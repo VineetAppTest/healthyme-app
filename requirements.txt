@@ -1,0 +1,6 @@
+streamlit
+pandas
+openpyxl
+SQLAlchemy>=2.0
+psycopg2-binary
+extra-streamlit-components>=0.1.71

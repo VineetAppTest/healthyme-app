@@ -1,0 +1,32 @@
+[
+  {
+    "section": "Body-Mind Connection",
+    "code": "primary_symptom_main_concern",
+    "label": "What is the primary symptom that relates to the main health concern? If multiple health concerns are listed, refer to the symptom affecting you the most.",
+    "type": "text"
+  },
+  {
+    "section": "Body-Mind Connection",
+    "code": "daily_effect",
+    "label": "How does the above symptom and main health concern affect you on a daily basis?",
+    "type": "text"
+  },
+  {
+    "section": "Body-Mind Connection",
+    "code": "emotions_related",
+    "label": "Which emotion/feeling comes to mind when you think of the symptom or main health concern?",
+    "type": "text"
+  },
+  {
+    "section": "Body-Mind Connection",
+    "code": "positive_changes_from_symptom",
+    "label": "List any positive changes in your life that have resulted from this symptom or health concern.",
+    "type": "text"
+  },
+  {
+    "section": "Body-Mind Connection",
+    "code": "comments",
+    "label": "Comments",
+    "type": "text"
+  }
+]

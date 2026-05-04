@@ -1,0 +1,29 @@
+# Python temporary files
+__pycache__/
+*.pyc
+
+# Local database and real data
+data/db.json
+data/*.json
+!data/db_sample.json
+
+# Uploaded files / generated reports
+uploads/
+uploaded_files/
+reports/
+exports/
+logs/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Environment files
+.env
+
+# Excel/CSV files that may contain client data
+*.xlsx
+*.csv
+
+# But allow specific safe templates if needed
+!templates/*.xlsx
+!sample_data/*.xlsx
