@@ -98,11 +98,6 @@
       "user_id": "admin001",
       "created_at": "2026-05-04T20:03:02",
       "active": true
-    },
-    "52e4af31-dc60-414f-a4e6-d87997c93b2b": {
-      "user_id": "admin001",
-      "created_at": "2026-05-04T21:18:13",
-      "active": true
     }
   },
   "response_audit_log": []

@@ -27,7 +27,7 @@ if st.session_state.pop("clear_admin_fields_next_run", False):
     st.session_state["admin_name_input"] = ""
     st.session_state["admin_email_input"] = ""
 
-topbar("Create Members / Admins", "Create users here. New users reset password on first login.", "Admin access manager")
+topbar("Create Members / Admins", "Create role-mapping users here. Login is handled by Auth0/OIDC.", "Admin access manager")
 
 # Show success messages after rerun, once the fields have been safely cleared.
 if "create_user_success_msg" in st.session_state:
@@ -50,7 +50,7 @@ with left:
             st.error("This email is already registered.")
         else:
             create_user(n.strip(), e.strip().lower(), "member")
-            st.session_state["create_user_success_msg"] = "Member created with default password: password@123"
+            st.session_state["create_user_success_msg"] = "Member created. This email is now authorized for Auth0/OIDC login."
             st.session_state["clear_member_fields_next_run"] = True
             st.rerun()
     card_end()
@@ -70,7 +70,7 @@ with right:
             st.error("This email is already registered.")
         else:
             create_user(n.strip(), e.strip().lower(), "admin")
-            st.session_state["create_user_success_msg"] = "Admin created with default password: password@123"
+            st.session_state["create_user_success_msg"] = "Admin created. This email is now authorized for Auth0/OIDC login."
             st.session_state["clear_admin_fields_next_run"] = True
             st.rerun()
     card_end()

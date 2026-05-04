@@ -73,6 +73,46 @@ def clear_login_session(token):
     if token in db.get("login_sessions", {}):
         db["login_sessions"][token]["active"] = False
         save_db(db)
+def find_user_by_email(email):
+    email = (email or "").strip().lower()
+    if not email:
+        return None
+    db = load_db()
+    for u in db.get("users", []):
+        if u.get("email", "").strip().lower() == email and u.get("is_active", True):
+            return u
+    return None
+
+def ensure_oidc_user_record(email, name="", role="member"):
+    """Create a role-mapping user if explicitly needed by admin tools.
+
+    Not used for public signup. Login guards still require an existing authorized user.
+    """
+    db = load_db()
+    existing = None
+    for u in db.get("users", []):
+        if u.get("email", "").strip().lower() == (email or "").strip().lower():
+            existing = u
+            break
+    if existing:
+        return existing["id"]
+    user_id = str(uuid.uuid4())[:8]
+    db.setdefault("users", []).append({
+        "id": user_id,
+        "name": name or email,
+        "email": email,
+        "password_hash": "",
+        "role": role,
+        "must_reset_password": False,
+        "is_active": True,
+        "auth_provider": "oidc",
+    })
+    if role == "member":
+        db.setdefault("profiles", {})[user_id] = {"full_name": name or "", "gender": "", "age": "", "height_cm": "", "weight_kg": "", "mobile_number": "", "country": "", "occupation": ""}
+        db.setdefault("workflow", {})[user_id] = {"laf_completed":False,"nsp1_completed":False,"nsp2_completed":False,"submitted_for_review":False,"admin_completed":False,"final_report_ready":False,"workflow_status":"not_started"}
+    save_db(db)
+    return user_id
+
 def change_password(user_id, new_password):
     db=load_db()
     for u in db["users"]:

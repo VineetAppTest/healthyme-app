@@ -1,5 +1,5 @@
-streamlit
+streamlit>=1.42
 pandas
 openpyxl
-
 supabase>=2.0.0
+authlib>=1.3.2
