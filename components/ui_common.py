@@ -1,6 +1,6 @@
 
 import streamlit as st
-from components.auth_session import logout_current_session
+from components.auth_session import logout_current_user
 
 LUXE_CSS = """
 <style>
@@ -339,4 +339,5 @@ def utility_logout_bar():
         st.markdown(f"<div class='utility-bar'><div class='utility-user'>Signed in as <b>{name}</b><span class='utility-role'>{role.title()}</span></div></div>", unsafe_allow_html=True)
     with right:
         if st.button("Logout", key="global_logout", use_container_width=True):
-            logout_current_session()
+            logout_current_user()
+            st.switch_page("pages/01_Login.py")

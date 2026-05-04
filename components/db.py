@@ -4,25 +4,75 @@ BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
 DB_PATH = BASE_DIR / "data" / "db.json"
 from components.storage_backend import load_state, save_state
 
-def load_db(): return load_state()
+def load_db():
+    db = load_state()
+    before = len(db.get("users", []))
+    db = ensure_default_admin(db)
+    if len(db.get("users", [])) != before:
+        save_state(db)
+    return db
 def save_db(db): save_state(db)
 def hash_password(p): return hashlib.sha256(p.encode()).hexdigest()
+def ensure_default_admin(db):
+    """Guarantee one fallback admin exists if database state has no admin.
+
+    This protects first deploy/Supabase-empty states from locking out the admin.
+    It does not overwrite existing admins.
+    """
+    db.setdefault("users", [])
+    has_admin = any(u.get("role") == "admin" and u.get("email", "").lower() == "admin@healthyme.local" for u in db.get("users", []))
+    if not has_admin:
+        db["users"].append({
+            "id": "admin001",
+            "name": "Demo Admin",
+            "email": "admin@healthyme.local",
+            "password_hash": hash_password("admin123"),
+            "role": "admin",
+            "must_reset_password": False,
+            "is_active": True,
+        })
+    return db
 def authenticate(email, password):
+    email = (email or "").strip().lower()
+    password = (password or "").strip()
     db=load_db(); hp=hash_password(password)
-    # Cache this DB snapshot for start_persistent_session() so login avoids one extra Supabase read.
-    try:
-        import streamlit as st
-        st.session_state["_hm_login_db_snapshot"] = db
-    except Exception:
-        pass
-    for u in db["users"]:
-        if u["email"].lower()==email.lower() and u["password_hash"]==hp and u.get("is_active", True): return u
-    try:
-        import streamlit as st
-        st.session_state.pop("_hm_login_db_snapshot", None)
-    except Exception:
-        pass
+    for u in db.get("users", []):
+        if u.get("email", "").strip().lower()==email and u.get("password_hash")==hp and u.get("is_active", True): return u
     return None
+def create_login_session(user_id):
+    """Create a lightweight login token for browser refresh persistence."""
+    db = load_db()
+    token = str(uuid.uuid4())
+    db.setdefault("login_sessions", {})[token] = {
+        "user_id": user_id,
+        "created_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "active": True,
+    }
+    save_db(db)
+    return token
+
+def get_user_by_session_token(token):
+    token = (token or "").strip()
+    if not token:
+        return None
+    db = load_db()
+    session = db.get("login_sessions", {}).get(token)
+    if not session or not session.get("active"):
+        return None
+    user_id = session.get("user_id")
+    for u in db.get("users", []):
+        if u.get("id") == user_id and u.get("is_active", True):
+            return u
+    return None
+
+def clear_login_session(token):
+    token = (token or "").strip()
+    if not token:
+        return
+    db = load_db()
+    if token in db.get("login_sessions", {}):
+        db["login_sessions"][token]["active"] = False
+        save_db(db)
 def change_password(user_id, new_password):
     db=load_db()
     for u in db["users"]:
@@ -77,11 +127,23 @@ def get_admin_assessment(user_id): return load_db().get("admin_assessments",{}).
 def member_has_meaningful_data(user_id): return bool(get_form_response("laf_responses",user_id) or get_form_response("nsp1_responses",user_id) or get_form_response("nsp2_responses",user_id))
 def list_members():
     db=load_db(); rows=[]
-    for u in db["users"]:
-        if u["role"]=="member":
-            wf=normalize_workflow(db["workflow"].get(u["id"],{}))
-            rows.append({"id":u["id"],"name":u["name"],"email":u["email"],"laf_completed":wf["laf_completed"],"nsp1_completed":wf["nsp1_completed"],"nsp2_completed":wf["nsp2_completed"],"submitted":wf["submitted_for_review"],"admin_completed":wf["admin_completed"],"final_report_ready":wf["final_report_ready"],"workflow_status":wf["workflow_status"]})
+    seen=set()
+    for u in db.get("users", []):
+        if u.get("role")=="member" and u.get("is_active", True):
+            uid = u.get("id")
+            if uid in seen:
+                continue
+            seen.add(uid)
+            wf=normalize_workflow(db.get("workflow", {}).get(uid,{}))
+            rows.append({"id":uid,"name":u.get("name",""),"email":u.get("email",""),"laf_completed":wf["laf_completed"],"nsp1_completed":wf["nsp1_completed"],"nsp2_completed":wf["nsp2_completed"],"submitted":wf["submitted_for_review"],"admin_completed":wf["admin_completed"],"final_report_ready":wf["final_report_ready"],"workflow_status":wf["workflow_status"]})
     return rows
+
+def count_member_accounts():
+    return len(list_members())
+
+def count_admin_accounts():
+    db=load_db()
+    return len([u for u in db.get("users", []) if u.get("role")=="admin" and u.get("is_active", True)])
 def get_profile(user_id):
     return get_profile_with_laf_fallback(user_id)
 
@@ -515,3 +577,65 @@ def get_all_member_instances():
                 **inst,
             })
     return rows
+
+
+def get_admin_dashboard_snapshot():
+    """Load dashboard data once to prevent repeated database reads."""
+    db = load_db()
+    members = []
+    seen = set()
+    for u in db.get("users", []):
+        if u.get("role") == "member" and u.get("is_active", True):
+            uid = u.get("id")
+            if uid in seen:
+                continue
+            seen.add(uid)
+            wf = normalize_workflow(db.get("workflow", {}).get(uid, {}))
+            members.append({
+                "id": uid,
+                "name": u.get("name", ""),
+                "email": u.get("email", ""),
+                "laf_completed": wf["laf_completed"],
+                "nsp1_completed": wf["nsp1_completed"],
+                "nsp2_completed": wf["nsp2_completed"],
+                "submitted": wf["submitted_for_review"],
+                "admin_completed": wf["admin_completed"],
+                "final_report_ready": wf["final_report_ready"],
+                "workflow_status": wf["workflow_status"],
+            })
+
+    admin_count = len([
+        u for u in db.get("users", [])
+        if u.get("role") == "admin" and u.get("is_active", True)
+    ])
+
+    # Lightweight queue calculation directly from loaded db, no extra load_db calls.
+    users = {u.get("id"): u for u in db.get("users", [])}
+    queue = []
+    for uid, instances in db.get("assessment_instances", {}).items():
+        for inst in instances:
+            if inst.get("submitted_for_review") and inst.get("status") == "review_required":
+                user = users.get(uid, {})
+                pages = inst.get("requested_pages", [])
+                queue.append({
+                    "member_id": uid,
+                    "member_name": user.get("name", uid),
+                    "email": user.get("email", ""),
+                    "instance_id": inst.get("instance_id"),
+                    "instance_number": inst.get("instance_number"),
+                    "instance_type": inst.get("instance_type"),
+                    "requested_pages": ", ".join("NSP Page 1" if p == "nsp1" else "NSP Page 2" for p in pages),
+                    "submitted_date": inst.get("submitted_date", ""),
+                    "status": inst.get("status", ""),
+                })
+    queue.sort(key=lambda x: (x.get("submitted_date", ""), x.get("member_name", "")), reverse=True)
+
+    return {
+        "members": members,
+        "member_count": len(members),
+        "admin_count": admin_count,
+        "review_queue": queue,
+        "initial_pending": [r for r in queue if r.get("instance_type") == "Initial Assessment"],
+        "reassess_pending": [r for r in queue if r.get("instance_type") == "Reassessment"],
+        "finalized_count": sum(1 for m in members if m.get("final_report_ready")),
+    }

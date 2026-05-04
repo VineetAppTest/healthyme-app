@@ -9,7 +9,6 @@ from components.storage_backend import (
     pull_supabase_to_local_backup,
 )
 from components.flash import set_system_message, render_system_message
-from utils.secret_reader import get_secret_diagnostics
 
 st.set_page_config(page_title="Database Status", page_icon="💚", layout="wide")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
@@ -17,10 +16,10 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 topbar("Database Status", "Check Supabase connection, fallback mode, migration, and backups.", "Admin database")
 render_system_message()
 
-status = get_storage_status()
+status = get_storage_status(force_check=True)
 mode = status.get("mode", "UNKNOWN")
-connected = bool(status.get("supabase_connected", False))
-fallback = bool(status.get("fallback_active", True))
+connected = status.get("supabase_connected", False)
+fallback = status.get("fallback_active", True)
 
 stat_grid([
     {"label": "Database Mode", "value": mode, "note": "SUPABASE or LOCAL_FALLBACK"},
@@ -29,7 +28,7 @@ stat_grid([
     {"label": "Fallback", "value": "Active" if fallback else "Inactive", "note": "Local JSON mode"},
 ])
 
-if fallback:
+if mode != "SUPABASE":
     st.warning("App is currently not running in LIVE Supabase mode. Data may not persist on Streamlit Cloud.")
 else:
     st.success("App is running in LIVE Supabase mode.")
@@ -45,13 +44,7 @@ st.json({
     "members_count": status.get("members_count", "-"),
     "last_action": status.get("last_action", ""),
     "last_error": status.get("last_error", ""),
-    "secret_source": status.get("secret_source", "-"),
 })
-card_end()
-
-card_start()
-st.subheader("Safe Secret Diagnostics")
-st.json(get_secret_diagnostics())
 card_end()
 
 card_start()

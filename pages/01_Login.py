@@ -1,18 +1,20 @@
 import streamlit as st
-
 from components.ui_common import inject_global_styles, apply_luxe_theme
-from components.db import authenticate
-from components.auth_session import start_persistent_session, restore_persistent_session, route_authenticated_user, maybe_wait_for_cookie_restore
+from components.db import authenticate, create_login_session
+from components.auth_session import persist_token_in_url, restore_login_from_token
 
 st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide")
 inject_global_styles()
 apply_luxe_theme()
 
-if restore_persistent_session():
-    route_authenticated_user()
-else:
-    maybe_wait_for_cookie_restore()
-
+# If browser was refreshed and token is present, restore login.
+if restore_login_from_token():
+    if st.session_state.get('must_reset_password'):
+        st.switch_page('pages/00_Reset_Password.py')
+    elif st.session_state.get('user_role') == 'admin':
+        st.switch_page('pages/10_Admin_Dashboard.py')
+    else:
+        st.switch_page('pages/02_Member_Home.py')
 
 st.markdown("""
 <div class="login-brand-row">
@@ -36,19 +38,28 @@ with login_col:
         st.markdown("## Login Credentials")
         st.caption("Sign in using the access created by your administrator.")
 
-        with st.form("healthyme_login_form", clear_on_submit=False):
-            email = st.text_input("Email", placeholder="name@example.com")
-            password = st.text_input("Password", type="password", placeholder="Enter password")
-            submitted = st.form_submit_button("Login", type="primary", use_container_width=True)
+        email = st.text_input("Email", placeholder="name@example.com")
+        password = st.text_input("Password", type="password", placeholder="Enter password")
 
-        if submitted:
-            with st.spinner("Signing you in securely..."):
-                user = authenticate(email, password)
-                if not user:
-                    st.error("Invalid email or password.")
+        if st.button("Login", type="primary", use_container_width=True):
+            user = authenticate(email, password)
+            if not user:
+                st.error("Invalid email or password.")
+            else:
+                st.session_state["logged_in"] = True
+                st.session_state["user_id"] = user["id"]
+                st.session_state["user_role"] = user["role"]
+                st.session_state["user_name"] = user["name"]
+                st.session_state["must_reset_password"] = user.get("must_reset_password", False)
+                token = create_login_session(user["id"])
+                st.session_state["hm_token"] = token
+                persist_token_in_url(token)
+                if st.session_state["must_reset_password"]:
+                    st.switch_page("pages/00_Reset_Password.py")
+                elif user["role"] == "admin":
+                    st.switch_page("pages/10_Admin_Dashboard.py")
                 else:
-                    start_persistent_session(user)
-                    route_authenticated_user()
+                    st.switch_page("pages/02_Member_Home.py")
 
 with journey_col:
     st.markdown("""

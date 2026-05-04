@@ -1,0 +1,5 @@
+1. Extract this ZIP.
+2. Double-click run_app.bat.
+3. Login with:
+   Admin: admin@healthyme.local / admin123
+   Demo Member: member@healthyme.local / member123

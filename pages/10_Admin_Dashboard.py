@@ -1,35 +1,34 @@
 import streamlit as st
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, stat_grid, card_start, card_end, utility_logout_bar
-from components.db import list_members
-from components.assessment_instances import list_review_queue
+from components.db import get_admin_dashboard_snapshot
 from components.flash import render_system_message
 from components.storage_backend import get_storage_status
 
 st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
-members = list_members()
-queue = list_review_queue()
-db_status = get_storage_status()
-initial_pending = [r for r in queue if r.get("instance_type") == "Initial Assessment"]
-reassess_pending = [r for r in queue if r.get("instance_type") == "Reassessment"]
+snapshot = get_admin_dashboard_snapshot()
+members = snapshot["members"]
+member_count = snapshot["member_count"]
+admin_count = snapshot["admin_count"]
+initial_pending = snapshot["initial_pending"]
+reassess_pending = snapshot["reassess_pending"]
+finalized_count = snapshot["finalized_count"]
+db_status = get_storage_status(force_check=False)
 
 topbar("Admin Dashboard", "Premium command center for review, reassessment, reporting, and content management.", "Admin experience")
 render_system_message()
 
-# Show a warning only when the actual app storage backend is not Supabase.
-if db_status.get("fallback_active"):
-    st.warning(
-        "Database is currently running in LOCAL FALLBACK mode. "
-        "For live Streamlit use, configure Supabase and verify via Database Status."
-    )
+# Database Status Warning
+if db_status.get("mode") != "SUPABASE":
+    st.warning("Database is currently running in LOCAL FALLBACK mode. For live Streamlit use, configure Supabase and verify via Database Status.")
 
 stat_grid([
-    {"label": "Total Members", "value": len(members), "note": "Registered accounts"},
+    {"label": "Members", "value": member_count, "note": "Member accounts only"},
     {"label": "Initial Reviews", "value": len(initial_pending), "note": "Pending initial assessment"},
     {"label": "Reassessments", "value": len(reassess_pending), "note": "Pending follow-up review"},
-    {"label": "Finalized", "value": sum(1 for m in members if m["final_report_ready"]), "note": "Reports ready"},
+    {"label": "Finalized", "value": finalized_count, "note": "Reports ready"},
 ])
 
 card_start()

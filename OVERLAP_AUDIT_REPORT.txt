@@ -1,0 +1,29 @@
+HealthyMe Overlap Audit Final Build
+
+Audit summary:
+- st.expander occurrences checked: 7
+  - pages/04_NSP_Page1.py:22: with st.expander("Show unanswered questions"):
+  - pages/05_NSP_Page2.py:22: with st.expander("Show unanswered questions"):
+  - pages/11_Evaluation_Status.py:128: with st.expander(exp_title, expanded=False):
+  - pages/08_Recipe_Repository.py:27: with st.expander("Ingredients"): st.write(row.get("ingredients",""))
+  - pages/08_Recipe_Repository.py:28: with st.expander("Steps"): st.write(row.get("steps",""))
+  - pages/09_Exercise_Repository.py:27: with st.expander("Ingredients"): st.write(row.get("instructions",""))
+  - pages/09_Exercise_Repository.py:28: with st.expander("Instructions"): st.write(row.get("instructions",""))
+- long st.button lines checked: 4
+  - pages/02_Member_Home.py:26: if st.button("2. Fill NSP Pg 1", use_container_width=True, disabled=disabled): st.switch_page("pages/04_NSP_Page1.py")
+  - pages/02_Member_Home.py:28: if st.button("3. Fill NSP Pg 2", use_container_width=True, disabled=disabled): st.switch_page("pages/05_NSP_Page2.py")
+  - pages/07_My_Profile.py:12: if st.button("Save Profile", type="primary"): update_profile(st.session_state["user_id"], data); st.success("Profile saved.")
+  - pages/10_Admin_Dashboard.py:13: if st.button("Evaluation Status", type="primary", use_container_width=True): st.switch_page("pages/11_Evaluation_Status.py")
+- 4/5 column layout occurrences checked: 1
+  - pages/10_Admin_Dashboard.py:11: a,b,c,d=st.columns(4)
+
+Fixes applied:
+- Stronger global expander header wrapping safety.
+- Button/tab/dataframe wrapping safety.
+- Member/evaluation status card wrapping safety.
+- Edit/Delete selector labels shortened where long repository item names may overflow.
+
+Credentials:
+Admin: admin@healthyme.local / admin123
+Demo Member: member@healthyme.local / member123
+New member default: password@123

@@ -1,0 +1,15 @@
+HealthyMe Recreated Latest Build
+
+Includes:
+- Member Home Journey Summary as 2 x 2 cards
+- Recipe and Exercise repository search
+- Admin edit/delete for recipes and exercises
+- Single reusable logout utility on authenticated pages
+- Luxe Emerald/Ivory/Gold UI + typography/button fixes
+- Admin user validation
+- CSV import layout fix
+
+Credentials:
+Admin: admin@healthyme.local / admin123
+Demo Member: member@healthyme.local / member123
+New member default: password@123

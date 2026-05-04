@@ -49,10 +49,12 @@
   "nsp2_responses": {},
   "nsp_scores": {},
   "admin_assessments": {},
-  "notifications": [],
-  "response_audit_log": [],
   "body_mind_responses": {},
   "daily_logs": {},
+  "notifications": [],
+  "recipes": [],
+  "exercises": [],
+  "audit_logs": [],
   "assessment_instances": {
     "member001": [
       {
@@ -85,5 +87,18 @@
       "nsp2": {},
       "consent": {}
     }
-  }
+  },
+  "login_sessions": {
+    "c6513997-ae03-4a86-af34-22f51567d294": {
+      "user_id": "admin001",
+      "created_at": "2026-05-04T19:35:25",
+      "active": true
+    },
+    "13b2a4d4-6b2d-47c9-8418-13e4fc0f4c9a": {
+      "user_id": "admin001",
+      "created_at": "2026-05-04T20:03:02",
+      "active": true
+    }
+  },
+  "response_audit_log": []
 }
