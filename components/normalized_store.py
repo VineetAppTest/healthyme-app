@@ -163,3 +163,40 @@ def sync_users_workflow_to_normalized(db: Dict[str, Any]) -> Tuple[bool, str]:
 
 def upsert_user_to_normalized(user: dict, workflow: dict = None) -> Tuple[bool, str]:
     return sync_users_workflow_to_normalized({"users": [user], "workflow": {user.get("id"): workflow or {}}})
+
+
+def find_user_by_email_fast(email: str):
+    """Fast login-time lookup from hm_users.
+
+    This avoids loading the full JSONB app state during Auth0 callback.
+    Returns (ok, user_or_none, message). ok=False means caller should fallback.
+    """
+    email = (email or "").strip().lower()
+    if not email or not _configured():
+        return False, None, "Supabase not configured or email missing."
+    try:
+        c = _client()
+        res = (
+            c.table("hm_users")
+            .select("id,name,email,role,is_active,auth_provider,must_reset_password")
+            .eq("email", email)
+            .limit(1)
+            .execute()
+        )
+        rows = res.data or []
+        if not rows:
+            return True, None, "No normalized user found."
+        row = rows[0]
+        if not bool(row.get("is_active", True)):
+            return True, None, "User is inactive."
+        return True, {
+            "id": row.get("id"),
+            "name": row.get("name", ""),
+            "email": row.get("email", ""),
+            "role": row.get("role", "member"),
+            "is_active": bool(row.get("is_active", True)),
+            "auth_provider": row.get("auth_provider", "oidc"),
+            "must_reset_password": bool(row.get("must_reset_password", False)),
+        }, "Loaded user from normalized hm_users."
+    except Exception as exc:
+        return False, None, f"Fast normalized lookup failed: {exc}"

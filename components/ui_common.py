@@ -380,6 +380,77 @@ div[data-testid="stTextArea"] textarea {
     margin-top: -.35rem;
 }
 
+
+/* HealthyMe final button color normalization */
+:root {
+  --hm-btn-primary-bg: linear-gradient(135deg, #064E3B 0%, #0F766E 100%);
+  --hm-btn-primary-text: #FFFFFF;
+  --hm-btn-secondary-bg: #FFFFFF;
+  --hm-btn-secondary-text: #064E3B;
+  --hm-btn-border: #D8A84E;
+}
+
+/* Secondary/default buttons */
+div[data-testid="stButton"] > button,
+div[data-testid="stDownloadButton"] > button,
+.stButton > button,
+.stDownloadButton > button,
+button[data-testid="baseButton-secondary"] {
+  background: var(--hm-btn-secondary-bg) !important;
+  color: var(--hm-btn-secondary-text) !important;
+  border: 1.5px solid var(--hm-btn-border) !important;
+  border-radius: 14px !important;
+  font-weight: 850 !important;
+  box-shadow: 0 6px 14px rgba(6,78,59,.08) !important;
+}
+
+/* Primary buttons */
+button[data-testid="baseButton-primary"],
+div[data-testid="stButton"] > button[kind="primary"],
+.stButton > button[kind="primary"],
+button[kind="primary"] {
+  background: var(--hm-btn-primary-bg) !important;
+  color: var(--hm-btn-primary-text) !important;
+  border: 1.5px solid #064E3B !important;
+  border-radius: 14px !important;
+  font-weight: 900 !important;
+  box-shadow: 0 12px 28px rgba(6,78,59,.20) !important;
+}
+
+/* Force nested markdown text inside buttons */
+button[data-testid="baseButton-primary"] *,
+div[data-testid="stButton"] > button[kind="primary"] *,
+.stButton > button[kind="primary"] *,
+button[kind="primary"] * {
+  color: #FFFFFF !important;
+}
+
+button[data-testid="baseButton-secondary"] *,
+div[data-testid="stButton"] > button:not([kind="primary"]) *,
+.stButton > button:not([kind="primary"]) * {
+  color: #064E3B !important;
+}
+
+div[data-testid="stButton"] > button:hover,
+.stButton > button:hover,
+div[data-testid="stDownloadButton"] > button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 12px 26px rgba(6,78,59,.14) !important;
+}
+
+div[data-testid="stButton"] > button:disabled,
+.stButton > button:disabled {
+  background: #F4F1EA !important;
+  color: #777E7A !important;
+  border-color: #E2D7C2 !important;
+  box-shadow: none !important;
+}
+
+div[data-testid="stButton"] > button:disabled *,
+.stButton > button:disabled * {
+  color: #777E7A !important;
+}
+
 </style>
 """
 
