@@ -2,7 +2,7 @@
 import streamlit as st
 from components.ui_common import inject_global_styles, apply_luxe_theme
 from components.db import change_password
-st.set_page_config(page_title="Reset Password", page_icon="🌿", layout="wide")
+st.set_page_config(page_title="Reset Password", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme()
 st.markdown("## Reset Password")
 p1=st.text_input("New password", type="password")

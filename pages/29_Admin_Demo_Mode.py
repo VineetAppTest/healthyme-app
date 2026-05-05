@@ -10,7 +10,7 @@ from components.assessment_instances import ensure_assessment_instances
 from components.flash import set_system_message, render_system_message
 from components.scoring import score_answers
 
-st.set_page_config(page_title="Demo Mode", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Demo Mode", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 BASE = pathlib.Path(__file__).resolve().parents[1]

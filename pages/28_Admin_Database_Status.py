@@ -10,7 +10,7 @@ from components.storage_backend import (
 )
 from components.flash import set_system_message, render_system_message
 
-st.set_page_config(page_title="Database Status", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Database Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 topbar("Database Status", "Check Supabase connection, fallback mode, migration, and backups.", "Admin database")

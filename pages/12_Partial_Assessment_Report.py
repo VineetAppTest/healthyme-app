@@ -12,7 +12,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import load_db, get_form_response, get_workflow, get_profile
 from components.systems_rating import calculate_systems_rating
 
-st.set_page_config(page_title="Partial Assessment Report", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Partial Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 mid = st.session_state.get("selected_member_id")

@@ -4,7 +4,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import create_user, load_db
 from components.auth0_management import provision_auth0_user, auth0_config_status
 
-st.set_page_config(page_title="Admin User Manager", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Admin User Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 def valid_email(e):

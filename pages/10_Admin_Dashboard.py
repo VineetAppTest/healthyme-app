@@ -5,7 +5,7 @@ from components.db import get_admin_dashboard_snapshot
 from components.flash import render_system_message
 from components.storage_backend import get_storage_status
 
-st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 snapshot = get_admin_dashboard_snapshot()
@@ -82,3 +82,7 @@ with m:
     if st.button("Demo Mode", use_container_width=True):
         st.switch_page("pages/29_Admin_Demo_Mode.py")
 card_end()
+
+# Access manager shortcut
+if st.button("User Access Manager", use_container_width=True):
+    st.switch_page("pages/30_Admin_User_Access_Manager.py")

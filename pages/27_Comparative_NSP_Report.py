@@ -11,7 +11,7 @@ from components.db import list_members, load_db
 from components.assessment_instances import get_assessment_instances
 from components.systems_rating import calculate_systems_rating
 
-st.set_page_config(page_title="Comparative NSP Report", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Comparative NSP Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 def score(v):

@@ -6,7 +6,7 @@ from components.db import list_members
 from components.assessment_instances import get_assessment_instances, create_reassessment_request
 from components.flash import set_system_message, render_system_message
 
-st.set_page_config(page_title="Reassessment Manager", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Reassessment Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 topbar("Reassessment Manager", "Request NSP Page 1, NSP Page 2, or both for follow-up assessment.", "Admin reassessment")

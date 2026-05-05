@@ -4,7 +4,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import save_daily_log, get_daily_logs
 from components.flash import set_system_message, render_system_message
 
-st.set_page_config(page_title="Daily Log", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Daily Log", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 user_id = st.session_state["user_id"]

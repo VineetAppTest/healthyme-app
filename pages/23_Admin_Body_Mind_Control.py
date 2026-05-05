@@ -4,7 +4,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment
 from components.flash import set_system_message, render_system_message
 
-st.set_page_config(page_title="Body-Mind Access Control", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Body-Mind Access Control", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 topbar(

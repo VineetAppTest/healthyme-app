@@ -2,7 +2,7 @@ import streamlit as st
 from components.ui_common import inject_global_styles, apply_luxe_theme
 from components.auth_session import restore_login_from_token, get_oidc_email, get_oidc_name
 
-st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide")
+st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
 

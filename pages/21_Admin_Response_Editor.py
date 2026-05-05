@@ -8,7 +8,7 @@ from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar
 from components.db import load_db, save_db_direct, update_member_response_with_audit, list_members
 
-st.set_page_config(page_title="Response Editor", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Response Editor", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 BASE = pathlib.Path(__file__).resolve().parents[1]

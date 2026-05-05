@@ -306,6 +306,27 @@ button {
   margin:.35rem 0 .75rem 0;
 }
 
+
+/* HealthyMe speed/UI cleanup: hide Streamlit's default multipage sidebar/nav flash */
+section[data-testid="stSidebar"] {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+}
+button[kind="header"] {
+    display: none !important;
+}
+div[data-testid="collapsedControl"] {
+    display: none !important;
+}
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+.block-container {
+    padding-top: 1.2rem !important;
+}
+
 </style>
 """
 

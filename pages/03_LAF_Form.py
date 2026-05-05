@@ -6,7 +6,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import get_form_response, save_form_response, update_workflow, sync_profile_from_laf, load_db
 from components.flash import set_system_message, render_system_message
 
-st.set_page_config(page_title="LAF", page_icon="💚", layout="wide")
+st.set_page_config(page_title="LAF", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 questions = json.loads((pathlib.Path(__file__).resolve().parents[1] / "config" / "laf_questions.json").read_text(encoding="utf-8"))

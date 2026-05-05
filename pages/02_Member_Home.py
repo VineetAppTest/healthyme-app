@@ -5,7 +5,7 @@ from components.db import get_workflow
 from components.assessment_instances import get_current_assessment_instance
 from components.flash import render_system_message
 
-st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 user_id = st.session_state["user_id"]

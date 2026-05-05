@@ -679,3 +679,60 @@ def get_admin_dashboard_snapshot():
         "reassess_pending": [r for r in queue if r.get("instance_type") == "Reassessment"],
         "finalized_count": sum(1 for m in members if m.get("final_report_ready")),
     }
+
+
+def list_all_users_for_access_manager():
+    db = load_db()
+    rows = []
+    seen = set()
+    for u in db.get("users", []):
+        uid = u.get("id")
+        if uid in seen:
+            continue
+        seen.add(uid)
+        rows.append({
+            "id": uid,
+            "name": u.get("name", ""),
+            "email": u.get("email", ""),
+            "role": u.get("role", ""),
+            "is_active": bool(u.get("is_active", True)),
+            "auth_provider": u.get("auth_provider", "oidc"),
+        })
+    rows.sort(key=lambda r: (r["role"], r["name"].lower(), r["email"].lower()))
+    return rows
+
+def update_user_access_record(user_id, name=None, role=None, is_active=None, email=None, actor="admin"):
+    db = load_db()
+    users = db.setdefault("users", [])
+    target = None
+    before = None
+    for u in users:
+        if u.get("id") == user_id:
+            target = u
+            before = dict(u)
+            break
+    if not target:
+        return False, "User not found."
+
+    if name is not None:
+        target["name"] = name.strip()
+    if role is not None:
+        target["role"] = role
+    if is_active is not None:
+        target["is_active"] = bool(is_active)
+    if email is not None:
+        target["email"] = email.strip().lower()
+
+    db.setdefault("audit_logs", []).append({
+        "ts": datetime.datetime.now().isoformat(timespec="seconds"),
+        "actor": actor,
+        "action": "user_access_update",
+        "user_id": user_id,
+        "before": before,
+        "after": dict(target),
+    })
+    save_db(db)
+    return True, "HealthyMe user updated."
+
+def soft_delete_user_access_record(user_id, actor="admin"):
+    return update_user_access_record(user_id, is_active=False, actor=actor)

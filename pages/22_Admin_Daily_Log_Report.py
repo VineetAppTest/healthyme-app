@@ -9,7 +9,7 @@ from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid
 from components.db import list_members, get_daily_logs
 
-st.set_page_config(page_title="Daily Log Report", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Daily Log Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 def build_excel(member, logs):

@@ -4,7 +4,7 @@ from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, stat_grid
 from components.db import list_members
 
-st.set_page_config(page_title="Evaluation Status", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Evaluation Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 rows = list_members()

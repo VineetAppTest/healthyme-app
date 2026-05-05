@@ -160,3 +160,64 @@ If no email is received:
 - Keep M2M secrets only in Streamlit Secrets.
 - Do not commit `.streamlit/secrets.toml` to GitHub.
 - HealthyMe stores roles in Supabase; Auth0 stores identity/password/session.
+
+# Phase 2.2 — User Access Manager and future hard delete readiness
+
+This build adds:
+
+```text
+Admin Dashboard → User Access Manager
+```
+
+Current enabled actions:
+- Edit name
+- Edit role
+- Deactivate user
+- Reactivate user
+- Resend password setup email
+- Check Auth0 status
+
+Hard delete:
+- The hard delete button is intentionally disabled/hidden for now.
+- Use deactivate/reactivate for normal operations.
+
+## Auth0 permission to add now for future hard delete
+
+Since we may activate hard delete later, add this permission now to the Machine-to-Machine app:
+
+```text
+delete:users
+```
+
+Where to add:
+
+```text
+Auth0 Dashboard
+→ Applications
+→ Applications
+→ HealthyMe User Provisioner
+→ APIs
+→ Auth0 Management API
+→ Permissions
+→ select delete:users
+→ Save/Update
+```
+
+This does not activate hard delete in the app today.  
+It only makes the Auth0 tenant ready when we decide to enable it later.
+
+## Operating recommendation
+
+Use:
+
+```text
+Deactivate
+```
+
+instead of hard delete.
+
+Why:
+- Keeps LAF/NSP/report history safe
+- Blocks future login
+- Avoids breaking audit trail
+- Can be reversed through Reactivate

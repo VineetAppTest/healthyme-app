@@ -5,7 +5,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow
 from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
-st.set_page_config(page_title="Admin Assessment", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Admin Assessment", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 mid=st.session_state.get("selected_member_id")
 if not mid: st.switch_page("pages/11_Evaluation_Status.py")

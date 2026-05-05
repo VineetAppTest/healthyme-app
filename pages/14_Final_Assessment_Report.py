@@ -5,7 +5,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import load_db, get_workflow, get_admin_assessment
 from components.report_engine import build_full_admin_report, summary_preview_rows
 
-st.set_page_config(page_title="Final Assessment Report", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Final Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 mid = st.session_state.get("selected_member_id")

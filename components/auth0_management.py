@@ -205,3 +205,131 @@ def provision_auth0_user(email: str, name: str = "", send_setup_email: bool = Tr
         result["message"] = result["message"] + " " + mail_msg
 
     return result
+
+def update_auth0_user_profile(email: str, name: str = "", email_new: str = "") -> Dict[str, object]:
+    """Update Auth0 user profile. Email update is supported but should be used carefully."""
+    result = {"ok": False, "message": "", "auth0_user_found": False}
+    ok, user, msg = find_auth0_user_by_email(email)
+    if not ok:
+        result["message"] = msg
+        return result
+    if not user:
+        result["message"] = "Auth0 user not found for this email."
+        return result
+
+    ok, token_or_msg = _management_token()
+    if not ok:
+        result["message"] = token_or_msg
+        return result
+
+    domain = _auth0_domain()
+    user_id = user.get("user_id")
+    payload = {}
+    if name:
+        payload["name"] = name
+    if email_new and email_new.strip().lower() != email.strip().lower():
+        payload["email"] = email_new.strip().lower()
+        payload["email_verified"] = False
+        payload["verify_email"] = True
+
+    if not payload:
+        result.update({"ok": True, "auth0_user_found": True, "message": "No Auth0 profile changes needed."})
+        return result
+
+    try:
+        resp = requests.patch(
+            f"https://{domain}/api/v2/users/{user_id}",
+            json=payload,
+            headers=_headers(token_or_msg),
+            timeout=20,
+        )
+        if resp.status_code >= 300:
+            result["message"] = f"Could not update Auth0 user: {resp.status_code} {resp.text[:700]}"
+            return result
+        result.update({"ok": True, "auth0_user_found": True, "message": "Auth0 user updated."})
+        return result
+    except Exception as exc:
+        result["message"] = f"Could not update Auth0 user: {exc}"
+        return result
+
+def set_auth0_user_blocked(email: str, blocked: bool) -> Dict[str, object]:
+    """Block/unblock Auth0 user. Used for deactivate/reactivate."""
+    result = {"ok": False, "message": "", "auth0_user_found": False}
+    ok, user, msg = find_auth0_user_by_email(email)
+    if not ok:
+        result["message"] = msg
+        return result
+    if not user:
+        result["message"] = "Auth0 user not found for this email."
+        return result
+
+    ok, token_or_msg = _management_token()
+    if not ok:
+        result["message"] = token_or_msg
+        return result
+
+    domain = _auth0_domain()
+    user_id = user.get("user_id")
+    try:
+        resp = requests.patch(
+            f"https://{domain}/api/v2/users/{user_id}",
+            json={"blocked": bool(blocked)},
+            headers=_headers(token_or_msg),
+            timeout=20,
+        )
+        if resp.status_code >= 300:
+            result["message"] = f"Could not {'block' if blocked else 'unblock'} Auth0 user: {resp.status_code} {resp.text[:700]}"
+            return result
+        result.update({"ok": True, "auth0_user_found": True, "message": f"Auth0 user {'blocked' if blocked else 'unblocked'}."})
+        return result
+    except Exception as exc:
+        result["message"] = f"Could not {'block' if blocked else 'unblock'} Auth0 user: {exc}"
+        return result
+
+def delete_auth0_user_by_email(email: str) -> Dict[str, object]:
+    """Hard delete Auth0 user. Function present for later use; UI keeps this hidden/disabled for now."""
+    result = {"ok": False, "message": "", "auth0_user_found": False}
+    ok, user, msg = find_auth0_user_by_email(email)
+    if not ok:
+        result["message"] = msg
+        return result
+    if not user:
+        result["message"] = "Auth0 user not found for this email."
+        return result
+
+    ok, token_or_msg = _management_token()
+    if not ok:
+        result["message"] = token_or_msg
+        return result
+
+    domain = _auth0_domain()
+    user_id = user.get("user_id")
+    try:
+        resp = requests.delete(
+            f"https://{domain}/api/v2/users/{user_id}",
+            headers=_headers(token_or_msg),
+            timeout=20,
+        )
+        if resp.status_code >= 300:
+            result["message"] = f"Could not delete Auth0 user: {resp.status_code} {resp.text[:700]}"
+            return result
+        result.update({"ok": True, "auth0_user_found": True, "message": "Auth0 user hard-deleted."})
+        return result
+    except Exception as exc:
+        result["message"] = f"Could not delete Auth0 user: {exc}"
+        return result
+
+def check_auth0_user_status(email: str) -> Dict[str, object]:
+    ok, user, msg = find_auth0_user_by_email(email)
+    if not ok:
+        return {"ok": False, "exists": False, "blocked": None, "message": msg}
+    if not user:
+        return {"ok": True, "exists": False, "blocked": None, "message": "Auth0 user does not exist."}
+    return {
+        "ok": True,
+        "exists": True,
+        "blocked": bool(user.get("blocked", False)),
+        "user_id": user.get("user_id", ""),
+        "email_verified": bool(user.get("email_verified", False)),
+        "message": "Auth0 user found.",
+    }

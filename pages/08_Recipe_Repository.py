@@ -3,7 +3,7 @@ import streamlit as st, pandas as pd, pathlib
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar
 from components.db import get_workflow
-st.set_page_config(page_title="Recipes", page_icon="💚", layout="wide")
+st.set_page_config(page_title="Recipes", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 wf=get_workflow(st.session_state["user_id"]); topbar("Recipe Repository","Search and browse personalized recipes.","Personalized content")
 if not wf.get("admin_completed"): st.warning("Your personalized plan will unlock after expert evaluation is completed."); st.stop()
