@@ -3,6 +3,7 @@ import json
 import os
 import pathlib
 from typing import Any, Dict, Optional, Tuple
+from components.normalized_store import load_users_workflow_from_normalized, sync_users_workflow_to_normalized
 
 BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
 LOCAL_DB_PATH = BASE_DIR / "data" / "db.json"
@@ -91,6 +92,24 @@ def normalize_state(db: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         base.update(db)
     return base
 
+def _overlay_normalized_users_workflow(db: Dict[str, Any]) -> Dict[str, Any]:
+    """Overlay normalized hm_users/hm_workflow when the tables are available.
+
+    This keeps the app compatible with the older JSONB app state while allowing
+    high-traffic users/workflow to come from faster dedicated tables.
+    """
+    try:
+        ok, users, workflow, msg = load_users_workflow_from_normalized()
+        if ok:
+            db["users"] = users
+            db["workflow"] = workflow
+            _set_status(normalized_users_workflow=True, normalized_last_action=msg)
+        else:
+            _set_status(normalized_users_workflow=False, normalized_last_action=msg)
+    except Exception as exc:
+        _set_status(normalized_users_workflow=False, normalized_last_action=str(exc))
+    return db
+
 def _get_secret(name: str, default: str = "") -> str:
     value = os.environ.get(name)
     if value:
@@ -154,6 +173,7 @@ def load_state(force_refresh: bool = False) -> Dict[str, Any]:
         ok, db, msg = _load_from_supabase()
         if ok:
             db = normalize_state(db)
+            db = _overlay_normalized_users_workflow(db)
             _set_cache(db)
             _set_status(
                 mode="SUPABASE",
@@ -167,6 +187,7 @@ def load_state(force_refresh: bool = False) -> Dict[str, Any]:
 
         # Safe fallback; no crash.
         db = normalize_state(_read_initial_local_state())
+        db = _overlay_normalized_users_workflow(db)
         _set_cache(db)
         _set_status(
             mode="LOCAL_FALLBACK",
@@ -179,6 +200,7 @@ def load_state(force_refresh: bool = False) -> Dict[str, Any]:
         return db
 
     db = normalize_state(_read_initial_local_state())
+    # No Supabase secrets means normalized tables cannot be used.
     _set_cache(db)
     _set_status(
         mode="LOCAL_FALLBACK",
@@ -197,6 +219,7 @@ def save_state(db: Dict[str, Any]) -> None:
     if configured:
         ok, msg = _save_to_supabase(db)
         if ok:
+            norm_ok, norm_msg = sync_users_workflow_to_normalized(db)
             _set_cache(db)
             _set_status(
                 mode="SUPABASE",
@@ -205,6 +228,8 @@ def save_state(db: Dict[str, Any]) -> None:
                 fallback_active=False,
                 last_error="",
                 last_action="Saved to Supabase.",
+                normalized_users_workflow=bool(norm_ok),
+                normalized_last_action=norm_msg,
             )
             return
         _set_status(
@@ -264,6 +289,8 @@ def get_storage_status(force_check: bool = False) -> Dict[str, Any]:
             "last_action": msg or "Supabase forced health check passed.",
             "users_count": len(db.get("users", [])),
             "members_count": len([u for u in db.get("users", []) if u.get("role") == "member"]),
+            "normalized_users_workflow": _get_cached_status().get("normalized_users_workflow", False),
+            "normalized_last_action": _get_cached_status().get("normalized_last_action", ""),
         }
         _set_cache(db)
         _set_status(**status)

@@ -9,6 +9,7 @@ from components.storage_backend import (
     pull_supabase_to_local_backup,
 )
 from components.flash import set_system_message, render_system_message
+from components.normalized_store import check_normalized_tables, sync_users_workflow_to_normalized
 
 st.set_page_config(page_title="Database Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
@@ -44,6 +45,8 @@ st.json({
     "members_count": status.get("members_count", "-"),
     "last_action": status.get("last_action", ""),
     "last_error": status.get("last_error", ""),
+    "normalized_users_workflow": status.get("normalized_users_workflow", "-"),
+    "normalized_last_action": status.get("normalized_last_action", "-"),
 })
 card_end()
 
@@ -79,6 +82,30 @@ with c2:
         ok, msg = pull_supabase_to_local_backup()
         set_system_message(msg, "success" if ok else "error")
         st.rerun()
+card_end()
+
+
+card_start()
+st.subheader("Normalized Users + Workflow Tables")
+norm_status = check_normalized_tables()
+st.json(norm_status)
+
+n1, n2 = st.columns(2)
+with n1:
+    if st.button("Check Normalized Tables", use_container_width=True):
+        norm_status = check_normalized_tables()
+        set_system_message(norm_status.get("message", "Checked normalized tables."), "success" if norm_status.get("ok") else "warning")
+        st.rerun()
+with n2:
+    if st.button("Migrate Users + Workflow to Normalized Tables", type="primary", use_container_width=True):
+        # Uses current active database state and upserts users/workflow to hm_users/hm_workflow.
+        from components.storage_backend import load_state
+        current_db = load_state(force_refresh=True)
+        ok, msg = sync_users_workflow_to_normalized(current_db)
+        set_system_message(msg, "success" if ok else "error")
+        st.rerun()
+
+st.caption("Safe migration: only users and workflow are migrated. LAF/NSP/reports remain on current storage for now.")
 card_end()
 
 card_start()
