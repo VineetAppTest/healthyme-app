@@ -1,3 +1,4 @@
+
 import streamlit as st
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, stat_grid, card_start, card_end, utility_logout_bar
@@ -17,10 +18,9 @@ reassess_pending = snapshot["reassess_pending"]
 finalized_count = snapshot["finalized_count"]
 db_status = get_storage_status(force_check=False)
 
-topbar("Admin Dashboard", "Premium command center for review, reassessment, reporting, and content management.", "Admin experience")
+topbar("Admin Dashboard", "Structured command center for review, access, content, and system controls.", "Admin experience")
 render_system_message()
 
-# Database Status Warning
 if db_status.get("mode") != "SUPABASE":
     st.warning("Database is currently running in LOCAL FALLBACK mode. For live Streamlit use, configure Supabase and verify via Database Status.")
 
@@ -31,58 +31,128 @@ stat_grid([
     {"label": "Finalized", "value": finalized_count, "note": "Reports ready"},
 ])
 
+st.markdown("""
+<style>
+.hm-section-title {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #064E3B;
+    margin-bottom: .25rem;
+}
+.hm-section-subtitle {
+    color: #64748B;
+    font-size: .86rem;
+    margin-bottom: .75rem;
+}
+.hm-action-card {
+    border: 1px solid #EADFCB;
+    border-radius: 20px;
+    padding: 1rem;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFCF6 100%);
+    box-shadow: 0 14px 35px rgba(15,23,42,.06);
+    min-height: 100%;
+}
+.hm-action-chip {
+    font-size: .75rem;
+    color: #047857;
+    background: #ECFDF5;
+    padding: .2rem .55rem;
+    border-radius: 999px;
+    font-weight: 800;
+}
+</style>
+""", unsafe_allow_html=True)
+
+def action_button(label, page, key, primary=False, help_text=None):
+    if st.button(label, key=key, type="primary" if primary else "secondary", use_container_width=True, help=help_text):
+        st.switch_page(page)
+
+def action_group(title, subtitle, chip, actions):
+    with st.container(border=True):
+        st.markdown(f"<div class='hm-section-title'>{title} <span class='hm-action-chip'>{chip}</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='hm-section-subtitle'>{subtitle}</div>", unsafe_allow_html=True)
+        for action in actions:
+            action_button(
+                action["label"],
+                action["page"],
+                action["key"],
+                action.get("primary", False),
+                action.get("help"),
+            )
+
 card_start()
 st.subheader("Quick Actions")
-a,b,c,d = st.columns(4)
-with a:
-    if st.button("Review Queue", type="primary", use_container_width=True):
-        st.switch_page("pages/26_Admin_Review_Queue.py")
-with b:
-    if st.button("Evaluation Status", use_container_width=True):
-        st.switch_page("pages/11_Evaluation_Status.py")
-with c:
-    if st.button("Reassessment Manager", use_container_width=True):
-        st.switch_page("pages/25_Admin_Reassessment_Manager.py")
-with d:
-    if st.button("Create Users", use_container_width=True):
-        st.switch_page("pages/17_Admin_User_Manager.py")
 
-e,f,g,h = st.columns(4)
-with e:
-    if st.button("Question Manager", use_container_width=True):
-        st.switch_page("pages/20_Admin_Question_Manager.py")
-with f:
-    if st.button("Edit Responses", use_container_width=True):
-        st.switch_page("pages/21_Admin_Response_Editor.py")
-with g:
-    if st.button("Daily Log Report", use_container_width=True):
-        st.switch_page("pages/22_Admin_Daily_Log_Report.py")
-with h:
-    if st.button("Body-Mind Access", use_container_width=True):
-        st.switch_page("pages/23_Admin_Body_Mind_Control.py")
+row1_col1, row1_col2 = st.columns(2, gap="large")
+with row1_col1:
+    action_group(
+        "Review & Assessment",
+        "Daily operating area for member assessments, queues, reassessment requests, and reports.",
+        "Main workflow",
+        [
+            {"label": "Review Queue", "page": "pages/26_Admin_Review_Queue.py", "key": "qa_review_queue", "primary": True, "help": "Start here for submitted assessments awaiting review."},
+            {"label": "Evaluation Status", "page": "pages/11_Evaluation_Status.py", "key": "qa_eval_status"},
+            {"label": "Reassessment Manager", "page": "pages/25_Admin_Reassessment_Manager.py", "key": "qa_reassessment"},
+            {"label": "Comparative NSP Report", "page": "pages/27_Comparative_NSP_Report.py", "key": "qa_comparative"},
+        ],
+    )
 
-i,j = st.columns(2)
-with i:
-    if st.button("Manage Recipes", use_container_width=True):
-        st.switch_page("pages/15_Admin_Recipe_Manager.py")
-with j:
-    if st.button("Manage Exercises", use_container_width=True):
-        st.switch_page("pages/16_Admin_Exercise_Manager.py")
+with row1_col2:
+    action_group(
+        "User & Access Management",
+        "Create users, manage roles, deactivate/reactivate access, and control Body-Mind visibility.",
+        "Access control",
+        [
+            {"label": "Create Members / Admins", "page": "pages/17_Admin_User_Manager.py", "key": "qa_create_users", "primary": True},
+            {"label": "User Access Manager", "page": "pages/30_Admin_User_Access_Manager.py", "key": "qa_access_manager"},
+            {"label": "Body-Mind Access", "page": "pages/23_Admin_Body_Mind_Control.py", "key": "qa_bodymind_access"},
+        ],
+    )
 
-k,l = st.columns(2)
-with k:
-    if st.button("Comparative NSP Report", use_container_width=True):
-        st.switch_page("pages/27_Comparative_NSP_Report.py")
-with l:
-    if st.button("Database Status", use_container_width=True):
-        st.switch_page("pages/28_Admin_Database_Status.py")
+row2_col1, row2_col2 = st.columns(2, gap="large")
+with row2_col1:
+    action_group(
+        "Questionnaire & Response Controls",
+        "Tools for managing questions, corrections, audit rationale, and member daily logs.",
+        "Admin controls",
+        [
+            {"label": "Question Manager", "page": "pages/20_Admin_Question_Manager.py", "key": "qa_questions", "primary": True},
+            {"label": "Edit Responses", "page": "pages/21_Admin_Response_Editor.py", "key": "qa_responses"},
+            {"label": "Daily Log Report", "page": "pages/22_Admin_Daily_Log_Report.py", "key": "qa_daily_log"},
+        ],
+    )
 
-m,n = st.columns(2)
-with m:
-    if st.button("Demo Mode", use_container_width=True):
-        st.switch_page("pages/29_Admin_Demo_Mode.py")
+with row2_col2:
+    action_group(
+        "Content / Resource Management",
+        "Manage content repositories used after expert review and personalized guidance.",
+        "Resources",
+        [
+            {"label": "Manage Recipes", "page": "pages/15_Admin_Recipe_Manager.py", "key": "qa_recipes", "primary": True},
+            {"label": "Manage Exercises", "page": "pages/16_Admin_Exercise_Manager.py", "key": "qa_exercises"},
+        ],
+    )
+
+row3_col1, row3_col2 = st.columns(2, gap="large")
+with row3_col1:
+    action_group(
+        "System & Database Tools",
+        "Database status, Supabase verification, backups, and demo walkthrough controls.",
+        "System",
+        [
+            {"label": "Database Status", "page": "pages/28_Admin_Database_Status.py", "key": "qa_db_status", "primary": True},
+            {"label": "Demo Mode", "page": "pages/29_Admin_Demo_Mode.py", "key": "qa_demo"},
+        ],
+    )
+
+with row3_col2:
+    with st.container(border=True):
+        st.markdown("<div class='hm-section-title'>Recommended Flow <span class='hm-action-chip'>Guide</span></div>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class='hm-section-subtitle'>
+        For daily work: start with <b>Review Queue</b>. For user issues: use <b>User Access Manager</b>.
+        For scoring/report configuration: use <b>Question Manager</b> and <b>Edit Responses</b>.
+        </div>
+        """, unsafe_allow_html=True)
+        st.info("This dashboard is now grouped by operational purpose instead of one long button list.")
 card_end()
-
-# Access manager shortcut
-if st.button("User Access Manager", use_container_width=True):
-    st.switch_page("pages/30_Admin_User_Access_Manager.py")
