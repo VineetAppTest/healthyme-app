@@ -33,7 +33,7 @@ with login_col:
 
     with box:
         st.markdown("## Secure Login")
-        st.caption("Sign in through Auth0. HealthyMe will allow access only if your email is authorized by the admin.")
+        st.caption("Sign in through Auth0. HealthyMe will allow access only if your email is authorized by the admin. Auth0 may take a few seconds during secure redirect.")
 
         auth_error = st.session_state.get("auth_error")
         if auth_error:

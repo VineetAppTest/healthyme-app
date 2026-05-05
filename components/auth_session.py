@@ -59,6 +59,11 @@ def restore_login_from_token():
     return True
 
 def logout_current_user():
-    for k in list(st.session_state.keys()):
-        del st.session_state[k]
+    """Logout through Streamlit native OIDC.
+
+    Do not manually delete session keys before st.logout(); st.logout removes
+    the identity cookie and starts a new session. Manual clearing can create
+    extra rerun/reload-like behaviour.
+    """
+    st.logout()
     st.logout()
