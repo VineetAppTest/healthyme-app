@@ -1,15 +1,16 @@
-import streamlit as st, json, pathlib, re
+import streamlit as st, pathlib, re
 import streamlit.components.v1 as components
 from collections import OrderedDict
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar
 from components.db import get_form_response, save_form_response, update_workflow, sync_profile_from_laf, load_db
 from components.flash import set_system_message, render_system_message
+from components.config_cache import load_config_json
 
 st.set_page_config(page_title="LAF", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
-questions = json.loads((pathlib.Path(__file__).resolve().parents[1] / "config" / "laf_questions.json").read_text(encoding="utf-8"))
+questions = load_config_json("config/laf_questions.json")
 questions = [q for q in questions if not q.get("deleted")]
 existing = get_form_response("laf_responses", st.session_state["user_id"])
 user_id = st.session_state["user_id"]

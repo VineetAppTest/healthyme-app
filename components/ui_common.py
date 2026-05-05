@@ -327,6 +327,59 @@ div[data-testid="collapsedControl"] {
     padding-top: 1.2rem !important;
 }
 
+
+/* UX Speed Polish Sprint: premium button hierarchy and compact controls */
+div.stButton > button,
+div.stDownloadButton > button,
+button[data-testid="baseButton-secondary"] {
+    min-height: 2.65rem !important;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease !important;
+}
+div.stButton > button:hover,
+div.stDownloadButton > button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(6,78,59,.12) !important;
+}
+button[data-testid="baseButton-primary"],
+div.stButton > button[kind="primary"],
+.stButton button[kind="primary"],
+button[kind="primary"] {
+    background: linear-gradient(135deg, #064E3B 0%, #0F766E 100%) !important;
+    color: #FFFFFF !important;
+    border: 1.5px solid #064E3B !important;
+    box-shadow: 0 10px 26px rgba(6,78,59,.18) !important;
+}
+button[data-testid="baseButton-primary"] p,
+button[data-testid="baseButton-primary"] span,
+div.stButton > button[kind="primary"] p,
+div.stButton > button[kind="primary"] span {
+    color: #FFFFFF !important;
+}
+button[data-testid="baseButton-secondary"],
+div.stButton > button[kind="secondary"],
+.stButton button[kind="secondary"] {
+    background: #FFFFFF !important;
+    color: #064E3B !important;
+    border: 1.5px solid #D9C79F !important;
+}
+button:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: 0 10px 26px rgba(6,78,59,.14) !important;
+}
+div[data-testid="stTextInput"] input,
+div[data-testid="stNumberInput"] input,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+    min-height: 2.55rem !important;
+}
+div[data-testid="stTextArea"] textarea {
+    min-height: 5.8rem !important;
+}
+.hm-micro-note {
+    font-size: .78rem;
+    color: #64748B;
+    margin-top: -.35rem;
+}
+
 </style>
 """
 

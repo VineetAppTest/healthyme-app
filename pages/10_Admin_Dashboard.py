@@ -31,6 +31,24 @@ stat_grid([
     {"label": "Finalized", "value": finalized_count, "note": "Reports ready"},
 ])
 
+
+card_start()
+st.subheader("Today's Priority")
+p1, p2, p3 = st.columns(3, gap="large")
+with p1:
+    st.metric("Initial Reviews", len(initial_pending), help="Members who submitted first assessment and need admin review.")
+    if st.button("Open Review Queue", type="primary", key="priority_review", use_container_width=True):
+        st.switch_page("pages/26_Admin_Review_Queue.py")
+with p2:
+    st.metric("Reassessments", len(reassess_pending), help="Follow-up NSP submissions waiting for review.")
+    if st.button("Open Reassessment Manager", key="priority_reassess", use_container_width=True):
+        st.switch_page("pages/25_Admin_Reassessment_Manager.py")
+with p3:
+    st.metric("Finalized", finalized_count, help="Members with final reports ready.")
+    if st.button("Open Evaluation Status", key="priority_eval", use_container_width=True):
+        st.switch_page("pages/11_Evaluation_Status.py")
+card_end()
+
 st.markdown("""
 <style>
 .hm-section-title {
@@ -154,5 +172,5 @@ with row3_col2:
         For scoring/report configuration: use <b>Question Manager</b> and <b>Edit Responses</b>.
         </div>
         """, unsafe_allow_html=True)
-        st.info("This dashboard is now grouped by operational purpose instead of one long button list.")
+        st.info("Use Review Queue for daily work, User Access Manager for login/access issues, and Database Status only when checking Supabase.")
 card_end()

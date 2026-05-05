@@ -1,6 +1,7 @@
 import streamlit as st, json, pathlib
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar
+from components.config_cache import refresh_config_cache
 
 st.set_page_config(page_title="Question Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
@@ -19,6 +20,7 @@ def load_json(path):
 
 def save_json(path, data):
     (BASE / path).write_text(json.dumps(data, indent=2), encoding="utf-8")
+    refresh_config_cache()
 
 def label_for_question(q):
     return q.get("label") or q.get("text") or q.get("code", "")

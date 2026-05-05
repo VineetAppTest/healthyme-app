@@ -1,10 +1,11 @@
-import streamlit as st, json, pathlib
+import streamlit as st, pathlib
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar
 from components.db import get_form_response, save_form_response, save_nsp_score
 from components.assessment_instances import get_current_assessment_instance, get_instance_response, save_instance_page_response
 from components.scoring import completion, unanswered_questions, score_answers
 from components.flash import set_system_message, render_system_message
+from components.config_cache import load_config_json
 
 st.set_page_config(page_title="NSP Client Assessment - Page 2", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
@@ -20,7 +21,7 @@ if "nsp2" not in requested_pages:
         st.switch_page("pages/02_Member_Home.py")
     st.stop()
 
-questions = json.loads((pathlib.Path(__file__).resolve().parents[1] / "config" / "nsp_page2_questions.json").read_text())
+questions = load_config_json("config/nsp_page2_questions.json")
 questions = [q for q in questions if not q.get("deleted")]
 existing = get_instance_response(instance_id, "nsp2") or get_form_response("nsp2_responses", user_id)
 laf = get_form_response("laf_responses", user_id)
