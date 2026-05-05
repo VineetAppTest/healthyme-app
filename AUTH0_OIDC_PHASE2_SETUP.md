@@ -2,7 +2,7 @@
 
 This hotfix uses:
 ```text
-streamlit==1.52.1
+streamlit==1.52.2
 st.login("auth0")
 [auth.auth0]
 ```
@@ -83,3 +83,14 @@ Auth0 = identity
 HealthyMe users table = role authorization
 Supabase = app data
 ```
+
+## Version compatibility fix
+
+This build pins:
+
+```text
+streamlit==1.52.2
+authlib==1.6.5
+```
+
+This avoids the known `400: 'NoneType' object does not support item assignment` Authlib/Streamlit login issue.
