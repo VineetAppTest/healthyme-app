@@ -44,7 +44,7 @@ with login_col:
                 st.logout()
 
         if st.button("Continue with Auth0", type="primary", use_container_width=True):
-            st.login()
+            st.login("auth0")
 
         st.markdown("""
         <div class='info-banner'>
