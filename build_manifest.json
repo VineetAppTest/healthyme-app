@@ -1,0 +1,20 @@
+{
+  "build_name": "HealthyMe v14 Native Cards + Dashboard Flow Fix",
+  "version": "v14_native_cards_dashboard_flow",
+  "updated_on": "2026-05-11T21:33:16.586053+00:00",
+  "scope": [
+    "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
+    "Restored proper card structure for Today's Priority and Main Workflows.",
+    "Kept microcopy inside the same card as its action, so second line does not appear detached.",
+    "Removed Recommended Flow expander to eliminate '-a' expand/collapse artifact.",
+    "Replaced expander with always-visible compact flow card to avoid scroll-jump after expansion.",
+    "Unified build text to v14 aliases.",
+    "No scoring/auth/database/report calculation changes."
+  ],
+  "excluded": [
+    "No scoring changes",
+    "No authentication changes",
+    "No report calculation changes",
+    "No new feature expansion"
+  ]
+}

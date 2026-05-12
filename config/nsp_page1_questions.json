@@ -1,0 +1,204 @@
+[
+  {
+    "code": "nsp1_q1",
+    "number": 1,
+    "text": "General fatigue or weakness"
+  },
+  {
+    "code": "nsp1_q2",
+    "number": 2,
+    "text": "Difficulty losing weight"
+  },
+  {
+    "code": "nsp1_q3",
+    "number": 3,
+    "text": "Frequent infections"
+  },
+  {
+    "code": "nsp1_q4",
+    "number": 4,
+    "text": "High stress lifestyle"
+  },
+  {
+    "code": "nsp1_q5",
+    "number": 5,
+    "text": "Smokes cigarettes"
+  },
+  {
+    "code": "nsp1_q6",
+    "number": 6,
+    "text": "Drinking more than 12oz of coffee per day"
+  },
+  {
+    "code": "nsp1_q7",
+    "number": 7,
+    "text": "Bad breath and/or body odour"
+  },
+  {
+    "code": "nsp1_q8",
+    "number": 8,
+    "text": "Constipated"
+  },
+  {
+    "code": "nsp1_q9",
+    "number": 9,
+    "text": "Puffy eyelids/dark circles under eyes"
+  },
+  {
+    "code": "nsp1_q10",
+    "number": 10,
+    "text": "Crave sugars, bread, alcohol"
+  },
+  {
+    "code": "nsp1_q11",
+    "number": 11,
+    "text": "Certain foods create digestive pain/cramping"
+  },
+  {
+    "code": "nsp1_q12",
+    "number": 12,
+    "text": "Have used antibiotics in past 10 years"
+  },
+  {
+    "code": "nsp1_q13",
+    "number": 13,
+    "text": "Diagnosed food allergies/sensitivities"
+  },
+  {
+    "code": "nsp1_q14",
+    "number": 14,
+    "text": "Poor concentration or memory"
+  },
+  {
+    "code": "nsp1_q15",
+    "number": 15,
+    "text": "Excessive gas after meals"
+  },
+  {
+    "code": "nsp1_q16",
+    "number": 16,
+    "text": "Skin irritations - breakouts/rashes"
+  },
+  {
+    "code": "nsp1_q17",
+    "number": 17,
+    "text": "High intake of processed animal protein"
+  },
+  {
+    "code": "nsp1_q18",
+    "number": 18,
+    "text": "Regular intake of cow dairy products"
+  },
+  {
+    "code": "nsp1_q19",
+    "number": 19,
+    "text": "Heavy alcohol consumption"
+  },
+  {
+    "code": "nsp1_q20",
+    "number": 20,
+    "text": "Exposure to toxins/chemicals"
+  },
+  {
+    "code": "nsp1_q21",
+    "number": 21,
+    "text": "Frequent mood swings"
+  },
+  {
+    "code": "nsp1_q22",
+    "number": 22,
+    "text": "Depressed and/or irritable"
+  },
+  {
+    "code": "nsp1_q23",
+    "number": 23,
+    "text": "Frequent urinary tract infections"
+  },
+  {
+    "code": "nsp1_q24",
+    "number": 24,
+    "text": "Dry, brittle hair, split ends"
+  },
+  {
+    "code": "nsp1_q25",
+    "number": 25,
+    "text": "High consumption of saturated fats"
+  },
+  {
+    "code": "nsp1_q26",
+    "number": 26,
+    "text": "Nervousness/anxious/tension/worry"
+  },
+  {
+    "code": "nsp1_q27",
+    "number": 27,
+    "text": "Insomnia or lack of sleep/restless sleep"
+  },
+  {
+    "code": "nsp1_q28",
+    "number": 28,
+    "text": "Low amount of fibre in the diet"
+  },
+  {
+    "code": "nsp1_q29",
+    "number": 29,
+    "text": "Muscle cramps"
+  },
+  {
+    "code": "nsp1_q30",
+    "number": 30,
+    "text": "Sleepy when sitting up"
+  },
+  {
+    "code": "nsp1_q31",
+    "number": 31,
+    "text": "Female: Menstrual cramps",
+    "gender_restriction": "female",
+    "auto_na_when_gender": "male"
+  },
+  {
+    "code": "nsp1_q32",
+    "number": 32,
+    "text": "Bronchitis/asthma/pneumonia/emphysema"
+  },
+  {
+    "code": "nsp1_q33",
+    "number": 33,
+    "text": "Cellulite"
+  },
+  {
+    "code": "nsp1_q34",
+    "number": 34,
+    "text": "Cold hands and feet"
+  },
+  {
+    "code": "nsp1_q35",
+    "number": 35,
+    "text": "Varicose veins"
+  },
+  {
+    "code": "nsp1_q36",
+    "number": 36,
+    "text": "Feeling out of control/anger"
+  },
+  {
+    "code": "nsp1_q37",
+    "number": 37,
+    "text": "Environmental/chemical sensitivities"
+  },
+  {
+    "code": "nsp1_q38",
+    "number": 38,
+    "text": "Frequent yeast/fungus infections"
+  },
+  {
+    "code": "nsp1_q39",
+    "number": 39,
+    "text": "Bones break easily/porous bones"
+  },
+  {
+    "code": "nsp1_q40",
+    "number": 40,
+    "text": "Exercise less than one/two times per week"
+  }
+]

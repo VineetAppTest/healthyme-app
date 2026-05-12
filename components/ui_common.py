@@ -1,0 +1,1912 @@
+
+import streamlit as st
+from components.auth_session import logout_current_user
+
+LUXE_CSS = """
+<style>
+#MainMenu {visibility:hidden !important;}
+header[data-testid="stHeader"] {visibility:hidden !important; height:0 !important;}
+[data-testid="stToolbar"] {display:none !important;}
+[data-testid="stSidebar"], [data-testid="collapsedControl"], section[data-testid="stSidebar"] {display:none !important;}
+:root{--hm-emerald:#064E3B;--hm-emerald-2:#0F766E;--hm-gold:#D8A84E;--hm-gold-deep:#8A5F10;--hm-gold-soft:#F5E7C8;--hm-ivory:#FFF8EE;--hm-text:#17211F;--hm-heading:#063F32;--hm-muted:#4B5A57;--hm-border:#E9DFCC;--hm-shadow:0 14px 34px rgba(25,36,31,.08);}
+html, body, [data-testid="stAppViewContainer"]{background:radial-gradient(circle at top right, rgba(216,168,78,.18), transparent 25%),radial-gradient(circle at top left, rgba(6,78,59,.10), transparent 30%),linear-gradient(180deg,var(--hm-ivory) 0%,#FFFDF8 100%) !important;color:var(--hm-text)!important;}
+.block-container{padding-top:.75rem!important;padding-bottom:1.1rem!important;max-width:1180px!important;}
+html, body, [data-testid="stAppViewContainer"], .stApp, button, input, textarea, label, select, div, p, span{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif!important;}
+h1,h2,h3{letter-spacing:-.035em;color:var(--hm-heading)!important;}
+h2{font-size:1.85rem!important;font-weight:880!important;}
+h3{font-size:1.28rem!important;font-weight:820!important;}
+p,label,.stCaption,.small-note{color:var(--hm-muted)!important;}
+.stButton button,.stButton button:hover,.stButton button:active,.stButton button:focus{background:#fff!important;color:#063F32!important;border:1.5px solid #CDBB8F!important;border-radius:14px!important;font-weight:820!important;box-shadow:0 4px 12px rgba(25,36,31,.06)!important;outline:none!important;}
+.stButton button[kind="primary"],button[kind="primary"],.stButton button[kind="primary"]:hover,.stButton button[kind="primary"]:active,.stButton button[kind="primary"]:focus{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#fff!important;border-color:#064E3B!important;}
+.stButton button[kind="primary"] *{color:#fff!important;}
+.stButton button:disabled{background:#F4F1EA!important;color:#777E7A!important;border-color:#E2D7C2!important;opacity:1!important;}
+.main-card{background:rgba(255,255,255,.88);padding:1.25rem;border-radius:22px;box-shadow:var(--hm-shadow);border:1px solid var(--hm-border);}
+.hero-shell{background:linear-gradient(135deg,rgba(255,248,238,.95) 0%,rgba(255,255,255,.96) 66%,rgba(245,231,200,.65) 100%);border:1px solid var(--hm-border);border-radius:26px;box-shadow:var(--hm-shadow);padding:1.2rem 1.35rem;margin-bottom:1rem;}
+.hero-kicker{display:inline-block;padding:.42rem .8rem;border-radius:999px;background:var(--hm-gold-soft);color:var(--hm-gold-deep);font-weight:800;font-size:.77rem;margin-bottom:.55rem;}
+.hero-title{font-size:2rem;font-weight:940;margin:0;color:var(--hm-heading)!important;}
+.hero-subtitle{margin-top:.3rem;color:var(--hm-muted)!important;max-width:780px;}
+.meta-pill,.status-chip{display:inline-block;padding:.35rem .72rem;border-radius:999px;font-size:.77rem;font-weight:850;border:1px solid var(--hm-border);margin:.35rem .25rem 0 0;background:#fff;color:var(--hm-text);}
+.status-ok{background:#E7F7EF;color:#166534}.status-info{background:#EAF5F8;color:#0F4C5C}.status-warn{background:#FFF4DE;color:#9A6700}.status-gold{background:var(--hm-gold-soft);color:var(--hm-gold-deep)}.status-neutral{background:#F7F4ED;color:#6B7280}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin:.25rem 0 1rem 0}.kpi-card{background:linear-gradient(180deg,#fff 0%,#FFFBF4 100%);border:1px solid var(--hm-border);border-radius:20px;padding:1rem;box-shadow:0 8px 22px rgba(25,36,31,.05)}.kpi-label{font-size:.76rem;font-weight:850;text-transform:uppercase;letter-spacing:.05em;color:var(--hm-muted)!important}.kpi-value{font-size:1.9rem;line-height:1.05;font-weight:940;color:var(--hm-heading)!important}.kpi-note{color:var(--hm-muted)!important;font-size:.82rem}
+.info-banner,.warning-banner,.success-banner{border-radius:16px;padding:.9rem 1rem;border:1px solid var(--hm-border);margin:.4rem 0 .75rem 0}.info-banner{background:#EAF5F8}.warning-banner{background:#FFF4DE}.success-banner{background:#E7F7EF}
+.login-brand-row{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.75rem}.login-brand-name{font-size:1.9rem;font-weight:950;color:var(--hm-heading);letter-spacing:-.055em}.login-brand-sub{color:var(--hm-muted);font-size:.92rem}.login-secure-pill{display:inline-block;border-radius:999px;padding:.45rem .85rem;background:var(--hm-gold-soft);color:var(--hm-gold-deep);font-weight:850;font-size:.78rem;border:1px solid #E8D39E}.login-cred{background:#FFF4DE;border:1px solid #E8D39E;border-radius:16px;padding:.75rem .85rem;color:#4B3A16;font-size:.9rem;line-height:1.45;margin:.8rem 0}.login-access{background:#E7F7EF;border:1px solid #C9EAD7;border-radius:15px;padding:.65rem .8rem;color:#14532D;font-size:.84rem;margin-bottom:.8rem}.journey-card{background:linear-gradient(135deg,var(--hm-emerald) 0%,var(--hm-emerald-2) 78%);border-radius:26px;padding:1.35rem;box-shadow:0 16px 38px rgba(6,78,59,.18);color:#fff!important}.journey-card h3{color:#fff!important}.journey-card p{color:#E9FFF7!important}.journey-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;margin-top:.65rem}.journey-item{background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.17);border-radius:15px;padding:.7rem .8rem;color:#fff;font-weight:750;min-height:68px;display:flex;align-items:center}.login-feature-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-top:.85rem}.login-feature{background:#fff;border:1px solid var(--hm-border);border-radius:18px;padding:.9rem;box-shadow:0 8px 20px rgba(25,36,31,.05)}.login-feature b{color:var(--hm-heading)}.login-feature p{font-size:.8rem;margin:.15rem 0 0 0;color:var(--hm-muted)!important}
+.utility-bar{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin:.15rem 0 .65rem 0;padding:.45rem .65rem;border:1px solid var(--hm-border);border-radius:999px;background:rgba(255,255,255,.72);box-shadow:0 6px 18px rgba(25,36,31,.04)}.utility-user{color:var(--hm-muted);font-size:.82rem;font-weight:700}.utility-role{color:var(--hm-gold-deep);font-size:.75rem;font-weight:850;background:var(--hm-gold-soft);padding:.25rem .55rem;border-radius:999px;margin-left:.35rem}
+.member-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin-top:.6rem}.member-summary-item{border:1px solid var(--hm-border);border-radius:16px;background:#fff;padding:.75rem .8rem;box-shadow:0 6px 16px rgba(25,36,31,.04)}.member-summary-label{color:var(--hm-muted);font-size:.74rem;font-weight:850;text-transform:uppercase;letter-spacing:.04em}.member-summary-value{margin-top:.25rem;font-size:.92rem;font-weight:850;color:var(--hm-heading)}.member-summary-ok{border-color:#CFE8DA;background:#F3FBF6}.member-summary-warn{border-color:#EAD6A4;background:#FFF8E8}.member-summary-info{border-color:#D9E9E3;background:#F3FAF7}
+.repo-search-card,.csv-upload-panel{background:#fff;border:1px solid var(--hm-border);border-radius:18px;padding:1rem;margin:.35rem 0 1rem 0;box-shadow:0 8px 20px rgba(25,36,31,.04)}.repo-result-count{display:inline-block;padding:.38rem .75rem;border-radius:999px;background:var(--hm-gold-soft);color:var(--hm-gold-deep);font-weight:850;font-size:.8rem;margin:.25rem 0 .85rem}
+@media(max-width:900px){.kpi-grid,.login-feature-strip{grid-template-columns:1fr 1fr}.block-container{max-width:96%!important}}@media(max-width:640px){.kpi-grid,.login-feature-strip,.journey-grid,.member-summary-grid{grid-template-columns:1fr}.login-brand-row{display:block}.login-secure-pill{margin-top:.5rem}.hero-title{font-size:1.4rem}.login-brand-name{font-size:1.55rem}}
+
+/* --- Evaluation Status Multi-Member UX --- */
+.member-filter-panel{
+  background:#FFFFFF;
+  border:1px solid var(--hm-border);
+  border-radius:18px;
+  padding:1rem;
+  margin:.35rem 0 1rem 0;
+  box-shadow:0 8px 20px rgba(25,36,31,.04);
+}
+.member-row-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:.75rem;
+  flex-wrap:wrap;
+}
+.member-row-name{
+  font-size:1.05rem;
+  font-weight:900;
+  color:var(--hm-heading);
+}
+.member-row-email{
+  font-size:.82rem;
+  color:var(--hm-muted);
+}
+.member-count-pill{
+  display:inline-block;
+  padding:.38rem .75rem;
+  border-radius:999px;
+  background:var(--hm-gold-soft);
+  color:var(--hm-gold-deep);
+  font-weight:850;
+  font-size:.8rem;
+  margin:.25rem 0 .85rem 0;
+}
+
+
+/* --- Global Text Overlap Safety Patch --- */
+* {
+  box-sizing: border-box;
+}
+.stMarkdown, .stMarkdown p, .stMarkdown span, .stMarkdown div,
+.stButton button, [data-testid="stExpander"] div, [data-testid="stDataFrame"] * {
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+.stButton button {
+  white-space: normal !important;
+  line-height: 1.2 !important;
+  min-height: 2.75rem !important;
+  height: auto !important;
+}
+.status-chip {
+  white-space: normal !important;
+  line-height: 1.2 !important;
+  max-width: 100% !important;
+}
+.eval-status-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:.55rem;
+  margin:.7rem 0 .9rem 0;
+}
+.eval-status-card{
+  border:1px solid var(--hm-border);
+  border-radius:16px;
+  padding:.75rem .8rem;
+  background:#fff;
+  box-shadow:0 6px 16px rgba(25,36,31,.04);
+  min-width:0;
+}
+.eval-status-label{
+  font-size:.72rem;
+  color:var(--hm-muted);
+  font-weight:850;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.eval-status-value{
+  margin-top:.25rem;
+  font-size:.9rem;
+  font-weight:850;
+  color:var(--hm-heading);
+  overflow-wrap:anywhere;
+}
+.eval-ok{background:#F3FBF6;border-color:#CFE8DA;}
+.eval-warn{background:#FFF8E8;border-color:#EAD6A4;}
+.eval-info{background:#F3FAF7;border-color:#D9E9E3;}
+.eval-gold{background:#FFF8E8;border-color:#E8D39E;}
+.eval-actions-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:.65rem;
+  margin-top:.75rem;
+}
+@media (max-width: 900px){
+  .eval-status-grid{grid-template-columns:repeat(2, minmax(0, 1fr));}
+  .eval-actions-grid{grid-template-columns:1fr;}
+}
+@media (max-width: 640px){
+  .eval-status-grid{grid-template-columns:1fr;}
+}
+
+
+/* --- Evaluation Status Clarity Patch --- */
+.eval-helper-box{
+  background:#FFF8E8;
+  border:1px solid #E8D39E;
+  border-radius:18px;
+  padding:1rem;
+  margin:.6rem 0 1rem 0;
+  color:#4B3A16;
+  box-shadow:0 6px 16px rgba(25,36,31,.04);
+}
+.eval-helper-box b{
+  color:var(--hm-heading);
+}
+.eval-section-title{
+  margin-top:1.1rem;
+  margin-bottom:.35rem;
+  font-weight:900;
+  color:var(--hm-heading);
+  font-size:1.2rem;
+}
+.eval-section-note{
+  color:var(--hm-muted);
+  font-size:.92rem;
+  margin-bottom:.75rem;
+}
+
+
+/* --- Expander Header Overlap Fix --- */
+[data-testid="stExpander"] summary {
+  min-height: 2.75rem !important;
+  align-items: center !important;
+}
+[data-testid="stExpander"] summary p {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  padding-right: .75rem !important;
+  line-height: 1.25 !important;
+}
+
+
+/* --- Final Overlap Safety Audit Patch --- */
+/* Prevent text from colliding with expand/caret icons, tabs, or buttons */
+[data-testid="stExpander"] summary {
+  display: flex !important;
+  align-items: center !important;
+  gap: .45rem !important;
+  min-height: 2.85rem !important;
+  padding-right: .55rem !important;
+}
+[data-testid="stExpander"] summary p,
+[data-testid="stExpander"] summary span,
+[data-testid="stExpander"] summary div {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  line-height: 1.25 !important;
+  max-width: calc(100% - 2rem) !important;
+}
+[data-testid="stExpander"] details summary svg {
+  flex-shrink: 0 !important;
+}
+button, .stButton button, .stButton button p, .stButton button span {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  line-height: 1.18 !important;
+}
+button {
+  min-width: 0 !important;
+}
+[data-testid="stTabs"] button,
+[data-testid="stTabs"] button p {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.2 !important;
+}
+[data-testid="stDataFrame"] * {
+  white-space: normal !important;
+}
+.member-row-name,
+.member-row-email,
+.eval-status-value,
+.eval-status-label,
+.member-summary-value,
+.member-summary-label {
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  white-space: normal !important;
+}
+
+
+/* --- Evaluation Status Member Row Polish --- */
+[data-testid="stExpander"] summary p {
+  font-weight: 850 !important;
+  color: var(--hm-heading) !important;
+}
+.eval-section-note b {
+  color: var(--hm-heading) !important;
+}
+
+
+/* --- Custom Member Toggle Row --- */
+.member-toggle-card{
+  background:#FFFFFF;
+  border:1px solid var(--hm-border);
+  border-radius:16px;
+  padding:.55rem .75rem;
+  margin:.55rem 0;
+  box-shadow:0 6px 16px rgba(25,36,31,.04);
+}
+.member-toggle-card .stButton button{
+  justify-content:flex-start !important;
+  text-align:left !important;
+  width:100% !important;
+  font-weight:900 !important;
+  color:var(--hm-heading) !important;
+  background:#FFFFFF !important;
+  border:0 !important;
+  box-shadow:none !important;
+  padding:.35rem .25rem !important;
+}
+.member-detail-panel{
+  background:#FFFDF8;
+  border:1px solid var(--hm-border);
+  border-radius:18px;
+  padding:1rem;
+  margin:.35rem 0 1rem 0;
+}
+
+
+/* --- LAF Guided Page Flow Patch --- */
+[data-testid="stProgressBar"] {
+  margin-top: .25rem !important;
+  margin-bottom: .35rem !important;
+}
+
+
+/* --- LAF Smart Validation Patch --- */
+[data-testid="stExpander"] summary p {
+  color: var(--hm-heading) !important;
+}
+[data-testid="stNumberInput"] input {
+  font-weight: 650 !important;
+}
+
+
+/* --- Member Form Autosave + Family History Table Patch --- */
+.family-history-row{
+  border-bottom:1px solid var(--hm-border);
+  padding:.35rem 0;
+}
+.family-history-head{
+  font-weight:900;
+  color:var(--hm-heading);
+  background:#FFF8E8;
+  border:1px solid #E8D39E;
+  border-radius:12px;
+  padding:.5rem .65rem;
+  margin-bottom:.35rem;
+}
+.autosave-note{
+  color:var(--hm-muted);
+  font-size:.86rem;
+  font-weight:700;
+  margin:.35rem 0 .75rem 0;
+}
+
+
+/* HealthyMe speed/UI cleanup: hide Streamlit's default multipage sidebar/nav flash */
+section[data-testid="stSidebar"] {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+}
+button[kind="header"] {
+    display: none !important;
+}
+div[data-testid="collapsedControl"] {
+    display: none !important;
+}
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+.block-container {
+    padding-top: 1.2rem !important;
+}
+
+
+/* UX Speed Polish Sprint: premium button hierarchy and compact controls */
+div.stButton > button,
+div.stDownloadButton > button,
+button[data-testid="baseButton-secondary"] {
+    min-height: 2.65rem !important;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease !important;
+}
+div.stButton > button:hover,
+div.stDownloadButton > button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(6,78,59,.12) !important;
+}
+button[data-testid="baseButton-primary"],
+div.stButton > button[kind="primary"],
+.stButton button[kind="primary"],
+button[kind="primary"] {
+    background: linear-gradient(135deg, #064E3B 0%, #0F766E 100%) !important;
+    color: #FFFFFF !important;
+    border: 1.5px solid #064E3B !important;
+    box-shadow: 0 10px 26px rgba(6,78,59,.18) !important;
+}
+button[data-testid="baseButton-primary"] p,
+button[data-testid="baseButton-primary"] span,
+div.stButton > button[kind="primary"] p,
+div.stButton > button[kind="primary"] span {
+    color: #FFFFFF !important;
+}
+button[data-testid="baseButton-secondary"],
+div.stButton > button[kind="secondary"],
+.stButton button[kind="secondary"] {
+    background: #FFFFFF !important;
+    color: #064E3B !important;
+    border: 1.5px solid #D9C79F !important;
+}
+button:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: 0 10px 26px rgba(6,78,59,.14) !important;
+}
+div[data-testid="stTextInput"] input,
+div[data-testid="stNumberInput"] input,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+    min-height: 2.55rem !important;
+}
+div[data-testid="stTextArea"] textarea {
+    min-height: 5.8rem !important;
+}
+.hm-micro-note {
+    font-size: .78rem;
+    color: #64748B;
+    margin-top: -.35rem;
+}
+
+
+/* HealthyMe final button color normalization */
+:root {
+  --hm-btn-primary-bg: linear-gradient(135deg, #064E3B 0%, #0F766E 100%);
+  --hm-btn-primary-text: #FFFFFF;
+  --hm-btn-secondary-bg: #FFFFFF;
+  --hm-btn-secondary-text: #064E3B;
+  --hm-btn-border: #D8A84E;
+}
+
+/* Secondary/default buttons */
+div[data-testid="stButton"] > button,
+div[data-testid="stDownloadButton"] > button,
+.stButton > button,
+.stDownloadButton > button,
+button[data-testid="baseButton-secondary"] {
+  background: var(--hm-btn-secondary-bg) !important;
+  color: var(--hm-btn-secondary-text) !important;
+  border: 1.5px solid var(--hm-btn-border) !important;
+  border-radius: 14px !important;
+  font-weight: 850 !important;
+  box-shadow: 0 6px 14px rgba(6,78,59,.08) !important;
+}
+
+/* Primary buttons */
+button[data-testid="baseButton-primary"],
+div[data-testid="stButton"] > button[kind="primary"],
+.stButton > button[kind="primary"],
+button[kind="primary"] {
+  background: var(--hm-btn-primary-bg) !important;
+  color: var(--hm-btn-primary-text) !important;
+  border: 1.5px solid #064E3B !important;
+  border-radius: 14px !important;
+  font-weight: 900 !important;
+  box-shadow: 0 12px 28px rgba(6,78,59,.20) !important;
+}
+
+/* Force nested markdown text inside buttons */
+button[data-testid="baseButton-primary"] *,
+div[data-testid="stButton"] > button[kind="primary"] *,
+.stButton > button[kind="primary"] *,
+button[kind="primary"] * {
+  color: #FFFFFF !important;
+}
+
+button[data-testid="baseButton-secondary"] *,
+div[data-testid="stButton"] > button:not([kind="primary"]) *,
+.stButton > button:not([kind="primary"]) * {
+  color: #064E3B !important;
+}
+
+div[data-testid="stButton"] > button:hover,
+.stButton > button:hover,
+div[data-testid="stDownloadButton"] > button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 12px 26px rgba(6,78,59,.14) !important;
+}
+
+div[data-testid="stButton"] > button:disabled,
+.stButton > button:disabled {
+  background: #F4F1EA !important;
+  color: #777E7A !important;
+  border-color: #E2D7C2 !important;
+  box-shadow: none !important;
+}
+
+div[data-testid="stButton"] > button:disabled *,
+.stButton > button:disabled * {
+  color: #777E7A !important;
+}
+
+
+
+/* --- UX Navigation + User Intent Patch --- */
+.hm-nav-row{
+  display:flex;
+  gap:.55rem;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  margin:.45rem 0 .85rem 0;
+}
+.hm-priority-action{
+  background:linear-gradient(135deg,rgba(231,247,239,.98),rgba(255,244,222,.92));
+  border:1px solid rgba(216,168,78,.45);
+  border-radius:20px;
+  padding:1rem 1.05rem;
+  margin:.65rem 0 1rem 0;
+  box-shadow:0 10px 24px rgba(6,78,59,.08);
+}
+.hm-priority-action h3{margin-top:0!important;margin-bottom:.25rem!important;}
+.hm-page-anchor{scroll-margin-top:90px;}
+.hm-bottom-nav-shell{
+  margin-top:1rem;
+  padding-top:.8rem;
+  border-top:1px solid var(--hm-border);
+}
+@media(max-width:640px){
+  .hm-nav-row{display:block;}
+  .hm-priority-action{padding:.85rem;border-radius:16px;}
+}
+
+
+/* --- Final Report Download + Structure Clarity Patch v2 --- */
+/* Make download actions visually unmistakable, not divider-like */
+div[data-testid="stDownloadButton"] > button,
+.stDownloadButton > button {
+  background: linear-gradient(135deg, #064E3B 0%, #0F766E 100%) !important;
+  color: #FFFFFF !important;
+  border: 2px solid #064E3B !important;
+  border-radius: 16px !important;
+  min-height: 3.25rem !important;
+  font-size: 1rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .01em !important;
+  box-shadow: 0 14px 32px rgba(6,78,59,.24) !important;
+}
+div[data-testid="stDownloadButton"] > button *,
+.stDownloadButton > button * {
+  color: #FFFFFF !important;
+  font-weight: 950 !important;
+}
+div[data-testid="stDownloadButton"] > button:hover,
+.stDownloadButton > button:hover {
+  background: linear-gradient(135deg, #043B2D 0%, #0B5F58 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 16px 36px rgba(6,78,59,.30) !important;
+}
+.hm-report-download-panel{
+  background: linear-gradient(135deg, #E7F7EF 0%, #FFF8E8 100%);
+  border: 1.5px solid rgba(216,168,78,.55);
+  border-radius: 22px;
+  padding: 1.1rem;
+  margin: .85rem 0 1.15rem 0;
+  box-shadow: 0 12px 28px rgba(6,78,59,.10);
+}
+.hm-report-download-panel h3{
+  margin: 0 0 .25rem 0 !important;
+  color: #063F32 !important;
+}
+.hm-report-download-panel p{
+  margin: 0 0 .8rem 0 !important;
+  color: #334155 !important;
+  font-weight: 650 !important;
+}
+.hm-structure-section{
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1.5px solid #E8D39E;
+}
+.hm-structure-toggle-note{
+  color:#475569;
+  font-size:.92rem;
+  margin:.2rem 0 .7rem 0;
+}
+.hm-structure-card{
+  background:#FFFFFF;
+  border:1.5px solid #E8D39E;
+  border-radius:18px;
+  padding:1rem;
+  margin:.75rem 0 0 0;
+  box-shadow:0 8px 20px rgba(25,36,31,.06);
+}
+/* Keep Streamlit expander readable where still used elsewhere */
+[data-testid="stExpander"] {
+  margin-top: .75rem !important;
+  margin-bottom: .75rem !important;
+}
+[data-testid="stExpander"] summary {
+  border: 1px solid #E8D39E !important;
+  border-radius: 14px !important;
+  background: #FFF8E8 !important;
+  padding: .65rem .8rem !important;
+}
+
+/* --- Final Report Structure Lightweight Patch v3 --- */
+.hm-structure-section-lite{
+  margin-top: 1.35rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(232,211,158,.65);
+}
+.hm-lite-structure-card{
+  background: #FBFDF9;
+  border: 1px solid rgba(15,118,110,.16);
+  border-radius: 18px;
+  padding: .95rem 1rem;
+  box-shadow: 0 8px 18px rgba(15,23,42,.045);
+}
+.hm-lite-structure-title{
+  color:#064E3B;
+  font-weight: 900;
+  font-size: 1.02rem;
+  margin-bottom: .15rem;
+}
+.hm-lite-structure-subtitle{
+  color:#64748B;
+  font-size: .9rem;
+  margin-bottom: .65rem;
+}
+.hm-lite-pill-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.45rem;
+  margin:.35rem 0 .55rem 0;
+}
+.hm-lite-pill-row span{
+  display:inline-flex;
+  align-items:center;
+  padding:.38rem .62rem;
+  border-radius:999px;
+  background:#ECFDF5;
+  border:1px solid rgba(6,78,59,.14);
+  color:#064E3B;
+  font-weight:800;
+  font-size:.84rem;
+}
+.hm-lite-note{
+  color:#475569;
+  font-size:.88rem;
+  line-height:1.45;
+}
+@media(max-width:640px){
+  .hm-lite-pill-row{display:block;}
+  .hm-lite-pill-row span{
+    display:flex;
+    width:100%;
+    margin-bottom:.38rem;
+  }
+}
+
+/* --- Blank Element + Smooth Navigation Cleanup v4 --- */
+.element-container:empty,
+.stMarkdown:empty {
+  display: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.hm-native-nav-shell{
+  background: rgba(255,255,255,.72);
+  border: 1px solid var(--hm-border);
+  border-radius: 18px;
+  padding: .55rem .65rem;
+  margin: .35rem 0 .75rem 0;
+  box-shadow: 0 6px 16px rgba(25,36,31,.045);
+}
+.hm-bottom-nav-shell{
+  margin-top: 1rem;
+  padding-top: .8rem;
+  border-top: 1px solid var(--hm-border);
+}
+div[data-testid="stPageLink"] a {
+  min-height: 2.55rem !important;
+  border: 1.5px solid #D8A84E !important;
+  border-radius: 14px !important;
+  background: #FFFFFF !important;
+  color: #064E3B !important;
+  font-weight: 900 !important;
+  box-shadow: 0 6px 14px rgba(6,78,59,.06) !important;
+  text-decoration: none !important;
+  justify-content: center !important;
+}
+div[data-testid="stPageLink"] a * {
+  color: #064E3B !important;
+  font-weight: 900 !important;
+}
+@media(max-width:640px){
+  .hm-native-nav-shell{
+    padding:.45rem;
+    border-radius:16px;
+  }
+}
+
+/* --- v5 Visual Hierarchy + Overlap Hardening --- */
+.hm-action-grid-clean{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:1rem;
+}
+.hm-flow-guide-card{
+  background:#FFFFFF;
+  border:1px solid var(--hm-border);
+  border-radius:20px;
+  padding:1rem;
+  box-shadow:0 10px 24px rgba(25,36,31,.055);
+}
+.hm-flow-guide-card h4{
+  color:var(--hm-heading)!important;
+  font-size:1.05rem!important;
+  font-weight:900!important;
+  margin:.1rem 0 .45rem 0!important;
+}
+.hm-flow-guide-card p,
+.hm-flow-guide-card li{
+  color:var(--hm-muted)!important;
+  font-size:.92rem!important;
+  line-height:1.45!important;
+  margin:.2rem 0!important;
+}
+.hm-flow-guide-card ul{margin:.35rem 0 0 1rem!important;padding:0!important;}
+.hm-admin-action-note{
+  color:#64748B;
+  font-size:.86rem;
+  line-height:1.35;
+  margin-bottom:.55rem;
+}
+.hm-gentle-reminder-card{
+  background:#FFF8E8;
+  border:1px solid #E8D39E;
+  border-radius:18px;
+  padding:.9rem 1rem;
+  margin:.75rem 0 1rem 0;
+}
+.hm-gentle-reminder-card b{color:#064E3B!important;}
+.hm-comm-card{
+  background:#FFFFFF;
+  border:1px solid var(--hm-border);
+  border-radius:18px;
+  padding:1rem;
+  margin:.7rem 0;
+  box-shadow:0 8px 20px rgba(25,36,31,.045);
+}
+.hm-comm-card b{color:#064E3B!important;}
+/* Keep button/page-link text from overlapping icons or adjacent columns */
+div[data-testid="stButton"] > button,
+div[data-testid="stDownloadButton"] > button,
+div[data-testid="stPageLink"] a{
+  width:100%!important;
+  min-width:0!important;
+  height:auto!important;
+  min-height:2.8rem!important;
+  white-space:normal!important;
+  line-height:1.22!important;
+  padding:.65rem .8rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  gap:.35rem!important;
+}
+div[data-testid="stButton"] > button *,
+div[data-testid="stDownloadButton"] > button *,
+div[data-testid="stPageLink"] a *{
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+  line-height:1.22!important;
+  text-align:center!important;
+}
+/* Remove accidental black-looking first-button effect */
+button[data-testid="baseButton-primary"],
+div[data-testid="stButton"] > button[kind="primary"],
+.stButton > button[kind="primary"],
+button[kind="primary"]{
+  background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
+  color:#FFFFFF!important;
+}
+@media(max-width:900px){
+  .hm-action-grid-clean{grid-template-columns:1fr;}
+}
+
+/* --- v7 Structural Reset: targeted, non-destructive styling --- */
+.hm-build-marker{
+  display:inline-flex;
+  align-items:center;
+  gap:.35rem;
+  font-size:.78rem;
+  font-weight:800;
+  color:#065F46;
+  background:#ECFDF5;
+  border:1px solid rgba(6,95,70,.18);
+  border-radius:999px;
+  padding:.25rem .55rem;
+  margin:.1rem 0 .7rem 0;
+}
+.hm-v7-priority-list{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:.7rem;
+  margin:.5rem 0 1.1rem 0;
+}
+.hm-v7-priority-row{
+  display:grid;
+  grid-template-columns:minmax(160px, 1.1fr) minmax(220px, .9fr);
+  gap:.9rem;
+  align-items:center;
+  background:#FFFFFF;
+  border:1px solid rgba(216,168,78,.42);
+  border-radius:18px;
+  padding:.75rem .85rem;
+  box-shadow:0 8px 20px rgba(25,36,31,.045);
+}
+.hm-v7-priority-title{
+  color:#064E3B;
+  font-weight:900;
+  font-size:.98rem;
+  margin:0;
+}
+.hm-v7-priority-sub{
+  color:#64748B;
+  font-size:.84rem;
+  margin:.15rem 0 0 0;
+}
+.hm-v7-section-card{
+  background:#FFFFFF;
+  border:1px solid rgba(216,168,78,.42);
+  border-radius:18px;
+  padding:.95rem;
+  box-shadow:0 8px 20px rgba(25,36,31,.045);
+  margin-bottom:.95rem;
+}
+.hm-v7-section-card h4{
+  color:#064E3B!important;
+  font-size:1rem!important;
+  font-weight:900!important;
+  margin:0 0 .25rem 0!important;
+}
+.hm-v7-section-card p{
+  color:#64748B!important;
+  font-size:.88rem!important;
+  line-height:1.45!important;
+  margin:0 0 .75rem 0!important;
+}
+.hm-v7-guide{
+  background:#FFFFFF;
+  border:1px solid rgba(216,168,78,.42);
+  border-radius:18px;
+  padding:1rem;
+  box-shadow:0 8px 20px rgba(25,36,31,.045);
+  margin:1rem 0;
+}
+.hm-v7-guide h4{
+  color:#064E3B!important;
+  font-size:1rem!important;
+  font-weight:900!important;
+  margin:0 0 .45rem 0!important;
+}
+.hm-v7-guide ol{
+  margin:.2rem 0 0 1.15rem!important;
+  padding:0!important;
+}
+.hm-v7-guide li{
+  color:#334155!important;
+  font-size:.9rem!important;
+  line-height:1.5!important;
+  margin:.2rem 0!important;
+}
+.hm-v7-small-note{
+  color:#64748B;
+  font-size:.84rem;
+  line-height:1.4;
+}
+.hm-v7-navline{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.5rem;
+  align-items:center;
+  margin:.35rem 0 .75rem 0;
+}
+.hm-v7-navline a{
+  color:#064E3B!important;
+  font-weight:800!important;
+  text-decoration:none!important;
+  border:1px solid rgba(216,168,78,.45);
+  border-radius:999px;
+  padding:.36rem .65rem;
+  background:#FFFFFF;
+}
+.hm-v7-allocation-note{
+  background:#ECFDF5;
+  border:1px solid rgba(6,95,70,.14);
+  color:#064E3B;
+  border-radius:16px;
+  padding:.75rem .85rem;
+  margin:.55rem 0 .85rem 0;
+  font-size:.9rem;
+  line-height:1.45;
+}
+/* Safe button text wrapping only. No vertical word breaking. */
+div[data-testid="stButton"] > button,
+div[data-testid="stDownloadButton"] > button{
+  min-height:2.65rem;
+  white-space:normal!important;
+  line-height:1.25!important;
+  text-align:center!important;
+}
+/* Avoid vertical letter stacking created by older aggressive patches */
+div[data-testid="stButton"] > button *,
+div[data-testid="stDownloadButton"] > button *{
+  white-space:normal!important;
+  word-break:keep-all!important;
+  overflow-wrap:normal!important;
+  line-height:1.25!important;
+}
+@media(max-width:760px){
+  .hm-v7-priority-row{
+    grid-template-columns:1fr;
+    gap:.55rem;
+  }
+}
+
+/* --- v8 Refinement: compact cards + horizontal priority + safer buttons --- */
+
+/* Dashboard priority cards: horizontal but responsive */
+.hm-v8-priority-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.85rem;
+  margin:.45rem 0 1rem 0;
+}
+.hm-v8-priority-card{
+  background:#FFFFFF;
+  border:1px solid rgba(216,168,78,.42);
+  border-radius:16px;
+  padding:.78rem;
+  box-shadow:0 6px 16px rgba(25,36,31,.04);
+}
+.hm-v8-priority-card .hm-v8-priority-title{
+  color:#064E3B;
+  font-weight:900;
+  font-size:.94rem;
+  margin:0 0 .18rem 0;
+}
+.hm-v8-priority-card .hm-v8-priority-sub{
+  color:#64748B;
+  font-size:.8rem;
+  line-height:1.32;
+  min-height:2.1rem;
+  margin:0 0 .6rem 0;
+}
+
+/* Make action cards slightly smaller on internal pages and dashboard */
+div[data-testid="stVerticalBlockBorderWrapper"]{
+  border-radius:14px!important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"] > div{
+  padding:.72rem .82rem!important;
+}
+
+/* Compact information/help blocks. These should not dominate the page. */
+.stAlert{
+  padding:.55rem .72rem!important;
+  border-radius:12px!important;
+}
+.stAlert p{
+  font-size:.86rem!important;
+  line-height:1.35!important;
+}
+.hm-v8-info-compact{
+  background:#F8FAFC;
+  border:1px solid rgba(148,163,184,.28);
+  border-radius:12px;
+  padding:.55rem .7rem;
+  margin:.35rem 0 .65rem 0;
+  color:#475569;
+  font-size:.84rem;
+  line-height:1.35;
+}
+
+/* Safer buttons: no vertical stacking; allow text to fit naturally */
+div[data-testid="stButton"] > button,
+div[data-testid="stDownloadButton"] > button{
+  width:100%!important;
+  min-height:2.45rem!important;
+  height:auto!important;
+  padding:.52rem .7rem!important;
+  white-space:normal!important;
+  line-height:1.18!important;
+  text-align:center!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+}
+div[data-testid="stButton"] > button *,
+div[data-testid="stDownloadButton"] > button *{
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+  line-height:1.18!important;
+}
+
+/* Remove odd primary/black look from first button on dashboard priority */
+.hm-v8-priority-grid div[data-testid="stButton"] > button{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.5px solid #D8A84E!important;
+  box-shadow:0 5px 12px rgba(6,78,59,.05)!important;
+  font-weight:850!important;
+}
+.hm-v8-priority-grid div[data-testid="stButton"] > button *{
+  color:#064E3B!important;
+}
+
+/* Keep sections tight */
+h2, h3{
+  margin-top:.85rem!important;
+}
+@media(max-width:900px){
+  .hm-v8-priority-grid{
+    grid-template-columns:1fr;
+  }
+  .hm-v8-priority-card .hm-v8-priority-sub{
+    min-height:0;
+  }
+}
+
+/* --- v9 Compact Headers + Tooltip-First Information --- */
+
+/* Page header proportions */
+h1{
+  font-size:1.65rem!important;
+  line-height:1.18!important;
+  margin-bottom:.25rem!important;
+}
+h2{
+  font-size:1.22rem!important;
+  line-height:1.22!important;
+  margin-top:.8rem!important;
+  margin-bottom:.35rem!important;
+}
+h3{
+  font-size:1.05rem!important;
+  line-height:1.22!important;
+  margin-top:.65rem!important;
+  margin-bottom:.3rem!important;
+}
+p, li{
+  line-height:1.38!important;
+}
+
+/* Reduce topbar/header visual weight where custom classes exist */
+.main-title,
+.page-title,
+.hero-title{
+  font-size:1.65rem!important;
+  line-height:1.18!important;
+}
+.subtitle,
+.page-subtitle,
+.hero-subtitle{
+  font-size:.9rem!important;
+  line-height:1.35!important;
+  max-width:920px;
+}
+
+/* Compact info: use only when info must remain visible */
+.hm-v9-compact-note{
+  background:#F8FAFC;
+  border:1px solid rgba(148,163,184,.24);
+  border-radius:12px;
+  color:#475569;
+  font-size:.82rem;
+  line-height:1.34;
+  padding:.48rem .62rem;
+  margin:.3rem 0 .55rem 0;
+}
+
+/* Buttons: prevent overlap by reducing visible labels and enforcing minimum sensible width */
+div[data-testid="stButton"] > button,
+div[data-testid="stDownloadButton"] > button{
+  min-height:2.35rem!important;
+  padding:.48rem .62rem!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  font-size:.88rem!important;
+}
+div[data-testid="stButton"] > button *,
+div[data-testid="stDownloadButton"] > button *{
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  line-height:1.15!important;
+}
+
+/* Evaluation status action rows need compact controls */
+.hm-v9-action-row{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(96px,1fr));
+  gap:.42rem;
+}
+.hm-v9-action-row .stButton button{
+  font-size:.82rem!important;
+  min-height:2.2rem!important;
+  padding:.4rem .5rem!important;
+}
+
+/* Alerts/info blocks should not dominate */
+.stAlert{
+  padding:.42rem .58rem!important;
+  border-radius:10px!important;
+}
+.stAlert p{
+  font-size:.8rem!important;
+  line-height:1.28!important;
+}
+
+/* Bordered cards even tighter */
+div[data-testid="stVerticalBlockBorderWrapper"] > div{
+  padding:.58rem .68rem!important;
+}
+
+/* Mobile: allow wrap only on narrow screens, but keep sane spacing */
+@media(max-width:720px){
+  h1{font-size:1.42rem!important;}
+  h2{font-size:1.12rem!important;}
+  div[data-testid="stButton"] > button,
+  div[data-testid="stDownloadButton"] > button,
+  div[data-testid="stButton"] > button *,
+  div[data-testid="stDownloadButton"] > button *{
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+}
+
+/* --- v11 Designer Stable System --- */
+
+/* Global proportion reset: clean, compact, no forced weird boxes */
+h1{
+  font-size:1.72rem!important;
+  line-height:1.18!important;
+  margin:0 0 .25rem 0!important;
+}
+h2{
+  font-size:1.24rem!important;
+  line-height:1.22!important;
+  margin:.85rem 0 .35rem 0!important;
+}
+h3{
+  font-size:1.06rem!important;
+  line-height:1.24!important;
+  margin:.65rem 0 .3rem 0!important;
+}
+p, li{
+  line-height:1.42!important;
+}
+
+/* Designer cards: compact, content-led, not oversized */
+.hm-v11-card{
+  background:#FFFFFF;
+  border:1px solid rgba(216,168,78,.38);
+  border-radius:16px;
+  padding:.78rem .85rem;
+  box-shadow:0 6px 16px rgba(15,23,42,.045);
+  margin:.45rem 0 .75rem 0;
+}
+.hm-v11-card-title{
+  color:#064E3B;
+  font-size:.98rem;
+  font-weight:900;
+  line-height:1.2;
+  margin:0 0 .2rem 0;
+}
+.hm-v11-card-sub{
+  color:#64748B;
+  font-size:.82rem;
+  line-height:1.34;
+  margin:0 0 .55rem 0;
+}
+.hm-v11-section-note{
+  color:#64748B;
+  font-size:.82rem;
+  line-height:1.35;
+  margin:.15rem 0 .55rem 0;
+}
+
+/* Stable dashboard grids */
+.hm-v11-priority-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.8rem;
+  margin:.35rem 0 .9rem 0;
+}
+.hm-v11-workflow-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:.85rem;
+  margin:.35rem 0 .85rem 0;
+}
+
+/* Button discipline: no forced one-line ellipsis, no vertical stacking */
+div[data-testid="stButton"] > button,
+div[data-testid="stDownloadButton"] > button{
+  width:100%;
+  min-height:2.38rem;
+  height:auto;
+  padding:.5rem .7rem;
+  border-radius:999px;
+  line-height:1.2;
+  white-space:normal;
+  word-break:normal;
+  overflow-wrap:normal;
+  text-align:center;
+}
+div[data-testid="stButton"] > button *,
+div[data-testid="stDownloadButton"] > button *{
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:normal!important;
+  line-height:1.2!important;
+}
+
+/* No black-first-button effect on dashboard/action cards */
+.hm-v11-card div[data-testid="stButton"] > button{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.4px solid #D8A84E!important;
+  font-weight:850!important;
+  box-shadow:0 4px 10px rgba(6,78,59,.045)!important;
+}
+.hm-v11-card div[data-testid="stButton"] > button *{
+  color:#064E3B!important;
+}
+
+/* Compact native Streamlit bordered containers; no giant cards */
+div[data-testid="stVerticalBlockBorderWrapper"] > div{
+  padding:.62rem .72rem!important;
+  border-radius:14px!important;
+}
+
+/* Informational blocks: minimal; use expander/help for secondary explanations */
+.stAlert{
+  padding:.48rem .62rem!important;
+  border-radius:10px!important;
+  margin:.4rem 0!important;
+}
+.stAlert p{
+  font-size:.82rem!important;
+  line-height:1.3!important;
+}
+
+/* Small non-intrusive build text, not a big tag */
+.hm-v11-build-text{
+  color:#94A3B8;
+  font-size:.68rem;
+  font-weight:700;
+  margin:.05rem 0 .35rem 0;
+}
+
+/* Evaluation Status: action groups stack within each member card instead of cramped text/button rows */
+.hm-v11-actions{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.38rem;
+  margin-top:.45rem;
+}
+
+/* Mobile/tablet */
+@media(max-width:900px){
+  .hm-v11-priority-grid,
+  .hm-v11-workflow-grid{
+    grid-template-columns:1fr;
+  }
+  .hm-v11-actions{
+    grid-template-columns:1fr;
+  }
+}
+
+/* --- v12 Consistent Build + Header Card Consistency --- */
+.hm-current-build-text{
+  color:#94A3B8;
+  font-size:.68rem;
+  font-weight:800;
+  margin:.05rem 0 .35rem 0;
+}
+.hm-current-build-badge{
+  display:inline-flex;
+  align-items:center;
+  color:#065F46;
+  background:#ECFDF5;
+  border:1px solid rgba(6,95,70,.18);
+  border-radius:999px;
+  padding:.22rem .55rem;
+  font-size:.72rem;
+  font-weight:900;
+  margin:.05rem 0 .45rem 0;
+}
+/* Header cards should remain card-based, but proportionate */
+.hero-card,
+.hm-header-card,
+div[data-testid="stVerticalBlock"] .hero-card{
+  border-radius:22px!important;
+}
+/* Dashboard priority header cards retained and balanced */
+.hm-v12-priority-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.85rem;
+  margin:.35rem 0 1rem 0;
+}
+.hm-v12-priority-card{
+  background:#FFFFFF;
+  border:1px solid rgba(216,168,78,.42);
+  border-radius:16px;
+  padding:.85rem .9rem;
+  box-shadow:0 6px 16px rgba(15,23,42,.045);
+}
+.hm-v12-priority-title{
+  color:#064E3B;
+  font-size:.98rem;
+  font-weight:900;
+  line-height:1.22;
+  margin:0 0 .25rem 0;
+}
+.hm-v12-priority-sub{
+  color:#64748B;
+  font-size:.82rem;
+  line-height:1.35;
+  margin:0 0 .65rem 0;
+}
+.hm-v12-priority-card div[data-testid="stButton"] > button{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.4px solid #D8A84E!important;
+  font-weight:850!important;
+}
+@media(max-width:900px){
+  .hm-v12-priority-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* --- v13 Client-Safe Dashboard Redesign --- */
+
+/* Very small build text only. Never a dominant badge. */
+.hm-v13-build-text{
+  color:#94A3B8;
+  font-size:.66rem;
+  font-weight:700;
+  margin:.05rem 0 .2rem 0;
+}
+
+/* Dashboard priority: action-first, low clutter */
+.hm-v13-priority-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.9rem;
+  margin:.35rem 0 1.05rem 0;
+}
+.hm-v13-priority-card{
+  background:#FFFFFF;
+  border:1px solid rgba(216,168,78,.42);
+  border-radius:18px;
+  padding:.85rem .9rem .9rem .9rem;
+  box-shadow:0 8px 18px rgba(15,23,42,.045);
+}
+.hm-v13-priority-kicker{
+  color:#64748B;
+  font-size:.72rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin:0 0 .16rem 0;
+}
+.hm-v13-priority-number{
+  color:#064E3B;
+  font-size:1.55rem;
+  font-weight:950;
+  line-height:1;
+  margin:0 0 .42rem 0;
+}
+.hm-v13-priority-micro{
+  color:#64748B;
+  font-size:.78rem;
+  line-height:1.25;
+  min-height:1rem;
+  margin:.45rem 0 0 0;
+}
+
+/* In priority cards, action button is the focus */
+.hm-v13-priority-card div[data-testid="stButton"] > button{
+  background:#064E3B!important;
+  color:#FFFFFF!important;
+  border:1px solid #064E3B!important;
+  border-radius:999px!important;
+  min-height:2.55rem!important;
+  font-weight:900!important;
+  box-shadow:0 8px 18px rgba(6,78,59,.15)!important;
+}
+.hm-v13-priority-card div[data-testid="stButton"] > button *{
+  color:#FFFFFF!important;
+  font-weight:900!important;
+}
+
+/* Workflow cards: compact, action list first, no explanatory clutter */
+.hm-v13-workflow-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:.9rem;
+  margin:.35rem 0 .9rem 0;
+}
+.hm-v13-workflow-card{
+  background:#FFFFFF;
+  border:1px solid rgba(216,168,78,.36);
+  border-radius:18px;
+  padding:.82rem .9rem;
+  box-shadow:0 7px 16px rgba(15,23,42,.04);
+}
+.hm-v13-workflow-title{
+  color:#064E3B;
+  font-size:.98rem;
+  font-weight:950;
+  margin:0 0 .55rem 0;
+}
+.hm-v13-workflow-card div[data-testid="stButton"] > button{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.25px solid #D8A84E!important;
+  border-radius:999px!important;
+  min-height:2.38rem!important;
+  font-weight:850!important;
+  box-shadow:0 4px 10px rgba(6,78,59,.045)!important;
+}
+.hm-v13-workflow-card div[data-testid="stButton"] > button *{
+  color:#064E3B!important;
+  font-weight:850!important;
+}
+
+/* Dashboard section spacing */
+.hm-v13-section-note{
+  color:#64748B;
+  font-size:.78rem;
+  margin:.05rem 0 .4rem 0;
+}
+
+/* Header proportions: keep header cards but reduce bulk */
+h1{
+  font-size:1.68rem!important;
+  line-height:1.18!important;
+}
+h2{
+  font-size:1.22rem!important;
+  line-height:1.22!important;
+  margin-top:.85rem!important;
+  margin-bottom:.35rem!important;
+}
+h3{
+  font-size:1.05rem!important;
+  line-height:1.22!important;
+}
+.stAlert{
+  padding:.48rem .62rem!important;
+  border-radius:10px!important;
+}
+.stAlert p{
+  font-size:.82rem!important;
+  line-height:1.3!important;
+}
+
+/* Generic safe button handling: avoid vertical stacking without over-forcing */
+div[data-testid="stButton"] > button,
+div[data-testid="stDownloadButton"] > button{
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:normal!important;
+  text-align:center!important;
+  line-height:1.2!important;
+}
+div[data-testid="stButton"] > button *,
+div[data-testid="stDownloadButton"] > button *{
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:normal!important;
+  line-height:1.2!important;
+}
+
+@media(max-width:900px){
+  .hm-v13-priority-grid,
+  .hm-v13-workflow-grid{
+    grid-template-columns:1fr;
+  }
+  .hm-v13-priority-micro{
+    min-height:0;
+  }
+}
+
+/* --- v14 Native Cards + No Expander Dashboard --- */
+
+/* Small build text */
+.hm-v14-build-text{
+  color:#94A3B8;
+  font-size:.66rem;
+  font-weight:700;
+  margin:.05rem 0 .25rem 0;
+}
+
+/* Native Streamlit bordered containers become the card system */
+.hm-v14-priority-card,
+.hm-v14-workflow-card,
+.hm-v14-flow-card{
+  padding:.15rem 0;
+}
+
+/* Text inside cards stays visually connected */
+.hm-v14-kicker{
+  color:#64748B;
+  font-size:.72rem;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin:0 0 .1rem 0;
+}
+.hm-v14-number{
+  color:#064E3B;
+  font-size:1.55rem;
+  font-weight:950;
+  line-height:1.05;
+  margin:0 0 .35rem 0;
+}
+.hm-v14-micro{
+  color:#64748B;
+  font-size:.78rem;
+  line-height:1.28;
+  margin:.42rem 0 0 0;
+}
+.hm-v14-workflow-title{
+  color:#064E3B;
+  font-size:.98rem;
+  font-weight:950;
+  margin:0 0 .5rem 0;
+}
+.hm-v14-flow-title{
+  color:#064E3B;
+  font-size:.96rem;
+  font-weight:950;
+  margin:0 0 .4rem 0;
+}
+.hm-v14-flow-list{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:.45rem;
+}
+.hm-v14-flow-step{
+  background:#F8FAFC;
+  border:1px solid rgba(148,163,184,.22);
+  border-radius:12px;
+  padding:.48rem .52rem;
+  color:#334155;
+  font-size:.78rem;
+  line-height:1.25;
+}
+
+/* Compact card sizing across pages */
+div[data-testid="stVerticalBlockBorderWrapper"] > div{
+  padding:.7rem .78rem!important;
+  border-radius:16px!important;
+}
+
+/* Button style inside priority cards */
+.hm-v14-priority-card div[data-testid="stButton"] > button{
+  background:#064E3B!important;
+  color:#FFFFFF!important;
+  border:1px solid #064E3B!important;
+  border-radius:999px!important;
+  min-height:2.48rem!important;
+  font-weight:900!important;
+  box-shadow:0 8px 16px rgba(6,78,59,.14)!important;
+}
+.hm-v14-priority-card div[data-testid="stButton"] > button *{
+  color:#FFFFFF!important;
+  font-weight:900!important;
+}
+
+/* Workflow buttons */
+.hm-v14-workflow-card div[data-testid="stButton"] > button{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.25px solid #D8A84E!important;
+  border-radius:999px!important;
+  min-height:2.32rem!important;
+  font-weight:850!important;
+  box-shadow:0 4px 10px rgba(6,78,59,.04)!important;
+}
+.hm-v14-workflow-card div[data-testid="stButton"] > button *{
+  color:#064E3B!important;
+}
+
+/* No vertical stacking / no over-aggressive text forcing */
+div[data-testid="stButton"] > button,
+div[data-testid="stDownloadButton"] > button{
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:normal!important;
+  text-align:center!important;
+  line-height:1.2!important;
+}
+
+/* If any Streamlit expander remains elsewhere, reduce its visual awkwardness */
+details summary{
+  font-size:.86rem!important;
+  color:#064E3B!important;
+  font-weight:850!important;
+}
+
+/* Responsive */
+@media(max-width:900px){
+  .hm-v14-flow-list{
+    grid-template-columns:1fr;
+  }
+}
+
+/* --- v15 Navigation + Action Consistency Patch --- */
+.hm-v15-build-text{color:#94A3B8;font-size:.66rem;font-weight:700;margin:.05rem 0 .25rem 0;}
+div[data-testid="stPageLink"] a{flex-wrap:nowrap!important;white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;min-height:2.55rem!important;}
+div[data-testid="stPageLink"] a *{white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;}
+div[data-testid="stFormSubmitButton"] button,div[data-testid="stFormSubmitButton"] button[kind="primary"],button[kind="primaryFormSubmit"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border:1px solid #064E3B!important;font-weight:900!important;}
+div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] *{color:#FFFFFF!important;font-weight:900!important;}
+.hm-v15-action-emphasis div[data-testid="stButton"] > button{min-height:2.9rem!important;font-weight:900!important;}
+.hm-v15-action-emphasis .stButton button[kind="primary"],.hm-v15-action-emphasis div[data-testid="stButton"] > button[kind="primary"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border-color:#064E3B!important;}
+.hm-v15-action-emphasis .stButton button[kind="primary"] *,.hm-v15-action-emphasis div[data-testid="stButton"] > button[kind="primary"] *{color:#FFFFFF!important;}
+.hm-v15-compact-note{color:#64748B;font-size:.82rem;line-height:1.32;margin:.25rem 0 .55rem 0;}
+.hm-v15-reminder-note{background:#FFF8E8;border:1px solid #E8D39E;border-radius:16px;padding:.65rem .8rem;margin:.75rem 0 .8rem 0;color:#4B3A16;font-size:.84rem;line-height:1.35;}
+
+</style>
+"""
+
+def inject_global_styles(): st.markdown(LUXE_CSS, unsafe_allow_html=True)
+def apply_luxe_theme():
+    return None
+def apply_mobile_first_premium_theme():
+    inject_global_styles()
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(f"""<div class='hero-shell'><div class='hero-kicker'>{kicker}</div><div class='hero-title'>{title}</div><div class='hero-subtitle'>{subtitle}</div><div><span class='meta-pill'>Guided wellness workflow</span></div></div>""", unsafe_allow_html=True)
+
+def card_start():
+    """
+    Compatibility no-op.
+
+    Previous versions emitted raw opening HTML and closing HTML in separate
+    Streamlit elements. Streamlit can render those as empty visible boxes,
+    which creates blank/hidden-looking sections.
+    """
+    return None
+
+def card_end():
+    """Compatibility no-op. See card_start()."""
+    return None
+
+def chip(label, tone='neutral'):
+    tone_map={'success':'status-ok','ok':'status-ok','info':'status-info','warning':'status-warn','warn':'status-warn','neutral':'status-neutral','gold':'status-gold'}
+    st.markdown(f"<span class='status-chip {tone_map.get(tone,'status-neutral')}'>{label}</span>", unsafe_allow_html=True)
+
+def stat_grid(stats):
+    html=["<div class='kpi-grid'>"]
+    for s in stats:
+        html.append(f"<div class='kpi-card'><div class='kpi-label'>{s.get('label','')}</div><div class='kpi-value'>{s.get('value','')}</div><div class='kpi-note'>{s.get('note','')}</div></div>")
+    html.append("</div>")
+    st.markdown(''.join(html), unsafe_allow_html=True)
+
+def utility_logout_bar():
+    role=st.session_state.get("user_role","")
+    name=st.session_state.get("user_name","User")
+    if not st.session_state.get("logged_in"): return
+    left,right=st.columns([5,1])
+    with left:
+        st.markdown(f"<div class='utility-bar'><div class='utility-user'>Signed in as <b>{name}</b><span class='utility-role'>{role.title()}</span></div></div>", unsafe_allow_html=True)
+    with right:
+        if st.button("Logout", key="global_logout", use_container_width=True):
+            logout_current_user()
+            st.switch_page("pages/01_Login.py")
+
+
+# --- UX Navigation + User Intent Patch Helpers ---
+def page_anchor_top():
+    st.markdown("<div id='top' class='hm-page-anchor'></div>", unsafe_allow_html=True)
+
+def nav_button(label, target_page, key, *, primary=False):
+    """Compatibility wrapper for old calls."""
+    if st.button(label, key=key, type='primary' if primary else 'secondary', use_container_width=True):
+        st.switch_page(target_page)
+
+def _safe_page_link(target_page, label, icon=None):
+    """Use Streamlit native page links for smoother navigation."""
+    try:
+        st.page_link(target_page, label=label, icon=icon, use_container_width=True)
+    except Exception:
+        # Fallback for older Streamlit versions.
+        if st.button(label, key=f"fallback_{label}_{target_page}", use_container_width=True):
+            st.switch_page(target_page)
+
+def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_Admin_Dashboard.py', evaluation_page='pages/11_Evaluation_Status.py', *, location='top', show_dashboard=True, show_evaluation=True):
+    """Consistent top/bottom navigation for long admin pages.
+
+    v4 uses native page links for Back/Evaluation/Dashboard. This avoids the
+    abrupt button-triggered rerun blanking that was visible during navigation.
+    """
+    if location == 'top':
+        page_anchor_top()
+        st.markdown("<div class='hm-native-nav-shell'>", unsafe_allow_html=True)
+    else:
+        st.markdown("<div class='hm-bottom-nav-shell hm-native-nav-shell'>", unsafe_allow_html=True)
+
+    cols = st.columns(3)
+    with cols[0]:
+        if back_page:
+            _safe_page_link(back_page, "Back", icon=":material/arrow_back:")
+        else:
+            st.empty()
+    with cols[1]:
+        if show_evaluation:
+            _safe_page_link(evaluation_page, "Evaluation Status", icon=":material/fact_check:")
+        else:
+            st.empty()
+    with cols[2]:
+        if show_dashboard:
+            _safe_page_link(dashboard_page, "Dashboard", icon=":material/dashboard:")
+        else:
+            st.empty()
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if location != 'top':
+        st.markdown("<div style='margin:.45rem 0 0 0;'><a href='#top'>↑ Back to top</a></div>", unsafe_allow_html=True)
+def priority_action_start(title, subtitle=''):
+    st.markdown(f"""<div class='hm-priority-action'><h3>{title}</h3><div class='hero-subtitle'>{subtitle}</div>""", unsafe_allow_html=True)
+
+def priority_action_end():
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def build_marker_v7():
+    st.markdown("<div class='hm-build-marker'>✅ Build v7 active · Structural reset loaded</div>", unsafe_allow_html=True)
+
+
+def build_marker_v8():
+    st.markdown("<div class='hm-build-marker'>✅ Build v8 active · Layout refinement loaded</div>", unsafe_allow_html=True)
+
+
+def build_marker_v9():
+    st.markdown("<div class='hm-build-marker'>✅ Build v9 active · Compact tooltip layout loaded</div>", unsafe_allow_html=True)
+
+
+APP_BUILD_VERSION = "v11"
+APP_BUILD_LABEL = "Designer stable build"
+
+def render_build_text_v11():
+    """Small non-intrusive build text. Not a visual tag."""
+    st.markdown("<div class='hm-v11-build-text'>HealthyMe v11 · Designer stable build</div>", unsafe_allow_html=True)
+
+def build_marker_v11():
+    render_build_text_v11()
+
+
+# --------------------------------------------------------------------
+# v12: Single source of truth for visible build marker
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v12"
+APP_BUILD_LABEL = "Consistent build + header card patch"
+
+def render_current_build(compact=True):
+    """Single current build marker used across all pages."""
+    cls = "hm-current-build-text" if compact else "hm-current-build-badge"
+    st.markdown(
+        f"<div class='{cls}'>HealthyMe {APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>",
+        unsafe_allow_html=True,
+    )
+
+# New preferred name
+def render_build_text_v12():
+    render_current_build(compact=True)
+
+# Backward-compatible aliases.
+# These intentionally override older marker functions so all pages show the same build.
+def render_build_text_v11():
+    render_current_build(compact=True)
+
+def build_marker_v11():
+    render_current_build(compact=True)
+
+def build_marker_v10():
+    render_current_build(compact=True)
+
+def build_marker_v9():
+    render_current_build(compact=True)
+
+def build_marker_v8():
+    render_current_build(compact=True)
+
+def build_marker_v7():
+    render_current_build(compact=True)
+
+def render_version_tag():
+    render_current_build(compact=True)
+
+
+# --------------------------------------------------------------------
+# v13: single current build text
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v13"
+APP_BUILD_LABEL = "Client-safe dashboard redesign"
+
+def render_current_build(compact=True):
+    st.markdown(
+        f"<div class='hm-v13-build-text'>HealthyMe {APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>",
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v13():
+    render_current_build(compact=True)
+
+# Backward-compatible aliases. All old marker calls now show v13.
+def render_build_text_v12():
+    render_current_build(compact=True)
+
+def render_build_text_v11():
+    render_current_build(compact=True)
+
+def build_marker_v11():
+    render_current_build(compact=True)
+
+def build_marker_v10():
+    render_current_build(compact=True)
+
+def build_marker_v9():
+    render_current_build(compact=True)
+
+def build_marker_v8():
+    render_current_build(compact=True)
+
+def build_marker_v7():
+    render_current_build(compact=True)
+
+def render_version_tag():
+    render_current_build(compact=True)
+
+
+# --------------------------------------------------------------------
+# v14: current build text
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v14"
+APP_BUILD_LABEL = "Native cards + dashboard flow fix"
+
+def render_current_build(compact=True):
+    st.markdown(
+        f"<div class='hm-v14-build-text'>HealthyMe {APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>",
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v14():
+    render_current_build(compact=True)
+
+# Backward-compatible aliases. All older markers now show v14.
+def render_build_text_v13():
+    render_current_build(compact=True)
+
+def render_build_text_v12():
+    render_current_build(compact=True)
+
+def render_build_text_v11():
+    render_current_build(compact=True)
+
+def build_marker_v11():
+    render_current_build(compact=True)
+
+def build_marker_v10():
+    render_current_build(compact=True)
+
+def build_marker_v9():
+    render_current_build(compact=True)
+
+def build_marker_v8():
+    render_current_build(compact=True)
+
+def build_marker_v7():
+    render_current_build(compact=True)
+
+def render_version_tag():
+    render_current_build(compact=True)
+
+
+# --------------------------------------------------------------------
+# v15: current build text + cleaner page nav labels
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = 'v15'
+APP_BUILD_LABEL = 'Navigation + action consistency patch'
+
+def render_current_build(compact=True):
+    st.markdown(f"<div class='hm-v15-build-text'>HealthyMe {APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>", unsafe_allow_html=True)
+
+def render_build_text_v15():
+    render_current_build(compact=True)
+
+def render_build_text_v14():
+    render_current_build(compact=True)
+def render_build_text_v13():
+    render_current_build(compact=True)
+def render_build_text_v12():
+    render_current_build(compact=True)
+def render_build_text_v11():
+    render_current_build(compact=True)
+def build_marker_v11():
+    render_current_build(compact=True)
+def build_marker_v10():
+    render_current_build(compact=True)
+def build_marker_v9():
+    render_current_build(compact=True)
+def build_marker_v8():
+    render_current_build(compact=True)
+def build_marker_v7():
+    render_current_build(compact=True)
+def render_version_tag():
+    render_current_build(compact=True)
+
+def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_Admin_Dashboard.py', evaluation_page='pages/11_Evaluation_Status.py', *, location='top', show_dashboard=True, show_evaluation=True):
+    if location == 'top':
+        page_anchor_top()
+        st.markdown("<div class='hm-native-nav-shell'>", unsafe_allow_html=True)
+    else:
+        st.markdown("<div class='hm-bottom-nav-shell hm-native-nav-shell'>", unsafe_allow_html=True)
+    cols = st.columns(3)
+    with cols[0]:
+        if back_page:
+            _safe_page_link(back_page, '← Back')
+        else:
+            st.empty()
+    with cols[1]:
+        if show_evaluation:
+            _safe_page_link(evaluation_page, 'Evaluation Status')
+        else:
+            st.empty()
+    with cols[2]:
+        if show_dashboard:
+            _safe_page_link(dashboard_page, 'Dashboard')
+        else:
+            st.empty()
+    st.markdown('</div>', unsafe_allow_html=True)
+    if location != 'top':
+        st.markdown("<div style='margin:.45rem 0 0 0;'><a href='#top'>↑ Back to top</a></div>", unsafe_allow_html=True)

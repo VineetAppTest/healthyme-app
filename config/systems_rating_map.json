@@ -1,0 +1,102 @@
+{
+  "Digestive": [
+    "nsp1_q7",
+    "nsp1_q8",
+    "nsp1_q11",
+    "nsp1_q15",
+    "nsp1_q17",
+    "nsp1_q18",
+    "nsp1_q19",
+    "nsp1_q25",
+    "nsp1_q28",
+    "nsp2_q46",
+    "nsp2_q47",
+    "nsp2_q48",
+    "nsp2_q66"
+  ],
+  "Intestinal": [
+    "nsp1_q8",
+    "nsp1_q10",
+    "nsp1_q11",
+    "nsp1_q12",
+    "nsp1_q13",
+    "nsp1_q15",
+    "nsp1_q23",
+    "nsp1_q38",
+    "nsp2_q46",
+    "nsp2_q47",
+    "nsp2_q53"
+  ],
+  "Immune/Lymphatic": [
+    "nsp1_q3",
+    "nsp1_q12",
+    "nsp1_q13",
+    "nsp1_q16",
+    "nsp1_q20",
+    "nsp1_q37",
+    "nsp1_q38",
+    "nsp2_q41",
+    "nsp2_q52",
+    "nsp2_q56",
+    "nsp2_q67"
+  ],
+  "Nervous": [
+    "nsp1_q1",
+    "nsp1_q14",
+    "nsp1_q21",
+    "nsp1_q22",
+    "nsp1_q26",
+    "nsp1_q27",
+    "nsp1_q30",
+    "nsp1_q36",
+    "nsp2_q43",
+    "nsp2_q59"
+  ],
+  "Circulatory/Cardiovascular": [
+    "nsp1_q34",
+    "nsp1_q35",
+    "nsp2_q44",
+    "nsp2_q45",
+    "nsp2_q64"
+  ],
+  "Respiratory": [
+    "nsp1_q32",
+    "nsp2_q41",
+    "nsp2_q42",
+    "nsp2_q56",
+    "nsp2_q67"
+  ],
+  "Glandular/Endocrine": [
+    "nsp1_q2",
+    "nsp1_q24",
+    "nsp1_q27",
+    "nsp1_q34",
+    "nsp2_q48",
+    "nsp2_q57",
+    "nsp2_q58",
+    "nsp2_q62",
+    "nsp2_q63",
+    "nsp2_q65"
+  ],
+  "Reproductive": [
+    "nsp1_q31",
+    "nsp2_q49",
+    "nsp2_q50",
+    "nsp2_q60",
+    "nsp2_q65"
+  ],
+  "Urinary": [
+    "nsp1_q23",
+    "nsp2_q51",
+    "nsp2_q53",
+    "nsp2_q54"
+  ],
+  "Musculoskeletal": [
+    "nsp1_q29",
+    "nsp1_q39",
+    "nsp1_q40",
+    "nsp2_q43",
+    "nsp2_q55",
+    "nsp2_q61"
+  ]
+}

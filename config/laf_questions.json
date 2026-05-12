@@ -1,0 +1,1822 @@
+[
+  {
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "section": "Basic Profile",
+    "code": "full_name",
+    "label": "Full Name",
+    "type": "text",
+    "required": true
+  },
+  {
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "section": "Basic Profile",
+    "code": "gender",
+    "label": "Gender",
+    "type": "select",
+    "options": [
+      "Female",
+      "Male",
+      "Non-binary",
+      "Prefer not to say",
+      "Other"
+    ],
+    "required": true
+  },
+  {
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "section": "Basic Profile",
+    "code": "age",
+    "label": "Age",
+    "type": "number",
+    "min": 1,
+    "max": 120,
+    "step": 1,
+    "required": true
+  },
+  {
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "section": "Basic Profile",
+    "code": "height_cm",
+    "label": "Height",
+    "type": "number",
+    "min": 50,
+    "max": 250,
+    "step": 1,
+    "suffix": "cm"
+  },
+  {
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "section": "Basic Profile",
+    "code": "weight_kg",
+    "label": "Weight",
+    "type": "number",
+    "min": 20,
+    "max": 250,
+    "step": 1,
+    "suffix": "kg"
+  },
+  {
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "section": "Basic Profile",
+    "code": "country",
+    "label": "Country",
+    "type": "select",
+    "options": [
+      "India",
+      "United States",
+      "Canada",
+      "United Kingdom",
+      "Australia",
+      "United Arab Emirates",
+      "Singapore",
+      "Other"
+    ],
+    "required": true
+  },
+  {
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "section": "Basic Profile",
+    "code": "mobile_number",
+    "label": "Mobile Number",
+    "type": "phone",
+    "required": true
+  },
+  {
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "section": "Basic Profile",
+    "code": "email_id",
+    "label": "Email ID",
+    "type": "email",
+    "required": true
+  },
+  {
+    "section": "Basic Profile",
+    "code": "relationship_status",
+    "label": "Relationship status",
+    "type": "select",
+    "options": [
+      "Married",
+      "Single",
+      "Divorced",
+      "Common Law",
+      "Widowed"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Purpose and concerns",
+    "code": "purpose_guidance",
+    "label": "What is your purpose in seeking nutritional guidance?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Purpose and concerns",
+    "code": "main_health_concerns",
+    "label": "What are your main health concerns/complaints? Please list in priority.",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "major_trauma_5_years",
+    "label": "Have you experienced any major physical/emotional trauma in the past five years?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_level",
+    "label": "What level of stress do you feel you are experiencing at this time? Scale 1 low to 10 high.",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_financial",
+    "label": "Financial stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_career",
+    "label": "Career stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_personal",
+    "label": "Personal stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_marriage",
+    "label": "Marriage stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_health",
+    "label": "Health stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_family",
+    "label": "Family stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_spiritual",
+    "label": "Spiritual stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_unfulfilled",
+    "label": "Unfulfilled expectations stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_other",
+    "label": "Other stress factors, please elaborate.",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "stress_manifest",
+    "label": "How does your stress manifest itself?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Stress and trauma",
+    "code": "coping_mechanisms",
+    "label": "Do you use any coping mechanisms?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Exercise and energy",
+    "code": "exercise_details",
+    "label": "What do you do for exercise? Indicate type, frequency, time of day and duration.",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Exercise and energy",
+    "code": "energy_level",
+    "label": "On a scale of 1 low to 10 high, how would you describe your energy levels?",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Exercise and energy",
+    "code": "energy_lulls_highs",
+    "label": "Do you experience any lulls or highs in your energy levels throughout the day? If so, at what time of day?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Sleep",
+    "code": "sleep_hours",
+    "label": "How many hours on average do you sleep daily, including naps?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Sleep",
+    "code": "sleep_time",
+    "label": "What time do you go to sleep?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Sleep",
+    "code": "wake_time",
+    "label": "What time do you awaken?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Sleep",
+    "code": "trouble_falling_asleep",
+    "label": "Do you have trouble falling asleep?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Sleep",
+    "code": "trouble_staying_asleep",
+    "label": "Do you have trouble staying asleep?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Sleep",
+    "code": "awaken_rested",
+    "label": "Do you awaken feeling rested?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Sleep",
+    "code": "snore",
+    "label": "Do you snore?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Work",
+    "code": "occupation",
+    "label": "What is your occupation?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Work",
+    "code": "enjoy_work",
+    "label": "Do you enjoy your work?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No",
+      "Sometimes"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Work",
+    "code": "work_hours",
+    "label": "How many hours each day/week do you work?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Work",
+    "code": "work_start_end",
+    "label": "At what times do you start and end work?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Work",
+    "code": "work_shifts_regular",
+    "label": "Do you work shifts or a regular schedule?",
+    "type": "text",
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Work",
+    "code": "changed_employment_12_months",
+    "label": "Have you changed employment within the last 12 months?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 1 - Profile, Purpose & Lifestyle"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "smoke_tobacco",
+    "label": "Do you smoke tobacco?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "smoke_tobacco_details",
+    "label": "If yes, in what form, how much and for how long?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "household_smoke",
+    "label": "If no, does anyone in your household or workplace smoke tobacco?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "medicinal_marijuana",
+    "label": "Do you smoke medicinal marijuana?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "medicinal_marijuana_details",
+    "label": "If yes, how much and for how long?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "recreational_drugs",
+    "label": "Do you use recreational drugs?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "recreational_drugs_details",
+    "label": "If yes, how often and what type?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "dependency_treatment",
+    "label": "Have you ever been treated for drug and/or alcohol dependency?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "dependency_type",
+    "label": "If yes, which have you been treated for, drug and/or alcohol?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Smoking and substances",
+    "code": "dependency_how_long_ago",
+    "label": "How long ago was treatment?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Weight goals",
+    "code": "weight_goal_type",
+    "label": "Do you wish to gain weight or lose weight?",
+    "type": "select",
+    "options": [
+      "Gain weight",
+      "Lose weight",
+      "Maintain weight",
+      "Not applicable"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Weight goals",
+    "code": "weight_goal_amount",
+    "label": "How much weight do you wish to gain/lose?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Weight goals",
+    "code": "weight_goal_date",
+    "label": "When do you wish to reach your goal weight?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Weight goals",
+    "code": "weight_goal_motivation",
+    "label": "What is your main motivation to change your weight?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Lifestyle environment",
+    "code": "hours_driving",
+    "label": "How many hours do you spend daily on average driving?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Lifestyle environment",
+    "code": "hours_tv",
+    "label": "How many hours do you spend daily on average watching television?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Lifestyle environment",
+    "code": "hours_reading",
+    "label": "How many hours do you spend daily on average reading?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Lifestyle environment",
+    "code": "hours_computer",
+    "label": "How many hours do you spend daily on average in front of a computer?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Lifestyle environment",
+    "code": "body_household_products",
+    "label": "Which type of body care and household products do you use?",
+    "type": "select",
+    "options": [
+      "Natural",
+      "Conventional",
+      "Both"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Lifestyle environment",
+    "code": "interests_hobbies",
+    "label": "What are your interests and hobbies?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Lifestyle environment",
+    "code": "vacation_regularly",
+    "label": "Do you vacation regularly?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Lifestyle environment",
+    "code": "last_vacation",
+    "label": "When was your last vacation?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Lifestyle environment",
+    "code": "spiritual_discipline",
+    "label": "Do you actively participate in any spiritual discipline, church, religious group, meditation, etc.?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "prescription_medication",
+    "label": "Are you currently taking any prescription medication?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "prescription_medication_list",
+    "label": "List all prescription medications and reasons for each.",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "otc_medication",
+    "label": "Are you currently taking any over the counter medication?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "otc_medication_list",
+    "label": "List all over the counter medications and reasons for each.",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "supplements_list",
+    "label": "List vitamins, minerals, herbal or homeopathic remedies you are currently taking and amounts/dosages.",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "birth_control",
+    "label": "Do you take birth control pills, IUD, or birth control injection?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "antibiotics_5_years",
+    "label": "Have you taken antibiotics over the past five years?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "antibiotics_details",
+    "label": "If yes, how often and why?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Allergies and sensitivities",
+    "code": "allergies_sensitivities",
+    "label": "Do you have allergies or sensitivities?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Allergies and sensitivities",
+    "code": "allergies_sensitivities_list",
+    "label": "If so, please list allergies or sensitivities.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Allergies and sensitivities",
+    "code": "anaphylaxis",
+    "label": "Do you have anaphylaxis, life-threatening allergy? If so, describe.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Medical history",
+    "code": "silver_mercury_fillings",
+    "label": "Do you have any silver-mercury fillings?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "diagnosed_illness",
+    "label": "Have you ever been diagnosed with an illness?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "diagnosed_illness_details",
+    "label": "If yes, please explain diagnosed illness.",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "hospitalized",
+    "label": "Have you ever been hospitalized?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "hospitalized_reason",
+    "label": "If yes, for what reason were you hospitalized?",
+    "type": "text",
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "surgery_gall_bladder",
+    "label": "Have you had surgery to remove gall bladder?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "surgery_tonsils",
+    "label": "Have you had surgery to remove tonsils?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Medical history",
+    "code": "surgery_appendix",
+    "label": "Have you had surgery to remove appendix?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 2 - Substances, Weight & Medical Intake"
+  },
+  {
+    "section": "Bowel habits",
+    "code": "bowel_movement_frequency",
+    "label": "How often do you have a bowel movement?",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Bowel habits",
+    "code": "strain_bowel_movement",
+    "label": "Do you strain to have a bowel movement?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No",
+      "Occasionally"
+    ],
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Bowel habits",
+    "code": "strain_related_food_circumstances",
+    "label": "If yes/occasionally, is it related to particular food or circumstances?",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Bowel habits",
+    "code": "loose_bowel_movements",
+    "label": "Do you have loose bowel movements?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No",
+      "Occasionally"
+    ],
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Bowel habits",
+    "code": "loose_related_food_circumstances",
+    "label": "If yes/occasionally, is it related to particular food or circumstances?",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Bowel habits",
+    "code": "undigested_food_stools",
+    "label": "Is there undigested food in your stools?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No",
+      "Occasionally"
+    ],
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_allergies",
+    "label": "Family history: Allergies, relation F/M/S/G/O and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_alzheimers",
+    "label": "Family history: Alzheimer's, relation F/M/S/G/O and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_asthma",
+    "label": "Family history: Asthma, relation F/M/S/G/O and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_autoimmune",
+    "label": "Family history: Autoimmune disease, type, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_cancer",
+    "label": "Family history: Cancer type, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_cardiovascular",
+    "label": "Family history: Cardiovascular disease type, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_cystic_fibrosis",
+    "label": "Family history: Cystic fibrosis, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_hemochromatosis",
+    "label": "Family history: Hemochromatosis, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_huntingtons",
+    "label": "Family history: Huntington's disease, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_intestinal",
+    "label": "Family history: Intestinal disease type, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_kidney",
+    "label": "Family history: Kidney dysfunction, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_liver_gallbladder",
+    "label": "Family history: Liver or gall bladder disease type, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_mental_health",
+    "label": "Family history: Mental health disorder type, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_obesity",
+    "label": "Family history: Obesity, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_parkinsons",
+    "label": "Family history: Parkinson's disease, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_type1_diabetes",
+    "label": "Family history: Type 1 diabetes, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_type2_diabetes",
+    "label": "Family history: Type 2 diabetes, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_skin_conditions",
+    "label": "Family history: Skin conditions type, relation and details.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Family history",
+    "code": "family_other_diseases",
+    "label": "Family history: Other diseases, please list.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Additional medical history",
+    "code": "fungal_infections",
+    "label": "Have you experienced fungal infections, e.g. jock itch, athlete's foot?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Additional medical history",
+    "code": "fungal_infections_details",
+    "label": "If yes, please describe fungal infections.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Additional medical history",
+    "code": "libido_decline",
+    "label": "Have you experienced a decline in your libido?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Additional medical history",
+    "code": "libido_decline_details",
+    "label": "If yes, please describe libido decline.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Additional medical history",
+    "code": "kidney_gall_stones",
+    "label": "Have you had kidney or gall stones?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Additional medical history",
+    "code": "kidney_gall_stones_details",
+    "label": "If yes, please describe kidney or gall stones.",
+    "type": "text",
+    "page": "Page 3 - Medical, Bowel & Family History"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "pronoun",
+    "label": "Identifying pronouns",
+    "type": "select",
+    "page": "Page 4 - Hormonal & Dietary Habits",
+    "options": [
+      "She/Her",
+      "He/Him",
+      "They/Them",
+      "Prefer not to say",
+      "Other"
+    ]
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "pregnant_possible",
+    "label": "Are you or could you be pregnant?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "pregnancy_trimester",
+    "label": "If yes, which trimester?",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "miscarriages_history",
+    "label": "History of miscarriages?",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "menses_changes",
+    "label": "Have you noticed any changes in menses, frequency, duration, flow, clotting or other changes?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "menses_changes_details",
+    "label": "If yes, please specify menses changes.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "pms_symptoms",
+    "label": "Do you suffer from PMS symptoms? Please specify.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "peri_menopausal",
+    "label": "Are you peri-menopausal?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "menopausal",
+    "label": "Are you menopausal?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "post_menopausal",
+    "label": "Are you post-menopausal?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "menopausal_symptoms",
+    "label": "Are you experiencing any menopausal symptoms?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "menopausal_symptoms_details",
+    "label": "If yes, please specify menopausal symptoms.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "bone_density_test",
+    "label": "Have you had a bone density test?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Female or identifying pronouns",
+    "code": "bone_density_result",
+    "label": "If yes, what was the result?",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Male or identifying pronouns",
+    "code": "prostate_problems",
+    "label": "Have you experienced any prostate problems, e.g. frequent urination, discomfort during urination?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Male or identifying pronouns",
+    "code": "prostate_problems_details",
+    "label": "If yes, please describe prostate problems.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "main_meals_count",
+    "label": "How many main meals do you eat per day?",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "main_meals_times",
+    "label": "Main meal times of day",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "snacks_count",
+    "label": "How many snacks do you eat per day?",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "snacks_times",
+    "label": "Snack times of day",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "weekly_food_budget",
+    "label": "What is your weekly food budget?",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "cooking_skill",
+    "label": "Rate your food preparation/cooking skills, 1 low to 10 advanced.",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits",
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Dietary habits",
+    "code": "eat_meals_with_family",
+    "label": "Do you eat meals with family?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "eat_meals_on_run",
+    "label": "Do you eat meals on the run?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "eat_meals_restaurant",
+    "label": "Do you eat restaurant meals?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "eat_meals_fast_food",
+    "label": "Do you eat fast food?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "diet_restrictions_due_to_others",
+    "label": "Do you feel there are restrictions to your diet due to preferences of others such as family, roommates, etc.?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Dietary habits",
+    "code": "diet_restrictions_explain",
+    "label": "If yes, please explain restrictions.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Daily servings",
+    "code": "servings_fruit",
+    "label": "How many 1/2 cup servings of fruit do you typically eat in a day? Fresh/dried/canned details.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Daily servings",
+    "code": "servings_vegetables",
+    "label": "How many 1/2 cup servings of vegetables do you typically eat in a day? Cooked/raw details.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Daily servings",
+    "code": "servings_grains",
+    "label": "How many 1/2 cup servings of grains do you typically eat in a day? Whole/refined details.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Daily servings",
+    "code": "servings_protein",
+    "label": "How many 1/2 cup servings of protein do you typically eat in a day? Type.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Daily servings",
+    "code": "servings_dairy",
+    "label": "How many 1/2 cup servings of dairy products do you typically eat in a day? Type.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Daily servings",
+    "code": "servings_other",
+    "label": "Other daily servings, specify.",
+    "type": "text",
+    "page": "Page 4 - Hormonal & Dietary Habits"
+  },
+  {
+    "section": "Typical meals",
+    "code": "typical_breakfast",
+    "label": "Provide examples of typical breakfast.",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Typical meals",
+    "code": "typical_lunch",
+    "label": "Provide examples of typical lunch.",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Typical meals",
+    "code": "typical_dinner",
+    "label": "Provide examples of typical dinner.",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Typical meals",
+    "code": "typical_snacks",
+    "label": "Provide examples of typical snacks.",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "aluminum_pans",
+    "label": "Do you eat/use Aluminum pans? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "margarine",
+    "label": "Do you eat/use Margarine? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "candy",
+    "label": "Do you eat/use Candy? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "microwave",
+    "label": "Do you eat/use Microwave? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "fried_foods",
+    "label": "Do you eat/use Fried foods? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "fast_foods",
+    "label": "Do you eat/use Fast foods? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "luncheon_meats",
+    "label": "Do you eat/use Luncheon meats? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "cigarettes",
+    "label": "Do you eat/use Cigarettes? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "artificial_sweeteners",
+    "label": "Do you eat/use Artificial sweeteners, NutraSweet/aspartame/Splenda? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Food exposures and frequency",
+    "code": "refined_foods",
+    "label": "Do you eat/use Refined foods, white sugar, pastries, white bread/pasta/rice, etc.? 1 rarely, 2 regularly, 3 often.",
+    "type": "select",
+    "options": [
+      "1",
+      "2",
+      "3"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_tap_water",
+    "label": "How many cups of Tap water do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_coffee",
+    "label": "How many cups of Coffee do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_tea",
+    "label": "How many cups of Tea do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_soft_drinks_diet",
+    "label": "How many cups of Soft drinks diet do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_soft_drinks_regular",
+    "label": "How many cups of Soft drinks regular do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_fresh_fruit_juices",
+    "label": "How many cups of Fresh fruit juices do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_prepared_fruit_juices",
+    "label": "How many cups of Fruit juices prepared do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_milk_1_2_whole",
+    "label": "How many cups of Milk 1%, 2%, or whole do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_milk_skim",
+    "label": "How many cups of Milk skim do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_prepared_vegetable_juices",
+    "label": "How many cups of Prepared vegetable juices do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_fresh_vegetable_juices",
+    "label": "How many cups of Fresh vegetable juices do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_red_wine",
+    "label": "How many cups of Red wine do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_white_wine",
+    "label": "How many cups of White wine do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_beer",
+    "label": "How many cups of Beer do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_other_alcohol",
+    "label": "How many cups of Other alcoholic beverages do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_bottled_spring_water",
+    "label": "How many cups of Bottled or spring water do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_herbal_tea",
+    "label": "How many cups of Herbal tea do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Beverages",
+    "code": "drink_other_drinks",
+    "label": "How many cups of Other drinks do you drink per day/week?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet pattern",
+    "code": "diet_type",
+    "label": "Are you a meat eater, vegetarian, or vegan?",
+    "type": "select",
+    "options": [
+      "Meat eater",
+      "Vegetarian",
+      "Vegan",
+      "Other"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet pattern",
+    "code": "meat_frequency",
+    "label": "How often do you eat meat?",
+    "type": "select",
+    "options": [
+      "Daily",
+      "3-5/week",
+      "Once/week or less",
+      "Never"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet pattern",
+    "code": "dairy_frequency",
+    "label": "How often do you consume dairy products?",
+    "type": "select",
+    "options": [
+      "Daily",
+      "3-5/week",
+      "Once/week or less",
+      "Never"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet pattern",
+    "code": "favorite_foods",
+    "label": "What are your favourite foods?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet pattern",
+    "code": "favorite_foods_frequency",
+    "label": "How often do you eat your favourite foods?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet pattern",
+    "code": "food_cravings",
+    "label": "Which foods do you crave?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet pattern",
+    "code": "food_cravings_frequency",
+    "label": "How often do you eat foods you crave?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet pattern",
+    "code": "avoid_foods",
+    "label": "Do you avoid certain foods?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet pattern",
+    "code": "avoid_foods_why",
+    "label": "If so, why do you avoid certain foods?",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet reactions",
+    "code": "symptoms_if_meals_missed",
+    "label": "Do you experience any symptoms if meals are missed?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet reactions",
+    "code": "symptoms_if_meals_missed_explain",
+    "label": "Explain symptoms if meals are missed.",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet reactions",
+    "code": "symptoms_after_meals",
+    "label": "Do you experience any symptoms after meals?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  },
+  {
+    "section": "Diet reactions",
+    "code": "symptoms_after_meals_explain",
+    "label": "Explain symptoms after meals.",
+    "type": "text",
+    "page": "Page 5 - Meals, Beverages & Food Reactions"
+  }
+]

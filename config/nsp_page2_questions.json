@@ -1,0 +1,145 @@
+[
+  {
+    "code": "nsp2_q41",
+    "number": 41,
+    "text": "Excessive mucous build-up"
+  },
+  {
+    "code": "nsp2_q42",
+    "number": 42,
+    "text": "Easily winded or shortness of breath"
+  },
+  {
+    "code": "nsp2_q43",
+    "number": 43,
+    "text": "Pins and needles sensation"
+  },
+  {
+    "code": "nsp2_q44",
+    "number": 44,
+    "text": "Chest pains"
+  },
+  {
+    "code": "nsp2_q45",
+    "number": 45,
+    "text": "Very rapid or slow heart beat"
+  },
+  {
+    "code": "nsp2_q46",
+    "number": 46,
+    "text": "Painful, hard or thin bowel movements"
+  },
+  {
+    "code": "nsp2_q47",
+    "number": 47,
+    "text": "Alternating constipation/diarrhea"
+  },
+  {
+    "code": "nsp2_q48",
+    "number": 48,
+    "text": "Carrying abdominal/visceral weight"
+  },
+  {
+    "code": "nsp2_q49",
+    "number": 49,
+    "text": "Menopause symptoms/hot flashes",
+    "gender_restriction": "female",
+    "auto_na_when_gender": "male"
+  },
+  {
+    "code": "nsp2_q50",
+    "number": 50,
+    "text": "Female: PMS",
+    "gender_restriction": "female",
+    "auto_na_when_gender": "male"
+  },
+  {
+    "code": "nsp2_q51",
+    "number": 51,
+    "text": "Difficulty urinating/voiding"
+  },
+  {
+    "code": "nsp2_q52",
+    "number": 52,
+    "text": "Swollen lymph glands, puffy throat"
+  },
+  {
+    "code": "nsp2_q53",
+    "number": 53,
+    "text": "Lower abdominal pain"
+  },
+  {
+    "code": "nsp2_q54",
+    "number": 54,
+    "text": "Frequent need to urinate"
+  },
+  {
+    "code": "nsp2_q55",
+    "number": 55,
+    "text": "Joint pain/swelling/stiffness"
+  },
+  {
+    "code": "nsp2_q56",
+    "number": 56,
+    "text": "Sinus inflammation/discharge"
+  },
+  {
+    "code": "nsp2_q57",
+    "number": 57,
+    "text": "Cravings for salty foods"
+  },
+  {
+    "code": "nsp2_q58",
+    "number": 58,
+    "text": "Sudden weight gain/loss"
+  },
+  {
+    "code": "nsp2_q59",
+    "number": 59,
+    "text": "Headaches/migraines"
+  },
+  {
+    "code": "nsp2_q60",
+    "number": 60,
+    "text": "Female: Taking birth control pills",
+    "gender_restriction": "female",
+    "auto_na_when_gender": "male"
+  },
+  {
+    "code": "nsp2_q61",
+    "number": 61,
+    "text": "Lower back pain"
+  },
+  {
+    "code": "nsp2_q62",
+    "number": 62,
+    "text": "Dry, flaky, rough skin"
+  },
+  {
+    "code": "nsp2_q63",
+    "number": 63,
+    "text": "Drink less than 6 glasses of water per day"
+  },
+  {
+    "code": "nsp2_q64",
+    "number": 64,
+    "text": "Water retention/edema"
+  },
+  {
+    "code": "nsp2_q65",
+    "number": 65,
+    "text": "Low or loss of libido",
+    "mapped_from_laf": "libido_decline",
+    "mapping_note": "LAF libido_decline: Yes -> 2, No -> NA; member can override."
+  },
+  {
+    "code": "nsp2_q66",
+    "number": 66,
+    "text": "Feeling heavy/bloated after meals"
+  },
+  {
+    "code": "nsp2_q67",
+    "number": 67,
+    "text": "Chronic cough or wheezing"
+  }
+]

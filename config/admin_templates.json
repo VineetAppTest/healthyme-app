@@ -1,0 +1,1348 @@
+{
+  "Digestive": [
+    {
+      "heading": "UNDERACTIVE STOMACH",
+      "items": [
+        {
+          "label": "Stomach bloated after eating",
+          "linked_code": "nsp2_q66",
+          "source": "linked"
+        },
+        {
+          "label": "Full feeling after heavy meat meal",
+          "linked_code": "nsp2_q66",
+          "source": "linked",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Link"
+        },
+        {
+          "label": "Nausea after taking supplements",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Undigested food in the stool",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Constipated",
+          "linked_code": "nsp1_q8",
+          "source": "linked"
+        },
+        {
+          "label": "Food allergies/sensitivities",
+          "linked_code": "nsp1_q13",
+          "source": "linked"
+        },
+        {
+          "label": "Slow digestion; feel full for hours after eating",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Onions, cabbage, radishes, cucumbers cause bloating/gas",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Excessive gas, belching or burping after meals",
+          "linked_code": "nsp1_q15",
+          "source": "linked"
+        }
+      ]
+    },
+    {
+      "heading": "OVERACTIVE STOMACH",
+      "items": [
+        {
+          "label": "Diarrhea after meals",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Burning sensation in stomach",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Stomach pain aggravated by worry/tension",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Gastritis, gastric ulcer",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Nausea",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Lower back pain",
+          "linked_code": "nsp2_q61",
+          "source": "linked"
+        },
+        {
+          "label": "Long term use of NSAIDS",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Heartburn",
+          "linked_code": null,
+          "source": "manual"
+        }
+      ]
+    },
+    {
+      "heading": "GALLBLADDER",
+      "items": [
+        {
+          "label": "Gallstones/history of gallstones",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Stool appears clay-coloured, foul odoured",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Constipated",
+          "linked_code": "nsp1_q8",
+          "source": "linked"
+        },
+        {
+          "label": "High LDL cholesterol/Low HDL levels",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Severe pain in right upper abdomen",
+          "linked_code": null,
+          "source": "manual"
+        }
+      ]
+    },
+    {
+      "heading": "LIVER",
+      "items": [
+        {
+          "label": "Fats/greasy foods cause nausea, headaches",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Heavy alcohol intake",
+          "linked_code": "nsp1_q19",
+          "source": "linked"
+        },
+        {
+          "label": "Bad breath; bad taste in mouth",
+          "linked_code": "nsp1_q7",
+          "source": "linked"
+        },
+        {
+          "label": "Excess body odour",
+          "linked_code": "nsp1_q7",
+          "source": "linked"
+        },
+        {
+          "label": "High LDL evaluation",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Discomfort underneath right ribcage",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Food allergies/sensitivities",
+          "linked_code": "nsp1_q13",
+          "source": "linked"
+        },
+        {
+          "label": "Irritable, easily angered",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Weight gain around the abdomen",
+          "linked_code": "nsp2_q48",
+          "source": "linked"
+        },
+        {
+          "label": "Jaundice",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Poor concentration/memory",
+          "linked_code": "nsp1_q14",
+          "source": "linked"
+        },
+        {
+          "label": "Difficulty losing weight",
+          "linked_code": "nsp1_q2",
+          "source": "linked"
+        },
+        {
+          "label": "Constipated",
+          "linked_code": "nsp1_q8",
+          "source": "linked"
+        },
+        {
+          "label": "Skin irritations/rashes/acne",
+          "linked_code": "nsp1_q16",
+          "source": "linked"
+        },
+        {
+          "label": "Migraine headaches",
+          "linked_code": "nsp2_q59",
+          "source": "linked",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Use NSP Source"
+        },
+        {
+          "label": "Low libido",
+          "linked_code": "nsp2_q65",
+          "source": "linked",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Use NSP Source"
+        },
+        {
+          "label": "Mood swings",
+          "linked_code": "nsp1_q21",
+          "source": "linked",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Use NSP Source"
+        },
+        {
+          "label": "Hormone imbalance - PMS",
+          "linked_code": "nsp2_q50",
+          "source": "linked"
+        }
+      ]
+    }
+  ],
+  "Intestinal": [
+    {
+      "heading": "CANDIDIASIS",
+      "items": [
+        {
+          "label": "Extreme fatigue",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Recurrent vaginal infections",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Use of antibiotics",
+          "linked_code": "nsp1_q12",
+          "source": "linked"
+        },
+        {
+          "label": "White coated tongue, oral thrush",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Crave sugars, bread, alcohol",
+          "linked_code": "nsp1_q10",
+          "source": "linked"
+        },
+        {
+          "label": "Headaches",
+          "linked_code": "nsp2_q59",
+          "source": "linked"
+        },
+        {
+          "label": "Abdominal gas and bloating",
+          "linked_code": "nsp1_q15",
+          "source": "linked"
+        },
+        {
+          "label": "Loss of libido",
+          "linked_code": "nsp2_q65",
+          "source": "linked"
+        },
+        {
+          "label": "Repeated bladder and/or kidney infections",
+          "linked_code": "nsp1_q23",
+          "source": "linked"
+        },
+        {
+          "label": "Increasing food and chemical sensitivities",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Chronic diarrhea",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Hives, psoriasis, acne, skin rashes",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Rectal itching",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Muscle aches",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Athlete\u2019s foot, finger/toenail fungus, jock itch",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Brain fog",
+          "linked_code": "nsp1_q14",
+          "source": "linked"
+        },
+        {
+          "label": "Anxious/panic attacks",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Inability to concentrate",
+          "linked_code": "nsp1_q14",
+          "source": "linked"
+        },
+        {
+          "label": "Lethargy",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Blood in stool",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Mental confusion",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Depressed",
+          "linked_code": "nsp1_q22",
+          "source": "linked"
+        },
+        {
+          "label": "Female: PMS/heavy cycles",
+          "linked_code": "nsp2_q50",
+          "source": "linked"
+        },
+        {
+          "label": "Mood swings",
+          "linked_code": "nsp1_q21",
+          "source": "linked",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Use NSP Source"
+        },
+        {
+          "label": "Irritable/loss temper easily",
+          "linked_code": "nsp1_q22",
+          "source": "linked"
+        }
+      ]
+    },
+    {
+      "heading": "PARASITES",
+      "items": [
+        {
+          "label": "Gas and bloating, cramps",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Ravenous appetite or loss of appetite",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Pain in umbilicus",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Headaches, neckaches, backaches",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Drooling while sleeping",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Grind teeth while asleep",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Bedwetting",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Lethargy; chronic fatigue",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Dark circles under eyes",
+          "linked_code": "nsp1_q9",
+          "source": "linked"
+        },
+        {
+          "label": "Irritability",
+          "linked_code": "nsp1_q22",
+          "source": "linked"
+        },
+        {
+          "label": "Itchy ears, nose, anus",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Low blood iron levels",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Sore joints",
+          "linked_code": "nsp2_q55",
+          "source": "linked"
+        },
+        {
+          "label": "Disrupted sleep",
+          "linked_code": "nsp1_q27",
+          "source": "linked"
+        }
+      ]
+    },
+    {
+      "heading": "DYSBIOSIS",
+      "items": [
+        {
+          "label": "Bloating",
+          "linked_code": "nsp2_q66",
+          "source": "linked",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Link"
+        },
+        {
+          "label": "Belching",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Flatulence after meals",
+          "linked_code": "nsp1_q15",
+          "source": "linked"
+        },
+        {
+          "label": "Food sensitivities/intolerances",
+          "linked_code": "nsp1_q13",
+          "source": "linked"
+        },
+        {
+          "label": "Nausea or diarrhea after supplements",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Weak or cracked fingernails",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Constipated",
+          "linked_code": "nsp1_q8",
+          "source": "linked"
+        },
+        {
+          "label": "Low libido",
+          "linked_code": "nsp2_q65",
+          "source": "linked",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Use NSP Source"
+        },
+        {
+          "label": "Iron deficiency",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Mood swings",
+          "linked_code": "nsp1_q21",
+          "source": "linked",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Link"
+        },
+        {
+          "label": "Acne, rashes, skin irritations",
+          "linked_code": "nsp1_q16",
+          "source": "linked"
+        },
+        {
+          "label": "Fatigue/low energy",
+          "linked_code": "nsp1_q1",
+          "source": "linked"
+        }
+      ]
+    },
+    {
+      "heading": "LEAKY GUT",
+      "items": [
+        {
+          "label": "Fatigue",
+          "linked_code": "nsp1_q1",
+          "source": "linked"
+        },
+        {
+          "label": "Learning disorder \u2013 ADD/ADHD",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Frequent infections",
+          "linked_code": "nsp1_q3",
+          "source": "linked"
+        },
+        {
+          "label": "Low libido",
+          "linked_code": "nsp2_q65",
+          "source": "linked"
+        },
+        {
+          "label": "Chronic gas/bloating",
+          "linked_code": "nsp1_q15",
+          "source": "linked"
+        },
+        {
+          "label": "Headaches",
+          "linked_code": "nsp2_q59",
+          "source": "linked"
+        },
+        {
+          "label": "Skin irritations",
+          "linked_code": "nsp1_q16",
+          "source": "linked"
+        },
+        {
+          "label": "Diarrhea and/or constipated",
+          "linked_code": "nsp2_q47",
+          "source": "linked"
+        },
+        {
+          "label": "Brain fog/memory loss",
+          "linked_code": "nsp1_q14",
+          "source": "linked"
+        },
+        {
+          "label": "Mood swings",
+          "linked_code": "nsp1_q21",
+          "source": "linked"
+        },
+        {
+          "label": "Autoimmune disorder",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Depressed",
+          "linked_code": "nsp1_q22",
+          "source": "linked"
+        },
+        {
+          "label": "Joint pain",
+          "linked_code": "nsp2_q55",
+          "source": "linked"
+        },
+        {
+          "label": "Insomnia",
+          "linked_code": "nsp1_q27",
+          "source": "linked"
+        },
+        {
+          "label": "Food intolerances",
+          "linked_code": null,
+          "source": "manual"
+        }
+      ]
+    },
+    {
+      "heading": "IBS/IBD/SIBO",
+      "items": [
+        {
+          "label": "Bad breath",
+          "linked_code": "nsp1_q7",
+          "source": "linked"
+        },
+        {
+          "label": "Hormone imbalances - PMS",
+          "linked_code": "nsp2_q50",
+          "source": "linked"
+        }
+      ]
+    }
+  ],
+  "Immune": [
+    {
+      "heading": "DIAGNOSED ALLERGIES/FOOD INTOLERANCES & SENSITIVITIES",
+      "items": [
+        {
+          "label": "Psoriasis, eczema",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Hay fever",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Frequent cravings for certain foods",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Repeated ear infections",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Hyperactivity",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Excessive sweating, night sweats",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Bowel disease: IBS, IBD",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Wheezing",
+          "linked_code": "nsp2_q67",
+          "source": "linked"
+        },
+        {
+          "label": "Pale face",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Hives",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Nose runs constantly",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Bloating or gas after eating certain foods",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Canker sores",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Dark circles under eyes",
+          "linked_code": "nsp1_q9",
+          "source": "linked"
+        },
+        {
+          "label": "Stuffy nose",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Itchy, watery eyes",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Sore joints",
+          "linked_code": "nsp2_q55",
+          "source": "linked"
+        },
+        {
+          "label": "Cough",
+          "linked_code": "nsp2_q67",
+          "source": "linked"
+        },
+        {
+          "label": "Fatigue",
+          "linked_code": "nsp1_q1",
+          "source": "linked"
+        },
+        {
+          "label": "Nausea",
+          "linked_code": null,
+          "source": "manual"
+        }
+      ]
+    },
+    {
+      "heading": "INFLAMMATION",
+      "items": [
+        {
+          "label": "Muscle stiffness",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Joint pain",
+          "linked_code": "nsp2_q55",
+          "source": "linked"
+        },
+        {
+          "label": "Fatigue/loss of energy",
+          "linked_code": "nsp1_q1",
+          "source": "linked"
+        },
+        {
+          "label": "Loss of appetite",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Red, itchy skin",
+          "linked_code": "nsp1_q16",
+          "source": "linked"
+        },
+        {
+          "label": "Overweight/obese",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Frequent infections",
+          "linked_code": "nsp1_q3",
+          "source": "linked"
+        },
+        {
+          "label": "Diagnosed allergies",
+          "linked_code": "nsp1_q13",
+          "source": "linked"
+        },
+        {
+          "label": "Autoimmune disorder",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Cancer",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "IBS, IBD, Crohn's",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Gluten intolerance",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Visceral fat",
+          "linked_code": "nsp2_q48",
+          "source": "linked"
+        },
+        {
+          "label": "Disease ending in \"itis\"",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Mental health disorder - depressed/anxious",
+          "linked_code": "nsp1_q22",
+          "source": "linked"
+        },
+        {
+          "label": "High stress lifestyle",
+          "linked_code": "nsp1_q4",
+          "source": "linked"
+        }
+      ]
+    }
+  ],
+  "Glandular": [
+    {
+      "heading": "UNDERACTIVE/LOW THYROID",
+      "items": [
+        {
+          "label": "Distinct, lethargic tiredness or sluggishness",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Cold hands or feet",
+          "linked_code": "nsp1_q34",
+          "source": "linked"
+        },
+        {
+          "label": "Gain weight easily, fail to lose on diets",
+          "linked_code": "nsp1_q2",
+          "source": "linked"
+        },
+        {
+          "label": "Constipated, less than one bowel movement a day",
+          "linked_code": "nsp1_q8",
+          "source": "linked"
+        },
+        {
+          "label": "Low body temperature, especially during bed rest",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Hair dry, brittle, dull, lifeless",
+          "linked_code": "nsp1_q24",
+          "source": "linked"
+        },
+        {
+          "label": "Dry, flaky, rough skin",
+          "linked_code": "nsp2_q62",
+          "source": "linked"
+        },
+        {
+          "label": "Loss of libido",
+          "linked_code": "nsp2_q65",
+          "source": "linked"
+        },
+        {
+          "label": "Depressed/mood swings",
+          "linked_code": "nsp1_q22",
+          "source": "linked"
+        },
+        {
+          "label": "Silver dental amalgams",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Low energy in the morning",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Low pulse rate",
+          "linked_code": null,
+          "source": "manual"
+        }
+      ]
+    },
+    {
+      "heading": "OVERACTIVE/HIGH THYROID",
+      "items": [
+        {
+          "label": "Losing weight without trying",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Heart palpitations",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Nervous behaviour, hyperactivity",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Feel warm/flushed at room temperature",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Frequent bowel movements, diarrhea",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Excessive sweating without exercising",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Hand tremor",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Heart races while at rest",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Increased appetite",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Insomnia",
+          "linked_code": "nsp1_q27",
+          "source": "linked"
+        }
+      ]
+    },
+    {
+      "heading": "ADRENALS",
+      "items": [
+        {
+          "label": "Cravings for salt",
+          "linked_code": "nsp2_q57",
+          "source": "linked"
+        },
+        {
+          "label": "Hypoglycemia",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Hair loss",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Low libido",
+          "linked_code": "nsp2_q65",
+          "source": "linked"
+        },
+        {
+          "label": "Disrupted sleep",
+          "linked_code": "nsp1_q27",
+          "source": "linked"
+        },
+        {
+          "label": "Stress or emotional upsets cause exhaustion",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Perspire excessively",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Frequent migraines",
+          "linked_code": "nsp2_q59",
+          "source": "linked"
+        },
+        {
+          "label": "Low blood pressure",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Dark circles under eyes",
+          "linked_code": "nsp1_q9",
+          "source": "linked"
+        },
+        {
+          "label": "Blood pressure decreases when going from a lying down position to a standing position",
+          "linked_code": null,
+          "source": "manual"
+        }
+      ]
+    },
+    {
+      "heading": "PITUITARY",
+      "items": [
+        {
+          "label": "Female: Loss of menstrual function",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Cold hands or feet",
+          "linked_code": "nsp1_q34",
+          "source": "linked"
+        },
+        {
+          "label": "Tachycardia, rapid heart rate",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Heat intolerance, frequent sweating",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Hand and/or head tremor",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Frequent bowel movements",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Unusual hair growth",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Loss of sleep/poor sleep habits",
+          "linked_code": "nsp1_q27",
+          "source": "linked"
+        },
+        {
+          "label": "Imbalanced blood sugar",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Blood pressure imbalances",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Edema",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        }
+      ]
+    },
+    {
+      "heading": "THYMUS (IMMUNITY)",
+      "items": [
+        {
+          "label": "Very susceptible to infections",
+          "linked_code": "nsp1_q3",
+          "source": "linked"
+        },
+        {
+          "label": "Swollen glands: tonsils, throat, armpits",
+          "linked_code": "nsp2_q52",
+          "source": "linked"
+        },
+        {
+          "label": "Feel puffiness in throat",
+          "linked_code": "nsp2_q52",
+          "source": "linked"
+        },
+        {
+          "label": "Look older than chronological age",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Flu-like symptoms often occur",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Extreme sweating",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Autoimmune disease",
+          "linked_code": null,
+          "source": "manual"
+        }
+      ]
+    },
+    {
+      "heading": "PANCREAS (DYSGLYCEMIA)",
+      "items": [
+        {
+          "label": "Acute fever",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Hungry up to 3 hours after eating",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Strong, sudden cravings for sweets, starches coffee or alcohol",
+          "linked_code": "nsp1_q10",
+          "source": "linked"
+        },
+        {
+          "label": "Nervous/anxious feelings relieved by eating",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Irritable if late for or skip a meal",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Overweight",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Addicted to coffee with sugar and/or colas",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Frequent \u201cmidnight snacks\u201d",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Family history of diabetes",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Fatigue",
+          "linked_code": "nsp1_q1",
+          "source": "linked"
+        },
+        {
+          "label": "Frequent headaches",
+          "linked_code": "nsp2_q59",
+          "source": "linked"
+        },
+        {
+          "label": "Fainting spells",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Feeling depressed",
+          "linked_code": "nsp1_q22",
+          "source": "linked"
+        },
+        {
+          "label": "Lose temper easily",
+          "linked_code": null,
+          "source": "manual"
+        }
+      ]
+    }
+  ],
+  "Musculoskeletal": [
+    {
+      "heading": "MUSCULAR-SKELETAL",
+      "items": [
+        {
+          "label": "Pain, swelling, stiffness in joints",
+          "linked_code": "nsp2_q55",
+          "source": "linked"
+        },
+        {
+          "label": "Joint inflammation",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Pain, stiffness, inflammation of spine",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Facial pain",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Joints make popping sounds",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Gout",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Bones fracture easily",
+          "linked_code": "nsp1_q39",
+          "source": "linked"
+        },
+        {
+          "label": "Gradual loss of height",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Tooth loss, frequent toothaches",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Lack of exercise",
+          "linked_code": "nsp1_q40",
+          "source": "linked"
+        },
+        {
+          "label": "Rounding of shoulders; stooping",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Cramps in calf muscle during sleep/exercise",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Painful cramping of feet or toes",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Teeth prone to decay",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Malformation of bones",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Muscles weak, weak grip, light objects feel heavy",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Muscle pain",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Sprains; muscle strains",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Muscle(s) spasms",
+          "linked_code": "nsp1_q29",
+          "source": "linked",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Link"
+        },
+        {
+          "label": "Female: Menopause",
+          "linked_code": "nsp2_q49",
+          "source": "linked"
+        }
+      ]
+    },
+    {
+      "heading": "NEUROMUSCULAR",
+      "items": [
+        {
+          "label": "Muscle weakness",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Loss of balance",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Numbness",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Muscle twitching",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Muscle pain",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Hand tremors",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Pins and needles sensation",
+          "linked_code": "nsp2_q43",
+          "source": "linked"
+        },
+        {
+          "label": "Difficulty swallowing or breathing",
+          "linked_code": null,
+          "source": "manual",
+          "link_source": "client_review_column_N",
+          "client_final_status": "Don\u2019t link"
+        },
+        {
+          "label": "Muscular stiffness",
+          "linked_code": null,
+          "source": "manual"
+        },
+        {
+          "label": "Blurred or double vision",
+          "linked_code": null,
+          "source": "manual"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "users": [
+    {
+      "id": "admin001",
+      "name": "Admin User",
+      "email": "admin@healthyme.local",
+      "password_hash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "role": "admin",
+      "must_reset_password": false,
+      "is_active": true
+    },
+    {
+      "id": "member001",
+      "name": "Demo Member",
+      "email": "member@healthyme.local",
+      "password_hash": "5600376e863d2f57a053518f324ad3840b0bc2348b573af281a7b7cbe7a228c6",
+      "role": "member",
+      "must_reset_password": false,
+      "is_active": true
+    }
+  ],
+  "profiles": {
+    "member001": {
+      "full_name": "",
+      "gender": "",
+      "age": "",
+      "height_cm": "",
+      "weight_kg": "",
+      "phone": "",
+      "city": "",
+      "occupation": ""
+    }
+  },
+  "workflow": {
+    "member001": {
+      "laf_completed": false,
+      "nsp1_completed": false,
+      "nsp2_completed": false,
+      "submitted_for_review": false,
+      "admin_completed": false,
+      "final_report_ready": false,
+      "workflow_status": "not_started",
+      "body_mind_unlocked": false,
+      "body_mind_completed": false
+    }
+  },
+  "laf_responses": {},
+  "nsp1_responses": {},
+  "nsp2_responses": {},
+  "nsp_scores": {},
+  "admin_assessments": {},
+  "notifications": [],
+  "response_audit_log": [],
+  "body_mind_responses": {},
+  "daily_logs": {},
+  "assessment_instances": {},
+  "assessment_instance_responses": {}
+}
