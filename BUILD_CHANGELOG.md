@@ -146,3 +146,14 @@
 - Removed Recommended Flow expander and replaced it with a compact static flow card.
 - Unified marker aliases to show v14.
 - No scoring, authentication, database, or report calculation logic changed.
+
+
+## v16 - WakeMe Patch
+
+- Added `.github/workflows/wakeme.yml`.
+- Added `scripts/wakeme.py`.
+- Added `docs/WAKEME_SETUP.md`.
+- Workflow pings the deployed app every 10 minutes.
+- Workflow uses inline Python and no Node-based GitHub actions.
+- Requires GitHub secret or variable `WAKEME_URLS`.
+- No UI, scoring, authentication, database, or report calculation logic changed.

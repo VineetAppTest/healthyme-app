@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v14 Native Cards + Dashboard Flow Fix",
-  "version": "v14_native_cards_dashboard_flow",
-  "updated_on": "2026-05-11T21:33:16.586053+00:00",
+  "build_name": "HealthyMe v16 WakeMe Patch",
+  "version": "v16_wakeme_patch",
+  "updated_on": "2026-05-13T20:18:09.075169+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -16,5 +16,15 @@
     "No authentication changes",
     "No report calculation changes",
     "No new feature expansion"
+  ],
+  "latest_fix": [
+    "Added WakeMe keep-awake workflow at .github/workflows/wakeme.yml",
+    "Added scripts/wakeme.py for local/manual ping testing",
+    "Added docs/WAKEME_SETUP.md with setup steps",
+    "Workflow avoids Node-based GitHub actions to reduce Node deprecation warnings",
+    "No app UI, scoring, auth, database, or report calculation logic changed"
+  ],
+  "required_setup": [
+    "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
   ]
 }
