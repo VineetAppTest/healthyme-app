@@ -1,0 +1,75 @@
+name: WakeMe - Keep HealthyMe Warm
+
+on:
+  schedule:
+    # Runs every 10 minutes. GitHub schedules are best-effort and may be delayed occasionally.
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wakeme:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping HealthyMe app
+        env:
+          # Prefer repository secret WAKEME_URLS.
+          # Repository variable WAKEME_URLS is also supported.
+          WAKEME_URLS: ${{ secrets.WAKEME_URLS || vars.WAKEME_URLS }}
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          import time
+          import urllib.request
+          import urllib.error
+
+          def ping_url(url, timeout=25):
+              url = url.strip()
+              if not url:
+                  return False, "Empty URL skipped."
+              req = urllib.request.Request(
+                  url,
+                  headers={
+                      "User-Agent": "HealthyMe-WakeMe/1.0",
+                      "Cache-Control": "no-cache",
+                  },
+                  method="GET",
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout) as response:
+                      return True, f"{url} -> HTTP {getattr(response, 'status', None)}"
+              except urllib.error.HTTPError as exc:
+                  return True, f"{url} -> HTTP {exc.code}"
+              except Exception as exc:
+                  return False, f"{url} -> ERROR: {exc}"
+
+          raw_urls = os.getenv("WAKEME_URLS", "").strip()
+          if not raw_urls:
+              print("WAKEME_URLS is not set. Set repo secret or variable WAKEME_URLS to your deployed app URL.")
+              sys.exit(0)
+
+          urls = [u.strip() for u in raw_urls.split(",") if u.strip()]
+          print(f"WakeMe started for {len(urls)} URL(s).")
+
+          failures = 0
+          for url in urls:
+              ok = False
+              for attempt in range(1, 4):
+                  ok, msg = ping_url(url)
+                  print(f"Attempt {attempt}: {msg}")
+                  if ok:
+                      break
+                  time.sleep(5)
+              if not ok:
+                  failures += 1
+
+          if failures:
+              print(f"WakeMe completed with {failures} failed URL(s). Temporary delays are tolerated.")
+          else:
+              print("WakeMe completed successfully.")
+          PY
