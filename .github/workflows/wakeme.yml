@@ -2,74 +2,137 @@ name: WakeMe - Keep HealthyMe Warm
 
 on:
   schedule:
-    # Runs every 10 minutes. GitHub schedules are best-effort and may be delayed occasionally.
+    # Every 10 minutes. GitHub schedule is UTC and best-effort.
     - cron: "*/10 * * * *"
+    # Extra safety ping around 10:00 AM IST = 04:30 UTC.
+    - cron: "30 4 * * *"
   workflow_dispatch:
+    inputs:
+      target_urls:
+        description: "Optional URL override. Leave blank to use WAKEME_URLS secret/variable."
+        required: false
+        default: ""
 
 permissions:
   contents: read
 
+concurrency:
+  group: wakeme-healthyme
+  cancel-in-progress: false
+
 jobs:
   wakeme:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
 
     steps:
-      - name: Ping HealthyMe app
+      - name: Wake deployed app
         env:
-          # Prefer repository secret WAKEME_URLS.
-          # Repository variable WAKEME_URLS is also supported.
-          WAKEME_URLS: ${{ secrets.WAKEME_URLS || vars.WAKEME_URLS }}
+          MANUAL_URLS: ${{ github.event.inputs.target_urls }}
+          WAKEME_URLS_SECRET: ${{ secrets.WAKEME_URLS }}
+          WAKEME_URLS_VARIABLE: ${{ vars.WAKEME_URLS }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
           python - <<'PY'
+          import datetime as dt
           import os
           import sys
           import time
+          import urllib.parse
           import urllib.request
           import urllib.error
 
-          def ping_url(url, timeout=25):
-              url = url.strip()
-              if not url:
-                  return False, "Empty URL skipped."
-              req = urllib.request.Request(
-                  url,
-                  headers={
-                      "User-Agent": "HealthyMe-WakeMe/1.0",
-                      "Cache-Control": "no-cache",
-                  },
-                  method="GET",
-              )
-              try:
-                  with urllib.request.urlopen(req, timeout=timeout) as response:
-                      return True, f"{url} -> HTTP {getattr(response, 'status', None)}"
-              except urllib.error.HTTPError as exc:
-                  return True, f"{url} -> HTTP {exc.code}"
-              except Exception as exc:
-                  return False, f"{url} -> ERROR: {exc}"
+          manual_urls = os.getenv("MANUAL_URLS", "").strip()
+          secret_urls = os.getenv("WAKEME_URLS_SECRET", "").strip()
+          variable_urls = os.getenv("WAKEME_URLS_VARIABLE", "").strip()
+          event_name = os.getenv("GITHUB_EVENT_NAME", "")
 
-          raw_urls = os.getenv("WAKEME_URLS", "").strip()
+          raw_urls = manual_urls or secret_urls or variable_urls
+
+          print("WakeMe diagnostic")
+          print("=================")
+          print(f"Event: {event_name}")
+          print(f"UTC time: {dt.datetime.utcnow().isoformat()}Z")
+          print(f"Manual override configured: {'YES' if manual_urls else 'NO'}")
+          print(f"Secret WAKEME_URLS configured: {'YES' if secret_urls else 'NO'}")
+          print(f"Variable WAKEME_URLS configured: {'YES' if variable_urls else 'NO'}")
+
           if not raw_urls:
-              print("WAKEME_URLS is not set. Set repo secret or variable WAKEME_URLS to your deployed app URL.")
+              print("")
+              print("ERROR: No target URL configured.")
+              print("Set one of these:")
+              print("1. GitHub repository secret: WAKEME_URLS")
+              print("2. GitHub repository variable: WAKEME_URLS")
+              print("3. Manual workflow input: target_urls")
               sys.exit(0)
 
           urls = [u.strip() for u in raw_urls.split(",") if u.strip()]
+          if not urls:
+              print("ERROR: URL string was found, but no valid URLs were parsed.")
+              sys.exit(0)
+
+          def add_cache_buster(url):
+              parsed = urllib.parse.urlparse(url)
+              query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+              query.append(("wakeme", str(int(time.time()))))
+              new_query = urllib.parse.urlencode(query)
+              return urllib.parse.urlunparse(parsed._replace(query=new_query))
+
+          def ping(url, timeout=30):
+              target = add_cache_buster(url)
+              req = urllib.request.Request(
+                  target,
+                  headers={
+                      "User-Agent": "HealthyMe-WakeMe/3.0",
+                      "Cache-Control": "no-cache",
+                      "Pragma": "no-cache",
+                  },
+                  method="GET",
+              )
+              started = time.time()
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout) as response:
+                      elapsed = round(time.time() - started, 2)
+                      status = getattr(response, "status", None)
+                      return True, f"HTTP {status} in {elapsed}s"
+              except urllib.error.HTTPError as exc:
+                  elapsed = round(time.time() - started, 2)
+                  # HTTP response still confirms endpoint was reached.
+                  return True, f"HTTP {exc.code} in {elapsed}s"
+              except Exception as exc:
+                  elapsed = round(time.time() - started, 2)
+                  return False, f"ERROR after {elapsed}s: {exc}"
+
+          print("")
           print(f"WakeMe started for {len(urls)} URL(s).")
 
           failures = 0
           for url in urls:
+              print("")
+              print(f"Target: {url}")
               ok = False
-              for attempt in range(1, 4):
-                  ok, msg = ping_url(url)
-                  print(f"Attempt {attempt}: {msg}")
+              last = ""
+              # Salary Management System learning:
+              # A sleeping Streamlit app may need multiple hits and a longer wait.
+              for attempt in range(1, 6):
+                  ok, last = ping(url)
+                  print(f"Attempt {attempt}/5: {last}")
                   if ok:
                       break
-                  time.sleep(5)
+                  # Progressive wait: short first, then slightly longer.
+                  time.sleep(min(5 * attempt, 20))
               if not ok:
                   failures += 1
+                  print(f"Final status for {url}: FAILED")
+              else:
+                  print(f"Final status for {url}: OK")
 
+          print("")
           if failures:
-              print(f"WakeMe completed with {failures} failed URL(s). Temporary delays are tolerated.")
+              print(f"WakeMe finished with {failures} failed target(s).")
+              print("Workflow exits success intentionally, so temporary Streamlit/network delays do not disable the workflow.")
           else:
-              print("WakeMe completed successfully.")
+              print("WakeMe completed successfully for all targets.")
+
+          sys.exit(0)
           PY
