@@ -157,3 +157,15 @@
 - Workflow uses inline Python and no Node-based GitHub actions.
 - Requires GitHub secret or variable `WAKEME_URLS`.
 - No UI, scoring, authentication, database, or report calculation logic changed.
+
+
+## v18 - Sturdy WakeMe
+
+- Applied Salary Management System scheduling learnings.
+- Added manual workflow URL override.
+- Reads secret and variable separately.
+- Adds cache-busting query parameter.
+- Uses 5 retries with progressive waiting.
+- Adds extra 10:00 AM IST safety schedule.
+- Logs UTC time and configuration diagnostics.
+- No app UI, scoring, authentication, database, or report calculation logic changed.

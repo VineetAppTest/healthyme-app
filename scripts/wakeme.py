@@ -1,13 +1,11 @@
 """
-WakeMe script for HealthyMe.
+HealthyMe WakeMe local/manual tester.
 
-Pings deployed HealthyMe URL(s) to reduce idle sleep.
-Uses only Python standard library.
+Usage:
+  set WAKEME_URLS=https://your-app.streamlit.app
+  python scripts/wakeme.py
 
-Environment variable:
-  WAKEME_URLS="https://your-app.streamlit.app"
-or multiple:
-  WAKEME_URLS="https://app1.streamlit.app,https://app2.streamlit.app"
+This mirrors the GitHub workflow logic closely.
 """
 
 from __future__ import annotations
@@ -15,66 +13,64 @@ from __future__ import annotations
 import os
 import sys
 import time
+import urllib.parse
 import urllib.request
 import urllib.error
 
 
-def ping_url(url: str, timeout: int = 25) -> tuple[bool, str]:
-    url = url.strip()
-    if not url:
-        return False, "Empty URL skipped."
+def add_cache_buster(url: str) -> str:
+    parsed = urllib.parse.urlparse(url)
+    query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+    query.append(("wakeme", str(int(time.time()))))
+    return urllib.parse.urlunparse(parsed._replace(query=urllib.parse.urlencode(query)))
 
-    request = urllib.request.Request(
-        url,
+
+def ping(url: str, timeout: int = 30) -> tuple[bool, str]:
+    target = add_cache_buster(url)
+    req = urllib.request.Request(
+        target,
         headers={
-            "User-Agent": "HealthyMe-WakeMe/1.0",
+            "User-Agent": "HealthyMe-WakeMe/3.0",
             "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
         },
         method="GET",
     )
-
+    started = time.time()
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            return True, f"{url} -> HTTP {getattr(response, 'status', None)}"
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            elapsed = round(time.time() - started, 2)
+            return True, f"HTTP {getattr(response, 'status', None)} in {elapsed}s"
     except urllib.error.HTTPError as exc:
-        # Any HTTP response means the endpoint was reached.
-        return True, f"{url} -> HTTP {exc.code}"
+        elapsed = round(time.time() - started, 2)
+        return True, f"HTTP {exc.code} in {elapsed}s"
     except Exception as exc:
-        return False, f"{url} -> ERROR: {exc}"
+        elapsed = round(time.time() - started, 2)
+        return False, f"ERROR after {elapsed}s: {exc}"
 
 
 def main() -> int:
-    raw_urls = os.getenv("WAKEME_URLS", "").strip()
-
-    if not raw_urls:
-        print("WAKEME_URLS is not set. Nothing to ping.")
-        print("Set GitHub secret or variable WAKEME_URLS to your deployed app URL.")
+    raw = os.getenv("WAKEME_URLS", "").strip()
+    if not raw:
+        print("ERROR: WAKEME_URLS is not set.")
         return 0
 
-    urls = [u.strip() for u in raw_urls.split(",") if u.strip()]
-    if not urls:
-        print("No valid URL found in WAKEME_URLS.")
-        return 0
-
-    print(f"WakeMe started for {len(urls)} URL(s).")
-
+    urls = [u.strip() for u in raw.split(",") if u.strip()]
     failures = 0
+
     for url in urls:
+        print(f"Target: {url}")
         ok = False
-        for attempt in range(1, 4):
-            ok, message = ping_url(url)
-            print(f"Attempt {attempt}: {message}")
+        for attempt in range(1, 6):
+            ok, msg = ping(url)
+            print(f"Attempt {attempt}/5: {msg}")
             if ok:
                 break
-            time.sleep(5)
+            time.sleep(min(5 * attempt, 20))
         if not ok:
             failures += 1
 
-    if failures:
-        print(f"WakeMe completed with {failures} failed URL(s). Temporary delays are tolerated.")
-        return 0
-
-    print("WakeMe completed successfully.")
+    print("WakeMe completed." if not failures else f"WakeMe completed with {failures} failed target(s).")
     return 0
 
 
