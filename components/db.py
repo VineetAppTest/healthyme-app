@@ -137,10 +137,11 @@ def update_workflow(user_id, **kwargs):
     db=load_db()
     wf=db["workflow"].setdefault(user_id,{})
     wf.update(kwargs)
-    # v22 rule: when admin review is completed, Body-Mind should become visible automatically.
-    # Explicit disabling remains available only through Body-Mind Access Control.
-    if kwargs.get("admin_completed") is True:
-        wf["body_mind_unlocked"] = True
+    # v23 rule:
+    # Admin completion and Body-Mind activation are related but not identical.
+    # Body-Mind should activate only when admin completion is done AND admin explicitly selects activation
+    # from Admin Assessment or Body-Mind Access Control.
+    # Do not auto-enable here.
     db["workflow"][user_id]=normalize_workflow(wf)
     save_db(db)
 def save_form_response(store,user_id,data): db=load_db(); db[store][user_id]=data; save_db(db)

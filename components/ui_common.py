@@ -1594,6 +1594,20 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
 .hm-v15-compact-note{color:#64748B;font-size:.82rem;line-height:1.32;margin:.25rem 0 .55rem 0;}
 .hm-v15-reminder-note{background:#FFF8E8;border:1px solid #E8D39E;border-radius:16px;padding:.65rem .8rem;margin:.75rem 0 .8rem 0;color:#4B3A16;font-size:.84rem;line-height:1.35;}
 
+/* --- v23 Stability + Visibility Fix --- */
+.hm-v23-version-line{
+  margin-top:.12rem;
+  color:#64748B;
+  font-size:.76rem;
+  font-weight:800;
+  letter-spacing:.01em;
+}
+.hm-v23-logout-note{
+  color:#64748B;
+  font-size:.78rem;
+  margin:.15rem 0 .4rem 0;
+}
+
 </style>
 """
 
@@ -1910,3 +1924,83 @@ def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_A
     st.markdown('</div>', unsafe_allow_html=True)
     if location != 'top':
         st.markdown("<div style='margin:.45rem 0 0 0;'><a href='#top'>↑ Back to top</a></div>", unsafe_allow_html=True)
+
+
+# --------------------------------------------------------------------
+# v23: version display + logout polish
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v23"
+APP_BUILD_LABEL = "Stability + Visibility Fix"
+
+def render_build_text_v23():
+    st.markdown(
+        f"<div class='hm-v23-version-line'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>",
+        unsafe_allow_html=True,
+    )
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hm-v23-version-line'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# Backward-compatible build aliases.
+def render_build_text_v22():
+    render_build_text_v23()
+def render_build_text_v21():
+    render_build_text_v23()
+def render_build_text_v20():
+    render_build_text_v23()
+def render_build_text_v19():
+    render_build_text_v23()
+def render_build_text_v18():
+    render_build_text_v23()
+def render_build_text_v17():
+    render_build_text_v23()
+def render_build_text_v16():
+    render_build_text_v23()
+def render_build_text_v15():
+    render_build_text_v23()
+def render_build_text_v14():
+    render_build_text_v23()
+def render_build_text_v13():
+    render_build_text_v23()
+def render_build_text_v12():
+    render_build_text_v23()
+def render_build_text_v11():
+    render_build_text_v23()
+def build_marker_v11():
+    render_build_text_v23()
+def build_marker_v10():
+    render_build_text_v23()
+def build_marker_v9():
+    render_build_text_v23()
+def build_marker_v8():
+    render_build_text_v23()
+def build_marker_v7():
+    render_build_text_v23()
+def render_version_tag():
+    render_build_text_v23()
+
+
+def utility_logout_bar():
+    role=st.session_state.get("user_role","")
+    name=st.session_state.get("user_name","User")
+    if not st.session_state.get("logged_in"):
+        return
+    left,right=st.columns([5,1])
+    with left:
+        st.markdown(f"<div class='utility-bar'><div class='utility-user'>Signed in as <b>{name}</b><span class='utility-role'>{role.title()}</span></div></div>", unsafe_allow_html=True)
+    with right:
+        if st.button("Logout", key="global_logout", use_container_width=True):
+            st.session_state["logout_in_progress"] = True
+            logout_current_user()
+            st.switch_page("pages/01_Login.py")

@@ -11,7 +11,7 @@ render_page_nav("Body-Mind Access", back_page="pages/10_Admin_Dashboard.py", sho
 
 topbar(
     "Body-Mind Access Control",
-    "Body-Mind auto-activates after admin assessment completion. Use this page only to check or explicitly disable access.",
+    "Activate Body-Mind after the five admin pages/final admin assessment are completed, or explicitly disable it if required.",
     "Admin control"
 )
 render_system_message()
@@ -30,6 +30,7 @@ body_response = db.get("body_mind_responses", {}).get(member_id, {})
 admin_assessment = get_admin_assessment(member_id)
 
 admin_assessment_saved = bool(admin_assessment) or bool(wf.get("admin_completed"))
+admin_final_completed = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready"))
 
 card_start()
 st.subheader(member["name"])
@@ -40,15 +41,15 @@ stat_grid([
     {"label": "Body-Mind", "value": "Completed" if wf.get("body_mind_completed") else "Not completed", "note": "Member progress"},
     {"label": "Responses", "value": "Available" if body_response else "No responses", "note": "Stored data"},
 ])
-if not admin_assessment_saved:
-    st.warning("Complete and save Admin Assessment before enabling Body-Mind Connection.")
+if not admin_final_completed:
+    st.warning("Complete the five admin pages / final admin assessment before enabling Body-Mind Connection.")
 card_end()
 
 card_start()
 st.subheader("Set visibility")
-st.caption("v22 note: Body-Mind auto-activates after admin assessment completion. Use this page for verification or explicit disable only.")
+st.caption("v22 note: Body-Mind activates only after admin completion and admin selection. Use this page to activate, verify, or explicitly disable.")
 
-if not admin_assessment_saved and not wf.get("body_mind_unlocked"):
+if not admin_final_completed and not wf.get("body_mind_unlocked"):
     st.checkbox(
         "Make Body-Mind Connection page visible to this member",
         value=False,

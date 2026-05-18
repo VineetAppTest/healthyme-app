@@ -205,3 +205,16 @@
 - Final Admin Assessment completion explicitly activates Body-Mind.
 - Body-Mind Access Control remains the place for explicit disable.
 - No scoring, authentication, database, or final report calculation logic changed.
+
+
+## v23 - Stability + Visibility Fix
+
+- Applied clarified Body-Mind business rule:
+  admin final completion + admin activation selection = Body-Mind visible.
+- Removed the assumption that admin completion alone should auto-activate Body-Mind.
+- Admin Assessment final submit now applies selected Body-Mind activation and preserves existing activation.
+- Body-Mind Access Control requires final admin completion before activation.
+- Added v23 version line below page header/topbar.
+- Added minor logout transition polish.
+- Removed duplicate build/patch/archive artifacts only.
+- No scoring, final report calculation, auth structure, or DB schema changes.

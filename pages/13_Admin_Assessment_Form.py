@@ -67,6 +67,8 @@ else:
 # Disabling should happen only from Body-Mind Access Control via explicit disable confirmation.
 def _effective_body_mind_unlock():
     latest_wf = get_workflow(mid)
+    # Preserve existing activation. Enable if selected here.
+    # Do not disable Body-Mind from Admin Assessment; disable only from Body-Mind Access Control.
     return bool(latest_wf.get("body_mind_unlocked")) or bool(body_mind_unlock_choice)
 
 c1,c2=st.columns(2)
@@ -92,6 +94,9 @@ with c2:
             save_admin_assessment(mid, all_data)
             unlock_body_mind(mid, _effective_body_mind_unlock())
             update_workflow(mid, admin_completed=True, final_report_ready=True)
+            # v23: apply selected Body-Mind activation after admin completion.
+            # This activates Body-Mind if selected from this path, and preserves existing activation.
+            unlock_body_mind(mid, _effective_body_mind_unlock())
             effective_unlock = _effective_body_mind_unlock()
             if effective_unlock and not old_body_mind_visibility:
                 set_system_message("Admin Assessment completed, Final Assessment Report is now available, and Body-Mind Connection page enabled for this member.", "success", celebrate=True)

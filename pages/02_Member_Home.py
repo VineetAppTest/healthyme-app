@@ -116,7 +116,7 @@ with right:
             st.switch_page("pages/19_Body_Mind_Connection.py")
     else:
         st.markdown(
-            "<div class='lock-card'><b>Body-Mind Connection is not enabled yet.</b><br>Body-Mind appears after admin assessment completion, or when enabled separately by the admin.</div>",
+            "<div class='lock-card'><b>Body-Mind Connection is not activated yet.</b><br>Admin final assessment is required first, then Body-Mind must be activated by the admin.</div>",
             unsafe_allow_html=True,
         )
 
