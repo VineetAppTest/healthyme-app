@@ -116,7 +116,7 @@ with right:
             st.switch_page("pages/19_Body_Mind_Connection.py")
     else:
         st.markdown(
-            "<div class='lock-card'><b>Body-Mind Connection is not enabled yet.</b><br>Your admin will enable this section after review.</div>",
+            "<div class='lock-card'><b>Body-Mind Connection is not enabled yet.</b><br>Recipes/exercises may be available separately after final review. Body-Mind needs separate admin activation.</div>",
             unsafe_allow_html=True,
         )
 

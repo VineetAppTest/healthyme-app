@@ -187,3 +187,12 @@
 - Body-Mind Access Control now shows 'already activated' and disables duplicate activation.
 - Disabling requires an explicit checkbox to reduce accidental changes.
 - No scoring, authentication, database, or final report calculation logic changed.
+
+
+## v21 - Body-Mind Preserve Activation
+
+- Fixed safety gap where Admin Assessment could unintentionally disable Body-Mind if the checkbox was unchecked/stale.
+- Admin Assessment can now enable Body-Mind, but it will not disable an existing activation.
+- Body-Mind disable remains only through explicit Body-Mind Access Control safety flow.
+- Clarified Member Home lock message for Body-Mind vs Recipe/Exercise access.
+- No scoring, authentication, database, or final report calculation logic changed.

@@ -46,6 +46,7 @@ card_end()
 
 card_start()
 st.subheader("Set visibility")
+st.caption("v21 safety note: Body-Mind activation is independent from recipe/exercise unlock. Recipes/exercises may be visible after final report even if Body-Mind is still hidden.")
 
 if not admin_assessment_saved and not wf.get("body_mind_unlocked"):
     st.checkbox(
