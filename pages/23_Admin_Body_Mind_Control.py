@@ -11,7 +11,7 @@ render_page_nav("Body-Mind Access", back_page="pages/10_Admin_Dashboard.py", sho
 
 topbar(
     "Body-Mind Access Control",
-    "Enable or disable the Body-Mind Connection page for the selected member.",
+    "Body-Mind auto-activates after admin assessment completion. Use this page only to check or explicitly disable access.",
     "Admin control"
 )
 render_system_message()
@@ -46,7 +46,7 @@ card_end()
 
 card_start()
 st.subheader("Set visibility")
-st.caption("v21 safety note: Body-Mind activation is independent from recipe/exercise unlock. Recipes/exercises may be visible after final report even if Body-Mind is still hidden.")
+st.caption("v22 note: Body-Mind auto-activates after admin assessment completion. Use this page for verification or explicit disable only.")
 
 if not admin_assessment_saved and not wf.get("body_mind_unlocked"):
     st.checkbox(

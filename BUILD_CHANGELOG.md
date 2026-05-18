@@ -196,3 +196,12 @@
 - Body-Mind disable remains only through explicit Body-Mind Access Control safety flow.
 - Clarified Member Home lock message for Body-Mind vs Recipe/Exercise access.
 - No scoring, authentication, database, or final report calculation logic changed.
+
+
+## v22 - Body-Mind Auto Activate on Admin Complete
+
+- Fixed split-flag confusion between `admin_completed` and `body_mind_unlocked`.
+- When `admin_completed=True` is set, `body_mind_unlocked=True` is now also set.
+- Final Admin Assessment completion explicitly activates Body-Mind.
+- Body-Mind Access Control remains the place for explicit disable.
+- No scoring, authentication, database, or final report calculation logic changed.

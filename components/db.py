@@ -134,7 +134,15 @@ def normalize_workflow(wf):
     return base
 def get_workflow(user_id): return normalize_workflow(load_db()["workflow"].get(user_id,{}))
 def update_workflow(user_id, **kwargs):
-    db=load_db(); wf=db["workflow"].setdefault(user_id,{}); wf.update(kwargs); db["workflow"][user_id]=normalize_workflow(wf); save_db(db)
+    db=load_db()
+    wf=db["workflow"].setdefault(user_id,{})
+    wf.update(kwargs)
+    # v22 rule: when admin review is completed, Body-Mind should become visible automatically.
+    # Explicit disabling remains available only through Body-Mind Access Control.
+    if kwargs.get("admin_completed") is True:
+        wf["body_mind_unlocked"] = True
+    db["workflow"][user_id]=normalize_workflow(wf)
+    save_db(db)
 def save_form_response(store,user_id,data): db=load_db(); db[store][user_id]=data; save_db(db)
 def get_form_response(store,user_id): return load_db().get(store,{}).get(user_id,{})
 def save_nsp_score(user_id,data): db=load_db(); db["nsp_scores"][user_id]=data; save_db(db)

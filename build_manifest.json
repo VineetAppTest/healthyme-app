@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v21 Body-Mind Preserve Activation",
-  "version": "v21_body_mind_preserve_activation",
-  "updated_on": "2026-05-18T08:04:07.015156+00:00",
+  "build_name": "HealthyMe v22 Body-Mind Auto Activate on Admin Complete",
+  "version": "v22_body_mind_auto_activate_admin_complete",
+  "updated_on": "2026-05-18T08:14:26.291827+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,10 +18,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Admin Assessment page can enable Body-Mind but can no longer disable an existing activation.",
-    "Before saving/final submit, Admin Assessment re-reads latest workflow and preserves body_mind_unlocked=True if already active.",
-    "Disabling Body-Mind remains possible only from Body-Mind Access Control with explicit disable safety.",
-    "Member Home lock copy clarified to explain Body-Mind is separate from recipe/exercise unlock.",
+    "When admin_completed=True is set, body_mind_unlocked is automatically set to True.",
+    "Final Admin Assessment completion now explicitly activates Body-Mind.",
+    "Body-Mind Access Control remains available for verification or explicit disable only.",
+    "Member Home wording clarified.",
     "No scoring/auth/database/final report calculation changes."
   ],
   "required_setup": [
@@ -38,14 +38,14 @@
     "workflow uses inline Python and no Node-based actions"
   ],
   "root_cause": [
-    "Current screenshot means admin_completed=True, so Recipe/Exercise are visible, but body_mind_unlocked=False.",
-    "Likely safety gap: Admin Assessment save/final submit could call unlock_body_mind(False) if the Body-Mind checkbox was unchecked or stale.",
-    "That could override a prior Body-Mind activation done from Body-Mind Access Control."
+    "admin_completed and body_mind_unlocked were separate flags.",
+    "Completing the admin assessment/final report could make recipes and exercises visible while Body-Mind remained hidden.",
+    "This caused confusion because the business expectation is that Body-Mind should be available after admin completion."
   ],
   "testing_required": [
-    "Activate Body-Mind from Body-Mind Access Control.",
-    "Open/save/final-submit Admin Assessment with the Body-Mind checkbox not selected or stale.",
-    "Confirm Body-Mind remains visible to the member.",
-    "Confirm Recipe/Exercise remain controlled by admin_completed/final report."
+    "Complete Admin Assessment final action for a test member.",
+    "Confirm final_report_ready=True and body_mind_unlocked=True.",
+    "Login as member and confirm Body-Mind Connection appears.",
+    "If needed, explicitly disable Body-Mind from Body-Mind Access Control and confirm it hides."
   ]
 }
