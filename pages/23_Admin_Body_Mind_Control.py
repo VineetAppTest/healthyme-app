@@ -11,7 +11,7 @@ render_page_nav("Body-Mind Access", back_page="pages/10_Admin_Dashboard.py", sho
 
 topbar(
     "Body-Mind Access Control",
-    "Enable or disable the Body-Mind Connection page after the admin assessment has been saved.",
+    "Enable or disable the Body-Mind Connection page for the selected member.",
     "Admin control"
 )
 render_system_message()
@@ -56,21 +56,32 @@ if not admin_assessment_saved and not wf.get("body_mind_unlocked"):
     )
     st.button("Save Body-Mind Visibility", disabled=True, use_container_width=True)
 else:
-    unlock = st.checkbox(
-        "Make Body-Mind Connection page visible to this member",
-        value=bool(wf.get("body_mind_unlocked")),
-        help="You can disable visibility later if needed."
-    )
-    if st.button("Save Body-Mind Visibility", type="primary", use_container_width=True):
-        old_visibility = bool(wf.get("body_mind_unlocked"))
-        set_body_mind_visibility(member_id, unlock)
-        if unlock and not old_visibility:
-            set_system_message("Body-Mind Connection page enabled for this member.", "success", celebrate=True)
-        elif not unlock and old_visibility:
-            set_system_message("Body-Mind Connection page disabled for this member.", "warning")
-        else:
-            set_system_message("No visibility change was needed.", "info")
-        st.rerun()
+    old_visibility = bool(wf.get("body_mind_unlocked"))
+
+    if old_visibility:
+        st.info("Body-Mind Connection is already activated for this member.")
+        if st.button("Keep Activated", disabled=True, use_container_width=True):
+            pass
+        st.caption("To avoid accidental duplicate activation, this page will not re-activate an already active Body-Mind connection.")
+        allow_disable = st.checkbox("I need to disable Body-Mind visibility for this member")
+        if allow_disable:
+            if st.button("Disable Body-Mind Visibility", type="primary", use_container_width=True):
+                set_body_mind_visibility(member_id, False)
+                set_system_message("Body-Mind Connection page disabled for this member.", "warning")
+                st.rerun()
+    else:
+        unlock = st.checkbox(
+            "Make Body-Mind Connection page visible to this member",
+            value=False,
+            help="Enable Body-Mind Connection for this member."
+        )
+        if st.button("Save Body-Mind Visibility", type="primary", use_container_width=True):
+            set_body_mind_visibility(member_id, unlock)
+            if unlock:
+                set_system_message("Body-Mind Connection page enabled for this member.", "success", celebrate=True)
+            else:
+                set_system_message("No visibility change was needed.", "info")
+            st.rerun()
 
 card_end()
 

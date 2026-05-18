@@ -169,3 +169,21 @@
 - Adds extra 10:00 AM IST safety schedule.
 - Logs UTC time and configuration diagnostics.
 - No app UI, scoring, authentication, database, or report calculation logic changed.
+
+
+## v19 - Body-Mind Visibility Fix
+
+- Fixed mismatch where admin could enable Body-Mind but Member Home still hid it if `admin_completed` was false.
+- Body-Mind now appears whenever `body_mind_unlocked=True`.
+- Recipes/exercises remain gated by `admin_completed=True`.
+- Updated Body-Mind Control page copy.
+- No scoring, authentication, database, or report calculation logic changed.
+
+
+## v20 - Body-Mind Activation Safety
+
+- Added duplicate activation safety for Body-Mind Connection.
+- If Body-Mind is already active, Admin Assessment page now shows an informational message instead of acting like a new activation is needed.
+- Body-Mind Access Control now shows 'already activated' and disables duplicate activation.
+- Disabling requires an explicit checkbox to reduce accidental changes.
+- No scoring, authentication, database, or final report calculation logic changed.

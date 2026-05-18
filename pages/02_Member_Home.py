@@ -102,13 +102,30 @@ with left:
 with right:
     card_start()
     st.subheader("Personalized content")
-    if not wf.get("admin_completed"):
-        st.markdown("<div class='lock-card'><b>Locked until expert review is complete.</b><br>Recipes and exercises unlock after admin evaluation.</div>", unsafe_allow_html=True)
+
+    # v19 fix:
+    # Body-Mind visibility is controlled by body_mind_unlocked.
+    # It should not be hidden only because admin_completed is False.
+    # Recipes/exercises remain locked until admin_completed.
+    body_mind_unlocked = bool(wf.get("body_mind_unlocked"))
+    admin_completed = bool(wf.get("admin_completed"))
+
+    if body_mind_unlocked:
+        label = "Body-Mind Connection" if not wf.get("body_mind_completed") else "Body-Mind Connection ✓"
+        if st.button(label, type="primary", use_container_width=True):
+            st.switch_page("pages/19_Body_Mind_Connection.py")
     else:
-        if wf.get("body_mind_unlocked"):
-            label = "Body-Mind Connection" if not wf.get("body_mind_completed") else "Body-Mind Connection ✓"
-            if st.button(label, use_container_width=True):
-                st.switch_page("pages/19_Body_Mind_Connection.py")
+        st.markdown(
+            "<div class='lock-card'><b>Body-Mind Connection is not enabled yet.</b><br>Your admin will enable this section after review.</div>",
+            unsafe_allow_html=True,
+        )
+
+    if not admin_completed:
+        st.markdown(
+            "<div class='lock-card'><b>Recipes and exercises are locked until expert review is complete.</b></div>",
+            unsafe_allow_html=True,
+        )
+    else:
         if st.button("Recipe Repository", use_container_width=True):
             st.switch_page("pages/08_Recipe_Repository.py")
         if st.button("Exercise Repository", use_container_width=True):

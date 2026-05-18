@@ -24,8 +24,6 @@ This package is a cleaned, ready-to-upload version of the uploaded HealthyMe app
 5. Cleanup done:
    - Removed many old version notes, salary/payroll/WageWise leftover files, old patch notes, and unused CSVs.
    - Kept only runtime folders/files plus essential Supabase SQL references.
-  
-6. WakeMe schedule activated
 
 ## Important
 

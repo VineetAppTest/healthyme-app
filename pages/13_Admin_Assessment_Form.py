@@ -50,8 +50,17 @@ for section, groups in templates.items():
                 section_data[key]=val; grand+=map_answer(val)
     all_data[section]=section_data
 st.info(f"Estimated internal total: {grand}")
-body_mind_unlock_choice = st.checkbox("After saving this admin assessment, make Body-Mind Connection page visible to this member", value=bool(current_wf.get("body_mind_unlocked")))
-st.caption("Body-Mind can be enabled here only because this action saves the admin assessment first.")
+body_mind_already_unlocked = bool(current_wf.get("body_mind_unlocked"))
+
+if body_mind_already_unlocked:
+    st.info("Body-Mind Connection is already activated for this member. No further activation is required from this page.")
+    body_mind_unlock_choice = True
+else:
+    body_mind_unlock_choice = st.checkbox(
+        "After saving this admin assessment, make Body-Mind Connection page visible to this member",
+        value=False,
+    )
+    st.caption("Body-Mind can be enabled here only because this action saves the admin assessment first.")
 c1,c2=st.columns(2)
 with c1:
     if st.button("Save Draft", use_container_width=True):
@@ -77,6 +86,8 @@ with c2:
             update_workflow(mid, admin_completed=True, final_report_ready=True)
             if body_mind_unlock_choice and not old_body_mind_visibility:
                 set_system_message("Admin Assessment completed, Final Assessment Report is now available, and Body-Mind Connection page enabled for this member.", "success", celebrate=True)
+            elif body_mind_unlock_choice and old_body_mind_visibility:
+                set_system_message("Admin Assessment completed and Final Assessment Report is now available. Body-Mind Connection was already activated.", "success", celebrate=True)
             elif not body_mind_unlock_choice and old_body_mind_visibility:
                 set_system_message("Final report generated and Body-Mind Connection page disabled for this member.", "warning")
             else:

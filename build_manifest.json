@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v18 Sturdy WakeMe",
-  "version": "v18_sturdy_wakeme",
-  "updated_on": "2026-05-16T15:24:33.314399+00:00",
+  "build_name": "HealthyMe v20 Body-Mind Activation Safety",
+  "version": "v20_body_mind_activation_safety",
+  "updated_on": "2026-05-18T07:53:51.222469+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,10 +18,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Replaced WakeMe with sturdy v18 workflow",
-    "Updated scripts/wakeme.py",
-    "Updated docs/WAKEME_SETUP.md",
-    "No app UI/scoring/auth/database/report logic changed"
+    "Admin Assessment page now shows 'already activated' message if Body-Mind is already unlocked.",
+    "Body-Mind Access Control now shows 'already activated' and disables duplicate activation.",
+    "Disable remains possible only through an explicit 'I need to disable' safety checkbox.",
+    "Messages updated to avoid implying duplicate activation.",
+    "No scoring/auth/database/final report calculation changes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -35,5 +36,16 @@
     "cache-busting query parameter added",
     "extra safety cron around 10:00 AM IST",
     "workflow uses inline Python and no Node-based actions"
+  ],
+  "root_cause": [
+    "Two admin locations can update the same body_mind_unlocked flag.",
+    "Activating from both locations is technically idempotent but confusing for admins.",
+    "Second location appeared to allow activation again even when already active."
+  ],
+  "testing_required": [
+    "Admin: Select member in Body-Mind Access Control and enable visibility.",
+    "Member: Log out/login or refresh Member Home.",
+    "Member Home: Body-Mind Connection button should appear under Personalized content.",
+    "Recipes/exercises should remain locked if admin_completed=False."
   ]
 }
