@@ -115,8 +115,17 @@ with right:
         if st.button(label, type="primary", use_container_width=True):
             st.switch_page("pages/19_Body_Mind_Connection.py")
     else:
+        activation_requested = bool(wf.get("body_mind_activation_requested"))
+        if admin_completed and activation_requested:
+            body_mind_msg = "Activation was requested, but visibility sync is pending. Ask admin to save Body-Mind access once."
+        elif admin_completed:
+            body_mind_msg = "Final review is complete, but Body-Mind has not been activated by admin."
+        elif activation_requested:
+            body_mind_msg = "Activation is requested and will open after admin final assessment is completed."
+        else:
+            body_mind_msg = "Admin final assessment is required first, then Body-Mind must be activated by admin."
         st.markdown(
-            "<div class='lock-card'><b>Body-Mind Connection is not activated yet.</b><br>Admin final assessment is required first, then Body-Mind must be activated by the admin.</div>",
+            f"<div class='lock-card'><b>Body-Mind Connection is not activated yet.</b><br>{body_mind_msg}</div>",
             unsafe_allow_html=True,
         )
 

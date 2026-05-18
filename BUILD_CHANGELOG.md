@@ -218,3 +218,23 @@
 - Added minor logout transition polish.
 - Removed duplicate build/patch/archive artifacts only.
 - No scoring, final report calculation, auth structure, or DB schema changes.
+
+
+## v24 - Body-Mind + Version Placement Fix
+
+- Moved version display under the HealthyMe brand in the page header.
+- Added shared Body-Mind activation sync helper.
+- Admin Assessment final submit now syncs Body-Mind activation after admin completion if activation is selected.
+- Body-Mind Access Control uses the same activation sync path.
+- Member Home message now distinguishes between admin completion pending and activation pending.
+- No scoring, report calculation, auth structure, or DB schema changes.
+
+
+## v25 - Body-Mind State Sync Fix
+
+- Added `body_mind_activation_requested` workflow flag.
+- Body-Mind activation request is now preserved from either approved path.
+- If request exists and admin final completion is done, Body-Mind unlocks.
+- Body-Mind Access Control can record the activation request before final completion.
+- Explicit disable clears request and visibility.
+- No scoring, report calculation, auth structure, or DB schema changes.

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v23 Stability + Visibility Fix",
-  "version": "v23_stability_visibility_fix",
-  "updated_on": "2026-05-18T08:43:57.735811+00:00",
+  "build_name": "HealthyMe v25 Body-Mind State Sync Fix",
+  "version": "v25_body_mind_state_sync",
+  "updated_on": "2026-05-18T08:57:42.485884+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,13 +18,14 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed/avoided auto Body-Mind activation on admin_completed alone.",
-    "Admin Assessment final submit applies selected Body-Mind activation and preserves existing activation.",
-    "Body-Mind Access Control requires admin final completion before activation.",
-    "Member Home message clarified for Body-Mind activation pending state.",
-    "Added visible v23 version line under page header/topbar.",
-    "Added minor logout polish by setting logout_in_progress before switching to login.",
-    "Removed duplicate build/patch/archive artifacts only."
+    "Added body_mind_activation_requested workflow flag.",
+    "Admin Assessment records activation request and syncs visibility after final completion.",
+    "Body-Mind Access Control can record activation request before final completion.",
+    "When final admin completion happens, Body-Mind unlocks if request exists.",
+    "Existing active Body-Mind remains preserved.",
+    "Explicit disable clears both request and visibility.",
+    "Version marker updated to v25.",
+    "No scoring, final report calculation, auth structure, or database schema changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -40,22 +41,19 @@
     "workflow uses inline Python and no Node-based actions"
   ],
   "root_cause": [
-    "admin_completed and body_mind_unlocked were separate flags.",
-    "Completing the admin assessment/final report could make recipes and exercises visible while Body-Mind remained hidden.",
-    "This caused confusion because the business expectation is that Body-Mind should be available after admin completion."
+    "The app had only body_mind_unlocked, but did not reliably preserve that admin had requested activation before final admin completion.",
+    "If admin selected Body-Mind activation before completion, the request could be lost or not applied after final completion.",
+    "This caused Member Home to show recipes/exercises while Body-Mind stayed hidden."
   ],
   "testing_required": [
-    "Complete Admin Assessment final action for a test member.",
-    "Confirm final_report_ready=True and body_mind_unlocked=True.",
-    "Login as member and confirm Body-Mind Connection appears.",
-    "If needed, explicitly disable Body-Mind from Body-Mind Access Control and confirm it hides."
+    "Case 1: Request Body-Mind before final admin completion, then complete admin final assessment; member should see Body-Mind.",
+    "Case 2: Complete admin final assessment first, then activate Body-Mind from Body-Mind Access Control; member should see Body-Mind.",
+    "Case 3: Disable explicitly from Body-Mind Access Control; member should not see Body-Mind."
   ],
   "business_rule": [
-    "Once the five admin pages/final admin assessment are completed, Body-Mind can be activated from either approved path.",
-    "Body-Mind should not auto-activate merely because admin completion happened.",
-    "Body-Mind should activate when admin completion is done and admin selects activation.",
-    "If Body-Mind is already active, Admin Assessment must preserve it.",
-    "Disabling Body-Mind remains explicit through Body-Mind Access Control."
+    "Body-Mind activates only when admin final assessment is complete and admin selects Body-Mind activation from either approved path.",
+    "Existing Body-Mind activation is preserved.",
+    "Disabling remains explicit through Body-Mind Access Control."
   ],
   "removed_duplicate_artifacts": [],
   "not_changed": [

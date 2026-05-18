@@ -2,7 +2,7 @@
 import streamlit as st, json, pathlib
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12
-from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow
+from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation
 from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
 from components.admin_value_resolver import resolve_admin_linked_value
@@ -51,6 +51,7 @@ for section, groups in templates.items():
     all_data[section]=section_data
 st.info(f"Estimated internal total: {grand}")
 body_mind_already_unlocked = bool(current_wf.get("body_mind_unlocked"))
+body_mind_activation_requested = bool(current_wf.get("body_mind_activation_requested"))
 
 if body_mind_already_unlocked:
     st.info("Body-Mind Connection is already activated for this member. No further activation is required from this page.")
@@ -58,7 +59,7 @@ if body_mind_already_unlocked:
 else:
     body_mind_unlock_choice = st.checkbox(
         "After saving this admin assessment, make Body-Mind Connection page visible to this member",
-        value=False,
+        value=bool(body_mind_activation_requested),
     )
     st.caption("Body-Mind can be enabled here only because this action saves the admin assessment first.")
 
@@ -67,18 +68,16 @@ else:
 # Disabling should happen only from Body-Mind Access Control via explicit disable confirmation.
 def _effective_body_mind_unlock():
     latest_wf = get_workflow(mid)
-    # Preserve existing activation. Enable if selected here.
-    # Do not disable Body-Mind from Admin Assessment; disable only from Body-Mind Access Control.
-    return bool(latest_wf.get("body_mind_unlocked")) or bool(body_mind_unlock_choice)
+    return bool(latest_wf.get("body_mind_unlocked")) or bool(latest_wf.get("body_mind_activation_requested")) or bool(body_mind_unlock_choice)
 
 c1,c2=st.columns(2)
 with c1:
     if st.button("Save Draft", use_container_width=True):
         old_body_mind_visibility = bool(get_workflow(mid).get("body_mind_unlocked"))
         save_admin_assessment(mid, all_data)
-        unlock_body_mind(mid, _effective_body_mind_unlock())
+        sync_body_mind_after_admin_completion(mid, activation_selected=bool(body_mind_unlock_choice))
         if body_mind_unlock_choice and not old_body_mind_visibility:
-            set_system_message("Draft saved and Body-Mind Connection page enabled for this member.", "success", celebrate=True)
+            set_system_message("Draft saved. Body-Mind activation request has been recorded.", "success", celebrate=True)
         elif old_body_mind_visibility:
             set_system_message("Draft saved. Body-Mind Connection remains activated for this member.", "info")
         else:
@@ -92,11 +91,12 @@ with c2:
         else:
             old_body_mind_visibility = bool(get_workflow(mid).get("body_mind_unlocked"))
             save_admin_assessment(mid, all_data)
-            unlock_body_mind(mid, _effective_body_mind_unlock())
+            sync_body_mind_after_admin_completion(mid, activation_selected=bool(body_mind_unlock_choice))
             update_workflow(mid, admin_completed=True, final_report_ready=True)
-            # v23: apply selected Body-Mind activation after admin completion.
-            # This activates Body-Mind if selected from this path, and preserves existing activation.
-            unlock_body_mind(mid, _effective_body_mind_unlock())
+            # v25: after admin completion, unlock if activation was requested from either path.
+            sync_body_mind_after_admin_completion(mid, activation_selected=bool(body_mind_unlock_choice))
+            # v24: apply selected Body-Mind activation after admin completion and preserve existing activation.
+            sync_body_mind_after_admin_completion(mid, activation_selected=bool(body_mind_unlock_choice))
             effective_unlock = _effective_body_mind_unlock()
             if effective_unlock and not old_body_mind_visibility:
                 set_system_message("Admin Assessment completed, Final Assessment Report is now available, and Body-Mind Connection page enabled for this member.", "success", celebrate=True)

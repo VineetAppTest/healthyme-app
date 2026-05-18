@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v15, render_page_nav, stat_grid
-from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment
+from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Body-Mind Access Control", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -37,6 +37,7 @@ st.subheader(member["name"])
 st.caption(member["email"])
 stat_grid([
     {"label": "Visibility", "value": "Visible" if wf.get("body_mind_unlocked") else "Hidden", "note": "Member access"},
+    {"label": "Activation", "value": "Requested" if wf.get("body_mind_activation_requested") else "Not requested", "note": "Admin selection"},
     {"label": "Admin Assessment", "value": "Saved" if admin_assessment_saved else "Not saved", "note": "Unlock prerequisite"},
     {"label": "Body-Mind", "value": "Completed" if wf.get("body_mind_completed") else "Not completed", "note": "Member progress"},
     {"label": "Responses", "value": "Available" if body_response else "No responses", "note": "Stored data"},
@@ -68,7 +69,7 @@ else:
         allow_disable = st.checkbox("I need to disable Body-Mind visibility for this member")
         if allow_disable:
             if st.button("Disable Body-Mind Visibility", type="primary", use_container_width=True):
-                set_body_mind_visibility(member_id, False)
+                clear_body_mind_activation(member_id)
                 set_system_message("Body-Mind Connection page disabled for this member.", "warning")
                 st.rerun()
     else:
@@ -78,8 +79,8 @@ else:
             help="Enable Body-Mind Connection for this member."
         )
         if st.button("Save Body-Mind Visibility", type="primary", use_container_width=True):
-            set_body_mind_visibility(member_id, unlock)
             if unlock:
+                request_body_mind_activation(member_id)
                 set_system_message("Body-Mind Connection page enabled for this member.", "success", celebrate=True)
             else:
                 set_system_message("No visibility change was needed.", "info")

@@ -1608,6 +1608,22 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
   margin:.15rem 0 .4rem 0;
 }
 
+/* --- v24 BodyMind + Version Placement --- */
+.hm-v24-brand{
+  color:#064E3B;
+  font-size:.82rem;
+  font-weight:950;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  margin-bottom:.08rem;
+}
+.hm-v24-version-line{
+  color:#64748B;
+  font-size:.72rem;
+  font-weight:800;
+  margin-bottom:.42rem;
+}
+
 </style>
 """
 
@@ -2004,3 +2020,126 @@ def utility_logout_bar():
             st.session_state["logout_in_progress"] = True
             logout_current_user()
             st.switch_page("pages/01_Login.py")
+
+
+# --------------------------------------------------------------------
+# v24: brand version placement
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v24"
+APP_BUILD_LABEL = "Body-Mind + Version Placement Fix"
+
+def render_build_text_v24():
+    st.markdown(
+        f"<div class='hm-v24-brand'>HealthyMe</div><div class='hm-v24-version-line'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>",
+        unsafe_allow_html=True,
+    )
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v24-brand'>HealthyMe</div>
+          <div class='hm-v24-version-line'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# Backward-compatible build aliases.
+def render_build_text_v23():
+    render_build_text_v24()
+def render_build_text_v22():
+    render_build_text_v24()
+def render_build_text_v21():
+    render_build_text_v24()
+def render_build_text_v20():
+    render_build_text_v24()
+def render_build_text_v19():
+    render_build_text_v24()
+def render_build_text_v18():
+    render_build_text_v24()
+def render_build_text_v17():
+    render_build_text_v24()
+def render_build_text_v16():
+    render_build_text_v24()
+def render_build_text_v15():
+    render_build_text_v24()
+def render_build_text_v14():
+    render_build_text_v24()
+def render_build_text_v13():
+    render_build_text_v24()
+def render_build_text_v12():
+    render_build_text_v24()
+def render_build_text_v11():
+    render_build_text_v24()
+def build_marker_v11():
+    render_build_text_v24()
+def build_marker_v10():
+    render_build_text_v24()
+def build_marker_v9():
+    render_build_text_v24()
+def build_marker_v8():
+    render_build_text_v24()
+def build_marker_v7():
+    render_build_text_v24()
+def render_version_tag():
+    render_build_text_v24()
+
+
+# --------------------------------------------------------------------
+# v25: current build marker
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v25"
+APP_BUILD_LABEL = "Body-Mind State Sync Fix"
+
+def render_build_text_v25():
+    st.markdown(
+        f"<div class='hm-v23-version-line'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>",
+        unsafe_allow_html=True,
+    )
+
+# aliases
+def render_build_text_v24():
+    render_build_text_v25()
+def render_build_text_v23():
+    render_build_text_v25()
+def render_build_text_v22():
+    render_build_text_v25()
+def render_build_text_v21():
+    render_build_text_v25()
+def render_build_text_v20():
+    render_build_text_v25()
+def render_build_text_v19():
+    render_build_text_v25()
+def render_build_text_v18():
+    render_build_text_v25()
+def render_build_text_v17():
+    render_build_text_v25()
+def render_build_text_v16():
+    render_build_text_v25()
+def render_build_text_v15():
+    render_build_text_v25()
+def render_build_text_v14():
+    render_build_text_v25()
+def render_build_text_v13():
+    render_build_text_v25()
+def render_build_text_v12():
+    render_build_text_v25()
+def render_build_text_v11():
+    render_build_text_v25()
+def build_marker_v11():
+    render_build_text_v25()
+def build_marker_v10():
+    render_build_text_v25()
+def build_marker_v9():
+    render_build_text_v25()
+def build_marker_v8():
+    render_build_text_v25()
+def build_marker_v7():
+    render_build_text_v25()
+def render_version_tag():
+    render_build_text_v25()
