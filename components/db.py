@@ -1243,3 +1243,18 @@ def save_daily_food_journal_day_details(user_id, log_date, physical_activity="",
     db["daily_logs"][user_id] = legacy[-120:]
     save_db(db)
     return day
+
+
+# --------------------------------------------------------------------
+# v45: ensure Other meal section is available
+# --------------------------------------------------------------------
+def ensure_other_meal_section():
+    db = load_db()
+    rows = db.get("meal_type_repository") or []
+    if not rows:
+        rows = get_meal_type_repository()
+    if not any(str(r.get("key")) == "other" and bool(r.get("active", True)) for r in rows):
+        rows.append({"key": "other", "label": "Other", "active": True, "sort_order": max([int(r.get("sort_order", 0) or 0) for r in rows] + [0]) + 1})
+        db["meal_type_repository"] = rows
+        save_db(db)
+    return rows

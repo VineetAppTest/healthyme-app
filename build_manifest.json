@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v44 Daily Log One-Section + Other Slots",
-  "version": "v44_daily_log_one_section_other_slots",
-  "updated_on": "2026-05-19T10:22:54.885351+00:00",
+  "build_name": "HealthyMe v45 Daily Log Compact Other Fix",
+  "version": "v45_daily_log_compact_other_fix",
+  "updated_on": "2026-05-19T10:40:22.590466+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,13 +18,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Moved Reference format from sample journal to the bottom of the member Daily Log page.",
-    "Replaced bulky expand/collapse layout with compact meal section buttons.",
-    "Only one meal section is open at a time.",
-    "If the current section has unsaved changes, switching to another section is blocked with save warning.",
-    "Added repeatable Other eating time sections: Other 1, Other 2, etc.",
-    "Admin meal repository default now includes Other.",
-    "Admin report handles dynamic Other sections."
+    "Reference format from sample journal remains at bottom and is styled as a compact reference card.",
+    "Expand/collapse styling made more compact and aesthetic.",
+    "Meal section layout made more compact with reduced instructional/header spacing.",
+    "Other is now forced available even for existing repositories and appears as a clear '+ Other' button.",
+    "Other creates repeatable Other 1, Other 2, Other 3 sections.",
+    "Unsaved section warning retained before switching sections."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"

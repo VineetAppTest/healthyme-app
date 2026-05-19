@@ -430,3 +430,12 @@
 - Added repeatable Other slots: Other 1, Other 2, etc.
 - Admin repository default includes Other.
 - Admin report handles dynamic Other sections.
+
+
+## v45 - Daily Log Compact Other Fix
+
+- Made Reference format from sample journal more compact and aesthetic at the bottom.
+- Made meal section controls more compact.
+- Forced Other section availability for existing repositories.
+- Added clear + Other button for repeatable Other 1, Other 2, etc.
+- Retained unsaved-change warning before switching sections.
