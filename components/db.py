@@ -1707,3 +1707,64 @@ def save_daily_log_supervision_note(member_id, note, actor_id="nutritionist", lo
     })
     save_db(db)
     return item
+
+
+# --------------------------------------------------------------------
+# v59: Full-day details structured poop fields
+# --------------------------------------------------------------------
+def save_daily_food_journal_day_details(
+    user_id,
+    log_date,
+    physical_activity="",
+    poop="",
+    notes="",
+    water_litres="",
+    poop_rounds="Select",
+    poop_timings=None,
+    feeling_after_poop="",
+):
+    """Save full-day details including water and structured poop fields.
+
+    Backward compatible: old `poop` field is still stored as a readable summary.
+    """
+    db = load_db()
+    store = _daily_food_journal_store(db).setdefault(user_id, {})
+    day = store.get(str(log_date), {
+        "date": str(log_date),
+        "meals": {},
+        "log_type": "daily_food_journal_day",
+    })
+
+    poop_timings = poop_timings or []
+    clean_timings = [str(x or "").strip() for x in poop_timings]
+
+    # Build a readable legacy summary for existing table/report views.
+    structured_summary = ""
+    if poop_rounds and str(poop_rounds) != "Select":
+        timing_text = ", ".join([x for x in clean_timings if x])
+        structured_summary = f"{poop_rounds} round(s)"
+        if timing_text:
+            structured_summary += f" at {timing_text}"
+        if feeling_after_poop:
+            structured_summary += f" / {feeling_after_poop}"
+
+    day["physical_activity"] = physical_activity
+    day["poop"] = structured_summary or poop
+    day["poop_rounds"] = poop_rounds
+    day["poop_timings"] = clean_timings
+    day["feeling_after_poop"] = feeling_after_poop
+    day["notes"] = notes
+    day["water_litres"] = water_litres
+    day["timestamp"] = datetime.datetime.now().isoformat(timespec="seconds")
+    day["log_type"] = "daily_food_journal_day"
+    store[str(log_date)] = day
+
+    db.setdefault("daily_logs", {}).setdefault(user_id, [])
+    legacy = [
+        x for x in db["daily_logs"][user_id]
+        if not (x.get("log_type") == "daily_food_journal_day" and x.get("date") == str(log_date))
+    ]
+    legacy.append(day)
+    db["daily_logs"][user_id] = legacy[-120:]
+    save_db(db)
+    return day

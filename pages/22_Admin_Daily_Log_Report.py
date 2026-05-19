@@ -37,7 +37,9 @@ def flatten_day(day, supervision_notes=None):
         "Date": day.get("date", ""),
         "Water": day.get("water_litres", ""),
         "Physical Activity": day.get("physical_activity", ""),
-        "Poop": day.get("poop", ""),
+        "Poop Rounds": day.get("poop_rounds", ""),
+        "Poop Timings": ", ".join([str(x) for x in (day.get("poop_timings", []) or []) if str(x).strip()]),
+        "Feeling After Poop": day.get("feeling_after_poop", ""),
         "Overall Notes": day.get("notes", ""),
         "Nutritionist Notes": " | ".join([n.get("note", "") for n in (supervision_notes or [])]),
     }
@@ -146,7 +148,10 @@ else:
     st.dataframe(meal_rows, use_container_width=True, hide_index=True)
     st.markdown("#### Full-day details")
     st.markdown(f"**Physical Activity:** {selected_day.get('physical_activity','') or '-'}")
-    st.markdown(f"**Poop:** {selected_day.get('poop','') or '-'}")
+    st.markdown(f"**Poop rounds:** {selected_day.get('poop_rounds','') or '-'}")
+    timings = selected_day.get("poop_timings", []) or []
+    st.markdown(f"**Poop timings:** {', '.join([str(x) for x in timings if str(x).strip()]) or '-'}")
+    st.markdown(f"**Feeling after poop:** {selected_day.get('feeling_after_poop','') or '-'}")
     st.markdown(f"**Overall Notes:** {selected_day.get('notes','') or '-'}")
 
     st.download_button(
@@ -206,7 +211,9 @@ else:
             "Dinner": (d.get("meals", {}).get("dinner", {}) or {}).get("food", ""),
             "Water": d.get("water_litres", ""),
             "Activity": d.get("physical_activity", ""),
-            "Poop": d.get("poop", ""),
+            "Poop Rounds": d.get("poop_rounds", ""),
+            "Poop Timings": ", ".join([str(x) for x in (d.get("poop_timings", []) or []) if str(x).strip()]),
+            "Feeling After Poop": d.get("feeling_after_poop", ""),
             "Notes": d.get("notes", ""),
             "Nutritionist Notes": latest_note_text,
         })

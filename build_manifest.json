@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v58 LAF Restructure Correction",
-  "version": "v58_laf_restructure_correction",
-  "updated_on": "2026-05-19T18:19:09.840913+00:00",
+  "build_name": "HealthyMe v59 Structured Poop Rounds",
+  "version": "v59_structured_poop_rounds",
+  "updated_on": "2026-05-19T19:00:25.574911+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,15 +18,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Nutritionist notifications remain visible until read/archive.",
-    "Water moved out of meal sections and into Full-day details with Select / 0 to 10 Litres dropdown in 0.5 increments.",
-    "Nutritionist Notes Archive removed from Daily Log page.",
-    "Recent saved days now includes Nutritionist Notes column with latest note for each day.",
-    "Day-specific nutritionist note history can be opened for selected day only.",
-    "Orange-highlighted LAF fields removed from LAF configuration.",
-    "Pink-highlighted stress/lifestyle fields moved to Body-Mind configuration.",
-    "Dietary Habits removed from member LAF and saved as separate admin dietary habits config.",
-    "Disabled admin Dietary Habits Form placeholder added."
+    "Split Poop rounds and feeling after poop into structured fields.",
+    "Poop rounds is now a dropdown: Select, 1 to 10.",
+    "Timing text boxes dynamically open basis selected poop round count.",
+    "Added separate Feeling after poop text box.",
+    "Admin Daily Log Report shows poop rounds, timings, and feeling after poop.",
+    "Retains v58 LAF restructure correction and all v57 Daily Log changes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"

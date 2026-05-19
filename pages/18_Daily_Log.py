@@ -208,18 +208,41 @@ with d1:
         height=90,
     )
 with d2:
-    poop = st.text_area(
-        "Poop rounds and feeling after poop",
-        value=existing.get("poop", ""),
-        placeholder="Example: 2 times, felt relieved / constipated / loose stool",
-        height=90,
-    )
+    poop_options = ["Select"] + list(range(1, 11))
+    existing_poop_rounds = existing.get("poop_rounds", "Select") or "Select"
+    if str(existing_poop_rounds).isdigit():
+        existing_poop_rounds = int(existing_poop_rounds)
+    poop_round_index = poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0
+    poop_rounds = st.selectbox("Poop rounds", poop_options, index=poop_round_index)
+
+    poop_timings = []
+    existing_timings = existing.get("poop_timings", []) or []
+    if poop_rounds != "Select":
+        st.caption("Record timing for each poop round.")
+        for idx in range(int(poop_rounds)):
+            default_timing = existing_timings[idx] if idx < len(existing_timings) else ""
+            poop_timings.append(
+                st.text_input(
+                    f"Poop timing {idx + 1}",
+                    value=default_timing,
+                    key=f"poop_timing_{idx + 1}",
+                    placeholder="Example: 7:30 AM",
+                )
+            )
+
+feeling_after_poop = st.text_area(
+    "Feeling after poop",
+    value=existing.get("feeling_after_poop", ""),
+    placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
+    height=80,
+)
+poop = ""
 day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=85)
 
 c_save_1, c_save_2 = st.columns(2)
 with c_save_1:
     if st.button("Save Day Details Only", use_container_width=True):
-        save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop.strip(), day_notes.strip(), water_litres)
+        save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop, day_notes.strip(), water_litres, poop_rounds, poop_timings, feeling_after_poop.strip())
         set_system_message("Day details saved.", "success")
         st.rerun()
 with c_save_2:
@@ -230,7 +253,14 @@ with c_save_2:
             "date": str(log_date),
             "meals": merged_meals,
             "physical_activity": physical_activity.strip(),
-            "poop": poop.strip(),
+            "poop_rounds": poop_rounds,
+            "poop_timings": [x.strip() for x in poop_timings],
+            "feeling_after_poop": feeling_after_poop.strip(),
+            "poop": (
+                (f"{poop_rounds} round(s)" if poop_rounds != "Select" else "")
+                + (f" at {', '.join([x.strip() for x in poop_timings if x.strip()])}" if poop_rounds != "Select" and any(x.strip() for x in poop_timings) else "")
+                + (f" / {feeling_after_poop.strip()}" if feeling_after_poop.strip() else "")
+            ),
             "notes": day_notes.strip(),
             "water_litres": water_litres,
         }

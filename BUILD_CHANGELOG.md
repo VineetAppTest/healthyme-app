@@ -550,3 +550,13 @@
 - Restored `major_trauma_5_years` to LAF under Page 1 / Stress and trauma.
 - Removed `major_trauma_5_years` from Body-Mind Connection.
 - Retained all other v57 fixes.
+
+
+## v59 - Structured Poop Rounds
+
+- Split old "Poop rounds and feeling after poop" field.
+- Added Poop rounds dropdown: Select, 1 to 10.
+- Dynamic timing boxes appear based on selected number of poop rounds.
+- Added separate Feeling after poop text box.
+- Admin Daily Log Report shows the structured poop fields.
+- Retains v58 LAF restructure correction.
