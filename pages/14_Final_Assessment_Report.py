@@ -1,5 +1,5 @@
 import streamlit as st
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top, compact_topbar
 from components.db import load_db, get_workflow, get_admin_assessment
 from components.report_engine import build_full_admin_report, summary_preview_rows, prepare_report_db, report_data_diagnostics
 
@@ -29,7 +29,7 @@ admin_assessment = get_admin_assessment(mid)
 member_name = member.get("name") or member.get("email") or "Selected member"
 
 if not (admin_assessment and wf.get("final_report_ready")):
-    topbar(
+    compact_topbar(
         "Final Assessment Report",
         "Locked until Admin Assessment is completed.",
         "Admin report engine"
@@ -56,7 +56,7 @@ if not (admin_assessment and wf.get("final_report_ready")):
     render_page_nav("Final Assessment Report", back_page="pages/11_Evaluation_Status.py", location="bottom")
     st.stop()
 
-topbar(
+compact_topbar(
     "Final Assessment Report",
     f"Final report for {member_name}. The download action is placed first for faster user completion.{ ' Instance: ' + selected_instance_id if selected_instance_id else ''}",
     "Admin report engine"

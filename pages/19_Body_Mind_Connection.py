@@ -1,7 +1,7 @@
 import streamlit as st, json, pathlib, datetime
 from collections import OrderedDict
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12, render_back_to_top, compact_topbar
 from components.db import get_workflow, get_body_mind_response, save_body_mind_response, get_profile_with_laf_fallback, has_explicit_body_mind_access
 from components.flash import set_system_message, render_system_message
 
@@ -16,12 +16,12 @@ if not body_mind_allowed:
     st.stop()
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
-questions = json.loads((BASE / "config" / "body_mind_questions.json").read_text(encoding="utf-8"))
+questions = load_body_mind_questions_cached()
 questions = [q for q in questions if not q.get("deleted") and q.get("section") != "Client Statement"]
 existing = get_body_mind_response(user_id)
 profile = get_profile_with_laf_fallback(user_id)
 
-topbar("Body-Mind Connection", "This section is enabled by the admin after assessment review.", "Member reflection")
+compact_topbar("Body-Mind Connection", "This section is enabled by the admin after assessment review.", "Member reflection")
 render_system_message()
 
 st.markdown("""

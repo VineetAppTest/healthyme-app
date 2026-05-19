@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top, compact_topbar
 from components.db import (
     save_daily_food_journal_day,
     save_daily_food_journal_meal,
@@ -59,7 +59,7 @@ st.markdown(
 )
 
 user_id = st.session_state["user_id"]
-topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
+compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 auto_archive_expired_nutritionist_messages(user_id)
 
@@ -273,6 +273,7 @@ card_end()
 
 card_start()
 st.subheader("Recent saved days")
+st.markdown("<div class='hm-table-note'>Latest nutritionist note is shown per day. Use the date selector below to view same-day note history.</div>", unsafe_allow_html=True)
 days = get_daily_food_journal_days(user_id)
 if not days:
     st.info("No food journal days saved yet.")
@@ -297,7 +298,7 @@ else:
             "Notes": day.get("notes", ""),
             "Nutritionist Notes": latest_note_text,
         })
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, use_container_width=True, hide_index=True, height=330)
 
     note_dates = [d.get("date", "") for d in days[:14] if get_daily_log_notes_by_date(user_id, d.get("date", ""), limit=1)]
     if note_dates:

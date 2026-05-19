@@ -1913,6 +1913,58 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
 .hm-v60-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
 .hm-v60-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
 
+/* --- v61 Stability + Premium UX Cleanup --- */
+.hm-v61-brand-row{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;margin-bottom:.2rem;}
+.hm-v61-brand{color:#064E3B;font-size:.78rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v61-version-inline{color:#64748B;font-size:.7rem;font-weight:800;}
+.hero-shell{
+  padding:1.05rem 1.25rem !important;
+  margin-bottom:1rem !important;
+  border-radius:22px !important;
+}
+.hero-title{font-size:1.55rem !important;line-height:1.15 !important;margin:.15rem 0 !important;}
+.hero-subtitle{font-size:.92rem !important;line-height:1.35 !important;margin:.15rem 0 .55rem 0 !important;}
+.hero-kicker,.meta-pill{font-size:.72rem !important;padding:.28rem .7rem !important;}
+.stButton > button{
+  min-height:2.45rem !important;
+  border-radius:14px !important;
+  font-weight:750 !important;
+  white-space:normal !important;
+  line-height:1.2 !important;
+}
+.stButton > button[kind="primary"], button[kind="primary"]{
+  background:#075E4A !important;
+  border-color:#075E4A !important;
+  color:#FFFFFF !important;
+}
+.stButton > button:disabled{
+  opacity:.58 !important;
+  background:#EEF2F0 !important;
+  color:#64748B !important;
+  border-color:#D8E0DC !important;
+}
+[data-testid="stDataFrame"]{
+  border:1px solid #E7D8BE !important;
+  border-radius:16px !important;
+  overflow:hidden !important;
+  box-shadow:0 8px 22px rgba(15,23,42,.05) !important;
+}
+[data-testid="stDataFrame"] div{
+  font-size:.88rem !important;
+}
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea,
+[data-testid="stSelectbox"] div[data-baseweb="select"]{
+  border-radius:12px !important;
+}
+.info-banner{
+  padding:.75rem .9rem !important;
+  border-radius:14px !important;
+  margin:.45rem 0 !important;
+}
+.hm-compact-page-section{margin-top:.6rem !important;margin-bottom:.6rem !important;}
+.hm-table-note{font-size:.82rem;color:#64748B;margin:.25rem 0 .5rem 0;}
+
 </style>
 """
 
@@ -4754,6 +4806,105 @@ def topbar(title, subtitle="", kicker="HealthyMe premium"):
         unsafe_allow_html=True,
     )
 
+def render_build_text_v60(): return None
+def render_build_text_v59(): return None
+def render_build_text_v58(): return None
+def render_build_text_v57(): return None
+def render_build_text_v56(): return None
+def render_build_text_v55(): return None
+def render_build_text_v54(): return None
+def render_build_text_v53(): return None
+def render_build_text_v52(): return None
+def render_build_text_v51(): return None
+def render_build_text_v50(): return None
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v61: Stability + Premium UX Cleanup
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v61"
+APP_BUILD_LABEL = "Stability + Premium UX Cleanup"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v61-brand-row'>
+            <span class='hm-v61-brand'>HealthyMe</span>
+            <span class='hm-v61-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def compact_topbar(title, subtitle="", kicker="HealthyMe"):
+    """Compact header for internal working pages."""
+    st.markdown(
+        f"""
+        <div class='hero-shell hm-compact-page-section'>
+          <div class='hm-v61-brand-row'>
+            <span class='hm-v61-brand'>HealthyMe</span>
+            <span class='hm-v61-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v61(): return None
 def render_build_text_v60(): return None
 def render_build_text_v59(): return None
 def render_build_text_v58(): return None

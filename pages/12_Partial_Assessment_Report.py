@@ -8,7 +8,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, render_build_text_v12, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, render_build_text_v12, render_back_to_top, compact_topbar
 from components.db import load_db, get_form_response, get_workflow, get_profile
 from components.systems_rating import calculate_systems_rating
 from components.report_engine import prepare_report_db
@@ -144,7 +144,7 @@ systems_rating_rows = calculate_systems_rating(nsp1, nsp2)
 
 render_page_nav("Partial Assessment Report", back_page="pages/11_Evaluation_Status.py", location="top")
 
-topbar(
+compact_topbar(
     "Partial Assessment Report",
     "View and download the member's LAF, NSP responses and Systems Rating Table before admin assessment.",
     "Admin partial report"

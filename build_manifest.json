@@ -1,15 +1,15 @@
 {
-  "build_name": "HealthyMe v60 Poop Layout Refinement",
-  "version": "v60_poop_layout_refinement",
-  "updated_on": "2026-05-19T19:16:30.390204+00:00",
+  "build_name": "HealthyMe v61 Stability + Premium UX Cleanup",
+  "version": "v61_stability_premium_ux_cleanup",
+  "updated_on": "2026-05-19T19:35:00.914530+00:00",
   "scope": [
-    "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
-    "Restored proper card structure for Today's Priority and Main Workflows.",
-    "Kept microcopy inside the same card as its action, so second line does not appear detached.",
-    "Removed Recommended Flow expander to eliminate '-a' expand/collapse artifact.",
-    "Replaced expander with always-visible compact flow card to avoid scroll-jump after expansion.",
-    "Unified build text to v14 aliases.",
-    "No scoring/auth/database/report calculation changes."
+    "Compact internal page headers",
+    "Standard button hierarchy via shared CSS",
+    "Daily Log table polish",
+    "Cached config loaders",
+    "Duplicate helper function risk reduced by final canonical v61 overrides",
+    "Minimal db.py split preparation through facade modules",
+    "Existing business logic unchanged"
   ],
   "excluded": [
     "No scoring changes",
@@ -180,5 +180,18 @@
     "major_trauma_in_body_mind": false,
     "laf_question_count": 105,
     "body_mind_question_count": 24
-  }
+  },
+  "files_added": [
+    "components/config_loader.py",
+    "components/db_daily_log.py",
+    "components/db_messages.py",
+    "components/db_workflow.py"
+  ],
+  "duplicate_helper_count_after_v61": {
+    "topbar": 37,
+    "utility_logout_bar": 7,
+    "format_local_ts": 1,
+    "render_back_to_top": 1
+  },
+  "business_logic_note": "No core workflow/scoring/body-mind/final-report business rules were intentionally changed."
 }

@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, format_local_ts, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, format_local_ts, render_back_to_top, compact_topbar
 from components.db import (
     list_members,
     get_daily_food_journal_days,
@@ -92,7 +92,7 @@ def build_excel(member, days):
     wb.save(bio)
     return bio.getvalue()
 
-topbar("Daily Food Journal Report", "", "Admin report")
+compact_topbar("Daily Food Journal Report", "", "Admin report")
 
 members = list_members()
 if not members:

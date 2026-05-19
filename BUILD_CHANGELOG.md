@@ -568,3 +568,13 @@
 - Poop timing inputs now render in a 3-column grid.
 - Maximum Poop rounds reduced from 10 to 9.
 - Retains v59 structured poop fields and v58 LAF restructure correction.
+
+
+## v61 - Stability + Premium UX Cleanup
+
+- Applied compact internal page header treatment to working pages.
+- Added shared button hierarchy and compact table styling through global CSS.
+- Polished Daily Log Recent saved days table.
+- Added cached config loader for static JSON configs.
+- Added db facade modules to prepare safe future db.py split without changing business logic.
+- Kept existing business logic unchanged.

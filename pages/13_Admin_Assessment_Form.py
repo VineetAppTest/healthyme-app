@@ -1,7 +1,7 @@
 
 import streamlit as st, json, pathlib
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12, render_back_to_top, compact_topbar
 from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization, sync_member_finalization_state, has_explicit_body_mind_access
 from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
@@ -26,7 +26,7 @@ nsp1=_inst_resp.get("nsp1") or get_form_response("nsp1_responses", mid)
 nsp2=_inst_resp.get("nsp2") or get_form_response("nsp2_responses", mid)
 laf=get_form_response("laf_responses", mid)
 render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="top")
-topbar("Fill Admin Page","Linked items are auto-pulled; manual items can be NA, 1, 2, or 3.","Admin assessment")
+compact_topbar("Fill Admin Page","Linked items are auto-pulled; manual items can be NA, 1, 2, or 3.","Admin assessment")
 render_system_message()
 
 # v26 finalization lock:
