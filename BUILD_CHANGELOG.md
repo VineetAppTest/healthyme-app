@@ -447,3 +447,11 @@
 - Removed Daily Log helper text examples including Gentle reminder and supervision note explanation.
 - Put Select member and Select food log date side by side in Admin Daily Log Report.
 - Retains v45 Daily Log compact Other flow.
+
+
+## v47 - Logout + Daily Log Backcompat + Reference Toggle
+
+- Replaced the member Daily Log reference expander with a compact Show / Hide sample journal format button.
+- Admin Daily Log Report now reads older row-based food journal entries as well as new day-based logs.
+- Logout now clears app session and calls Streamlit logout without additional rerun/switch_page calls.
+- Login page authenticated logout uses the same logout handler.

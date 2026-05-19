@@ -1719,6 +1719,11 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
 .hm-v46-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
 .hm-v46-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
 
+/* --- v47 Logout + Daily Log Backcompat + Reference Toggle --- */
+.hm-v47-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v47-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v47-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+
 </style>
 """
 
@@ -3477,6 +3482,93 @@ def topbar(title, subtitle="", kicker="HealthyMe premium"):
         unsafe_allow_html=True,
     )
 
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v47: final logout override - no rerun/switch after st.logout
+# --------------------------------------------------------------------
+def utility_logout_bar():
+    role = st.session_state.get("user_role", "")
+    name = st.session_state.get("user_name", "User")
+    if not st.session_state.get("logged_in"):
+        return
+    left, right = st.columns([5, 1])
+    with left:
+        st.markdown(
+            f"<div class='utility-bar'><div class='utility-user'>Signed in as <b>{name}</b><span class='utility-role'>{role.title()}</span></div></div>",
+            unsafe_allow_html=True,
+        )
+    with right:
+        if st.button("Logout", key="global_logout", use_container_width=True):
+            logout_current_user()
+
+
+# --------------------------------------------------------------------
+# v47: Logout + Daily Log Backcompat + Reference Toggle
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v47"
+APP_BUILD_LABEL = "Logout + Daily Log Backcompat"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v47-brand-row'>
+            <span class='hm-v47-brand'>HealthyMe</span>
+            <span class='hm-v47-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v47(): return None
 def render_build_text_v46(): return None
 def render_build_text_v45(): return None
 def render_build_text_v44(): return None

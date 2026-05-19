@@ -1258,3 +1258,100 @@ def ensure_other_meal_section():
         db["meal_type_repository"] = rows
         save_db(db)
     return rows
+
+
+# --------------------------------------------------------------------
+# v47: Daily food journal backward compatibility
+# --------------------------------------------------------------------
+def _legacy_food_journal_days_for_user(db, user_id):
+    """Convert old one-row food_journal entries into the new day-based structure."""
+    grouped = {}
+    meal_label_to_key = {
+        "breakfast": "breakfast",
+        "lunch": "lunch",
+        "evening snack": "evening_snack",
+        "dinner": "dinner",
+        "bedtime": "bedtime",
+        "early morning": "early_morning",
+        "mid morning": "mid_morning",
+    }
+    for item in db.get("daily_logs", {}).get(user_id, []) or []:
+        if item.get("log_type") == "daily_food_journal_day":
+            continue
+        if not (item.get("log_type") == "food_journal" or any(k in item for k in ["meal_type", "food", "portion_size", "mood_energy", "physical_activity", "poop"])):
+            continue
+
+        d = str(item.get("date") or item.get("timestamp", "")[:10] or "")
+        if not d:
+            continue
+
+        day = grouped.setdefault(d, {
+            "date": d,
+            "meals": {},
+            "physical_activity": "",
+            "poop": "",
+            "notes": "",
+            "timestamp": item.get("timestamp", ""),
+            "log_type": "daily_food_journal_day",
+            "_source": "legacy_daily_logs",
+        })
+
+        meal_label = str(item.get("meal_type") or "Other").strip() or "Other"
+        base_key = meal_label_to_key.get(meal_label.lower(), "")
+        if not base_key:
+            existing_other = [k for k in day["meals"].keys() if k.startswith("other_")]
+            base_key = f"other_{len(existing_other) + 1}"
+
+        # If same meal appears multiple times, keep first key and create extra Other slots.
+        key = base_key
+        if key in day["meals"] and any(item.get(x) for x in ["food", "water", "portion_size", "mood_energy"]):
+            if base_key.startswith("other_"):
+                key = f"other_{len([k for k in day['meals'].keys() if k.startswith('other_')]) + 1}"
+            else:
+                key = f"{base_key}_extra"
+
+        day["meals"][key] = {
+            "label": meal_label,
+            "time": item.get("time", ""),
+            "food": item.get("food", item.get("food_log", "")),
+            "water": item.get("water", item.get("water_ml", "")),
+            "portion_size": item.get("portion_size", ""),
+            "mood_energy": item.get("mood_energy", ""),
+        }
+
+        if item.get("physical_activity") or item.get("exercise_notes"):
+            day["physical_activity"] = item.get("physical_activity", item.get("exercise_notes", ""))
+        if item.get("poop"):
+            day["poop"] = item.get("poop", "")
+        if item.get("notes"):
+            day["notes"] = item.get("notes", "")
+
+    return grouped
+
+def get_daily_food_journal_day(user_id, log_date):
+    db = load_db()
+    current = db.get("daily_food_journals", {}).get(user_id, {}).get(str(log_date), {})
+    if current:
+        return current
+    legacy = _legacy_food_journal_days_for_user(db, user_id)
+    return legacy.get(str(log_date), {})
+
+def get_daily_food_journal_days(user_id):
+    db = load_db()
+    store = db.get("daily_food_journals", {}).get(user_id, {}) or {}
+    merged = {str(k): v for k, v in store.items()}
+
+    # Include old day records in daily_logs.
+    for x in db.get("daily_logs", {}).get(user_id, []) or []:
+        if x.get("log_type") == "daily_food_journal_day" and x.get("date") and str(x.get("date")) not in merged:
+            merged[str(x.get("date"))] = x
+
+    # Include old row-based food_journal records grouped by date.
+    legacy = _legacy_food_journal_days_for_user(db, user_id)
+    for d, day in legacy.items():
+        if d not in merged:
+            merged[d] = day
+
+    rows = list(merged.values())
+    rows.sort(key=lambda r: (r.get("date", ""), r.get("timestamp", "")), reverse=True)
+    return rows

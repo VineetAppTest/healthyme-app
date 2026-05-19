@@ -1,6 +1,6 @@
 import streamlit as st
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12
-from components.auth_session import restore_login_from_token, get_oidc_email, get_oidc_name
+from components.auth_session import restore_login_from_token, get_oidc_email, get_oidc_name, logout_current_user
 
 st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
@@ -39,9 +39,7 @@ with login_col:
         if auth_error:
             st.error(auth_error)
             if st.button("Logout authenticated identity", use_container_width=True):
-                for k in list(st.session_state.keys()):
-                    del st.session_state[k]
-                st.logout()
+                logout_current_user()
 
         if st.button("Continue with Auth0", type="primary", use_container_width=True):
             st.login("auth0")

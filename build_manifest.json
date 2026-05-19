@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v46 Admin Info Cleanup + Daily Log Layout",
-  "version": "v46_admin_info_cleanup_daily_log_layout",
-  "updated_on": "2026-05-19T11:01:16.439779+00:00",
+  "build_name": "HealthyMe v47 Logout + Daily Log Backcompat",
+  "version": "v47_logout_daily_log_backcompat_reference_toggle",
+  "updated_on": "2026-05-19T11:15:21.267446+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,10 +18,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed grey informative caption-style statements from admin pages.",
-    "Removed specific Daily Log helper text: Gentle reminder, note explanation, supervision note instruction and Daily Log report subtitle.",
-    "Placed Select member and Select food log date side by side in Admin Daily Log Report.",
-    "Retained v45 Daily Log compact Other flow and prior Body-Mind fixes."
+    "Replaced odd Reference format expander with a clean Show / Hide sample journal format toggle button.",
+    "Admin Daily Log Report now reads old row-based food journal entries and new day-based logs.",
+    "Logout now clears Streamlit session and calls st.logout without an extra st.rerun/st.switch_page after it.",
+    "Login page authenticated-identity logout uses the same logout handler."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -136,5 +136,9 @@
     "23_Admin_Body_Mind_Control.py": 51,
     "25_Admin_Daily_Log_Settings.py": 148
   },
-  "compile_repair": "Fixed empty if block in Evaluation Status after removing grey caption text."
+  "compile_repair": "Fixed empty if block in Evaluation Status after removing grey caption text.",
+  "notes": [
+    "If the browser still auto-logs in after reboot, that means the Auth0/OIDC identity cookie is still active in the browser; the app now calls st.logout directly to clear it.",
+    "Old Daily Food Journal rows are grouped by date for admin view."
+  ]
 }

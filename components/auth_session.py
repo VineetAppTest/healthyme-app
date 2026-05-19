@@ -78,8 +78,14 @@ def restore_login_from_token():
     return _apply_user_to_session(app_user, email)
 
 def logout_current_user():
-    """Logout through Streamlit native OIDC.
+    """Logout through Streamlit native OIDC and clear app session state.
 
-    Streamlit removes the identity cookie and starts a new session.
+    Do not call st.rerun() or st.switch_page() after this function.
+    Streamlit handles redirect after st.logout().
     """
+    for k in list(st.session_state.keys()):
+        try:
+            del st.session_state[k]
+        except Exception:
+            pass
     st.logout()

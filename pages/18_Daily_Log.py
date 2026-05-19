@@ -46,17 +46,6 @@ st.markdown(
         color: #064E3B;
         margin-bottom: .15rem;
     }
-    div[data-testid="stExpander"] {
-        border: 1px solid #E7D8BE;
-        border-radius: 16px;
-        overflow: hidden;
-        background: #FFFDF8;
-    }
-    div[data-testid="stExpander"] details summary {
-        padding: .45rem .65rem !important;
-        font-size: .9rem !important;
-        font-weight: 800 !important;
-    }
     div[data-testid="stVerticalBlock"] > div:has(.hm-meal-title) {
         gap: .2rem !important;
     }
@@ -284,8 +273,12 @@ SAMPLE_ROWS = [
     {"Time": "7:30 - 8:00 PM", "Meal Type": "Dinner", "Food": "Soup / light dinner", "Water": "", "Portion Size": "1 big bowl", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
 ]
 
-st.markdown("<div class='hm-reference-shell'><div class='hm-reference-title'>Reference</div><div class='hm-compact-section-note'>Open only when needed.</div>", unsafe_allow_html=True)
-with st.expander("Reference format from sample journal", expanded=False):
+st.markdown("<div class='hm-reference-shell'><div class='hm-reference-title'>Reference format from sample journal</div><div class='hm-compact-section-note'>Use only when needed.</div>", unsafe_allow_html=True)
+if "show_daily_reference_sample" not in st.session_state:
+    st.session_state["show_daily_reference_sample"] = False
+if st.button("Show / Hide sample journal format", use_container_width=True):
+    st.session_state["show_daily_reference_sample"] = not st.session_state["show_daily_reference_sample"]
+if st.session_state["show_daily_reference_sample"]:
     st.dataframe(SAMPLE_ROWS, use_container_width=True, hide_index=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
