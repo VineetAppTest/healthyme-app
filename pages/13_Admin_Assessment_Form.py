@@ -113,6 +113,14 @@ else:
     )
     st.caption("Body-Mind can be enabled here only because this action saves the admin assessment first.")
 
+
+# v39: Auto-save Admin Assessment draft on every interaction/rerun.
+# This saves the five admin pages as draft only. Final report generation remains manual.
+save_admin_assessment(mid, all_data)
+if body_mind_unlock_choice and not bool(get_workflow(mid).get("body_mind_unlocked")):
+    request_body_mind_activation(mid)
+st.markdown("<div class='autosave-note'>Auto-saved draft. Use Save and Generate Final Report only when the admin review is final.</div>", unsafe_allow_html=True)
+
 # v21 safety:
 # The Admin Assessment page can enable Body-Mind, but must not accidentally disable it.
 # Disabling should happen only from Body-Mind Access Control via explicit disable confirmation.
@@ -122,7 +130,7 @@ def _effective_body_mind_unlock():
 
 c1,c2=st.columns(2)
 with c1:
-    if st.button("Save Draft", use_container_width=True):
+    if st.button("Save Draft / Confirm Changes", use_container_width=True):
         old_body_mind_visibility = bool(get_workflow(mid).get("body_mind_unlocked"))
         save_admin_assessment(mid, all_data)
         if body_mind_unlock_choice:
@@ -132,7 +140,7 @@ with c1:
         elif old_body_mind_visibility:
             set_system_message("Draft saved. Body-Mind Connection remains activated for this member.", "info")
         else:
-            set_system_message("Draft saved successfully.", "success")
+            set_system_message("Draft confirmed successfully.", "success")
         st.rerun()
 with c2:
     if st.button("Save and Generate Final Report", type="primary", use_container_width=True):

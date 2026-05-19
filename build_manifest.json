@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v37 Remove Body-Mind Activation Checkbox",
-  "version": "v37_remove_body_mind_activation_checkbox",
-  "updated_on": "2026-05-19T08:46:44.547035+00:00",
+  "build_name": "HealthyMe v39 Admin Autosave",
+  "version": "v39_admin_autosave",
+  "updated_on": "2026-05-19T08:58:44.821074+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,11 +18,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed legacy checkbox: Make Body-Mind Connection page visible to this member.",
-    "Finalized inactive members now see only Activate Body-Mind Connection button.",
-    "Non-finalized members see an informational message; no disabled checkbox.",
-    "Active members show active state and no activation button.",
-    "Admin Assessment locked page also uses one-click activation if activation is needed."
+    "Added auto-save draft behavior to Admin 5 Pages.",
+    "Admin Assessment now saves all five admin page values on every interaction/rerun.",
+    "Final report generation remains manual through Save and Generate Final Report.",
+    "Save Draft button retained as Save Draft / Confirm Changes.",
+    "Retains v38 Body-Mind disabled button UI and prior Body-Mind access fixes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -112,5 +112,12 @@
     "NSP Page 2": "Auto-save enabled.",
     "Body-Mind": "Auto-save enabled; explanatory text removed.",
     "Admin 5 Pages": "Manual save only via Save Draft or Save and Generate Final Report."
+  },
+  "autosave_status": {
+    "LAF": "Auto-save enabled",
+    "NSP Page 1": "Auto-save enabled",
+    "NSP Page 2": "Auto-save enabled",
+    "Body-Mind": "Auto-save enabled",
+    "Admin 5 Pages": "Auto-save draft enabled in v39; finalization remains manual"
   }
 }

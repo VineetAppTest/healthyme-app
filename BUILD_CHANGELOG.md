@@ -362,3 +362,20 @@
 - Normalized Body-Mind Access Control to one-click activation after finalization.
 - Non-finalized members show informational text instead of disabled checkbox.
 - Active members show active state and no activation button.
+
+
+## v38 - Body-Mind Disabled Button UI
+
+- Removed redundant prerequisite message in Body-Mind Access Control.
+- Non-finalized members now show one prerequisite message and a disabled Activate Body-Mind Connection button.
+- Finalized inactive members retain one-click activation.
+- Active members show active state and no activation button.
+
+
+## v39 - Admin Autosave
+
+- Added auto-save draft behavior to Admin 5 Pages.
+- Admin Assessment now saves draft values on every interaction/rerun.
+- Final report generation remains manual through Save and Generate Final Report.
+- Save Draft button retained as Save Draft / Confirm Changes.
+- Retains v38 Body-Mind disabled button UI and previous Body-Mind access fixes.

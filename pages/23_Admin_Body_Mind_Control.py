@@ -50,8 +50,6 @@ stat_grid([
     {"label": "Body-Mind", "value": "Completed" if wf.get("body_mind_completed") else "Not completed", "note": "Member progress"},
     {"label": "Responses", "value": "Available" if body_response else "No responses", "note": "Stored data"},
 ])
-if not admin_final_completed:
-    st.warning("Complete the five admin pages / final admin assessment before enabling Body-Mind Connection.")
 card_end()
 
 card_start()
@@ -80,7 +78,7 @@ else:
             st.rerun()
     else:
         st.warning("Complete the five admin pages / final admin assessment before enabling Body-Mind Connection.")
-        st.info("Manual Body-Mind activation will be available here after final admin completion.")
+        st.button("Activate Body-Mind Connection", use_container_width=True, disabled=True)
 
 card_end()
 render_page_nav("Body-Mind Access", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
