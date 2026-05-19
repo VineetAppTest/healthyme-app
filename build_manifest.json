@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v68 View History Micro Alignment",
-  "version": "v68_view_history_micro_alignment",
-  "updated_on": "2026-05-19T21:31:09.182645+00:00",
+  "build_name": "HealthyMe v69 Inline History Button Alignment",
+  "version": "v69_inline_history_button_alignment",
+  "updated_on": "2026-05-19T21:40:09.784525+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Reduced View / Hide history button font size further.",
-    "Pulled the action button upward to align with row text.",
-    "Tightened action column spacing.",
-    "Reduced dead space around Meal type and Nutritionist Notes text."
+    "Removed separate Streamlit View History button row.",
+    "Rendered View / Hide control inside the same Action table cell.",
+    "Action control now aligns naturally with row text.",
+    "History opens inline under the same row using HTML details.",
+    "Business logic unchanged."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -191,5 +192,5 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "UI-only micro-patch. No Daily Log, Nutritionist note, dedupe, or admin logic changed."
+  "business_logic_note": "UI-only alignment fix. No Daily Log save, Nutritionist message dedupe, admin, LAF, Body-Mind, or final report logic changed."
 }

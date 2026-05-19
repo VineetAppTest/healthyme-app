@@ -2394,6 +2394,145 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
   min-height:0 !important;
 }
 
+/* --- v69 Inline History Button Alignment --- */
+.hm-v69-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v69-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v69-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+
+.hm-rsd-card{
+  border:1.5px solid #D9C2A0 !important;
+  border-radius:18px !important;
+  background:#FFFDF8 !important;
+  box-shadow:0 10px 28px rgba(15,23,42,.06) !important;
+  overflow:hidden !important;
+  margin-top:.7rem !important;
+}
+.hm-rsd-header,
+.hm-rsd-row{
+  display:grid !important;
+  grid-template-columns: 1fr 1.7fr .9fr .9fr 2fr .78fr !important;
+  gap:0 !important;
+}
+.hm-rsd-header{
+  background:#FFFCF5 !important;
+  border-bottom:1.5px solid #D9C2A0 !important;
+}
+.hm-rsd-header > div{
+  padding:.82rem .9rem !important;
+  border-right:1.25px solid #E2CFB1 !important;
+  font-size:.82rem !important;
+  font-weight:900 !important;
+  color:#064E3B !important;
+}
+.hm-rsd-header > div:last-child{border-right:none !important;}
+
+.hm-rsd-row{
+  border-bottom:1.25px solid #E6D5BB !important;
+  color:#0F2F2A !important;
+  font-size:.86rem !important;
+}
+.hm-rsd-row:last-child{border-bottom:none !important;}
+.hm-rsd-row > div{
+  padding:.62rem .82rem !important;
+  border-right:1.25px solid #EADBC5 !important;
+  min-height:3.1rem !important;
+  display:flex !important;
+  align-items:center !important;
+}
+.hm-rsd-row > div:last-child{border-right:none !important;}
+.hm-rsd-date{
+  font-weight:850 !important;
+  color:#064E3B !important;
+}
+.hm-rsd-meals{
+  font-size:.80rem !important;
+  line-height:1.18 !important;
+  color:#253B36 !important;
+}
+.hm-rsd-note{
+  font-size:.80rem !important;
+  line-height:1.18 !important;
+  color:#253B36 !important;
+}
+.hm-rsd-action-cell{
+  justify-content:center !important;
+  align-items:center !important;
+  overflow:visible !important;
+}
+.hm-rsd-details{
+  position:relative !important;
+  width:auto !important;
+}
+.hm-rsd-details > summary{
+  list-style:none !important;
+  cursor:pointer !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border:1.15px solid #D6B56D !important;
+  border-radius:999px !important;
+  padding:.22rem .58rem !important;
+  background:#FFFFFF !important;
+  color:#064E3B !important;
+  font-size:.72rem !important;
+  font-weight:750 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  box-shadow:0 2px 6px rgba(15,23,42,.035) !important;
+}
+.hm-rsd-details > summary::-webkit-details-marker{display:none !important;}
+.hm-rsd-history-panel{
+  grid-column:1 / -1 !important;
+  position:relative !important;
+  margin-top:.65rem !important;
+  padding:.75rem !important;
+  border:1px solid #E7D8BE !important;
+  border-radius:14px !important;
+  background:#EEF8F9 !important;
+  min-width:280px !important;
+  max-width:560px !important;
+  z-index:3 !important;
+}
+.hm-rsd-history-title{
+  font-weight:900 !important;
+  color:#064E3B !important;
+  margin-bottom:.45rem !important;
+  font-size:.86rem !important;
+}
+.hm-rsd-history-item{
+  padding:.55rem .65rem !important;
+  margin:.4rem 0 !important;
+  border-radius:12px !important;
+  background:#FFFFFF !important;
+  border:1px solid #DDEDEA !important;
+  font-size:.82rem !important;
+  line-height:1.25 !important;
+}
+.hm-rsd-no-history{
+  color:#94A3B8 !important;
+  font-weight:700 !important;
+}
+@media (max-width: 760px){
+  .hm-rsd-header{display:none !important;}
+  .hm-rsd-row{
+    grid-template-columns:1fr !important;
+    margin:.7rem !important;
+    border:1.25px solid #D9C2A0 !important;
+    border-radius:16px !important;
+    overflow:hidden !important;
+  }
+  .hm-rsd-row > div{
+    border-right:none !important;
+    border-bottom:1.1px solid #EADBC5 !important;
+    min-height:auto !important;
+    padding:.72rem .85rem !important;
+    display:block !important;
+  }
+  .hm-rsd-row > div:last-child{border-bottom:none !important;}
+  .hm-rsd-action-cell{display:flex !important;justify-content:flex-start !important;}
+  .hm-rsd-history-panel{max-width:100% !important;min-width:0 !important;}
+}
+
 </style>
 """
 
@@ -6040,6 +6179,112 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         unsafe_allow_html=True,
     )
 
+def render_build_text_v68(): return None
+def render_build_text_v67(): return None
+def render_build_text_v66(): return None
+def render_build_text_v65(): return None
+def render_build_text_v64(): return None
+def render_build_text_v63(): return None
+def render_build_text_v62(): return None
+def render_build_text_v61(): return None
+def render_build_text_v60(): return None
+def render_build_text_v59(): return None
+def render_build_text_v58(): return None
+def render_build_text_v57(): return None
+def render_build_text_v56(): return None
+def render_build_text_v55(): return None
+def render_build_text_v54(): return None
+def render_build_text_v53(): return None
+def render_build_text_v52(): return None
+def render_build_text_v51(): return None
+def render_build_text_v50(): return None
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v69: Inline History Button Alignment
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v69"
+APP_BUILD_LABEL = "Inline History Button Alignment"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v69-brand-row'>
+            <span class='hm-v69-brand'>HealthyMe</span>
+            <span class='hm-v69-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def compact_topbar(title, subtitle="", kicker="HealthyMe"):
+    st.markdown(
+        f"""
+        <div class='hero-shell hm-compact-page-section'>
+          <div class='hm-v69-brand-row'>
+            <span class='hm-v69-brand'>HealthyMe</span>
+            <span class='hm-v69-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v69(): return None
 def render_build_text_v68(): return None
 def render_build_text_v67(): return None
 def render_build_text_v66(): return None

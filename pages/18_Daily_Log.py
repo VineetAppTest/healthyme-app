@@ -282,7 +282,7 @@ days = get_daily_food_journal_days(user_id)
 if not days:
     st.info("No food journal days saved yet.")
 else:
-    st.markdown(
+    rsd_html = [
         """
         <div class='hm-rsd-card'>
           <div class='hm-rsd-header'>
@@ -293,11 +293,9 @@ else:
             <div>Nutritionist Notes</div>
             <div>Action</div>
           </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        """
+    ]
 
-    note_dates = []
     for day in days[:14]:
         day_date = day.get("date", "")
         meal_summary = []
@@ -308,62 +306,48 @@ else:
 
         latest_note = get_latest_daily_log_note_for_date(user_id, day_date)
         latest_note_text = "—"
-        has_notes = False
         if latest_note:
-            has_notes = True
-            note_dates.append(day_date)
             latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
 
-        date_display = html.escape(str(day_date or "—"))
-        meal_display = html.escape(meal_display_text)
-        water_display = html.escape(str(day.get("water_litres") or "—"))
-        notes_display = html.escape(str(day.get("notes") or "—"))
-        nutritionist_display = html.escape(latest_note_text)
+        note_history = get_daily_log_notes_by_date(user_id, day_date, limit=20)
+        if note_history:
+            history_items = []
+            for n in note_history:
+                history_items.append(
+                    f"""
+                    <div class='hm-rsd-history-item'>
+                      <b>{html.escape(format_local_ts(n.get('ts','')))}</b><br>
+                      <span>{html.escape(str(n.get('note','')))}</span>
+                    </div>
+                    """
+                )
+            action_html = f"""
+                <details class='hm-rsd-details'>
+                  <summary>View / Hide</summary>
+                  <div class='hm-rsd-history-panel'>
+                    <div class='hm-rsd-history-title'>Nutritionist note history for {html.escape(str(day_date))}</div>
+                    {''.join(history_items)}
+                  </div>
+                </details>
+            """
+        else:
+            action_html = "<span class='hm-rsd-no-history'>—</span>"
 
-        st.markdown(
+        rsd_html.append(
             f"""
             <div class='hm-rsd-row'>
-              <div class='hm-rsd-date'>{date_display}</div>
-              <div class='hm-rsd-meals'>{meal_display}</div>
-              <div>{water_display}</div>
-              <div>{notes_display}</div>
-              <div class='hm-rsd-note'>{nutritionist_display}</div>
-              <div class='hm-rsd-action-slot'></div>
+              <div class='hm-rsd-date'>{html.escape(str(day_date or "—"))}</div>
+              <div class='hm-rsd-meals'>{html.escape(meal_display_text)}</div>
+              <div>{html.escape(str(day.get("water_litres") or "—"))}</div>
+              <div>{html.escape(str(day.get("notes") or "—"))}</div>
+              <div class='hm-rsd-note'>{html.escape(latest_note_text)}</div>
+              <div class='hm-rsd-action-cell'>{action_html}</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-        action_cols = st.columns([5.75, 0.6])
-        with action_cols[1]:
-            selected_history_date = st.session_state.get("selected_daily_note_history_date")
-            history_label = "Hide history" if selected_history_date == day_date else "View history"
-            if st.button(history_label, key=f"rsd_history_{day_date}", use_container_width=False, disabled=not has_notes):
-                if selected_history_date == day_date:
-                    st.session_state["selected_daily_note_history_date"] = None
-                else:
-                    st.session_state["selected_daily_note_history_date"] = day_date
-                st.rerun()
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    selected_note_date = st.session_state.get("selected_daily_note_history_date")
-    if selected_note_date:
-        note_history = get_daily_log_notes_by_date(user_id, selected_note_date, limit=20)
-        if note_history:
-            st.markdown(f"#### Nutritionist note history for {selected_note_date}")
-            for n in note_history:
-                st.markdown(
-                    f"""
-                    <div class='info-banner'>
-                      <b>{format_local_ts(n.get('ts',''))}</b><br>
-                      <p>{n.get('note','')}</p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-        else:
-            st.info("No nutritionist notes found for the selected date.")
+    rsd_html.append("</div>")
+    st.markdown("".join(rsd_html), unsafe_allow_html=True)
 card_end()
 
 

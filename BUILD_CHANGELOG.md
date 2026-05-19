@@ -637,3 +637,11 @@
 - Pulled action button upward to align better with row text.
 - Tightened action column width and surrounding spacing.
 - UI-only micro patch; business logic unchanged.
+
+
+## v69 - Inline History Button Alignment
+
+- Removed separate Streamlit button row that caused View History misalignment.
+- View / Hide control now renders inside the same Action table cell.
+- History opens inline for the same date using an HTML details panel.
+- UI-only alignment fix; business logic unchanged.
