@@ -137,12 +137,9 @@ def update_workflow(user_id, **kwargs):
     db=load_db()
     wf=normalize_workflow(db["workflow"].setdefault(user_id,{}))
     wf.update(kwargs)
-    # v25 rule:
-    # If admin completion is being set and Body-Mind activation was previously requested,
-    # unlock Body-Mind now. Do not auto-unlock without request.
-    if kwargs.get("admin_completed") is True or kwargs.get("final_report_ready") is True:
-        if bool(wf.get("body_mind_activation_requested")):
-            wf["body_mind_unlocked"] = True
+    # v29 rule:
+    # Final admin completion/final report readiness does NOT automatically unlock Body-Mind.
+    # Body-Mind unlock requires an explicit admin action after finalization.
     db["workflow"][user_id]=normalize_workflow(wf)
     save_db(db)
 def save_form_response(store,user_id,data): db=load_db(); db[store][user_id]=data; save_db(db)
@@ -375,13 +372,15 @@ def get_daily_logs(user_id):
 def set_body_mind_visibility(user_id, unlocked):
     db = load_db()
     wf = normalize_workflow(db["workflow"].setdefault(user_id, {}))
+    admin_done = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready"))
+
     if bool(unlocked):
         wf["body_mind_activation_requested"] = True
-        admin_done = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready"))
         wf["body_mind_unlocked"] = bool(admin_done)
     else:
         wf["body_mind_activation_requested"] = False
         wf["body_mind_unlocked"] = False
+
     db["workflow"][user_id] = normalize_workflow(wf)
     save_db(db)
 
@@ -858,40 +857,33 @@ def queue_daily_log_reminder(member_id, actor="admin"):
 # v25: Body-Mind request + activation sync helper
 # --------------------------------------------------------------------
 def sync_body_mind_after_admin_completion(user_id, activation_selected=False):
-    """Synchronize Body-Mind request and visibility.
+    """v29 sync: Body-Mind unlock is manual and requires final admin completion.
 
-    Business rule:
-    - Admin final completion is required before member visibility.
-    - Admin can request activation from either approved path.
-    - If request exists and admin completion is done, Body-Mind becomes visible.
-    - Existing activation is preserved.
-    - Admin Assessment must not silently disable Body-Mind.
+    Rule:
+    - If admin final work is complete and activation_selected=True, unlock.
+    - If admin final work is not complete and activation_selected=True, store request only.
+    - Do not auto-unlock merely because final report is ready.
     """
     db = load_db()
     wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
-
     admin_done = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready"))
-    already_active = bool(wf.get("body_mind_unlocked"))
-    request_exists = bool(wf.get("body_mind_activation_requested")) or bool(activation_selected)
 
-    if request_exists:
+    if activation_selected:
         wf["body_mind_activation_requested"] = True
-
-    if already_active:
-        wf["body_mind_unlocked"] = True
-    elif admin_done and request_exists:
-        wf["body_mind_unlocked"] = True
+        wf["body_mind_unlocked"] = bool(admin_done)
     else:
-        wf["body_mind_unlocked"] = False
+        # Preserve existing state. Do not disable here.
+        wf["body_mind_unlocked"] = bool(wf.get("body_mind_unlocked"))
 
     db["workflow"][user_id] = normalize_workflow(wf)
     save_db(db)
     return bool(wf.get("body_mind_unlocked"))
 
 def request_body_mind_activation(user_id):
-    """Record that admin has requested Body-Mind activation.
+    """Record manual admin request for Body-Mind activation.
 
-    If admin completion is already done, also unlock immediately.
+    If final admin work is complete, Body-Mind unlocks immediately.
+    If not complete, request is stored and can unlock when finalization happens.
     """
     return sync_body_mind_after_admin_completion(user_id, activation_selected=True)
 
@@ -910,10 +902,11 @@ def clear_body_mind_activation(user_id):
 # v26: Finalize admin assessment safely
 # --------------------------------------------------------------------
 def finalize_admin_assessment(user_id, assessment_data, activation_selected=False):
-    """Save admin assessment, mark final report ready, and sync Body-Mind once.
+    """Save admin assessment, mark final report ready, and manually unlock Body-Mind only if selected.
 
-    This is the single finalization path used by the Admin Assessment page.
-    It avoids repeated writes/sync calls and prevents re-finalization confusion.
+    v29 rule:
+    - Save & Generate Final Report sets admin_completed/final_report_ready.
+    - Body-Mind unlocks only if admin selected the Body-Mind activation checkbox/action.
     """
     db = load_db()
     db.setdefault("admin_assessments", {})[user_id] = assessment_data
@@ -924,13 +917,11 @@ def finalize_admin_assessment(user_id, assessment_data, activation_selected=Fals
     wf["admin_completed"] = True
     wf["final_report_ready"] = True
 
-    request_exists = bool(wf.get("body_mind_activation_requested")) or bool(activation_selected)
-    if request_exists:
+    if activation_selected or bool(wf.get("body_mind_activation_requested")):
         wf["body_mind_activation_requested"] = True
         wf["body_mind_unlocked"] = True
-    elif bool(wf.get("body_mind_unlocked")):
-        # Preserve existing activation.
-        wf["body_mind_unlocked"] = True
+    else:
+        wf["body_mind_unlocked"] = bool(wf.get("body_mind_unlocked"))
 
     db["workflow"][user_id] = normalize_workflow(wf)
     save_db(db)

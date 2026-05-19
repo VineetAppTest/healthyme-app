@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v27 Final Report NSP Data Integrity + Body-Mind Carry Forward",
-  "version": "v27_final_report_nsp_data_integrity",
-  "updated_on": "2026-05-18T14:41:12.312175+00:00",
+  "build_name": "HealthyMe v29 Manual Body-Mind Unlock",
+  "version": "v29_manual_body_mind_unlock",
+  "updated_on": "2026-05-19T07:11:49.596801+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,13 +18,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Final report now resolves NSP data from selected assessment instance first.",
-    "If selected instance is missing, final report uses latest submitted/finalized instance.",
-    "Legacy member-level NSP responses remain fallback.",
-    "Digestive score diagnostics added to Final Report page and Excel Report Meta.",
-    "Partial report now uses same report-safe NSP source resolver.",
-    "Body-Mind v26 finalization/self-heal behavior carried forward and strengthened on Member Home.",
-    "No scoring formula or final report layout calculation changed except data-source integrity."
+    "Reverted v28 automatic Body-Mind unlock.",
+    "Finalization no longer auto-unlocks Body-Mind unless activation was selected.",
+    "Body-Mind Access Control manually unlocks only after final admin completion.",
+    "Member Home messaging updated to explain manual activation pending.",
+    "Version remains next to HealthyMe and duplicate top version line remains suppressed.",
+    "v27 NSP final report data integrity retained."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -51,17 +50,19 @@
     "If activation was never selected, Body-Mind remains hidden until activated from Body-Mind Access Control."
   ],
   "business_rule": [
-    "Body-Mind activates only when admin final assessment is complete and admin selects Body-Mind activation from either approved path.",
-    "Existing Body-Mind activation is preserved.",
-    "Disabling remains explicit through Body-Mind Access Control."
+    "Body-Mind is NOT automatically unlocked based only on admin_completed/final_report_ready.",
+    "Admin final work must be complete first.",
+    "After final admin completion, Body-Mind becomes visible only when admin manually activates it.",
+    "Manual activation can happen from either approved path.",
+    "Final report download is not required; Save and Generate Final Report / admin_completed is sufficient prerequisite."
   ],
   "removed_duplicate_artifacts": [],
   "not_changed": [
     "Scoring formula",
-    "Digestive mapping",
+    "Final report NSP data integrity fix",
+    "Final report calculation",
     "Auth structure",
-    "Database schema",
-    "Admin assessment questions"
+    "Database schema"
   ],
   "diagnostics_added": [
     "NSP Source",
@@ -70,5 +71,21 @@
     "NSP2 answer count",
     "Digestive score",
     "Legacy vs instance answer counts"
+  ],
+  "p0_fix": [
+    "Body-Mind unlocks automatically when admin_completed or final_report_ready is true.",
+    "Member Home self-heals old records where final report is ready but Body-Mind is hidden.",
+    "Body-Mind Access Control self-heals the same mismatch.",
+    "Eliminates Recipe/Exercise visible while Body-Mind hidden after final review."
+  ],
+  "version_cleanup": [
+    "Standalone duplicate version line removed.",
+    "Version appears next to HealthyMe in the header/topbar only."
+  ],
+  "retained": [
+    "v27 Final Report NSP Data Integrity fix retained.",
+    "Scoring formula unchanged.",
+    "Final report calculation unchanged.",
+    "Auth structure unchanged."
   ]
 }

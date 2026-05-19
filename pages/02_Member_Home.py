@@ -10,17 +10,7 @@ inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar
 
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
-# v27 carry-forward Body-Mind self-heal:
-# If finalization and activation request exist, ensure member visibility is synced.
-if (wf.get("admin_completed") or wf.get("final_report_ready")) and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
-    sync_body_mind_after_admin_completion(user_id, activation_selected=True)
-    wf = get_workflow(user_id)
 
-# v26 self-heal for historical records:
-# If admin finalized and activation was requested, ensure Body-Mind visibility is synced.
-if (wf.get("admin_completed") or wf.get("final_report_ready")) and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
-    sync_body_mind_after_admin_completion(user_id, activation_selected=True)
-    wf = get_workflow(user_id)
 current_instance = get_current_assessment_instance(user_id)
 requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
 is_reassessment = current_instance.get("instance_type") == "Reassessment" and not current_instance.get("submitted_for_review")
@@ -130,7 +120,7 @@ with right:
         if admin_completed and activation_requested:
             body_mind_msg = "Activation was requested, but visibility sync is pending. Ask admin to save Body-Mind access once."
         elif admin_completed:
-            body_mind_msg = "Final review is complete, but Body-Mind has not been activated by admin."
+            body_mind_msg = "Body-Mind has been explicitly disabled by admin."
         elif activation_requested:
             body_mind_msg = "Activation is requested and will open after admin final assessment is completed."
         else:

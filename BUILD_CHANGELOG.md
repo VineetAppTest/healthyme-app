@@ -260,3 +260,26 @@
 - Added same NSP source resolver to Partial Report.
 - Carried forward v26 Body-Mind self-heal into Member Home.
 - No scoring formula, Digestive mapping, auth structure, or DB schema changes.
+
+
+## v28 - Body-Mind Final Unlock + Version Cleanup
+
+- P0 fix: Body-Mind now unlocks automatically when admin final review/final report is ready.
+- Member Home self-heals historical records where final report is ready but Body-Mind remains hidden.
+- Body-Mind Access Control self-heals the same mismatch.
+- Removed duplicate standalone version line.
+- Version now appears next to HealthyMe inside the header/topbar.
+- Retains v27 Final Report NSP Data Integrity fix.
+- No scoring formula, final report calculation, auth structure, or DB schema changes.
+
+
+## v29 - Manual Body-Mind Unlock
+
+- Reverted v28 automatic Body-Mind unlock.
+- Body-Mind now requires:
+  1. Admin final completion / Save and Generate Final Report
+  2. Manual admin activation from either approved path
+- Final report download is not required.
+- Member Home copy now states manual activation is pending after final review.
+- Version remains next to HealthyMe; duplicate standalone version line remains suppressed.
+- Retains v27 Final Report NSP Data Integrity fix.

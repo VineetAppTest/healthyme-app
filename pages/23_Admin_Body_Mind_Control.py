@@ -11,7 +11,7 @@ render_page_nav("Body-Mind Access", back_page="pages/10_Admin_Dashboard.py", sho
 
 topbar(
     "Body-Mind Access Control",
-    "Activate Body-Mind after the five admin pages/final admin assessment are completed, or explicitly disable it if required.",
+    "Manually activate Body-Mind after final admin completion, or explicitly disable access if required.",
     "Admin control"
 )
 render_system_message()
@@ -26,11 +26,6 @@ member_id = selected.split(" — ")[0]
 member = next(m for m in members if m["id"] == member_id)
 wf = get_workflow(member_id)
 
-# v26 self-heal:
-# If final admin completion is done and Body-Mind activation was requested, ensure visibility is unlocked.
-if (wf.get("admin_completed") or wf.get("final_report_ready")) and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
-    sync_body_mind_after_admin_completion(member_id, activation_selected=True)
-    wf = get_workflow(member_id)
 db = load_db()
 body_response = db.get("body_mind_responses", {}).get(member_id, {})
 admin_assessment = get_admin_assessment(member_id)
@@ -82,12 +77,12 @@ else:
         unlock = st.checkbox(
             "Make Body-Mind Connection page visible to this member",
             value=False,
-            help="Enable Body-Mind Connection for this member."
+            help="Enable Body-Mind Connection for this member. Final admin completion is required first."
         )
         if st.button("Save Body-Mind Visibility", type="primary", use_container_width=True):
             if unlock:
                 request_body_mind_activation(member_id)
-                set_system_message("Body-Mind Connection page enabled for this member.", "success", celebrate=True)
+                set_system_message("Body-Mind Connection manually activated for this member.", "success", celebrate=True)
             else:
                 set_system_message("No visibility change was needed.", "info")
             st.rerun()
