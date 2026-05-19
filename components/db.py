@@ -1125,9 +1125,9 @@ def save_daily_log_supervision_note(member_id, note, actor_id="admin", log_date=
         "id": str(uuid.uuid4())[:8],
         "ts": item["ts"],
         "member_id": member_id,
-        "sender_role": "admin",
+        "sender_role": "nutritionist",
         "actor_id": actor_id,
-        "subject": f"Daily Log Supervision Note{date_text}",
+        "subject": f"Nutritionist Note{date_text}",
         "message": note,
         "status": "queued",
         "email_required": True,
@@ -1135,9 +1135,9 @@ def save_daily_log_supervision_note(member_id, note, actor_id="admin", log_date=
     })
     db.setdefault("notifications", []).append({
         "ts": item["ts"],
-        "kind": "daily_log_supervision_note",
+        "kind": "nutritionist_note",
         "user_id": member_id,
-        "message": f"Daily Log Supervision Note{date_text}: {note[:160]}",
+        "message": f"Nutritionist Note{date_text}: {note[:160]}",
         "status": "queued",
         "email_required": True,
         "created_by": actor_id or "admin",
@@ -1355,3 +1355,40 @@ def get_daily_food_journal_days(user_id):
     rows = list(merged.values())
     rows.sort(key=lambda r: (r.get("date", ""), r.get("timestamp", "")), reverse=True)
     return rows
+
+
+# --------------------------------------------------------------------
+# v48: Nutritionist message archive/read support
+# --------------------------------------------------------------------
+def mark_member_message_read(member_id, message_id):
+    """Mark one member message as read/archive it from the main screen."""
+    db = load_db()
+    changed = False
+    for m in db.get("messages", []):
+        if m.get("member_id") == member_id and m.get("id") == message_id:
+            m["read"] = True
+            m["archived"] = True
+            m["read_ts"] = datetime.datetime.now().isoformat(timespec="seconds")
+            changed = True
+            break
+    if changed:
+        save_db(db)
+    return changed
+
+def get_member_unread_messages(member_id, limit=10):
+    db = load_db()
+    rows = [
+        m for m in db.get("messages", [])
+        if m.get("member_id") == member_id and not m.get("read") and not m.get("archived")
+    ]
+    rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    return rows[:limit]
+
+def get_member_archived_messages(member_id, limit=50):
+    db = load_db()
+    rows = [
+        m for m in db.get("messages", [])
+        if m.get("member_id") == member_id and (m.get("read") or m.get("archived"))
+    ]
+    rows.sort(key=lambda r: r.get("read_ts", r.get("ts", "")), reverse=True)
+    return rows[:limit]

@@ -1,13 +1,25 @@
 import streamlit as st
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12
-from components.auth_session import restore_login_from_token, get_oidc_email, get_oidc_name, logout_current_user
+from components.auth_session import restore_login_from_token, get_oidc_email, get_oidc_name, logout_current_user, logout_current_user
 
 st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
 
+# v49 logout landing guard:
+# If user has just logged out, do not auto-restore and bounce back into app.
+logout_param = False
+try:
+    logout_param = st.query_params.get("logout") == "1"
+except Exception:
+    logout_param = False
+
+if logout_param:
+    st.session_state["signed_out"] = True
+    st.session_state["logout_requested"] = True
+
 # If already authenticated and authorized, route user.
-if restore_login_from_token():
+if not st.session_state.get("signed_out") and not st.session_state.get("logout_requested") and restore_login_from_token():
     if st.session_state.get("user_role") == "admin":
         st.switch_page("pages/10_Admin_Dashboard.py")
     else:
@@ -26,6 +38,12 @@ st.markdown("""
 login_col, journey_col = st.columns([.96, 1.04], gap="large")
 
 with login_col:
+    if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
+        st.success("You have been signed out.")
+        st.caption("For a full secure logout, complete the Auth0/OIDC logout below. If your browser still signs in automatically, close the browser tab or use a fresh browser profile.")
+        if st.button("Complete secure logout", use_container_width=True):
+            logout_current_user()
+
     try:
         box = st.container(border=True)
     except TypeError:
@@ -42,6 +60,12 @@ with login_col:
                 logout_current_user()
 
         if st.button("Continue with Auth0", type="primary", use_container_width=True):
+            st.session_state.pop("signed_out", None)
+            st.session_state.pop("logout_requested", None)
+            try:
+                st.query_params.clear()
+            except Exception:
+                pass
             st.login("auth0")
 
         st.markdown("""

@@ -36,7 +36,7 @@ def flatten_day(day, supervision_notes=None):
         "Physical Activity": day.get("physical_activity", ""),
         "Poop": day.get("poop", ""),
         "Overall Notes": day.get("notes", ""),
-        "Supervision Notes": " | ".join([n.get("note", "") for n in (supervision_notes or [])]),
+        "Nutritionist Notes": " | ".join([n.get("note", "") for n in (supervision_notes or [])]),
     }
     meals = day.get("meals", {}) or {}
     for key, label in meal_keys_for_day(day):
@@ -158,14 +158,14 @@ else:
 card_end()
 
 card_start()
-st.subheader(f"Supervision note for {selected_date}")
-note = st.text_area("Supervision note", placeholder="Example: Please add water quantity for lunch and dinner tomorrow.")
+st.subheader(f"Nutritionist note for {selected_date}")
+note = st.text_area("Nutritionist note", placeholder="Example: Please add water quantity for lunch and dinner tomorrow.")
 if st.button("Save Supervision Note / Notify Member", type="primary", use_container_width=True):
     if not note.strip():
-        st.error("Please write a supervision note before saving.")
+        st.error("Please write a nutritionist note before saving.")
     else:
         save_daily_log_supervision_note(member_id, note.strip(), actor_id=st.session_state.get("user_id", "admin"), log_date=selected_date)
-        st.success("Date-specific supervision note saved and notification queued.")
+        st.success("Date-specific nutritionist note saved and notification queued.")
         st.rerun()
 
 if date_notes:
@@ -202,7 +202,7 @@ else:
             "Dinner": flat.get("Dinner Food", ""),
             "Activity": flat.get("Physical Activity", ""),
             "Poop": flat.get("Poop", ""),
-            "Supervision Notes": flat.get("Supervision Notes", ""),
+            "Nutritionist Notes": flat.get("Nutritionist Notes", ""),
         })
     st.dataframe(rows, use_container_width=True, hide_index=True)
 card_end()

@@ -44,13 +44,11 @@ def _apply_user_to_session(app_user, email):
     return True
 
 def restore_login_from_token():
-    """Compatibility name retained, but now uses Streamlit OIDC identity.
+    """Compatibility name retained, but now uses Streamlit OIDC identity."""
+    # v49: after logout, do not auto-restore in the same app session.
+    if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
+        return False
 
-    Speed improvement:
-    - If role was already resolved in this Streamlit session, do not query DB again.
-    - On first Auth0 callback, try fast hm_users lookup first.
-    - Fallback to legacy JSONB lookup only if normalized lookup is unavailable.
-    """
     if not oidc_is_logged_in():
         return False
 
@@ -67,7 +65,6 @@ def restore_login_from_token():
     app_user = fast_user if ok and fast_user else None
 
     if not app_user:
-        # Fallback for cases where normalized tables are not migrated yet.
         app_user = find_user_by_email(email)
 
     if not app_user:
@@ -77,15 +74,20 @@ def restore_login_from_token():
 
     return _apply_user_to_session(app_user, email)
 
-def logout_current_user():
-    """Logout through Streamlit native OIDC and clear app session state.
-
-    Do not call st.rerun() or st.switch_page() after this function.
-    Streamlit handles redirect after st.logout().
-    """
+def clear_app_session_for_logout():
+    """Clear HealthyMe app-level session keys before logout."""
     for k in list(st.session_state.keys()):
         try:
             del st.session_state[k]
         except Exception:
             pass
+    st.session_state["signed_out"] = True
+    st.session_state["logout_requested"] = True
+
+def logout_current_user():
+    """Clear app session and call native Streamlit/OIDC logout.
+
+    Do not call st.rerun() or st.switch_page() after this function.
+    """
+    clear_app_session_for_logout()
     st.logout()

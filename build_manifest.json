@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v47 Logout + Daily Log Backcompat",
-  "version": "v47_logout_daily_log_backcompat_reference_toggle",
-  "updated_on": "2026-05-19T11:15:21.267446+00:00",
+  "build_name": "HealthyMe v49 Logout Session Hardening",
+  "version": "v49_logout_session_hardening",
+  "updated_on": "2026-05-19T11:29:58.330372+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,10 +18,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Replaced odd Reference format expander with a clean Show / Hide sample journal format toggle button.",
-    "Admin Daily Log Report now reads old row-based food journal entries and new day-based logs.",
-    "Logout now clears Streamlit session and calls st.logout without an extra st.rerun/st.switch_page after it.",
-    "Login page authenticated-identity logout uses the same logout handler."
+    "Logout button now clears HealthyMe app session and routes to Login page with logout flag.",
+    "Login page no longer auto-restores the user while logout flag/signed_out state is active.",
+    "Native Streamlit/Auth0 logout is performed from the Login page via Complete secure logout.",
+    "Avoids st.logout plus st.switch_page/st.rerun combination that caused intermittent error page.",
+    "Continue with Auth0 clears logout flags and starts a fresh login."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -136,9 +137,10 @@
     "23_Admin_Body_Mind_Control.py": 51,
     "25_Admin_Daily_Log_Settings.py": 148
   },
-  "compile_repair": "Fixed empty if block in Evaluation Status after removing grey caption text.",
+  "compile_repair": "Rebuilt auth_session.py cleanly to remove duplicate malformed logout function.",
   "notes": [
     "If the browser still auto-logs in after reboot, that means the Auth0/OIDC identity cookie is still active in the browser; the app now calls st.logout directly to clear it.",
     "Old Daily Food Journal rows are grouped by date for admin view."
-  ]
+  ],
+  "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout."
 }

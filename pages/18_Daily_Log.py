@@ -11,6 +11,7 @@ from components.db import (
     get_daily_log_supervision_notes,
     get_meal_type_repository,
     ensure_other_meal_section,
+    get_member_archived_messages,
 )
 from components.flash import set_system_message, render_system_message
 
@@ -127,7 +128,7 @@ if "active_daily_meal_section" not in st.session_state or st.session_state["acti
 date_notes = get_daily_log_supervision_notes(user_id, limit=10, log_date=str(log_date))
 if date_notes:
     card_start()
-    st.subheader(f"Admin supervision notes for {log_date}")
+    st.subheader(f"Nutritionist notes for {log_date}")
     for n in date_notes:
         st.markdown(f"<div class='info-banner'><b>{n.get('ts','')}</b><br>{n.get('note','')}</div>", unsafe_allow_html=True)
     card_end()
@@ -263,6 +264,31 @@ else:
             "Notes": day.get("notes", ""),
         })
     st.dataframe(rows, use_container_width=True, hide_index=True)
+card_end()
+
+
+card_start()
+st.subheader("Nutritionist message archive")
+archived_messages = get_member_archived_messages(user_id, limit=30)
+if not archived_messages:
+    st.info("No archived nutritionist messages yet.")
+else:
+    if "show_nutritionist_archive" not in st.session_state:
+        st.session_state["show_nutritionist_archive"] = False
+    if st.button("Show / Hide archived nutritionist messages", use_container_width=True):
+        st.session_state["show_nutritionist_archive"] = not st.session_state["show_nutritionist_archive"]
+    if st.session_state["show_nutritionist_archive"]:
+        for msg in archived_messages:
+            st.markdown(
+                f"""
+                <div class='info-banner'>
+                  <b>{msg.get('subject','Message')}</b><br>
+                  <small>{msg.get('ts','')}</small><br>
+                  <p>{msg.get('message','')}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 card_end()
 
 # Reference moved to bottom, with more aesthetic and compact expander.

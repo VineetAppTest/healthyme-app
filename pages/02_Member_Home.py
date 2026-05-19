@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12
-from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access
+from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read
 from components.assessment_instances import get_current_assessment_instance
 from components.flash import render_system_message
 
@@ -28,7 +28,7 @@ render_system_message()
 
 messages = get_member_messages(user_id, limit=3)
 if messages:
-    with st.expander("Messages from Admin", expanded=True):
+    with st.expander("Messages from Nutritionist", expanded=True):
         for msg in messages:
             st.markdown(
                 f"""

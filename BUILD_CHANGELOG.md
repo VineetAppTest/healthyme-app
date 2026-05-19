@@ -455,3 +455,21 @@
 - Admin Daily Log Report now reads older row-based food journal entries as well as new day-based logs.
 - Logout now clears app session and calls Streamlit logout without additional rerun/switch_page calls.
 - Login page authenticated logout uses the same logout handler.
+
+
+## v48 - Nutritionist Message Archive
+
+- Changed "Messages from Admin" to "Messages from Nutritionist".
+- Replaced message expander with a cleaner Show / Hide nutritionist messages button.
+- Added Mark as read / archive action.
+- Read messages disappear from Member Home and are stored in Daily Food Journal archive.
+- Daily Log supervision notes now use Nutritionist wording.
+
+
+## v49 - Logout Session Hardening
+
+- Logout now clears app session and routes to Login with logout flag.
+- Login page blocks auto-restore while signed_out/logout_requested is active.
+- Added Complete secure logout action on Login page.
+- Removed dangerous st.logout + switch/rerun combination from deep app pages.
+- Continue with Auth0 clears logout flags and starts fresh login.
