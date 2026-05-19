@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v39 Admin Autosave",
-  "version": "v39_admin_autosave",
-  "updated_on": "2026-05-19T08:58:44.821074+00:00",
+  "build_name": "HealthyMe v40 Body-Mind Status Sync",
+  "version": "v40_body_mind_status_sync",
+  "updated_on": "2026-05-19T09:16:14.641274+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,11 +18,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added auto-save draft behavior to Admin 5 Pages.",
-    "Admin Assessment now saves all five admin page values on every interaction/rerun.",
-    "Final report generation remains manual through Save and Generate Final Report.",
-    "Save Draft button retained as Save Draft / Confirm Changes.",
-    "Retains v38 Body-Mind disabled button UI and prior Body-Mind access fixes."
+    "Body-Mind Access Control Activation card now shows Activated when Body-Mind is visible through workflow unlock or explicit access marker.",
+    "Visibility and Activation cards now read from the same combined active-state rule.",
+    "Retains v39 Admin Autosave and prior Body-Mind fixes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -119,5 +117,9 @@
     "NSP Page 2": "Auto-save enabled",
     "Body-Mind": "Auto-save enabled",
     "Admin 5 Pages": "Auto-save draft enabled in v39; finalization remains manual"
+  },
+  "status_rule": {
+    "visible_or_activated": "body_mind_unlocked OR explicit_body_mind_access",
+    "activation_display": "Activated if visible/access marker exists; Requested if request exists but not visible; Not requested otherwise"
   }
 }

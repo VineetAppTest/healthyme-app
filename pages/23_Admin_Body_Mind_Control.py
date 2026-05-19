@@ -32,6 +32,9 @@ if explicit_body_mind_access:
 # v31: repair stale review/instance status for finalized records without auto-unlocking Body-Mind.
 if wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflow_status") == "finalized":
     wf = sync_member_finalization_state(member_id, body_mind_unlock=None)
+explicit_body_mind_access = has_explicit_body_mind_access(member_id)
+if explicit_body_mind_access:
+    wf["body_mind_unlocked"] = True
 
 db = load_db()
 body_response = db.get("body_mind_responses", {}).get(member_id, {})
@@ -45,7 +48,7 @@ st.subheader(member["name"])
 st.caption(member["email"])
 stat_grid([
     {"label": "Visibility", "value": "Visible" if (wf.get("body_mind_unlocked") or explicit_body_mind_access) else "Hidden", "note": "Member access"},
-    {"label": "Activation", "value": "Requested" if wf.get("body_mind_activation_requested") else "Not requested", "note": "Admin selection"},
+    {"label": "Activation", "value": "Activated" if (wf.get("body_mind_unlocked") or explicit_body_mind_access) else ("Requested" if wf.get("body_mind_activation_requested") else "Not requested"), "note": "Admin selection"},
     {"label": "Admin Assessment", "value": "Saved" if admin_assessment_saved else "Not saved", "note": "Unlock prerequisite"},
     {"label": "Body-Mind", "value": "Completed" if wf.get("body_mind_completed") else "Not completed", "note": "Member progress"},
     {"label": "Responses", "value": "Available" if body_response else "No responses", "note": "Stored data"},

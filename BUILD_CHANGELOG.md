@@ -379,3 +379,11 @@
 - Final report generation remains manual through Save and Generate Final Report.
 - Save Draft button retained as Save Draft / Confirm Changes.
 - Retains v38 Body-Mind disabled button UI and previous Body-Mind access fixes.
+
+
+## v40 - Body-Mind Status Sync
+
+- Fixed Body-Mind Access Control status mismatch.
+- Activation now shows Activated when Visibility is Visible.
+- Both cards use the same active-state source: workflow unlock OR explicit access marker.
+- Retains v39 Admin Autosave and earlier Body-Mind fixes.
