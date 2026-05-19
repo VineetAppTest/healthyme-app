@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v70 Streamlit Native Recent Saved Days",
-  "version": "v70_streamlit_native_recent_saved_days",
-  "updated_on": "2026-05-19T21:45:55.827070+00:00",
+  "build_name": "HealthyMe v71 Compact Nutritionist History Block",
+  "version": "v71_compact_nutritionist_history_block",
+  "updated_on": "2026-05-19T21:58:55.906775+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed separate Streamlit View History button row.",
-    "Rendered View / Hide control inside the same Action table cell.",
-    "Action control now aligns naturally with row text.",
-    "History opens inline under the same row using HTML details.",
-    "Business logic unchanged."
+    "Made Nutritionist note history block more compact.",
+    "Reduced note card padding.",
+    "Reduced history title/body font size.",
+    "Tightened spacing between history items.",
+    "No business logic changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -192,5 +192,5 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "UI-only correction. No save, dedupe, notification, LAF, Body-Mind, admin, or final report logic changed."
+  "business_logic_note": "UI-only micro patch. No Daily Log, notification, dedupe, admin, LAF, Body-Mind, or final report logic changed."
 }

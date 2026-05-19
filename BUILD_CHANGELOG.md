@@ -654,3 +654,11 @@
 - Prevents raw HTML from appearing on screen.
 - Keeps View / Hide history state behavior.
 - UI-only correction; business logic unchanged.
+
+
+## v71 - Compact Nutritionist History Block
+
+- Made Nutritionist note history section more compact.
+- Reduced font size and padding of history cards.
+- Reduced spacing between history cards.
+- UI-only micro patch; business logic unchanged.
