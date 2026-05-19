@@ -7,7 +7,7 @@ from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
 from components.admin_value_resolver import resolve_admin_linked_value
 st.set_page_config(page_title="Admin Assessment", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 mid=st.session_state.get("selected_member_id")
 if not mid: st.switch_page("pages/11_Evaluation_Status.py")
 templates=json.loads((pathlib.Path(__file__).resolve().parents[1]/"config"/"admin_templates.json").read_text())

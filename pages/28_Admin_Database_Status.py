@@ -12,7 +12,7 @@ from components.flash import set_system_message, render_system_message
 from components.normalized_store import check_normalized_tables, sync_users_workflow_to_normalized
 
 st.set_page_config(page_title="Database Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 
 topbar("Database Status", "Check Supabase connection, fallback mode, migration, and backups.", "Admin database")
 render_system_message()

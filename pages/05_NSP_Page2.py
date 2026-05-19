@@ -8,7 +8,7 @@ from components.flash import set_system_message, render_system_message
 from components.config_cache import load_config_json
 
 st.set_page_config(page_title="NSP Client Assessment - Page 2", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
 user_id = st.session_state["user_id"]
 current_instance = get_current_assessment_instance(user_id)

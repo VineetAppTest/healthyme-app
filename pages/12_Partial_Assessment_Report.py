@@ -14,7 +14,7 @@ from components.systems_rating import calculate_systems_rating
 from components.report_engine import prepare_report_db
 
 st.set_page_config(page_title="Partial Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 
 mid = st.session_state.get("selected_member_id")
 if not mid:

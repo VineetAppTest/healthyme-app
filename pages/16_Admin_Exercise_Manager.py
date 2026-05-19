@@ -1,11 +1,11 @@
 
 import streamlit as st, pathlib, pandas as pd
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, render_build_text_v14, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, render_build_text_v14, render_back_to_top, render_page_nav
 from components.db import list_members, get_resource_assignments, save_resource_assignments
 
 st.set_page_config(page_title="Manage & Allocate Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 
 path = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
 

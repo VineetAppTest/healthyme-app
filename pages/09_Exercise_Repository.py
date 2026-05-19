@@ -4,7 +4,7 @@ from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12, render_back_to_top
 from components.db import get_workflow, get_resource_assignments
 st.set_page_config(page_title="Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 wf=get_workflow(st.session_state["user_id"]); topbar("Exercise Repository","Search and browse personalized exercises.","Personalized content")
 if not wf.get("admin_completed"): st.warning("Your personalized plan will unlock after expert evaluation is completed."); st.stop()
 df=pd.read_csv(pathlib.Path(__file__).resolve().parents[1]/"data"/"exercises.csv"); df=df[df["status"].fillna("active").eq("active")].copy()

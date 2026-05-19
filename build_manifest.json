@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v54 Nutritionist Read Archive Fix",
-  "version": "v54_nutritionist_read_archive_fix",
-  "updated_on": "2026-05-19T12:31:15.134044+00:00",
+  "build_name": "HealthyMe v55 Admin Dashboard Import Fix",
+  "version": "v55_admin_dashboard_import_fix",
+  "updated_on": "2026-05-19T12:52:35.796078+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -147,9 +147,22 @@
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
-    "Fixed ImportError on Member Home by exposing format_local_ts in components.ui_common.",
-    "Fixed ImportError on Member Home by exposing render_back_to_top in components.ui_common.",
-    "Moved shared helpers near the top of ui_common.py so page imports resolve reliably.",
-    "Retained v52 login logout block placement and v51 timezone/archive/back-to-top behavior."
-  ]
+    "Fixed NameError on Admin Dashboard by importing card_start/card_end from components.ui_common.",
+    "Scanned pages and repaired missing ui_common imports for referenced helpers.",
+    "Cleaned duplicate render_back_to_top calls.",
+    "Retains v54 Nutritionist read/archive fixes."
+  ],
+  "pages_imports_repaired": {
+    "10_Admin_Dashboard.py": [
+      "card_start",
+      "card_end"
+    ],
+    "15_Admin_Recipe_Manager.py": [
+      "render_page_nav"
+    ],
+    "16_Admin_Exercise_Manager.py": [
+      "render_page_nav"
+    ]
+  },
+  "remaining_missing_ui_imports": {}
 }

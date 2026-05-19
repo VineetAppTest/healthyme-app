@@ -12,7 +12,7 @@ from components.assessment_instances import get_assessment_instances
 from components.systems_rating import calculate_systems_rating
 
 st.set_page_config(page_title="Comparative NSP Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 render_build_text_v15()
 render_page_nav("Comparative NSP", back_page="pages/10_Admin_Dashboard.py", show_evaluation=True, location="top")
 

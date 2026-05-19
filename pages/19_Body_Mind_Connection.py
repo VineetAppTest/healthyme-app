@@ -6,7 +6,7 @@ from components.db import get_workflow, get_body_mind_response, save_body_mind_r
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Body-Mind Connection", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)

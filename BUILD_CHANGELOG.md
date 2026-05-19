@@ -514,3 +514,11 @@
 - Added auto-archive for nutritionist messages whose linked date has passed.
 - Removed duplicate date-specific Nutritionist notes from the Daily Log entry screen.
 - Nutritionist Notes Archive remains the storage location for notes/messages.
+
+
+## v55 - Admin Dashboard Import Fix
+
+- Fixed Admin Dashboard NameError by importing missing `card_start` / `card_end`.
+- Scanned pages and repaired missing `components.ui_common` helper imports.
+- Cleaned duplicate Back to Top calls.
+- Retains v54 Nutritionist read/archive behavior.

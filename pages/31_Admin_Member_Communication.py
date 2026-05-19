@@ -5,7 +5,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import list_members, queue_member_message, get_member_messages
 
 st.set_page_config(page_title="Admin-Member Communication", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 render_build_text_v14()
 
 topbar("Admin-Member Communication", "Send app messages to members and queue email notifications.", "Admin communication")

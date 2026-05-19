@@ -5,7 +5,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import list_members
 
 st.set_page_config(page_title="Eval Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 render_build_text_v15()
 
 rows = list_members()

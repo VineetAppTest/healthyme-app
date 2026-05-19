@@ -5,7 +5,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import get_profile_with_laf_fallback, update_profile, sync_profile_from_laf
 
 st.set_page_config(page_title="My Profile", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
 user_id = st.session_state["user_id"]
 sync_profile_from_laf(user_id)
