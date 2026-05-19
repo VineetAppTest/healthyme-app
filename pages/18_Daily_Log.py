@@ -12,6 +12,7 @@ from components.db import (
     get_meal_type_repository,
     ensure_other_meal_section,
     get_member_archived_messages,
+    auto_archive_expired_nutritionist_messages,
 )
 from components.flash import set_system_message, render_system_message
 
@@ -58,6 +59,7 @@ st.markdown(
 user_id = st.session_state["user_id"]
 topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
+auto_archive_expired_nutritionist_messages(user_id)
 
 def meal_has_data(meal):
     return any((meal or {}).get(x) for x in ["time", "food", "water", "portion_size", "mood_energy"])
@@ -125,13 +127,6 @@ if not meal_sections:
 if "active_daily_meal_section" not in st.session_state or st.session_state["active_daily_meal_section"] not in [x[0] for x in meal_sections]:
     st.session_state["active_daily_meal_section"] = meal_sections[0][0]
 
-date_notes = get_daily_log_supervision_notes(user_id, limit=10, log_date=str(log_date))
-if date_notes:
-    card_start()
-    st.subheader(f"Nutritionist notes for {log_date}")
-    for n in date_notes:
-        st.markdown(f"<div class='info-banner'><b>{format_local_ts(n.get('ts',''))}</b><br>{n.get('note','')}</div>", unsafe_allow_html=True)
-    card_end()
 
 card_start()
 st.subheader("Meal sections")
@@ -276,7 +271,7 @@ if not archived_messages and not all_note_archive:
 else:
     if "show_nutritionist_archive" not in st.session_state:
         st.session_state["show_nutritionist_archive"] = False
-    if st.button("Show / Hide archived nutritionist notes/messages", use_container_width=True):
+    if st.button("Show / Hide Nutritionist Notes Archive", use_container_width=True):
         st.session_state["show_nutritionist_archive"] = not st.session_state["show_nutritionist_archive"]
     if st.session_state["show_nutritionist_archive"]:
         if all_note_archive:

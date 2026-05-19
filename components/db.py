@@ -1392,3 +1392,85 @@ def get_member_archived_messages(member_id, limit=50):
     ]
     rows.sort(key=lambda r: r.get("read_ts", r.get("ts", "")), reverse=True)
     return rows[:limit]
+
+
+# --------------------------------------------------------------------
+# v54: Final Nutritionist read/archive behavior
+# --------------------------------------------------------------------
+def _today_iso_for_archive():
+    return datetime.date.today().isoformat()
+
+def _message_effective_date(msg):
+    """Return date string used for automatic nutritionist message archiving."""
+    return str(msg.get("log_date") or msg.get("date") or (msg.get("ts", "")[:10] if msg.get("ts") else ""))
+
+def auto_archive_expired_nutritionist_messages(member_id):
+    """Archive nutritionist messages whose linked date has passed.
+
+    This keeps old notes out of Member Home but retained in archive.
+    """
+    db = load_db()
+    today = _today_iso_for_archive()
+    changed = False
+    for m in db.get("messages", []):
+        if m.get("member_id") != member_id:
+            continue
+        role = str(m.get("sender_role", "")).lower()
+        subject = str(m.get("subject", "")).lower()
+        is_nutritionist = role in ["nutritionist", "admin"] or "nutritionist" in subject or "daily log supervision" in subject
+        if not is_nutritionist:
+            continue
+        if m.get("read") or m.get("archived"):
+            continue
+        d = _message_effective_date(m)
+        if d and d < today:
+            m["archived"] = True
+            m["auto_archived"] = True
+            m["archive_reason"] = "date_passed"
+            m["read_ts"] = datetime.datetime.now().isoformat(timespec="seconds")
+            changed = True
+    if changed:
+        save_db(db)
+    return changed
+
+def mark_member_message_read(member_id, message_id):
+    """Mark one member message as read/archive it from the main screen."""
+    db = load_db()
+    changed = False
+    for m in db.get("messages", []):
+        if m.get("member_id") == member_id and m.get("id") == message_id:
+            m["read"] = True
+            m["archived"] = True
+            m["read_ts"] = datetime.datetime.now().isoformat(timespec="seconds")
+            m["archive_reason"] = "member_read"
+            changed = True
+            break
+    if changed:
+        save_db(db)
+    return changed
+
+def get_member_unread_messages(member_id, limit=10):
+    auto_archive_expired_nutritionist_messages(member_id)
+    db = load_db()
+    rows = [
+        m for m in db.get("messages", [])
+        if m.get("member_id") == member_id
+        and not m.get("read")
+        and not m.get("archived")
+    ]
+    rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    return rows[:limit]
+
+def get_member_messages(member_id, limit=10):
+    """Main-screen messages: unread/unarchived only."""
+    return get_member_unread_messages(member_id, limit=limit)
+
+def get_member_archived_messages(member_id, limit=50):
+    auto_archive_expired_nutritionist_messages(member_id)
+    db = load_db()
+    rows = [
+        m for m in db.get("messages", [])
+        if m.get("member_id") == member_id and (m.get("read") or m.get("archived"))
+    ]
+    rows.sort(key=lambda r: r.get("read_ts", r.get("ts", "")), reverse=True)
+    return rows[:limit]

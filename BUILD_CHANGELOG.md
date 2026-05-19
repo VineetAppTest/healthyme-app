@@ -504,3 +504,13 @@
 - Fixed Member Home ImportError by exposing `render_back_to_top` in `components.ui_common`.
 - Shared helpers now sit near the top of `ui_common.py` so all pages can import them reliably.
 - Retains v52 login logout placement and v51 timezone/archive/back-to-top fixes.
+
+
+## v54 - Nutritionist Read Archive Fix
+
+- Fixed unread/read archive flow for nutritionist messages.
+- Read / Archive removes message from Member Home and stores it in Daily Food Journal archive.
+- Added archive success/error feedback.
+- Added auto-archive for nutritionist messages whose linked date has passed.
+- Removed duplicate date-specific Nutritionist notes from the Daily Log entry screen.
+- Nutritionist Notes Archive remains the storage location for notes/messages.

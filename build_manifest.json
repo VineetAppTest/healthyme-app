@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v53 UI Helper Import Fix",
-  "version": "v53_ui_helper_import_fix",
-  "updated_on": "2026-05-19T12:14:13.827186+00:00",
+  "build_name": "HealthyMe v54 Nutritionist Read Archive Fix",
+  "version": "v54_nutritionist_read_archive_fix",
+  "updated_on": "2026-05-19T12:31:15.134044+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,9 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Moved signed-out / Complete secure logout section below the Secure Login card.",
-    "Removed the top signed-out block from above Secure Login.",
-    "Retained v51 timezone, notes archive, and Back to Top fixes."
+    "Fixed get_member_messages to return only unread/unarchived messages.",
+    "Read / Archive now marks message read+archived and immediately removes it from Member Home.",
+    "Added success/error feedback after Read / Archive.",
+    "Auto-archives nutritionist messages when their linked log date has passed.",
+    "Removed duplicate Nutritionist notes section from Daily Food Journal main entry screen.",
+    "Nutritionist notes/messages remain available under Nutritionist Notes Archive.",
+    "Removed Show/Hide message button from Member Home and made Read / Archive the visible action."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -141,7 +145,7 @@
     "Old Daily Food Journal rows are grouped by date for admin view."
   ],
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
-  "timezone_note": "Current implementation defaults to Asia/Kolkata. Future user profile timezone values can be passed to format_local_ts when timezone fields are added.",
+  "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
     "Fixed ImportError on Member Home by exposing format_local_ts in components.ui_common.",
     "Fixed ImportError on Member Home by exposing render_back_to_top in components.ui_common.",

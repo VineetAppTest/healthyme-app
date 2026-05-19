@@ -1,9 +1,9 @@
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, format_local_ts, render_back_to_top
-from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read
+from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read, mark_member_message_read, auto_archive_expired_nutritionist_messages
 from components.assessment_instances import get_current_assessment_instance
-from components.flash import render_system_message
+from components.flash import render_system_message, set_system_message
 
 st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
@@ -25,33 +25,31 @@ is_reassessment = current_instance.get("instance_type") == "Reassessment" and no
 
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 render_system_message()
+auto_archive_expired_nutritionist_messages(user_id)
 
 messages = get_member_messages(user_id, limit=3)
 if messages:
     st.markdown("<div class='hm-nutritionist-message-shell'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-nutritionist-message-title'>Messages from Nutritionist</div>", unsafe_allow_html=True)
 
-    if "show_nutritionist_messages" not in st.session_state:
-        st.session_state["show_nutritionist_messages"] = True
-
-    if st.button("Show / Hide nutritionist messages", key="toggle_nutritionist_messages", use_container_width=True):
-        st.session_state["show_nutritionist_messages"] = not st.session_state["show_nutritionist_messages"]
-
-    if st.session_state["show_nutritionist_messages"]:
-        for msg in messages:
-            st.markdown(
-                f"""
-                <div class='info-banner hm-nutritionist-message-card'>
-                  <b>{msg.get('subject','Message')}</b><br>
-                  <small>{format_local_ts(msg.get('ts',''))}</small><br>
-                  <p>{msg.get('message','')}</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            if st.button("Mark as read / archive", key=f"read_msg_{msg.get('id','')}", use_container_width=True):
-                mark_member_message_read(user_id, msg.get("id", ""))
-                st.rerun()
+    for msg in messages:
+        st.markdown(
+            f"""
+            <div class='info-banner hm-nutritionist-message-card'>
+              <b>{msg.get('subject','Message')}</b><br>
+              <small>{format_local_ts(msg.get('ts',''))}</small><br>
+              <p>{msg.get('message','')}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Read / Archive message from Nutritionist", key=f"read_msg_{msg.get('id','')}", use_container_width=True):
+            ok = mark_member_message_read(user_id, msg.get("id", ""))
+            if ok:
+                set_system_message("Message archived. You can find it in Daily Food Journal → Nutritionist Notes Archive.", "success")
+            else:
+                set_system_message("Message could not be archived. Please refresh and try again.", "error")
+            st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
 
