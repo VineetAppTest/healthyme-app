@@ -22,6 +22,14 @@ render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_eval
 
 MEAL_KEYS = [(r["key"], r["label"]) for r in get_meal_type_repository()]
 
+def meal_keys_for_day(day):
+    keys = list(MEAL_KEYS)
+    known = {k for k, _label in keys}
+    for k, meal in (day.get("meals", {}) or {}).items():
+        if k not in known:
+            keys.append((k, meal.get("label", k.replace("_", " ").title())))
+    return keys
+
 def flatten_day(day, supervision_notes=None):
     base = {
         "Date": day.get("date", ""),
@@ -31,7 +39,7 @@ def flatten_day(day, supervision_notes=None):
         "Supervision Notes": " | ".join([n.get("note", "") for n in (supervision_notes or [])]),
     }
     meals = day.get("meals", {}) or {}
-    for key, label in MEAL_KEYS:
+    for key, label in meal_keys_for_day(day):
         meal = meals.get(key, {}) or {}
         base[f"{label} Time"] = meal.get("time", "")
         base[f"{label} Food"] = meal.get("food", "")
@@ -46,7 +54,14 @@ def build_excel(member, days):
     ws.title = "Daily Food Journal"
     ws.append(["Member", member.get("name", ""), "Email", member.get("email", "")])
     ws.append([])
-    headers = list(flatten_day({}).keys())
+    # Build headers using all saved days so dynamic Other sections are included.
+    headers = []
+    for d in days:
+        for h in flatten_day(d).keys():
+            if h not in headers:
+                headers.append(h)
+    if not headers:
+        headers = list(flatten_day({}).keys())
     ws.append(headers)
     for day in days:
         notes = get_daily_log_supervision_notes(member.get("id"), limit=50, log_date=day.get("date"))
@@ -112,7 +127,7 @@ if not selected_day or not selected_day.get("meals"):
     st.info("No food journal available for this date.")
 else:
     meal_rows = []
-    for key, label in MEAL_KEYS:
+    for key, label in meal_keys_for_day(selected_day):
         meal = (selected_day.get("meals", {}) or {}).get(key, {}) or {}
         meal_rows.append({
             "Meal Type": label,

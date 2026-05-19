@@ -17,30 +17,80 @@ st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wi
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 user_id = st.session_state["user_id"]
-topbar("Daily Food Journal", "Fill the whole day at once or save each meal section progressively.", "Member tracker")
+topbar("Daily Food Journal", "Save each meal progressively or complete the full day together.", "Member tracker")
 render_system_message()
 
+def meal_blank(label):
+    return {"label": label, "time": "", "food": "", "water": "", "portion_size": "", "mood_energy": ""}
+
+def normalize_meal_key(label):
+    return label.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
+
+def meal_has_data(meal):
+    return any((meal or {}).get(x) for x in ["time", "food", "water", "portion_size", "mood_energy"])
+
+def current_widget_payload(section_key, section_label):
+    return {
+        "label": section_label,
+        "time": st.session_state.get(f"{section_key}_time", "").strip(),
+        "food": st.session_state.get(f"{section_key}_food", "").strip(),
+        "water": st.session_state.get(f"{section_key}_water", "").strip(),
+        "portion_size": st.session_state.get(f"{section_key}_portion", "").strip(),
+        "mood_energy": st.session_state.get(f"{section_key}_mood", "").strip(),
+    }
+
+def saved_payload_for(existing_meals, section_key, section_label):
+    prior = existing_meals.get(section_key, {}) if existing_meals else {}
+    return {
+        "label": prior.get("label", section_label),
+        "time": prior.get("time", ""),
+        "food": prior.get("food", ""),
+        "water": prior.get("water", ""),
+        "portion_size": prior.get("portion_size", ""),
+        "mood_energy": prior.get("mood_energy", ""),
+    }
+
+def is_dirty(existing_meals, section_key, section_label):
+    if f"{section_key}_food" not in st.session_state:
+        return False
+    cur = current_widget_payload(section_key, section_label)
+    saved = saved_payload_for(existing_meals, section_key, section_label)
+    return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "water", "portion_size", "mood_energy"])
+
 meal_repo = get_meal_type_repository()
-MEAL_GROUPS = [(r["key"], r["label"]) for r in meal_repo]
+base_sections = [(r["key"], r["label"]) for r in meal_repo if r.get("key") != "other"]
 
-SAMPLE_ROWS = [
-    {"Time": "10:00 - 10:30 AM", "Meal Type": "Breakfast", "Food": "Boiled eggs / omelet / moong dal chilla / poha", "Water": "", "Portion Size": "2 eggs / 2 chilla / 1 bowl poha", "Mood/Energy": "Fresh", "Activity": "1 PM - 2 PM", "Poop": "2-3 times / felt relieved", "Notes": "Mention exact items."},
-    {"Time": "2:30 - 2:45 PM", "Meal Type": "Lunch", "Food": "Dal + rice / roti + salad + curd + sabzi", "Water": "", "Portion Size": "100 ml rice + 100 ml dal", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
-    {"Time": "5:00 - 5:30 PM", "Meal Type": "Evening Snack", "Food": "Half cup tea with snack", "Water": "", "Portion Size": "", "Mood/Energy": "Okay", "Activity": "", "Poop": "", "Notes": ""},
-    {"Time": "7:30 - 8:00 PM", "Meal Type": "Dinner", "Food": "Soup / light dinner", "Water": "", "Portion Size": "1 big bowl", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
-]
+# Always provide repeatable Other slots if repository has Other active, or if older data already contains other_*.
+other_enabled = any(r.get("key") == "other" for r in meal_repo)
+if "daily_log_other_count" not in st.session_state:
+    st.session_state["daily_log_other_count"] = 1 if other_enabled else 0
 
-with st.expander("Reference format from sample journal", expanded=False):
-    st.caption("Use this as a guide. Actual meal sections are controlled by admin.")
-    st.dataframe(SAMPLE_ROWS, use_container_width=True, hide_index=True)
-
-if not MEAL_GROUPS:
+if not base_sections and not other_enabled:
     st.warning("No meal sections are currently active. Please contact admin.")
     st.stop()
 
 log_date = st.date_input("Food journal date", value=date.today())
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
+
+# Make sure existing Other entries are reflected in count.
+existing_other_nums = []
+for key in existing_meals.keys():
+    if key.startswith("other_"):
+        try:
+            existing_other_nums.append(int(key.split("_")[1]))
+        except Exception:
+            pass
+if existing_other_nums:
+    st.session_state["daily_log_other_count"] = max(st.session_state.get("daily_log_other_count", 1), max(existing_other_nums))
+
+meal_sections = list(base_sections)
+if other_enabled:
+    for idx in range(1, st.session_state.get("daily_log_other_count", 1) + 1):
+        meal_sections.append((f"other_{idx}", f"Other {idx}"))
+
+if "active_daily_meal_section" not in st.session_state or st.session_state["active_daily_meal_section"] not in [x[0] for x in meal_sections]:
+    st.session_state["active_daily_meal_section"] = meal_sections[0][0]
 
 date_notes = get_daily_log_supervision_notes(user_id, limit=10, log_date=str(log_date))
 if date_notes:
@@ -51,42 +101,73 @@ if date_notes:
     card_end()
 
 card_start()
-st.subheader("Food journal by meal")
-st.caption("You can save one meal now and return later, or fill multiple meals and use Save Full-Day Journal.")
+st.subheader("Meal sections")
+st.caption("Only one section opens at a time. Save the current section before moving to another one.")
 
-meals = {}
-for key, label in MEAL_GROUPS:
-    prior = existing_meals.get(key, {}) if existing_meals else {}
-    meal_has_data = any(prior.get(x) for x in ["time", "food", "water", "portion_size", "mood_energy"])
-    with st.expander(f"{label}{' ✓' if meal_has_data else ''}", expanded=not meal_has_data and label in ["Breakfast", "Lunch", "Dinner"]):
-        c1, c2 = st.columns([1, 1])
-        with c1:
-            time_text = st.text_input("Time", value=prior.get("time", ""), key=f"{key}_time", placeholder="Example: 10:00 - 10:30 AM")
-        with c2:
-            water = st.text_input("Water", value=prior.get("water", ""), key=f"{key}_water", placeholder="Example: 250 ml / 2 glasses")
-        food = st.text_area("Food", value=prior.get("food", ""), key=f"{key}_food", placeholder=f"What did you have for {label.lower()}?")
-        c3, c4 = st.columns([1, 1])
-        with c3:
-            portion = st.text_input("Portion Size", value=prior.get("portion_size", ""), key=f"{key}_portion", placeholder="Example: 1 bowl / 2 rotis / 250 ml")
-        with c4:
-            mood = st.text_input("Mood / Energy", value=prior.get("mood_energy", ""), key=f"{key}_mood", placeholder="Example: fresh / heavy / energetic")
+active_key = st.session_state["active_daily_meal_section"]
+active_label = next((label for key, label in meal_sections if key == active_key), meal_sections[0][1])
 
-        meal_payload = {
-            "label": label,
-            "time": time_text.strip(),
-            "food": food.strip(),
-            "water": water.strip(),
-            "portion_size": portion.strip(),
-            "mood_energy": mood.strip(),
-        }
-        meals[key] = meal_payload
+# Compact section selector buttons
+cols = st.columns(min(5, max(1, len(meal_sections))))
+for idx, (key, label) in enumerate(meal_sections):
+    with cols[idx % len(cols)]:
+        saved = meal_has_data(existing_meals.get(key, {}))
+        button_label = f"{'● ' if key == active_key else ''}{label}{' ✓' if saved else ''}"
+        if st.button(button_label, key=f"section_btn_{key}", use_container_width=True):
+            if key != active_key and is_dirty(existing_meals, active_key, active_label):
+                st.warning(f"Please save the section ({active_label}) before moving to next section.")
+            else:
+                st.session_state["active_daily_meal_section"] = key
+                st.rerun()
 
-        if st.button(f"Save {label}", key=f"save_{key}", use_container_width=True):
-            save_daily_food_journal_meal(user_id, str(log_date), key, meal_payload)
-            set_system_message(f"{label} saved for {log_date}.", "success")
+if other_enabled:
+    if st.button("+ Add Other eating time", use_container_width=True):
+        if is_dirty(existing_meals, active_key, active_label):
+            st.warning(f"Please save the section ({active_label}) before adding another Other section.")
+        else:
+            st.session_state["daily_log_other_count"] = st.session_state.get("daily_log_other_count", 1) + 1
+            st.session_state["active_daily_meal_section"] = f"other_{st.session_state['daily_log_other_count']}"
             st.rerun()
 
-st.markdown("#### Full-day details")
+st.markdown("---")
+st.markdown(f"### {active_label}")
+prior = existing_meals.get(active_key, {}) if existing_meals else {}
+
+c1, c2 = st.columns([1, 1])
+with c1:
+    time_text = st.text_input("Time", value=prior.get("time", ""), key=f"{active_key}_time", placeholder="Example: 10:00 - 10:30 AM")
+with c2:
+    water = st.text_input("Water", value=prior.get("water", ""), key=f"{active_key}_water", placeholder="Example: 250 ml / 2 glasses")
+
+food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?")
+
+c3, c4 = st.columns([1, 1])
+with c3:
+    portion = st.text_input("Portion Size", value=prior.get("portion_size", ""), key=f"{active_key}_portion", placeholder="Example: 1 bowl / 2 rotis / 250 ml")
+with c4:
+    mood = st.text_input("Mood / Energy", value=prior.get("mood_energy", ""), key=f"{active_key}_mood", placeholder="Example: fresh / heavy / energetic")
+
+active_payload = current_widget_payload(active_key, active_label)
+meal_dirty = is_dirty(existing_meals, active_key, active_label)
+
+c_save, c_status = st.columns([1, 1])
+with c_save:
+    if st.button(f"Save {active_label}", type="primary", use_container_width=True):
+        save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
+        set_system_message(f"{active_label} saved for {log_date}.", "success")
+        st.rerun()
+with c_status:
+    if meal_dirty:
+        st.warning(f"Unsaved changes in {active_label}.")
+    elif meal_has_data(prior):
+        st.success(f"{active_label} saved.")
+    else:
+        st.caption("No saved entry yet.")
+
+card_end()
+
+card_start()
+st.subheader("Full-day details")
 d1, d2 = st.columns(2)
 with d1:
     physical_activity = st.text_area(
@@ -110,13 +191,12 @@ with c_save_1:
         st.rerun()
 with c_save_2:
     if st.button("Save Full-Day Journal", type="primary", use_container_width=True):
-        filled = any(v.get("food") or v.get("water") or v.get("time") or v.get("portion_size") or v.get("mood_energy") for v in meals.values())
-        if not filled and not physical_activity.strip() and not poop.strip() and not day_notes.strip():
-            set_system_message("Please enter at least one detail before saving.", "error")
-            st.rerun()
+        # Merge latest visible widget payload with saved meals.
+        merged_meals = dict(existing_meals or {})
+        merged_meals[active_key] = active_payload
         payload = {
             "date": str(log_date),
-            "meals": meals,
+            "meals": merged_meals,
             "physical_activity": physical_activity.strip(),
             "poop": poop.strip(),
             "notes": day_notes.strip(),
@@ -148,6 +228,17 @@ else:
         })
     st.dataframe(rows, use_container_width=True, hide_index=True)
 card_end()
+
+# Reference moved to bottom
+SAMPLE_ROWS = [
+    {"Time": "10:00 - 10:30 AM", "Meal Type": "Breakfast", "Food": "Boiled eggs / omelet / moong dal chilla / poha", "Water": "", "Portion Size": "2 eggs / 2 chilla / 1 bowl poha", "Mood/Energy": "Fresh", "Activity": "1 PM - 2 PM", "Poop": "2-3 times / felt relieved", "Notes": "Mention exact items."},
+    {"Time": "2:30 - 2:45 PM", "Meal Type": "Lunch", "Food": "Dal + rice / roti + salad + curd + sabzi", "Water": "", "Portion Size": "100 ml rice + 100 ml dal", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
+    {"Time": "5:00 - 5:30 PM", "Meal Type": "Evening Snack", "Food": "Half cup tea with snack", "Water": "", "Portion Size": "", "Mood/Energy": "Okay", "Activity": "", "Poop": "", "Notes": ""},
+    {"Time": "7:30 - 8:00 PM", "Meal Type": "Dinner", "Food": "Soup / light dinner", "Water": "", "Portion Size": "1 big bowl", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
+]
+with st.expander("Reference format from sample journal", expanded=False):
+    st.caption("Reference moved to the bottom to keep the entry area clean.")
+    st.dataframe(SAMPLE_ROWS, use_container_width=True, hide_index=True)
 
 if st.button("Back to Home", use_container_width=True):
     st.switch_page("pages/02_Member_Home.py")

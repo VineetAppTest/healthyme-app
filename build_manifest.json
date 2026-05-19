@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v43 Progressive Daily Log + Repository",
-  "version": "v43_progressive_daily_log_repository",
-  "updated_on": "2026-05-19T10:06:39.386435+00:00",
+  "build_name": "HealthyMe v44 Daily Log One-Section + Other Slots",
+  "version": "v44_daily_log_one_section_other_slots",
+  "updated_on": "2026-05-19T10:22:54.885351+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,12 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Member can now save meal sections progressively instead of completing the whole day in one go.",
-    "Member can still save the full-day journal at once.",
-    "Admin-editable meal type repository added.",
-    "Default active meal sections set to Breakfast, Lunch, Evening Snack, Dinner and Bedtime.",
-    "Admin can add/remove/rename/reorder meal sections from Daily Log Settings.",
-    "Admin report reads active meal sections from the repository."
+    "Moved Reference format from sample journal to the bottom of the member Daily Log page.",
+    "Replaced bulky expand/collapse layout with compact meal section buttons.",
+    "Only one meal section is open at a time.",
+    "If the current section has unsaved changes, switching to another section is blocked with save warning.",
+    "Added repeatable Other eating time sections: Other 1, Other 2, etc.",
+    "Admin meal repository default now includes Other.",
+    "Admin report handles dynamic Other sections."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -126,5 +127,6 @@
   },
   "format_source": "Sample_Food_Journal.xlsx",
   "supervision_note_rule": "Supervision note attaches to selected food log date, appears to member under that date, and is queued as notification/email.",
-  "client_rule": "Daily Log should support both incremental meal-wise entry and full-day entry. Meal sections should be admin configurable."
+  "client_rule": "Daily Log should support both incremental meal-wise entry and full-day entry. Meal sections should be admin configurable.",
+  "warning_text": "Please save the section (Breakfast/Lunch/Evening Snack/Dinner/Bedtime/Other) before moving to next section."
 }

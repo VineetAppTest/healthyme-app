@@ -419,3 +419,14 @@
 - Default active meal sections: Breakfast, Lunch, Evening Snack, Dinner, Bedtime.
 - Admin can add/remove/rename/reorder meal sections.
 - Admin Daily Log Report follows the repository order.
+
+
+## v44 - Daily Log One-Section + Other Slots
+
+- Moved Reference format from sample journal to the bottom.
+- Replaced bulky expand/collapse meal layout with compact section buttons.
+- Only one meal section is open at a time.
+- Switching sections is blocked if current section has unsaved changes.
+- Added repeatable Other slots: Other 1, Other 2, etc.
+- Admin repository default includes Other.
+- Admin report handles dynamic Other sections.

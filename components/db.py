@@ -1167,6 +1167,7 @@ def get_meal_type_repository():
         {"key": "evening_snack", "label": "Evening Snack", "active": True, "sort_order": 3},
         {"key": "dinner", "label": "Dinner", "active": True, "sort_order": 4},
         {"key": "bedtime", "label": "Bedtime", "active": True, "sort_order": 5},
+        {"key": "other", "label": "Other", "active": True, "sort_order": 6},
     ]
     rows = db.get("meal_type_repository")
     if not rows:
