@@ -5,11 +5,11 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12, render_back_to_top
 from components.db import load_db, save_db_direct, update_member_response_with_audit, list_members
 
 st.set_page_config(page_title="Response Editor", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
 

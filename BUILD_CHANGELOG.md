@@ -473,3 +473,26 @@
 - Added Complete secure logout action on Login page.
 - Removed dangerous st.logout + switch/rerun combination from deep app pages.
 - Continue with Auth0 clears logout flags and starts fresh login.
+
+
+## v50 - Member Home Message + Journey Compact
+
+- Removed remaining Streamlit expander for Messages from Nutritionist.
+- Added clean Show / Hide nutritionist messages button.
+- Retained Mark as read / archive action.
+- Reduced Journey Summary padding/spacing and removed bulky divider gap.
+
+
+## v51 - Timezone + Notes Archive + Back to Top
+
+- Nutritionist note timestamps now render in local formatted time.
+- Member Home nutritionist messages also render formatted local timestamps.
+- Nutritionist Notes Archive now includes all Daily Log Nutritionist Notes plus read/archived nutritionist messages.
+- Added floating Back to Top control across scrolling pages.
+
+
+## v52 - Login Logout Block Bottom
+
+- Moved the signed-out / Complete secure logout section to the bottom of the login column.
+- Removed the signed-out block from above Secure Login.
+- Retains v51 timezone, Nutritionist Notes archive, and Back to Top fixes.

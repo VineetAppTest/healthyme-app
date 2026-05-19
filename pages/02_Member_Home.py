@@ -1,12 +1,12 @@
 import streamlit as st
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, format_local_ts, render_back_to_top
 from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read
 from components.assessment_instances import get_current_assessment_instance
 from components.flash import render_system_message
 
 st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
@@ -28,19 +28,32 @@ render_system_message()
 
 messages = get_member_messages(user_id, limit=3)
 if messages:
-    with st.expander("Messages from Nutritionist", expanded=True):
+    st.markdown("<div class='hm-nutritionist-message-shell'>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-nutritionist-message-title'>Messages from Nutritionist</div>", unsafe_allow_html=True)
+
+    if "show_nutritionist_messages" not in st.session_state:
+        st.session_state["show_nutritionist_messages"] = True
+
+    if st.button("Show / Hide nutritionist messages", key="toggle_nutritionist_messages", use_container_width=True):
+        st.session_state["show_nutritionist_messages"] = not st.session_state["show_nutritionist_messages"]
+
+    if st.session_state["show_nutritionist_messages"]:
         for msg in messages:
             st.markdown(
                 f"""
-                <div class='hm-comm-card'>
-                  <b>{msg.get('subject','')}</b><br>
-                  <span style='color:#64748B;font-size:.85rem;'>{msg.get('ts','')}</span>
+                <div class='info-banner hm-nutritionist-message-card'>
+                  <b>{msg.get('subject','Message')}</b><br>
+                  <small>{format_local_ts(msg.get('ts',''))}</small><br>
                   <p>{msg.get('message','')}</p>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
+            if st.button("Mark as read / archive", key=f"read_msg_{msg.get('id','')}", use_container_width=True):
+                mark_member_message_read(user_id, msg.get("id", ""))
+                st.rerun()
 
+    st.markdown("</div>", unsafe_allow_html=True)
 
 stat_grid([
     {"label": "LAF", "value": "Completed" if wf.get("laf_completed") else "Pending", "note": "Lifestyle intake"},
@@ -149,8 +162,8 @@ with right:
         if st.button("Exercise Repository", use_container_width=True):
             st.switch_page("pages/09_Exercise_Repository.py")
 
-    st.divider()
-    st.subheader("Journey summary")
+    st.markdown("<div class='hm-journey-compact-spacer'></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-journey-compact-title'>Journey summary</div>", unsafe_allow_html=True)
     st.markdown(
         f"""
         <div class="member-summary-grid">

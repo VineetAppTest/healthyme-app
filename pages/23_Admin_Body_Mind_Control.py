@@ -1,11 +1,11 @@
 import streamlit as st
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v15, render_page_nav, stat_grid
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v15, render_page_nav, stat_grid, render_back_to_top
 from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, manually_unlock_body_mind_after_finalization, sync_member_finalization_state, has_explicit_body_mind_access
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Body-Mind Access Control", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 render_build_text_v15()
 render_page_nav("Body-Mind Access", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 

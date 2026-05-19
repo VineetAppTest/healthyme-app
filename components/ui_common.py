@@ -1,5 +1,7 @@
 
 import streamlit as st
+from zoneinfo import ZoneInfo
+import datetime
 from components.auth_session import logout_current_user
 
 LUXE_CSS = """
@@ -1733,6 +1735,87 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
 .hm-v49-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
 .hm-v49-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
 .hm-v49-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+
+/* --- v50 Member Home Message + Journey Compact --- */
+.hm-v50-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v50-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v50-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+.hm-nutritionist-message-shell{
+  border:1px solid #E7D8BE;
+  border-radius:16px;
+  background:#FFFDF8;
+  padding:.65rem .85rem;
+  margin:.35rem 0 1rem 0;
+}
+.hm-nutritionist-message-title{
+  font-size:1rem;
+  font-weight:900;
+  color:#064E3B;
+  margin-bottom:.45rem;
+}
+.hm-nutritionist-message-card{
+  margin-top:.55rem;
+  margin-bottom:.4rem;
+}
+.hm-journey-compact-spacer{
+  height:.65rem;
+  border-top:1px solid #E7D8BE;
+  margin:1rem 0 .55rem 0;
+}
+.hm-journey-compact-title{
+  font-size:1rem;
+  font-weight:900;
+  color:#064E3B;
+  margin:.15rem 0 .45rem 0;
+}
+.member-summary-grid{
+  margin-top:.15rem !important;
+  gap:.5rem !important;
+}
+.member-summary-item{
+  padding:.75rem .85rem !important;
+  min-height:72px !important;
+}
+
+/* --- v51 Timezone + Back To Top --- */
+.hm-v51-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v51-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v51-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+.hm-back-to-top{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:9999;
+  background:#064E3B;
+  color:white !important;
+  padding:.62rem .85rem;
+  border-radius:999px;
+  text-decoration:none !important;
+  font-size:.85rem;
+  font-weight:850;
+  box-shadow:0 10px 25px rgba(15,23,42,.18);
+}
+.hm-back-to-top:hover{filter:brightness(1.05);}
+.hm-page-top-anchor{height:1px;}
+.hm-ts-local{color:#64748B;font-size:.85rem;}
+
+/* --- v52 Login Logout Block Bottom --- */
+.hm-v52-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v52-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v52-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+.hm-logout-bottom-shell{
+  margin-top:1rem;
+  padding:.9rem;
+  border:1px solid #E7D8BE;
+  border-radius:16px;
+  background:#FFFDF8;
+}
+.hm-logout-bottom-copy{
+  color:#64748B;
+  font-size:.9rem;
+  line-height:1.45;
+  margin:.6rem 0 .8rem 0;
+}
 
 </style>
 """
@@ -3748,6 +3831,250 @@ def topbar(title, subtitle="", kicker="HealthyMe premium"):
         unsafe_allow_html=True,
     )
 
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v50: Member Home Message + Journey Compact
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v50"
+APP_BUILD_LABEL = "Member Home Message + Journey Compact"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v50-brand-row'>
+            <span class='hm-v50-brand'>HealthyMe</span>
+            <span class='hm-v50-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v50(): return None
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v51: timezone display + back-to-top
+# --------------------------------------------------------------------
+DEFAULT_APP_TIMEZONE = "Asia/Kolkata"
+
+def format_local_ts(ts_value, timezone_name=None):
+    """Format stored ISO timestamp in a local timezone.
+
+    Default is Asia/Kolkata. Future user/admin profile timezone values can
+    be passed through timezone_name.
+    """
+    if not ts_value:
+        return ""
+    tz_name = timezone_name or DEFAULT_APP_TIMEZONE
+    raw = str(ts_value)
+    try:
+        dt = datetime.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            # Existing app timestamps are naive server-local; treat them as app timezone.
+            dt = dt.replace(tzinfo=ZoneInfo(DEFAULT_APP_TIMEZONE))
+        return dt.astimezone(ZoneInfo(tz_name)).strftime("%d-%b-%Y %I:%M %p")
+    except Exception:
+        return raw
+
+def render_back_to_top():
+    st.markdown("<a id='top'></a><a class='hm-back-to-top' href='#top'>↑ Back to Top</a>", unsafe_allow_html=True)
+
+
+# --------------------------------------------------------------------
+# v51: Timezone + Notes Archive + Back to Top
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v51"
+APP_BUILD_LABEL = "Timezone + Notes Archive + Back to Top"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v51-brand-row'>
+            <span class='hm-v51-brand'>HealthyMe</span>
+            <span class='hm-v51-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v51(): return None
+def render_build_text_v50(): return None
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v52: Login Logout Block Bottom
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v52"
+APP_BUILD_LABEL = "Login Logout Block Bottom"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v52-brand-row'>
+            <span class='hm-v52-brand'>HealthyMe</span>
+            <span class='hm-v52-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v52(): return None
+def render_build_text_v51(): return None
+def render_build_text_v50(): return None
 def render_build_text_v49(): return None
 def render_build_text_v48(): return None
 def render_build_text_v47(): return None

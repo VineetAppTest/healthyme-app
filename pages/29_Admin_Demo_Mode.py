@@ -4,14 +4,14 @@ import pathlib
 from datetime import date
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v12
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v12, render_back_to_top
 from components.db import load_db, save_db, list_members, normalize_workflow, hash_password
 from components.assessment_instances import ensure_assessment_instances
 from components.flash import set_system_message, render_system_message
 from components.scoring import score_answers
 
 st.set_page_config(page_title="Demo Mode", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
 

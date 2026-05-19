@@ -1,6 +1,6 @@
 import streamlit as st
-from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12
-from components.auth_session import restore_login_from_token, get_oidc_email, get_oidc_name, logout_current_user, logout_current_user
+from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12, render_back_to_top
+from components.auth_session import restore_login_from_token, get_oidc_email, get_oidc_name, logout_current_user
 
 st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
@@ -38,12 +38,6 @@ st.markdown("""
 login_col, journey_col = st.columns([.96, 1.04], gap="large")
 
 with login_col:
-    if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
-        st.success("You have been signed out.")
-        st.caption("For a full secure logout, complete the Auth0/OIDC logout below. If your browser still signs in automatically, close the browser tab or use a fresh browser profile.")
-        if st.button("Complete secure logout", use_container_width=True):
-            logout_current_user()
-
     try:
         box = st.container(border=True)
     except TypeError:
@@ -74,6 +68,17 @@ with login_col:
           Auth0 confirms who you are. HealthyMe then checks whether your email exists in the app as Admin or Member.
         </div>
         """, unsafe_allow_html=True)
+
+    if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
+        st.markdown("<div class='hm-logout-bottom-shell'>", unsafe_allow_html=True)
+        st.success("You have been signed out.")
+        st.markdown(
+            "<div class='hm-logout-bottom-copy'>For a full secure logout, complete the Auth0/OIDC logout below. If your browser still signs in automatically, close the browser tab or use a fresh browser profile.</div>",
+            unsafe_allow_html=True,
+        )
+        if st.button("Complete secure logout", key="complete_secure_logout_bottom", use_container_width=True):
+            logout_current_user()
+        st.markdown("</div>", unsafe_allow_html=True)
 
 with journey_col:
     st.markdown("""

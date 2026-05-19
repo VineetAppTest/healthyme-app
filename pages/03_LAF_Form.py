@@ -2,13 +2,13 @@ import streamlit as st, pathlib, re
 import streamlit.components.v1 as components
 from collections import OrderedDict
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, render_back_to_top
 from components.db import get_form_response, save_form_response, update_workflow, sync_profile_from_laf, load_db
 from components.flash import set_system_message, render_system_message
 from components.config_cache import load_config_json
 
 st.set_page_config(page_title="LAF", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_member(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 
 questions = load_config_json("config/laf_questions.json")
 questions = [q for q in questions if not q.get("deleted")]

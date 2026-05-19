@@ -1,13 +1,13 @@
 import streamlit as st
 from datetime import date, timedelta
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v12
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v12, render_back_to_top
 from components.db import list_members
 from components.assessment_instances import get_assessment_instances, create_reassessment_request
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Reassessment Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 
 topbar("Reassessment Manager", "Request NSP Page 1, NSP Page 2, or both for follow-up assessment.", "Admin reassessment")
 render_system_message()

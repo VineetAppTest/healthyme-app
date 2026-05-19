@@ -1,20 +1,5 @@
 import streamlit as st
-import copy
-import json
-from components.guards import require_admin
-from components.ui_common import (
-    inject_global_styles,
-    apply_luxe_theme,
-    topbar,
-    card_start,
-    card_end,
-    utility_logout_bar,
-    stat_grid,
-    render_page_nav,
-    priority_action_start,
-    priority_action_end,
-    render_build_text_v14,
-)
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top
 from components.db import load_db, get_workflow, get_admin_assessment
 from components.report_engine import build_full_admin_report, summary_preview_rows, prepare_report_db, report_data_diagnostics
 
@@ -24,7 +9,7 @@ def build_full_admin_report_cached(db_payload_json: str, member_id: str):
     return build_full_admin_report(json.loads(db_payload_json), member_id)
 
 st.set_page_config(page_title="Final Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 
 mid = st.session_state.get("selected_member_id")
 if not mid:

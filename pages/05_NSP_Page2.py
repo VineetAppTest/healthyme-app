@@ -1,6 +1,6 @@
 import streamlit as st, pathlib
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, render_back_to_top
 from components.db import get_form_response, save_form_response, save_nsp_score
 from components.assessment_instances import get_current_assessment_instance, get_instance_response, save_instance_page_response
 from components.scoring import completion, unanswered_questions, score_answers
@@ -8,7 +8,7 @@ from components.flash import set_system_message, render_system_message
 from components.config_cache import load_config_json
 
 st.set_page_config(page_title="NSP Client Assessment - Page 2", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_member(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 
 user_id = st.session_state["user_id"]
 current_instance = get_current_assessment_instance(user_id)

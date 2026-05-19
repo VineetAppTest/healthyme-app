@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v15, render_page_nav
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v15, render_page_nav, render_back_to_top
 from components.db import list_all_users_for_access_manager, update_user_access_record
 from components.auth0_management import (
     auth0_config_status,
@@ -14,7 +14,7 @@ from components.auth0_management import (
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="User Access Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 render_build_text_v15()
 render_page_nav("User Access", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 

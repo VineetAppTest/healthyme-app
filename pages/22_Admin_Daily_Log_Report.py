@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, format_local_ts, render_back_to_top
 from components.db import (
     list_members,
     get_daily_food_journal_days,
@@ -17,7 +17,7 @@ from components.db import (
 )
 
 st.set_page_config(page_title="Daily Food Journal Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 
 MEAL_KEYS = [(r["key"], r["label"]) for r in get_meal_type_repository()]
@@ -174,7 +174,7 @@ if date_notes:
         st.markdown(
             f"""
             <div class='info-banner'>
-              <b>{n.get('ts','')}</b><br>
+              <b>{format_local_ts(n.get('ts',''))}</b><br>
               {n.get('note','')}
             </div>
             """,

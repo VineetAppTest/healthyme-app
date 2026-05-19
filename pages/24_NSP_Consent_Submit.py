@@ -1,13 +1,13 @@
 import streamlit as st
 from datetime import date
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v12
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v12, render_back_to_top
 from components.db import get_profile_with_laf_fallback
 from components.assessment_instances import get_current_assessment_instance, submit_current_assessment_instance_once
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Consent & Submit", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_member(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 
 user_id = st.session_state["user_id"]
 inst = get_current_assessment_instance(user_id)

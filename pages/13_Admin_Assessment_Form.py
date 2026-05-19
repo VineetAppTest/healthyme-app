@@ -1,13 +1,13 @@
 
 import streamlit as st, json, pathlib
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12, render_back_to_top
 from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization, sync_member_finalization_state, has_explicit_body_mind_access
 from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
 from components.admin_value_resolver import resolve_admin_linked_value
 st.set_page_config(page_title="Admin Assessment", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 mid=st.session_state.get("selected_member_id")
 if not mid: st.switch_page("pages/11_Evaluation_Status.py")
 templates=json.loads((pathlib.Path(__file__).resolve().parents[1]/"config"/"admin_templates.json").read_text())

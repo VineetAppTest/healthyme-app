@@ -1,13 +1,13 @@
 
 import streamlit as st
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, stat_grid, utility_logout_bar, render_build_text_v14
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, stat_grid, utility_logout_bar, render_build_text_v14, render_back_to_top
 from components.db import get_admin_dashboard_snapshot
 from components.flash import render_system_message
 from components.storage_backend import get_storage_status
 
 st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 
 @st.cache_data(show_spinner=False, ttl=90)
 def cached_dashboard_snapshot():

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v49 Logout Session Hardening",
-  "version": "v49_logout_session_hardening",
-  "updated_on": "2026-05-19T11:29:58.330372+00:00",
+  "build_name": "HealthyMe v52 Login Logout Block Bottom",
+  "version": "v52_login_logout_block_bottom",
+  "updated_on": "2026-05-19T11:57:07.460653+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,11 +18,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Logout button now clears HealthyMe app session and routes to Login page with logout flag.",
-    "Login page no longer auto-restores the user while logout flag/signed_out state is active.",
-    "Native Streamlit/Auth0 logout is performed from the Login page via Complete secure logout.",
-    "Avoids st.logout plus st.switch_page/st.rerun combination that caused intermittent error page.",
-    "Continue with Auth0 clears logout flags and starts a fresh login."
+    "Moved signed-out / Complete secure logout section below the Secure Login card.",
+    "Removed the top signed-out block from above Secure Login.",
+    "Retained v51 timezone, notes archive, and Back to Top fixes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -137,10 +135,11 @@
     "23_Admin_Body_Mind_Control.py": 51,
     "25_Admin_Daily_Log_Settings.py": 148
   },
-  "compile_repair": "Rebuilt auth_session.py cleanly to remove duplicate malformed logout function.",
+  "compile_repair": "Fixed Final Assessment Report ui_common multiline import after Back to Top injection.",
   "notes": [
     "If the browser still auto-logs in after reboot, that means the Auth0/OIDC identity cookie is still active in the browser; the app now calls st.logout directly to clear it.",
     "Old Daily Food Journal rows are grouped by date for admin view."
   ],
-  "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout."
+  "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
+  "timezone_note": "Current implementation defaults to Asia/Kolkata. Future user profile timezone values can be passed to format_local_ts when timezone fields are added."
 }

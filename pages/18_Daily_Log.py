@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top
 from components.db import (
     save_daily_food_journal_day,
     save_daily_food_journal_meal,
@@ -16,7 +16,7 @@ from components.db import (
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
 st.markdown(
     """
@@ -130,7 +130,7 @@ if date_notes:
     card_start()
     st.subheader(f"Nutritionist notes for {log_date}")
     for n in date_notes:
-        st.markdown(f"<div class='info-banner'><b>{n.get('ts','')}</b><br>{n.get('note','')}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='info-banner'><b>{format_local_ts(n.get('ts',''))}</b><br>{n.get('note','')}</div>", unsafe_allow_html=True)
     card_end()
 
 card_start()
@@ -268,22 +268,39 @@ card_end()
 
 
 card_start()
-st.subheader("Nutritionist message archive")
+st.subheader("Nutritionist Notes Archive")
 archived_messages = get_member_archived_messages(user_id, limit=30)
-if not archived_messages:
-    st.info("No archived nutritionist messages yet.")
+all_note_archive = get_daily_log_supervision_notes(user_id, limit=100)
+if not archived_messages and not all_note_archive:
+    st.info("No archived nutritionist notes/messages yet.")
 else:
     if "show_nutritionist_archive" not in st.session_state:
         st.session_state["show_nutritionist_archive"] = False
-    if st.button("Show / Hide archived nutritionist messages", use_container_width=True):
+    if st.button("Show / Hide archived nutritionist notes/messages", use_container_width=True):
         st.session_state["show_nutritionist_archive"] = not st.session_state["show_nutritionist_archive"]
     if st.session_state["show_nutritionist_archive"]:
+        if all_note_archive:
+            st.markdown("#### Nutritionist Notes")
+            for n in all_note_archive:
+                date_label = n.get("log_date", "")
+                st.markdown(
+                    f"""
+                    <div class='info-banner'>
+                      <b>{date_label}</b><br>
+                      <small>{format_local_ts(n.get('ts',''))}</small><br>
+                      <p>{n.get('note','')}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+        if archived_messages:
+            st.markdown("#### Read Messages")
         for msg in archived_messages:
             st.markdown(
                 f"""
                 <div class='info-banner'>
                   <b>{msg.get('subject','Message')}</b><br>
-                  <small>{msg.get('ts','')}</small><br>
+                  <small>{format_local_ts(msg.get('ts',''))}</small><br>
                   <p>{msg.get('message','')}</p>
                 </div>
                 """,

@@ -8,13 +8,13 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, render_build_text_v12
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, render_build_text_v12, render_back_to_top
 from components.db import load_db, get_form_response, get_workflow, get_profile
 from components.systems_rating import calculate_systems_rating
 from components.report_engine import prepare_report_db
 
 st.set_page_config(page_title="Partial Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 
 mid = st.session_state.get("selected_member_id")
 if not mid:

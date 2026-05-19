@@ -6,13 +6,13 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v15, render_page_nav
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v15, render_page_nav, render_back_to_top
 from components.db import list_members, load_db
 from components.assessment_instances import get_assessment_instances
 from components.systems_rating import calculate_systems_rating
 
 st.set_page_config(page_title="Comparative NSP Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_admin(); render_back_to_top(); utility_logout_bar(); render_back_to_top()
 render_build_text_v15()
 render_page_nav("Comparative NSP", back_page="pages/10_Admin_Dashboard.py", show_evaluation=True, location="top")
 
