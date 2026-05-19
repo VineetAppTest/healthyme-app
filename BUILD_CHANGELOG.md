@@ -337,3 +337,20 @@
 - Member Home already showed the Body-Mind button using explicit access marker.
 - Page 19 now also checks explicit access marker.
 - This resolves the button-visible-but-page-blocked issue.
+
+
+## v36 - Body-Mind Text Removal + Autosave Check
+
+- Removed Body-Mind explanatory text: "Auto-save enabled..." and consent statement line.
+- Confirmed LAF, NSP Page 1, NSP Page 2, and Body-Mind have autosave behavior.
+- Confirmed Admin Assessment/Five Admin Pages are not autosaved; they require Save Draft or Save and Generate Final Report.
+- Retains v35 Body-Mind page access guard fix.
+
+
+## v36 Refresh - Body-Mind Admin State + Autosave Check
+
+- Body-Mind Access Control now recognizes explicit Body-Mind access and shows Active state.
+- Admin pages no longer show Activate Body-Mind Connection when Body-Mind is already active.
+- Activation UI normalized to one-click activation for finalized members.
+- Removed old checkbox + button activation inconsistency.
+- Retains Body-Mind auto-save text removal and autosave confirmation.

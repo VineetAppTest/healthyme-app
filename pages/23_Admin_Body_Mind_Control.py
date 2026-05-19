@@ -32,6 +32,9 @@ if explicit_body_mind_access:
 # v31: repair stale review/instance status for finalized records without auto-unlocking Body-Mind.
 if wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflow_status") == "finalized":
     wf = sync_member_finalization_state(member_id, body_mind_unlock=None)
+explicit_body_mind_access = has_explicit_body_mind_access(member_id)
+if explicit_body_mind_access:
+    wf["body_mind_unlocked"] = True
 
 db = load_db()
 body_response = db.get("body_mind_responses", {}).get(member_id, {})
@@ -66,13 +69,11 @@ if not admin_final_completed and not wf.get("body_mind_unlocked"):
     )
     st.button("Save Body-Mind Visibility", disabled=True, use_container_width=True)
 else:
-    old_visibility = bool(wf.get("body_mind_unlocked"))
+    body_mind_active = bool(wf.get("body_mind_unlocked")) or explicit_body_mind_access
 
-    if old_visibility:
-        st.info("Body-Mind Connection is already activated for this member.")
-        if st.button("Keep Activated", disabled=True, use_container_width=True):
-            pass
-        st.caption("To avoid accidental duplicate activation, this page will not re-activate an already active Body-Mind connection.")
+    if body_mind_active:
+        st.success("Body-Mind Connection is active for this member.")
+        st.caption("No activation action is required.")
         allow_disable = st.checkbox("I need to disable Body-Mind visibility for this member")
         if allow_disable:
             if st.button("Disable Body-Mind Visibility", type="primary", use_container_width=True):
@@ -80,15 +81,21 @@ else:
                 set_system_message("Body-Mind Connection page disabled for this member.", "warning")
                 st.rerun()
     else:
-        st.warning("Final admin work is complete, but Body-Mind is not active for this member.")
-        if st.button("Activate Body-Mind Connection", type="primary", use_container_width=True):
-            ok, msg = manually_unlock_body_mind_after_finalization(member_id)
-            if ok:
-                set_system_message(msg, "success", celebrate=True)
-            else:
-                set_system_message(msg, "error")
-            st.rerun()
+        if admin_final_completed:
+            st.warning("Final admin work is complete, but Body-Mind is not active for this member.")
+            if st.button("Activate Body-Mind Connection", type="primary", use_container_width=True):
+                ok, msg = manually_unlock_body_mind_after_finalization(member_id)
+                if ok:
+                    set_system_message(msg, "success", celebrate=True)
+                else:
+                    set_system_message(msg, "error")
+                st.rerun()
+        else:
+            st.info("Final admin assessment is not completed yet. Activation can be requested now, but member access will open only after finalization.")
+            if st.button("Request Body-Mind Activation", type="primary", use_container_width=True):
+                request_body_mind_activation(member_id)
+                set_system_message("Body-Mind activation request saved. It will open after final admin completion.", "success")
+                st.rerun()
 
 card_end()
-
 render_page_nav("Body-Mind Access", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")

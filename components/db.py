@@ -954,8 +954,7 @@ def hard_sync_body_mind_if_requested(user_id):
 def manually_unlock_body_mind_after_finalization(user_id):
     """One-click manual unlock after final admin completion.
 
-    Writes both workflow flags and explicit access marker.
-    Returns (ok, message).
+    Writes workflow flags and explicit access marker together.
     """
     db = load_db()
     wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
@@ -971,8 +970,8 @@ def manually_unlock_body_mind_after_finalization(user_id):
     wf["workflow_status"] = "finalized"
     wf["body_mind_activation_requested"] = True
     wf["body_mind_unlocked"] = True
-    db["workflow"][user_id] = normalize_workflow(wf)
 
+    db["workflow"][user_id] = normalize_workflow(wf)
     db.setdefault("body_mind_access", {})[user_id] = True
 
     for inst in db.get("assessment_instances", {}).get(user_id, []) or []:

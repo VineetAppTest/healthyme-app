@@ -26,8 +26,7 @@ render_system_message()
 
 st.markdown("""
 <div class='info-banner'>
-<b>Auto-save enabled.</b><br>
-Your Body-Mind responses are saved as you work. The client consent statement is now captured in the NSP submission flow.
+
 </div>
 """, unsafe_allow_html=True)
 
