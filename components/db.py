@@ -1768,3 +1768,174 @@ def save_daily_food_journal_day_details(
     db["daily_logs"][user_id] = legacy[-120:]
     save_db(db)
     return day
+
+
+# --------------------------------------------------------------------
+# v66: Nutritionist message dedupe / idempotent note notification
+# --------------------------------------------------------------------
+def _normalise_note_text_for_dedupe(text):
+    return " ".join(str(text or "").strip().split()).lower()
+
+def _nutritionist_message_dedupe_key(member_id, log_date, note):
+    return f"{member_id}|{str(log_date or '')}|{_normalise_note_text_for_dedupe(note)}"
+
+def _dedupe_member_messages_in_memory(db):
+    """Remove duplicate unread/read message records created by prior patch cycles.
+
+    Keeps the earliest message record for each member/date/text/source combination.
+    """
+    seen = set()
+    cleaned = []
+    changed = False
+    for m in db.get("messages", []) or []:
+        source = str(m.get("source", ""))
+        sender = str(m.get("sender_role", "")).lower()
+        subject = str(m.get("subject", "")).lower()
+        is_nutritionist_note = (
+            source == "daily_log_supervision_note"
+            or sender == "nutritionist"
+            or "nutritionist note" in subject
+            or "daily log supervision" in subject
+        )
+        if is_nutritionist_note:
+            key = _nutritionist_message_dedupe_key(
+                m.get("member_id", ""),
+                m.get("log_date", ""),
+                m.get("message", ""),
+            )
+            if key in seen:
+                changed = True
+                continue
+            seen.add(key)
+        cleaned.append(m)
+    if changed:
+        db["messages"] = cleaned
+    return changed
+
+def save_daily_log_supervision_note(member_id, note, actor_id="nutritionist", log_date=None):
+    """Save nutritionist note and create exactly one member-visible message.
+
+    v66 is idempotent for same member + same date + same note text.
+    """
+    note = (note or "").strip()
+    if not note:
+        return None
+
+    db = load_db()
+    _dedupe_member_messages_in_memory(db)
+
+    ts = datetime.datetime.now().isoformat(timespec="seconds")
+    date_str = str(log_date or "")
+    dedupe_key = _nutritionist_message_dedupe_key(member_id, date_str, note)
+
+    # Avoid duplicate note rows too.
+    db.setdefault("daily_log_supervision_notes", {}).setdefault(member_id, [])
+    existing_note = None
+    for n in db["daily_log_supervision_notes"][member_id]:
+        if _nutritionist_message_dedupe_key(member_id, n.get("log_date", ""), n.get("note", "")) == dedupe_key:
+            existing_note = n
+            break
+
+    if existing_note:
+        note_id = existing_note.get("id") or str(uuid.uuid4())[:8]
+        existing_note["id"] = note_id
+        item = existing_note
+    else:
+        note_id = str(uuid.uuid4())[:8]
+        item = {
+            "id": note_id,
+            "ts": ts,
+            "member_id": member_id,
+            "log_date": date_str,
+            "note": note,
+            "actor_id": actor_id or "nutritionist",
+            "sender_role": "nutritionist",
+        }
+        db["daily_log_supervision_notes"][member_id].append(item)
+
+    # Create exactly one member-visible message for this note.
+    existing_message = None
+    for m in db.get("messages", []) or []:
+        if _nutritionist_message_dedupe_key(member_id, m.get("log_date", ""), m.get("message", "")) == dedupe_key:
+            existing_message = m
+            break
+
+    date_text = f" for {date_str}" if date_str else ""
+    if existing_message:
+        existing_message["sender_role"] = "nutritionist"
+        existing_message["subject"] = f"Nutritionist Note{date_text}"
+        existing_message["source"] = "daily_log_supervision_note"
+        existing_message["note_id"] = note_id
+        # If it was already read, do not reset it to unread.
+        existing_message.setdefault("read", False)
+        existing_message.setdefault("archived", False)
+        message_id = existing_message.get("id", str(uuid.uuid4())[:8])
+        existing_message["id"] = message_id
+    else:
+        message_id = str(uuid.uuid4())[:8]
+        db.setdefault("messages", []).append({
+            "id": message_id,
+            "ts": ts,
+            "member_id": member_id,
+            "sender_role": "nutritionist",
+            "actor_id": actor_id or "nutritionist",
+            "subject": f"Nutritionist Note{date_text}",
+            "message": note,
+            "status": "queued",
+            "email_required": True,
+            "log_date": date_str,
+            "read": False,
+            "archived": False,
+            "source": "daily_log_supervision_note",
+            "note_id": note_id,
+        })
+
+    # Queue notification once per source message id.
+    db.setdefault("notifications", [])
+    if not any(n.get("source_message_id") == message_id for n in db["notifications"]):
+        db["notifications"].append({
+            "id": str(uuid.uuid4())[:8],
+            "ts": ts,
+            "kind": "nutritionist_note",
+            "user_id": member_id,
+            "member_id": member_id,
+            "message": f"Nutritionist Note{date_text}: {note[:160]}",
+            "status": "queued",
+            "email_required": True,
+            "created_by": actor_id or "nutritionist",
+            "log_date": date_str,
+            "source_message_id": message_id,
+        })
+
+    save_db(db)
+    return item
+
+def get_member_unread_messages(member_id, limit=10):
+    """Unread/unarchived messages, deduped before display."""
+    db = load_db()
+    changed = _dedupe_member_messages_in_memory(db)
+    rows = [
+        m for m in db.get("messages", [])
+        if m.get("member_id") == member_id
+        and not m.get("read")
+        and not m.get("archived")
+    ]
+    rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    if changed:
+        save_db(db)
+    return rows[:limit]
+
+def get_member_messages(member_id, limit=10):
+    return get_member_unread_messages(member_id, limit=limit)
+
+def get_member_archived_messages(member_id, limit=50):
+    db = load_db()
+    changed = _dedupe_member_messages_in_memory(db)
+    rows = [
+        m for m in db.get("messages", [])
+        if m.get("member_id") == member_id and (m.get("read") or m.get("archived"))
+    ]
+    rows.sort(key=lambda r: r.get("read_ts", r.get("ts", "")), reverse=True)
+    if changed:
+        save_db(db)
+    return rows[:limit]

@@ -334,11 +334,11 @@ else:
             unsafe_allow_html=True,
         )
 
-        action_cols = st.columns([5, 1])
+        action_cols = st.columns([5.6, 0.7])
         with action_cols[1]:
             selected_history_date = st.session_state.get("selected_daily_note_history_date")
             history_label = "Hide history" if selected_history_date == day_date else "View history"
-            if st.button(history_label, key=f"rsd_history_{day_date}", use_container_width=True, disabled=not has_notes):
+            if st.button(history_label, key=f"rsd_history_{day_date}", use_container_width=False, disabled=not has_notes):
                 if selected_history_date == day_date:
                     st.session_state["selected_daily_note_history_date"] = None
                 else:

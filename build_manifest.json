@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v65 Daily Log + Admin UI Fixes",
-  "version": "v65_daily_log_admin_ui_fixes",
-  "updated_on": "2026-05-19T21:05:00.810526+00:00",
+  "build_name": "HealthyMe v67 View History Alignment Fix",
+  "version": "v67_view_history_alignment_fix",
+  "updated_on": "2026-05-19T21:22:22.193433+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Member Recent saved days now shows Meal type and food instead of Meals Logged progress.",
-    "Admin Daily Log Full-day details now shows Water Intake before Physical Activity.",
-    "Admin Member Communication page helper card removed.",
-    "Admin Member Communication spacing reduced for Send Message and Recent messages sections.",
-    "Bottom Back to Dashboard button overlap fixed with clean navigation button."
+    "Aligned Recent saved days View / Hide history button with previous cleaner build.",
+    "Reduced button width and height.",
+    "Reduced action column width.",
+    "Centered button vertically with row text.",
+    "No business logic changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -144,11 +144,11 @@
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
-    "Fixed missing member notification after nutritionist saves a Daily Log note.",
-    "save_daily_log_supervision_note now always writes a visible unread message to db['messages'].",
-    "The same action also queues app/email notification in db['notifications'].",
-    "Member Home reads unread/unarchived messages and shows the Nutritionist note.",
-    "Read / Archive still removes it from Member Home and keeps it in archive."
+    "Made nutritionist note save idempotent for same member/date/message.",
+    "Dedupes duplicate member messages before Member Home display.",
+    "Dedupes duplicate archived messages before archive/history display.",
+    "Prevents duplicate notification queue rows for same source message.",
+    "Adds Member Home display-level guard against duplicate note messages."
   ],
   "pages_imports_repaired": {
     "10_Admin_Dashboard.py": [
@@ -192,5 +192,5 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "UI/content patch only. No Daily Log save, Body-Mind, LAF, Final Report, or message queue logic intentionally changed."
+  "business_logic_note": "UI-only fix. No Daily Log, Nutritionist note, message dedupe, or admin logic changed."
 }

@@ -613,3 +613,19 @@
 - Removed helper info text from Admin-Member Communication.
 - Reduced extra space in Send Message and Recent messages sections.
 - Fixed bottom Back to Dashboard button overlap.
+
+
+## v66 - Nutritionist Message Dedupe
+
+- Fixed duplicate Messages from Nutritionist issue.
+- Nutritionist Daily Log note save is now idempotent for same member/date/message.
+- Duplicate member messages are deduped before display.
+- Duplicate notification queue rows are prevented for same source message.
+
+
+## v67 - View History Alignment Fix
+
+- Reduced Recent saved days View / Hide history button size.
+- Restored cleaner alignment closer to previous build behavior.
+- Reduced action column width and removed button stretching.
+- UI-only fix; business logic unchanged.

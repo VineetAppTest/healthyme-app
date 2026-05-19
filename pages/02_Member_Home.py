@@ -32,7 +32,12 @@ if messages:
     st.markdown("<div class='hm-nutritionist-message-shell'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-nutritionist-message-title'>Messages from Nutritionist</div>", unsafe_allow_html=True)
 
+    v66_seen_msg_keys = set()
     for msg in messages:
+        v66_key = f"{msg.get('member_id','')}|{msg.get('log_date','')}|{' '.join(str(msg.get('message','')).strip().split()).lower()}"
+        if v66_key in v66_seen_msg_keys:
+            continue
+        v66_seen_msg_keys.add(v66_key)
         st.markdown(
             f"""
             <div class='info-banner hm-nutritionist-message-card'>
