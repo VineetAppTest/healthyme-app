@@ -578,3 +578,12 @@
 - Added cached config loader for static JSON configs.
 - Added db facade modules to prepare safe future db.py split without changing business logic.
 - Kept existing business logic unchanged.
+
+
+## v62 - Recent Saved Days Premium Layout
+
+- Replaced Recent saved days dataframe with premium card/table layout.
+- Kept headers intact: Date, Meals Logged, Water, Notes, Nutritionist Notes, Action.
+- Meals Logged now displays simple text progress like 3/5.
+- View history opens same-day nutritionist note history only.
+- UI-only patch; business logic unchanged.

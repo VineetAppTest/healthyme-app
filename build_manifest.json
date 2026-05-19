@@ -1,15 +1,14 @@
 {
-  "build_name": "HealthyMe v61 Stability + Premium UX Cleanup",
-  "version": "v61_stability_premium_ux_cleanup",
-  "updated_on": "2026-05-19T19:35:00.914530+00:00",
+  "build_name": "HealthyMe v62 Recent Saved Days Premium Layout",
+  "version": "v62_recent_saved_days_premium_layout",
+  "updated_on": "2026-05-19T20:01:22.899186+00:00",
   "scope": [
-    "Compact internal page headers",
-    "Standard button hierarchy via shared CSS",
-    "Daily Log table polish",
-    "Cached config loaders",
-    "Duplicate helper function risk reduced by final canonical v61 overrides",
-    "Minimal db.py split preparation through facade modules",
-    "Existing business logic unchanged"
+    "UI-only patch for Daily Log Recent saved days",
+    "Replaced plain dataframe with premium rounded card/table layout",
+    "Kept current headers: Date, Meals Logged, Water, Notes, Nutritionist Notes, Action",
+    "Meals Logged displayed as simple text progress like 3/5",
+    "View history button opens same-date nutritionist note history only",
+    "Business logic unchanged"
   ],
   "excluded": [
     "No scoring changes",
@@ -193,5 +192,5 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "No core workflow/scoring/body-mind/final-report business rules were intentionally changed."
+  "business_logic_note": "No Daily Log save, notification, LAF, Body-Mind, final report, or database logic was intentionally changed."
 }

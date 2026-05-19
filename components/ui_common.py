@@ -1965,6 +1965,83 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
 .hm-compact-page-section{margin-top:.6rem !important;margin-bottom:.6rem !important;}
 .hm-table-note{font-size:.82rem;color:#64748B;margin:.25rem 0 .5rem 0;}
 
+/* --- v62 Recent Saved Days Premium Layout --- */
+.hm-v62-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v62-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v62-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+.hm-rsd-card{
+  border:1px solid #E7D8BE;
+  border-radius:18px;
+  background:#FFFDF8;
+  box-shadow:0 10px 28px rgba(15,23,42,.06);
+  overflow:hidden;
+  margin-top:.7rem;
+}
+.hm-rsd-header{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 1.35fr 2fr 1fr;
+  gap:.75rem;
+  padding:.85rem 1rem;
+  font-size:.82rem;
+  font-weight:900;
+  color:#064E3B;
+  border-bottom:1px solid #E7D8BE;
+  background:#FFFCF5;
+}
+.hm-rsd-row{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 1.35fr 2fr 1fr;
+  gap:.75rem;
+  padding:.9rem 1rem;
+  align-items:center;
+  border-bottom:1px solid #F0E5D2;
+  font-size:.9rem;
+  color:#0F2F2A;
+}
+.hm-rsd-row:last-child{border-bottom:none;}
+.hm-rsd-date{font-weight:800;color:#064E3B;}
+.hm-rsd-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:3.2rem;
+  padding:.34rem .65rem;
+  border-radius:999px;
+  background:#EAF7F1;
+  border:1px solid #BEE8D6;
+  color:#064E3B;
+  font-weight:900;
+}
+.hm-rsd-note{
+  line-height:1.35;
+  color:#253B36;
+}
+.hm-rsd-action-slot{
+  min-height:1px;
+}
+@media (max-width: 760px){
+  .hm-rsd-header{display:none;}
+  .hm-rsd-row{
+    grid-template-columns: 1fr;
+    gap:.35rem;
+    padding:.85rem;
+  }
+  .hm-rsd-row > div::before{
+    display:block;
+    font-size:.7rem;
+    font-weight:900;
+    color:#64748B;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    margin-bottom:.1rem;
+  }
+  .hm-rsd-row > div:nth-child(1)::before{content:"Date";}
+  .hm-rsd-row > div:nth-child(2)::before{content:"Meals Logged";}
+  .hm-rsd-row > div:nth-child(3)::before{content:"Water";}
+  .hm-rsd-row > div:nth-child(4)::before{content:"Notes";}
+  .hm-rsd-row > div:nth-child(5)::before{content:"Nutritionist Notes";}
+}
+
 </style>
 """
 
@@ -4904,6 +4981,105 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         unsafe_allow_html=True,
     )
 
+def render_build_text_v61(): return None
+def render_build_text_v60(): return None
+def render_build_text_v59(): return None
+def render_build_text_v58(): return None
+def render_build_text_v57(): return None
+def render_build_text_v56(): return None
+def render_build_text_v55(): return None
+def render_build_text_v54(): return None
+def render_build_text_v53(): return None
+def render_build_text_v52(): return None
+def render_build_text_v51(): return None
+def render_build_text_v50(): return None
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v62: Recent Saved Days Premium Layout
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v62"
+APP_BUILD_LABEL = "Recent Saved Days Premium Layout"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v62-brand-row'>
+            <span class='hm-v62-brand'>HealthyMe</span>
+            <span class='hm-v62-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def compact_topbar(title, subtitle="", kicker="HealthyMe"):
+    st.markdown(
+        f"""
+        <div class='hero-shell hm-compact-page-section'>
+          <div class='hm-v62-brand-row'>
+            <span class='hm-v62-brand'>HealthyMe</span>
+            <span class='hm-v62-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v62(): return None
 def render_build_text_v61(): return None
 def render_build_text_v60(): return None
 def render_build_text_v59(): return None
