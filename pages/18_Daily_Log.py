@@ -199,16 +199,23 @@ water_options = ['Select', '0 Litres', '0.5 Litres', '1 Litre', '1.5 Litres', '2
 existing_water = existing.get("water_litres", "Select") or "Select"
 water_index = water_options.index(existing_water) if existing_water in water_options else 0
 water_litres = st.selectbox("Water intake for the full day", water_options, index=water_index)
-d1, d2 = st.columns(2)
-with d1:
+left_col, right_col = st.columns(2)
+with left_col:
     physical_activity = st.text_area(
         "Physical activity - time of day and duration",
         value=existing.get("physical_activity", ""),
         placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
         height=90,
     )
-with d2:
-    poop_options = ["Select"] + list(range(1, 11))
+    feeling_after_poop = st.text_area(
+        "Feeling after poop",
+        value=existing.get("feeling_after_poop", ""),
+        placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
+        height=160,
+    )
+
+with right_col:
+    poop_options = ["Select"] + list(range(1, 10))
     existing_poop_rounds = existing.get("poop_rounds", "Select") or "Select"
     if str(existing_poop_rounds).isdigit():
         existing_poop_rounds = int(existing_poop_rounds)
@@ -219,23 +226,18 @@ with d2:
     existing_timings = existing.get("poop_timings", []) or []
     if poop_rounds != "Select":
         st.caption("Record timing for each poop round.")
+        timing_cols = st.columns(3)
         for idx in range(int(poop_rounds)):
             default_timing = existing_timings[idx] if idx < len(existing_timings) else ""
-            poop_timings.append(
-                st.text_input(
-                    f"Poop timing {idx + 1}",
-                    value=default_timing,
-                    key=f"poop_timing_{idx + 1}",
-                    placeholder="Example: 7:30 AM",
+            with timing_cols[idx % 3]:
+                poop_timings.append(
+                    st.text_input(
+                        f"Poop timing {idx + 1}",
+                        value=default_timing,
+                        key=f"poop_timing_{idx + 1}",
+                        placeholder="Example: 7:30 AM",
+                    )
                 )
-            )
-
-feeling_after_poop = st.text_area(
-    "Feeling after poop",
-    value=existing.get("feeling_after_poop", ""),
-    placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
-    height=80,
-)
 poop = ""
 day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=85)
 

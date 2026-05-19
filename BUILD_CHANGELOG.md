@@ -560,3 +560,11 @@
 - Added separate Feeling after poop text box.
 - Admin Daily Log Report shows the structured poop fields.
 - Retains v58 LAF restructure correction.
+
+
+## v60 - Poop Layout Refinement
+
+- Moved Feeling after poop under the Physical activity column for better visual alignment.
+- Poop timing inputs now render in a 3-column grid.
+- Maximum Poop rounds reduced from 10 to 9.
+- Retains v59 structured poop fields and v58 LAF restructure correction.

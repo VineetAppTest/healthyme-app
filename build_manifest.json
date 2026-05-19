@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v59 Structured Poop Rounds",
-  "version": "v59_structured_poop_rounds",
-  "updated_on": "2026-05-19T19:00:25.574911+00:00",
+  "build_name": "HealthyMe v60 Poop Layout Refinement",
+  "version": "v60_poop_layout_refinement",
+  "updated_on": "2026-05-19T19:16:30.390204+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,12 +18,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Split Poop rounds and feeling after poop into structured fields.",
-    "Poop rounds is now a dropdown: Select, 1 to 10.",
-    "Timing text boxes dynamically open basis selected poop round count.",
-    "Added separate Feeling after poop text box.",
-    "Admin Daily Log Report shows poop rounds, timings, and feeling after poop.",
-    "Retains v58 LAF restructure correction and all v57 Daily Log changes."
+    "Aligned Feeling after poop under the Physical activity column.",
+    "Changed Poop timings layout to 3 inputs per row.",
+    "Supports up to 9 timings in a 3x3 grid.",
+    "Reduced Poop rounds maximum from 10 to 9.",
+    "Retains v59 structured poop data and v58 LAF restructure correction."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
