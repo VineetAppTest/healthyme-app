@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v69 Inline History Button Alignment",
-  "version": "v69_inline_history_button_alignment",
-  "updated_on": "2026-05-19T21:40:09.784525+00:00",
+  "build_name": "HealthyMe v70 Streamlit Native Recent Saved Days",
+  "version": "v70_streamlit_native_recent_saved_days",
+  "updated_on": "2026-05-19T21:45:55.827070+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -144,11 +144,11 @@
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
-    "Made nutritionist note save idempotent for same member/date/message.",
-    "Dedupes duplicate member messages before Member Home display.",
-    "Dedupes duplicate archived messages before archive/history display.",
-    "Prevents duplicate notification queue rows for same source message.",
-    "Adds Member Home display-level guard against duplicate note messages."
+    "Removed raw inline HTML table/details approach from v69.",
+    "Rebuilt Recent saved days with Streamlit-native columns and buttons.",
+    "Prevents HTML code from being rendered visibly on screen.",
+    "Keeps View / Hide history toggle using Streamlit state.",
+    "Aligns button in same row/column structure."
   ],
   "pages_imports_repaired": {
     "10_Admin_Dashboard.py": [
@@ -192,5 +192,5 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "UI-only alignment fix. No Daily Log save, Nutritionist message dedupe, admin, LAF, Body-Mind, or final report logic changed."
+  "business_logic_note": "UI-only correction. No save, dedupe, notification, LAF, Body-Mind, admin, or final report logic changed."
 }

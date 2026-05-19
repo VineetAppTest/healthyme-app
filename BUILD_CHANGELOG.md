@@ -645,3 +645,12 @@
 - View / Hide control now renders inside the same Action table cell.
 - History opens inline for the same date using an HTML details panel.
 - UI-only alignment fix; business logic unchanged.
+
+
+## v70 - Streamlit Native Recent Saved Days
+
+- Removed v69 raw inline HTML table/details implementation.
+- Rebuilt Recent saved days using Streamlit-native columns and buttons.
+- Prevents raw HTML from appearing on screen.
+- Keeps View / Hide history state behavior.
+- UI-only correction; business logic unchanged.
