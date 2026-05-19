@@ -282,16 +282,12 @@ days = get_daily_food_journal_days(user_id)
 if not days:
     st.info("No food journal days saved yet.")
 else:
-    active_meal_count = len(MEAL_GROUPS) if "MEAL_GROUPS" in globals() else 0
-    if active_meal_count <= 0:
-        active_meal_count = 1
-
     st.markdown(
         """
         <div class='hm-rsd-card'>
           <div class='hm-rsd-header'>
             <div>Date</div>
-            <div>Meals Logged</div>
+            <div>Meal type and food</div>
             <div>Water</div>
             <div>Notes</div>
             <div>Nutritionist Notes</div>
@@ -308,8 +304,7 @@ else:
         for _k, meal in (day.get("meals", {}) or {}).items():
             if meal.get("food"):
                 meal_summary.append(f"{meal.get('label','')}: {meal.get('food','')}")
-        meals_logged = len(meal_summary)
-        meal_progress = f"{meals_logged}/{active_meal_count}"
+        meal_display_text = " | ".join(meal_summary) if meal_summary else "—"
 
         latest_note = get_latest_daily_log_note_for_date(user_id, day_date)
         latest_note_text = "—"
@@ -320,7 +315,7 @@ else:
             latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
 
         date_display = html.escape(str(day_date or "—"))
-        meal_display = html.escape(meal_progress)
+        meal_display = html.escape(meal_display_text)
         water_display = html.escape(str(day.get("water_litres") or "—"))
         notes_display = html.escape(str(day.get("notes") or "—"))
         nutritionist_display = html.escape(latest_note_text)
@@ -329,7 +324,7 @@ else:
             f"""
             <div class='hm-rsd-row'>
               <div class='hm-rsd-date'>{date_display}</div>
-              <div><span class='hm-rsd-pill'>{meal_display}</span></div>
+              <div class='hm-rsd-meals'>{meal_display}</div>
               <div>{water_display}</div>
               <div>{notes_display}</div>
               <div class='hm-rsd-note'>{nutritionist_display}</div>

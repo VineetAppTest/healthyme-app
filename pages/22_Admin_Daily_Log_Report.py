@@ -147,6 +147,7 @@ else:
         })
     st.dataframe(meal_rows, use_container_width=True, hide_index=True)
     st.markdown("#### Full-day details")
+    st.markdown(f"**Water Intake:** {selected_day.get('water_litres','') or '-'}")
     st.markdown(f"**Physical Activity:** {selected_day.get('physical_activity','') or '-'}")
     st.markdown(f"**Poop rounds:** {selected_day.get('poop_rounds','') or '-'}")
     timings = selected_day.get("poop_timings", []) or []

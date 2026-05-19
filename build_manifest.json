@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v64 Recent Saved Days Refinement",
-  "version": "v64_recent_saved_days_refinement",
-  "updated_on": "2026-05-19T20:30:50.062304+00:00",
+  "build_name": "HealthyMe v65 Daily Log + Admin UI Fixes",
+  "version": "v65_daily_log_admin_ui_fixes",
+  "updated_on": "2026-05-19T21:05:00.810526+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Reduced size of View / Hide history button.",
-    "Improved vertical alignment of the action button with row content.",
-    "Made table borders more prominent.",
-    "Made Nutritionist Notes text slightly smaller and more compact.",
-    "Business logic unchanged from v63."
+    "Member Recent saved days now shows Meal type and food instead of Meals Logged progress.",
+    "Admin Daily Log Full-day details now shows Water Intake before Physical Activity.",
+    "Admin Member Communication page helper card removed.",
+    "Admin Member Communication spacing reduced for Send Message and Recent messages sections.",
+    "Bottom Back to Dashboard button overlap fixed with clean navigation button."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -192,5 +192,5 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "UI-only refinement. No Daily Log save, notification, LAF, Body-Mind, final report, or database logic changed."
+  "business_logic_note": "UI/content patch only. No Daily Log save, Body-Mind, LAF, Final Report, or message queue logic intentionally changed."
 }

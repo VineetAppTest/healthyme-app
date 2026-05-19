@@ -604,3 +604,12 @@
 - Made Recent saved days table borders more prominent.
 - Reduced Nutritionist Notes text size and made it more compact.
 - UI-only refinement; business logic unchanged.
+
+
+## v65 - Daily Log + Admin UI Fixes
+
+- Member Recent saved days now shows Meal type and food.
+- Admin Daily Log full-day details now includes Water Intake before Physical Activity.
+- Removed helper info text from Admin-Member Communication.
+- Reduced extra space in Send Message and Recent messages sections.
+- Fixed bottom Back to Dashboard button overlap.
