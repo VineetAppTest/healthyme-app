@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v52 Login Logout Block Bottom",
-  "version": "v52_login_logout_block_bottom",
-  "updated_on": "2026-05-19T11:57:07.460653+00:00",
+  "build_name": "HealthyMe v53 UI Helper Import Fix",
+  "version": "v53_ui_helper_import_fix",
+  "updated_on": "2026-05-19T12:14:13.827186+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -141,5 +141,11 @@
     "Old Daily Food Journal rows are grouped by date for admin view."
   ],
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
-  "timezone_note": "Current implementation defaults to Asia/Kolkata. Future user profile timezone values can be passed to format_local_ts when timezone fields are added."
+  "timezone_note": "Current implementation defaults to Asia/Kolkata. Future user profile timezone values can be passed to format_local_ts when timezone fields are added.",
+  "hotfix": [
+    "Fixed ImportError on Member Home by exposing format_local_ts in components.ui_common.",
+    "Fixed ImportError on Member Home by exposing render_back_to_top in components.ui_common.",
+    "Moved shared helpers near the top of ui_common.py so page imports resolve reliably.",
+    "Retained v52 login logout block placement and v51 timezone/archive/back-to-top behavior."
+  ]
 }

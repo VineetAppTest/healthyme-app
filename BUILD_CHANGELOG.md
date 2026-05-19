@@ -496,3 +496,11 @@
 - Moved the signed-out / Complete secure logout section to the bottom of the login column.
 - Removed the signed-out block from above Secure Login.
 - Retains v51 timezone, Nutritionist Notes archive, and Back to Top fixes.
+
+
+## v53 - UI Helper Import Fix
+
+- Fixed Member Home ImportError by exposing `format_local_ts` in `components.ui_common`.
+- Fixed Member Home ImportError by exposing `render_back_to_top` in `components.ui_common`.
+- Shared helpers now sit near the top of `ui_common.py` so all pages can import them reliably.
+- Retains v52 login logout placement and v51 timezone/archive/back-to-top fixes.
