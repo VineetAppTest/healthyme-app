@@ -12,6 +12,9 @@ user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
 
 current_instance = get_current_assessment_instance(user_id)
+
+# v31: workflow finalization overrides stale instance review status.
+workflow_finalized = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready")) or wf.get("workflow_status") == "finalized"
 requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
 is_reassessment = current_instance.get("instance_type") == "Reassessment" and not current_instance.get("submitted_for_review")
 
@@ -118,7 +121,7 @@ with right:
     else:
         activation_requested = bool(wf.get("body_mind_activation_requested"))
         if admin_completed and activation_requested:
-            body_mind_msg = "Admin has requested activation, but visibility is not active yet. Ask admin to click Activate Body-Mind Connection."
+            body_mind_msg = "Activation was requested but not synced. Ask admin to activate once from Body-Mind Access Control."
         elif admin_completed:
             body_mind_msg = "Final review is complete. Admin must manually activate Body-Mind for it to appear."
         elif activation_requested:

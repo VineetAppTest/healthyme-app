@@ -2,7 +2,7 @@
 import streamlit as st, json, pathlib
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12
-from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization
+from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization, sync_member_finalization_state
 from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
 from components.admin_value_resolver import resolve_admin_linked_value
@@ -35,6 +35,9 @@ current_wf = get_workflow(mid)
 is_finalized = bool(current_wf.get("admin_completed")) or bool(current_wf.get("final_report_ready"))
 
 if is_finalized:
+
+    # v31: repair stale review/instance status for finalized records.
+    current_wf = sync_member_finalization_state(mid, body_mind_unlock=None)
     card_start()
     st.success("Final admin assessment is already completed. The final report is ready and this form is now locked.")
     st.markdown(

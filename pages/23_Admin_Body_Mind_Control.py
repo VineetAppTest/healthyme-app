@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v15, render_page_nav, stat_grid
-from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, manually_unlock_body_mind_after_finalization
+from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, manually_unlock_body_mind_after_finalization, sync_member_finalization_state
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Body-Mind Access Control", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -25,6 +25,10 @@ selected = st.selectbox("Select member", [f"{m['id']} — {m['name']} — {m['em
 member_id = selected.split(" — ")[0]
 member = next(m for m in members if m["id"] == member_id)
 wf = get_workflow(member_id)
+
+# v31: repair stale review/instance status for finalized records without auto-unlocking Body-Mind.
+if wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflow_status") == "finalized":
+    wf = sync_member_finalization_state(member_id, body_mind_unlock=None)
 
 db = load_db()
 body_response = db.get("body_mind_responses", {}).get(member_id, {})

@@ -292,3 +292,12 @@
 - Added explicit Body-Mind activation control on Body-Mind Access Control page.
 - Added `manually_unlock_body_mind_after_finalization()`.
 - Keeps client rule: finalization is prerequisite; manual admin activation is required.
+
+
+## v31 - Workflow + Body-Mind Sync
+
+- Added central sync between workflow and assessment instance status.
+- Finalized workflow now also finalizes stale assessment instances.
+- Manual Body-Mind activation also repairs finalized workflow/instance status.
+- Member Home now treats workflow finalization as source of truth over stale instance status.
+- Body-Mind still requires manual admin activation after finalization.
