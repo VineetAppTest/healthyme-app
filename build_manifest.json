@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v31 Workflow + Body-Mind Sync",
-  "version": "v31_workflow_instance_body_mind_sync",
-  "updated_on": "2026-05-19T07:34:05.131559+00:00",
+  "build_name": "HealthyMe v32 Manual Body-Mind Hard Sync",
+  "version": "v32_manual_body_mind_hard_sync",
+  "updated_on": "2026-05-19T07:51:43.882114+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -73,10 +73,11 @@
     "Legacy vs instance answer counts"
   ],
   "p0_fix": [
-    "Body-Mind unlocks automatically when admin_completed or final_report_ready is true.",
-    "Member Home self-heals old records where final report is ready but Body-Mind is hidden.",
-    "Body-Mind Access Control self-heals the same mismatch.",
-    "Eliminates Recipe/Exercise visible while Body-Mind hidden after final review."
+    "Manual activation is now one click, not checkbox plus button.",
+    "Manual activation writes body_mind_activation_requested=True and body_mind_unlocked=True together.",
+    "Member Home repairs body_mind_unlocked only when finalization is complete and manual activation request exists.",
+    "Does not unlock on finalization alone.",
+    "Reduces multiple-click activation issue."
   ],
   "version_cleanup": [
     "Standalone duplicate version line removed.",
@@ -90,8 +91,8 @@
   ],
   "base_file": "healthyme-app-main (19.05.2026).zip",
   "client_rule_retained": [
-    "Body-Mind does not unlock automatically only because finalization exists.",
-    "Manual admin activation is still required.",
-    "Finalization is the prerequisite for manual activation."
+    "Finalization is prerequisite.",
+    "Manual activation is required.",
+    "Finalization alone does not unlock Body-Mind."
   ]
 }

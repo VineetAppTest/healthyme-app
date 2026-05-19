@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12
-from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion
+from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested
 from components.assessment_instances import get_current_assessment_instance
 from components.flash import render_system_message
 
@@ -10,6 +10,11 @@ inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar
 
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
+# v32 hard sync:
+# If finalization is complete and manual activation request exists, repair body_mind_unlocked.
+if (wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflow_status") == "finalized") and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
+    hard_sync_body_mind_if_requested(user_id)
+    wf = get_workflow(user_id)
 
 current_instance = get_current_assessment_instance(user_id)
 

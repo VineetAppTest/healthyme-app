@@ -79,12 +79,7 @@ else:
                 st.rerun()
     else:
         st.warning("Final admin work is complete, but Body-Mind is not active for this member.")
-        unlock = st.checkbox(
-            "Show Body-Mind Connection to this member",
-            value=False,
-            help="Manual activation. Final admin completion is already satisfied."
-        )
-        if st.button("Activate Body-Mind Connection", type="primary", use_container_width=True, disabled=not unlock):
+        if st.button("Activate Body-Mind Connection", type="primary", use_container_width=True):
             ok, msg = manually_unlock_body_mind_after_finalization(member_id)
             if ok:
                 set_system_message(msg, "success", celebrate=True)

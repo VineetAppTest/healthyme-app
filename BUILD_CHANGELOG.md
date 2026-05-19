@@ -301,3 +301,12 @@
 - Manual Body-Mind activation also repairs finalized workflow/instance status.
 - Member Home now treats workflow finalization as source of truth over stale instance status.
 - Body-Mind still requires manual admin activation after finalization.
+
+
+## v32 - Manual Body-Mind Hard Sync
+
+- Manual Body-Mind activation is now one-click.
+- Activation writes both request and visibility together.
+- Member Home self-repairs only if finalization is complete AND manual activation request exists.
+- Does not unlock on finalization alone.
+- Reduces multiple-click activation issue.

@@ -881,11 +881,7 @@ def sync_body_mind_after_admin_completion(user_id, activation_selected=False):
     return bool(wf.get("body_mind_unlocked"))
 
 def request_body_mind_activation(user_id):
-    """Record manual admin request for Body-Mind activation.
-
-    If final admin work is complete, Body-Mind unlocks immediately.
-    If not complete, request is stored and can unlock when finalization happens.
-    """
+    """Record manual admin request for Body-Mind activation."""
     ok, _msg = manually_unlock_body_mind_after_finalization(user_id)
     if ok:
         return True
@@ -927,24 +923,75 @@ def finalize_admin_assessment(user_id, assessment_data, activation_selected=Fals
 
 
 
-# --------------------------------------------------------------------
-# v31: Workflow + assessment instance synchronization helpers
-# --------------------------------------------------------------------
-def sync_member_finalization_state(user_id, *, body_mind_unlock=None):
-    """Synchronize member workflow and assessment instances after admin finalization.
 
-    This closes the gap where workflow could be finalized but the member's current
-    assessment instance still showed Review Required / pending review.
+
+# --------------------------------------------------------------------
+# v32: Hard sync Body-Mind after manual activation
+# --------------------------------------------------------------------
+def hard_sync_body_mind_if_requested(user_id):
+    """Repair Body-Mind visibility if finalization is done and manual activation was requested.
+
+    This does not unlock on finalization alone. It requires body_mind_activation_requested=True.
     """
     db = load_db()
-    db.setdefault("workflow", {})
-    db.setdefault("assessment_instances", {})
+    wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
+    final_done = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready")) or wf.get("workflow_status") == "finalized"
+    requested = bool(wf.get("body_mind_activation_requested"))
 
-    wf = normalize_workflow(db["workflow"].setdefault(user_id, {}))
+    if final_done and requested and not bool(wf.get("body_mind_unlocked")):
+        wf["body_mind_unlocked"] = True
+        db["workflow"][user_id] = normalize_workflow(wf)
+        save_db(db)
+        return True
+
+    db["workflow"][user_id] = normalize_workflow(wf)
+    save_db(db)
+    return bool(wf.get("body_mind_unlocked"))
+
+def manually_unlock_body_mind_after_finalization(user_id):
+    """One-click manual unlock after final admin completion.
+
+    Returns (ok, message).
+    """
+    db = load_db()
+    wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
+    admin_done = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready")) or wf.get("workflow_status") == "finalized"
+
+    if not admin_done:
+        db["workflow"][user_id] = normalize_workflow(wf)
+        save_db(db)
+        return False, "Admin final assessment is not completed yet."
+
     wf["admin_completed"] = True
     wf["final_report_ready"] = True
-    wf["submitted_for_review"] = True
     wf["workflow_status"] = "finalized"
+    wf["body_mind_activation_requested"] = True
+    wf["body_mind_unlocked"] = True
+
+    db["workflow"][user_id] = normalize_workflow(wf)
+
+    # Keep assessment instances aligned.
+    for inst in db.get("assessment_instances", {}).get(user_id, []) or []:
+        if inst.get("submitted_for_review") or inst.get("status") in ["review_required", "submitted", "pending_review", "in_review", "finalized"]:
+            inst["status"] = "finalized"
+            inst["admin_completed"] = True
+            inst["final_report_ready"] = True
+            inst["review_status"] = "finalized"
+
+    save_db(db)
+    return True, "Body-Mind Connection manually activated."
+
+
+# --------------------------------------------------------------------
+# v32: Workflow finalization sync helper
+# --------------------------------------------------------------------
+def sync_member_finalization_state(user_id, *, body_mind_unlock=None):
+    db = load_db()
+    wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
+    wf["admin_completed"] = True
+    wf["final_report_ready"] = True
+    wf["workflow_status"] = "finalized"
+    wf["submitted_for_review"] = True
 
     if body_mind_unlock is True:
         wf["body_mind_activation_requested"] = True
@@ -952,12 +999,15 @@ def sync_member_finalization_state(user_id, *, body_mind_unlock=None):
     elif body_mind_unlock is False:
         wf["body_mind_activation_requested"] = False
         wf["body_mind_unlocked"] = False
+    else:
+        # If request exists, repair unlock. Do not unlock without request.
+        if wf.get("body_mind_activation_requested"):
+            wf["body_mind_unlocked"] = True
 
     db["workflow"][user_id] = normalize_workflow(wf)
 
-    # Mark all submitted/review instances for this member as finalized.
     for inst in db.get("assessment_instances", {}).get(user_id, []) or []:
-        if inst.get("submitted_for_review") or inst.get("status") in ["review_required", "submitted", "pending_review", "in_review"]:
+        if inst.get("submitted_for_review") or inst.get("status") in ["review_required", "submitted", "pending_review", "in_review", "finalized"]:
             inst["status"] = "finalized"
             inst["admin_completed"] = True
             inst["final_report_ready"] = True
@@ -965,20 +1015,3 @@ def sync_member_finalization_state(user_id, *, body_mind_unlock=None):
 
     save_db(db)
     return get_workflow(user_id)
-
-def manually_unlock_body_mind_after_finalization(user_id):
-    """Manually unlock Body-Mind after final admin completion.
-
-    Returns (ok, message).
-    """
-    db = load_db()
-    wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
-    admin_done = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready"))
-
-    if not admin_done:
-        db["workflow"][user_id] = normalize_workflow(wf)
-        save_db(db)
-        return False, "Admin final assessment is not completed yet."
-
-    sync_member_finalization_state(user_id, body_mind_unlock=True)
-    return True, "Body-Mind Connection manually activated."
