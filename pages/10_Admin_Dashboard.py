@@ -158,11 +158,10 @@ with st.container(border=True):
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
-
 # v43 Daily Log Settings quick access
 card_start()
 st.subheader("Daily Log Configuration")
-st.caption("Manage meal sections used in the member Daily Food Journal.")
+
 if st.button("Daily Log Settings", use_container_width=True):
     st.switch_page("pages/25_Admin_Daily_Log_Settings.py")
 card_end()

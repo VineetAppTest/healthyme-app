@@ -111,8 +111,6 @@ else:
         "After saving this admin assessment, make Body-Mind Connection page visible to this member",
         value=bool(body_mind_activation_requested),
     )
-    st.caption("Body-Mind can be enabled here only because this action saves the admin assessment first.")
-
 
 # v39: Auto-save Admin Assessment draft on every interaction/rerun.
 # This saves the five admin pages as draft only. Final report generation remains manual.

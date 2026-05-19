@@ -69,7 +69,6 @@ def make_excel(member, profile, workflow, laf_rows, nsp1_rows, nsp2_rows, system
         ws.append([f"Workflow: {k}", v])
     style(ws)
 
-
     ws = wb.create_sheet("Systems Rating Table")
     ws.append(["SYSTEMS RATING TABLE", "", ""])
     ws.append(["No.", "System", "Score"])
@@ -158,10 +157,9 @@ stat_grid([
     {"label": "Workflow", "value": workflow.get("workflow_status", "not_started").replace("_", " ").title(), "note": "Current status"},
 ])
 
-
 card_start()
 st.subheader("Systems Rating Table")
-st.caption("Calculated from NSP Page 1 and NSP Page 2 responses.")
+
 sr_header = st.columns([0.5, 3, 1])
 with sr_header[0]:
     st.markdown("**No.**")

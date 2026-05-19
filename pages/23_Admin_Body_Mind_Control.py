@@ -62,7 +62,7 @@ body_mind_active = bool(wf.get("body_mind_unlocked")) or explicit_body_mind_acce
 
 if body_mind_active:
     st.success("Body-Mind Connection is active for this member.")
-    st.caption("No activation action is required.")
+
     allow_disable = st.checkbox("I need to disable Body-Mind visibility for this member")
     if allow_disable:
         if st.button("Disable Body-Mind Visibility", type="primary", use_container_width=True):

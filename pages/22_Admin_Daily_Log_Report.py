@@ -88,7 +88,7 @@ def build_excel(member, days):
     wb.save(bio)
     return bio.getvalue()
 
-topbar("Daily Food Journal Report", "Review full-day journals and add date-specific supervision notes.", "Admin report")
+topbar("Daily Food Journal Report", "", "Admin report")
 
 members = list_members()
 if not members:
@@ -104,13 +104,18 @@ if default_member:
             default_index = idx
             break
 
-selected = st.selectbox("Select member", options, index=default_index)
+selector_col_1, selector_col_2 = st.columns(2)
+with selector_col_1:
+    selected = st.selectbox("Select member", options, index=default_index)
+
 member_id = selected.split(" — ")[0]
 member = next(m for m in members if m["id"] == member_id)
 days = get_daily_food_journal_days(member_id)
-
 available_dates = [d.get("date") for d in days if d.get("date")]
-selected_date = st.selectbox("Select food log date for review / note", available_dates or [str(date.today())])
+
+with selector_col_2:
+    selected_date = st.selectbox("Select food log date for review / note", available_dates or [str(date.today())])
+
 selected_day = get_daily_food_journal_day(member_id, selected_date) or next((d for d in days if d.get("date") == selected_date), {"date": selected_date, "meals": {}})
 date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selected_date)
 
@@ -154,8 +159,7 @@ card_end()
 
 card_start()
 st.subheader(f"Supervision note for {selected_date}")
-st.caption("This note is connected to the selected day's food log. It will show to the member under that date and be queued as notification/email.")
-note = st.text_area("Write supervision note for selected date", placeholder="Example: Please add water quantity for lunch and dinner tomorrow.")
+note = st.text_area("Supervision note", placeholder="Example: Please add water quantity for lunch and dinner tomorrow.")
 if st.button("Save Supervision Note / Notify Member", type="primary", use_container_width=True):
     if not note.strip():
         st.error("Please write a supervision note before saving.")
@@ -177,7 +181,6 @@ if date_notes:
             unsafe_allow_html=True,
         )
 
-st.markdown("<div class='hm-v15-reminder-note'><b>Gentle reminder</b><br>Send a reminder to fill Daily Log.</div>", unsafe_allow_html=True)
 if st.button("Send gentle Daily Log reminder", type="secondary", use_container_width=True):
     queue_daily_log_reminder(member_id)
     st.success("Reminder queued for the member and marked for email notification.")

@@ -439,3 +439,11 @@
 - Forced Other section availability for existing repositories.
 - Added clear + Other button for repeatable Other 1, Other 2, etc.
 - Retained unsaved-change warning before switching sections.
+
+
+## v46 - Admin Info Cleanup + Daily Log Layout
+
+- Removed grey informative caption-style statements from admin-facing pages.
+- Removed Daily Log helper text examples including Gentle reminder and supervision note explanation.
+- Put Select member and Select food log date side by side in Admin Daily Log Report.
+- Retains v45 Daily Log compact Other flow.

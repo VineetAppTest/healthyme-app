@@ -215,7 +215,8 @@ else:
                     st.session_state["selected_member_id"] = member["id"]
                     st.switch_page("pages/14_Final_Assessment_Report.py")
                 if not final_unlocked:
-                    st.caption("Final report is locked until Admin Assessment is completed.")
+                    pass
+
             with b4:
                 if st.button("Daily Logs", key=f"dl_{member['id']}", type="primary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]

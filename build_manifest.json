@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v45 Daily Log Compact Other Fix",
-  "version": "v45_daily_log_compact_other_fix",
-  "updated_on": "2026-05-19T10:40:22.590466+00:00",
+  "build_name": "HealthyMe v46 Admin Info Cleanup + Daily Log Layout",
+  "version": "v46_admin_info_cleanup_daily_log_layout",
+  "updated_on": "2026-05-19T11:01:16.439779+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,12 +18,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Reference format from sample journal remains at bottom and is styled as a compact reference card.",
-    "Expand/collapse styling made more compact and aesthetic.",
-    "Meal section layout made more compact with reduced instructional/header spacing.",
-    "Other is now forced available even for existing repositories and appears as a clear '+ Other' button.",
-    "Other creates repeatable Other 1, Other 2, Other 3 sections.",
-    "Unsaved section warning retained before switching sections."
+    "Removed grey informative caption-style statements from admin pages.",
+    "Removed specific Daily Log helper text: Gentle reminder, note explanation, supervision note instruction and Daily Log report subtitle.",
+    "Placed Select member and Select food log date side by side in Admin Daily Log Report.",
+    "Retained v45 Daily Log compact Other flow and prior Body-Mind fixes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -127,5 +125,16 @@
   "format_source": "Sample_Food_Journal.xlsx",
   "supervision_note_rule": "Supervision note attaches to selected food log date, appears to member under that date, and is queued as notification/email.",
   "client_rule": "Daily Log should support both incremental meal-wise entry and full-day entry. Meal sections should be admin configurable.",
-  "warning_text": "Please save the section (Breakfast/Lunch/Evening Snack/Dinner/Bedtime/Other) before moving to next section."
+  "warning_text": "Please save the section (Breakfast/Lunch/Evening Snack/Dinner/Bedtime/Other) before moving to next section.",
+  "admin_files_cleaned": {
+    "10_Admin_Dashboard.py": 74,
+    "11_Evaluation_Status.py": 93,
+    "12_Partial_Assessment_Report.py": 68,
+    "13_Admin_Assessment_Form.py": 108,
+    "14_Final_Assessment_Report.py": 3,
+    "22_Admin_Daily_Log_Report.py": 0,
+    "23_Admin_Body_Mind_Control.py": 51,
+    "25_Admin_Daily_Log_Settings.py": 148
+  },
+  "compile_repair": "Fixed empty if block in Evaluation Status after removing grey caption text."
 }

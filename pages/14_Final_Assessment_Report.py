@@ -18,12 +18,10 @@ from components.ui_common import (
 from components.db import load_db, get_workflow, get_admin_assessment
 from components.report_engine import build_full_admin_report, summary_preview_rows, prepare_report_db, report_data_diagnostics
 
-
 @st.cache_data(show_spinner=False, ttl=300)
 def build_full_admin_report_cached(db_payload_json: str, member_id: str):
     """Cache final report bytes so UI-only actions do not regenerate the Excel file."""
     return build_full_admin_report(json.loads(db_payload_json), member_id)
-
 
 st.set_page_config(page_title="Final Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
@@ -87,7 +85,6 @@ stat_grid([
     {"label": "Digestive Score", "value": report_diag.get("digestive_score", 0), "note": "NSP system score"},
     {"label": "Final Status", "value": "Ready" if wf.get("final_report_ready") else "Draft", "note": "Workflow state"},
 ])
-
 
 with st.expander("Report data diagnostics", expanded=False):
     st.markdown(
