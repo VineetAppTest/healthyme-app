@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12
-from components.db import get_workflow, get_member_messages
+from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, sync_body_mind_after_admin_completion
 from components.assessment_instances import get_current_assessment_instance
 from components.flash import render_system_message
 
@@ -10,6 +10,17 @@ inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar
 
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
+# v27 carry-forward Body-Mind self-heal:
+# If finalization and activation request exist, ensure member visibility is synced.
+if (wf.get("admin_completed") or wf.get("final_report_ready")) and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
+    sync_body_mind_after_admin_completion(user_id, activation_selected=True)
+    wf = get_workflow(user_id)
+
+# v26 self-heal for historical records:
+# If admin finalized and activation was requested, ensure Body-Mind visibility is synced.
+if (wf.get("admin_completed") or wf.get("final_report_ready")) and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
+    sync_body_mind_after_admin_completion(user_id, activation_selected=True)
+    wf = get_workflow(user_id)
 current_instance = get_current_assessment_instance(user_id)
 requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
 is_reassessment = current_instance.get("instance_type") == "Reassessment" and not current_instance.get("submitted_for_review")

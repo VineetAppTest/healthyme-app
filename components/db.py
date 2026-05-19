@@ -904,3 +904,38 @@ def clear_body_mind_activation(user_id):
     db["workflow"][user_id] = normalize_workflow(wf)
     save_db(db)
     return True
+
+
+# --------------------------------------------------------------------
+# v26: Finalize admin assessment safely
+# --------------------------------------------------------------------
+def finalize_admin_assessment(user_id, assessment_data, activation_selected=False):
+    """Save admin assessment, mark final report ready, and sync Body-Mind once.
+
+    This is the single finalization path used by the Admin Assessment page.
+    It avoids repeated writes/sync calls and prevents re-finalization confusion.
+    """
+    db = load_db()
+    db.setdefault("admin_assessments", {})[user_id] = assessment_data
+
+    wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
+    already_finalized = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready"))
+
+    wf["admin_completed"] = True
+    wf["final_report_ready"] = True
+
+    request_exists = bool(wf.get("body_mind_activation_requested")) or bool(activation_selected)
+    if request_exists:
+        wf["body_mind_activation_requested"] = True
+        wf["body_mind_unlocked"] = True
+    elif bool(wf.get("body_mind_unlocked")):
+        # Preserve existing activation.
+        wf["body_mind_unlocked"] = True
+
+    db["workflow"][user_id] = normalize_workflow(wf)
+    save_db(db)
+    return {
+        "already_finalized": already_finalized,
+        "body_mind_unlocked": bool(wf.get("body_mind_unlocked")),
+        "body_mind_activation_requested": bool(wf.get("body_mind_activation_requested")),
+    }

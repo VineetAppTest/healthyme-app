@@ -2143,3 +2143,117 @@ def build_marker_v7():
     render_build_text_v25()
 def render_version_tag():
     render_build_text_v25()
+
+
+# --------------------------------------------------------------------
+# v26: current build marker
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v26"
+APP_BUILD_LABEL = "Finalization Lock + Body-Mind Sync"
+
+def render_build_text_v26():
+    st.markdown(
+        f"<div class='hm-v23-version-line'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>",
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v25():
+    render_build_text_v26()
+def render_build_text_v24():
+    render_build_text_v26()
+def render_build_text_v23():
+    render_build_text_v26()
+def render_build_text_v22():
+    render_build_text_v26()
+def render_build_text_v21():
+    render_build_text_v26()
+def render_build_text_v20():
+    render_build_text_v26()
+def render_build_text_v19():
+    render_build_text_v26()
+def render_build_text_v18():
+    render_build_text_v26()
+def render_build_text_v17():
+    render_build_text_v26()
+def render_build_text_v16():
+    render_build_text_v26()
+def render_build_text_v15():
+    render_build_text_v26()
+def render_build_text_v14():
+    render_build_text_v26()
+def render_build_text_v13():
+    render_build_text_v26()
+def render_build_text_v12():
+    render_build_text_v26()
+def render_build_text_v11():
+    render_build_text_v26()
+def build_marker_v11():
+    render_build_text_v26()
+def build_marker_v10():
+    render_build_text_v26()
+def build_marker_v9():
+    render_build_text_v26()
+def build_marker_v8():
+    render_build_text_v26()
+def build_marker_v7():
+    render_build_text_v26()
+def render_version_tag():
+    render_build_text_v26()
+
+
+# --------------------------------------------------------------------
+# v27: current build marker
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v27"
+APP_BUILD_LABEL = "Final Report NSP Data Integrity + Body-Mind Carry Forward"
+
+def render_build_text_v27():
+    st.markdown(
+        f"<div class='hm-v23-version-line'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>",
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v26():
+    render_build_text_v27()
+def render_build_text_v25():
+    render_build_text_v27()
+def render_build_text_v24():
+    render_build_text_v27()
+def render_build_text_v23():
+    render_build_text_v27()
+def render_build_text_v22():
+    render_build_text_v27()
+def render_build_text_v21():
+    render_build_text_v27()
+def render_build_text_v20():
+    render_build_text_v27()
+def render_build_text_v19():
+    render_build_text_v27()
+def render_build_text_v18():
+    render_build_text_v27()
+def render_build_text_v17():
+    render_build_text_v27()
+def render_build_text_v16():
+    render_build_text_v27()
+def render_build_text_v15():
+    render_build_text_v27()
+def render_build_text_v14():
+    render_build_text_v27()
+def render_build_text_v13():
+    render_build_text_v27()
+def render_build_text_v12():
+    render_build_text_v27()
+def render_build_text_v11():
+    render_build_text_v27()
+def build_marker_v11():
+    render_build_text_v27()
+def build_marker_v10():
+    render_build_text_v27()
+def build_marker_v9():
+    render_build_text_v27()
+def build_marker_v8():
+    render_build_text_v27()
+def build_marker_v7():
+    render_build_text_v27()
+def render_version_tag():
+    render_build_text_v27()

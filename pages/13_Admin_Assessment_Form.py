@@ -2,7 +2,7 @@
 import streamlit as st, json, pathlib
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12
-from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation
+from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment
 from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
 from components.admin_value_resolver import resolve_admin_linked_value
@@ -28,6 +28,38 @@ laf=get_form_response("laf_responses", mid)
 render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="top")
 topbar("Fill Admin Page","Linked items are auto-pulled; manual items can be NA, 1, 2, or 3.","Admin assessment")
 render_system_message()
+
+# v26 finalization lock:
+# Once final report/admin review is complete, the form is frozen.
+current_wf = get_workflow(mid)
+is_finalized = bool(current_wf.get("admin_completed")) or bool(current_wf.get("final_report_ready"))
+
+if is_finalized:
+    card_start()
+    st.success("Final admin assessment is already completed. The final report is ready and this form is now locked.")
+    st.markdown(
+        """
+        <div class='info-banner'>
+          <b>No further action is required on the five admin pages.</b><br>
+          To review member status or reports, use Evaluation Status. To manage Body-Mind access, use Body-Mind Access Control.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    c_locked_1, c_locked_2, c_locked_3 = st.columns(3)
+    with c_locked_1:
+        if st.button("Evaluation Status", use_container_width=True):
+            st.switch_page("pages/11_Evaluation_Status.py")
+    with c_locked_2:
+        if st.button("Body-Mind Access", use_container_width=True):
+            st.switch_page("pages/23_Admin_Body_Mind_Control.py")
+    with c_locked_3:
+        if st.button("Final Report", type="primary", use_container_width=True):
+            st.switch_page("pages/14_Final_Assessment_Report.py")
+    card_end()
+    render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="bottom")
+    st.stop()
+
 card_start()
 if not member_has_meaningful_data(mid): st.warning("Member assessment is incomplete. Final report generation is disabled until member data exists.")
 all_data={}; grand=0
@@ -75,7 +107,8 @@ with c1:
     if st.button("Save Draft", use_container_width=True):
         old_body_mind_visibility = bool(get_workflow(mid).get("body_mind_unlocked"))
         save_admin_assessment(mid, all_data)
-        sync_body_mind_after_admin_completion(mid, activation_selected=bool(body_mind_unlock_choice))
+        if body_mind_unlock_choice:
+            request_body_mind_activation(mid)
         if body_mind_unlock_choice and not old_body_mind_visibility:
             set_system_message("Draft saved. Body-Mind activation request has been recorded.", "success", celebrate=True)
         elif old_body_mind_visibility:
@@ -89,21 +122,25 @@ with c2:
             set_system_message("Member assessment is incomplete.", "error")
             st.rerun()
         else:
-            old_body_mind_visibility = bool(get_workflow(mid).get("body_mind_unlocked"))
-            save_admin_assessment(mid, all_data)
-            sync_body_mind_after_admin_completion(mid, activation_selected=bool(body_mind_unlock_choice))
-            update_workflow(mid, admin_completed=True, final_report_ready=True)
-            # v25: after admin completion, unlock if activation was requested from either path.
-            sync_body_mind_after_admin_completion(mid, activation_selected=bool(body_mind_unlock_choice))
-            # v24: apply selected Body-Mind activation after admin completion and preserve existing activation.
-            sync_body_mind_after_admin_completion(mid, activation_selected=bool(body_mind_unlock_choice))
-            effective_unlock = _effective_body_mind_unlock()
-            if effective_unlock and not old_body_mind_visibility:
-                set_system_message("Admin Assessment completed, Final Assessment Report is now available, and Body-Mind Connection page enabled for this member.", "success", celebrate=True)
-            elif effective_unlock and old_body_mind_visibility:
-                set_system_message("Admin Assessment completed and Final Assessment Report is now available. Body-Mind Connection remains activated.", "success", celebrate=True)
+            with st.spinner("Finalizing admin assessment and preparing final report..."):
+                result = finalize_admin_assessment(
+                    mid,
+                    all_data,
+                    activation_selected=bool(body_mind_unlock_choice),
+                )
+
+            if result.get("body_mind_unlocked"):
+                set_system_message(
+                    "Admin Assessment completed, Final Assessment Report is ready, and Body-Mind Connection is activated.",
+                    "success",
+                    celebrate=True,
+                )
             else:
-                set_system_message("Admin Assessment completed and Final Assessment Report is now available.", "success", celebrate=True)
+                set_system_message(
+                    "Admin Assessment completed and Final Assessment Report is ready. Body-Mind was not activated because activation was not selected.",
+                    "success",
+                    celebrate=True,
+                )
             st.rerun()
 card_end()
 render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="bottom")

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v25 Body-Mind State Sync Fix",
-  "version": "v25_body_mind_state_sync",
-  "updated_on": "2026-05-18T08:57:42.485884+00:00",
+  "build_name": "HealthyMe v27 Final Report NSP Data Integrity + Body-Mind Carry Forward",
+  "version": "v27_final_report_nsp_data_integrity",
+  "updated_on": "2026-05-18T14:41:12.312175+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,14 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added body_mind_activation_requested workflow flag.",
-    "Admin Assessment records activation request and syncs visibility after final completion.",
-    "Body-Mind Access Control can record activation request before final completion.",
-    "When final admin completion happens, Body-Mind unlocks if request exists.",
-    "Existing active Body-Mind remains preserved.",
-    "Explicit disable clears both request and visibility.",
-    "Version marker updated to v25.",
-    "No scoring, final report calculation, auth structure, or database schema changed."
+    "Final report now resolves NSP data from selected assessment instance first.",
+    "If selected instance is missing, final report uses latest submitted/finalized instance.",
+    "Legacy member-level NSP responses remain fallback.",
+    "Digestive score diagnostics added to Final Report page and Excel Report Meta.",
+    "Partial report now uses same report-safe NSP source resolver.",
+    "Body-Mind v26 finalization/self-heal behavior carried forward and strengthened on Member Home.",
+    "No scoring formula or final report layout calculation changed except data-source integrity."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -41,14 +40,15 @@
     "workflow uses inline Python and no Node-based actions"
   ],
   "root_cause": [
-    "The app had only body_mind_unlocked, but did not reliably preserve that admin had requested activation before final admin completion.",
-    "If admin selected Body-Mind activation before completion, the request could be lost or not applied after final completion.",
-    "This caused Member Home to show recipes/exercises while Body-Mind stayed hidden."
+    "Admin Assessment form remained actionable after Save and Generate Final Report.",
+    "Finalization path had multiple repeated Body-Mind sync calls and no lock/read-only state.",
+    "Historical records could have admin_completed/final_report_ready and activation request but body_mind_unlocked still false."
   ],
   "testing_required": [
-    "Case 1: Request Body-Mind before final admin completion, then complete admin final assessment; member should see Body-Mind.",
-    "Case 2: Complete admin final assessment first, then activate Body-Mind from Body-Mind Access Control; member should see Body-Mind.",
-    "Case 3: Disable explicitly from Body-Mind Access Control; member should not see Body-Mind."
+    "Finalized member: Admin Assessment page should show locked state and no Save/Generate buttons.",
+    "New test member: select Body-Mind activation, click Save and Generate Final Report, then Member Home should show Body-Mind.",
+    "Existing broken member: if activation request exists, Member Home should self-heal and show Body-Mind.",
+    "If activation was never selected, Body-Mind remains hidden until activated from Body-Mind Access Control."
   ],
   "business_rule": [
     "Body-Mind activates only when admin final assessment is complete and admin selects Body-Mind activation from either approved path.",
@@ -57,10 +57,18 @@
   ],
   "removed_duplicate_artifacts": [],
   "not_changed": [
-    "Scoring logic",
-    "Final report calculation",
-    "Authentication structure",
+    "Scoring formula",
+    "Digestive mapping",
+    "Auth structure",
     "Database schema",
-    "Assessment questions"
+    "Admin assessment questions"
+  ],
+  "diagnostics_added": [
+    "NSP Source",
+    "Selected Instance",
+    "NSP1 answer count",
+    "NSP2 answer count",
+    "Digestive score",
+    "Legacy vs instance answer counts"
   ]
 }

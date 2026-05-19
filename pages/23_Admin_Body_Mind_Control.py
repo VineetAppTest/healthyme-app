@@ -25,6 +25,12 @@ selected = st.selectbox("Select member", [f"{m['id']} — {m['name']} — {m['em
 member_id = selected.split(" — ")[0]
 member = next(m for m in members if m["id"] == member_id)
 wf = get_workflow(member_id)
+
+# v26 self-heal:
+# If final admin completion is done and Body-Mind activation was requested, ensure visibility is unlocked.
+if (wf.get("admin_completed") or wf.get("final_report_ready")) and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
+    sync_body_mind_after_admin_completion(member_id, activation_selected=True)
+    wf = get_workflow(member_id)
 db = load_db()
 body_response = db.get("body_mind_responses", {}).get(member_id, {})
 admin_assessment = get_admin_assessment(member_id)

@@ -1,4 +1,5 @@
 from io import BytesIO
+import copy
 import json
 import pathlib
 from datetime import datetime
@@ -54,7 +55,89 @@ def _question_maps():
         {q["code"]: q for q in nsp2},
     )
 
+
+
+# --------------------------------------------------------------------
+# v27: Report NSP source integrity helpers
+# --------------------------------------------------------------------
+def _count_answers(answers):
+    return len([v for v in (answers or {}).values() if v not in [None, "", "Select"]])
+
+def _latest_report_instance_id(db, member_id):
+    """Find the best assessment instance for final report if UI did not set one."""
+    instances = db.get("assessment_instances", {}).get(member_id, []) or []
+    if not instances:
+        return ""
+
+    def rank(inst):
+        status = str(inst.get("status", "")).lower()
+        submitted = bool(inst.get("submitted_for_review"))
+        finalized_like = status in ["finalized", "review_required", "submitted", "completed"]
+        return (
+            1 if finalized_like or submitted else 0,
+            int(inst.get("instance_number", 0) or 0),
+            str(inst.get("created_date", "")),
+        )
+
+    return sorted(instances, key=rank, reverse=True)[0].get("instance_id", "")
+
+def prepare_report_db(db, member_id, selected_instance_id=None):
+    """Return a report-safe db copy and diagnostics.
+
+    Priority:
+    1. selected_instance_id from UI/session
+    2. latest submitted/finalized assessment instance
+    3. legacy member-level nsp1_responses/nsp2_responses
+    """
+    safe_db = copy.deepcopy(db)
+    selected_instance_id = selected_instance_id or _latest_report_instance_id(safe_db, member_id)
+
+    legacy_nsp1 = safe_db.get("nsp1_responses", {}).get(member_id, {}) or {}
+    legacy_nsp2 = safe_db.get("nsp2_responses", {}).get(member_id, {}) or {}
+
+    source = "legacy_member_responses"
+    inst_nsp1 = {}
+    inst_nsp2 = {}
+
+    if selected_instance_id:
+        inst_resp = safe_db.get("assessment_instance_responses", {}).get(selected_instance_id, {}) or {}
+        inst_nsp1 = inst_resp.get("nsp1", {}) or {}
+        inst_nsp2 = inst_resp.get("nsp2", {}) or {}
+        if _count_answers(inst_nsp1) or _count_answers(inst_nsp2):
+            source = "assessment_instance_responses"
+            safe_db.setdefault("nsp1_responses", {})[member_id] = inst_nsp1
+            safe_db.setdefault("nsp2_responses", {})[member_id] = inst_nsp2
+
+    nsp1_final = safe_db.get("nsp1_responses", {}).get(member_id, {}) or {}
+    nsp2_final = safe_db.get("nsp2_responses", {}).get(member_id, {}) or {}
+    rows = calculate_systems_rating(nsp1_final, nsp2_final)
+    digestive_score = next((r.get("Score", 0) for r in rows if r.get("System") == "Digestive"), 0)
+
+    safe_db["_report_meta"] = {
+        "member_id": member_id,
+        "selected_instance_id": selected_instance_id or "",
+        "nsp_source": source,
+        "nsp1_answer_count": _count_answers(nsp1_final),
+        "nsp2_answer_count": _count_answers(nsp2_final),
+        "digestive_score": digestive_score,
+        "legacy_nsp1_answer_count": _count_answers(legacy_nsp1),
+        "legacy_nsp2_answer_count": _count_answers(legacy_nsp2),
+        "instance_nsp1_answer_count": _count_answers(inst_nsp1),
+        "instance_nsp2_answer_count": _count_answers(inst_nsp2),
+    }
+    return safe_db, safe_db["_report_meta"]
+
+def report_data_diagnostics(db, member_id, selected_instance_id=None):
+    safe_db, meta = prepare_report_db(db, member_id, selected_instance_id)
+    rows = calculate_systems_rating(
+        safe_db.get("nsp1_responses", {}).get(member_id, {}),
+        safe_db.get("nsp2_responses", {}).get(member_id, {}),
+    )
+    return meta, rows
+
 def _admin_rows(db, member_id):
+    if not db.get("_report_meta"):
+        db, _ = prepare_report_db(db, member_id)
     templates = _load_json("config/admin_templates.json")
     admin = db.get("admin_assessments", {}).get(member_id, {})
     nsp1 = db.get("nsp1_responses", {}).get(member_id, {})
@@ -104,6 +187,8 @@ def _select_top_systems_from_nsp(nsp_system_rows):
     return selected, scored
 
 def compute_summary(db, member_id):
+    if not db.get("_report_meta"):
+        db, _ = prepare_report_db(db, member_id)
     """Central report logic.
 
     NSP Systems Rating Score is the single source of truth for:
@@ -255,8 +340,14 @@ def _build_all_details_sheet(wb, db, member_id, summary):
     ws = wb.active
     ws.title = "All Details"
 
+    report_meta = db.get("_report_meta", {})
     _append_section(ws, "Report Meta", ["Field", "Value"], [
         ["Generated On", datetime.now().strftime("%Y-%m-%d %H:%M")],
+        ["Selected Instance", report_meta.get("selected_instance_id", "")],
+        ["NSP Source", report_meta.get("nsp_source", "")],
+        ["NSP1 Answers Used", report_meta.get("nsp1_answer_count", 0)],
+        ["NSP2 Answers Used", report_meta.get("nsp2_answer_count", 0)],
+        ["Digestive NSP Score", report_meta.get("digestive_score", 0)],
         ["Score Rule", "NSP Systems Rating Score is calculated from NSP Page 1 + NSP Page 2 and is used consistently in Partial and Final Reports."],
         ["Top System Rule", "Top 3 systems by NSP score. If rank 4 ties with rank 3, rank 4 is also included."],
         ["Admin Finding Rule", "Admin Assessment scores are used for findings; only 2 and 3 are shown in the final summary."],

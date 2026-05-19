@@ -238,3 +238,25 @@
 - Body-Mind Access Control can record the activation request before final completion.
 - Explicit disable clears request and visibility.
 - No scoring, report calculation, auth structure, or DB schema changes.
+
+
+## v26 - Finalization Lock + Body-Mind Sync
+
+- Added finalization lock for Admin Assessment page.
+- After Save and Generate Final Report succeeds, five admin pages become read-only/locked.
+- Removed repeated Body-Mind sync/write calls from final generation path.
+- Added `finalize_admin_assessment()` helper as the single finalization path.
+- Added self-heal for historical records where finalization + activation request exists but Body-Mind is still hidden.
+- Added spinner during finalization to make the 4-5 second wait visible.
+- No scoring or final report calculation logic changed.
+
+
+## v27 - Final Report NSP Data Integrity + Body-Mind Carry Forward
+
+- Final Report now resolves NSP1/NSP2 from selected assessment instance first.
+- If no selected instance exists, it uses the latest submitted/finalized instance.
+- Legacy member-level NSP responses remain fallback.
+- Added report diagnostics for NSP source, selected instance, NSP1/NSP2 counts, and Digestive score.
+- Added same NSP source resolver to Partial Report.
+- Carried forward v26 Body-Mind self-heal into Member Home.
+- No scoring formula, Digestive mapping, auth structure, or DB schema changes.

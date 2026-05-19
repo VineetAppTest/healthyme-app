@@ -16,7 +16,7 @@ from components.ui_common import (
     render_build_text_v14,
 )
 from components.db import load_db, get_workflow, get_admin_assessment
-from components.report_engine import build_full_admin_report, summary_preview_rows
+from components.report_engine import build_full_admin_report, summary_preview_rows, prepare_report_db, report_data_diagnostics
 
 
 @st.cache_data(show_spinner=False, ttl=300)
@@ -34,14 +34,10 @@ if not mid:
 
 render_page_nav("Final Assessment Report", back_page="pages/11_Evaluation_Status.py", location="top")
 
-db = load_db()
+db_raw = load_db()
 selected_instance_id = st.session_state.get('selected_instance_id')
-if selected_instance_id:
-    db = copy.deepcopy(db)
-    inst_resp = db.get('assessment_instance_responses', {}).get(selected_instance_id, {})
-    if inst_resp:
-        db.setdefault('nsp1_responses', {})[mid] = inst_resp.get('nsp1', db.get('nsp1_responses', {}).get(mid, {}))
-        db.setdefault('nsp2_responses', {})[mid] = inst_resp.get('nsp2', db.get('nsp2_responses', {}).get(mid, {}))
+db, report_diag = prepare_report_db(db_raw, mid, selected_instance_id)
+selected_instance_id = report_diag.get("selected_instance_id", selected_instance_id or "")
 
 users = {u["id"]: u for u in db.get("users", [])}
 member = users.get(mid, {})
@@ -86,11 +82,25 @@ topbar(
 selected_systems, subheaders, findings = summary_preview_rows(db, mid)
 
 stat_grid([
-    {"label": "Selected Systems", "value": len(selected_systems), "note": "Top 3 / Top 4 by NSP score"},
-    {"label": "Final Findings", "value": len(findings), "note": "Admin items scored 2 or 3"},
-    {"label": "Admin Assessment", "value": "Available" if admin_assessment else "Pending", "note": "5 admin sections"},
+    {"label": "NSP1 Used", "value": report_diag.get("nsp1_answer_count", 0), "note": report_diag.get("nsp_source", "source")},
+    {"label": "NSP2 Used", "value": report_diag.get("nsp2_answer_count", 0), "note": f"Instance: {report_diag.get('selected_instance_id','') or 'legacy'}"},
+    {"label": "Digestive Score", "value": report_diag.get("digestive_score", 0), "note": "NSP system score"},
     {"label": "Final Status", "value": "Ready" if wf.get("final_report_ready") else "Draft", "note": "Workflow state"},
 ])
+
+
+with st.expander("Report data diagnostics", expanded=False):
+    st.markdown(
+        f"""
+        **NSP Source:** `{report_diag.get('nsp_source')}`  
+        **Selected Instance:** `{report_diag.get('selected_instance_id') or 'legacy/latest'}`  
+        **NSP1 answers used:** `{report_diag.get('nsp1_answer_count')}`  
+        **NSP2 answers used:** `{report_diag.get('nsp2_answer_count')}`  
+        **Digestive score:** `{report_diag.get('digestive_score')}`  
+        **Legacy NSP1 / NSP2 counts:** `{report_diag.get('legacy_nsp1_answer_count')}` / `{report_diag.get('legacy_nsp2_answer_count')}`  
+        **Instance NSP1 / NSP2 counts:** `{report_diag.get('instance_nsp1_answer_count')}` / `{report_diag.get('instance_nsp2_answer_count')}`
+        """
+    )
 
 # User-first priority action: show the download section before explanatory structure.
 st.markdown(
