@@ -1058,22 +1058,53 @@ def has_explicit_body_mind_access(user_id):
     return bool(wf.get("body_mind_unlocked"))
 
 
-# --------------------------------------------------------------------
-# v41: Daily Food Journal + Admin Supervision Notes
-# --------------------------------------------------------------------
-def save_daily_food_journal_entry(user_id, entry):
-    """Save one structured food journal entry."""
-    db = load_db()
-    db.setdefault("daily_logs", {}).setdefault(user_id, [])
-    item = dict(entry)
-    item["timestamp"] = datetime.datetime.now().isoformat(timespec="seconds")
-    item["log_type"] = "food_journal"
-    db["daily_logs"][user_id].append(item)
-    save_db(db)
-    return item
 
-def save_daily_log_supervision_note(member_id, note, actor_id="admin"):
-    """Save admin supervision note and queue member notification/email marker."""
+
+# --------------------------------------------------------------------
+# v42: Day-based Daily Food Journal + date-linked supervision notes
+# --------------------------------------------------------------------
+def _daily_food_journal_store(db):
+    db.setdefault("daily_food_journals", {})
+    return db["daily_food_journals"]
+
+def save_daily_food_journal_day(user_id, log_date, day_data):
+    """Save complete daily food journal for one date.
+
+    This is day-based and contains all meal groups in one object.
+    """
+    db = load_db()
+    store = _daily_food_journal_store(db).setdefault(user_id, {})
+    payload = dict(day_data or {})
+    payload["date"] = str(log_date)
+    payload["timestamp"] = datetime.datetime.now().isoformat(timespec="seconds")
+    payload["log_type"] = "daily_food_journal_day"
+    store[str(log_date)] = payload
+
+    # Also mirror a compact latest entry in existing daily_logs for backward compatibility.
+    db.setdefault("daily_logs", {}).setdefault(user_id, [])
+    legacy = [x for x in db["daily_logs"][user_id] if not (x.get("log_type") == "daily_food_journal_day" and x.get("date") == str(log_date))]
+    legacy.append(payload)
+    db["daily_logs"][user_id] = legacy[-120:]
+    save_db(db)
+    return payload
+
+def get_daily_food_journal_day(user_id, log_date):
+    db = load_db()
+    return db.get("daily_food_journals", {}).get(user_id, {}).get(str(log_date), {})
+
+def get_daily_food_journal_days(user_id):
+    db = load_db()
+    store = db.get("daily_food_journals", {}).get(user_id, {}) or {}
+    rows = list(store.values())
+    # Include legacy day records if they exist but were not migrated into daily_food_journals.
+    for x in db.get("daily_logs", {}).get(user_id, []) or []:
+        if x.get("log_type") == "daily_food_journal_day" and x.get("date") and x.get("date") not in store:
+            rows.append(x)
+    rows.sort(key=lambda r: (r.get("date", ""), r.get("timestamp", "")), reverse=True)
+    return rows
+
+def save_daily_log_supervision_note(member_id, note, actor_id="admin", log_date=None):
+    """Save admin supervision note linked to a specific food journal date."""
     note = (note or "").strip()
     if not note:
         return None
@@ -1083,36 +1114,131 @@ def save_daily_log_supervision_note(member_id, note, actor_id="admin"):
         "id": str(uuid.uuid4())[:8],
         "ts": datetime.datetime.now().isoformat(timespec="seconds"),
         "member_id": member_id,
+        "log_date": str(log_date or ""),
         "note": note,
         "actor_id": actor_id,
     }
     db["daily_log_supervision_notes"][member_id].append(item)
 
+    date_text = f" for {item['log_date']}" if item.get("log_date") else ""
     db.setdefault("messages", []).append({
         "id": str(uuid.uuid4())[:8],
         "ts": item["ts"],
         "member_id": member_id,
         "sender_role": "admin",
         "actor_id": actor_id,
-        "subject": "Daily Log Supervision Note",
+        "subject": f"Daily Log Supervision Note{date_text}",
         "message": note,
         "status": "queued",
         "email_required": True,
+        "log_date": item.get("log_date", ""),
     })
     db.setdefault("notifications", []).append({
         "ts": item["ts"],
         "kind": "daily_log_supervision_note",
         "user_id": member_id,
-        "message": f"Daily Log Supervision Note: {note[:160]}",
+        "message": f"Daily Log Supervision Note{date_text}: {note[:160]}",
         "status": "queued",
         "email_required": True,
         "created_by": actor_id or "admin",
+        "log_date": item.get("log_date", ""),
     })
     save_db(db)
     return item
 
-def get_daily_log_supervision_notes(member_id, limit=20):
+def get_daily_log_supervision_notes(member_id, limit=20, log_date=None):
     db = load_db()
     rows = list(db.get("daily_log_supervision_notes", {}).get(member_id, []))
+    if log_date is not None:
+        rows = [r for r in rows if str(r.get("log_date", "")) == str(log_date)]
     rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
     return rows[:limit]
+
+
+# --------------------------------------------------------------------
+# v43: Editable meal type repository + progressive meal save
+# --------------------------------------------------------------------
+def get_meal_type_repository():
+    """Return active meal sections configured by admin."""
+    db = load_db()
+    default_rows = [
+        {"key": "breakfast", "label": "Breakfast", "active": True, "sort_order": 1},
+        {"key": "lunch", "label": "Lunch", "active": True, "sort_order": 2},
+        {"key": "evening_snack", "label": "Evening Snack", "active": True, "sort_order": 3},
+        {"key": "dinner", "label": "Dinner", "active": True, "sort_order": 4},
+        {"key": "bedtime", "label": "Bedtime", "active": True, "sort_order": 5},
+    ]
+    rows = db.get("meal_type_repository")
+    if not rows:
+        db["meal_type_repository"] = default_rows
+        save_db(db)
+        rows = default_rows
+    rows = [r for r in rows if r.get("active", True)]
+    rows.sort(key=lambda r: int(r.get("sort_order", 999)))
+    return rows
+
+def save_meal_type_repository(rows):
+    """Save admin configured meal sections."""
+    db = load_db()
+    clean = []
+    for idx, r in enumerate(rows or [], start=1):
+        label = str(r.get("label", "")).strip()
+        if not label:
+            continue
+        key = str(r.get("key") or label.lower().replace(" ", "_").replace("/", "_")).strip()
+        clean.append({
+            "key": key,
+            "label": label,
+            "active": bool(r.get("active", True)),
+            "sort_order": int(r.get("sort_order", idx) or idx),
+        })
+    db["meal_type_repository"] = clean
+    save_db(db)
+    return clean
+
+def save_daily_food_journal_meal(user_id, log_date, meal_key, meal_payload):
+    """Save/update a single meal section inside a daily journal."""
+    db = load_db()
+    store = _daily_food_journal_store(db).setdefault(user_id, {})
+    day = store.get(str(log_date), {
+        "date": str(log_date),
+        "meals": {},
+        "physical_activity": "",
+        "poop": "",
+        "notes": "",
+        "log_type": "daily_food_journal_day",
+    })
+    day.setdefault("meals", {})
+    day["meals"][meal_key] = dict(meal_payload or {})
+    day["date"] = str(log_date)
+    day["timestamp"] = datetime.datetime.now().isoformat(timespec="seconds")
+    day["log_type"] = "daily_food_journal_day"
+    store[str(log_date)] = day
+
+    db.setdefault("daily_logs", {}).setdefault(user_id, [])
+    legacy = [x for x in db["daily_logs"][user_id] if not (x.get("log_type") == "daily_food_journal_day" and x.get("date") == str(log_date))]
+    legacy.append(day)
+    db["daily_logs"][user_id] = legacy[-120:]
+    save_db(db)
+    return day
+
+def save_daily_food_journal_day_details(user_id, log_date, physical_activity="", poop="", notes=""):
+    db = load_db()
+    store = _daily_food_journal_store(db).setdefault(user_id, {})
+    day = store.get(str(log_date), {
+        "date": str(log_date),
+        "meals": {},
+        "log_type": "daily_food_journal_day",
+    })
+    day["physical_activity"] = physical_activity
+    day["poop"] = poop
+    day["notes"] = notes
+    day["timestamp"] = datetime.datetime.now().isoformat(timespec="seconds")
+    day["log_type"] = "daily_food_journal_day"
+    store[str(log_date)] = day
+    db.setdefault("daily_logs", {}).setdefault(user_id, [])
+    legacy = [x for x in db["daily_logs"][user_id] if not (x.get("log_type") == "daily_food_journal_day" and x.get("date") == str(log_date))]
+    legacy.append(day)
+    db["daily_logs"][user_id] = legacy[-120:]
+    save_db(db)
+    return day

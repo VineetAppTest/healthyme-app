@@ -1,155 +1,152 @@
 import streamlit as st
-from datetime import date, time
+from datetime import date
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12
-from components.db import save_daily_food_journal_entry, get_daily_logs, get_daily_log_supervision_notes
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar
+from components.db import (
+    save_daily_food_journal_day,
+    save_daily_food_journal_meal,
+    save_daily_food_journal_day_details,
+    get_daily_food_journal_day,
+    get_daily_food_journal_days,
+    get_daily_log_supervision_notes,
+    get_meal_type_repository,
+)
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 user_id = st.session_state["user_id"]
-topbar("Daily Food Journal", "Track meals, water, mood, activity, bowel movement and notes in the client-approved format.", "Member tracker")
+topbar("Daily Food Journal", "Fill the whole day at once or save each meal section progressively.", "Member tracker")
 render_system_message()
 
+meal_repo = get_meal_type_repository()
+MEAL_GROUPS = [(r["key"], r["label"]) for r in meal_repo]
+
 SAMPLE_ROWS = [
-    {
-        "time": "10:00 - 10:30 AM",
-        "meal_type": "Breakfast",
-        "food": "Boiled eggs / omelet / moong dal chilla / poha",
-        "water": "",
-        "portion_size": "2 eggs / 2 chilla / 1 bowl poha",
-        "mood_energy": "Fresh",
-        "physical_activity": "1 PM - 2 PM",
-        "poop": "2-3 times / felt relieved",
-        "notes": "Mention exact items and water intake where applicable.",
-    },
-    {
-        "time": "2:30 - 2:45 PM",
-        "meal_type": "Lunch",
-        "food": "Dal + rice / roti + salad + curd + sabzi",
-        "water": "",
-        "portion_size": "100 ml rice + 100 ml dal",
-        "mood_energy": "Energetic",
-        "physical_activity": "",
-        "poop": "",
-        "notes": "",
-    },
-    {
-        "time": "5:00 - 5:30 PM",
-        "meal_type": "Evening Snack",
-        "food": "Half cup tea with snack",
-        "water": "",
-        "portion_size": "",
-        "mood_energy": "Okay",
-        "physical_activity": "",
-        "poop": "",
-        "notes": "",
-    },
-    {
-        "time": "7:30 - 8:00 PM",
-        "meal_type": "Dinner",
-        "food": "Soup / light dinner",
-        "water": "",
-        "portion_size": "1 big bowl",
-        "mood_energy": "Energetic",
-        "physical_activity": "",
-        "poop": "",
-        "notes": "",
-    },
+    {"Time": "10:00 - 10:30 AM", "Meal Type": "Breakfast", "Food": "Boiled eggs / omelet / moong dal chilla / poha", "Water": "", "Portion Size": "2 eggs / 2 chilla / 1 bowl poha", "Mood/Energy": "Fresh", "Activity": "1 PM - 2 PM", "Poop": "2-3 times / felt relieved", "Notes": "Mention exact items."},
+    {"Time": "2:30 - 2:45 PM", "Meal Type": "Lunch", "Food": "Dal + rice / roti + salad + curd + sabzi", "Water": "", "Portion Size": "100 ml rice + 100 ml dal", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
+    {"Time": "5:00 - 5:30 PM", "Meal Type": "Evening Snack", "Food": "Half cup tea with snack", "Water": "", "Portion Size": "", "Mood/Energy": "Okay", "Activity": "", "Poop": "", "Notes": ""},
+    {"Time": "7:30 - 8:00 PM", "Meal Type": "Dinner", "Food": "Soup / light dinner", "Water": "", "Portion Size": "1 big bowl", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
 ]
 
 with st.expander("Reference format from sample journal", expanded=False):
-    st.caption("Use this as a guide. Enter your actual values below.")
+    st.caption("Use this as a guide. Actual meal sections are controlled by admin.")
     st.dataframe(SAMPLE_ROWS, use_container_width=True, hide_index=True)
 
-notes = get_daily_log_supervision_notes(user_id, limit=5)
-if notes:
+if not MEAL_GROUPS:
+    st.warning("No meal sections are currently active. Please contact admin.")
+    st.stop()
+
+log_date = st.date_input("Food journal date", value=date.today())
+existing = get_daily_food_journal_day(user_id, str(log_date))
+existing_meals = existing.get("meals", {}) if existing else {}
+
+date_notes = get_daily_log_supervision_notes(user_id, limit=10, log_date=str(log_date))
+if date_notes:
     card_start()
-    st.subheader("Admin supervision notes")
-    for n in notes:
-        st.markdown(
-            f"""
-            <div class='info-banner'>
-              <b>{n.get('ts','')}</b><br>
-              {n.get('note','')}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    st.subheader(f"Admin supervision notes for {log_date}")
+    for n in date_notes:
+        st.markdown(f"<div class='info-banner'><b>{n.get('ts','')}</b><br>{n.get('note','')}</div>", unsafe_allow_html=True)
     card_end()
 
 card_start()
-st.subheader("Add food journal entry")
-st.caption("Laptop-friendly and mobile-friendly structured entry based on the provided Food Journal format.")
+st.subheader("Food journal by meal")
+st.caption("You can save one meal now and return later, or fill multiple meals and use Save Full-Day Journal.")
 
-c1, c2, c3 = st.columns([1, 1, 1])
-with c1:
-    log_date = st.date_input("Date", value=date.today())
-with c2:
-    time_text = st.text_input("Time", placeholder="Example: 10:00 - 10:30 AM")
-with c3:
-    meal_type = st.selectbox("Meal Type", ["Select", "Early Morning", "Breakfast", "Mid Morning", "Lunch", "Evening Snack", "Dinner", "Bedtime", "Other"])
+meals = {}
+for key, label in MEAL_GROUPS:
+    prior = existing_meals.get(key, {}) if existing_meals else {}
+    meal_has_data = any(prior.get(x) for x in ["time", "food", "water", "portion_size", "mood_energy"])
+    with st.expander(f"{label}{' ✓' if meal_has_data else ''}", expanded=not meal_has_data and label in ["Breakfast", "Lunch", "Dinner"]):
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            time_text = st.text_input("Time", value=prior.get("time", ""), key=f"{key}_time", placeholder="Example: 10:00 - 10:30 AM")
+        with c2:
+            water = st.text_input("Water", value=prior.get("water", ""), key=f"{key}_water", placeholder="Example: 250 ml / 2 glasses")
+        food = st.text_area("Food", value=prior.get("food", ""), key=f"{key}_food", placeholder=f"What did you have for {label.lower()}?")
+        c3, c4 = st.columns([1, 1])
+        with c3:
+            portion = st.text_input("Portion Size", value=prior.get("portion_size", ""), key=f"{key}_portion", placeholder="Example: 1 bowl / 2 rotis / 250 ml")
+        with c4:
+            mood = st.text_input("Mood / Energy", value=prior.get("mood_energy", ""), key=f"{key}_mood", placeholder="Example: fresh / heavy / energetic")
 
-food = st.text_area("Food", placeholder="Example: Boiled egg with toast and tea")
-c4, c5 = st.columns(2)
-with c4:
-    water = st.text_input("Water", placeholder="Example: 2 ltr / coconut water / juice")
-with c5:
-    portion_size = st.text_input("Portion Size", placeholder="Example: 1 bowl / 250 ml / 2 eggs")
-
-c6, c7 = st.columns(2)
-with c6:
-    mood_energy = st.text_input("Mood / Energy", placeholder="Example: Normal / Fresh / Heavy / Full")
-with c7:
-    physical_activity = st.text_input("Physical activity - time and duration", placeholder="Example: Strength training 1 PM - 2 PM")
-
-poop = st.text_input("Poop rounds and feeling after poop", placeholder="Example: Twice / felt relieved")
-entry_notes = st.text_area("Notes", placeholder="Anything specific for admin to review")
-
-if st.button("Save Food Journal Entry", type="primary", use_container_width=True):
-    if meal_type == "Select" and not food.strip() and not water.strip() and not physical_activity.strip() and not poop.strip():
-        set_system_message("Please enter at least one food journal detail before saving.", "error")
-        st.rerun()
-    else:
-        save_daily_food_journal_entry(user_id, {
-            "date": str(log_date),
+        meal_payload = {
+            "label": label,
             "time": time_text.strip(),
-            "meal_type": "" if meal_type == "Select" else meal_type,
             "food": food.strip(),
             "water": water.strip(),
-            "portion_size": portion_size.strip(),
-            "mood_energy": mood_energy.strip(),
+            "portion_size": portion.strip(),
+            "mood_energy": mood.strip(),
+        }
+        meals[key] = meal_payload
+
+        if st.button(f"Save {label}", key=f"save_{key}", use_container_width=True):
+            save_daily_food_journal_meal(user_id, str(log_date), key, meal_payload)
+            set_system_message(f"{label} saved for {log_date}.", "success")
+            st.rerun()
+
+st.markdown("#### Full-day details")
+d1, d2 = st.columns(2)
+with d1:
+    physical_activity = st.text_area(
+        "Physical activity - time of day and duration",
+        value=existing.get("physical_activity", ""),
+        placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
+    )
+with d2:
+    poop = st.text_area(
+        "Poop rounds and feeling after poop",
+        value=existing.get("poop", ""),
+        placeholder="Example: 2 times, felt relieved / constipated / loose stool",
+    )
+day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.")
+
+c_save_1, c_save_2 = st.columns(2)
+with c_save_1:
+    if st.button("Save Day Details Only", use_container_width=True):
+        save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop.strip(), day_notes.strip())
+        set_system_message("Day details saved.", "success")
+        st.rerun()
+with c_save_2:
+    if st.button("Save Full-Day Journal", type="primary", use_container_width=True):
+        filled = any(v.get("food") or v.get("water") or v.get("time") or v.get("portion_size") or v.get("mood_energy") for v in meals.values())
+        if not filled and not physical_activity.strip() and not poop.strip() and not day_notes.strip():
+            set_system_message("Please enter at least one detail before saving.", "error")
+            st.rerun()
+        payload = {
+            "date": str(log_date),
+            "meals": meals,
             "physical_activity": physical_activity.strip(),
             "poop": poop.strip(),
-            "notes": entry_notes.strip(),
-        })
-        set_system_message("Food journal entry saved.", "success")
+            "notes": day_notes.strip(),
+        }
+        save_daily_food_journal_day(user_id, str(log_date), payload)
+        set_system_message("Full-day food journal saved.", "success")
         st.rerun()
 card_end()
 
 card_start()
-st.subheader("Recent food journal entries")
-logs = get_daily_logs(user_id)
-food_logs = [x for x in logs if x.get("log_type") == "food_journal" or any(k in x for k in ["meal_type", "food", "portion_size", "mood_energy", "physical_activity", "poop"])]
-if not food_logs:
-    st.info("No food journal entries saved yet.")
+st.subheader("Recent saved days")
+days = get_daily_food_journal_days(user_id)
+if not days:
+    st.info("No food journal days saved yet.")
 else:
-    display_rows = []
-    for item in reversed(food_logs[-20:]):
-        display_rows.append({
-            "Date": item.get("date", ""),
-            "Time": item.get("time", item.get("timestamp", "")),
-            "Meal Type": item.get("meal_type", ""),
-            "Food": item.get("food", item.get("food_log", "")),
-            "Water": item.get("water", item.get("water_ml", "")),
-            "Portion Size": item.get("portion_size", ""),
-            "Mood/Energy": item.get("mood_energy", ""),
-            "Physical Activity": item.get("physical_activity", item.get("exercise_notes", "")),
-            "Poop": item.get("poop", ""),
-            "Notes": item.get("notes", ""),
+    rows = []
+    for day in days[:14]:
+        meal_summary = []
+        for _k, meal in (day.get("meals", {}) or {}).items():
+            if meal.get("food"):
+                meal_summary.append(f"{meal.get('label','')}: {meal.get('food','')}")
+        rows.append({
+            "Date": day.get("date", ""),
+            "Meals Logged": len(meal_summary),
+            "Food Summary": " | ".join(meal_summary[:4]),
+            "Activity": day.get("physical_activity", ""),
+            "Poop": day.get("poop", ""),
+            "Notes": day.get("notes", ""),
         })
-    st.dataframe(display_rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, use_container_width=True, hide_index=True)
 card_end()
 
 if st.button("Back to Home", use_container_width=True):

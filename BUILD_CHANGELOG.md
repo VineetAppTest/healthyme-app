@@ -398,3 +398,24 @@
 - Added Admin supervision notes for each member's Daily Log.
 - Supervision notes appear on member Daily Log and queue notification/email marker.
 - Updated Daily Log Excel report to match the journal format.
+
+
+## v42 - Day-based Daily Log
+
+- Redesigned member Daily Log as one full-day journal grouped by date.
+- All meal types now sit in one daily group: Early Morning, Breakfast, Mid Morning, Lunch, Evening Snack, Dinner, Bedtime, Other.
+- Each meal section captures Time, Food, Water, Portion Size, and Mood/Energy.
+- Full-day fields capture Physical Activity, Poop rounds/feeling, and Overall Notes.
+- Admin supervision notes now attach to a specific day's food log.
+- Member sees supervision notes under the selected date.
+- Admin Daily Log Report supports date-specific review, notes, notification queue, and Excel download.
+
+
+## v43 - Progressive Daily Log + Repository
+
+- Member can save individual meal sections progressively.
+- Member can still save the whole daily journal at once.
+- Added admin-editable meal type repository.
+- Default active meal sections: Breakfast, Lunch, Evening Snack, Dinner, Bedtime.
+- Admin can add/remove/rename/reorder meal sections.
+- Admin Daily Log Report follows the repository order.
