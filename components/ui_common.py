@@ -2042,6 +2042,84 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
   .hm-rsd-row > div:nth-child(5)::before{content:"Nutritionist Notes";}
 }
 
+/* --- v63 Recent Saved Days Borders + Toggle --- */
+.hm-v63-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v63-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v63-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+.hm-rsd-card{
+  border:1px solid #E3D3B9 !important;
+  border-radius:18px !important;
+  background:#FFFDF8 !important;
+  box-shadow:0 10px 28px rgba(15,23,42,.06) !important;
+  overflow:hidden !important;
+}
+.hm-rsd-header{
+  display:grid !important;
+  grid-template-columns: 1fr 1fr 1fr 1.35fr 2fr 1fr !important;
+  gap:0 !important;
+  padding:0 !important;
+  border-bottom:1px solid #E3D3B9 !important;
+  background:#FFFDF6 !important;
+}
+.hm-rsd-header > div{
+  padding:.85rem 1rem !important;
+  border-right:1px solid #EFE3CF !important;
+  font-size:.82rem !important;
+  font-weight:900 !important;
+  color:#064E3B !important;
+}
+.hm-rsd-header > div:last-child{border-right:none !important;}
+.hm-rsd-row{
+  display:grid !important;
+  grid-template-columns: 1fr 1fr 1fr 1.35fr 2fr 1fr !important;
+  gap:0 !important;
+  padding:0 !important;
+  align-items:stretch !important;
+  border-bottom:1px solid #EFE3CF !important;
+  font-size:.9rem !important;
+  color:#0F2F2A !important;
+}
+.hm-rsd-row:last-child{border-bottom:none !important;}
+.hm-rsd-row > div{
+  padding:.9rem 1rem !important;
+  border-right:1px solid #F1E7D6 !important;
+  display:flex !important;
+  align-items:center !important;
+  min-height:3.9rem !important;
+}
+.hm-rsd-row > div:last-child{border-right:none !important;}
+.hm-rsd-date{font-weight:850 !important;color:#064E3B !important;}
+.hm-rsd-note{line-height:1.35 !important;align-items:flex-start !important;}
+.hm-rsd-action-slot{min-height:3.9rem !important;}
+/* Align the Streamlit action button closer to its row while preserving logic */
+.hm-rsd-card + div [data-testid="column"]:last-child .stButton > button,
+.hm-rsd-card ~ div [data-testid="column"]:last-child .stButton > button{
+  min-height:2.25rem !important;
+  border-radius:999px !important;
+  border-color:#D6B56D !important;
+  color:#064E3B !important;
+  background:#FFFFFF !important;
+  box-shadow:0 6px 16px rgba(15,23,42,.06) !important;
+}
+@media (max-width: 760px){
+  .hm-rsd-header{display:none !important;}
+  .hm-rsd-row{
+    grid-template-columns:1fr !important;
+    margin:.7rem !important;
+    border:1px solid #E7D8BE !important;
+    border-radius:16px !important;
+    overflow:hidden !important;
+  }
+  .hm-rsd-row > div{
+    border-right:none !important;
+    border-bottom:1px solid #F1E7D6 !important;
+    min-height:auto !important;
+    padding:.75rem .85rem !important;
+    display:block !important;
+  }
+  .hm-rsd-row > div:last-child{border-bottom:none !important;}
+}
+
 </style>
 """
 
@@ -5079,6 +5157,106 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         unsafe_allow_html=True,
     )
 
+def render_build_text_v62(): return None
+def render_build_text_v61(): return None
+def render_build_text_v60(): return None
+def render_build_text_v59(): return None
+def render_build_text_v58(): return None
+def render_build_text_v57(): return None
+def render_build_text_v56(): return None
+def render_build_text_v55(): return None
+def render_build_text_v54(): return None
+def render_build_text_v53(): return None
+def render_build_text_v52(): return None
+def render_build_text_v51(): return None
+def render_build_text_v50(): return None
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v63: Recent Saved Days Borders + Toggle
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v63"
+APP_BUILD_LABEL = "Recent Saved Days Borders + Toggle"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v63-brand-row'>
+            <span class='hm-v63-brand'>HealthyMe</span>
+            <span class='hm-v63-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def compact_topbar(title, subtitle="", kicker="HealthyMe"):
+    st.markdown(
+        f"""
+        <div class='hero-shell hm-compact-page-section'>
+          <div class='hm-v63-brand-row'>
+            <span class='hm-v63-brand'>HealthyMe</span>
+            <span class='hm-v63-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v63(): return None
 def render_build_text_v62(): return None
 def render_build_text_v61(): return None
 def render_build_text_v60(): return None

@@ -587,3 +587,11 @@
 - Meals Logged now displays simple text progress like 3/5.
 - View history opens same-day nutritionist note history only.
 - UI-only patch; business logic unchanged.
+
+
+## v63 - Recent Saved Days Borders + Toggle
+
+- Added aesthetic boundary lines to the Recent saved days premium table.
+- Changed View history to View / Hide history toggle behavior.
+- View opens same-date note history; Hide closes it.
+- UI-only patch; business logic unchanged.
