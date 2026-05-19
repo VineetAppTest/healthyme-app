@@ -354,3 +354,11 @@
 - Activation UI normalized to one-click activation for finalized members.
 - Removed old checkbox + button activation inconsistency.
 - Retains Body-Mind auto-save text removal and autosave confirmation.
+
+
+## v37 - Remove Body-Mind Activation Checkbox
+
+- Removed legacy checkbox: "Make Body-Mind Connection page visible to this member".
+- Normalized Body-Mind Access Control to one-click activation after finalization.
+- Non-finalized members show informational text instead of disabled checkbox.
+- Active members show active state and no activation button.
