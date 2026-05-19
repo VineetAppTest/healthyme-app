@@ -595,3 +595,12 @@
 - Changed View history to View / Hide history toggle behavior.
 - View opens same-date note history; Hide closes it.
 - UI-only patch; business logic unchanged.
+
+
+## v64 - Recent Saved Days Refinement
+
+- Reduced the View / Hide history button size.
+- Improved button alignment with row content.
+- Made Recent saved days table borders more prominent.
+- Reduced Nutritionist Notes text size and made it more compact.
+- UI-only refinement; business logic unchanged.

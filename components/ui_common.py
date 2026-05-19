@@ -2120,6 +2120,125 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
   .hm-rsd-row > div:last-child{border-bottom:none !important;}
 }
 
+/* --- v64 Recent Saved Days Refinement --- */
+.hm-v64-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v64-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v64-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+
+/* stronger and cleaner table boundaries */
+.hm-rsd-card{
+  border:1.5px solid #D9C2A0 !important;
+  border-radius:18px !important;
+  background:#FFFDF8 !important;
+  box-shadow:0 10px 28px rgba(15,23,42,.06) !important;
+  overflow:hidden !important;
+}
+.hm-rsd-header{
+  display:grid !important;
+  grid-template-columns: 1fr 1fr 1fr 1.35fr 2fr 1fr !important;
+  gap:0 !important;
+  padding:0 !important;
+  border-bottom:1.5px solid #D9C2A0 !important;
+  background:#FFFCF5 !important;
+}
+.hm-rsd-header > div{
+  padding:.82rem .95rem !important;
+  border-right:1.25px solid #E2CFB1 !important;
+  font-size:.82rem !important;
+  font-weight:900 !important;
+  color:#064E3B !important;
+}
+.hm-rsd-header > div:last-child{border-right:none !important;}
+
+.hm-rsd-row{
+  display:grid !important;
+  grid-template-columns: 1fr 1fr 1fr 1.35fr 2fr 1fr !important;
+  gap:0 !important;
+  padding:0 !important;
+  align-items:stretch !important;
+  border-bottom:1.25px solid #E6D5BB !important;
+  font-size:.9rem !important;
+  color:#0F2F2A !important;
+}
+.hm-rsd-row:last-child{border-bottom:none !important;}
+.hm-rsd-row > div{
+  padding:.72rem .95rem !important;
+  border-right:1.25px solid #EADBC5 !important;
+  display:flex !important;
+  align-items:center !important;
+  min-height:3.35rem !important;
+}
+.hm-rsd-row > div:last-child{border-right:none !important;}
+.hm-rsd-date{font-weight:850 !important;color:#064E3B !important;}
+.hm-rsd-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:3.1rem;
+  padding:.32rem .62rem;
+  border-radius:999px;
+  background:#EAF7F1;
+  border:1px solid #BEE8D6;
+  color:#064E3B;
+  font-weight:900;
+}
+/* smaller/more compact Nutritionist Notes */
+.hm-rsd-note{
+  line-height:1.28 !important;
+  align-items:flex-start !important;
+  font-size:.84rem !important;
+  color:#253B36 !important;
+}
+/* button smaller and visually aligned */
+.hm-rsd-action-slot{
+  min-height:3.35rem !important;
+}
+.hm-rsd-card + div [data-testid="column"]:last-child,
+.hm-rsd-card ~ div [data-testid="column"]:last-child{
+  display:flex !important;
+  align-items:center !important;
+}
+.hm-rsd-card + div [data-testid="column"]:last-child .stButton,
+.hm-rsd-card ~ div [data-testid="column"]:last-child .stButton{
+  width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.hm-rsd-card + div [data-testid="column"]:last-child .stButton > button,
+.hm-rsd-card ~ div [data-testid="column"]:last-child .stButton > button{
+  min-height:2rem !important;
+  height:2rem !important;
+  padding:.2rem .85rem !important;
+  border-radius:999px !important;
+  border:1.25px solid #D6B56D !important;
+  color:#064E3B !important;
+  background:#FFFFFF !important;
+  box-shadow:0 4px 10px rgba(15,23,42,.05) !important;
+  font-size:.83rem !important;
+  font-weight:700 !important;
+  width:auto !important;
+}
+@media (max-width: 760px){
+  .hm-rsd-header{display:none !important;}
+  .hm-rsd-row{
+    grid-template-columns:1fr !important;
+    margin:.7rem !important;
+    border:1.25px solid #D9C2A0 !important;
+    border-radius:16px !important;
+    overflow:hidden !important;
+  }
+  .hm-rsd-row > div{
+    border-right:none !important;
+    border-bottom:1.1px solid #EADBC5 !important;
+    min-height:auto !important;
+    padding:.72rem .85rem !important;
+    display:block !important;
+  }
+  .hm-rsd-row > div:last-child{border-bottom:none !important;}
+  .hm-rsd-note{font-size:.82rem !important;}
+}
+
 </style>
 """
 
@@ -5256,6 +5375,107 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         unsafe_allow_html=True,
     )
 
+def render_build_text_v63(): return None
+def render_build_text_v62(): return None
+def render_build_text_v61(): return None
+def render_build_text_v60(): return None
+def render_build_text_v59(): return None
+def render_build_text_v58(): return None
+def render_build_text_v57(): return None
+def render_build_text_v56(): return None
+def render_build_text_v55(): return None
+def render_build_text_v54(): return None
+def render_build_text_v53(): return None
+def render_build_text_v52(): return None
+def render_build_text_v51(): return None
+def render_build_text_v50(): return None
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v64: Recent Saved Days Refinement
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v64"
+APP_BUILD_LABEL = "Recent Saved Days Refinement"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v64-brand-row'>
+            <span class='hm-v64-brand'>HealthyMe</span>
+            <span class='hm-v64-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def compact_topbar(title, subtitle="", kicker="HealthyMe"):
+    st.markdown(
+        f"""
+        <div class='hero-shell hm-compact-page-section'>
+          <div class='hm-v64-brand-row'>
+            <span class='hm-v64-brand'>HealthyMe</span>
+            <span class='hm-v64-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v64(): return None
 def render_build_text_v63(): return None
 def render_build_text_v62(): return None
 def render_build_text_v61(): return None

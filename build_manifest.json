@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v63 Recent Saved Days Borders + Toggle",
-  "version": "v63_recent_saved_days_borders_toggle",
-  "updated_on": "2026-05-19T20:16:26.641881+00:00",
+  "build_name": "HealthyMe v64 Recent Saved Days Refinement",
+  "version": "v64_recent_saved_days_refinement",
+  "updated_on": "2026-05-19T20:30:50.062304+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added aesthetic vertical and horizontal boundary lines to Recent saved days premium table.",
-    "Converted View history into View / Hide history toggle behavior.",
-    "Clicking View history opens same-date note history.",
-    "Clicking Hide history closes the note history.",
-    "Business logic unchanged from v62."
+    "Reduced size of View / Hide history button.",
+    "Improved vertical alignment of the action button with row content.",
+    "Made table borders more prominent.",
+    "Made Nutritionist Notes text slightly smaller and more compact.",
+    "Business logic unchanged from v63."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -192,5 +192,5 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "UI-only patch. No Daily Log save, LAF, Body-Mind, final report, or notification logic changed."
+  "business_logic_note": "UI-only refinement. No Daily Log save, notification, LAF, Body-Mind, final report, or database logic changed."
 }
