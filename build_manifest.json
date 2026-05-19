@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v40 Body-Mind Status Sync",
-  "version": "v40_body_mind_status_sync",
-  "updated_on": "2026-05-19T09:16:14.641274+00:00",
+  "build_name": "HealthyMe v41 Daily Log Flow",
+  "version": "v41_daily_log_flow",
+  "updated_on": "2026-05-19T09:50:46.613952+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,9 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Body-Mind Access Control Activation card now shows Activated when Body-Mind is visible through workflow unlock or explicit access marker.",
-    "Visibility and Activation cards now read from the same combined active-state rule.",
-    "Retains v39 Admin Autosave and prior Body-Mind fixes."
+    "Implemented client Sample_Food_Journal format in member Daily Log page.",
+    "Added structured columns: Date, Time, Meal Type, Food, Water, Portion Size, Mood/Energy, Physical Activity, Poop, Notes.",
+    "Added sample reference entries for member guidance.",
+    "Admin Evaluation Status now has Daily Logs button under each member.",
+    "Admin Daily Log Report now shows food journal format and Excel download.",
+    "Admin can add supervision notes under member daily logs.",
+    "Supervision notes appear under member food log and are queued as app/email notifications."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -82,10 +86,9 @@
     "Version appears next to HealthyMe in the header/topbar only."
   ],
   "retained": [
-    "v27 Final Report NSP Data Integrity fix retained.",
-    "Scoring formula unchanged.",
-    "Final report calculation unchanged.",
-    "Auth structure unchanged."
+    "v40 Body-Mind status sync",
+    "v39 Admin Autosave",
+    "Existing daily log reminders"
   ],
   "base_file": "healthyme-app-main (19.05.2026).zip",
   "client_rule_retained": [
@@ -121,5 +124,6 @@
   "status_rule": {
     "visible_or_activated": "body_mind_unlocked OR explicit_body_mind_access",
     "activation_display": "Activated if visible/access marker exists; Requested if request exists but not visible; Not requested otherwise"
-  }
+  },
+  "format_source": "Sample_Food_Journal.xlsx"
 }

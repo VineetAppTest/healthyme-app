@@ -387,3 +387,14 @@
 - Activation now shows Activated when Visibility is Visible.
 - Both cards use the same active-state source: workflow unlock OR explicit access marker.
 - Retains v39 Admin Autosave and earlier Body-Mind fixes.
+
+
+## v41 - Daily Log Flow
+
+- Implemented daily food journal format based on Sample_Food_Journal.xlsx.
+- Added member-friendly structured food journal entry page.
+- Added sample reference entries.
+- Added Admin Daily Log button under each member in Evaluation Status.
+- Added Admin supervision notes for each member's Daily Log.
+- Supervision notes appear on member Daily Log and queue notification/email marker.
+- Updated Daily Log Excel report to match the journal format.

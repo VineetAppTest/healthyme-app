@@ -1056,3 +1056,63 @@ def has_explicit_body_mind_access(user_id):
         return True
     wf = normalize_workflow(db.get("workflow", {}).get(user_id, {}))
     return bool(wf.get("body_mind_unlocked"))
+
+
+# --------------------------------------------------------------------
+# v41: Daily Food Journal + Admin Supervision Notes
+# --------------------------------------------------------------------
+def save_daily_food_journal_entry(user_id, entry):
+    """Save one structured food journal entry."""
+    db = load_db()
+    db.setdefault("daily_logs", {}).setdefault(user_id, [])
+    item = dict(entry)
+    item["timestamp"] = datetime.datetime.now().isoformat(timespec="seconds")
+    item["log_type"] = "food_journal"
+    db["daily_logs"][user_id].append(item)
+    save_db(db)
+    return item
+
+def save_daily_log_supervision_note(member_id, note, actor_id="admin"):
+    """Save admin supervision note and queue member notification/email marker."""
+    note = (note or "").strip()
+    if not note:
+        return None
+    db = load_db()
+    db.setdefault("daily_log_supervision_notes", {}).setdefault(member_id, [])
+    item = {
+        "id": str(uuid.uuid4())[:8],
+        "ts": datetime.datetime.now().isoformat(timespec="seconds"),
+        "member_id": member_id,
+        "note": note,
+        "actor_id": actor_id,
+    }
+    db["daily_log_supervision_notes"][member_id].append(item)
+
+    db.setdefault("messages", []).append({
+        "id": str(uuid.uuid4())[:8],
+        "ts": item["ts"],
+        "member_id": member_id,
+        "sender_role": "admin",
+        "actor_id": actor_id,
+        "subject": "Daily Log Supervision Note",
+        "message": note,
+        "status": "queued",
+        "email_required": True,
+    })
+    db.setdefault("notifications", []).append({
+        "ts": item["ts"],
+        "kind": "daily_log_supervision_note",
+        "user_id": member_id,
+        "message": f"Daily Log Supervision Note: {note[:160]}",
+        "status": "queued",
+        "email_required": True,
+        "created_by": actor_id or "admin",
+    })
+    save_db(db)
+    return item
+
+def get_daily_log_supervision_notes(member_id, limit=20):
+    db = load_db()
+    rows = list(db.get("daily_log_supervision_notes", {}).get(member_id, []))
+    rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    return rows[:limit]
