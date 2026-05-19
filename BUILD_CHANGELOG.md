@@ -329,3 +329,11 @@
 - Removed outdated v22 Body-Mind note line.
 - Simplified logout to avoid login page then second refresh behavior.
 - Retains v33 explicit Body-Mind access marker.
+
+
+## v35 - Body-Mind Page Guard Fix
+
+- Fixed the actual Body-Mind page guard.
+- Member Home already showed the Body-Mind button using explicit access marker.
+- Page 19 now also checks explicit access marker.
+- This resolves the button-visible-but-page-blocked issue.

@@ -2,7 +2,7 @@ import streamlit as st, json, pathlib, datetime
 from collections import OrderedDict
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12
-from components.db import get_workflow, get_body_mind_response, save_body_mind_response, get_profile_with_laf_fallback
+from components.db import get_workflow, get_body_mind_response, save_body_mind_response, get_profile_with_laf_fallback, has_explicit_body_mind_access
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Body-Mind Connection", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -10,7 +10,8 @@ inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar
 
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
-if not wf.get("body_mind_unlocked"):
+body_mind_allowed = bool(wf.get("body_mind_unlocked")) or has_explicit_body_mind_access(user_id)
+if not body_mind_allowed:
     st.warning("This page will be available after your evaluator enables it.")
     st.stop()
 

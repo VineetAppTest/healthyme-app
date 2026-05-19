@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v34 Body-Mind NameError + Logout Fix",
-  "version": "v34_body_mind_nameerror_logout_fix",
-  "updated_on": "2026-05-19T08:13:48.208838+00:00",
+  "build_name": "HealthyMe v35 Body-Mind Page Guard Fix",
+  "version": "v35_body_mind_page_guard_fix",
+  "updated_on": "2026-05-19T08:26:59.944154+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,12 +18,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added sync_member_finalization_state helper.",
-    "Finalization now synchronizes workflow and assessment instance status to finalized.",
-    "Manual Body-Mind unlock also synchronizes finalized workflow/instance status.",
-    "Member Home uses workflow finalization as source of truth over stale instance status.",
-    "Body-Mind Access Control repairs stale finalized records without auto-unlocking Body-Mind.",
-    "Admin Assessment locked page repairs stale finalized records."
+    "Body-Mind Connection page now checks body_mind_unlocked OR has_explicit_body_mind_access(user_id).",
+    "Retains v33 explicit access marker.",
+    "Recipe/Exercise remain available after final admin review.",
+    "Logout remains single-rerun path as far as Streamlit allows."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -39,9 +37,9 @@
     "workflow uses inline Python and no Node-based actions"
   ],
   "root_cause": [
-    "Member workflow could be finalized while assessment instance/review status remained review_required.",
-    "Member Home status was reading stale instance status, so it still showed Review Required.",
-    "Manual Body-Mind unlock could be completed, but stale workflow/instance sync made member visibility inconsistent."
+    "Member Home was checking the explicit Body-Mind access marker, so the button became visible.",
+    "Body-Mind Connection page itself was still checking only workflow.body_mind_unlocked.",
+    "Therefore the button opened the page, but the page guard still blocked access."
   ],
   "testing_required": [
     "Finalized member: Admin Assessment page should show locked state and no Save/Generate buttons.",
