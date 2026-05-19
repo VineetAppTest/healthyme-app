@@ -320,3 +320,12 @@
 - Body-Mind Access Control checks explicit marker as fallback.
 - Removed outdated v22 Body-Mind note.
 - Simplified logout to avoid double refresh behavior.
+
+
+## v34 - Body-Mind NameError + Logout Fix
+
+- Fixed `explicit_body_mind_access` NameError in Body-Mind Access Control.
+- Ensured explicit Body-Mind access marker is read before visibility cards render.
+- Removed outdated v22 Body-Mind note line.
+- Simplified logout to avoid login page then second refresh behavior.
+- Retains v33 explicit Body-Mind access marker.

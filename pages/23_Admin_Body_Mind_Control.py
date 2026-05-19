@@ -25,6 +25,9 @@ selected = st.selectbox("Select member", [f"{m['id']} — {m['name']} — {m['em
 member_id = selected.split(" — ")[0]
 member = next(m for m in members if m["id"] == member_id)
 wf = get_workflow(member_id)
+explicit_body_mind_access = has_explicit_body_mind_access(member_id)
+if explicit_body_mind_access:
+    wf["body_mind_unlocked"] = True
 
 # v31: repair stale review/instance status for finalized records without auto-unlocking Body-Mind.
 if wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflow_status") == "finalized":
