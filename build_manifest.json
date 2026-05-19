@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v32 Manual Body-Mind Hard Sync",
-  "version": "v32_manual_body_mind_hard_sync",
-  "updated_on": "2026-05-19T07:51:43.882114+00:00",
+  "build_name": "HealthyMe v33 Body-Mind Explicit Access",
+  "version": "v33_body_mind_explicit_access",
+  "updated_on": "2026-05-19T08:03:14.684107+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -73,11 +73,12 @@
     "Legacy vs instance answer counts"
   ],
   "p0_fix": [
-    "Manual activation is now one click, not checkbox plus button.",
-    "Manual activation writes body_mind_activation_requested=True and body_mind_unlocked=True together.",
-    "Member Home repairs body_mind_unlocked only when finalization is complete and manual activation request exists.",
-    "Does not unlock on finalization alone.",
-    "Reduces multiple-click activation issue."
+    "Added explicit body_mind_access member access marker separate from workflow flags.",
+    "Manual admin activation writes body_mind_access[user_id]=True and body_mind_unlocked=True.",
+    "Member Home checks explicit access marker as fallback.",
+    "Body-Mind Access Control visibility also reads explicit marker.",
+    "Removed outdated v22 note line.",
+    "Logout simplified to one switch_page call after logout."
   ],
   "version_cleanup": [
     "Standalone duplicate version line removed.",
@@ -91,8 +92,12 @@
   ],
   "base_file": "healthyme-app-main (19.05.2026).zip",
   "client_rule_retained": [
-    "Finalization is prerequisite.",
-    "Manual activation is required.",
-    "Finalization alone does not unlock Body-Mind."
+    "Finalization remains prerequisite.",
+    "Manual admin activation remains required.",
+    "No automatic unlock from finalization alone."
+  ],
+  "why": [
+    "Prior fixes depended only on workflow fields, which could remain stale or be overwritten.",
+    "Explicit access marker ensures the manual admin action is honored even if workflow sync is stale."
   ]
 }

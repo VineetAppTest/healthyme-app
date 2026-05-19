@@ -373,14 +373,16 @@ def get_daily_logs(user_id):
 def set_body_mind_visibility(user_id, unlocked):
     db = load_db()
     wf = normalize_workflow(db["workflow"].setdefault(user_id, {}))
-    admin_done = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready"))
+    admin_done = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready")) or wf.get("workflow_status") == "finalized"
 
     if bool(unlocked):
         wf["body_mind_activation_requested"] = True
         wf["body_mind_unlocked"] = bool(admin_done)
+        db.setdefault("body_mind_access", {})[user_id] = bool(admin_done)
     else:
         wf["body_mind_activation_requested"] = False
         wf["body_mind_unlocked"] = False
+        db.setdefault("body_mind_access", {})[user_id] = False
 
     db["workflow"][user_id] = normalize_workflow(wf)
     save_db(db)
@@ -894,6 +896,7 @@ def clear_body_mind_activation(user_id):
     wf["body_mind_activation_requested"] = False
     wf["body_mind_unlocked"] = False
     db["workflow"][user_id] = normalize_workflow(wf)
+    db.setdefault("body_mind_access", {})[user_id] = False
     save_db(db)
     return True
 
@@ -951,6 +954,7 @@ def hard_sync_body_mind_if_requested(user_id):
 def manually_unlock_body_mind_after_finalization(user_id):
     """One-click manual unlock after final admin completion.
 
+    Writes both workflow flags and explicit access marker.
     Returns (ok, message).
     """
     db = load_db()
@@ -967,10 +971,10 @@ def manually_unlock_body_mind_after_finalization(user_id):
     wf["workflow_status"] = "finalized"
     wf["body_mind_activation_requested"] = True
     wf["body_mind_unlocked"] = True
-
     db["workflow"][user_id] = normalize_workflow(wf)
 
-    # Keep assessment instances aligned.
+    db.setdefault("body_mind_access", {})[user_id] = True
+
     for inst in db.get("assessment_instances", {}).get(user_id, []) or []:
         if inst.get("submitted_for_review") or inst.get("status") in ["review_required", "submitted", "pending_review", "in_review", "finalized"]:
             inst["status"] = "finalized"
@@ -1015,3 +1019,41 @@ def sync_member_finalization_state(user_id, *, body_mind_unlock=None):
 
     save_db(db)
     return get_workflow(user_id)
+
+
+# --------------------------------------------------------------------
+# v33: Explicit Body-Mind access marker
+# --------------------------------------------------------------------
+def _body_mind_access_store(db):
+    db.setdefault("body_mind_access", {})
+    return db["body_mind_access"]
+
+def set_explicit_body_mind_access(user_id, enabled=True):
+    """Persist explicit member access for Body-Mind.
+
+    This is a safety-layer separate from workflow flags so manual admin activation
+    cannot be lost due to stale workflow/instance state.
+    """
+    db = load_db()
+    store = _body_mind_access_store(db)
+    store[user_id] = bool(enabled)
+
+    wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
+    if enabled:
+        wf["body_mind_activation_requested"] = True
+        wf["body_mind_unlocked"] = True
+    else:
+        wf["body_mind_activation_requested"] = False
+        wf["body_mind_unlocked"] = False
+
+    db["workflow"][user_id] = normalize_workflow(wf)
+    save_db(db)
+    return bool(enabled)
+
+def has_explicit_body_mind_access(user_id):
+    db = load_db()
+    store = db.get("body_mind_access", {})
+    if bool(store.get(user_id)):
+        return True
+    wf = normalize_workflow(db.get("workflow", {}).get(user_id, {}))
+    return bool(wf.get("body_mind_unlocked"))

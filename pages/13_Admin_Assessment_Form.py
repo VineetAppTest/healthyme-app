@@ -2,7 +2,7 @@
 import streamlit as st, json, pathlib
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12
-from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization, sync_member_finalization_state
+from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization, sync_member_finalization_state, has_explicit_body_mind_access
 from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
 from components.admin_value_resolver import resolve_admin_linked_value
@@ -52,7 +52,7 @@ if is_finalized:
 
     # v30: Even after finalization lock, manual Body-Mind activation must remain available.
     latest_wf_locked = get_workflow(mid)
-    if latest_wf_locked.get("body_mind_unlocked"):
+    if latest_wf_locked.get("body_mind_unlocked") or has_explicit_body_mind_access(mid):
         st.success("Body-Mind Connection is active for this member.")
     else:
         st.warning("Body-Mind Connection is not active yet. Final admin work is complete, so you can activate it now.")

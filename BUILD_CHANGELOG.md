@@ -310,3 +310,13 @@
 - Member Home self-repairs only if finalization is complete AND manual activation request exists.
 - Does not unlock on finalization alone.
 - Reduces multiple-click activation issue.
+
+
+## v33 - Body-Mind Explicit Access
+
+- Added explicit `body_mind_access` marker independent of workflow flags.
+- Manual admin activation writes both workflow unlock and explicit access marker.
+- Member Home checks explicit marker as fallback.
+- Body-Mind Access Control checks explicit marker as fallback.
+- Removed outdated v22 Body-Mind note.
+- Simplified logout to avoid double refresh behavior.

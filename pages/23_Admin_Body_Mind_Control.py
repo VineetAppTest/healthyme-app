@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v15, render_page_nav, stat_grid
-from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, manually_unlock_body_mind_after_finalization, sync_member_finalization_state
+from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, manually_unlock_body_mind_after_finalization, sync_member_finalization_state, has_explicit_body_mind_access
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Body-Mind Access Control", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -41,7 +41,7 @@ card_start()
 st.subheader(member["name"])
 st.caption(member["email"])
 stat_grid([
-    {"label": "Visibility", "value": "Visible" if wf.get("body_mind_unlocked") else "Hidden", "note": "Member access"},
+    {"label": "Visibility", "value": "Visible" if (wf.get("body_mind_unlocked") or explicit_body_mind_access) else "Hidden", "note": "Member access"},
     {"label": "Activation", "value": "Requested" if wf.get("body_mind_activation_requested") else "Not requested", "note": "Admin selection"},
     {"label": "Admin Assessment", "value": "Saved" if admin_assessment_saved else "Not saved", "note": "Unlock prerequisite"},
     {"label": "Body-Mind", "value": "Completed" if wf.get("body_mind_completed") else "Not completed", "note": "Member progress"},
@@ -53,7 +53,6 @@ card_end()
 
 card_start()
 st.subheader("Set visibility")
-st.caption("v22 note: Body-Mind activates only after admin completion and admin selection. Use this page to activate, verify, or explicitly disable.")
 
 if not admin_final_completed and not wf.get("body_mind_unlocked"):
     st.checkbox(

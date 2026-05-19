@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12
-from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested
+from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access
 from components.assessment_instances import get_current_assessment_instance
 from components.flash import render_system_message
 
@@ -116,7 +116,7 @@ with right:
     # Body-Mind visibility is controlled by body_mind_unlocked.
     # It should not be hidden only because admin_completed is False.
     # Recipes/exercises remain locked until admin_completed.
-    body_mind_unlocked = bool(wf.get("body_mind_unlocked"))
+    body_mind_unlocked = bool(wf.get("body_mind_unlocked")) or has_explicit_body_mind_access(user_id)
     admin_completed = bool(wf.get("admin_completed"))
 
     if body_mind_unlocked:
