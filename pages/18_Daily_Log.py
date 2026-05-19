@@ -334,7 +334,7 @@ else:
             unsafe_allow_html=True,
         )
 
-        action_cols = st.columns([5.6, 0.7])
+        action_cols = st.columns([5.75, 0.6])
         with action_cols[1]:
             selected_history_date = st.session_state.get("selected_daily_note_history_date")
             history_label = "Hide history" if selected_history_date == day_date else "View history"

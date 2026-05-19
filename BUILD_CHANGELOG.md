@@ -629,3 +629,11 @@
 - Restored cleaner alignment closer to previous build behavior.
 - Reduced action column width and removed button stretching.
 - UI-only fix; business logic unchanged.
+
+
+## v68 - View History Micro Alignment
+
+- Reduced View / Hide history button font size.
+- Pulled action button upward to align better with row text.
+- Tightened action column width and surrounding spacing.
+- UI-only micro patch; business logic unchanged.
