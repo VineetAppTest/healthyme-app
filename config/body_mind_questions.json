@@ -28,5 +28,262 @@
     "code": "comments",
     "label": "Comments",
     "type": "text"
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_level",
+    "label": "What level of stress do you feel you are experiencing at this time? Scale 1 low to 10 high.",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_financial",
+    "label": "Financial stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_career",
+    "label": "Career stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_personal",
+    "label": "Personal stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_marriage",
+    "label": "Marriage stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_health",
+    "label": "Health stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_family",
+    "label": "Family stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_spiritual",
+    "label": "Spiritual stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_unfulfilled",
+    "label": "Unfulfilled expectations stress rating, 1 low to 10 high",
+    "type": "scale",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "min": 1,
+    "max": 10,
+    "step": 1
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_other",
+    "label": "Other stress factors, please elaborate.",
+    "type": "text"
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "stress_manifest",
+    "label": "How does your stress manifest itself?",
+    "type": "text"
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "coping_mechanisms",
+    "label": "Do you use any coping mechanisms?",
+    "type": "text"
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "hours_driving",
+    "label": "How many hours do you spend daily on average driving?",
+    "type": "text"
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "hours_tv",
+    "label": "How many hours do you spend daily on average watching television?",
+    "type": "text"
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "hours_reading",
+    "label": "How many hours do you spend daily on average reading?",
+    "type": "text"
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "hours_computer",
+    "label": "How many hours do you spend daily on average in front of a computer?",
+    "type": "text"
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "vacation_regularly",
+    "label": "Do you vacation regularly?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ]
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "last_vacation",
+    "label": "When was your last vacation?",
+    "type": "text"
+  },
+  {
+    "section": "Lifestyle Stress Reflection",
+    "code": "spiritual_discipline",
+    "label": "Do you actively participate in any spiritual discipline, church, religious group, meditation, etc.?",
+    "type": "select",
+    "options": [
+      "Yes",
+      "No"
+    ]
   }
 ]

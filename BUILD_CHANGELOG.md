@@ -530,3 +530,23 @@
 - Daily Log note save now writes to both member-visible messages and notification/email queue.
 - Member Home shows unread Nutritionist notes.
 - Read / Archive keeps the message in the Nutritionist Notes Archive.
+
+
+## v57 - Daily Log + LAF Restructure
+
+- Unread Nutritionist notifications remain visible until member reads/archives them.
+- Water intake moved to Full-day details as Select / 0 to 10 Litres dropdown in 0.5 increments.
+- Removed Nutritionist Notes Archive section.
+- Added Nutritionist Notes column under Recent saved days.
+- Latest note shows in the table; same-day note history opens for the selected date.
+- Removed orange-highlighted fields from LAF.
+- Moved pink-highlighted stress/lifestyle reflection fields to Body-Mind Connection.
+- Removed Dietary Habits from member LAF and added disabled admin placeholder.
+
+
+## v58 - LAF Restructure Correction
+
+- Corrected v57 LAF restructure.
+- Restored `major_trauma_5_years` to LAF under Page 1 / Stress and trauma.
+- Removed `major_trauma_5_years` from Body-Mind Connection.
+- Retained all other v57 fixes.

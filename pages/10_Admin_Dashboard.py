@@ -165,3 +165,10 @@ st.subheader("Daily Log Configuration")
 if st.button("Daily Log Settings", use_container_width=True):
     st.switch_page("pages/25_Admin_Daily_Log_Settings.py")
 card_end()
+
+
+# v57 Dietary Habits placeholder
+card_start()
+st.subheader("Dietary Habits")
+st.button("Dietary Habits Form - Coming Soon", disabled=True, use_container_width=True)
+card_end()

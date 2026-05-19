@@ -14,6 +14,8 @@ from components.db import (
     save_daily_log_supervision_note,
     get_daily_log_supervision_notes,
     get_meal_type_repository,
+    get_daily_log_notes_by_date,
+    get_latest_daily_log_note_for_date,
 )
 
 st.set_page_config(page_title="Daily Food Journal Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -33,6 +35,7 @@ def meal_keys_for_day(day):
 def flatten_day(day, supervision_notes=None):
     base = {
         "Date": day.get("date", ""),
+        "Water": day.get("water_litres", ""),
         "Physical Activity": day.get("physical_activity", ""),
         "Poop": day.get("poop", ""),
         "Overall Notes": day.get("notes", ""),
@@ -43,7 +46,6 @@ def flatten_day(day, supervision_notes=None):
         meal = meals.get(key, {}) or {}
         base[f"{label} Time"] = meal.get("time", "")
         base[f"{label} Food"] = meal.get("food", "")
-        base[f"{label} Water"] = meal.get("water", "")
         base[f"{label} Portion"] = meal.get("portion_size", "")
         base[f"{label} Mood/Energy"] = meal.get("mood_energy", "")
     return base
@@ -138,8 +140,7 @@ else:
             "Meal Type": label,
             "Time": meal.get("time", ""),
             "Food": meal.get("food", ""),
-            "Water": meal.get("water", ""),
-            "Portion Size": meal.get("portion_size", ""),
+                        "Portion Size": meal.get("portion_size", ""),
             "Mood/Energy": meal.get("mood_energy", ""),
         })
     st.dataframe(meal_rows, use_container_width=True, hide_index=True)
@@ -194,15 +195,20 @@ else:
     rows = []
     for d in days:
         notes_for_day = get_daily_log_supervision_notes(member_id, limit=20, log_date=d.get("date"))
-        flat = flatten_day(d, notes_for_day)
+        latest_note = get_latest_daily_log_note_for_date(member_id, d.get("date", ""))
+        latest_note_text = ""
+        if latest_note:
+            latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
         rows.append({
-            "Date": flat.get("Date", ""),
-            "Breakfast": flat.get("Breakfast Food", ""),
-            "Lunch": flat.get("Lunch Food", ""),
-            "Dinner": flat.get("Dinner Food", ""),
-            "Activity": flat.get("Physical Activity", ""),
-            "Poop": flat.get("Poop", ""),
-            "Nutritionist Notes": flat.get("Nutritionist Notes", ""),
+            "Date": d.get("date", ""),
+            "Breakfast": (d.get("meals", {}).get("breakfast", {}) or {}).get("food", ""),
+            "Lunch": (d.get("meals", {}).get("lunch", {}) or {}).get("food", ""),
+            "Dinner": (d.get("meals", {}).get("dinner", {}) or {}).get("food", ""),
+            "Water": d.get("water_litres", ""),
+            "Activity": d.get("physical_activity", ""),
+            "Poop": d.get("poop", ""),
+            "Notes": d.get("notes", ""),
+            "Nutritionist Notes": latest_note_text,
         })
     st.dataframe(rows, use_container_width=True, hide_index=True)
 card_end()

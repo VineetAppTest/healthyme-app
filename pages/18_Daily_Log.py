@@ -13,6 +13,8 @@ from components.db import (
     ensure_other_meal_section,
     get_member_archived_messages,
     auto_archive_expired_nutritionist_messages,
+    get_daily_log_notes_by_date,
+    get_latest_daily_log_note_for_date,
 )
 from components.flash import set_system_message, render_system_message
 
@@ -62,15 +64,14 @@ render_system_message()
 auto_archive_expired_nutritionist_messages(user_id)
 
 def meal_has_data(meal):
-    return any((meal or {}).get(x) for x in ["time", "food", "water", "portion_size", "mood_energy"])
+    return any((meal or {}).get(x) for x in ["time", "food", "portion_size", "mood_energy"])
 
 def current_widget_payload(section_key, section_label):
     return {
         "label": section_label,
         "time": st.session_state.get(f"{section_key}_time", "").strip(),
         "food": st.session_state.get(f"{section_key}_food", "").strip(),
-        "water": st.session_state.get(f"{section_key}_water", "").strip(),
-        "portion_size": st.session_state.get(f"{section_key}_portion", "").strip(),
+                "portion_size": st.session_state.get(f"{section_key}_portion", "").strip(),
         "mood_energy": st.session_state.get(f"{section_key}_mood", "").strip(),
     }
 
@@ -80,8 +81,7 @@ def saved_payload_for(existing_meals, section_key, section_label):
         "label": prior.get("label", section_label),
         "time": prior.get("time", ""),
         "food": prior.get("food", ""),
-        "water": prior.get("water", ""),
-        "portion_size": prior.get("portion_size", ""),
+                "portion_size": prior.get("portion_size", ""),
         "mood_energy": prior.get("mood_energy", ""),
     }
 
@@ -90,7 +90,7 @@ def is_dirty(existing_meals, section_key, section_label):
         return False
     cur = current_widget_payload(section_key, section_label)
     saved = saved_payload_for(existing_meals, section_key, section_label)
-    return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "water", "portion_size", "mood_energy"])
+    return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "portion_size", "mood_energy"])
 
 # Make sure Other exists even for old repositories.
 ensure_other_meal_section()
@@ -165,11 +165,7 @@ with add_cols[1]:
 st.markdown(f"<div class='hm-meal-title'>{active_label}</div>", unsafe_allow_html=True)
 prior = existing_meals.get(active_key, {}) if existing_meals else {}
 
-c1, c2 = st.columns([1, 1])
-with c1:
-    time_text = st.text_input("Time", value=prior.get("time", ""), key=f"{active_key}_time", placeholder="Example: 10:00 - 10:30 AM")
-with c2:
-    water = st.text_input("Water", value=prior.get("water", ""), key=f"{active_key}_water", placeholder="Example: 250 ml / 2 glasses")
+time_text = st.text_input("Time", value=prior.get("time", ""), key=f"{active_key}_time", placeholder="Example: 10:00 - 10:30 AM")
 
 food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=85)
 
@@ -199,6 +195,10 @@ card_end()
 
 card_start()
 st.subheader("Full-day details")
+water_options = ['Select', '0 Litres', '0.5 Litres', '1 Litre', '1.5 Litres', '2 Litres', '2.5 Litres', '3 Litres', '3.5 Litres', '4 Litres', '4.5 Litres', '5 Litres', '5.5 Litres', '6 Litres', '6.5 Litres', '7 Litres', '7.5 Litres', '8 Litres', '8.5 Litres', '9 Litres', '9.5 Litres', '10 Litres']
+existing_water = existing.get("water_litres", "Select") or "Select"
+water_index = water_options.index(existing_water) if existing_water in water_options else 0
+water_litres = st.selectbox("Water intake for the full day", water_options, index=water_index)
 d1, d2 = st.columns(2)
 with d1:
     physical_activity = st.text_area(
@@ -219,7 +219,7 @@ day_notes = st.text_area("Overall notes for the day", value=existing.get("notes"
 c_save_1, c_save_2 = st.columns(2)
 with c_save_1:
     if st.button("Save Day Details Only", use_container_width=True):
-        save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop.strip(), day_notes.strip())
+        save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop.strip(), day_notes.strip(), water_litres)
         set_system_message("Day details saved.", "success")
         st.rerun()
 with c_save_2:
@@ -232,6 +232,7 @@ with c_save_2:
             "physical_activity": physical_activity.strip(),
             "poop": poop.strip(),
             "notes": day_notes.strip(),
+            "water_litres": water_litres,
         }
         save_daily_food_journal_day(user_id, str(log_date), payload)
         set_system_message("Full-day food journal saved.", "success")
@@ -250,65 +251,47 @@ else:
         for _k, meal in (day.get("meals", {}) or {}).items():
             if meal.get("food"):
                 meal_summary.append(f"{meal.get('label','')}: {meal.get('food','')}")
+        latest_note = get_latest_daily_log_note_for_date(user_id, day.get("date", ""))
+        latest_note_text = ""
+        if latest_note:
+            latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
         rows.append({
             "Date": day.get("date", ""),
             "Meals Logged": len(meal_summary),
-            "Food Summary": " | ".join(meal_summary[:4]),
+            "Water": day.get("water_litres", ""),
+            "Food Summary": " | ".join(meal_summary[:3]),
             "Activity": day.get("physical_activity", ""),
             "Poop": day.get("poop", ""),
             "Notes": day.get("notes", ""),
+            "Nutritionist Notes": latest_note_text,
         })
     st.dataframe(rows, use_container_width=True, hide_index=True)
-card_end()
 
-
-card_start()
-st.subheader("Nutritionist Notes Archive")
-archived_messages = get_member_archived_messages(user_id, limit=30)
-all_note_archive = get_daily_log_supervision_notes(user_id, limit=100)
-if not archived_messages and not all_note_archive:
-    st.info("No archived nutritionist notes/messages yet.")
-else:
-    if "show_nutritionist_archive" not in st.session_state:
-        st.session_state["show_nutritionist_archive"] = False
-    if st.button("Show / Hide Nutritionist Notes Archive", use_container_width=True):
-        st.session_state["show_nutritionist_archive"] = not st.session_state["show_nutritionist_archive"]
-    if st.session_state["show_nutritionist_archive"]:
-        if all_note_archive:
-            st.markdown("#### Nutritionist Notes")
-            for n in all_note_archive:
-                date_label = n.get("log_date", "")
+    note_dates = [d.get("date", "") for d in days[:14] if get_daily_log_notes_by_date(user_id, d.get("date", ""), limit=1)]
+    if note_dates:
+        selected_note_date = st.selectbox("View nutritionist note history for a day", ["Select"] + note_dates)
+        if selected_note_date != "Select":
+            note_history = get_daily_log_notes_by_date(user_id, selected_note_date, limit=20)
+            st.markdown(f"#### Nutritionist note history for {selected_note_date}")
+            for n in note_history:
                 st.markdown(
                     f"""
                     <div class='info-banner'>
-                      <b>{date_label}</b><br>
-                      <small>{format_local_ts(n.get('ts',''))}</small><br>
+                      <b>{format_local_ts(n.get('ts',''))}</b><br>
                       <p>{n.get('note','')}</p>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
-        if archived_messages:
-            st.markdown("#### Read Messages")
-        for msg in archived_messages:
-            st.markdown(
-                f"""
-                <div class='info-banner'>
-                  <b>{msg.get('subject','Message')}</b><br>
-                  <small>{format_local_ts(msg.get('ts',''))}</small><br>
-                  <p>{msg.get('message','')}</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
 card_end()
+
 
 # Reference moved to bottom, with more aesthetic and compact expander.
 SAMPLE_ROWS = [
-    {"Time": "10:00 - 10:30 AM", "Meal Type": "Breakfast", "Food": "Boiled eggs / omelet / moong dal chilla / poha", "Water": "", "Portion Size": "2 eggs / 2 chilla / 1 bowl poha", "Mood/Energy": "Fresh", "Activity": "1 PM - 2 PM", "Poop": "2-3 times / felt relieved", "Notes": "Mention exact items."},
-    {"Time": "2:30 - 2:45 PM", "Meal Type": "Lunch", "Food": "Dal + rice / roti + salad + curd + sabzi", "Water": "", "Portion Size": "100 ml rice + 100 ml dal", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
-    {"Time": "5:00 - 5:30 PM", "Meal Type": "Evening Snack", "Food": "Half cup tea with snack", "Water": "", "Portion Size": "", "Mood/Energy": "Okay", "Activity": "", "Poop": "", "Notes": ""},
-    {"Time": "7:30 - 8:00 PM", "Meal Type": "Dinner", "Food": "Soup / light dinner", "Water": "", "Portion Size": "1 big bowl", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
+    {"Time": "10:00 - 10:30 AM", "Meal Type": "Breakfast", "Food": "Boiled eggs / omelet / moong dal chilla / poha", "Portion Size": "2 eggs / 2 chilla / 1 bowl poha", "Mood/Energy": "Fresh", "Activity": "1 PM - 2 PM", "Poop": "2-3 times / felt relieved", "Notes": "Mention exact items."},
+    {"Time": "2:30 - 2:45 PM", "Meal Type": "Lunch", "Food": "Dal + rice / roti + salad + curd + sabzi", "Portion Size": "100 ml rice + 100 ml dal", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
+    {"Time": "5:00 - 5:30 PM", "Meal Type": "Evening Snack", "Food": "Half cup tea with snack", "Portion Size": "", "Mood/Energy": "Okay", "Activity": "", "Poop": "", "Notes": ""},
+    {"Time": "7:30 - 8:00 PM", "Meal Type": "Dinner", "Food": "Soup / light dinner", "Portion Size": "1 big bowl", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
 ]
 
 st.markdown("<div class='hm-reference-shell'><div class='hm-reference-title'>Reference format from sample journal</div><div class='hm-compact-section-note'>Use only when needed.</div>", unsafe_allow_html=True)

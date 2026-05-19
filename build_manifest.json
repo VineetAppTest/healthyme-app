@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v56 Daily Log Nutritionist Notification",
-  "version": "v56_daily_log_nutritionist_notification",
-  "updated_on": "2026-05-19T13:04:05.698521+00:00",
+  "build_name": "HealthyMe v58 LAF Restructure Correction",
+  "version": "v58_laf_restructure_correction",
+  "updated_on": "2026-05-19T18:19:09.840913+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -18,13 +18,15 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Fixed get_member_messages to return only unread/unarchived messages.",
-    "Read / Archive now marks message read+archived and immediately removes it from Member Home.",
-    "Added success/error feedback after Read / Archive.",
-    "Auto-archives nutritionist messages when their linked log date has passed.",
-    "Removed duplicate Nutritionist notes section from Daily Food Journal main entry screen.",
-    "Nutritionist notes/messages remain available under Nutritionist Notes Archive.",
-    "Removed Show/Hide message button from Member Home and made Read / Archive the visible action."
+    "Nutritionist notifications remain visible until read/archive.",
+    "Water moved out of meal sections and into Full-day details with Select / 0 to 10 Litres dropdown in 0.5 increments.",
+    "Nutritionist Notes Archive removed from Daily Log page.",
+    "Recent saved days now includes Nutritionist Notes column with latest note for each day.",
+    "Day-specific nutritionist note history can be opened for selected day only.",
+    "Orange-highlighted LAF fields removed from LAF configuration.",
+    "Pink-highlighted stress/lifestyle fields moved to Body-Mind configuration.",
+    "Dietary Habits removed from member LAF and saved as separate admin dietary habits config.",
+    "Disabled admin Dietary Habits Form placeholder added."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -165,5 +167,22 @@
       "render_page_nav"
     ]
   },
-  "remaining_missing_ui_imports": {}
+  "remaining_missing_ui_imports": {},
+  "laf_restructure_counts": {
+    "laf_questions_before": 192,
+    "laf_questions_after": 104,
+    "moved_to_body_mind": 20,
+    "dietary_reserved_for_admin": 63
+  },
+  "correction": [
+    "Moved major_trauma_5_years back to LAF.",
+    "Removed major_trauma_5_years from Body-Mind Connection.",
+    "Retained all other v57 Daily Log, LAF, Body-Mind, and Dietary Habits changes."
+  ],
+  "validation": {
+    "major_trauma_in_laf": true,
+    "major_trauma_in_body_mind": false,
+    "laf_question_count": 105,
+    "body_mind_question_count": 24
+  }
 }

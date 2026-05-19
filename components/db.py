@@ -1563,3 +1563,147 @@ def get_member_unread_messages(member_id, limit=10):
 
 def get_member_messages(member_id, limit=10):
     return get_member_unread_messages(member_id, limit=limit)
+
+
+# --------------------------------------------------------------------
+# v57: Daily Log note visibility + water day detail helpers
+# --------------------------------------------------------------------
+def get_daily_log_notes_by_date(member_id, log_date, limit=20):
+    """Return nutritionist notes for one specific Daily Log date."""
+    db = load_db()
+    rows = list(db.get("daily_log_supervision_notes", {}).get(member_id, []))
+    rows = [r for r in rows if str(r.get("log_date", "")) == str(log_date)]
+    rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    return rows[:limit]
+
+def get_latest_daily_log_note_for_date(member_id, log_date):
+    rows = get_daily_log_notes_by_date(member_id, log_date, limit=1)
+    return rows[0] if rows else None
+
+def mark_member_message_read(member_id, message_id):
+    """Read/archive one member notification message."""
+    db = load_db()
+    changed = False
+    for m in db.get("messages", []):
+        if m.get("member_id") == member_id and m.get("id") == message_id:
+            m["read"] = True
+            m["archived"] = True
+            m["read_ts"] = datetime.datetime.now().isoformat(timespec="seconds")
+            m["archive_reason"] = "member_read"
+            changed = True
+            break
+    if changed:
+        save_db(db)
+    return changed
+
+def get_member_unread_messages(member_id, limit=10):
+    """Unread nutritionist/member notifications remain visible until member reads them.
+
+    We intentionally do NOT auto-hide unread messages when the date passes.
+    """
+    db = load_db()
+    rows = [
+        m for m in db.get("messages", [])
+        if m.get("member_id") == member_id
+        and not m.get("read")
+        and not m.get("archived")
+    ]
+    rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    return rows[:limit]
+
+def get_member_messages(member_id, limit=10):
+    return get_member_unread_messages(member_id, limit=limit)
+
+def get_member_archived_messages(member_id, limit=50):
+    db = load_db()
+    rows = [
+        m for m in db.get("messages", [])
+        if m.get("member_id") == member_id and (m.get("read") or m.get("archived"))
+    ]
+    rows.sort(key=lambda r: r.get("read_ts", r.get("ts", "")), reverse=True)
+    return rows[:limit]
+
+def save_daily_food_journal_day_details(user_id, log_date, physical_activity="", poop="", notes="", water_litres=""):
+    """Save full-day details including water intake in litres."""
+    db = load_db()
+    store = _daily_food_journal_store(db).setdefault(user_id, {})
+    day = store.get(str(log_date), {
+        "date": str(log_date),
+        "meals": {},
+        "log_type": "daily_food_journal_day",
+    })
+    day["physical_activity"] = physical_activity
+    day["poop"] = poop
+    day["notes"] = notes
+    day["water_litres"] = water_litres
+    day["timestamp"] = datetime.datetime.now().isoformat(timespec="seconds")
+    day["log_type"] = "daily_food_journal_day"
+    store[str(log_date)] = day
+
+    db.setdefault("daily_logs", {}).setdefault(user_id, [])
+    legacy = [x for x in db["daily_logs"][user_id] if not (x.get("log_type") == "daily_food_journal_day" and x.get("date") == str(log_date))]
+    legacy.append(day)
+    db["daily_logs"][user_id] = legacy[-120:]
+    save_db(db)
+    return day
+
+
+# --------------------------------------------------------------------
+# v57: Daily Log nutritionist note notification override
+# --------------------------------------------------------------------
+def save_daily_log_supervision_note(member_id, note, actor_id="nutritionist", log_date=None):
+    note = (note or "").strip()
+    if not note:
+        return None
+
+    db = load_db()
+    ts = datetime.datetime.now().isoformat(timespec="seconds")
+    note_id = str(uuid.uuid4())[:8]
+    date_str = str(log_date or "")
+
+    db.setdefault("daily_log_supervision_notes", {}).setdefault(member_id, [])
+    item = {
+        "id": note_id,
+        "ts": ts,
+        "member_id": member_id,
+        "log_date": date_str,
+        "note": note,
+        "actor_id": actor_id or "nutritionist",
+        "sender_role": "nutritionist",
+    }
+    db["daily_log_supervision_notes"][member_id].append(item)
+
+    date_text = f" for {date_str}" if date_str else ""
+    message_id = str(uuid.uuid4())[:8]
+    db.setdefault("messages", []).append({
+        "id": message_id,
+        "ts": ts,
+        "member_id": member_id,
+        "sender_role": "nutritionist",
+        "actor_id": actor_id or "nutritionist",
+        "subject": f"Nutritionist Note{date_text}",
+        "message": note,
+        "status": "queued",
+        "email_required": True,
+        "log_date": date_str,
+        "read": False,
+        "archived": False,
+        "source": "daily_log_supervision_note",
+        "note_id": note_id,
+    })
+
+    db.setdefault("notifications", []).append({
+        "id": str(uuid.uuid4())[:8],
+        "ts": ts,
+        "kind": "nutritionist_note",
+        "user_id": member_id,
+        "member_id": member_id,
+        "message": f"Nutritionist Note{date_text}: {note[:160]}",
+        "status": "queued",
+        "email_required": True,
+        "created_by": actor_id or "nutritionist",
+        "log_date": date_str,
+        "source_message_id": message_id,
+    })
+    save_db(db)
+    return item
