@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v55 Admin Dashboard Import Fix",
-  "version": "v55_admin_dashboard_import_fix",
-  "updated_on": "2026-05-19T12:52:35.796078+00:00",
+  "build_name": "HealthyMe v56 Daily Log Nutritionist Notification",
+  "version": "v56_daily_log_nutritionist_notification",
+  "updated_on": "2026-05-19T13:04:05.698521+00:00",
   "scope": [
     "Replaced raw HTML dashboard card wrappers with native Streamlit bordered containers.",
     "Restored proper card structure for Today's Priority and Main Workflows.",
@@ -147,10 +147,11 @@
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
-    "Fixed NameError on Admin Dashboard by importing card_start/card_end from components.ui_common.",
-    "Scanned pages and repaired missing ui_common imports for referenced helpers.",
-    "Cleaned duplicate render_back_to_top calls.",
-    "Retains v54 Nutritionist read/archive fixes."
+    "Fixed missing member notification after nutritionist saves a Daily Log note.",
+    "save_daily_log_supervision_note now always writes a visible unread message to db['messages'].",
+    "The same action also queues app/email notification in db['notifications'].",
+    "Member Home reads unread/unarchived messages and shows the Nutritionist note.",
+    "Read / Archive still removes it from Member Home and keeps it in archive."
   ],
   "pages_imports_repaired": {
     "10_Admin_Dashboard.py": [

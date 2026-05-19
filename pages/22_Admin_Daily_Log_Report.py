@@ -165,7 +165,7 @@ if st.button("Save Supervision Note / Notify Member", type="primary", use_contai
         st.error("Please write a nutritionist note before saving.")
     else:
         save_daily_log_supervision_note(member_id, note.strip(), actor_id=st.session_state.get("user_id", "admin"), log_date=selected_date)
-        st.success("Date-specific nutritionist note saved and notification queued.")
+        st.success("Nutritionist note saved. Member notification is now visible on Member Home and queued for email.")
         st.rerun()
 
 if date_notes:

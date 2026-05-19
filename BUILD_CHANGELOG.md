@@ -522,3 +522,11 @@
 - Scanned pages and repaired missing `components.ui_common` helper imports.
 - Cleaned duplicate Back to Top calls.
 - Retains v54 Nutritionist read/archive behavior.
+
+
+## v56 - Daily Log Nutritionist Notification
+
+- Fixed missing member notification after nutritionist saves a Daily Log note.
+- Daily Log note save now writes to both member-visible messages and notification/email queue.
+- Member Home shows unread Nutritionist notes.
+- Read / Archive keeps the message in the Nutritionist Notes Archive.

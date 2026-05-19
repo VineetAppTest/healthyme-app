@@ -1474,3 +1474,92 @@ def get_member_archived_messages(member_id, limit=50):
     ]
     rows.sort(key=lambda r: r.get("read_ts", r.get("ts", "")), reverse=True)
     return rows[:limit]
+
+
+# --------------------------------------------------------------------
+# v56: Daily Log Nutritionist Note member notification
+# --------------------------------------------------------------------
+def save_daily_log_supervision_note(member_id, note, actor_id="nutritionist", log_date=None):
+    """Save nutritionist note, show it to member, and queue app/email notification.
+
+    Member Home reads from db["messages"], so this function must always append
+    an unread/unarchived member message in addition to the archive note row.
+    """
+    note = (note or "").strip()
+    if not note:
+        return None
+
+    db = load_db()
+    ts = datetime.datetime.now().isoformat(timespec="seconds")
+    note_id = str(uuid.uuid4())[:8]
+    date_str = str(log_date or "")
+
+    db.setdefault("daily_log_supervision_notes", {}).setdefault(member_id, [])
+    item = {
+        "id": note_id,
+        "ts": ts,
+        "member_id": member_id,
+        "log_date": date_str,
+        "note": note,
+        "actor_id": actor_id or "nutritionist",
+        "sender_role": "nutritionist",
+        "read": False,
+        "archived": False,
+    }
+    db["daily_log_supervision_notes"][member_id].append(item)
+
+    date_text = f" for {date_str}" if date_str else ""
+    message_id = str(uuid.uuid4())[:8]
+    db.setdefault("messages", []).append({
+        "id": message_id,
+        "ts": ts,
+        "member_id": member_id,
+        "sender_role": "nutritionist",
+        "actor_id": actor_id or "nutritionist",
+        "subject": f"Nutritionist Note{date_text}",
+        "message": note,
+        "status": "queued",
+        "email_required": True,
+        "log_date": date_str,
+        "read": False,
+        "archived": False,
+        "source": "daily_log_supervision_note",
+        "note_id": note_id,
+    })
+
+    db.setdefault("notifications", []).append({
+        "id": str(uuid.uuid4())[:8],
+        "ts": ts,
+        "kind": "nutritionist_note",
+        "user_id": member_id,
+        "member_id": member_id,
+        "message": f"Nutritionist Note{date_text}: {note[:160]}",
+        "status": "queued",
+        "email_required": True,
+        "created_by": actor_id or "nutritionist",
+        "log_date": date_str,
+        "source_message_id": message_id,
+    })
+
+    save_db(db)
+    return item
+
+def get_member_unread_messages(member_id, limit=10):
+    """Return messages that must be visible on Member Home.
+
+    v56 keeps today's/future nutritionist notes visible until the member reads/archives them.
+    Past dated notes are auto-archived by auto_archive_expired_nutritionist_messages().
+    """
+    auto_archive_expired_nutritionist_messages(member_id)
+    db = load_db()
+    rows = [
+        m for m in db.get("messages", [])
+        if m.get("member_id") == member_id
+        and not m.get("read")
+        and not m.get("archived")
+    ]
+    rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    return rows[:limit]
+
+def get_member_messages(member_id, limit=10):
+    return get_member_unread_messages(member_id, limit=limit)
