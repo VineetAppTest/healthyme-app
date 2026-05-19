@@ -2,7 +2,7 @@
 import streamlit as st, json, pathlib
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12
-from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment
+from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization
 from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
 from components.admin_value_resolver import resolve_admin_linked_value
@@ -46,6 +46,22 @@ if is_finalized:
         """,
         unsafe_allow_html=True,
     )
+
+    # v30: Even after finalization lock, manual Body-Mind activation must remain available.
+    latest_wf_locked = get_workflow(mid)
+    if latest_wf_locked.get("body_mind_unlocked"):
+        st.success("Body-Mind Connection is active for this member.")
+    else:
+        st.warning("Body-Mind Connection is not active yet. Final admin work is complete, so you can activate it now.")
+        confirm_bm_unlock = st.checkbox("Show Body-Mind Connection to this member", key=f"bm_unlock_locked_{mid}")
+        if st.button("Activate Body-Mind Connection", type="primary", use_container_width=True, disabled=not confirm_bm_unlock):
+            ok, msg = manually_unlock_body_mind_after_finalization(mid)
+            if ok:
+                set_system_message(msg, "success", celebrate=True)
+            else:
+                set_system_message(msg, "error")
+            st.rerun()
+
     c_locked_1, c_locked_2, c_locked_3 = st.columns(3)
     with c_locked_1:
         if st.button("Evaluation Status", use_container_width=True):

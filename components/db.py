@@ -885,6 +885,9 @@ def request_body_mind_activation(user_id):
     If final admin work is complete, Body-Mind unlocks immediately.
     If not complete, request is stored and can unlock when finalization happens.
     """
+    ok, _msg = manually_unlock_body_mind_after_finalization(user_id)
+    if ok:
+        return True
     return sync_body_mind_after_admin_completion(user_id, activation_selected=True)
 
 def clear_body_mind_activation(user_id):
@@ -930,3 +933,27 @@ def finalize_admin_assessment(user_id, assessment_data, activation_selected=Fals
         "body_mind_unlocked": bool(wf.get("body_mind_unlocked")),
         "body_mind_activation_requested": bool(wf.get("body_mind_activation_requested")),
     }
+
+
+# --------------------------------------------------------------------
+# v30: Explicit manual Body-Mind unlock helper
+# --------------------------------------------------------------------
+def manually_unlock_body_mind_after_finalization(user_id):
+    """Manually unlock Body-Mind after final admin completion.
+
+    Returns (ok, message).
+    """
+    db = load_db()
+    wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
+    admin_done = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready"))
+
+    if not admin_done:
+        db["workflow"][user_id] = normalize_workflow(wf)
+        save_db(db)
+        return False, "Admin final assessment is not completed yet."
+
+    wf["body_mind_activation_requested"] = True
+    wf["body_mind_unlocked"] = True
+    db["workflow"][user_id] = normalize_workflow(wf)
+    save_db(db)
+    return True, "Body-Mind Connection manually activated."

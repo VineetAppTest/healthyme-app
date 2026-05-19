@@ -283,3 +283,12 @@
 - Member Home copy now states manual activation is pending after final review.
 - Version remains next to HealthyMe; duplicate standalone version line remains suppressed.
 - Retains v27 Final Report NSP Data Integrity fix.
+
+
+## v30 - Manual Body-Mind Unlock Control Applied to Current Build
+
+- Applied v30 directly to `healthyme-app-main (19.05.2026).zip`.
+- Added explicit Body-Mind activation control on finalized Admin Assessment page.
+- Added explicit Body-Mind activation control on Body-Mind Access Control page.
+- Added `manually_unlock_body_mind_after_finalization()`.
+- Keeps client rule: finalization is prerequisite; manual admin activation is required.

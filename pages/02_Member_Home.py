@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12
-from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, sync_body_mind_after_admin_completion
+from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion
 from components.assessment_instances import get_current_assessment_instance
 from components.flash import render_system_message
 
@@ -118,13 +118,13 @@ with right:
     else:
         activation_requested = bool(wf.get("body_mind_activation_requested"))
         if admin_completed and activation_requested:
-            body_mind_msg = "Activation was requested, but visibility sync is pending. Ask admin to save Body-Mind access once."
+            body_mind_msg = "Admin has requested activation, but visibility is not active yet. Ask admin to click Activate Body-Mind Connection."
         elif admin_completed:
-            body_mind_msg = "Body-Mind has been explicitly disabled by admin."
+            body_mind_msg = "Final review is complete. Admin must manually activate Body-Mind for it to appear."
         elif activation_requested:
-            body_mind_msg = "Activation is requested and will open after admin final assessment is completed."
+            body_mind_msg = "Body-Mind activation is selected and will open after final admin completion."
         else:
-            body_mind_msg = "Admin final assessment is required first, then Body-Mind must be activated by admin."
+            body_mind_msg = "Admin final assessment is required first, then admin must manually activate Body-Mind."
         st.markdown(
             f"<div class='lock-card'><b>Body-Mind Connection is not activated yet.</b><br>{body_mind_msg}</div>",
             unsafe_allow_html=True,

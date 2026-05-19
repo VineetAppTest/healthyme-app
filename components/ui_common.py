@@ -1634,6 +1634,11 @@ div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] 
 .hm-v29-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
 .hm-v29-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
 
+/* --- v30 Manual Body-Mind Unlock Control --- */
+.hm-v30-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v30-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v30-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+
 </style>
 """
 
@@ -2341,6 +2346,57 @@ def topbar(title, subtitle="", kicker="HealthyMe premium"):
         unsafe_allow_html=True,
     )
 
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v30: Manual Body-Mind unlock control
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v30"
+APP_BUILD_LABEL = "Manual Body-Mind Unlock Control"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v30-brand-row'>
+            <span class='hm-v30-brand'>HealthyMe</span>
+            <span class='hm-v30-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v30(): return None
 def render_build_text_v29(): return None
 def render_build_text_v28(): return None
 def render_build_text_v27(): return None

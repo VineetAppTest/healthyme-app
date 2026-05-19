@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v15, render_page_nav, stat_grid
-from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation
+from components.db import list_members, get_workflow, set_body_mind_visibility, load_db, get_admin_assessment, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, sync_body_mind_after_admin_completion, request_body_mind_activation, clear_body_mind_activation, manually_unlock_body_mind_after_finalization
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Body-Mind Access Control", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -74,17 +74,18 @@ else:
                 set_system_message("Body-Mind Connection page disabled for this member.", "warning")
                 st.rerun()
     else:
+        st.warning("Final admin work is complete, but Body-Mind is not active for this member.")
         unlock = st.checkbox(
-            "Make Body-Mind Connection page visible to this member",
+            "Show Body-Mind Connection to this member",
             value=False,
-            help="Enable Body-Mind Connection for this member. Final admin completion is required first."
+            help="Manual activation. Final admin completion is already satisfied."
         )
-        if st.button("Save Body-Mind Visibility", type="primary", use_container_width=True):
-            if unlock:
-                request_body_mind_activation(member_id)
-                set_system_message("Body-Mind Connection manually activated for this member.", "success", celebrate=True)
+        if st.button("Activate Body-Mind Connection", type="primary", use_container_width=True, disabled=not unlock):
+            ok, msg = manually_unlock_body_mind_after_finalization(member_id)
+            if ok:
+                set_system_message(msg, "success", celebrate=True)
             else:
-                set_system_message("No visibility change was needed.", "info")
+                set_system_message(msg, "error")
             st.rerun()
 
 card_end()
