@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v72 Final Report Import Fix",
-  "version": "v72_final_report_import_fix",
-  "updated_on": "2026-05-22T16:18:29.807813+00:00",
+  "build_name": "HealthyMe v73 Guard Import Fix",
+  "version": "v73_guard_import_fix",
+  "updated_on": "2026-05-22T16:23:42.272485+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -144,9 +144,10 @@
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
-    "Fixed NameError on Final Assessment Report by adding missing utility_logout_bar import.",
-    "Scanned all pages and repaired missing ui_common helper imports.",
-    "Retained v71 compact Nutritionist note history styling.",
+    "Fixed NameError on Final Assessment Report by adding missing require_admin import.",
+    "Scanned all pages and repaired missing require_admin / require_member imports.",
+    "Re-scanned ui_common helper imports.",
+    "Retained v72 and v71 fixes.",
     "No business logic changed."
   ],
   "pages_imports_repaired": {},
@@ -181,5 +182,14 @@
     "render_back_to_top": 1
   },
   "business_logic_note": "UI-only micro patch. No Daily Log, notification, dedupe, admin, LAF, Body-Mind, or final report logic changed.",
-  "final_report_imports": "inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top, compact_topbar"
+  "final_report_imports": "inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top, compact_topbar",
+  "guard_imports_repaired": {
+    "14_Final_Assessment_Report.py": [
+      "require_admin"
+    ]
+  },
+  "ui_imports_repaired": {},
+  "remaining_missing_guard_imports": {},
+  "final_report_guard_imports": "require_admin",
+  "final_report_ui_imports": "inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top, compact_topbar"
 }

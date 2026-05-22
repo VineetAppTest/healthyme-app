@@ -670,3 +670,11 @@
 - Scanned all pages and repaired missing `ui_common` helper imports.
 - Retains v71 compact Nutritionist note history styling.
 - No business logic changed.
+
+
+## v73 - Guard Import Fix
+
+- Fixed Final Assessment Report NameError by adding missing `require_admin` import.
+- Scanned all pages and repaired missing `require_admin` / `require_member` imports.
+- Re-scanned `ui_common` helper imports.
+- No business logic changed.
