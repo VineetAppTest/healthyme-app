@@ -678,3 +678,10 @@
 - Scanned all pages and repaired missing `require_admin` / `require_member` imports.
 - Re-scanned `ui_common` helper imports.
 - No business logic changed.
+
+
+## v74 - Final Report JSON Import Fix
+
+- Fixed Final Assessment Report NameError by adding missing `json` import.
+- Scanned pages for common missing standard-library imports.
+- No business logic changed.

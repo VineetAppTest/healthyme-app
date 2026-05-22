@@ -1,3 +1,4 @@
+import re
 import streamlit as st, pathlib, re
 import streamlit.components.v1 as components
 from collections import OrderedDict
