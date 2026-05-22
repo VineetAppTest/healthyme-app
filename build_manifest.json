@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v71 Compact Nutritionist History Block",
-  "version": "v71_compact_nutritionist_history_block",
-  "updated_on": "2026-05-19T21:58:55.906775+00:00",
+  "build_name": "HealthyMe v72 Final Report Import Fix",
+  "version": "v72_final_report_import_fix",
+  "updated_on": "2026-05-22T16:18:29.807813+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -144,24 +144,12 @@
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
-    "Removed raw inline HTML table/details approach from v69.",
-    "Rebuilt Recent saved days with Streamlit-native columns and buttons.",
-    "Prevents HTML code from being rendered visibly on screen.",
-    "Keeps View / Hide history toggle using Streamlit state.",
-    "Aligns button in same row/column structure."
+    "Fixed NameError on Final Assessment Report by adding missing utility_logout_bar import.",
+    "Scanned all pages and repaired missing ui_common helper imports.",
+    "Retained v71 compact Nutritionist note history styling.",
+    "No business logic changed."
   ],
-  "pages_imports_repaired": {
-    "10_Admin_Dashboard.py": [
-      "card_start",
-      "card_end"
-    ],
-    "15_Admin_Recipe_Manager.py": [
-      "render_page_nav"
-    ],
-    "16_Admin_Exercise_Manager.py": [
-      "render_page_nav"
-    ]
-  },
+  "pages_imports_repaired": {},
   "remaining_missing_ui_imports": {},
   "laf_restructure_counts": {
     "laf_questions_before": 192,
@@ -192,5 +180,6 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "UI-only micro patch. No Daily Log, notification, dedupe, admin, LAF, Body-Mind, or final report logic changed."
+  "business_logic_note": "UI-only micro patch. No Daily Log, notification, dedupe, admin, LAF, Body-Mind, or final report logic changed.",
+  "final_report_imports": "inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top, compact_topbar"
 }

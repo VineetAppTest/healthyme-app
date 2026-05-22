@@ -662,3 +662,11 @@
 - Reduced font size and padding of history cards.
 - Reduced spacing between history cards.
 - UI-only micro patch; business logic unchanged.
+
+
+## v72 - Final Report Import Fix
+
+- Fixed Final Assessment Report NameError by adding missing `utility_logout_bar` import.
+- Scanned all pages and repaired missing `ui_common` helper imports.
+- Retains v71 compact Nutritionist note history styling.
+- No business logic changed.
