@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v74 Final Report JSON Import Fix",
-  "version": "v74_final_report_json_import_fix",
-  "updated_on": "2026-05-22T16:28:21.419297+00:00",
+  "build_name": "HealthyMe v75 Final Report Diagnostics UI",
+  "version": "v75_final_report_diagnostics_ui",
+  "updated_on": "2026-05-22T16:39:57.852314+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Made Nutritionist note history block more compact.",
-    "Reduced note card padding.",
-    "Reduced history title/body font size.",
-    "Tightened spacing between history items.",
+    "Moved Report data diagnostics below the final report download button.",
+    "Replaced Streamlit expander with cleaner Show/Hide diagnostics button.",
+    "Removed Download Final Report helper text block.",
     "No business logic changed."
   ],
   "required_setup": [
@@ -180,7 +179,7 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "UI-only micro patch. No Daily Log, notification, dedupe, admin, LAF, Body-Mind, or final report logic changed.",
+  "business_logic_note": "UI-only final report page cleanup. Report generation and diagnostic data logic unchanged.",
   "final_report_imports": "inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top, compact_topbar",
   "guard_imports_repaired": {
     "14_Final_Assessment_Report.py": [

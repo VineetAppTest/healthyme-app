@@ -2629,6 +2629,63 @@ h4:has(+ .info-banner), h4 {
 .hm-v74-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
 .hm-v74-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
 
+/* --- v75 Final Report Diagnostics UI --- */
+.hm-v75-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v75-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v75-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+.hm-v75-diagnostics-action{
+  margin:.55rem 0 1rem 0;
+}
+.hm-v75-diagnostics-action .stButton > button{
+  min-height:2.2rem !important;
+  border-radius:14px !important;
+  background:#FFFFFF !important;
+  color:#064E3B !important;
+  border:1.2px solid #D6B56D !important;
+  font-size:.86rem !important;
+  font-weight:800 !important;
+}
+.hm-v75-diagnostics-card{
+  border:1px solid #E7D8BE;
+  background:#FFFDF8;
+  border-radius:16px;
+  padding:.85rem 1rem;
+  margin:.45rem 0 1rem 0;
+  box-shadow:0 8px 20px rgba(15,23,42,.05);
+}
+.hm-v75-diagnostics-title{
+  font-size:.95rem;
+  font-weight:900;
+  color:#064E3B;
+  margin-bottom:.65rem;
+}
+.hm-v75-diagnostics-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:.65rem;
+}
+.hm-v75-diagnostics-grid div{
+  border:1px solid #F0E3CE;
+  border-radius:12px;
+  padding:.55rem .65rem;
+  background:#FFFFFF;
+  font-size:.82rem;
+  line-height:1.25;
+}
+.hm-v75-diagnostics-grid b{
+  color:#334155;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+}
+.hm-v75-diagnostics-grid span{
+  color:#064E3B;
+  font-weight:750;
+}
+@media (max-width: 760px){
+  .hm-v75-diagnostics-grid{grid-template-columns:1fr;}
+}
+
 </style>
 """
 
@@ -6920,6 +6977,118 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         unsafe_allow_html=True,
     )
 
+def render_build_text_v74(): return None
+def render_build_text_v73(): return None
+def render_build_text_v72(): return None
+def render_build_text_v71(): return None
+def render_build_text_v70(): return None
+def render_build_text_v69(): return None
+def render_build_text_v68(): return None
+def render_build_text_v67(): return None
+def render_build_text_v66(): return None
+def render_build_text_v65(): return None
+def render_build_text_v64(): return None
+def render_build_text_v63(): return None
+def render_build_text_v62(): return None
+def render_build_text_v61(): return None
+def render_build_text_v60(): return None
+def render_build_text_v59(): return None
+def render_build_text_v58(): return None
+def render_build_text_v57(): return None
+def render_build_text_v56(): return None
+def render_build_text_v55(): return None
+def render_build_text_v54(): return None
+def render_build_text_v53(): return None
+def render_build_text_v52(): return None
+def render_build_text_v51(): return None
+def render_build_text_v50(): return None
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v75: Final Report Diagnostics UI
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v75"
+APP_BUILD_LABEL = "Final Report Diagnostics UI"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v75-brand-row'>
+            <span class='hm-v75-brand'>HealthyMe</span>
+            <span class='hm-v75-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def compact_topbar(title, subtitle="", kicker="HealthyMe"):
+    st.markdown(
+        f"""
+        <div class='hero-shell hm-compact-page-section'>
+          <div class='hm-v75-brand-row'>
+            <span class='hm-v75-brand'>HealthyMe</span>
+            <span class='hm-v75-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v75(): return None
 def render_build_text_v74(): return None
 def render_build_text_v73(): return None
 def render_build_text_v72(): return None

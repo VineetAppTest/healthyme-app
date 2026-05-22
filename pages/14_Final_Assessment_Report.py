@@ -73,29 +73,8 @@ stat_grid([
     {"label": "Final Status", "value": "Ready" if wf.get("final_report_ready") else "Draft", "note": "Workflow state"},
 ])
 
-with st.expander("Report data diagnostics", expanded=False):
-    st.markdown(
-        f"""
-        **NSP Source:** `{report_diag.get('nsp_source')}`  
-        **Selected Instance:** `{report_diag.get('selected_instance_id') or 'legacy/latest'}`  
-        **NSP1 answers used:** `{report_diag.get('nsp1_answer_count')}`  
-        **NSP2 answers used:** `{report_diag.get('nsp2_answer_count')}`  
-        **Digestive score:** `{report_diag.get('digestive_score')}`  
-        **Legacy NSP1 / NSP2 counts:** `{report_diag.get('legacy_nsp1_answer_count')}` / `{report_diag.get('legacy_nsp2_answer_count')}`  
-        **Instance NSP1 / NSP2 counts:** `{report_diag.get('instance_nsp1_answer_count')}` / `{report_diag.get('instance_nsp2_answer_count')}`
-        """
-    )
 
-# User-first priority action: show the download section before explanatory structure.
-st.markdown(
-    """
-    <div class='hm-report-download-panel'>
-      <h3>Download Final Report</h3>
-      <p>This is the primary action on this page. Use the button below to download the completed Final Assessment Report.</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+# User-first priority action: show the download button before explanatory structure.
 safe_name = (member.get("name") or "member").replace(" ", "_").replace("/", "_")
 # Build once and reuse. This prevents the Final Report page from feeling slow
 # when the user interacts with lightweight sections below.
@@ -110,6 +89,35 @@ st.download_button(
     type="primary",
     use_container_width=True,
 )
+
+st.markdown("<div class='hm-v75-diagnostics-action'>", unsafe_allow_html=True)
+if "show_report_data_diagnostics" not in st.session_state:
+    st.session_state["show_report_data_diagnostics"] = False
+
+diag_label = "Hide report data diagnostics" if st.session_state["show_report_data_diagnostics"] else "Show report data diagnostics"
+if st.button(diag_label, key="toggle_report_data_diagnostics", use_container_width=True):
+    st.session_state["show_report_data_diagnostics"] = not st.session_state["show_report_data_diagnostics"]
+    st.rerun()
+st.markdown("</div>", unsafe_allow_html=True)
+
+if st.session_state.get("show_report_data_diagnostics"):
+    st.markdown(
+        f"""
+        <div class='hm-v75-diagnostics-card'>
+          <div class='hm-v75-diagnostics-title'>Report data diagnostics</div>
+          <div class='hm-v75-diagnostics-grid'>
+            <div><b>NSP Source</b><br><span>{report_diag.get('nsp_source')}</span></div>
+            <div><b>Selected Instance</b><br><span>{report_diag.get('selected_instance_id') or 'legacy/latest'}</span></div>
+            <div><b>NSP1 answers used</b><br><span>{report_diag.get('nsp1_answer_count')}</span></div>
+            <div><b>NSP2 answers used</b><br><span>{report_diag.get('nsp2_answer_count')}</span></div>
+            <div><b>Digestive score</b><br><span>{report_diag.get('digestive_score')}</span></div>
+            <div><b>Legacy NSP1 / NSP2 counts</b><br><span>{report_diag.get('legacy_nsp1_answer_count')} / {report_diag.get('legacy_nsp2_answer_count')}</span></div>
+            <div><b>Instance NSP1 / NSP2 counts</b><br><span>{report_diag.get('instance_nsp1_answer_count')} / {report_diag.get('instance_nsp2_answer_count')}</span></div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 card_start()
 st.subheader("Selected top systems preview")

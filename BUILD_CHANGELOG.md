@@ -685,3 +685,11 @@
 - Fixed Final Assessment Report NameError by adding missing `json` import.
 - Scanned pages for common missing standard-library imports.
 - No business logic changed.
+
+
+## v75 - Final Report Diagnostics UI
+
+- Moved Report data diagnostics under the Final Assessment Report download button.
+- Replaced expander with a cleaner Show/Hide diagnostics button.
+- Removed Download Final Report explanatory helper text.
+- UI-only cleanup; business logic unchanged.
