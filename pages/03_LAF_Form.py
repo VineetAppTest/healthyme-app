@@ -7,6 +7,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import get_form_response, save_form_response, update_workflow, sync_profile_from_laf, load_db
 from components.flash import set_system_message, render_system_message
 from components.config_cache import load_config_json
+from components.config_loader import load_laf_questions_cached
 
 st.set_page_config(page_title="LAF", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
