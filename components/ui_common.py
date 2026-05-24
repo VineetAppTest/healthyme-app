@@ -2727,6 +2727,32 @@ div[data-testid="stSelectbox"] [data-baseweb="select"] > div, div[data-testid="s
   .hm-v75-diagnostics-grid{grid-template-columns:1fr;}
 }
 
+
+/* --- v76G LAF validation review button/card polish --- */
+.hm-validation-review-card{
+  margin:.75rem 0 1rem 0;
+  padding:1rem 1.05rem;
+  border:1px solid #E7C98E;
+  background:linear-gradient(135deg,#FFF9EC 0%,#FFFFFF 100%);
+  border-radius:18px;
+  box-shadow:0 10px 26px rgba(76,53,20,.08);
+}
+.hm-validation-review-title{
+  font-weight:950;
+  color:#064E3B;
+  font-size:1rem;
+  margin-bottom:.55rem;
+}
+.hm-validation-review-card ul{
+  margin:.25rem 0 0 1.15rem;
+  padding:0;
+}
+.hm-validation-review-card li{
+  margin:.35rem 0;
+  color:#4B5563;
+  line-height:1.45;
+}
+
 </style>
 """
 
@@ -7093,8 +7119,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v75: Final Report Diagnostics UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v76E"
-APP_BUILD_LABEL = "Page Context Selector Enforcement"
+APP_BUILD_VERSION = "v76G"
+APP_BUILD_LABEL = "LAF Validation Button Polish"
 
 def _build_badge_html():
     # Hide internal build labels from member-facing pages. Admin/developer screens still show the build marker.

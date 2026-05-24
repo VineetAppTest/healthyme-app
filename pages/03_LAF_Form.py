@@ -580,9 +580,30 @@ stat_grid([
 ])
 
 if validation_errors:
-    with st.expander("Validation items to review", expanded=False):
-        for err in validation_errors:
-            st.write(f"- {err}")
+    toggle_key = f"laf_validation_items_open_{user_id}"
+    if toggle_key not in st.session_state:
+        st.session_state[toggle_key] = False
+
+    button_label = (
+        f"Hide validation items ({len(validation_errors)})"
+        if st.session_state[toggle_key]
+        else f"Review validation items ({len(validation_errors)})"
+    )
+    if st.button(button_label, key="laf_validation_review_toggle", use_container_width=True):
+        st.session_state[toggle_key] = not st.session_state[toggle_key]
+        st.rerun()
+
+    if st.session_state[toggle_key]:
+        items_html = "".join(f"<li>{html.escape(str(err))}</li>" for err in validation_errors)
+        st.markdown(
+            f"""
+            <div class='hm-validation-review-card'>
+              <div class='hm-validation-review-title'>Validation items to review</div>
+              <ul>{items_html}</ul>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 # Auto-save current LAF state on every interaction/rerun.
