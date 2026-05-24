@@ -39,9 +39,9 @@ if st.button("Reset to Recommended Client Format", use_container_width=True):
         {"key": "evening_snack", "label": "Evening Snack", "active": True, "sort_order": 3},
         {"key": "dinner", "label": "Dinner", "active": True, "sort_order": 4},
         {"key": "bedtime", "label": "Bedtime", "active": True, "sort_order": 5},
-        {"key": "other", "label": "Other", "active": True, "sort_order": 6},
+        {"key": "other", "label": "Snacking", "active": True, "sort_order": 6},
     ])
-    set_system_message("Repository reset to Breakfast, Lunch, Evening Snack, Dinner, Bedtime and Other.", "success")
+    set_system_message("Repository reset to Breakfast, Lunch, Evening Snack, Dinner, Bedtime and Snacking.", "success")
     st.rerun()
 card_end()
 

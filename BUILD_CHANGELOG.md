@@ -693,3 +693,16 @@
 - Replaced expander with a cleaner Show/Hide diagnostics button.
 - Removed Download Final Report explanatory helper text.
 - UI-only cleanup; business logic unchanged.
+
+## v76 - Daily Log UX + Data Integrity Pack
+- Removed internal build diagnostics from member-facing topbars while keeping admin/developer build visibility.
+- Simplified member Body-Mind locked-state wording by removing admin-process wording.
+- Daily Food Journal: made date prominent and displayed dates in DD/MM/YYYY format.
+- Daily Food Journal: enforced meal order as Breakfast, Lunch, Evening Snack, Dinner, Bedtime, then Snacking slots.
+- Daily Food Journal: renamed Other flow to Snacking / Snacking 1 / Snacking 2.
+- Daily Food Journal: added validation to prevent blank meal, day-details, and full-day journal saves.
+- Daily Food Journal: replaced free-text meal and poop timing with controlled 12-hour time options.
+- Daily Food Journal: all 9 poop timing slots are visible, with inactive slots disabled until poop rounds are selected.
+- Admin Daily Food Journal Report: added prominent Review Context selector card for member/date.
+- Admin Daily Food Journal Report: included meal time with food in All Saved Days and Excel export.
+- Admin Daily Food Journal Report: labelled poop timing values as Poop Timing 1, Poop Timing 2, etc.

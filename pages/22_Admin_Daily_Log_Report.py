@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, format_local_ts, render_back_to_top, compact_topbar
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, format_local_ts, render_back_to_top, compact_topbar, render_context_selector_header
 from components.db import (
     list_members,
     get_daily_food_journal_days,
@@ -24,21 +24,57 @@ render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_eval
 
 MEAL_KEYS = [(r["key"], r["label"]) for r in get_meal_type_repository()]
 
+
+def display_date(d):
+    try:
+        return date.fromisoformat(str(d)).strftime("%d/%m/%Y")
+    except Exception:
+        return str(d or "")
+
+def meal_text(meal):
+    meal = meal or {}
+    tm = str(meal.get("time", "")).strip()
+    food = str(meal.get("food", "")).strip()
+    if tm and food:
+        return f"{tm}: {food}"
+    return food
+
+def labelled_poop_timings(day):
+    timings = [str(x or "").strip() for x in (day.get("poop_timings", []) or []) if str(x or "").strip()]
+    return ", ".join([f"Poop Timing {idx + 1}: {val}" for idx, val in enumerate(timings)])
+
 def meal_keys_for_day(day):
-    keys = list(MEAL_KEYS)
+    preferred = ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]
+    configured = {k: ("Snacking" if str(label).lower() == "other" else label) for k, label in MEAL_KEYS}
+    keys = [(k, configured[k]) for k in preferred if k in configured]
     known = {k for k, _label in keys}
+    for k, label in MEAL_KEYS:
+        if k not in known and k != "other":
+            keys.append((k, "Snacking" if str(label).lower() == "other" else label))
+            known.add(k)
+    other_count = 0
     for k, meal in (day.get("meals", {}) or {}).items():
-        if k not in known:
-            keys.append((k, meal.get("label", k.replace("_", " ").title())))
+        if k in known:
+            continue
+        if str(k).startswith("other_"):
+            other_count += 1
+            label = "Snacking" if other_count == 1 else f"Snacking {other_count - 1}"
+        else:
+            label = meal.get("label", k.replace("_", " ").title())
+            if str(label).lower().startswith("other"):
+                other_count += 1
+                label = "Snacking" if other_count == 1 else f"Snacking {other_count - 1}"
+        keys.append((k, label))
+        known.add(k)
     return keys
 
 def flatten_day(day, supervision_notes=None):
     base = {
-        "Date": day.get("date", ""),
+        "Date": display_date(day.get("date", "")),
         "Water": day.get("water_litres", ""),
         "Physical Activity": day.get("physical_activity", ""),
         "Poop Rounds": day.get("poop_rounds", ""),
-        "Poop Timings": ", ".join([str(x) for x in (day.get("poop_timings", []) or []) if str(x).strip()]),
+        "Poop Timings": labelled_poop_timings(day),
         "Feeling After Poop": day.get("feeling_after_poop", ""),
         "Overall Notes": day.get("notes", ""),
         "Nutritionist Notes": " | ".join([n.get("note", "") for n in (supervision_notes or [])]),
@@ -46,6 +82,7 @@ def flatten_day(day, supervision_notes=None):
     meals = day.get("meals", {}) or {}
     for key, label in meal_keys_for_day(day):
         meal = meals.get(key, {}) or {}
+        base[f"{label}"] = meal_text(meal)
         base[f"{label} Time"] = meal.get("time", "")
         base[f"{label} Food"] = meal.get("food", "")
         base[f"{label} Portion"] = meal.get("portion_size", "")
@@ -108,9 +145,12 @@ if default_member:
             default_index = idx
             break
 
+card_start()
+st.markdown("### 📋 Review Context")
+st.caption("This selection controls the member and food-log date visible on the page.")
 selector_col_1, selector_col_2 = st.columns(2)
 with selector_col_1:
-    selected = st.selectbox("Select member", options, index=default_index)
+    selected = st.selectbox("👤 Select member", options, index=default_index)
 
 member_id = selected.split(" — ")[0]
 member = next(m for m in members if m["id"] == member_id)
@@ -118,7 +158,13 @@ days = get_daily_food_journal_days(member_id)
 available_dates = [d.get("date") for d in days if d.get("date")]
 
 with selector_col_2:
-    selected_date = st.selectbox("Select food log date for review / note", available_dates or [str(date.today())])
+    selected_date = st.selectbox("📅 Select food log date for review / note", available_dates or [str(date.today())], format_func=display_date)
+card_end()
+render_context_selector_header(
+    "Currently Reviewing",
+    [("Member", member.get("name", "")), ("Food Log Date", display_date(selected_date))],
+    "Changing these values changes the report, note area, and saved-day view below.",
+)
 
 selected_day = get_daily_food_journal_day(member_id, selected_date) or next((d for d in days if d.get("date") == selected_date), {"date": selected_date, "meals": {}})
 date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selected_date)
@@ -126,12 +172,12 @@ date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selec
 stat_grid([
     {"label": "Member", "value": member.get("name", ""), "note": "Selected member"},
     {"label": "Saved Days", "value": len(days), "note": "Full-day food logs"},
-    {"label": "Selected Date", "value": selected_date, "note": "Current review"},
+    {"label": "Selected Date", "value": display_date(selected_date), "note": "Current review"},
     {"label": "Notes", "value": len(date_notes), "note": "For selected day"},
 ])
 
 card_start()
-st.subheader(f"Food journal for {selected_date}")
+st.subheader(f"Food journal for {display_date(selected_date)}")
 if not selected_day or not selected_day.get("meals"):
     st.info("No food journal available for this date.")
 else:
@@ -150,8 +196,7 @@ else:
     st.markdown(f"**Water Intake:** {selected_day.get('water_litres','') or '-'}")
     st.markdown(f"**Physical Activity:** {selected_day.get('physical_activity','') or '-'}")
     st.markdown(f"**Poop rounds:** {selected_day.get('poop_rounds','') or '-'}")
-    timings = selected_day.get("poop_timings", []) or []
-    st.markdown(f"**Poop timings:** {', '.join([str(x) for x in timings if str(x).strip()]) or '-'}")
+    st.markdown(f"**Poop timings:** {labelled_poop_timings(selected_day) or '-'}")
     st.markdown(f"**Feeling after poop:** {selected_day.get('feeling_after_poop','') or '-'}")
     st.markdown(f"**Overall Notes:** {selected_day.get('notes','') or '-'}")
 
@@ -165,7 +210,7 @@ else:
 card_end()
 
 card_start()
-st.subheader(f"Nutritionist note for {selected_date}")
+st.subheader(f"Nutritionist note for {display_date(selected_date)}")
 note = st.text_area("Nutritionist note", placeholder="Example: Please add water quantity for lunch and dinner tomorrow.")
 if st.button("Save Supervision Note / Notify Member", type="primary", use_container_width=True):
     if not note.strip():
@@ -206,14 +251,16 @@ else:
         if latest_note:
             latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
         rows.append({
-            "Date": d.get("date", ""),
-            "Breakfast": (d.get("meals", {}).get("breakfast", {}) or {}).get("food", ""),
-            "Lunch": (d.get("meals", {}).get("lunch", {}) or {}).get("food", ""),
-            "Dinner": (d.get("meals", {}).get("dinner", {}) or {}).get("food", ""),
+            "Date": display_date(d.get("date", "")),
+            "Breakfast": meal_text((d.get("meals", {}).get("breakfast", {}) or {})),
+            "Lunch": meal_text((d.get("meals", {}).get("lunch", {}) or {})),
+            "Evening Snack": meal_text((d.get("meals", {}).get("evening_snack", {}) or {})),
+            "Dinner": meal_text((d.get("meals", {}).get("dinner", {}) or {})),
+            "Bedtime": meal_text((d.get("meals", {}).get("bedtime", {}) or {})),
             "Water": d.get("water_litres", ""),
             "Activity": d.get("physical_activity", ""),
             "Poop Rounds": d.get("poop_rounds", ""),
-            "Poop Timings": ", ".join([str(x) for x in (d.get("poop_timings", []) or []) if str(x).strip()]),
+            "Poop Timings": labelled_poop_timings(d),
             "Feeling After Poop": d.get("feeling_after_poop", ""),
             "Notes": d.get("notes", ""),
             "Nutritionist Notes": latest_note_text,

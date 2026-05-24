@@ -1,8 +1,8 @@
 import streamlit as st
 import html
-from datetime import date
+from datetime import date, time
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top, compact_topbar
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top, compact_topbar, render_context_selector_header
 from components.db import (
     save_daily_food_journal_day,
     save_daily_food_journal_meal,
@@ -65,7 +65,52 @@ render_system_message()
 auto_archive_expired_nutritionist_messages(user_id)
 
 def meal_has_data(meal):
-    return any((meal or {}).get(x) for x in ["time", "food", "portion_size", "mood_energy"])
+    return any(str((meal or {}).get(x, "")).strip() for x in ["time", "food", "portion_size", "mood_energy"])
+
+
+def display_date(d):
+    try:
+        return d.strftime("%d/%m/%Y") if hasattr(d, "strftime") else date.fromisoformat(str(d)).strftime("%d/%m/%Y")
+    except Exception:
+        return str(d or "")
+
+def time_options():
+    vals = [""]
+    for h in range(24):
+        for m in (0, 15, 30, 45):
+            hour12 = h % 12 or 12
+            ampm = "AM" if h < 12 else "PM"
+            vals.append(f"{hour12:02d}.{m:02d} {ampm}")
+    return vals
+
+def normalise_time_value(value):
+    value = str(value or "").strip().replace(":", ".")
+    opts = time_options()
+    if value in opts:
+        return value
+    return ""
+
+def meal_display(label, meal):
+    tm = str((meal or {}).get("time", "")).strip()
+    food = str((meal or {}).get("food", "")).strip()
+    if tm and food:
+        return f"{label}: {tm}: {food}"
+    if food:
+        return f"{label}: {food}"
+    return ""
+
+def day_detail_has_data(water_litres, physical_activity, poop_rounds, poop_timings, feeling_after_poop, day_notes):
+    return any([
+        water_litres and water_litres != "Select",
+        str(physical_activity or "").strip(),
+        poop_rounds and str(poop_rounds) != "Select",
+        any(str(x or "").strip() for x in (poop_timings or [])),
+        str(feeling_after_poop or "").strip(),
+        str(day_notes or "").strip(),
+    ])
+
+def journal_has_any_data(meals, water_litres, physical_activity, poop_rounds, poop_timings, feeling_after_poop, day_notes):
+    return any(meal_has_data(m) for m in (meals or {}).values()) or day_detail_has_data(water_litres, physical_activity, poop_rounds, poop_timings, feeling_after_poop, day_notes)
 
 def current_widget_payload(section_key, section_label):
     return {
@@ -103,7 +148,8 @@ other_enabled = True
 if "daily_log_other_count" not in st.session_state:
     st.session_state["daily_log_other_count"] = 1
 
-log_date = st.date_input("Food journal date", value=date.today())
+log_date = st.date_input("📅 Food journal date", value=date.today(), format="DD/MM/YYYY")
+st.markdown(f"<div class='hm-date-emphasis'>📅 Food Journal Date: {display_date(log_date)}</div>", unsafe_allow_html=True)
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
 
@@ -117,9 +163,12 @@ for key in existing_meals.keys():
 if existing_other_nums:
     st.session_state["daily_log_other_count"] = max(st.session_state.get("daily_log_other_count", 1), max(existing_other_nums))
 
-meal_sections = list(base_sections)
+preferred_order = ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]
+section_lookup = {k: v for k, v in base_sections}
+meal_sections = [(k, section_lookup[k]) for k in preferred_order if k in section_lookup]
+meal_sections += [(k, v) for k, v in base_sections if k not in preferred_order and k != "other"]
 for idx in range(1, st.session_state.get("daily_log_other_count", 1) + 1):
-    meal_sections.append((f"other_{idx}", f"Other {idx}"))
+    meal_sections.append((f"other_{idx}", "Snacking" if idx == 1 else f"Snacking {idx - 1}"))
 
 if not meal_sections:
     st.warning("No meal sections are currently active. Please contact admin.")
@@ -153,20 +202,23 @@ for idx, (key, label) in enumerate(meal_sections):
 # Other is now very visible directly below the buttons.
 add_cols = st.columns([1, 2])
 with add_cols[0]:
-    if st.button("+ Other", use_container_width=True, help="Add another undefined eating time such as Other 2, Other 3, etc."):
+    if st.button("+ Snacking", use_container_width=True, help="Add another snacking/eating time such as Snacking 1, Snacking 2, etc."):
         if is_dirty(existing_meals, active_key, active_label):
-            st.warning(f"Please save the section ({active_label}) before adding another Other section.")
+            st.warning(f"Please save the section ({active_label}) before adding another Snacking section.")
         else:
             st.session_state["daily_log_other_count"] = st.session_state.get("daily_log_other_count", 1) + 1
             st.session_state["active_daily_meal_section"] = f"other_{st.session_state['daily_log_other_count']}"
             st.rerun()
 with add_cols[1]:
-    st.caption("Use Other for undefined eating times beyond the standard meals.")
+    st.caption("Use Snacking for eating times beyond the standard meals.")
 
 st.markdown(f"<div class='hm-meal-title'>{active_label}</div>", unsafe_allow_html=True)
 prior = existing_meals.get(active_key, {}) if existing_meals else {}
 
-time_text = st.text_input("Time", value=prior.get("time", ""), key=f"{active_key}_time", placeholder="Example: 10:00 - 10:30 AM")
+time_values = time_options()
+time_default = normalise_time_value(prior.get("time", ""))
+time_index = time_values.index(time_default) if time_default in time_values else 0
+time_text = st.selectbox("Time", time_values, index=time_index, key=f"{active_key}_time", format_func=lambda x: "Select time" if x == "" else x)
 
 food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=85)
 
@@ -182,9 +234,12 @@ meal_dirty = is_dirty(existing_meals, active_key, active_label)
 c_save, c_status = st.columns([1, 1])
 with c_save:
     if st.button(f"Save {active_label}", type="primary", use_container_width=True):
-        save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
-        set_system_message(f"{active_label} saved for {log_date}.", "success")
-        st.rerun()
+        if not meal_has_data(active_payload):
+            st.error("Please enter at least one detail for this meal before saving.")
+        else:
+            save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
+            set_system_message(f"{active_label} saved for {display_date(log_date)}.", "success")
+            st.rerun()
 with c_status:
     if meal_dirty:
         st.warning(f"Unsaved changes in {active_label}.")
@@ -199,20 +254,20 @@ st.subheader("Full-day details")
 water_options = ['Select', '0 Litres', '0.5 Litres', '1 Litre', '1.5 Litres', '2 Litres', '2.5 Litres', '3 Litres', '3.5 Litres', '4 Litres', '4.5 Litres', '5 Litres', '5.5 Litres', '6 Litres', '6.5 Litres', '7 Litres', '7.5 Litres', '8 Litres', '8.5 Litres', '9 Litres', '9.5 Litres', '10 Litres']
 existing_water = existing.get("water_litres", "Select") or "Select"
 water_index = water_options.index(existing_water) if existing_water in water_options else 0
-water_litres = st.selectbox("Water intake for the full day", water_options, index=water_index)
-left_col, right_col = st.columns(2)
+left_col, right_col = st.columns([1, 1])
 with left_col:
+    water_litres = st.selectbox("Water intake for the full day", water_options, index=water_index)
     physical_activity = st.text_area(
         "Physical activity - time of day and duration",
         value=existing.get("physical_activity", ""),
-        placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
-        height=90,
+        placeholder="Example: Walk 30 mins at 07.00 AM / strength training 01.00 PM - 02.00 PM",
+        height=96,
     )
     feeling_after_poop = st.text_area(
         "Feeling after poop",
         value=existing.get("feeling_after_poop", ""),
         placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
-        height=160,
+        height=96,
     )
 
 with right_col:
@@ -222,32 +277,39 @@ with right_col:
         existing_poop_rounds = int(existing_poop_rounds)
     poop_round_index = poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0
     poop_rounds = st.selectbox("Poop rounds", poop_options, index=poop_round_index)
-
+    st.caption("All 9 slots are visible. Slots open based on selected poop rounds.")
     poop_timings = []
     existing_timings = existing.get("poop_timings", []) or []
-    if poop_rounds != "Select":
-        st.caption("Record timing for each poop round.")
-        timing_cols = st.columns(3)
-        for idx in range(int(poop_rounds)):
-            default_timing = existing_timings[idx] if idx < len(existing_timings) else ""
-            with timing_cols[idx % 3]:
-                poop_timings.append(
-                    st.text_input(
-                        f"Poop timing {idx + 1}",
-                        value=default_timing,
-                        key=f"poop_timing_{idx + 1}",
-                        placeholder="Example: 7:30 AM",
-                    )
-                )
+    timing_values = time_options()
+    timing_cols = st.columns(3)
+    enabled_count = int(poop_rounds) if poop_rounds != "Select" else 0
+    for idx in range(9):
+        default_timing = existing_timings[idx] if idx < len(existing_timings) else ""
+        default_timing = normalise_time_value(default_timing)
+        timing_index = timing_values.index(default_timing) if default_timing in timing_values else 0
+        with timing_cols[idx % 3]:
+            val = st.selectbox(
+                f"Poop timing {idx + 1}",
+                timing_values,
+                index=timing_index,
+                key=f"poop_timing_{idx + 1}",
+                disabled=(idx >= enabled_count),
+                format_func=lambda x: "Not active" if x == "" else x,
+            )
+            if idx < enabled_count:
+                poop_timings.append(val)
 poop = ""
 day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=85)
 
 c_save_1, c_save_2 = st.columns(2)
 with c_save_1:
     if st.button("Save Day Details Only", use_container_width=True):
-        save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop, day_notes.strip(), water_litres, poop_rounds, poop_timings, feeling_after_poop.strip())
-        set_system_message("Day details saved.", "success")
-        st.rerun()
+        if not day_detail_has_data(water_litres, physical_activity, poop_rounds, poop_timings, feeling_after_poop, day_notes):
+            st.error("Please enter at least one full-day detail before saving.")
+        else:
+            save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop, day_notes.strip(), water_litres, poop_rounds, poop_timings, feeling_after_poop.strip())
+            set_system_message("Day details saved.", "success")
+            st.rerun()
 with c_save_2:
     if st.button("Save Full-Day Journal", type="primary", use_container_width=True):
         merged_meals = dict(existing_meals or {})
@@ -267,9 +329,12 @@ with c_save_2:
             "notes": day_notes.strip(),
             "water_litres": water_litres,
         }
-        save_daily_food_journal_day(user_id, str(log_date), payload)
-        set_system_message("Full-day food journal saved.", "success")
-        st.rerun()
+        if not journal_has_any_data(merged_meals, water_litres, physical_activity, poop_rounds, poop_timings, feeling_after_poop, day_notes):
+            st.error("Please enter at least one journal detail before saving.")
+        else:
+            save_daily_food_journal_day(user_id, str(log_date), payload)
+            set_system_message("Full-day food journal saved.", "success")
+            st.rerun()
 card_end()
 
 card_start()
@@ -298,7 +363,8 @@ else:
         meal_summary = []
         for _k, meal in (day.get("meals", {}) or {}).items():
             if meal.get("food"):
-                meal_summary.append(f"{meal.get('label','')}: {meal.get('food','')}")
+                label = meal.get('label','')
+                meal_summary.append(meal_display(label, meal))
         meal_display_text = " | ".join(meal_summary) if meal_summary else "—"
 
         latest_note = get_latest_daily_log_note_for_date(user_id, day_date)
@@ -310,7 +376,7 @@ else:
 
         with st.container():
             c1, c2, c3, c4, c5, c6 = st.columns([1.05, 1.75, .9, .9, 2.05, .85])
-            c1.markdown(f"<div class='hm-rsd-native-date'>{day_date or '—'}</div>", unsafe_allow_html=True)
+            c1.markdown(f"<div class='hm-rsd-native-date'>{display_date(day_date) if day_date else '—'}</div>", unsafe_allow_html=True)
             c2.markdown(f"<div class='hm-rsd-native-meals'>{meal_display_text}</div>", unsafe_allow_html=True)
             c3.markdown(f"<div class='hm-rsd-native-cell'>{day.get('water_litres') or '—'}</div>", unsafe_allow_html=True)
             c4.markdown(f"<div class='hm-rsd-native-cell'>{day.get('notes') or '—'}</div>", unsafe_allow_html=True)

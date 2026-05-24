@@ -2629,6 +2629,20 @@ h4:has(+ .info-banner), h4 {
 .hm-v74-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
 .hm-v74-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
 
+
+
+/* --- v76 Context selector and daily log UX --- */
+.hm-context-card{background:linear-gradient(135deg,#FFFDF8 0%,#FFFFFF 70%,#FFF4DE 100%);border:1.5px solid #D7C391;border-radius:22px;padding:1rem 1.05rem;margin:.35rem 0 1rem 0;box-shadow:0 12px 28px rgba(25,36,31,.07);position:sticky;top:.25rem;z-index:5;}
+.hm-context-title{font-size:1.04rem;font-weight:950;color:#064E3B;margin-bottom:.65rem;letter-spacing:-.02em;}
+.hm-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;}
+.hm-context-chip{background:#FFFFFF;border:1px solid #E7D8BE;border-radius:16px;padding:.78rem .9rem;box-shadow:0 6px 18px rgba(25,36,31,.04);}
+.hm-context-chip span{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.055em;font-weight:900;color:#92702A;margin-bottom:.2rem;}
+.hm-context-chip b{display:block;font-size:1rem;color:#063F32;overflow-wrap:anywhere;}
+.hm-context-note{margin-top:.55rem;color:#64748B;font-size:.86rem;font-weight:650;}
+.hm-date-emphasis{background:#FFF8E8;border:1px solid #E8D39E;border-radius:18px;padding:.8rem .95rem;margin:.5rem 0 1rem 0;color:#064E3B;font-weight:950;font-size:1.08rem;}
+.hm-disabled-poop input:disabled{opacity:.95!important;color:#9CA3AF!important;background:#F1F5F9!important;border-color:#E5E7EB!important;}
+@media(max-width:640px){.hm-context-grid{grid-template-columns:1fr}.hm-context-card{position:relative;top:auto}}
+
 /* --- v75 Final Report Diagnostics UI --- */
 .hm-v75-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
 .hm-v75-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
@@ -7052,8 +7066,15 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v75: Final Report Diagnostics UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v75"
-APP_BUILD_LABEL = "Final Report Diagnostics UI"
+APP_BUILD_VERSION = "v76"
+APP_BUILD_LABEL = "Daily Log UX + Data Integrity"
+
+def _build_badge_html():
+    # Hide internal build labels from member-facing pages. Admin/developer screens still show the build marker.
+    role = str(st.session_state.get("role", "")).lower()
+    if role == "member":
+        return ""
+    return f"<span class='hm-v75-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7061,7 +7082,7 @@ def topbar(title, subtitle="", kicker="HealthyMe premium"):
         <div class='hero-shell'>
           <div class='hm-v75-brand-row'>
             <span class='hm-v75-brand'>HealthyMe</span>
-            <span class='hm-v75-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+            {_build_badge_html()}
           </div>
           <div class='hero-kicker'>{kicker}</div>
           <div class='hero-title'>{title}</div>
@@ -7078,11 +7099,24 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         <div class='hero-shell hm-compact-page-section'>
           <div class='hm-v75-brand-row'>
             <span class='hm-v75-brand'>HealthyMe</span>
-            <span class='hm-v75-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+            {_build_badge_html()}
           </div>
           <div class='hero-kicker'>{kicker}</div>
           <div class='hero-title'>{title}</div>
           {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_context_selector_header(title, items, note=""):
+    chips = "".join([f"<div class='hm-context-chip'><span>{label}</span><b>{value}</b></div>" for label, value in items])
+    st.markdown(
+        f"""
+        <div class='hm-context-card'>
+          <div class='hm-context-title'>{title}</div>
+          <div class='hm-context-grid'>{chips}</div>
+          {f"<div class='hm-context-note'>{note}</div>" if note else ""}
         </div>
         """,
         unsafe_allow_html=True,
