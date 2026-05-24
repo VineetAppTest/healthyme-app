@@ -41,23 +41,16 @@ st.markdown(
     """
     <style>
 
-    /* v76H: Daily Food Journal input keeps premium field-card styling. */
-    div[data-testid="stSelectbox"], div[data-testid="stDateInput"]{
-      background:linear-gradient(180deg,#FFFFFF 0%,#FFFBF4 100%)!important;
-      border:1.5px solid #E7D8BE!important;
-      border-radius:16px!important;
-      padding:.68rem .82rem .78rem .82rem!important;
-      box-shadow:0 6px 18px rgba(25,36,31,.045)!important;
-      margin-bottom:.45rem!important;
+    /* v76I: Member Daily Log field-card styling is scoped only to the Food Journal Date card. */
+    .hm-food-date-shell {
+      background:linear-gradient(180deg,#FFFFFF 0%,#FFFBF4 100%);
+      border:1.5px solid #E7D8BE;
+      border-radius:16px;
+      padding:.68rem .82rem .78rem .82rem;
+      box-shadow:0 6px 18px rgba(25,36,31,.045);
+      margin-bottom:.45rem;
     }
-    div[data-testid="stSelectbox"] label, div[data-testid="stDateInput"] label{
-      text-transform:uppercase!important;
-      letter-spacing:.055em!important;
-      font-size:.72rem!important;
-      font-weight:900!important;
-      color:#92702A!important;
-    }
-    div[data-testid="stSelectbox"] [data-baseweb="select"] > div, div[data-testid="stDateInput"] input{
+    .hm-food-date-shell div[data-testid="stDateInput"] input{
       background:#FFFFFF!important;
       border-color:#E7D8BE!important;
       min-height:2.65rem!important;
@@ -188,7 +181,9 @@ if "daily_log_other_count" not in st.session_state:
     st.session_state["daily_log_other_count"] = 1
 
 st.markdown("### 📅 Food Journal Date")
+st.markdown("<div class='hm-food-date-shell'>", unsafe_allow_html=True)
 log_date = st.date_input("Food journal date", value=date.today(), format="DD/MM/YYYY", label_visibility="collapsed")
+st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(f"<div class='hm-context-note'>Food Journal Date: <b>{display_date(log_date)}</b></div>", unsafe_allow_html=True)
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
