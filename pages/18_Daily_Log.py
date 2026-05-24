@@ -318,12 +318,17 @@ with left_col:
 
 with right_col:
     poop_options = ["Select"] + list(range(1, 10))
-    existing_poop_rounds = existing.get("poop_rounds", "Select") or "Select"
+    existing_poop_rounds = existing.get("poop_rounds", "Select")
+    if existing_poop_rounds in (None, "", 0, "0"):
+        existing_poop_rounds = "Select"
     if str(existing_poop_rounds).isdigit():
         existing_poop_rounds = int(existing_poop_rounds)
     poop_round_index = poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0
-    poop_rounds = st.selectbox("Poop rounds", poop_options, index=poop_round_index)
-    st.caption("All 9 slots are visible. Slots open based on selected poop rounds.")
+    # Important: key is scoped by member + date so a previous day's selection
+    # does not leak into a fresh journal day. Default stays Select = all 9 inactive.
+    poop_widget_key = f"poop_rounds_{user_id}_{str(log_date)}"
+    poop_rounds = st.selectbox("Poop rounds", poop_options, index=poop_round_index, key=poop_widget_key)
+    st.caption("All 9 slots are visible. They remain inactive until poop rounds are selected.")
     poop_timings = []
     existing_timings = existing.get("poop_timings", []) or []
     timing_values = time_options()
@@ -338,7 +343,7 @@ with right_col:
                 f"Poop timing {idx + 1}",
                 timing_values,
                 index=timing_index,
-                key=f"poop_timing_{idx + 1}",
+                key=f"poop_timing_{user_id}_{str(log_date)}_{idx + 1}",
                 disabled=(idx >= enabled_count),
                 format_func=lambda x: "Not active" if x == "" else x,
             )
