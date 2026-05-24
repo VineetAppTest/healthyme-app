@@ -40,6 +40,30 @@ inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar
 st.markdown(
     """
     <style>
+
+    /* v76H: Daily Food Journal input keeps premium field-card styling. */
+    div[data-testid="stSelectbox"], div[data-testid="stDateInput"]{
+      background:linear-gradient(180deg,#FFFFFF 0%,#FFFBF4 100%)!important;
+      border:1.5px solid #E7D8BE!important;
+      border-radius:16px!important;
+      padding:.68rem .82rem .78rem .82rem!important;
+      box-shadow:0 6px 18px rgba(25,36,31,.045)!important;
+      margin-bottom:.45rem!important;
+    }
+    div[data-testid="stSelectbox"] label, div[data-testid="stDateInput"] label{
+      text-transform:uppercase!important;
+      letter-spacing:.055em!important;
+      font-size:.72rem!important;
+      font-weight:900!important;
+      color:#92702A!important;
+    }
+    div[data-testid="stSelectbox"] [data-baseweb="select"] > div, div[data-testid="stDateInput"] input{
+      background:#FFFFFF!important;
+      border-color:#E7D8BE!important;
+      min-height:2.65rem!important;
+      font-weight:760!important;
+      color:#063F32!important;
+    }
     .hm-compact-section-note {
         margin: .15rem 0 .45rem 0;
         color: #64748B;

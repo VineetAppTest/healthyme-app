@@ -2642,33 +2642,12 @@ h4:has(+ .info-banner), h4 {
 .hm-date-emphasis{background:#FFF8E8;border:1px solid #E8D39E;border-radius:18px;padding:.8rem .95rem;margin:.5rem 0 1rem 0;color:#064E3B;font-weight:950;font-size:1.08rem;}
 .hm-disabled-poop input:disabled{opacity:.95!important;color:#9CA3AF!important;background:#F1F5F9!important;border-color:#E5E7EB!important;}
 @media(max-width:640px){.hm-context-grid{grid-template-columns:1fr}.hm-context-card{position:relative;top:auto}}
-/* --- v76E Page Context Selector Enforcement --- */
+/* --- v76H Scoped Page Context Selector Enforcement --- */
 .hm-page-context-intro{font-size:.86rem;color:#64748B;font-weight:650;margin:.05rem 0 .55rem 0;}
 div[data-testid="stForm"], div[data-testid="stExpander"]{border-radius:18px!important;}
-/* Make data-driving Selectbox/Date widgets visually closer to context chips */
-div[data-testid="stSelectbox"], div[data-testid="stDateInput"]{
-  background:linear-gradient(180deg,#FFFFFF 0%,#FFFBF4 100%)!important;
-  border:1.5px solid #E7D8BE!important;
-  border-radius:16px!important;
-  padding:.68rem .82rem .78rem .82rem!important;
-  box-shadow:0 6px 18px rgba(25,36,31,.045)!important;
-  margin-bottom:.45rem!important;
-}
-div[data-testid="stSelectbox"] label, div[data-testid="stDateInput"] label{
-  text-transform:uppercase!important;
-  letter-spacing:.055em!important;
-  font-size:.72rem!important;
-  font-weight:900!important;
-  color:#92702A!important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div, div[data-testid="stDateInput"] input{
-  background:#FFFFFF!important;
-  border-color:#E7D8BE!important;
-  min-height:2.65rem!important;
-  font-weight:760!important;
-  color:#063F32!important;
-}
-
+/* IMPORTANT: v76H removes global Selectbox/DateInput card styling.
+   Selector card treatment must be applied page-locally only on review/report pages,
+   saved-day views, context selectors, and Daily Food Journal input. */
 
 /* --- v75 Final Report Diagnostics UI --- */
 .hm-v75-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
