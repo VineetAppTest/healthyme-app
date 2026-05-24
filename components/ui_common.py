@@ -7203,15 +7203,13 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v75: Final Report Diagnostics UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v76M"
-APP_BUILD_LABEL = "Bordered Recent Saved Days Table"
+APP_BUILD_VERSION = "v76N"
+APP_BUILD_LABEL = "Poop Default and Brand Marker Cleanup"
 
 def _build_badge_html():
-    # Hide internal build labels from member-facing pages. Admin/developer screens still show the build marker.
-    role = str(st.session_state.get("role", "")).lower()
-    if role == "member":
-        return ""
-    return f"<span class='hm-v75-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
+    # Brand hygiene: never render internal build/version markers beside or under HealthyMe.
+    # Build labels remain available in filenames, patches, manifests, and diagnostics only.
+    return ""
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
