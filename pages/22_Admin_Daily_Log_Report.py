@@ -160,32 +160,27 @@ if default_member:
             default_index = idx
             break
 
-card_start()
-st.markdown("### 📋 Currently Reviewing")
-st.caption("These selections control the report, note area, and saved-day view below.")
-selector_col_1, selector_col_2 = st.columns(2)
-with selector_col_1:
-    selected = st.selectbox("👤 Member", options, index=default_index)
+with st.container(border=True):
+    st.markdown("### 📋 Currently Reviewing")
+    st.markdown("<div class='hm-page-context-intro'>This section controls the member, report, note area, and saved-day view below.</div>", unsafe_allow_html=True)
+    selector_col_1, selector_col_2 = st.columns(2)
+    with selector_col_1:
+        selected = st.selectbox("👤 Member Loaded", options, index=default_index)
 
-member_id = selected.split(" — ")[0]
-member = next(m for m in members if m["id"] == member_id)
-days = get_daily_food_journal_days(member_id)
-available_dates = [d.get("date") for d in days if d.get("date")]
+    member_id = selected.split(" — ")[0]
+    member = next(m for m in members if m["id"] == member_id)
+    days = get_daily_food_journal_days(member_id)
+    available_dates = [d.get("date") for d in days if d.get("date")]
 
-with selector_col_2:
-    selected_date = st.selectbox("📅 Food Log Date", available_dates or [str(date.today())], format_func=display_date)
+    with selector_col_2:
+        selected_date = st.selectbox("📅 Food Log Date Loaded", available_dates or [str(date.today())], format_func=display_date)
 
-st.markdown(
-    f"""
-    <div class='hm-context-grid' style='margin-top:.85rem;'>
-      <div class='hm-context-chip'><span>Member Loaded</span><b>{member.get('name', '')}</b></div>
-      <div class='hm-context-chip'><span>Food Log Date Loaded</span><b>{display_date(selected_date)}</b></div>
-    </div>
-    <div class='hm-context-note'>Changing either selection reloads the visible report and note section.</div>
-    """,
-    unsafe_allow_html=True,
-)
-card_end()
+    st.markdown(
+        f"""
+        <div class='hm-context-note'>Changing either selection reloads the visible report and note section. Current view: <b>{member.get('name', '')}</b> · <b>{display_date(selected_date)}</b></div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 selected_day = get_daily_food_journal_day(member_id, selected_date) or next((d for d in days if d.get("date") == selected_date), {"date": selected_date, "meals": {}})
 date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selected_date)
