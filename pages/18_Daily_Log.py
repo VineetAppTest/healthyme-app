@@ -389,11 +389,12 @@ with c_save_2:
 card_end()
 
 card_start()
-st.subheader("Recent saved days")
-st.markdown(
-    "<div class='hm-table-note'>View your recently saved day entries and the latest note from your nutritionist.</div>",
-    unsafe_allow_html=True,
-)
+st.markdown("""
+<div class='hm-compact-section-head'>
+  <div class='hm-compact-section-title'>Recent saved days</div>
+  <div class='hm-compact-section-note'>View your recently saved day entries and the latest note from your nutritionist.</div>
+</div>
+""", unsafe_allow_html=True)
 days = get_daily_food_journal_days(user_id)
 if not days:
     st.info("No food journal days saved yet.")
@@ -474,7 +475,15 @@ SAMPLE_ROWS = [
     {"Time": "7:30 - 8:00 PM", "Meal Type": "Dinner", "Food": "Soup / light dinner", "Portion Size": "1 big bowl", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
 ]
 
-st.markdown("<div class='hm-reference-shell'><div class='hm-reference-title'>Reference format from sample journal</div><div class='hm-compact-section-note'>Use only when needed.</div>", unsafe_allow_html=True)
+st.markdown("""
+<div class='hm-reference-shell'>
+  <div class='hm-reference-row'>
+    <div>
+      <div class='hm-reference-title'>Reference format from sample journal</div>
+      <div class='hm-compact-section-note'>Use only when needed.</div>
+    </div>
+  </div>
+""", unsafe_allow_html=True)
 if "show_daily_reference_sample" not in st.session_state:
     st.session_state["show_daily_reference_sample"] = False
 if st.button("Show / Hide sample journal format", use_container_width=True):

@@ -2732,6 +2732,80 @@ div[data-testid="stForm"], div[data-testid="stExpander"]{border-radius:18px!impo
   line-height:1.45;
 }
 
+
+/* --- v76L Compact Member Recent Saved Days + Reference Block --- */
+.hm-compact-section-head{
+  margin:.15rem 0 .45rem 0 !important;
+  padding:0 !important;
+}
+.hm-compact-section-title{
+  color:#064E3B !important;
+  font-weight:950 !important;
+  font-size:1rem !important;
+  line-height:1.15 !important;
+  margin:0 0 .16rem 0 !important;
+}
+.hm-compact-section-note{
+  color:#52637A !important;
+  font-size:.78rem !important;
+  line-height:1.25 !important;
+  margin:0 !important;
+}
+.hm-rsd-native-shell{
+  border:1.4px solid #D7BE91 !important;
+  border-radius:14px !important;
+  background:#FFFDF8 !important;
+  box-shadow:none !important;
+  padding:.42rem .62rem .22rem .62rem !important;
+  margin-top:.35rem !important;
+}
+.hm-rsd-native-shell [data-testid="column"]{
+  display:flex !important;
+  align-items:center !important;
+  min-height:1.95rem !important;
+  padding:.1rem .25rem !important;
+}
+.hm-rsd-native-divider{
+  height:1px !important;
+  background:#DBC59F !important;
+  margin:.24rem 0 !important;
+}
+.hm-rsd-native-date{font-size:.82rem !important;line-height:1.15 !important;}
+.hm-rsd-native-meals,.hm-rsd-native-cell,.hm-rsd-native-note{font-size:.78rem !important;line-height:1.18 !important;}
+.hm-rsd-native-shell .stButton > button{
+  min-height:1.65rem !important;
+  height:1.65rem !important;
+  padding:.05rem .48rem !important;
+  font-size:.70rem !important;
+}
+.hm-reference-shell{
+  border:1.25px solid #D7BE91 !important;
+  border-radius:14px !important;
+  background:#FFFDF8 !important;
+  box-shadow:none !important;
+  padding:.55rem .7rem .48rem .7rem !important;
+  margin:.8rem 0 .55rem 0 !important;
+}
+.hm-reference-row{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:.75rem !important;}
+.hm-reference-title{
+  color:#064E3B !important;
+  font-size:.92rem !important;
+  font-weight:950 !important;
+  line-height:1.15 !important;
+  margin:0 0 .12rem 0 !important;
+}
+.hm-reference-shell .stButton{margin-top:.35rem !important;}
+.hm-reference-shell .stButton > button{
+  min-height:2rem !important;
+  height:2rem !important;
+  border-radius:12px !important;
+  font-size:.82rem !important;
+}
+@media (max-width:760px){
+  .hm-rsd-native-shell{padding:.35rem .45rem .15rem .45rem !important;border-radius:12px !important;}
+  .hm-rsd-native-shell [data-testid="column"]{min-height:1.75rem !important;}
+}
+
 </style>
 """
 
