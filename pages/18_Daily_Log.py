@@ -41,21 +41,32 @@ st.markdown(
     """
     <style>
 
-    /* v76I: Member Daily Log field-card styling is scoped only to the Food Journal Date card. */
-    .hm-food-date-shell {
-      background:linear-gradient(180deg,#FFFFFF 0%,#FFFBF4 100%);
-      border:1.5px solid #E7D8BE;
-      border-radius:16px;
-      padding:.68rem .82rem .78rem .82rem;
-      box-shadow:0 6px 18px rgba(25,36,31,.045);
-      margin-bottom:.45rem;
+    /* v76J: Member Daily Log premium card styling is enforced only on the Food Journal Date section. */
+    /* Style only the Streamlit container that contains this marker. */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-food-date-marker),
+    div[data-testid="stVerticalBlock"]:has(.hm-food-date-marker) {
+      background:linear-gradient(180deg,#FFFFFF 0%,#FFFBF4 100%) !important;
+      border:1.5px solid #E7D8BE !important;
+      border-radius:18px !important;
+      box-shadow:0 8px 22px rgba(25,36,31,.055) !important;
+      padding:.74rem .9rem .9rem .9rem !important;
+      margin:.35rem 0 .65rem 0 !important;
     }
-    .hm-food-date-shell div[data-testid="stDateInput"] input{
+    .hm-food-date-title {
+      font-size:1.03rem;
+      font-weight:900;
+      color:#064E3B;
+      margin-bottom:.42rem;
+      letter-spacing:-.01em;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-food-date-marker) div[data-testid="stDateInput"] input,
+    div[data-testid="stVerticalBlock"]:has(.hm-food-date-marker) div[data-testid="stDateInput"] input{
       background:#FFFFFF!important;
-      border-color:#E7D8BE!important;
+      border:1.4px solid #E7D8BE!important;
       min-height:2.65rem!important;
       font-weight:760!important;
       color:#063F32!important;
+      border-radius:12px!important;
     }
     .hm-compact-section-note {
         margin: .15rem 0 .45rem 0;
@@ -180,10 +191,10 @@ other_enabled = True
 if "daily_log_other_count" not in st.session_state:
     st.session_state["daily_log_other_count"] = 1
 
-st.markdown("### 📅 Food Journal Date")
-st.markdown("<div class='hm-food-date-shell'>", unsafe_allow_html=True)
-log_date = st.date_input("Food journal date", value=date.today(), format="DD/MM/YYYY", label_visibility="collapsed")
-st.markdown("</div>", unsafe_allow_html=True)
+with st.container(border=True):
+    st.markdown("<div class='hm-food-date-marker'></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-food-date-title'>📅 Food Journal Date</div>", unsafe_allow_html=True)
+    log_date = st.date_input("Food journal date", value=date.today(), format="DD/MM/YYYY", label_visibility="collapsed")
 st.markdown(f"<div class='hm-context-note'>Food Journal Date: <b>{display_date(log_date)}</b></div>", unsafe_allow_html=True)
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
