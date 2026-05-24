@@ -134,8 +134,13 @@ if not members:
     st.stop()
 
 member_options = [f"{m['id']} — {m['name']} — {m['email']}" for m in members]
-selected_member = st.selectbox("Select member", member_options)
+card_start()
+st.markdown("### 👤 Editing Context")
+st.caption("This member selection controls whose assessment responses are visible and editable below.")
+selected_member = st.selectbox("👤 Member", member_options)
 member_id = selected_member.split(" — ")[0]
+st.markdown(f"<div class='hm-date-emphasis'>👤 Editing responses for: {selected_member}</div>", unsafe_allow_html=True)
+card_end()
 
 db = load_db()
 member_lookup = {m["id"]: m for m in members}

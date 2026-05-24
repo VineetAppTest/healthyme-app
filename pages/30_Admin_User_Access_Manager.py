@@ -51,15 +51,16 @@ if not users:
     st.stop()
 
 card_start()
-st.subheader("Edit / deactivate / reactivate")
+st.subheader("User Access Context")
+st.caption("This user selection controls which access record is visible and editable below.")
 selected_label = st.selectbox(
-    "Select user",
+    "👤 User",
     [f"{u['id']} — {u['name']} — {u['email']} — {u['role']} — {'Active' if u['is_active'] else 'Inactive'}" for u in users]
 )
 uid = selected_label.split(" — ")[0]
 user = next(u for u in users if u["id"] == uid)
 
-st.markdown(f"**Selected:** {user['name']} — `{user['email']}`")
+st.markdown(f"<div class='hm-date-emphasis'>👤 Editing access for: {user['name']} — {user['email']}</div>", unsafe_allow_html=True)
 
 with st.form("edit_user_form"):
     new_name = st.text_input("Name", value=user["name"])

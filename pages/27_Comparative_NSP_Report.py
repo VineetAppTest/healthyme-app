@@ -80,8 +80,13 @@ if not members:
     st.info("No members available.")
     st.stop()
 
-selected = st.selectbox("Select member", [f"{m['id']} — {m['name']} — {m['email']}" for m in members])
+card_start()
+st.markdown("### 👤 Comparative Report Context")
+st.caption("This member selection controls which NSP comparison report is visible below.")
+selected = st.selectbox("👤 Member", [f"{m['id']} — {m['name']} — {m['email']}" for m in members])
 member_id = selected.split(" — ")[0]
+st.markdown(f"<div class='hm-date-emphasis'>👤 Comparing reports for: {selected}</div>", unsafe_allow_html=True)
+card_end()
 member = next(m for m in members if m["id"] == member_id)
 
 db = load_db()

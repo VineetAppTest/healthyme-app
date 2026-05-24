@@ -163,8 +163,12 @@ other_enabled = True
 if "daily_log_other_count" not in st.session_state:
     st.session_state["daily_log_other_count"] = 1
 
-log_date = st.date_input("📅 Food journal date", value=date.today(), format="DD/MM/YYYY")
+card_start()
+st.markdown("### 📅 Daily Log Context")
+st.caption("This date controls the meals and full-day details saved on this page.")
+log_date = st.date_input("📅 Food Journal Date", value=date.today(), format="DD/MM/YYYY")
 st.markdown(f"<div class='hm-date-emphasis'>📅 Food Journal Date: {display_date(log_date)}</div>", unsafe_allow_html=True)
+card_end()
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
 

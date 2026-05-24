@@ -1,7 +1,7 @@
 
 import streamlit as st, pathlib, pandas as pd
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, render_build_text_v14, render_back_to_top, render_page_nav
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, render_build_text_v14, render_back_to_top, render_page_nav, card_start, card_end
 from components.db import list_members, get_resource_assignments, save_resource_assignments
 
 st.set_page_config(page_title="Manage & Allocate Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -36,8 +36,13 @@ with tabs[0]:
         st.info("No active exercises available. Add or import exercises first.")
     else:
         member_options = {f"{m['name']} — {m['email']}": m["id"] for m in members}
-        label = st.selectbox("Select member", list(member_options.keys()), key="exercise_alloc_member_v7")
+        card_start()
+        st.markdown("### 👤 Allocation Context")
+        st.caption("This member selection controls which exercise allocation is visible and saved below.")
+        label = st.selectbox("👤 Member", list(member_options.keys()), key="exercise_alloc_member_v7")
         member_id = member_options[label]
+        st.markdown(f"<div class='hm-date-emphasis'>👤 Allocating exercises for: {label}</div>", unsafe_allow_html=True)
+        card_end()
         all_ids = [str(i) for i in df.index.tolist()]
         current = set(get_resource_assignments(member_id, "exercises"))
         state_key = f"exercise_alloc_state_{member_id}"
