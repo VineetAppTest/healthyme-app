@@ -327,6 +327,10 @@ with right_col:
     # Important: key is scoped by member + date so a previous day's selection
     # does not leak into a fresh journal day. Default stays Select = all 9 inactive.
     poop_widget_key = f"poop_rounds_{user_id}_{str(log_date)}"
+    has_saved_poop_rounds = existing.get("poop_rounds") not in (None, "", 0, "0", "Select")
+    has_saved_poop_timings = any(str(x or "").strip() for x in (existing.get("poop_timings", []) or []))
+    if not has_saved_poop_rounds and not has_saved_poop_timings:
+        st.session_state[poop_widget_key] = "Select"
     poop_rounds = st.selectbox("Poop rounds", poop_options, index=poop_round_index, key=poop_widget_key)
     st.caption("All 9 slots are visible. They remain inactive until poop rounds are selected.")
     poop_timings = []
