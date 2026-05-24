@@ -2,7 +2,22 @@ import streamlit as st
 import html
 from datetime import date, time
 from components.guards import require_member
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top, compact_topbar, render_context_selector_header
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top, compact_topbar
+
+def render_context_selector_header(title, items, note=""):
+    """Page-local fallback so Daily Log pages do not crash if shared UI helper is stale on deployment."""
+    chips = "".join([f"<div class='hm-context-chip'><span>{label}</span><b>{value}</b></div>" for label, value in items])
+    note_html = f"<div class='hm-context-note'>{note}</div>" if note else ""
+    st.markdown(
+        f"""
+        <div class='hm-context-card'>
+          <div class='hm-context-title'>{title}</div>
+          <div class='hm-context-grid'>{chips}</div>
+          {note_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 from components.db import (
     save_daily_food_journal_day,
     save_daily_food_journal_meal,

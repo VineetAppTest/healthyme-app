@@ -5,7 +5,22 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, format_local_ts, render_back_to_top, compact_topbar, render_context_selector_header
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, format_local_ts, render_back_to_top, compact_topbar
+
+def render_context_selector_header(title, items, note=""):
+    """Page-local fallback so Daily Log pages do not crash if shared UI helper is stale on deployment."""
+    chips = "".join([f"<div class='hm-context-chip'><span>{label}</span><b>{value}</b></div>" for label, value in items])
+    note_html = f"<div class='hm-context-note'>{note}</div>" if note else ""
+    st.markdown(
+        f"""
+        <div class='hm-context-card'>
+          <div class='hm-context-title'>{title}</div>
+          <div class='hm-context-grid'>{chips}</div>
+          {note_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 from components.db import (
     list_members,
     get_daily_food_journal_days,
@@ -146,11 +161,11 @@ if default_member:
             break
 
 card_start()
-st.markdown("### 📋 Review Context")
-st.caption("This selection controls the member and food-log date visible on the page.")
+st.markdown("### 📋 Currently Reviewing")
+st.caption("These selections control the report, note area, and saved-day view below.")
 selector_col_1, selector_col_2 = st.columns(2)
 with selector_col_1:
-    selected = st.selectbox("👤 Select member", options, index=default_index)
+    selected = st.selectbox("👤 Member", options, index=default_index)
 
 member_id = selected.split(" — ")[0]
 member = next(m for m in members if m["id"] == member_id)
@@ -158,13 +173,19 @@ days = get_daily_food_journal_days(member_id)
 available_dates = [d.get("date") for d in days if d.get("date")]
 
 with selector_col_2:
-    selected_date = st.selectbox("📅 Select food log date for review / note", available_dates or [str(date.today())], format_func=display_date)
-card_end()
-render_context_selector_header(
-    "Currently Reviewing",
-    [("Member", member.get("name", "")), ("Food Log Date", display_date(selected_date))],
-    "Changing these values changes the report, note area, and saved-day view below.",
+    selected_date = st.selectbox("📅 Food Log Date", available_dates or [str(date.today())], format_func=display_date)
+
+st.markdown(
+    f"""
+    <div class='hm-context-grid' style='margin-top:.85rem;'>
+      <div class='hm-context-chip'><span>Member Loaded</span><b>{member.get('name', '')}</b></div>
+      <div class='hm-context-chip'><span>Food Log Date Loaded</span><b>{display_date(selected_date)}</b></div>
+    </div>
+    <div class='hm-context-note'>Changing either selection reloads the visible report and note section.</div>
+    """,
+    unsafe_allow_html=True,
 )
+card_end()
 
 selected_day = get_daily_food_journal_day(member_id, selected_date) or next((d for d in days if d.get("date") == selected_date), {"date": selected_date, "meals": {}})
 date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selected_date)
