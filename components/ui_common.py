@@ -2733,50 +2733,81 @@ div[data-testid="stForm"], div[data-testid="stExpander"]{border-radius:18px!impo
 }
 
 
-/* --- v76L Compact Member Recent Saved Days + Reference Block --- */
+/* --- v76M Compact Bordered Recent Saved Days Table --- */
 .hm-compact-section-head{
-  margin:.15rem 0 .45rem 0 !important;
+  margin:.08rem 0 .30rem 0 !important;
   padding:0 !important;
 }
 .hm-compact-section-title{
   color:#064E3B !important;
   font-weight:950 !important;
-  font-size:1rem !important;
-  line-height:1.15 !important;
-  margin:0 0 .16rem 0 !important;
+  font-size:.98rem !important;
+  line-height:1.05 !important;
+  margin:0 0 .08rem 0 !important;
 }
 .hm-compact-section-note{
   color:#52637A !important;
-  font-size:.78rem !important;
-  line-height:1.25 !important;
+  font-size:.76rem !important;
+  line-height:1.15 !important;
   margin:0 !important;
 }
 .hm-rsd-native-shell{
-  border:1.4px solid #D7BE91 !important;
-  border-radius:14px !important;
+  border:1.6px solid #CFAE76 !important;
+  border-radius:12px !important;
   background:#FFFDF8 !important;
-  box-shadow:none !important;
-  padding:.42rem .62rem .22rem .62rem !important;
-  margin-top:.35rem !important;
+  box-shadow:0 2px 8px rgba(6,78,59,.04) !important;
+  padding:0 !important;
+  margin-top:.22rem !important;
+  overflow:hidden !important;
 }
 .hm-rsd-native-shell [data-testid="column"]{
   display:flex !important;
   align-items:center !important;
-  min-height:1.95rem !important;
-  padding:.1rem .25rem !important;
+  min-height:1.68rem !important;
+  padding:.02rem .38rem !important;
+  border-right:1px solid #E4D1AE !important;
+}
+.hm-rsd-native-shell [data-testid="column"]:last-child{
+  border-right:none !important;
+}
+.hm-rsd-native-shell [data-testid="stHorizontalBlock"]:first-of-type{
+  background:#FFF8EA !important;
+  border-bottom:1.4px solid #CFAE76 !important;
+}
+.hm-rsd-native-shell [data-testid="stHorizontalBlock"]{
+  margin:0 !important;
+  gap:0 !important;
+}
+.hm-rsd-native-shell [data-testid="stMarkdownContainer"] p{
+  margin:0 !important;
+  line-height:1.05 !important;
+}
+.hm-rsd-native-shell strong{
+  font-size:.82rem !important;
+  color:#334155 !important;
+  font-weight:850 !important;
 }
 .hm-rsd-native-divider{
   height:1px !important;
-  background:#DBC59F !important;
-  margin:.24rem 0 !important;
+  background:#E4D1AE !important;
+  margin:0 !important;
 }
-.hm-rsd-native-date{font-size:.82rem !important;line-height:1.15 !important;}
-.hm-rsd-native-meals,.hm-rsd-native-cell,.hm-rsd-native-note{font-size:.78rem !important;line-height:1.18 !important;}
+.hm-rsd-native-date{
+  font-size:.80rem !important;
+  line-height:1.05 !important;
+  font-weight:900 !important;
+}
+.hm-rsd-native-meals,.hm-rsd-native-cell,.hm-rsd-native-note{
+  font-size:.76rem !important;
+  line-height:1.08 !important;
+  margin:0 !important;
+}
 .hm-rsd-native-shell .stButton > button{
-  min-height:1.65rem !important;
-  height:1.65rem !important;
-  padding:.05rem .48rem !important;
-  font-size:.70rem !important;
+  min-height:1.45rem !important;
+  height:1.45rem !important;
+  padding:.02rem .38rem !important;
+  font-size:.68rem !important;
+  border-radius:10px !important;
 }
 .hm-reference-shell{
   border:1.25px solid #D7BE91 !important;
@@ -7172,8 +7203,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v75: Final Report Diagnostics UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v76G"
-APP_BUILD_LABEL = "LAF Validation Button Polish"
+APP_BUILD_VERSION = "v76M"
+APP_BUILD_LABEL = "Bordered Recent Saved Days Table"
 
 def _build_badge_html():
     # Hide internal build labels from member-facing pages. Admin/developer screens still show the build marker.

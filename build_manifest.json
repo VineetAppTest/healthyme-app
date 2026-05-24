@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v75 Final Report Diagnostics UI",
-  "version": "v75_final_report_diagnostics_ui",
-  "updated_on": "2026-05-22T16:39:57.852314+00:00",
+  "build_name": "HealthyMe v76M Bordered Recent Saved Days Table",
+  "version": "v76M_bordered_recent_saved_days_table",
+  "updated_on": "2026-05-24T09:26:26.170045+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Moved Report data diagnostics below the final report download button.",
-    "Replaced Streamlit expander with cleaner Show/Hide diagnostics button.",
-    "Removed Download Final Report helper text block.",
-    "No business logic changed."
+    "Removed extra visual space from Recent saved days header row.",
+    "Added clear borders to Recent saved days tabular format.",
+    "Kept changes UI-only; no business logic or data storage changes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
