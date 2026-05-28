@@ -54,34 +54,91 @@ def meal_text(meal):
         return f"{tm}: {food}"
     return food
 
+
+def parse_time_minutes(value):
+    import re
+    raw = str(value or "").strip().upper().replace(":", ".")
+    m = re.match(r"^(\d{1,2})(?:\.(\d{2}))?\s*(AM|PM)$", raw)
+    if not m:
+        return None
+    hour = int(m.group(1))
+    minute = int(m.group(2) or 0)
+    mer = m.group(3)
+    if hour == 12:
+        hour = 0
+    if mer == "PM":
+        hour += 12
+    return hour * 60 + minute
+
+DEFAULT_MEAL_ANCHORS = {"breakfast": 8*60, "lunch": 13*60, "evening_snack": 17*60, "dinner": 20*60, "bedtime": 22*60}
+SNACK_KEYS = {"evening_snack", "snack", "snacks", "snacking"}
+
+def is_snack_key(key):
+    key = str(key or "").lower()
+    return key.startswith("other_") or key in SNACK_KEYS or "snack" in key
+
+def _meal_time_map(meals):
+    anchors = dict(DEFAULT_MEAL_ANCHORS)
+    for key in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]:
+        parsed = parse_time_minutes((meals.get(key, {}) or {}).get("time"))
+        if parsed is not None:
+            anchors[key] = parsed
+    return anchors
+
+def _snack_number(key):
+    try:
+        key_l = str(key or "").lower()
+        return int(key_l.split("_")[1]) if key_l.startswith("other_") else 0
+    except Exception:
+        return 0
+
+def dynamic_meal_sort_key(item, anchors):
+    key, meal = item
+    key_l = str(key or "").lower()
+    if key_l in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]:
+        return (anchors.get(key_l, DEFAULT_MEAL_ANCHORS.get(key_l, 23*60)), 0, 0)
+    if is_snack_key(key_l):
+        t = parse_time_minutes((meal or {}).get("time"))
+        if t is None:
+            t = DEFAULT_MEAL_ANCHORS["evening_snack"]
+        breakfast_t = anchors.get("breakfast", DEFAULT_MEAL_ANCHORS["breakfast"])
+        bedtime_t = anchors.get("bedtime", DEFAULT_MEAL_ANCHORS["bedtime"])
+        if t <= breakfast_t:
+            t = breakfast_t + 1
+        elif t >= bedtime_t:
+            t = bedtime_t - 1
+        return (t, 1, _snack_number(key_l))
+    return (23*60+1, 9, key_l)
+
 def labelled_poop_timings(day):
     timings = [str(x or "").strip() for x in (day.get("poop_timings", []) or []) if str(x or "").strip()]
     return ", ".join([f"Poop Timing {idx + 1}: {val}" for idx, val in enumerate(timings)])
 
 def meal_keys_for_day(day):
-    preferred = ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]
-    configured = {k: ("Snacking" if str(label).lower() == "other" else label) for k, label in MEAL_KEYS}
-    keys = [(k, configured[k]) for k in preferred if k in configured]
-    known = {k for k, _label in keys}
-    for k, label in MEAL_KEYS:
-        if k not in known and k != "other":
-            keys.append((k, "Snacking" if str(label).lower() == "other" else label))
-            known.add(k)
-    other_count = 0
-    for k, meal in (day.get("meals", {}) or {}).items():
+    meals = day.get("meals", {}) or {}
+    configured = {k: ("Snacks" if str(label).lower() in {"other", "evening snack", "snack", "snacking"} else label) for k, label in MEAL_KEYS}
+    keys = []
+    known = set()
+    for key in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]:
+        if key in configured or key in meals:
+            label = configured.get(key, key.replace("_", " ").title())
+            if key == "evening_snack":
+                label = "Snacks"
+            keys.append((key, label))
+            known.add(key)
+    for k, meal in meals.items():
         if k in known:
             continue
         if str(k).startswith("other_"):
-            other_count += 1
-            label = "Snacking" if other_count == 1 else f"Snacking {other_count - 1}"
+            label = meal.get("label") or f"Snack {_snack_number(k)}"
         else:
-            label = meal.get("label", k.replace("_", " ").title())
-            if str(label).lower().startswith("other"):
-                other_count += 1
-                label = "Snacking" if other_count == 1 else f"Snacking {other_count - 1}"
+            label = meal.get("label", configured.get(k, k.replace("_", " ").title()))
+        if str(label).lower().startswith("other"):
+            label = "Snack"
         keys.append((k, label))
         known.add(k)
-    return keys
+    anchors = _meal_time_map(meals)
+    return sorted(keys, key=lambda item: dynamic_meal_sort_key((item[0], meals.get(item[0], {})), anchors))
 
 def flatten_day(day, supervision_notes=None):
     base = {
@@ -295,13 +352,10 @@ else:
         latest_note_text = ""
         if latest_note:
             latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
+        meal_order_text = " | ".join([f"{label}: {meal_text((d.get('meals', {}).get(key, {}) or {}))}" for key, label in meal_keys_for_day(d) if meal_text((d.get('meals', {}).get(key, {}) or {}))])
         rows.append({
             "Date": display_date(d.get("date", "")),
-            "Breakfast": meal_text((d.get("meals", {}).get("breakfast", {}) or {})),
-            "Lunch": meal_text((d.get("meals", {}).get("lunch", {}) or {})),
-            "Evening Snack": meal_text((d.get("meals", {}).get("evening_snack", {}) or {})),
-            "Dinner": meal_text((d.get("meals", {}).get("dinner", {}) or {})),
-            "Bedtime": meal_text((d.get("meals", {}).get("bedtime", {}) or {})),
+            "Meal Order": meal_order_text,
             "Water": d.get("water_litres", ""),
             "Activity": d.get("physical_activity", ""),
             "Poop Rounds": d.get("poop_rounds", ""),

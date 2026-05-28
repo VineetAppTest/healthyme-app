@@ -189,6 +189,13 @@ def parse_time_minutes(value):
 
 MEAL_BASE_ORDER = ["breakfast", "lunch", "dinner", "bedtime"]
 SNACK_KEYS = {"evening_snack", "snack", "snacks", "snacking"}
+DEFAULT_MEAL_ANCHORS = {
+    "breakfast": 8 * 60,
+    "lunch": 13 * 60,
+    "evening_snack": 17 * 60,
+    "dinner": 20 * 60,
+    "bedtime": 22 * 60,
+}
 
 def is_snack_key(key):
     key = str(key or "").lower()
@@ -207,39 +214,53 @@ def normalise_meal_label(key, meal):
             return "Snack"
     return label or key_l.replace("_", " ").title()
 
-def meal_sort_key_dynamic(item):
+def _meal_time_map(meal_items):
+    meals = dict(meal_items or [])
+    anchors = dict(DEFAULT_MEAL_ANCHORS)
+    for key in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]:
+        parsed = parse_time_minutes((meals.get(key, {}) or {}).get("time"))
+        if parsed is not None:
+            anchors[key] = parsed
+    return anchors
+
+def _snack_number(key):
+    key_l = str(key or "").lower()
+    try:
+        return int(key_l.split("_")[1]) if key_l.startswith("other_") else 0
+    except Exception:
+        return 0
+
+def meal_sort_key_dynamic_with_context(item, anchors=None):
+    """Sort meals in eating order. Snack 1..9 are dynamic by time but clamped inside breakfast-bedtime."""
     key, meal = item
     key_l = str(key or "").lower()
-    tm = parse_time_minutes((meal or {}).get("time"))
-    # Bedtime must remain last among standard meals.
-    if key_l == "breakfast":
-        return (10, 0)
-    if key_l == "lunch":
-        return (30, 0)
-    if key_l == "dinner":
-        return (50, 0)
-    if key_l == "bedtime":
-        return (70, 0)
+    anchors = anchors or DEFAULT_MEAL_ANCHORS
+    if key_l in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]:
+        return (anchors.get(key_l, DEFAULT_MEAL_ANCHORS.get(key_l, 23 * 60)), 0, 0)
     if is_snack_key(key_l):
-        # Place snacks by eating time, but never before breakfast and never after bedtime.
-        # Default anchors: breakfast 08:00, lunch 13:00, dinner 20:00, bedtime 22:00.
-        t = tm if tm is not None else 17 * 60
-        if t < 13 * 60:
-            bucket = 20  # after breakfast, before lunch
-        elif t < 20 * 60:
-            bucket = 40  # after lunch, before dinner
-        else:
-            bucket = 60  # after dinner, before bedtime
-        try:
-            snack_num = int(key_l.split("_")[1]) if key_l.startswith("other_") else 0
-        except Exception:
-            snack_num = 0
-        return (bucket, t, snack_num)
-    return (80, key_l)
+        raw_t = parse_time_minutes((meal or {}).get("time"))
+        t = raw_t if raw_t is not None else DEFAULT_MEAL_ANCHORS["evening_snack"]
+        # Snacks cannot appear before breakfast or after bedtime. If the time is outside
+        # the allowed window, clamp the display position inside the day boundary.
+        breakfast_t = anchors.get("breakfast", DEFAULT_MEAL_ANCHORS["breakfast"])
+        bedtime_t = anchors.get("bedtime", DEFAULT_MEAL_ANCHORS["bedtime"])
+        if t <= breakfast_t:
+            t = breakfast_t + 1
+        elif t >= bedtime_t:
+            t = bedtime_t - 1
+        return (t, 1, _snack_number(key_l))
+    return (23 * 60 + 1, 9, key_l)
+
+def meal_sort_key_dynamic(item):
+    return meal_sort_key_dynamic_with_context(item)
+
+def sorted_meal_items_dynamic(meal_items):
+    anchors = _meal_time_map(meal_items)
+    return sorted(meal_items or [], key=lambda item: meal_sort_key_dynamic_with_context(item, anchors))
 
 def render_meal_summary_html(meal_items):
     lines = []
-    for key, meal in sorted(meal_items, key=meal_sort_key_dynamic):
+    for key, meal in sorted_meal_items_dynamic(meal_items):
         if not (meal or {}).get("food"):
             continue
         label = html.escape(normalise_meal_label(key, meal))
@@ -250,6 +271,18 @@ def render_meal_summary_html(meal_items):
         else:
             lines.append(f"<div class='hm-rsd-meal-line'><span class='hm-rsd-meal-label'>{label}:</span> {food}</div>")
     return "".join(lines) or "—"
+
+def snack_time_within_day_bounds(section_key, payload, existing_meals):
+    if not is_snack_key(section_key):
+        return True
+    snack_t = parse_time_minutes((payload or {}).get("time"))
+    # If no snack time is selected, do not block save; display ordering will use the default snack anchor.
+    if snack_t is None:
+        return True
+    anchors = _meal_time_map((existing_meals or {}).items())
+    breakfast_t = anchors.get("breakfast", DEFAULT_MEAL_ANCHORS["breakfast"])
+    bedtime_t = anchors.get("bedtime", DEFAULT_MEAL_ANCHORS["bedtime"])
+    return breakfast_t < snack_t < bedtime_t
 
 def day_detail_has_data(water_litres, physical_activity, poop_rounds, poop_timings, feeling_after_poop, day_notes):
     return any([
@@ -324,8 +357,11 @@ meal_sections = [(k, section_lookup[k]) for k in preferred_order if k in section
 meal_sections += [(k, v) for k, v in base_sections if k not in preferred_order and k != "other"]
 for idx in range(1, st.session_state.get("daily_log_other_count", 1) + 1):
     meal_sections.append((f"other_{idx}", f"Snack {idx}"))
-# Present meal tabs in the required standard order; saved-day summaries use eating time to position snacks.
-meal_sections = sorted(meal_sections, key=lambda item: meal_sort_key_dynamic((item[0], {"label": item[1], "time": existing_meals.get(item[0], {}).get("time", "")})))
+# Present meal tabs in eating order. Snack 1..9 are positioned by saved eating time,
+# but remain inside breakfast-bedtime boundaries.
+section_sort_items = [(key, {"label": label, "time": existing_meals.get(key, {}).get("time", "")}) for key, label in meal_sections]
+section_order = [key for key, _meal in sorted_meal_items_dynamic(section_sort_items)]
+meal_sections = sorted(meal_sections, key=lambda item: section_order.index(item[0]) if item[0] in section_order else 999)
 
 if not meal_sections:
     st.warning("No meal sections are currently active. Please contact admin.")
@@ -393,6 +429,8 @@ with c_save:
     if st.button(f"Save {active_label}", type="primary", use_container_width=True):
         if not meal_has_data(active_payload):
             st.error("Please enter at least one detail for this meal before saving.")
+        elif is_snack_key(active_key) and not snack_time_within_day_bounds(active_key, active_payload, existing_meals):
+            st.error("Snack time must be after Breakfast and before Bedtime.")
         else:
             save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
             set_system_message(f"{active_label} saved for {display_date(log_date)}.", "success")
