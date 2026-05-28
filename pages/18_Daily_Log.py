@@ -146,7 +146,7 @@ def day_detail_has_data(water_litres, physical_activity, poop_rounds, poop_timin
     return any([
         water_litres and water_litres != "Select",
         str(physical_activity or "").strip(),
-        poop_rounds and str(poop_rounds) != "Select",
+        poop_rounds is not None and str(poop_rounds) != "Select",
         any(str(x or "").strip() for x in (poop_timings or [])),
         str(feeling_after_poop or "").strip(),
         str(day_notes or "").strip(),
@@ -309,6 +309,18 @@ with left_col:
         placeholder="Example: Walk 30 mins at 07.00 AM / strength training 01.00 PM - 02.00 PM",
         height=96,
     )
+
+with right_col:
+    poop_options = ["Select", 0] + list(range(1, 10))
+    existing_poop_rounds = existing.get("poop_rounds", "Select")
+    if existing_poop_rounds in (None, "", "Select"):
+        existing_poop_rounds = "Select"
+    elif str(existing_poop_rounds).isdigit():
+        existing_poop_rounds = int(existing_poop_rounds)
+    poop_widget_key = f"poop_rounds_{user_id}_{str(log_date)}"
+    if poop_widget_key not in st.session_state:
+        st.session_state[poop_widget_key] = existing_poop_rounds
+    poop_rounds = st.selectbox("Poop rounds", poop_options, key=poop_widget_key)
     feeling_after_poop = st.text_area(
         "Feeling after poop",
         value=existing.get("feeling_after_poop", ""),
@@ -316,43 +328,25 @@ with left_col:
         height=96,
     )
 
-with right_col:
-    poop_options = ["Select"] + list(range(1, 10))
-    existing_poop_rounds = existing.get("poop_rounds", "Select")
-    if existing_poop_rounds in (None, "", 0, "0"):
-        existing_poop_rounds = "Select"
-    if str(existing_poop_rounds).isdigit():
-        existing_poop_rounds = int(existing_poop_rounds)
-    poop_round_index = poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0
-    # Important: key is scoped by member + date so a previous day's selection
-    # does not leak into a fresh journal day. Default stays Select = all 9 inactive.
-    poop_widget_key = f"poop_rounds_{user_id}_{str(log_date)}"
-    has_saved_poop_rounds = existing.get("poop_rounds") not in (None, "", 0, "0", "Select")
-    has_saved_poop_timings = any(str(x or "").strip() for x in (existing.get("poop_timings", []) or []))
-    if not has_saved_poop_rounds and not has_saved_poop_timings:
-        st.session_state[poop_widget_key] = "Select"
-    poop_rounds = st.selectbox("Poop rounds", poop_options, index=poop_round_index, key=poop_widget_key)
-    st.caption("All 9 slots are visible. They remain inactive until poop rounds are selected.")
-    poop_timings = []
-    existing_timings = existing.get("poop_timings", []) or []
-    timing_values = time_options()
-    timing_cols = st.columns(3)
-    enabled_count = int(poop_rounds) if poop_rounds != "Select" else 0
-    for idx in range(9):
-        default_timing = existing_timings[idx] if idx < len(existing_timings) else ""
-        default_timing = normalise_time_value(default_timing)
-        timing_index = timing_values.index(default_timing) if default_timing in timing_values else 0
-        with timing_cols[idx % 3]:
-            val = st.selectbox(
-                f"Poop timing {idx + 1}",
-                timing_values,
-                index=timing_index,
-                key=f"poop_timing_{user_id}_{str(log_date)}_{idx + 1}",
-                disabled=(idx >= enabled_count),
-                format_func=lambda x: "Not active" if x == "" else x,
-            )
-            if idx < enabled_count:
-                poop_timings.append(val)
+st.caption("All 9 poop timing slots remain visible. Select 0 to keep all inactive; selecting 1-9 activates the matching number of slots.")
+poop_timings = []
+existing_timings = existing.get("poop_timings", []) or []
+timing_values = time_options()
+enabled_count = int(poop_rounds) if str(poop_rounds).isdigit() else 0
+for idx in range(9):
+    default_timing = existing_timings[idx] if idx < len(existing_timings) else ""
+    default_timing = normalise_time_value(default_timing)
+    timing_index = timing_values.index(default_timing) if default_timing in timing_values else 0
+    val = st.selectbox(
+        f"Poop Timing {idx + 1}",
+        timing_values,
+        index=timing_index,
+        key=f"poop_timing_{user_id}_{str(log_date)}_{idx + 1}",
+        disabled=(idx >= enabled_count),
+        format_func=lambda x: "Not active" if x == "" else x,
+    )
+    if idx < enabled_count:
+        poop_timings.append(val)
 poop = ""
 day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=85)
 
@@ -377,8 +371,8 @@ with c_save_2:
             "poop_timings": [x.strip() for x in poop_timings],
             "feeling_after_poop": feeling_after_poop.strip(),
             "poop": (
-                (f"{poop_rounds} round(s)" if poop_rounds != "Select" else "")
-                + (f" at {', '.join([x.strip() for x in poop_timings if x.strip()])}" if poop_rounds != "Select" and any(x.strip() for x in poop_timings) else "")
+                (f"{poop_rounds} round(s)" if str(poop_rounds).isdigit() and int(poop_rounds) > 0 else "")
+                + (f" at {', '.join([x.strip() for x in poop_timings if x.strip()])}" if str(poop_rounds).isdigit() and int(poop_rounds) > 0 and any(x.strip() for x in poop_timings) else "")
                 + (f" / {feeling_after_poop.strip()}" if feeling_after_poop.strip() else "")
             ),
             "notes": day_notes.strip(),
@@ -417,7 +411,18 @@ else:
     for day in days[:14]:
         day_date = day.get("date", "")
         meal_summary = []
-        for _k, meal in (day.get("meals", {}) or {}).items():
+        meal_items = list((day.get("meals", {}) or {}).items())
+        def _meal_sort_key(item):
+            key, _meal = item
+            if key in preferred_order:
+                return (preferred_order.index(key), 0)
+            if str(key).startswith("other_"):
+                try:
+                    return (len(preferred_order), int(str(key).split("_")[1]))
+                except Exception:
+                    return (len(preferred_order), 999)
+            return (len(preferred_order) + 1, str(key))
+        for _k, meal in sorted(meal_items, key=_meal_sort_key):
             if meal.get("food"):
                 label = meal.get('label','')
                 meal_summary.append(meal_display(label, meal))
