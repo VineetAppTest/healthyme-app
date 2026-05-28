@@ -369,9 +369,25 @@ if "daily_log_other_count" not in st.session_state:
 with st.container(border=True):
     st.markdown("<div class='hm-food-date-marker'></div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-food-date-title'>📅 Food Journal Date</div>", unsafe_allow_html=True)
-    log_date = st.date_input("Food journal date", value=date.today(), format="DD/MM/YYYY", label_visibility="collapsed")
+    log_date = st.date_input("Food journal date", value=date.today(), format="DD/MM/YYYY", label_visibility="collapsed", key="daily_food_log_date")
+
+current_log_date_key = str(log_date)
+previous_log_date_key = st.session_state.get("daily_food_log_active_date")
+if previous_log_date_key and previous_log_date_key != current_log_date_key:
+    # Food Log date changed: clear transient form widgets so entries from the previous
+    # date do not carry forward visually into the newly selected day. Saved data for
+    # the newly selected date is loaded below from storage.
+    for section_key in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"] + [f"other_{idx}" for idx in range(1, 10)]:
+        for suffix in ("time", "food", "portion", "mood"):
+            st.session_state.pop(f"{section_key}_{suffix}", None)
+    st.session_state.pop("active_daily_meal_section", None)
+    st.session_state.pop("daily_log_other_count", None)
+    st.session_state.pop("daily_log_other_count_date", None)
+    st.session_state.pop("selected_daily_note_history_date", None)
+st.session_state["daily_food_log_active_date"] = current_log_date_key
+
 st.markdown(f"<div class='hm-context-note'>Food Journal Date: <b>{display_date(log_date)}</b></div>", unsafe_allow_html=True)
-existing = get_daily_food_journal_day(user_id, str(log_date))
+existing = get_daily_food_journal_day(user_id, current_log_date_key)
 existing_meals = existing.get("meals", {}) if existing else {}
 
 existing_other_nums = []
@@ -386,7 +402,6 @@ for key in existing_meals.keys():
 # Keep the dynamic snack count scoped to the selected food-journal date.
 # Without this, Streamlit session state can carry Snack 1 from a previous date
 # and make it look visible by default on a fresh journal day.
-current_log_date_key = str(log_date)
 saved_other_count = max(existing_other_nums) if existing_other_nums else 0
 if st.session_state.get("daily_log_other_count_date") != current_log_date_key:
     st.session_state["daily_log_other_count"] = saved_other_count
@@ -517,12 +532,13 @@ existing_water = existing.get("water_litres", "Select") or "Select"
 water_index = water_options.index(existing_water) if existing_water in water_options else 0
 left_col, right_col = st.columns([1, 1])
 with left_col:
-    water_litres = st.selectbox("Water intake for the full day", water_options, index=water_index)
+    water_litres = st.selectbox("Water intake for the full day", water_options, index=water_index, key=f"water_litres_{user_id}_{current_log_date_key}")
     physical_activity = st.text_area(
         "Physical activity - time of day and duration",
         value=existing.get("physical_activity", ""),
         placeholder="Example: Walk 30 mins at 07.00 AM / strength training 01.00 PM - 02.00 PM",
         height=96,
+        key=f"physical_activity_{user_id}_{current_log_date_key}",
     )
 
 with right_col:
@@ -563,9 +579,10 @@ feeling_after_poop = st.text_area(
     value=existing.get("feeling_after_poop", ""),
     placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
     height=85,
+    key=f"feeling_after_poop_{user_id}_{current_log_date_key}",
 )
 poop = ""
-day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=85)
+day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=85, key=f"day_notes_{user_id}_{current_log_date_key}")
 
 c_save_1, c_save_2 = st.columns(2)
 with c_save_1:
