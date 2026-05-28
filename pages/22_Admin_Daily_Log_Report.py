@@ -92,23 +92,36 @@ def _snack_number(key):
     except Exception:
         return 0
 
+STANDARD_MEAL_ORDER_RANK = {"breakfast": 1000, "lunch": 3000, "evening_snack": 5000, "dinner": 7000, "bedtime": 9000}
+
 def dynamic_meal_sort_key(item, anchors):
     key, meal = item
     key_l = str(key or "").lower()
-    if key_l in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]:
-        return (anchors.get(key_l, DEFAULT_MEAL_ANCHORS.get(key_l, 23*60)), 0, 0)
+    if key_l in STANDARD_MEAL_ORDER_RANK:
+        return (STANDARD_MEAL_ORDER_RANK[key_l], 0, 0)
     if is_snack_key(key_l):
         t = parse_time_minutes((meal or {}).get("time"))
         if t is None:
             t = DEFAULT_MEAL_ANCHORS["evening_snack"]
         breakfast_t = anchors.get("breakfast", DEFAULT_MEAL_ANCHORS["breakfast"])
+        lunch_t = anchors.get("lunch", DEFAULT_MEAL_ANCHORS["lunch"])
+        snacks_t = anchors.get("evening_snack", DEFAULT_MEAL_ANCHORS["evening_snack"])
+        dinner_t = anchors.get("dinner", DEFAULT_MEAL_ANCHORS["dinner"])
         bedtime_t = anchors.get("bedtime", DEFAULT_MEAL_ANCHORS["bedtime"])
         if t <= breakfast_t:
             t = breakfast_t + 1
         elif t >= bedtime_t:
             t = bedtime_t - 1
-        return (t, 1, _snack_number(key_l))
-    return (23*60+1, 9, key_l)
+        if t < lunch_t:
+            bucket = 2000
+        elif t < snacks_t:
+            bucket = 4000
+        elif t < dinner_t:
+            bucket = 6000
+        else:
+            bucket = 8000
+        return (bucket, t, _snack_number(key_l))
+    return (9999, 9, key_l)
 
 def labelled_poop_timings(day):
     timings = [str(x or "").strip() for x in (day.get("poop_timings", []) or []) if str(x or "").strip()]

@@ -230,26 +230,56 @@ def _snack_number(key):
     except Exception:
         return 0
 
+STANDARD_MEAL_ORDER_RANK = {
+    "breakfast": 1000,
+    "lunch": 3000,
+    "evening_snack": 5000,  # displayed as Snacks
+    "dinner": 7000,
+    "bedtime": 9000,
+}
+
 def meal_sort_key_dynamic_with_context(item, anchors=None):
-    """Sort meals in eating order. Snack 1..9 are dynamic by time but clamped inside breakfast-bedtime."""
+    """
+    Fixed meals stay in the required business order:
+    Breakfast -> Lunch -> Snacks -> Dinner -> Bedtime.
+
+    Snack 1..9 are the only dynamic sections. They are inserted basis their
+    saved eating time, but never before Breakfast or after Bedtime.
+    """
     key, meal = item
     key_l = str(key or "").lower()
     anchors = anchors or DEFAULT_MEAL_ANCHORS
-    if key_l in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]:
-        return (anchors.get(key_l, DEFAULT_MEAL_ANCHORS.get(key_l, 23 * 60)), 0, 0)
+
+    if key_l in STANDARD_MEAL_ORDER_RANK:
+        return (STANDARD_MEAL_ORDER_RANK[key_l], 0, 0)
+
     if is_snack_key(key_l):
         raw_t = parse_time_minutes((meal or {}).get("time"))
         t = raw_t if raw_t is not None else DEFAULT_MEAL_ANCHORS["evening_snack"]
-        # Snacks cannot appear before breakfast or after bedtime. If the time is outside
-        # the allowed window, clamp the display position inside the day boundary.
+
         breakfast_t = anchors.get("breakfast", DEFAULT_MEAL_ANCHORS["breakfast"])
+        lunch_t = anchors.get("lunch", DEFAULT_MEAL_ANCHORS["lunch"])
+        snacks_t = anchors.get("evening_snack", DEFAULT_MEAL_ANCHORS["evening_snack"])
+        dinner_t = anchors.get("dinner", DEFAULT_MEAL_ANCHORS["dinner"])
         bedtime_t = anchors.get("bedtime", DEFAULT_MEAL_ANCHORS["bedtime"])
+
+        # Display clamp only. Save validation below blocks out-of-bound snack times.
         if t <= breakfast_t:
             t = breakfast_t + 1
         elif t >= bedtime_t:
             t = bedtime_t - 1
-        return (t, 1, _snack_number(key_l))
-    return (23 * 60 + 1, 9, key_l)
+
+        if t < lunch_t:
+            bucket = 2000   # after Breakfast, before Lunch
+        elif t < snacks_t:
+            bucket = 4000   # after Lunch, before Snacks
+        elif t < dinner_t:
+            bucket = 6000   # after Snacks, before Dinner
+        else:
+            bucket = 8000   # after Dinner, before Bedtime
+        return (bucket, t, _snack_number(key_l))
+
+    return (9999, 9, key_l)
 
 def meal_sort_key_dynamic(item):
     return meal_sort_key_dynamic_with_context(item)
@@ -327,11 +357,14 @@ def is_dirty(existing_meals, section_key, section_label):
 ensure_other_meal_section()
 meal_repo = get_meal_type_repository()
 
-base_sections = [(r["key"], r["label"]) for r in meal_repo if r.get("key") != "other"]
+base_sections = [(r["key"], "Snacks" if r.get("key") == "evening_snack" else r["label"]) for r in meal_repo if r.get("key") != "other"]
 other_enabled = True
 
 if "daily_log_other_count" not in st.session_state:
-    st.session_state["daily_log_other_count"] = 1
+    # Extra snack sections should not appear by default.
+    # Default meal order must remain: Breakfast -> Lunch -> Snacks -> Dinner -> Bedtime.
+    # Snack 1..9 appear only after the member taps + Snacking or when previously saved.
+    st.session_state["daily_log_other_count"] = 0
 
 with st.container(border=True):
     st.markdown("<div class='hm-food-date-marker'></div>", unsafe_allow_html=True)
@@ -355,11 +388,23 @@ preferred_order = ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]
 section_lookup = {k: v for k, v in base_sections}
 meal_sections = [(k, section_lookup[k]) for k in preferred_order if k in section_lookup]
 meal_sections += [(k, v) for k, v in base_sections if k not in preferred_order and k != "other"]
-for idx in range(1, st.session_state.get("daily_log_other_count", 1) + 1):
+for idx in range(1, st.session_state.get("daily_log_other_count", 0) + 1):
     meal_sections.append((f"other_{idx}", f"Snack {idx}"))
-# Present meal tabs in eating order. Snack 1..9 are positioned by saved eating time,
-# but remain inside breakfast-bedtime boundaries.
-section_sort_items = [(key, {"label": label, "time": existing_meals.get(key, {}).get("time", "")}) for key, label in meal_sections]
+
+def section_time_for_order(section_key):
+    """Use saved time first, then current widget state, so Snack 1..9 reorders by eating time.
+
+    This only affects display order. Save validation still blocks Snack 1..9
+    before Breakfast or after Bedtime.
+    """
+    session_value = st.session_state.get(f"{section_key}_time", "")
+    if session_value:
+        return session_value
+    return existing_meals.get(section_key, {}).get("time", "")
+
+# Present meal tabs in eating order. Snack 1..9 are positioned by eating time.
+# Fixed meals remain: Breakfast -> Lunch -> Snacks -> Dinner -> Bedtime.
+section_sort_items = [(key, {"label": label, "time": section_time_for_order(key)}) for key, label in meal_sections]
 section_order = [key for key, _meal in sorted_meal_items_dynamic(section_sort_items)]
 meal_sections = sorted(meal_sections, key=lambda item: section_order.index(item[0]) if item[0] in section_order else 999)
 
@@ -399,8 +444,12 @@ with add_cols[0]:
         if is_dirty(existing_meals, active_key, active_label):
             st.warning(f"Please save the section ({active_label}) before adding another Snacking section.")
         else:
-            st.session_state["daily_log_other_count"] = st.session_state.get("daily_log_other_count", 1) + 1
-            st.session_state["active_daily_meal_section"] = f"other_{st.session_state['daily_log_other_count']}"
+            current_count = st.session_state.get("daily_log_other_count", 0)
+            if current_count >= 9:
+                st.warning("You can add up to Snack 9 only.")
+            else:
+                st.session_state["daily_log_other_count"] = current_count + 1
+                st.session_state["active_daily_meal_section"] = f"other_{st.session_state['daily_log_other_count']}"
             st.rerun()
 with add_cols[1]:
     st.caption("Use Snacking for eating times beyond the standard meals.")
