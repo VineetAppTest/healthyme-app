@@ -381,8 +381,18 @@ for key in existing_meals.keys():
             existing_other_nums.append(int(key.split("_")[1]))
         except Exception:
             pass
-if existing_other_nums:
-    st.session_state["daily_log_other_count"] = max(st.session_state.get("daily_log_other_count", 1), max(existing_other_nums))
+
+# Snack 1-9 must not appear by default.
+# Keep the dynamic snack count scoped to the selected food-journal date.
+# Without this, Streamlit session state can carry Snack 1 from a previous date
+# and make it look visible by default on a fresh journal day.
+current_log_date_key = str(log_date)
+saved_other_count = max(existing_other_nums) if existing_other_nums else 0
+if st.session_state.get("daily_log_other_count_date") != current_log_date_key:
+    st.session_state["daily_log_other_count"] = saved_other_count
+    st.session_state["daily_log_other_count_date"] = current_log_date_key
+elif saved_other_count:
+    st.session_state["daily_log_other_count"] = max(st.session_state.get("daily_log_other_count", 0), saved_other_count)
 
 preferred_order = ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]
 section_lookup = {k: v for k, v in base_sections}
@@ -455,6 +465,7 @@ with add_cols[0]:
                 st.warning("You can add up to Snack 9 only.")
             else:
                 st.session_state["daily_log_other_count"] = current_count + 1
+                st.session_state["daily_log_other_count_date"] = str(log_date)
                 st.session_state["active_daily_meal_section"] = f"other_{st.session_state['daily_log_other_count']}"
             st.rerun()
 with add_cols[1]:
