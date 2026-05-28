@@ -135,10 +135,7 @@
     "25_Admin_Daily_Log_Settings.py": 148
   },
   "compile_repair": "Fixed Final Assessment Report ui_common multiline import after Back to Top injection.",
-  "notes": [
-    "If the browser still auto-logs in after reboot, that means the Auth0/OIDC identity cookie is still active in the browser; the app now calls st.logout directly to clear it.",
-    "Old Daily Food Journal rows are grouped by date for admin view."
-  ],
+  "notes": "Adds 0 poop rounds, fixes mobile meal/timing order, and keeps timing slots inactive until selected.",
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
@@ -213,5 +210,7 @@
     ]
   },
   "remaining_missing_standard_imports": {},
-  "final_report_has_json_import": true
+  "final_report_has_json_import": true,
+  "build": "v76O",
+  "label": "Poop and Mobile Daily Log Fixes"
 }

@@ -706,3 +706,12 @@
 - Admin Daily Food Journal Report: added prominent Review Context selector card for member/date.
 - Admin Daily Food Journal Report: included meal time with food in All Saved Days and Excel export.
 - Admin Daily Food Journal Report: labelled poop timing values as Poop Timing 1, Poop Timing 2, etc.
+
+
+## v76O - Poop and Mobile Daily Log Fixes
+- Added 0 to Poop Rounds.
+- Kept all 9 timing slots visible but inactive for Select/0.
+- Prevented Poop Rounds selection from resetting on rerun.
+- Moved Feeling after poop after Poop Rounds.
+- Rendered Poop Timing 1-9 in strict order for mobile.
+- Enforced meal display order in Recent Saved Days.
