@@ -424,18 +424,24 @@ active_key = st.session_state["active_daily_meal_section"]
 active_label = next((label for key, label in meal_sections if key == active_key), meal_sections[0][1])
 
 # Compact meal selector with reduced header/footer space.
+# IMPORTANT: render buttons row-wise, not column-bucket-wise.
+# Streamlit stacks columns vertically on mobile; the older idx % max_cols pattern caused
+# mobile ordering like Breakfast -> Dinner -> Lunch. Row-wise chunks preserve the
+# required visible order on both desktop and mobile.
 max_cols = 4 if len(meal_sections) >= 4 else len(meal_sections)
-cols = st.columns(max_cols)
-for idx, (key, label) in enumerate(meal_sections):
-    with cols[idx % max_cols]:
-        saved = meal_has_data(existing_meals.get(key, {}))
-        short_label = f"{'● ' if key == active_key else ''}{label}{' ✓' if saved else ''}"
-        if st.button(short_label, key=f"section_btn_{key}", use_container_width=True):
-            if key != active_key and is_dirty(existing_meals, active_key, active_label):
-                st.warning(f"Please save the section ({active_label}) before moving to next section.")
-            else:
-                st.session_state["active_daily_meal_section"] = key
-                st.rerun()
+for row_start in range(0, len(meal_sections), max_cols):
+    row_sections = meal_sections[row_start:row_start + max_cols]
+    cols = st.columns(len(row_sections))
+    for col, (key, label) in zip(cols, row_sections):
+        with col:
+            saved = meal_has_data(existing_meals.get(key, {}))
+            short_label = f"{'● ' if key == active_key else ''}{label}{' ✓' if saved else ''}"
+            if st.button(short_label, key=f"section_btn_{key}", use_container_width=True):
+                if key != active_key and is_dirty(existing_meals, active_key, active_label):
+                    st.warning(f"Please save the section ({active_label}) before moving to next section.")
+                else:
+                    st.session_state["active_daily_meal_section"] = key
+                    st.rerun()
 
 # Other is now very visible directly below the buttons.
 add_cols = st.columns([1, 2])
