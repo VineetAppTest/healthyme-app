@@ -1,25 +1,25 @@
 {
-  "build_name": "HealthyMe v76M Bordered Recent Saved Days Table",
-  "version": "v76M_bordered_recent_saved_days_table",
-  "updated_on": "2026-05-24T09:26:26.170045+00:00",
+  "build_name": "HealthyMe v76X Mobile-Only UX Optimization",
+  "version": "v76X_mobile_only_ux_optimization",
+  "updated_on": "2026-05-28T21:01:43+00:00",
   "scope": [
-    "UI-only patch for Daily Log Recent saved days",
-    "Replaced plain dataframe with premium rounded card/table layout",
-    "Kept current headers: Date, Meals Logged, Water, Notes, Nutritionist Notes, Action",
-    "Meals Logged displayed as simple text progress like 3/5",
-    "View history button opens same-date nutritionist note history only",
-    "Business logic unchanged"
+    "Mobile-only Daily Food Journal UX optimization using max-width responsive CSS only",
+    "Desktop Recent Saved Days table and desktop structure preserved as-is",
+    "Recent Saved Days continues to render as desktop table on laptop/desktop and mobile cards on phone",
+    "Mobile cards made more readable with stacked labels, compact spacing, full-width-friendly actions, and safer text wrapping",
+    "Includes latest date-scoped Food Log widget state from v76W"
   ],
   "excluded": [
+    "No desktop table or desktop layout redesign",
     "No scoring changes",
     "No authentication changes",
     "No report calculation changes",
-    "No new feature expansion"
+    "No database schema changes"
   ],
   "latest_fix": [
-    "Removed extra visual space from Recent saved days header row.",
-    "Added clear borders to Recent saved days tabular format.",
-    "Kept changes UI-only; no business logic or data storage changes."
+    "Created current-order build for the previously discussed v76R Mobile-Only UX Optimization scope.",
+    "Kept all desktop behavior untouched; changes are contained inside @media (max-width: 760px).",
+    "Retained Food Log date-scoped widget keys from v76W."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -211,6 +211,6 @@
   },
   "remaining_missing_standard_imports": {},
   "final_report_has_json_import": true,
-  "build": "v76O",
-  "label": "Poop and Mobile Daily Log Fixes"
+  "build": "v76X",
+  "label": "Mobile-Only UX Optimization"
 }

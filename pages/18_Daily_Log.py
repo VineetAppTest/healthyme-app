@@ -118,10 +118,42 @@ st.markdown(
     .hm-rsd-mobile-row { display:flex; gap:.35rem; align-items:flex-start; margin:.22rem 0; line-height:1.25; }
     .hm-rsd-mobile-row b { min-width:5.3rem; color:#475569; font-weight:850; }
     .hm-rsd-action-note { color:#64748B; font-size:.78rem; margin-top:.35rem; }
+    /* v76X: Mobile-only UX optimization. Desktop table/structure remains untouched. */
     @media (max-width: 760px) {
       .hm-rsd-responsive-desktop { display:none !important; }
       .hm-rsd-responsive-mobile { display:block !important; }
       .hm-compact-section-head { margin-bottom:.25rem !important; }
+      .hm-rsd-mobile-card {
+        padding:.72rem .75rem !important;
+        margin:.55rem 0 !important;
+        border-radius:15px !important;
+      }
+      .hm-rsd-mobile-row {
+        display:block !important;
+        margin:.38rem 0 !important;
+      }
+      .hm-rsd-mobile-row b {
+        display:block !important;
+        min-width:0 !important;
+        margin-bottom:.12rem !important;
+        color:#064E3B !important;
+      }
+      .hm-rsd-mobile-row span {
+        display:block !important;
+        overflow-wrap:anywhere !important;
+      }
+      .hm-rsd-meal-line {
+        margin:.18rem 0 !important;
+        padding:.18rem 0 !important;
+        border-bottom:1px dashed #EFE3CE;
+      }
+      .hm-rsd-meal-line:last-child { border-bottom:none; }
+      div[data-testid="stButton"] > button {
+        min-height:2.65rem !important;
+      }
+      div[data-testid="stHorizontalBlock"] {
+        gap:.35rem !important;
+      }
     }
 
     </style>
