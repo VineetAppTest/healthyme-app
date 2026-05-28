@@ -97,6 +97,33 @@ st.markdown(
     div[data-testid="stVerticalBlock"] > div:has(.hm-meal-title) {
         gap: .2rem !important;
     }
+
+    .hm-rsd-responsive-desktop { display:block; }
+    .hm-rsd-responsive-mobile { display:none; }
+    .hm-rsd-table {
+      width:100%; border-collapse:separate; border-spacing:0; overflow:hidden;
+      border:1px solid #E7D8BE; border-radius:14px; background:#FFFDF8;
+      font-size:.9rem;
+    }
+    .hm-rsd-table th { text-align:left; padding:.62rem .7rem; background:#FFFBF4; color:#334155; border-bottom:1px solid #E7D8BE; font-weight:850; }
+    .hm-rsd-table td { vertical-align:top; padding:.68rem .7rem; border-bottom:1px solid #EFE3CE; color:#263238; }
+    .hm-rsd-table tr:last-child td { border-bottom:none; }
+    .hm-rsd-meal-line { margin:.08rem 0; line-height:1.25; }
+    .hm-rsd-meal-label { font-weight:850; color:#064E3B; }
+    .hm-rsd-mobile-card {
+      border:1px solid #E7D8BE; border-radius:16px; background:#FFFDF8;
+      padding:.75rem .8rem; margin:.65rem 0; box-shadow:0 6px 16px rgba(25,36,31,.045);
+    }
+    .hm-rsd-mobile-date { font-weight:900; color:#064E3B; font-size:1rem; margin-bottom:.45rem; }
+    .hm-rsd-mobile-row { display:flex; gap:.35rem; align-items:flex-start; margin:.22rem 0; line-height:1.25; }
+    .hm-rsd-mobile-row b { min-width:5.3rem; color:#475569; font-weight:850; }
+    .hm-rsd-action-note { color:#64748B; font-size:.78rem; margin-top:.35rem; }
+    @media (max-width: 760px) {
+      .hm-rsd-responsive-desktop { display:none !important; }
+      .hm-rsd-responsive-mobile { display:block !important; }
+      .hm-compact-section-head { margin-bottom:.25rem !important; }
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -141,6 +168,88 @@ def meal_display(label, meal):
     if food:
         return f"{label}: {food}"
     return ""
+
+
+
+def parse_time_minutes(value):
+    """Parse app time values like '10.30 AM' or '10:30 AM' into minutes from midnight."""
+    import re
+    raw = str(value or "").strip().upper().replace(":", ".")
+    m = re.match(r"^(\d{1,2})(?:\.(\d{2}))?\s*(AM|PM)$", raw)
+    if not m:
+        return None
+    hour = int(m.group(1))
+    minute = int(m.group(2) or 0)
+    mer = m.group(3)
+    if hour == 12:
+        hour = 0
+    if mer == "PM":
+        hour += 12
+    return hour * 60 + minute
+
+MEAL_BASE_ORDER = ["breakfast", "lunch", "dinner", "bedtime"]
+SNACK_KEYS = {"evening_snack", "snack", "snacks", "snacking"}
+
+def is_snack_key(key):
+    key = str(key or "").lower()
+    return key.startswith("other_") or key in SNACK_KEYS or "snack" in key
+
+def normalise_meal_label(key, meal):
+    key_l = str(key or "").lower()
+    label = str((meal or {}).get("label", "")).strip()
+    if key_l == "evening_snack" or label.lower() in {"evening snack", "snack", "snacks", "snacking"}:
+        return "Snacks"
+    if key_l.startswith("other_"):
+        try:
+            n = int(key_l.split("_")[1])
+            return f"Snack {n}"
+        except Exception:
+            return "Snack"
+    return label or key_l.replace("_", " ").title()
+
+def meal_sort_key_dynamic(item):
+    key, meal = item
+    key_l = str(key or "").lower()
+    tm = parse_time_minutes((meal or {}).get("time"))
+    # Bedtime must remain last among standard meals.
+    if key_l == "breakfast":
+        return (10, 0)
+    if key_l == "lunch":
+        return (30, 0)
+    if key_l == "dinner":
+        return (50, 0)
+    if key_l == "bedtime":
+        return (70, 0)
+    if is_snack_key(key_l):
+        # Place snacks by eating time, but never before breakfast and never after bedtime.
+        # Default anchors: breakfast 08:00, lunch 13:00, dinner 20:00, bedtime 22:00.
+        t = tm if tm is not None else 17 * 60
+        if t < 13 * 60:
+            bucket = 20  # after breakfast, before lunch
+        elif t < 20 * 60:
+            bucket = 40  # after lunch, before dinner
+        else:
+            bucket = 60  # after dinner, before bedtime
+        try:
+            snack_num = int(key_l.split("_")[1]) if key_l.startswith("other_") else 0
+        except Exception:
+            snack_num = 0
+        return (bucket, t, snack_num)
+    return (80, key_l)
+
+def render_meal_summary_html(meal_items):
+    lines = []
+    for key, meal in sorted(meal_items, key=meal_sort_key_dynamic):
+        if not (meal or {}).get("food"):
+            continue
+        label = html.escape(normalise_meal_label(key, meal))
+        tm = html.escape(str((meal or {}).get("time", "")).strip())
+        food = html.escape(str((meal or {}).get("food", "")).strip())
+        if tm:
+            lines.append(f"<div class='hm-rsd-meal-line'><span class='hm-rsd-meal-label'>{label}:</span> {tm}: {food}</div>")
+        else:
+            lines.append(f"<div class='hm-rsd-meal-line'><span class='hm-rsd-meal-label'>{label}:</span> {food}</div>")
+    return "".join(lines) or "—"
 
 def day_detail_has_data(water_litres, physical_activity, poop_rounds, poop_timings, feeling_after_poop, day_notes):
     return any([
@@ -214,7 +323,9 @@ section_lookup = {k: v for k, v in base_sections}
 meal_sections = [(k, section_lookup[k]) for k in preferred_order if k in section_lookup]
 meal_sections += [(k, v) for k, v in base_sections if k not in preferred_order and k != "other"]
 for idx in range(1, st.session_state.get("daily_log_other_count", 1) + 1):
-    meal_sections.append((f"other_{idx}", "Snacking" if idx == 1 else f"Snacking {idx - 1}"))
+    meal_sections.append((f"other_{idx}", f"Snack {idx}"))
+# Present meal tabs in the required standard order; saved-day summaries use eating time to position snacks.
+meal_sections = sorted(meal_sections, key=lambda item: meal_sort_key_dynamic((item[0], {"label": item[1], "time": existing_meals.get(item[0], {}).get("time", "")})))
 
 if not meal_sections:
     st.warning("No meal sections are currently active. Please contact admin.")
@@ -321,32 +432,34 @@ with right_col:
     if poop_widget_key not in st.session_state:
         st.session_state[poop_widget_key] = existing_poop_rounds
     poop_rounds = st.selectbox("Poop rounds", poop_options, key=poop_widget_key)
-    feeling_after_poop = st.text_area(
-        "Feeling after poop",
-        value=existing.get("feeling_after_poop", ""),
-        placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
-        height=96,
-    )
 
 st.caption("All 9 poop timing slots remain visible. Select 0 to keep all inactive; selecting 1-9 activates the matching number of slots.")
 poop_timings = []
 existing_timings = existing.get("poop_timings", []) or []
 timing_values = time_options()
 enabled_count = int(poop_rounds) if str(poop_rounds).isdigit() else 0
+timing_cols = st.columns(3)
 for idx in range(9):
     default_timing = existing_timings[idx] if idx < len(existing_timings) else ""
     default_timing = normalise_time_value(default_timing)
     timing_index = timing_values.index(default_timing) if default_timing in timing_values else 0
-    val = st.selectbox(
-        f"Poop Timing {idx + 1}",
-        timing_values,
-        index=timing_index,
-        key=f"poop_timing_{user_id}_{str(log_date)}_{idx + 1}",
-        disabled=(idx >= enabled_count),
-        format_func=lambda x: "Not active" if x == "" else x,
-    )
+    with timing_cols[idx % 3]:
+        val = st.selectbox(
+            f"Poop Timing {idx + 1}",
+            timing_values,
+            index=timing_index,
+            key=f"poop_timing_{user_id}_{str(log_date)}_{idx + 1}",
+            disabled=(idx >= enabled_count),
+            format_func=lambda x: "Not active" if x == "" else x,
+        )
     if idx < enabled_count:
         poop_timings.append(val)
+feeling_after_poop = st.text_area(
+    "Feeling after poop",
+    value=existing.get("feeling_after_poop", ""),
+    placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
+    height=85,
+)
 poop = ""
 day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=85)
 
@@ -397,82 +510,80 @@ days = get_daily_food_journal_days(user_id)
 if not days:
     st.info("No food journal days saved yet.")
 else:
-    st.markdown("<div class='hm-rsd-native-shell'>", unsafe_allow_html=True)
-
-    h1, h2, h3, h4, h5, h6 = st.columns([1.05, 1.75, .9, .9, 2.05, .85])
-    h1.markdown("**Date**")
-    h2.markdown("**Meal type and food**")
-    h3.markdown("**Water**")
-    h4.markdown("**Notes**")
-    h5.markdown("**Nutritionist Notes**")
-    h6.markdown("**Action**")
-    st.markdown("<div class='hm-rsd-native-divider'></div>", unsafe_allow_html=True)
-
+    desktop_rows = []
+    mobile_cards = []
+    history_meta = []
     for day in days[:14]:
         day_date = day.get("date", "")
-        meal_summary = []
         meal_items = list((day.get("meals", {}) or {}).items())
-        def _meal_sort_key(item):
-            key, _meal = item
-            if key in preferred_order:
-                return (preferred_order.index(key), 0)
-            if str(key).startswith("other_"):
-                try:
-                    return (len(preferred_order), int(str(key).split("_")[1]))
-                except Exception:
-                    return (len(preferred_order), 999)
-            return (len(preferred_order) + 1, str(key))
-        for _k, meal in sorted(meal_items, key=_meal_sort_key):
-            if meal.get("food"):
-                label = meal.get('label','')
-                meal_summary.append(meal_display(label, meal))
-        meal_display_text = " | ".join(meal_summary) if meal_summary else "—"
-
+        meal_display_text = render_meal_summary_html(meal_items)
         latest_note = get_latest_daily_log_note_for_date(user_id, day_date)
         latest_note_text = "—"
         has_notes = False
         if latest_note:
             has_notes = True
-            latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
+            latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {html.escape(str(latest_note.get('note','')))}"
+        d_disp = display_date(day_date) if day_date else "—"
+        water = html.escape(str(day.get('water_litres') or '—'))
+        notes = html.escape(str(day.get('notes') or '—'))
+        action = "View history" if has_notes else "No notes"
+        desktop_rows.append(
+            f"<tr><td><b style='color:#064E3B'>{html.escape(d_disp)}</b></td>"
+            f"<td>{meal_display_text}</td><td>{water}</td><td>{notes}</td>"
+            f"<td>{latest_note_text}</td><td>{action}</td></tr>"
+        )
+        mobile_cards.append(
+            f"<div class='hm-rsd-mobile-card'>"
+            f"<div class='hm-rsd-mobile-date'>{html.escape(d_disp)}</div>"
+            f"<div class='hm-rsd-mobile-row'><b>Meals</b><span>{meal_display_text}</span></div>"
+            f"<div class='hm-rsd-mobile-row'><b>Water</b><span>{water}</span></div>"
+            f"<div class='hm-rsd-mobile-row'><b>Notes</b><span>{notes}</span></div>"
+            f"<div class='hm-rsd-mobile-row'><b>Nutritionist</b><span>{latest_note_text}</span></div>"
+            f"<div class='hm-rsd-action-note'>{action}</div>"
+            f"</div>"
+        )
+        history_meta.append((day_date, has_notes))
 
-        with st.container():
-            c1, c2, c3, c4, c5, c6 = st.columns([1.05, 1.75, .9, .9, 2.05, .85])
-            c1.markdown(f"<div class='hm-rsd-native-date'>{display_date(day_date) if day_date else '—'}</div>", unsafe_allow_html=True)
-            c2.markdown(f"<div class='hm-rsd-native-meals'>{meal_display_text}</div>", unsafe_allow_html=True)
-            c3.markdown(f"<div class='hm-rsd-native-cell'>{day.get('water_litres') or '—'}</div>", unsafe_allow_html=True)
-            c4.markdown(f"<div class='hm-rsd-native-cell'>{day.get('notes') or '—'}</div>", unsafe_allow_html=True)
-            c5.markdown(f"<div class='hm-rsd-native-note'>{latest_note_text}</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='hm-rsd-responsive-desktop'>"
+        "<table class='hm-rsd-table'><thead><tr>"
+        "<th>Date</th><th>Meal type and food</th><th>Water</th><th>Notes</th><th>Nutritionist Notes</th><th>Action</th>"
+        "</tr></thead><tbody>" + "".join(desktop_rows) + "</tbody></table></div>"
+        "<div class='hm-rsd-responsive-mobile'>" + "".join(mobile_cards) + "</div>",
+        unsafe_allow_html=True,
+    )
 
-            selected_date = st.session_state.get("selected_daily_note_history_date")
-            button_label = "Hide history" if selected_date == day_date else "View history"
-            with c6:
-                if st.button(button_label, key=f"rsd_native_history_{day_date}", disabled=not has_notes):
-                    if selected_date == day_date:
-                        st.session_state["selected_daily_note_history_date"] = None
-                    else:
-                        st.session_state["selected_daily_note_history_date"] = day_date
-                    st.rerun()
-
-            st.markdown("<div class='hm-rsd-native-divider'></div>", unsafe_allow_html=True)
-
-            if st.session_state.get("selected_daily_note_history_date") == day_date:
-                note_history = get_daily_log_notes_by_date(user_id, day_date, limit=20)
-                if note_history:
-                    st.markdown(f"#### Nutritionist note history for {day_date}")
-                    for n in note_history:
-                        st.markdown(
-                            f"""
-                            <div class='info-banner'>
-                              <b>{format_local_ts(n.get('ts',''))}</b><br>
-                              <p>{n.get('note','')}</p>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
+    st.caption("Nutritionist note history")
+    button_cols = st.columns(3)
+    for idx, (day_date, has_notes) in enumerate(history_meta):
+        selected_date = st.session_state.get("selected_daily_note_history_date")
+        button_label = f"{'Hide' if selected_date == day_date else 'View'} history · {display_date(day_date)}"
+        with button_cols[idx % 3]:
+            if st.button(button_label, key=f"rsd_native_history_{day_date}", disabled=not has_notes, use_container_width=True):
+                if selected_date == day_date:
+                    st.session_state["selected_daily_note_history_date"] = None
                 else:
-                    st.info("No nutritionist notes found for the selected date.")
+                    st.session_state["selected_daily_note_history_date"] = day_date
+                st.rerun()
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    if st.session_state.get("selected_daily_note_history_date"):
+        day_date = st.session_state.get("selected_daily_note_history_date")
+        note_history = get_daily_log_notes_by_date(user_id, day_date, limit=20)
+        if note_history:
+            st.markdown(f"#### Nutritionist note history for {display_date(day_date)}")
+            for n in note_history:
+                st.markdown(
+                    f"""
+                    <div class='info-banner'>
+                      <b>{format_local_ts(n.get('ts',''))}</b><br>
+                      <p>{html.escape(str(n.get('note','')))}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.info("No nutritionist notes found for the selected date.")
+
 card_end()
 
 
