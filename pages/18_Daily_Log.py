@@ -327,13 +327,18 @@ def day_detail_has_data(water_litres, physical_activity, poop_rounds, poop_timin
 def journal_has_any_data(meals, water_litres, physical_activity, poop_rounds, poop_timings, feeling_after_poop, day_notes):
     return any(meal_has_data(m) for m in (meals or {}).values()) or day_detail_has_data(water_litres, physical_activity, poop_rounds, poop_timings, feeling_after_poop, day_notes)
 
+def meal_widget_key(section_key, suffix):
+    """Date-scoped widget key so values from one Food Log date cannot leak into another date."""
+    active_date = st.session_state.get("daily_food_log_active_date", str(date.today()))
+    return f"dailylog_{active_date}_{section_key}_{suffix}"
+
 def current_widget_payload(section_key, section_label):
     return {
         "label": section_label,
-        "time": st.session_state.get(f"{section_key}_time", "").strip(),
-        "food": st.session_state.get(f"{section_key}_food", "").strip(),
-                "portion_size": st.session_state.get(f"{section_key}_portion", "").strip(),
-        "mood_energy": st.session_state.get(f"{section_key}_mood", "").strip(),
+        "time": st.session_state.get(meal_widget_key(section_key, "time"), "").strip(),
+        "food": st.session_state.get(meal_widget_key(section_key, "food"), "").strip(),
+        "portion_size": st.session_state.get(meal_widget_key(section_key, "portion"), "").strip(),
+        "mood_energy": st.session_state.get(meal_widget_key(section_key, "mood"), "").strip(),
     }
 
 def saved_payload_for(existing_meals, section_key, section_label):
@@ -347,7 +352,7 @@ def saved_payload_for(existing_meals, section_key, section_label):
     }
 
 def is_dirty(existing_meals, section_key, section_label):
-    if f"{section_key}_food" not in st.session_state:
+    if meal_widget_key(section_key, "food") not in st.session_state:
         return False
     cur = current_widget_payload(section_key, section_label)
     saved = saved_payload_for(existing_meals, section_key, section_label)
@@ -377,9 +382,14 @@ if previous_log_date_key and previous_log_date_key != current_log_date_key:
     # Food Log date changed: clear transient form widgets so entries from the previous
     # date do not carry forward visually into the newly selected day. Saved data for
     # the newly selected date is loaded below from storage.
+    # Legacy non-date-scoped meal keys from older builds.
     for section_key in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"] + [f"other_{idx}" for idx in range(1, 10)]:
         for suffix in ("time", "food", "portion", "mood"):
             st.session_state.pop(f"{section_key}_{suffix}", None)
+    # Date-scoped keys for the previous date, to force a clean render when the date changes.
+    for key in list(st.session_state.keys()):
+        if str(key).startswith(f"dailylog_{previous_log_date_key}_"):
+            st.session_state.pop(key, None)
     st.session_state.pop("active_daily_meal_section", None)
     st.session_state.pop("daily_log_other_count", None)
     st.session_state.pop("daily_log_other_count_date", None)
@@ -422,7 +432,7 @@ def section_time_for_order(section_key):
     This only affects display order. Save validation still blocks Snack 1..9
     before Breakfast or after Bedtime.
     """
-    session_value = st.session_state.get(f"{section_key}_time", "")
+    session_value = st.session_state.get(meal_widget_key(section_key, "time"), "")
     if session_value:
         return session_value
     return existing_meals.get(section_key, {}).get("time", "")
@@ -492,15 +502,15 @@ prior = existing_meals.get(active_key, {}) if existing_meals else {}
 time_values = time_options()
 time_default = normalise_time_value(prior.get("time", ""))
 time_index = time_values.index(time_default) if time_default in time_values else 0
-time_text = st.selectbox("Time", time_values, index=time_index, key=f"{active_key}_time", format_func=lambda x: "Select time" if x == "" else x)
+time_text = st.selectbox("Time", time_values, index=time_index, key=meal_widget_key(active_key, "time"), format_func=lambda x: "Select time" if x == "" else x)
 
-food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=85)
+food = st.text_area("Food", value=prior.get("food", ""), key=meal_widget_key(active_key, "food"), placeholder=f"What did you have for {active_label.lower()}?", height=85)
 
 c3, c4 = st.columns([1, 1])
 with c3:
-    portion = st.text_input("Portion Size", value=prior.get("portion_size", ""), key=f"{active_key}_portion", placeholder="Example: 1 bowl / 2 rotis / 250 ml")
+    portion = st.text_input("Portion Size", value=prior.get("portion_size", ""), key=meal_widget_key(active_key, "portion"), placeholder="Example: 1 bowl / 2 rotis / 250 ml")
 with c4:
-    mood = st.text_input("Mood / Energy", value=prior.get("mood_energy", ""), key=f"{active_key}_mood", placeholder="Example: fresh / heavy / energetic")
+    mood = st.text_input("Mood / Energy", value=prior.get("mood_energy", ""), key=meal_widget_key(active_key, "mood"), placeholder="Example: fresh / heavy / energetic")
 
 active_payload = current_widget_payload(active_key, active_label)
 meal_dirty = is_dirty(existing_meals, active_key, active_label)
