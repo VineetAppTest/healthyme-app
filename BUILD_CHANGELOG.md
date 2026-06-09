@@ -841,3 +841,12 @@
 - Native time picker is available when mobile controls are active.
 - Changed stepper styling to force a compact horizontal `- value +` layout where Streamlit allows.
 - No save/business logic changed.
+
+## v91.3 - Mobile Control Stability Fix
+
+- Replaced broken custom column-based stepper with stable `st.number_input` controls for mobile mode.
+- Keeps Water Intake range 0–10 litres in 0.5 increments.
+- Keeps Poop Rounds range 0–6.
+- Keeps mobile time input where mobile mode is active.
+- Desktop/default branch remains dropdown based.
+- Notes: true custom horizontal steppers and guaranteed native mobile time picker need a custom Streamlit component or native/Flutter front end.

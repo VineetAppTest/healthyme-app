@@ -158,6 +158,26 @@ st.markdown(
   }
 }
 
+
+/* --- v91.3 Mobile Control Stability Fix --- */
+.hm-v91-stepper-label{
+  margin-top:.15rem!important;
+  margin-bottom:.12rem!important;
+}
+@media (max-width:768px){
+  div[data-testid="stNumberInput"] input{
+    min-height:2rem!important;
+    height:2rem!important;
+    font-size:.92rem!important;
+    font-weight:800!important;
+    color:#064E3B!important;
+  }
+  div[data-testid="stNumberInput"] button{
+    min-height:2rem!important;
+    height:2rem!important;
+  }
+}
+
 </style>
     """,
     unsafe_allow_html=True,
@@ -249,20 +269,20 @@ def render_v90a_chip_selector(label, options, current_value, key_prefix, columns
 
 device_mode_v90a = get_device_mode_for_spike()
 manual_mobile_toggle_v912 = st.toggle(
-    "Use mobile input controls",
+    "Use mobile input controls on this device",
     value=(device_mode_v90a == "mobile"),
     key="v912_use_mobile_controls",
     help="Use this on phone if automatic mobile detection does not activate.",
 )
 is_mobile_mode_v90a = (device_mode_v90a == "mobile") or manual_mobile_toggle_v912
-rendered_controls_v90a = "mobile stepper controls" if is_mobile_mode_v90a else "desktop controls"
+rendered_controls_v90a = "stable mobile controls" if is_mobile_mode_v90a else "desktop controls"
 
 st.markdown(f"""
 <div class='hm-v90a-diagnostic'>
   <b>v91.2 Mobile Input Diagnostic</b><br>
   Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
   Rendered controls: <b>{rendered_controls_v90a}</b><br>
-  Auto-detects mobile when possible. Override: <code>?device=mobile</code> / <code>?device=desktop</code>, or use the toggle above.
+  Use the toggle above on phone if mobile controls are not active. Override: <code>?device=mobile</code> / <code>?device=desktop</code>.
 </div>
 """, unsafe_allow_html=True)
 
@@ -336,43 +356,43 @@ def _clamp_number(value, minimum, maximum):
     return max(minimum, min(maximum, numeric))
 
 def render_v91_stepper(label, current_value, key_prefix, minimum, maximum, step, suffix="", as_int=False):
+    """
+    v91.3 stability fix.
+
+    Custom Streamlit column-based steppers stack vertically on mobile.
+    Use Streamlit number_input for stable mobile behavior. This preserves
+    the same stored values and avoids the broken vertical - / value / + layout.
+    """
     st.markdown(f"<div class='hm-v90a-chip-label hm-v91-stepper-label'>{label}</div>", unsafe_allow_html=True)
 
-    state_key = f"{key_prefix}_value"
-    if state_key not in st.session_state:
-        st.session_state[state_key] = current_value
-
-    current = _clamp_number(st.session_state.get(state_key, current_value), minimum, maximum)
     if as_int:
-        current = int(round(current))
-    else:
-        current = round(current, 1)
-    st.session_state[state_key] = current
-
-    # v91.2: horizontal stepper marker. CSS below prevents the three controls from
-    # looking like large stacked mobile blocks as far as Streamlit allows.
-    st.markdown("<div class='hm-v912-horizontal-stepper-anchor'></div>", unsafe_allow_html=True)
-    minus_col, value_col, plus_col = st.columns([0.75, 1.35, 0.75], gap="small")
-    with minus_col:
-        if st.button("−", key=f"{key_prefix}_minus", use_container_width=True):
-            next_value = _clamp_number(current - step, minimum, maximum)
-            st.session_state[state_key] = int(round(next_value)) if as_int else round(next_value, 1)
-            st.rerun()
-
-    with value_col:
-        display_value = int(current) if as_int else current
-        st.markdown(
-            f"<div class='hm-v91-stepper-value'>{display_value}{suffix}</div>",
-            unsafe_allow_html=True,
+        value = st.number_input(
+            label,
+            min_value=int(minimum),
+            max_value=int(maximum),
+            value=int(current_value) if isinstance(current_value, int) else int(minimum),
+            step=int(step),
+            key=f"{key_prefix}_number_input",
+            label_visibility="collapsed",
         )
+        return int(value)
 
-    with plus_col:
-        if st.button("＋", key=f"{key_prefix}_plus", use_container_width=True):
-            next_value = _clamp_number(current + step, minimum, maximum)
-            st.session_state[state_key] = int(round(next_value)) if as_int else round(next_value, 1)
-            st.rerun()
+    try:
+        starting_value = float(current_value)
+    except Exception:
+        starting_value = float(minimum)
 
-    return st.session_state[state_key]
+    value = st.number_input(
+        label,
+        min_value=float(minimum),
+        max_value=float(maximum),
+        value=float(starting_value),
+        step=float(step),
+        key=f"{key_prefix}_number_input",
+        label_visibility="collapsed",
+        format="%.1f",
+    )
+    return round(float(value), 1)
 
 def water_stepper_to_litres(value):
     value = round(float(value), 1)
