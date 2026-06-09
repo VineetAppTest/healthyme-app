@@ -701,3 +701,14 @@
 - Active Poop Timing fields now show placeholder: Enter the Poop Time.
 - Inactive Poop Timing fields remain disabled with placeholder: Not active.
 - Meal Timing now shows recommended timing by meal type.
+
+
+## v77 - Meal Timing + Daily Log UI Alignment Fix
+
+- Restored fixed meal sections: Breakfast, Lunch, Evening Snacks, Dinner, Bedtime.
+- Replaced Other with + Snacking and repeatable Snacking sections.
+- Added 12-hour HH:MM AM/PM meal timing validation.
+- Enforced client-approved meal timing windows.
+- Snacking is allowed only outside standard meal windows.
+- Improved Recent saved days table vertical alignment.
+- Standardized save button colors to HealthyMe schema.

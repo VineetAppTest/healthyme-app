@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v76 Mobile Daily Log Timing Fix",
-  "version": "v76_mobile_daily_log_timing_fix",
-  "updated_on": "2026-06-09T05:48:34.193946+00:00",
+  "build_name": "HealthyMe v77 Meal Timing + Daily Log UI Alignment Fix",
+  "version": "v77_meal_timing_dailylog_ui_alignment_fix",
+  "updated_on": "2026-06-09T06:45:46.375339+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,14 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Poop Timing fields now render in row-major order: 1,2,3 then 4,5,6 then 7,8,9, so mobile stacks correctly.",
-    "Selecting Poop Rounds activates the matching number of Poop Timing fields.",
-    "Active Poop Timing placeholder now says Enter the Poop Time; inactive fields remain Not active.",
-    "Meal Timing placeholder/help updated by meal type: Breakfast 6 AM-11 AM, Lunch 12 PM-3 PM, Snacks 4 PM-6 PM, Dinner 7 PM-10 PM, Other outside standard windows.",
-    "No business logic changed outside Daily Log UI/input guidance."
+    "Restored fixed standard meal sections: Breakfast, Lunch, Evening Snacks, Dinner, Bedtime.",
+    "Replaced Other with + Snacking and repeatable Snacking 1, Snacking 2, etc.",
+    "Meal Timing uses 12-hour HH:MM AM/PM format.",
+    "Validation added for standard meal timing windows and Snacking outside standard windows.",
+    "Bedtime window set to 11:00 PM to 12:00 AM.",
+    "Boundary times accepted for standard meals.",
+    "Recent saved days table vertical alignment improved.",
+    "Save buttons standardized to HealthyMe color schema."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -180,7 +183,7 @@
     "format_local_ts": 1,
     "render_back_to_top": 1
   },
-  "business_logic_note": "UI-only final report page cleanup. Report generation and diagnostic data logic unchanged.",
+  "business_logic_note": "Focused Daily Log UI/input validation patch. No LAF, Body-Mind, Final Report, or Nutritionist message logic changed.",
   "final_report_imports": "inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top, compact_topbar",
   "guard_imports_repaired": {
     "14_Final_Assessment_Report.py": [

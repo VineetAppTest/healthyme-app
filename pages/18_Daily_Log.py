@@ -1,5 +1,6 @@
 import streamlit as st
 import html
+import re
 from datetime import date
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top, compact_topbar
@@ -93,47 +94,119 @@ def is_dirty(existing_meals, section_key, section_label):
     saved = saved_payload_for(existing_meals, section_key, section_label)
     return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "portion_size", "mood_energy"])
 
-def meal_time_guidance(section_key, section_label):
-    """User-facing timing guidance for standard meal sections."""
+def parse_12h_time_to_minutes(value):
+    raw = (value or "").strip().upper()
+    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
+    if not m:
+        return None
+    hour = int(m.group(1))
+    minute = int(m.group(2))
+    suffix = m.group(3)
+    if suffix == "AM":
+        hour = 0 if hour == 12 else hour
+    else:
+        hour = 12 if hour == 12 else hour + 12
+    return hour * 60 + minute
+
+def in_window(minutes, start, end):
+    if minutes is None:
+        return False
+    if start <= end:
+        return start <= minutes <= end
+    return minutes >= start or minutes <= end
+
+STANDARD_MEAL_WINDOWS = {
+    "breakfast": ("6:00 AM to 11:00 AM", 6 * 60, 11 * 60),
+    "lunch": ("12:00 PM to 3:00 PM", 12 * 60, 15 * 60),
+    "evening_snacks": ("4:00 PM to 6:00 PM", 16 * 60, 18 * 60),
+    "dinner": ("7:00 PM to 10:00 PM", 19 * 60, 22 * 60),
+    "bedtime": ("11:00 PM to 12:00 AM", 23 * 60, 0),
+}
+
+def meal_window_key(section_key, section_label):
     key = str(section_key or "").lower()
     label = str(section_label or "").lower()
+    if key.startswith("snacking_") or "snacking" in label:
+        return "snacking"
     if "breakfast" in key or "breakfast" in label:
-        return "6 AM to 11 AM"
+        return "breakfast"
     if "lunch" in key or "lunch" in label:
-        return "12 PM to 3 PM"
-    if "snack" in key or "snack" in label:
-        return "4 PM to 6 PM"
+        return "lunch"
+    if "evening" in key and "snack" in key:
+        return "evening_snacks"
+    if "evening" in label and "snack" in label:
+        return "evening_snacks"
     if "dinner" in key or "dinner" in label:
-        return "7 PM to 10 PM"
-    return "Enter time outside standard meal windows"
+        return "dinner"
+    if "bedtime" in key or "bedtime" in label:
+        return "bedtime"
+    return "snacking"
 
-# Make sure Other exists even for old repositories.
-ensure_other_meal_section()
-meal_repo = get_meal_type_repository()
+def meal_time_guidance(section_key, section_label):
+    window_key = meal_window_key(section_key, section_label)
+    if window_key == "snacking":
+        return "Enter time outside standard meal windows, e.g., 11:30 AM"
+    return f"Enter time between {STANDARD_MEAL_WINDOWS[window_key][0]}"
 
-base_sections = [(r["key"], r["label"]) for r in meal_repo if r.get("key") != "other"]
-other_enabled = True
+def validate_meal_time(section_key, section_label, time_value):
+    raw = (time_value or "").strip()
+    if not raw:
+        return True, ""
+    minutes = parse_12h_time_to_minutes(raw)
+    if minutes is None:
+        return False, "Please enter time in HH:MM AM/PM format, for example 08:30 AM."
+    window_key = meal_window_key(section_key, section_label)
+    if window_key == "snacking":
+        inside_standard = any(in_window(minutes, start, end) for _label, start, end in STANDARD_MEAL_WINDOWS.values())
+        if inside_standard:
+            return False, "Snacking time must be outside the standard meal windows."
+        return True, ""
+    label, start, end = STANDARD_MEAL_WINDOWS[window_key]
+    if not in_window(minutes, start, end):
+        return False, f"{section_label} time must be between {label}."
+    return True, ""
 
-if "daily_log_other_count" not in st.session_state:
-    st.session_state["daily_log_other_count"] = 1
 
+
+# Fixed Daily Log meal structure.
 log_date = st.date_input("Food journal date", value=date.today())
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
 
-existing_other_nums = []
+normalised_meals = {}
+snack_counter = 0
+for k, v in (existing_meals or {}).items():
+    if str(k).startswith("other_"):
+        snack_counter += 1
+        normalised_meals[f"snacking_{snack_counter}"] = dict(v or {}, label=f"Snacking {snack_counter}")
+    else:
+        normalised_meals[k] = v
+existing_meals = normalised_meals
+
+standard_sections = [
+    ("breakfast", "Breakfast"),
+    ("lunch", "Lunch"),
+    ("evening_snacks", "Evening Snacks"),
+    ("dinner", "Dinner"),
+    ("bedtime", "Bedtime"),
+]
+
+existing_snack_nums = []
 for key in existing_meals.keys():
-    if key.startswith("other_"):
+    if key.startswith("snacking_"):
         try:
-            existing_other_nums.append(int(key.split("_")[1]))
+            existing_snack_nums.append(int(key.split("_")[1]))
         except Exception:
             pass
-if existing_other_nums:
-    st.session_state["daily_log_other_count"] = max(st.session_state.get("daily_log_other_count", 1), max(existing_other_nums))
 
-meal_sections = list(base_sections)
-for idx in range(1, st.session_state.get("daily_log_other_count", 1) + 1):
-    meal_sections.append((f"other_{idx}", f"Other {idx}"))
+if "daily_log_snacking_count" not in st.session_state:
+    st.session_state["daily_log_snacking_count"] = max(existing_snack_nums) if existing_snack_nums else 0
+elif existing_snack_nums:
+    st.session_state["daily_log_snacking_count"] = max(st.session_state.get("daily_log_snacking_count", 0), max(existing_snack_nums))
+
+meal_sections = list(standard_sections)
+for idx in range(1, st.session_state.get("daily_log_snacking_count", 0) + 1):
+    meal_sections.append((f"snacking_{idx}", f"Snacking {idx}"))
 
 if not meal_sections:
     st.warning("No meal sections are currently active. Please contact admin.")
@@ -167,22 +240,22 @@ for idx, (key, label) in enumerate(meal_sections):
 # Other is now very visible directly below the buttons.
 add_cols = st.columns([1, 2])
 with add_cols[0]:
-    if st.button("+ Other", use_container_width=True, help="Add another undefined eating time such as Other 2, Other 3, etc."):
+    if st.button("+ Snacking", use_container_width=True, help="Add another snacking time outside the standard meal windows."):
         if is_dirty(existing_meals, active_key, active_label):
-            st.warning(f"Please save the section ({active_label}) before adding another Other section.")
+            st.warning(f"Please save the section ({active_label}) before adding another Snacking section.")
         else:
-            st.session_state["daily_log_other_count"] = st.session_state.get("daily_log_other_count", 1) + 1
-            st.session_state["active_daily_meal_section"] = f"other_{st.session_state['daily_log_other_count']}"
+            st.session_state["daily_log_snacking_count"] = st.session_state.get("daily_log_snacking_count", 1) + 1
+            st.session_state["active_daily_meal_section"] = f"snacking_{st.session_state['daily_log_snacking_count']}"
             st.rerun()
 with add_cols[1]:
-    st.caption("Use Other for undefined eating times beyond the standard meals.")
+    st.caption("Use Snacking for food or drinks taken outside the standard meal windows.")
 
 st.markdown(f"<div class='hm-meal-title'>{active_label}</div>", unsafe_allow_html=True)
 prior = existing_meals.get(active_key, {}) if existing_meals else {}
 
 time_guidance = meal_time_guidance(active_key, active_label)
 time_text = st.text_input(
-    "Meal Timing",
+    "Meal Timing (HH:MM AM/PM)",
     value=prior.get("time", ""),
     key=f"{active_key}_time",
     placeholder=time_guidance,
@@ -199,13 +272,19 @@ with c4:
 
 active_payload = current_widget_payload(active_key, active_label)
 meal_dirty = is_dirty(existing_meals, active_key, active_label)
+meal_time_valid, meal_time_error = validate_meal_time(active_key, active_label, active_payload.get("time", ""))
+if active_payload.get("time") and not meal_time_valid:
+    st.error(meal_time_error)
 
 c_save, c_status = st.columns([1, 1])
 with c_save:
-    if st.button(f"Save {active_label}", type="primary", use_container_width=True):
-        save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
-        set_system_message(f"{active_label} saved for {log_date}.", "success")
-        st.rerun()
+    if st.button(f"Save {active_label}", use_container_width=True):
+        if not meal_time_valid:
+            st.error(meal_time_error)
+        else:
+            save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
+            set_system_message(f"{active_label} saved for {log_date}.", "success")
+            st.rerun()
 with c_status:
     if meal_dirty:
         st.warning(f"Unsaved changes in {active_label}.")
@@ -276,6 +355,9 @@ with c_save_1:
         st.rerun()
 with c_save_2:
     if st.button("Save Full-Day Journal", type="primary", use_container_width=True):
+        if not meal_time_valid:
+            st.error(meal_time_error)
+            st.stop()
         merged_meals = dict(existing_meals or {})
         merged_meals[active_key] = active_payload
         payload = {
