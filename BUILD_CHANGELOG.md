@@ -825,3 +825,12 @@
 - Desktop/default branch remains unchanged with dropdown controls.
 - Mobile mode activates only with `?device=mobile`.
 - No save/business logic changed beyond mapping the selected values to existing payload fields.
+
+## v91.1 - Mobile Auto-Detect + Compact Stepper Fix
+
+- Added best-effort automatic mobile detection from request/user-agent headers.
+- Kept query overrides: `?device=mobile` and `?device=desktop`.
+- Compact stepper layout for Water Intake and Poop Rounds.
+- Changed plus button to visible `＋`.
+- Desktop/default branch remains dropdown based.
+- No save/business logic changed.

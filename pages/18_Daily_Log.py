@@ -73,23 +73,46 @@ st.markdown(
     }
     
 /* --- v91 Mobile-only Stepper Input Controls --- */
+.hm-v91-stepper-label{
+  margin-top:.15rem!important;
+  margin-bottom:.16rem!important;
+}
+.hm-v91-stepper-shell{
+  margin:.02rem 0 .35rem 0!important;
+}
 .hm-v91-stepper-value{
-  min-height:2.25rem;
+  min-height:1.82rem;
   display:flex;
   align-items:center;
   justify-content:center;
-  border:1.4px solid #D9C399;
+  border:1.25px solid #D9C399;
   background:#FFFDF8;
-  border-radius:14px;
+  border-radius:12px;
   color:#064E3B;
-  font-size:1rem;
+  font-size:.92rem;
   font-weight:900;
-  box-shadow:0 4px 14px rgba(15,23,42,.04);
+  box-shadow:0 3px 10px rgba(15,23,42,.035);
+  white-space:nowrap;
+}
+.hm-v91-stepper-shell button{
+  min-height:1.82rem!important;
+  height:1.82rem!important;
+  padding:0!important;
+  font-size:1.05rem!important;
+  line-height:1!important;
+  border-radius:12px!important;
 }
 @media (max-width:768px){
   .hm-v91-stepper-value{
-    min-height:2rem!important;
-    font-size:.92rem!important;
+    min-height:1.68rem!important;
+    font-size:.86rem!important;
+    border-radius:10px!important;
+  }
+  .hm-v91-stepper-shell button{
+    min-height:1.68rem!important;
+    height:1.68rem!important;
+    font-size:1rem!important;
+    border-radius:10px!important;
   }
 }
 
@@ -104,20 +127,40 @@ render_system_message()
 
 def get_device_mode_for_spike():
     """
-    v90A controlled mobile-detection spike.
+    v91.1 mobile detection guard.
 
-    Desktop remains default. Mobile branch activates only with:
-    ?device=mobile
+    Priority:
+    1. Explicit override: ?device=mobile or ?device=desktop
+    2. Best-effort mobile browser/user-agent detection through Streamlit context, when available
+    3. Desktop fallback
     """
     try:
         qp = st.query_params
-        raw = qp.get("device", "desktop")
+        raw = qp.get("device", "")
         if isinstance(raw, list):
-            raw = raw[0] if raw else "desktop"
+            raw = raw[0] if raw else ""
         raw = str(raw).strip().lower()
+        if raw == "mobile":
+            return "mobile"
+        if raw == "desktop":
+            return "desktop"
     except Exception:
-        raw = "desktop"
-    return "mobile" if raw == "mobile" else "desktop"
+        pass
+
+    try:
+        headers = getattr(getattr(st, "context", None), "headers", {}) or {}
+        try:
+            ua = headers.get("user-agent", "") or headers.get("User-Agent", "")
+        except Exception:
+            ua = ""
+        ua_l = str(ua).lower()
+        mobile_tokens = ["mobile", "android", "iphone", "ipad", "ipod", "windows phone", "blackberry", "opera mini", "iemobile"]
+        if any(token in ua_l for token in mobile_tokens):
+            return "mobile"
+    except Exception:
+        pass
+
+    return "desktop"
 
 def to_time_input_value(value):
     raw = (value or "").strip().upper()
@@ -171,7 +214,7 @@ st.markdown(f"""
   <b>v90A Mobile Detection Spike</b><br>
   Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
   Rendered controls: <b>{rendered_controls_v90a}</b><br>
-  Mobile test URL: add <code>?device=mobile</code>. Desktop default: no query parameter.
+  Auto-detects mobile when possible. Override: <code>?device=mobile</code> or <code>?device=desktop</code>.
 </div>
 """, unsafe_allow_html=True)
 
@@ -245,7 +288,7 @@ def _clamp_number(value, minimum, maximum):
     return max(minimum, min(maximum, numeric))
 
 def render_v91_stepper(label, current_value, key_prefix, minimum, maximum, step, suffix="", as_int=False):
-    st.markdown(f"<div class='hm-v90a-chip-label'>{label}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='hm-v90a-chip-label hm-v91-stepper-label'>{label}</div>", unsafe_allow_html=True)
 
     state_key = f"{key_prefix}_value"
     if state_key not in st.session_state:
@@ -258,7 +301,8 @@ def render_v91_stepper(label, current_value, key_prefix, minimum, maximum, step,
         current = round(current, 1)
     st.session_state[state_key] = current
 
-    minus_col, value_col, plus_col = st.columns([0.75, 1.45, 0.75])
+    st.markdown("<div class='hm-v91-stepper-shell'>", unsafe_allow_html=True)
+    minus_col, value_col, plus_col = st.columns([0.55, 1.55, 0.55], gap="small")
     with minus_col:
         if st.button("−", key=f"{key_prefix}_minus", use_container_width=True):
             next_value = _clamp_number(current - step, minimum, maximum)
@@ -273,10 +317,11 @@ def render_v91_stepper(label, current_value, key_prefix, minimum, maximum, step,
         )
 
     with plus_col:
-        if st.button("+", key=f"{key_prefix}_plus", use_container_width=True):
+        if st.button("＋", key=f"{key_prefix}_plus", use_container_width=True):
             next_value = _clamp_number(current + step, minimum, maximum)
             st.session_state[state_key] = int(round(next_value)) if as_int else round(next_value, 1)
             st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
     return st.session_state[state_key]
 

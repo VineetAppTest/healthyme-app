@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v91_Mobile_Only_Stepper_Input_Controls",
-  "version": "v91_mobile_only_stepper_input_controls",
-  "updated_on": "2026-06-09T12:36:43.941785+00:00",
+  "build_name": "HealthyMe_v91_1_Mobile_AutoDetect_Stepper_Compact_Fix",
+  "version": "v91_1_mobile_autodetect_stepper_compact_fix",
+  "updated_on": "2026-06-09T12:54:33.851651+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Mobile mode only: Water Intake changed to stepper control from 0 to 10 litres in 0.5 increments.",
-    "Mobile mode only: Poop Rounds changed to stepper control from 0 to 6 in increment of 1.",
-    "Mobile mode only: Meal Timing keeps native time picker.",
-    "Desktop/default branch remains on v90 dropdown controls.",
-    "Mobile branch activates only with ?device=mobile.",
+    "Mobile mode now attempts automatic mobile browser/user-agent detection.",
+    "Query overrides retained: ?device=mobile and ?device=desktop.",
+    "Native time picker should appear when mobile mode is active.",
+    "Stepper controls compacted for mobile.",
+    "Plus button changed to visible full-width plus symbol \uff0b.",
+    "Desktop/default branch remains dropdown based.",
     "No Body-Mind, report, login, LAF/NSP, or nutritionist-note logic changed."
   ],
   "required_setup": [
@@ -262,8 +263,9 @@
     "This spike therefore restores dropdown controls that are acceptable on desktop and mobile instead of applying mobile-only controls globally."
   ],
   "test_urls": [
-    "Desktop/default: /Daily_Log",
-    "Mobile test: /Daily_Log?device=mobile"
+    "Auto mobile: open normally on phone and verify diagnostic says mobile.",
+    "Force mobile: /Daily_Log?device=mobile",
+    "Force desktop: /Daily_Log?device=desktop"
   ],
   "helper_defined_before_call": true
 }
