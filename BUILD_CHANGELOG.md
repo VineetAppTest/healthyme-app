@@ -802,3 +802,11 @@
 - Replaced Poop Rounds slider with dropdown from Select, 0 to 6.
 - Confirmed that true mobile-only widget rendering should not be forced globally in Streamlit without a proper front-end/mobile detection layer.
 - No save/business logic changed.
+
+## v90A - Mobile Detection Spike
+
+- Added controlled mobile mode using `?device=mobile`.
+- Added temporary diagnostic banner showing device mode and rendered control set.
+- Desktop default keeps v90 dropdown controls.
+- Mobile test branch renders native time picker and segmented/chip controls only when explicitly activated.
+- No save/business logic changed beyond mapping selected input values to the existing payload fields.

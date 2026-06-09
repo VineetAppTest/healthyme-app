@@ -7640,3 +7640,6 @@ def render_build_text_v89R(): return None
 
 
 def render_build_text_v90(): return None
+
+
+def render_build_text_v90A(): return None

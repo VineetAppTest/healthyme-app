@@ -1,7 +1,7 @@
 import streamlit as st
 import html
 import re
-from datetime import date
+from datetime import date, time
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top, compact_topbar
 from components.db import (
@@ -80,6 +80,20 @@ user_id = st.session_state["user_id"]
 compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
+device_mode_v90a = get_device_mode_for_spike()
+is_mobile_mode_v90a = device_mode_v90a == "mobile"
+rendered_controls_v90a = "mobile test controls" if is_mobile_mode_v90a else "desktop controls"
+
+st.markdown(f"""
+<div class='hm-v90a-diagnostic'>
+  <b>v90A Mobile Detection Spike</b><br>
+  Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
+  Rendered controls: <b>{rendered_controls_v90a}</b><br>
+  Mobile test URL: add <code>?device=mobile</code>. Desktop default: no query parameter.
+</div>
+""", unsafe_allow_html=True)
+
+
 st.markdown("""
 <style>
 .hm-v88-balanced-empty{min-height:.1rem!important;}
@@ -138,6 +152,68 @@ def is_dirty(existing_meals, section_key, section_label):
     cur = current_widget_payload(section_key, section_label)
     saved = saved_payload_for(existing_meals, section_key, section_label)
     return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "portion_size", "mood_energy"])
+
+
+def get_device_mode_for_spike():
+    """
+    v90A controlled mobile-detection spike.
+
+    Desktop remains default. Mobile branch activates only with:
+    ?device=mobile
+    """
+    try:
+        qp = st.query_params
+        raw = qp.get("device", "desktop")
+        if isinstance(raw, list):
+            raw = raw[0] if raw else "desktop"
+        raw = str(raw).strip().lower()
+    except Exception:
+        raw = "desktop"
+    return "mobile" if raw == "mobile" else "desktop"
+
+def to_time_input_value(value):
+    raw = (value or "").strip().upper()
+    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
+    if not m:
+        return None
+    h = int(m.group(1))
+    minute = int(m.group(2))
+    period = m.group(3)
+    if period == "AM":
+        hour24 = 0 if h == 12 else h
+    else:
+        hour24 = 12 if h == 12 else h + 12
+    return time(hour24, minute)
+
+def from_time_input_value(value):
+    if value is None:
+        return ""
+    hour24 = value.hour
+    minute = value.minute
+    period = "AM" if hour24 < 12 else "PM"
+    h12 = hour24 % 12
+    if h12 == 0:
+        h12 = 12
+    return f"{h12:02d}:{minute:02d} {period}"
+
+def render_v90a_chip_selector(label, options, current_value, key_prefix, columns=4):
+    st.markdown(f"<div class='hm-v90a-chip-label'>{label}</div>", unsafe_allow_html=True)
+    selected = st.session_state.get(key_prefix, current_value)
+    if selected not in options:
+        selected = current_value if current_value in options else options[0]
+    st.session_state[key_prefix] = selected
+
+    for start in range(0, len(options), columns):
+        cols = st.columns(columns)
+        for col, option in zip(cols, options[start:start + columns]):
+            button_label = str(option)
+            safe_label = button_label.replace(" ", "_").replace("+", "plus").replace(".", "_")
+            with col:
+                if st.button(button_label, key=f"{key_prefix}_{safe_label}", use_container_width=True):
+                    st.session_state[key_prefix] = option
+                    st.rerun()
+    return st.session_state.get(key_prefix, selected)
+
 
 def split_12h_time_parts(value):
     raw = (value or "").strip().upper()
@@ -335,37 +411,52 @@ st.session_state.setdefault(f"{active_key}_time_h", pre_h)
 st.session_state.setdefault(f"{active_key}_time_m", pre_m)
 st.session_state.setdefault(f"{active_key}_time_p", pre_p)
 st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
-th, tm, tp = st.columns([1, 1, 1])
-with th:
-    hour_options = ["HH"] + [f"{i:02d}" for i in range(1, 13)]
-    current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
-    st.selectbox(
-        "HH",
-        hour_options,
-        index=hour_options.index(current_h) if current_h in hour_options else 0,
-        key=f"{active_key}_time_h",
-        label_visibility="collapsed",
+if is_mobile_mode_v90a:
+    existing_time_value = to_time_input_value(prior.get("time", ""))
+    fallback_time_value = existing_time_value or time(8, 0)
+    selected_time_value = st.time_input(
+        "Select Meal Timing",
+        value=fallback_time_value,
+        key=f"{active_key}_v90a_mobile_native_time",
     )
-with tm:
-    minute_options = ["MM"] + [f"{i:02d}" for i in range(0, 60)]
-    current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
-    st.selectbox(
-        "MM",
-        minute_options,
-        index=minute_options.index(current_m) if current_m in minute_options else 0,
-        key=f"{active_key}_time_m",
-        label_visibility="collapsed",
-    )
-with tp:
-    ampm_options = ["AM/PM", "AM", "PM"]
-    current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
-    st.selectbox(
-        "AM/PM",
-        ampm_options,
-        index=ampm_options.index(current_p) if current_p in ampm_options else 0,
-        key=f"{active_key}_time_p",
-        label_visibility="collapsed",
-    )
+    native_time_text = from_time_input_value(selected_time_value)
+    time_h, time_m, time_p = split_12h_time_parts(native_time_text)
+    st.session_state[f"{active_key}_time_h"] = time_h
+    st.session_state[f"{active_key}_time_m"] = time_m
+    st.session_state[f"{active_key}_time_p"] = time_p
+    st.markdown(f"<div class='hm-time-preview'>Selected: {native_time_text}</div>", unsafe_allow_html=True)
+else:
+    th, tm, tp = st.columns([1, 1, 1])
+    with th:
+        hour_options = ["HH"] + [f"{i:02d}" for i in range(1, 13)]
+        current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
+        st.selectbox(
+            "HH",
+            hour_options,
+            index=hour_options.index(current_h) if current_h in hour_options else 0,
+            key=f"{active_key}_time_h",
+            label_visibility="collapsed",
+        )
+    with tm:
+        minute_options = ["MM"] + [f"{i:02d}" for i in range(0, 60)]
+        current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
+        st.selectbox(
+            "MM",
+            minute_options,
+            index=minute_options.index(current_m) if current_m in minute_options else 0,
+            key=f"{active_key}_time_m",
+            label_visibility="collapsed",
+        )
+    with tp:
+        ampm_options = ["AM/PM", "AM", "PM"]
+        current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
+        st.selectbox(
+            "AM/PM",
+            ampm_options,
+            index=ampm_options.index(current_p) if current_p in ampm_options else 0,
+            key=f"{active_key}_time_p",
+            label_visibility="collapsed",
+        )
 st.markdown(f"<div class='hm-full-day-helper'>{time_guidance}</div>", unsafe_allow_html=True)
 
 food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=78)
@@ -424,12 +515,22 @@ with top_left:
         "9.5 Litres",
         "10 Litres",
     ]
+    mobile_water_options = ["Select", "0 Litres", "0.5 Litres", "1 Litre", "1.5 Litres", "2 Litres", "2.5 Litres", "3 Litres", "3.5 Litres", "4 Litres", "4.5 Litres", "5+ Litres"]
     existing_water = existing.get("water_litres", "Select") or "Select"
-    water_litres = st.selectbox(
-        "Water intake for the full day",
-        water_options,
-        index=water_options.index(existing_water) if existing_water in water_options else 0,
-    )
+    if is_mobile_mode_v90a:
+        water_litres = render_v90a_chip_selector(
+            "Water intake for the full day",
+            mobile_water_options,
+            existing_water if existing_water in mobile_water_options else "Select",
+            "v90a_mobile_water_litres",
+            columns=4,
+        )
+    else:
+        water_litres = st.selectbox(
+            "Water intake for the full day",
+            water_options,
+            index=water_options.index(existing_water) if existing_water in water_options else 0,
+        )
 with top_right:
     poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
     existing_poop_rounds = existing.get("poop_rounds", "Select")
@@ -437,11 +538,20 @@ with top_right:
         existing_poop_rounds = "Select"
     if str(existing_poop_rounds).isdigit():
         existing_poop_rounds = int(existing_poop_rounds)
-    poop_rounds = st.selectbox(
-        "Poop rounds",
-        poop_options,
-        index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
-    )
+    if is_mobile_mode_v90a:
+        poop_rounds = render_v90a_chip_selector(
+            "Poop rounds",
+            poop_options,
+            existing_poop_rounds if existing_poop_rounds in poop_options else "Select",
+            "v90a_mobile_poop_rounds",
+            columns=4,
+        )
+    else:
+        poop_rounds = st.selectbox(
+            "Poop rounds",
+            poop_options,
+            index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
+        )
 
 poop_timings = []
 existing_timings = existing.get("poop_timings", []) or []
