@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v91_3_Mobile_Control_Stability_Fix",
-  "version": "v91_3_mobile_control_stability_fix",
-  "updated_on": "2026-06-09T13:26:18.081836+00:00",
+  "build_name": "HealthyMe_v92_Custom_Mobile_Time_Component_Validation_Restore",
+  "version": "v92_custom_mobile_time_component_validation_restore",
+  "updated_on": "2026-06-09T13:38:03.450435+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,13 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Replaced broken custom column-based mobile stepper with stable Streamlit number_input controls.",
-    "This avoids the vertical - / value / + stacking issue caused by Streamlit mobile column behavior.",
-    "Water Intake remains 0 to 10 litres in 0.5 increments.",
-    "Poop Rounds remains 0 to 6 in increment of 1.",
-    "Mobile input mode can be forced using the toggle or ?device=mobile.",
-    "Meal Timing still uses time_input in mobile mode, but browser-native picker behavior depends on mobile browser support.",
-    "Desktop/default branch remains dropdown based."
+    "Added local custom Streamlit component for mobile time input using browser input type=time.",
+    "Mobile Meal Timing now uses custom component instead of st.time_input.",
+    "Restored visible timing-window validation feedback under Meal Timing.",
+    "Mobile number_input control look and feel improved.",
+    "Desktop/default branch remains unchanged.",
+    "No Body-Mind, report, login, LAF/NSP, or nutritionist-note logic changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -269,7 +268,7 @@
   ],
   "helper_defined_before_call": true,
   "important_note": [
-    "A true custom horizontal - value + control cannot be reliably guaranteed in Streamlit mobile using st.columns because Streamlit stacks columns on small screens.",
-    "For a guaranteed native mobile time picker and guaranteed custom horizontal stepper, HealthyMe would need a custom Streamlit component or a Flutter/native front end."
+    "The custom time component uses streamlit-component-lib from CDN. Streamlit Cloud should allow this, but if CDN is blocked, the component may not render.",
+    "This is a component spike; validate on Android Chrome and desktop before making it production default."
   ]
 }

@@ -19,6 +19,7 @@ from components.db import (
     get_latest_daily_log_note_for_date,
 )
 from components.flash import set_system_message, render_system_message
+from components.mobile_time_input_component import mobile_time_input
 
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
@@ -178,6 +179,31 @@ st.markdown(
   }
 }
 
+
+/* --- v92 Number Input Look & Feel --- */
+@media (max-width:768px){
+  div[data-testid="stNumberInput"]{
+    margin-bottom:.45rem!important;
+  }
+  div[data-testid="stNumberInput"] input{
+    background:#FFFDF8!important;
+    border:1.4px solid #D9C399!important;
+    border-radius:14px!important;
+    color:#064E3B!important;
+    font-size:1rem!important;
+    font-weight:900!important;
+    text-align:center!important;
+    min-height:2.35rem!important;
+    box-shadow:0 4px 14px rgba(15,23,42,.045)!important;
+  }
+  div[data-testid="stNumberInput"] button{
+    background:#FFFDF8!important;
+    border:1.2px solid #D9C399!important;
+    color:#064E3B!important;
+    min-height:2.35rem!important;
+  }
+}
+
 </style>
     """,
     unsafe_allow_html=True,
@@ -275,11 +301,11 @@ manual_mobile_toggle_v912 = st.toggle(
     help="Use this on phone if automatic mobile detection does not activate.",
 )
 is_mobile_mode_v90a = (device_mode_v90a == "mobile") or manual_mobile_toggle_v912
-rendered_controls_v90a = "stable mobile controls" if is_mobile_mode_v90a else "desktop controls"
+rendered_controls_v90a = "custom mobile time + stable number controls" if is_mobile_mode_v90a else "desktop controls"
 
 st.markdown(f"""
 <div class='hm-v90a-diagnostic'>
-  <b>v91.2 Mobile Input Diagnostic</b><br>
+  <b>v92 Mobile Input Diagnostic</b><br>
   Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
   Rendered controls: <b>{rendered_controls_v90a}</b><br>
   Use the toggle above on phone if mobile controls are not active. Override: <code>?device=mobile</code> / <code>?device=desktop</code>.
@@ -310,6 +336,38 @@ auto_archive_expired_nutritionist_messages(user_id)
 
 def meal_has_data(meal):
     return any((meal or {}).get(x) for x in ["time", "food", "portion_size", "mood_energy"])
+
+
+def validate_meal_time_window(section_key, time_text):
+    minutes = parse_12h_time_to_minutes(time_text)
+    if minutes is None:
+        return False
+
+    # Valid windows:
+    # Breakfast: 6 AM to 11 AM
+    # Lunch: 12 PM to 3 PM
+    # Evening Snacks: 4 PM to 6 PM
+    # Dinner: 7 PM to 10 PM
+    # Bedtime: 11 PM to 12 AM
+    # Snacking: outside standard meal windows; boundary times accepted.
+    windows = {
+        "breakfast": (6 * 60, 11 * 60),
+        "lunch": (12 * 60, 15 * 60),
+        "evening_snacks": (16 * 60, 18 * 60),
+        "dinner": (19 * 60, 22 * 60),
+        "bedtime": (23 * 60, 24 * 60),
+    }
+
+    if section_key.startswith("snacking_"):
+        standard_windows = list(windows.values())
+        return not any(start <= minutes <= end for start, end in standard_windows)
+
+    if section_key in windows:
+        start, end = windows[section_key]
+        return start <= minutes <= end
+
+    return True
+
 
 def current_widget_payload(section_key, section_label):
     hour = st.session_state.get(f"{section_key}_time_h", "HH")
@@ -401,6 +459,37 @@ def water_stepper_to_litres(value):
     if value == int(value):
         return f"{int(value)} Litres"
     return f"{value} Litres"
+
+
+
+def _time_12h_to_24h_value(value):
+    raw = (value or "").strip().upper()
+    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
+    if not m:
+        return "08:00"
+    h = int(m.group(1))
+    minute = int(m.group(2))
+    period = m.group(3)
+    if period == "AM":
+        hour24 = 0 if h == 12 else h
+    else:
+        hour24 = 12 if h == 12 else h + 12
+    return f"{hour24:02d}:{minute:02d}"
+
+def _time_24h_to_12h_text(value):
+    raw = (value or "").strip()
+    m = re.match(r"^([0-2][0-9]):([0-5][0-9])$", raw)
+    if not m:
+        return ""
+    h24 = int(m.group(1))
+    minute = int(m.group(2))
+    if h24 > 23:
+        return ""
+    period = "AM" if h24 < 12 else "PM"
+    h12 = h24 % 12
+    if h12 == 0:
+        h12 = 12
+    return f"{h12:02d}:{minute:02d} {period}"
 
 
 def split_12h_time_parts(value):
@@ -600,14 +689,13 @@ st.session_state.setdefault(f"{active_key}_time_m", pre_m)
 st.session_state.setdefault(f"{active_key}_time_p", pre_p)
 st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
 if is_mobile_mode_v90a:
-    existing_time_value = to_time_input_value(prior.get("time", ""))
-    fallback_time_value = existing_time_value or time(8, 0)
-    selected_time_value = st.time_input(
+    prior_24h = _time_12h_to_24h_value(prior.get("time", ""))
+    selected_time_24h = mobile_time_input(
         "Select Meal Timing",
-        value=fallback_time_value,
-        key=f"{active_key}_v90a_mobile_native_time",
+        value=prior_24h,
+        key=f"{active_key}_v92_mobile_time_component",
     )
-    native_time_text = from_time_input_value(selected_time_value)
+    native_time_text = _time_24h_to_12h_text(selected_time_24h) or _time_24h_to_12h_text(prior_24h)
     time_h, time_m, time_p = split_12h_time_parts(native_time_text)
     st.session_state[f"{active_key}_time_h"] = time_h
     st.session_state[f"{active_key}_time_m"] = time_m
@@ -646,6 +734,12 @@ else:
             label_visibility="collapsed",
         )
 st.markdown(f"<div class='hm-full-day-helper'>{time_guidance}</div>", unsafe_allow_html=True)
+
+selected_meal_time_for_validation = f"{st.session_state.get(f'{active_key}_time_h', 'HH')}:{st.session_state.get(f'{active_key}_time_m', 'MM')} {st.session_state.get(f'{active_key}_time_p', 'AM/PM')}"
+if selected_meal_time_for_validation and "HH" not in selected_meal_time_for_validation and "MM" not in selected_meal_time_for_validation and "AM/PM" not in selected_meal_time_for_validation:
+    if not validate_meal_time_window(active_key, selected_meal_time_for_validation):
+        st.warning(f"{active_label} timing is outside the allowed window. {time_guidance}")
+
 
 food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=78)
 

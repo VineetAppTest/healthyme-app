@@ -850,3 +850,11 @@
 - Keeps mobile time input where mobile mode is active.
 - Desktop/default branch remains dropdown based.
 - Notes: true custom horizontal steppers and guaranteed native mobile time picker need a custom Streamlit component or native/Flutter front end.
+
+## v92 - Custom Mobile Time Component + Validation Restore
+
+- Added a local custom Streamlit component for mobile meal timing using browser `input type=time`.
+- Mobile Meal Timing no longer relies on `st.time_input`.
+- Restored visible timing-window validation feedback.
+- Improved mobile number_input look and feel for Water Intake and Poop Rounds.
+- Desktop/default branch remains unchanged.
