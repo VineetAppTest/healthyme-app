@@ -779,3 +779,11 @@
 - Loader tries shared loader sources first, then local JSON files, then embedded fallback questions.
 - Added a regression scan so `load_body_mind_questions_cached()` cannot be called before definition.
 - No Body-Mind unlock/save logic changed.
+
+## v88.1 - Mobile Visual Spacing Polish
+
+- Visual-only spacing polish on top of v88.
+- Tightened Snacking helper spacing.
+- Tightened Recent saved days label/value rows.
+- Reduced helper-text visual weight for mobile.
+- No data/save/business logic changed.

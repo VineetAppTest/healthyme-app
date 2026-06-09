@@ -2884,6 +2884,30 @@ button[kind="primary"]{
   padding:.78rem .95rem !important;
 }
 
+/* --- v88.1 Mobile Visual Spacing Polish --- */
+.hm-full-day-helper-tight{
+  margin-top:.02rem!important;
+  margin-bottom:.22rem!important;
+  font-size:.78rem!important;
+}
+@media (max-width: 768px){
+  .hm-meal-title{
+    margin-top:.22rem!important;
+    margin-bottom:.05rem!important;
+    font-size:1rem!important;
+  }
+  .hm-compact-section-note{
+    margin-bottom:.18rem!important;
+    font-size:.79rem!important;
+    line-height:1.18!important;
+  }
+  .hm-full-day-helper{
+    font-size:.78rem!important;
+    line-height:1.14!important;
+    margin-bottom:.22rem!important;
+  }
+}
+
 </style>
 """
 
@@ -7604,3 +7628,9 @@ def render_build_text_v86(): return None
 
 
 def render_build_text_v87(): return None
+
+
+def render_build_text_v88(): return None
+
+
+def render_build_text_v88_1(): return None
