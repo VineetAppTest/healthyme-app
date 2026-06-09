@@ -794,3 +794,11 @@
 - Restored the last stable v88.1 Daily Log visual/mobile spacing state.
 - Added guard note: do not globally alter Streamlit controls for a mobile-only requirement.
 - No business logic, save logic, Body-Mind logic, report logic, or nutritionist-note logic changed.
+
+## v90 - Mobile-Specific Input UX Spike
+
+- Replaced Meal Timing sliders with 3 dropdown cells: HH, MM, AM/PM.
+- Replaced Water Intake slider with dropdown from Select, 0 to 10 Litres in 0.5 increments.
+- Replaced Poop Rounds slider with dropdown from Select, 0 to 6.
+- Confirmed that true mobile-only widget rendering should not be forced globally in Streamlit without a proper front-end/mobile detection layer.
+- No save/business logic changed.

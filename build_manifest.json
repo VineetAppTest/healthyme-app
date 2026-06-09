@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v89R_Rollback_To_v88_1_Input_Control_Guard",
-  "version": "v89R_rollback_to_v88_1_input_control_guard",
-  "updated_on": "2026-06-09T10:41:20.438239+00:00",
+  "build_name": "HealthyMe_v90_Mobile_Specific_Input_UX_Spike",
+  "version": "v90_mobile_specific_input_ux_spike",
+  "updated_on": "2026-06-09T10:52:04.634630+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Visual-only mobile spacing polish on top of v88.",
-    "Tightened Snacking helper spacing and copy.",
-    "Reduced Recent saved days label/value row spacing.",
-    "Reduced helper text size and line-height for compact mobile rendering.",
-    "No save logic, data logic, Body-Mind logic, or report logic changed."
+    "Replaced Meal Timing sliders with 3 dropdown cells: HH, MM, AM/PM.",
+    "Replaced Water Intake slider with dropdown from Select, 0 to 10 Litres in 0.5 increments.",
+    "Replaced Poop Rounds slider with dropdown: Select, 0, 1, 2, 3, 4, 5, 6.",
+    "Removed the incorrect v89 global hybrid input implementation.",
+    "No Daily Log save logic, Body-Mind logic, report logic, or nutritionist notes logic changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -256,5 +256,9 @@
     "Recent Saved Days mobile label/value layout.",
     "Daily Log spacing refinement.",
     "Body-Mind loader regression guard inherited from v87 lineage."
+  ],
+  "mobile_specific_spike_note": [
+    "Streamlit does not provide a reliable server-side mobile-only widget branch without custom front-end handling.",
+    "This spike therefore restores dropdown controls that are acceptable on desktop and mobile instead of applying mobile-only controls globally."
   ]
 }

@@ -335,19 +335,37 @@ st.session_state.setdefault(f"{active_key}_time_h", pre_h)
 st.session_state.setdefault(f"{active_key}_time_m", pre_m)
 st.session_state.setdefault(f"{active_key}_time_p", pre_p)
 st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
-th, tm, tp = st.columns([1, 1, 1.1])
+th, tm, tp = st.columns([1, 1, 1])
 with th:
-    current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
     hour_options = ["HH"] + [f"{i:02d}" for i in range(1, 13)]
-    st.session_state[f"{active_key}_time_h"] = st.select_slider("Hour", options=hour_options, value=current_h if current_h in hour_options else "HH", label_visibility="collapsed", key=f"{active_key}_time_h_slider")
+    current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
+    st.selectbox(
+        "HH",
+        hour_options,
+        index=hour_options.index(current_h) if current_h in hour_options else 0,
+        key=f"{active_key}_time_h",
+        label_visibility="collapsed",
+    )
 with tm:
-    current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
     minute_options = ["MM"] + [f"{i:02d}" for i in range(0, 60)]
-    st.session_state[f"{active_key}_time_m"] = st.select_slider("Minute", options=minute_options, value=current_m if current_m in minute_options else "MM", label_visibility="collapsed", key=f"{active_key}_time_m_slider")
+    current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
+    st.selectbox(
+        "MM",
+        minute_options,
+        index=minute_options.index(current_m) if current_m in minute_options else 0,
+        key=f"{active_key}_time_m",
+        label_visibility="collapsed",
+    )
 with tp:
-    current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
     ampm_options = ["AM/PM", "AM", "PM"]
-    st.session_state[f"{active_key}_time_p"] = st.radio("AM / PM", ampm_options, index=ampm_options.index(current_p) if current_p in ampm_options else 0, horizontal=True, label_visibility="collapsed", key=f"{active_key}_time_p_radio")
+    current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
+    st.selectbox(
+        "AM/PM",
+        ampm_options,
+        index=ampm_options.index(current_p) if current_p in ampm_options else 0,
+        key=f"{active_key}_time_p",
+        label_visibility="collapsed",
+    )
 st.markdown(f"<div class='hm-full-day-helper'>{time_guidance}</div>", unsafe_allow_html=True)
 
 food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=78)
@@ -381,13 +399,37 @@ card_end()
 
 card_start()
 st.subheader("Full-day details")
-water_options = ['Select', '0 Litres', '0.5 Litres', '1 Litre', '1.5 Litres', '2 Litres', '2.5 Litres', '3 Litres', '3.5 Litres', '4 Litres', '4.5 Litres', '5 Litres', '5.5 Litres', '6 Litres', '6.5 Litres', '7 Litres', '7.5 Litres', '8 Litres', '8.5 Litres', '9 Litres', '9.5 Litres', '10 Litres']
-existing_water = existing.get("water_litres", "Select") or "Select"
-water_index = water_options.index(existing_water) if existing_water in water_options else 0
-
 top_left, top_right = st.columns(2)
 with top_left:
-    water_litres = st.select_slider("Water intake for the full day", options=water_options, value=existing_water if existing_water in water_options else "Select")
+    water_options = ["Select"] + [
+        "0 Litres",
+        "0.5 Litres",
+        "1 Litre",
+        "1.5 Litres",
+        "2 Litres",
+        "2.5 Litres",
+        "3 Litres",
+        "3.5 Litres",
+        "4 Litres",
+        "4.5 Litres",
+        "5 Litres",
+        "5.5 Litres",
+        "6 Litres",
+        "6.5 Litres",
+        "7 Litres",
+        "7.5 Litres",
+        "8 Litres",
+        "8.5 Litres",
+        "9 Litres",
+        "9.5 Litres",
+        "10 Litres",
+    ]
+    existing_water = existing.get("water_litres", "Select") or "Select"
+    water_litres = st.selectbox(
+        "Water intake for the full day",
+        water_options,
+        index=water_options.index(existing_water) if existing_water in water_options else 0,
+    )
 with top_right:
     poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
     existing_poop_rounds = existing.get("poop_rounds", "Select")
@@ -395,7 +437,11 @@ with top_right:
         existing_poop_rounds = "Select"
     if str(existing_poop_rounds).isdigit():
         existing_poop_rounds = int(existing_poop_rounds)
-    poop_rounds = st.select_slider("Poop rounds", options=poop_options, value=existing_poop_rounds if existing_poop_rounds in poop_options else "Select")
+    poop_rounds = st.selectbox(
+        "Poop rounds",
+        poop_options,
+        index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
+    )
 
 poop_timings = []
 existing_timings = existing.get("poop_timings", []) or []
