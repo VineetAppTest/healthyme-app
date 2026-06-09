@@ -1,7 +1,7 @@
 import streamlit as st
 import html
 import re
-from datetime import date
+from datetime import date, time
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top, compact_topbar
 from components.db import (
@@ -71,7 +71,46 @@ st.markdown(
     div[data-testid="stVerticalBlock"] > div:has(.hm-meal-title) {
         gap: .2rem !important;
     }
-    </style>
+    
+/* --- v89 Hybrid Mobile Input Upgrade --- */
+.hm-chip-label{
+  color:#064E3B;
+  font-size:.86rem;
+  font-weight:900;
+  margin:.1rem 0 .3rem 0;
+}
+.hm-chip-help{
+  color:#6B7280;
+  font-size:.78rem;
+  line-height:1.2;
+  margin:-.1rem 0 .35rem 0;
+}
+.hm-time-preview{
+  display:inline-block;
+  color:#064E3B;
+  background:#EFFAF4;
+  border:1px solid #BFE8D1;
+  border-radius:999px;
+  padding:.28rem .65rem;
+  font-size:.82rem;
+  font-weight:800;
+  margin:.35rem 0 .2rem 0;
+}
+.hm-chip-shadow{
+  display:none;
+}
+@media (max-width:768px){
+  .hm-chip-label{
+    font-size:.82rem!important;
+    margin:.05rem 0 .22rem 0!important;
+  }
+  .hm-time-preview{
+    font-size:.78rem!important;
+    padding:.22rem .55rem!important;
+  }
+}
+
+</style>
     """,
     unsafe_allow_html=True,
 )
@@ -138,6 +177,54 @@ def is_dirty(existing_meals, section_key, section_label):
     cur = current_widget_payload(section_key, section_label)
     saved = saved_payload_for(existing_meals, section_key, section_label)
     return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "portion_size", "mood_energy"])
+
+
+def to_time_input_value(value):
+    raw = (value or "").strip().upper()
+    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
+    if not m:
+        return None
+    h = int(m.group(1))
+    minute = int(m.group(2))
+    period = m.group(3)
+    if period == "AM":
+        hour24 = 0 if h == 12 else h
+    else:
+        hour24 = 12 if h == 12 else h + 12
+    return time(hour24, minute)
+
+def from_time_input_value(value):
+    if value is None:
+        return ""
+    hour24 = value.hour
+    minute = value.minute
+    period = "AM" if hour24 < 12 else "PM"
+    h12 = hour24 % 12
+    if h12 == 0:
+        h12 = 12
+    return f"{h12:02d}:{minute:02d} {period}"
+
+def render_chip_selector(label, options, current_value, key_prefix, columns=6, help_text=None):
+    st.markdown(f"<div class='hm-chip-label'>{label}</div>", unsafe_allow_html=True)
+    if help_text:
+        st.markdown(f"<div class='hm-chip-help'>{help_text}</div>", unsafe_allow_html=True)
+
+    selected = st.session_state.get(key_prefix, current_value)
+    if selected not in options:
+        selected = current_value if current_value in options else options[0]
+    st.session_state[key_prefix] = selected
+
+    for start in range(0, len(options), columns):
+        cols = st.columns(columns)
+        for col, option in zip(cols, options[start:start + columns]):
+            active_cls = " hm-chip-active" if selected == option else ""
+            with col:
+                if st.button(str(option), key=f"{key_prefix}_{str(option).replace(' ', '_').replace('+', 'plus').replace('.', '_')}", use_container_width=True):
+                    st.session_state[key_prefix] = option
+                    st.rerun()
+                st.markdown(f"<div class='hm-chip-shadow{active_cls}'></div>", unsafe_allow_html=True)
+    return st.session_state.get(key_prefix, selected)
+
 
 def split_12h_time_parts(value):
     raw = (value or "").strip().upper()
@@ -335,19 +422,20 @@ st.session_state.setdefault(f"{active_key}_time_h", pre_h)
 st.session_state.setdefault(f"{active_key}_time_m", pre_m)
 st.session_state.setdefault(f"{active_key}_time_p", pre_p)
 st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
-th, tm, tp = st.columns([1, 1, 1.1])
-with th:
-    current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
-    hour_options = ["HH"] + [f"{i:02d}" for i in range(1, 13)]
-    st.session_state[f"{active_key}_time_h"] = st.select_slider("Hour", options=hour_options, value=current_h if current_h in hour_options else "HH", label_visibility="collapsed", key=f"{active_key}_time_h_slider")
-with tm:
-    current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
-    minute_options = ["MM"] + [f"{i:02d}" for i in range(0, 60)]
-    st.session_state[f"{active_key}_time_m"] = st.select_slider("Minute", options=minute_options, value=current_m if current_m in minute_options else "MM", label_visibility="collapsed", key=f"{active_key}_time_m_slider")
-with tp:
-    current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
-    ampm_options = ["AM/PM", "AM", "PM"]
-    st.session_state[f"{active_key}_time_p"] = st.radio("AM / PM", ampm_options, index=ampm_options.index(current_p) if current_p in ampm_options else 0, horizontal=True, label_visibility="collapsed", key=f"{active_key}_time_p_radio")
+existing_time_value = to_time_input_value(prior.get("time", ""))
+fallback_time_value = existing_time_value or time(8, 0)
+selected_time_value = st.time_input(
+    "Select Meal Timing",
+    value=fallback_time_value,
+    key=f"{active_key}_native_time",
+    label_visibility="collapsed",
+)
+native_time_text = from_time_input_value(selected_time_value)
+time_h, time_m, time_p = split_12h_time_parts(native_time_text)
+st.session_state[f"{active_key}_time_h"] = time_h
+st.session_state[f"{active_key}_time_m"] = time_m
+st.session_state[f"{active_key}_time_p"] = time_p
+st.markdown(f"<div class='hm-time-preview'>Selected: {native_time_text}</div>", unsafe_allow_html=True)
 st.markdown(f"<div class='hm-full-day-helper'>{time_guidance}</div>", unsafe_allow_html=True)
 
 food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=78)
@@ -387,7 +475,14 @@ water_index = water_options.index(existing_water) if existing_water in water_opt
 
 top_left, top_right = st.columns(2)
 with top_left:
-    water_litres = st.select_slider("Water intake for the full day", options=water_options, value=existing_water if existing_water in water_options else "Select")
+    water_chip_options = ["Select", "0 Litres", "0.5 Litres", "1 Litre", "1.5 Litres", "2 Litres", "2.5 Litres", "3 Litres", "3.5 Litres", "4 Litres", "4.5 Litres", "5+ Litres"]
+    water_litres = render_chip_selector(
+        "Water intake for the full day",
+        water_chip_options,
+        existing_water if existing_water in water_chip_options else "Select",
+        "daily_water_litres_chip",
+        columns=4,
+    )
 with top_right:
     poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
     existing_poop_rounds = existing.get("poop_rounds", "Select")
@@ -395,7 +490,13 @@ with top_right:
         existing_poop_rounds = "Select"
     if str(existing_poop_rounds).isdigit():
         existing_poop_rounds = int(existing_poop_rounds)
-    poop_rounds = st.select_slider("Poop rounds", options=poop_options, value=existing_poop_rounds if existing_poop_rounds in poop_options else "Select")
+    poop_rounds = render_chip_selector(
+        "Poop rounds",
+        poop_options,
+        existing_poop_rounds if existing_poop_rounds in poop_options else "Select",
+        "daily_poop_rounds_chip",
+        columns=4,
+    )
 
 poop_timings = []
 existing_timings = existing.get("poop_timings", []) or []

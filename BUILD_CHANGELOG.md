@@ -787,3 +787,11 @@
 - Tightened Recent saved days label/value rows.
 - Reduced helper-text visual weight for mobile.
 - No data/save/business logic changed.
+
+## v89 - Hybrid Mobile Input Upgrade
+
+- Replaced Meal Timing dropdown/slider style controls with native/mobile-friendly time input.
+- Replaced Poop Rounds with segmented/chip buttons.
+- Replaced Water Intake with segmented/chip buttons.
+- Kept existing validation windows and save payload behavior.
+- No Body-Mind, report, login, LAF/NSP, or nutritionist note logic changed.

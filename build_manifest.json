@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v88_1_Mobile_Visual_Spacing_Polish",
-  "version": "v88_1_mobile_visual_spacing_polish",
-  "updated_on": "2026-06-09T09:56:08.566432+00:00",
+  "build_name": "HealthyMe_v89_Hybrid_Mobile_Input_Upgrade",
+  "version": "v89_hybrid_mobile_input_upgrade",
+  "updated_on": "2026-06-09T10:28:51.698980+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Visual-only mobile spacing polish on top of v88.",
-    "Tightened Snacking helper spacing and copy.",
-    "Reduced Recent saved days label/value row spacing.",
-    "Reduced helper text size and line-height for compact mobile rendering.",
-    "No save logic, data logic, Body-Mind logic, or report logic changed."
+    "Meal Timing moved to native/mobile-friendly time picker.",
+    "Poop Rounds moved to segmented/chip buttons: Select, 0, 1, 2, 3, 4, 5, 6.",
+    "Water Intake moved to segmented/chip buttons with Select through 5+ Litres.",
+    "Existing meal timing validation windows retained.",
+    "No Daily Log save logic, Body-Mind logic, report logic, or nutritionist notes logic changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
