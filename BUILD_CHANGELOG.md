@@ -750,3 +750,8 @@
 - Physical activity aligned left; Poop timings and Feeling after poop aligned right.
 - Overall notes moved to a full-width row.
 - Poop rounds reduced to 0-6 and Poop timings reduced to 6 fields.
+
+## v83 - Physical Activity Height Balance Fix
+
+- Increased the Physical activity text area height in Full-day details to reduce empty space on laptop.
+- No other logic or layout behavior changed from v82.

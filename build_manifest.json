@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v82_FullDay_Details_HealthyMe_Structure_Alignment",
-  "version": "v82_fullday_details_healthyme_structure_alignment",
-  "updated_on": "2026-06-09T08:30:19.929237+00:00",
+  "build_name": "HealthyMe_v83_Physical_Activity_Height_Balance_Fix",
+  "version": "v83_physical_activity_height_balance_fix",
+  "updated_on": "2026-06-09T08:36:30.364854+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,12 +17,8 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Rebuilt Full-day details in the accepted HealthyMe structure.",
-    "Top row now shows Water intake and Poop rounds side by side.",
-    "Middle row now shows Physical activity on the left and Poop timings on the right.",
-    "Feeling after poop is clubbed into the Poop timings section.",
-    "Overall notes now spans the full row width.",
-    "Poop rounds reduced to Select, 0, 1, 2, 3, 4, 5, 6 and timings reduced to 6 fields."
+    "Increased the Physical activity paragraph box height to reduce empty laptop space in Full-day details.",
+    "No other UI logic or save logic changed from v82."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"

@@ -375,7 +375,7 @@ with body_left:
         "Physical activity - time of day and duration",
         value=existing.get("physical_activity", ""),
         placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
-        height=210,
+        height=290,
     )
 
 with body_right:
