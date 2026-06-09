@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v89_Hybrid_Mobile_Input_Upgrade",
-  "version": "v89_hybrid_mobile_input_upgrade",
-  "updated_on": "2026-06-09T10:28:51.698980+00:00",
+  "build_name": "HealthyMe_v89R_Rollback_To_v88_1_Input_Control_Guard",
+  "version": "v89R_rollback_to_v88_1_input_control_guard",
+  "updated_on": "2026-06-09T10:41:20.438239+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Meal Timing moved to native/mobile-friendly time picker.",
-    "Poop Rounds moved to segmented/chip buttons: Select, 0, 1, 2, 3, 4, 5, 6.",
-    "Water Intake moved to segmented/chip buttons with Select through 5+ Litres.",
-    "Existing meal timing validation windows retained.",
-    "No Daily Log save logic, Body-Mind logic, report logic, or nutritionist notes logic changed."
+    "Visual-only mobile spacing polish on top of v88.",
+    "Tightened Snacking helper spacing and copy.",
+    "Reduced Recent saved days label/value row spacing.",
+    "Reduced helper text size and line-height for compact mobile rendering.",
+    "No save logic, data logic, Body-Mind logic, or report logic changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -240,5 +240,21 @@
     "pages/23_Admin_Body_Mind_Control.py"
   ],
   "regression_scan_issues": {},
-  "body_mind_loader_defined_before_call": true
+  "body_mind_loader_defined_before_call": true,
+  "rollback_reason": [
+    "v89 hybrid controls impacted desktop unexpectedly.",
+    "v89 hybrid mobile controls did not implement the intended pattern correctly.",
+    "This corrective build restores the last stable v88.1 Daily Log visual/mobile spacing state."
+  ],
+  "guard": [
+    "Do not globally replace Streamlit input controls for mobile-only UX.",
+    "Future hybrid mobile input work must be implemented in a separate mobile-specific rendering path or only after explicit desktop approval.",
+    "No business logic changes are included in this rollback."
+  ],
+  "retained_from_v88_1": [
+    "Mobile visual spacing polish.",
+    "Recent Saved Days mobile label/value layout.",
+    "Daily Log spacing refinement.",
+    "Body-Mind loader regression guard inherited from v87 lineage."
+  ]
 }

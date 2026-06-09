@@ -788,10 +788,9 @@
 - Reduced helper-text visual weight for mobile.
 - No data/save/business logic changed.
 
-## v89 - Hybrid Mobile Input Upgrade
+## v89R - Rollback to Stable v88.1 + Input Control Guard
 
-- Replaced Meal Timing dropdown/slider style controls with native/mobile-friendly time input.
-- Replaced Poop Rounds with segmented/chip buttons.
-- Replaced Water Intake with segmented/chip buttons.
-- Kept existing validation windows and save payload behavior.
-- No Body-Mind, report, login, LAF/NSP, or nutritionist note logic changed.
+- Rolled back incorrect v89 hybrid input-control implementation.
+- Restored the last stable v88.1 Daily Log visual/mobile spacing state.
+- Added guard note: do not globally alter Streamlit controls for a mobile-only requirement.
+- No business logic, save logic, Body-Mind logic, report logic, or nutritionist-note logic changed.
