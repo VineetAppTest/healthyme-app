@@ -726,3 +726,11 @@
 - Rebalanced the laptop Full-day details layout.
 - Moved Feeling after poop to a full-width compact row to remove excess blank space.
 - Applied compact polish to Daily Log controls while keeping business logic unchanged.
+
+## v80 - Daily Log Laptop Balance Fix
+
+- Rebalanced meal section buttons using Option A.
+- Standard meals now render as Breakfast/Lunch/Evening Snacks, then Dinner/Bedtime.
+- Snacking sections render separately as Snacking 1, Snacking 2, Snacking 3.
+- Tightened Full-day details layout to reduce laptop blank space.
+- No timing/save/business logic changed.

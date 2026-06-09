@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v79_Micro_Polish_Build",
-  "version": "v79_micro_polish_build",
-  "updated_on": "2026-06-09T07:09:02.027523+00:00",
+  "build_name": "HealthyMe_v80_DailyLog_Laptop_Balance_Fix",
+  "version": "v80_dailylog_laptop_balance_fix",
+  "updated_on": "2026-06-09T07:30:19.021000+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Tightened Daily Log meal-section spacing and helper text.",
-    "Rebalanced the Full-day details layout for laptop view.",
-    "Moved Feeling after poop to a full-width compact row to remove blank space.",
-    "Applied a cleaner compact pass to Daily Log controls without changing business logic."
+    "Meal buttons rebalanced using Option A: Breakfast/Lunch/Evening Snacks, Dinner/Bedtime, then Snacking sections.",
+    "Snacking sections render as Snacking 1, Snacking 2, Snacking 3 in rows of three.",
+    "Full-day details laptop layout further tightened.",
+    "Reduced empty space around Physical activity and Feeling after poop.",
+    "No timing/save/business logic changed from v79."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"

@@ -255,28 +255,49 @@ st.markdown("<div class='hm-compact-section-note hm-section-mini-gap'>Tap a meal
 active_key = st.session_state["active_daily_meal_section"]
 active_label = next((label for key, label in meal_sections if key == active_key), meal_sections[0][1])
 
-# Compact meal selector with reduced header/footer space.
-max_cols = 4 if len(meal_sections) >= 4 else len(meal_sections)
-cols = st.columns(max_cols)
-for idx, (key, label) in enumerate(meal_sections):
-    with cols[idx % max_cols]:
-        saved = meal_has_data(existing_meals.get(key, {}))
-        short_label = f"{'● ' if key == active_key else ''}{label}{' ✓' if saved else ''}"
-        if st.button(short_label, key=f"section_btn_{key}", use_container_width=True):
-            if key != active_key and is_dirty(existing_meals, active_key, active_label):
-                st.warning(f"Please save the section ({active_label}) before moving to next section.")
-            else:
-                st.session_state["active_daily_meal_section"] = key
-                st.rerun()
+# v80 balanced meal selector:
+# Row 1: Breakfast / Lunch / Evening Snacks
+# Row 2: Dinner / Bedtime
+# Row 3: Snacking 1..n
+def render_meal_section_button(key, label):
+    saved = meal_has_data(existing_meals.get(key, {}))
+    short_label = f"{'● ' if key == active_key else ''}{label}{' ✓' if saved else ''}"
+    if st.button(short_label, key=f"section_btn_{key}", use_container_width=True):
+        if key != active_key and is_dirty(existing_meals, active_key, active_label):
+            st.warning(f"Please save the section ({active_label}) before moving to next section.")
+        else:
+            st.session_state["active_daily_meal_section"] = key
+            st.rerun()
 
-# Other is now very visible directly below the buttons.
-add_cols = st.columns([1.1, 2.4])
+row1 = [("breakfast", "Breakfast"), ("lunch", "Lunch"), ("evening_snacks", "Evening Snacks")]
+row1_cols = st.columns(3)
+for col, (key, label) in zip(row1_cols, row1):
+    with col:
+        render_meal_section_button(key, label)
+
+row2 = [("dinner", "Dinner"), ("bedtime", "Bedtime")]
+row2_cols = st.columns([1, 1, 1])
+for col, item in zip(row2_cols[:2], row2):
+    with col:
+        render_meal_section_button(item[0], item[1])
+with row2_cols[2]:
+    st.markdown("<div class='hm-v80-empty-slot'></div>", unsafe_allow_html=True)
+
+snacking_sections = [(key, label) for key, label in meal_sections if key.startswith("snacking_")]
+if snacking_sections:
+    for start in range(0, len(snacking_sections), 3):
+        snack_cols = st.columns(3)
+        for col, item in zip(snack_cols, snacking_sections[start:start + 3]):
+            with col:
+                render_meal_section_button(item[0], item[1])
+
+add_cols = st.columns([1, 2])
 with add_cols[0]:
     if st.button("+ Snacking", use_container_width=True, help="Add another snacking time outside the standard meal windows."):
         if is_dirty(existing_meals, active_key, active_label):
             st.warning(f"Please save the section ({active_label}) before adding another Snacking section.")
         else:
-            st.session_state["daily_log_snacking_count"] = st.session_state.get("daily_log_snacking_count", 1) + 1
+            st.session_state["daily_log_snacking_count"] = st.session_state.get("daily_log_snacking_count", 0) + 1
             st.session_state["active_daily_meal_section"] = f"snacking_{st.session_state['daily_log_snacking_count']}"
             st.rerun()
 with add_cols[1]:
@@ -341,7 +362,7 @@ with left_col:
         "Physical activity - time of day and duration",
         value=existing.get("physical_activity", ""),
         placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
-        height=88,
+        height=78,
     )
 
 with right_col:
@@ -378,10 +399,10 @@ feeling_after_poop = st.text_area(
     "Feeling after poop",
     value=existing.get("feeling_after_poop", ""),
     placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
-    height=88,
+    height=72,
 )
 poop = ""
-day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=78)
+day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=72)
 
 c_save_1, c_save_2 = st.columns(2)
 with c_save_1:

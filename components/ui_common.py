@@ -2769,6 +2769,29 @@ button[kind="primary"]{
   max-width:5.4rem !important;
 }
 
+/* --- v80 Daily Log Laptop Balance Fix --- */
+.hm-v80-empty-slot{
+  min-height:2.35rem;
+}
+.hm-snack-helper{
+  margin-top:.38rem !important;
+  font-size:.80rem !important;
+}
+.hm-compact-section-note{
+  margin-bottom:.35rem !important;
+}
+.hm-meal-title{
+  margin-top:.35rem !important;
+}
+@media (min-width: 900px){
+  div[data-testid="stVerticalBlock"] > div:has(.hm-poop-timing-grid-anchor){
+    gap:.25rem !important;
+  }
+  .hm-poop-timing-grid-anchor + div [data-testid="stTextInput"]{
+    margin-bottom:.2rem !important;
+  }
+}
+
 </style>
 """
 
@@ -7360,7 +7383,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v79"
+APP_BUILD_VERSION = "v80"
 APP_BUILD_LABEL = "Meal Timing + Daily Log UI Alignment Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7467,3 +7490,5 @@ def build_marker_v9(): return None
 def build_marker_v8(): return None
 def build_marker_v7(): return None
 def render_version_tag(): return None
+
+def render_build_text_v80(): return None
