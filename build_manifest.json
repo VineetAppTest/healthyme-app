@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v92_Custom_Mobile_Time_Component_Validation_Restore",
-  "version": "v92_custom_mobile_time_component_validation_restore",
-  "updated_on": "2026-06-09T13:38:03.450435+00:00",
+  "build_name": "HealthyMe_v92_1_Mobile_Time_Active_And_Number_Button_Size_Fix",
+  "version": "v92_1_mobile_time_active_and_number_button_size_fix",
+  "updated_on": "2026-06-09T13:44:47.773039+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added local custom Streamlit component for mobile time input using browser input type=time.",
-    "Mobile Meal Timing now uses custom component instead of st.time_input.",
-    "Restored visible timing-window validation feedback under Meal Timing.",
-    "Mobile number_input control look and feel improved.",
-    "Desktop/default branch remains unchanged.",
+    "Updated custom mobile time component styling so Meal Timing does not appear greyed out.",
+    "Explicitly removes disabled/readonly state from the custom time input.",
+    "Increased mobile number_input control height and button/icon size for Water Intake and Poop Rounds.",
+    "Kept timing validation and desktop/default behavior unchanged.",
     "No Body-Mind, report, login, LAF/NSP, or nutritionist-note logic changed."
   ],
   "required_setup": [

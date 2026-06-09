@@ -204,6 +204,46 @@ st.markdown(
   }
 }
 
+
+/* --- v92.1 Mobile Time Active + Number Button Size Fix --- */
+@media (max-width:768px){
+  iframe[title="healthyme_mobile_time_input"]{
+    min-height:78px!important;
+  }
+  div[data-testid="stNumberInput"]{
+    margin-top:.05rem!important;
+    margin-bottom:.65rem!important;
+  }
+  div[data-testid="stNumberInput"] input{
+    min-height:2.65rem!important;
+    height:2.65rem!important;
+    font-size:1.08rem!important;
+    font-weight:900!important;
+    text-align:center!important;
+    color:#064E3B!important;
+    -webkit-text-fill-color:#064E3B!important;
+    background:#FFFFFF!important;
+    border:1.6px solid #D4A63A!important;
+    border-radius:14px!important;
+  }
+  div[data-testid="stNumberInput"] button{
+    min-width:2.65rem!important;
+    min-height:2.65rem!important;
+    height:2.65rem!important;
+    font-size:1.45rem!important;
+    font-weight:900!important;
+    color:#064E3B!important;
+    background:#FFFDF8!important;
+    border:1.4px solid #D4A63A!important;
+    border-radius:14px!important;
+  }
+  div[data-testid="stNumberInput"] button svg{
+    width:1.2rem!important;
+    height:1.2rem!important;
+    stroke-width:3!important;
+  }
+}
+
 </style>
     """,
     unsafe_allow_html=True,
@@ -305,7 +345,7 @@ rendered_controls_v90a = "custom mobile time + stable number controls" if is_mob
 
 st.markdown(f"""
 <div class='hm-v90a-diagnostic'>
-  <b>v92 Mobile Input Diagnostic</b><br>
+  <b>v92.1 Mobile Input Diagnostic</b><br>
   Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
   Rendered controls: <b>{rendered_controls_v90a}</b><br>
   Use the toggle above on phone if mobile controls are not active. Override: <code>?device=mobile</code> / <code>?device=desktop</code>.

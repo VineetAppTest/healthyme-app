@@ -22,29 +22,43 @@
       margin: 0 0 6px 0;
     }
     .hm-time-input {
+      -webkit-appearance: none;
+      appearance: none;
       box-sizing: border-box;
       width: 100%;
-      min-height: 42px;
-      border: 1.4px solid #D9C399;
+      min-height: 46px;
+      border: 1.6px solid #D4A63A;
       border-radius: 14px;
-      background: #FFFDF8;
+      background: #FFFFFF;
       color: #064E3B;
-      font-size: 16px;
-      font-weight: 800;
-      padding: 8px 12px;
+      -webkit-text-fill-color: #064E3B;
+      opacity: 1;
+      font-size: 17px;
+      font-weight: 900;
+      padding: 9px 12px;
       outline: none;
-      box-shadow: 0 4px 14px rgba(15,23,42,.04);
+      box-shadow: 0 5px 16px rgba(15,23,42,.055);
     }
     .hm-time-input:focus {
       border-color: #0F766E;
-      box-shadow: 0 0 0 3px rgba(15,118,110,.12);
+      background: #FFFDF8;
+      box-shadow: 0 0 0 3px rgba(15,118,110,.14);
+    }
+    .hm-time-input::-webkit-date-and-time-value {
+      color: #064E3B;
+      -webkit-text-fill-color: #064E3B;
+      text-align: left;
+    }
+    .hm-time-input::-webkit-calendar-picker-indicator {
+      opacity: 1;
+      filter: invert(25%) sepia(36%) saturate(897%) hue-rotate(122deg) brightness(89%) contrast(92%);
     }
   </style>
 </head>
 <body>
   <div class="hm-wrap">
     <div id="label" class="hm-label"></div>
-    <input id="timeInput" class="hm-time-input" type="time" />
+    <input id="timeInput" class="hm-time-input" type="time" inputmode="none" />
   </div>
 
   <script>
@@ -53,22 +67,27 @@
 
     function sendValue() {
       Streamlit.setComponentValue(input.value || "");
-      Streamlit.setFrameHeight(72);
+      Streamlit.setFrameHeight(78);
     }
 
     function onRender(event) {
       const data = event.detail.args || {};
       label.textContent = data.label || "Select time";
+      input.disabled = false;
+      input.readOnly = false;
+      input.removeAttribute("disabled");
+      input.removeAttribute("readonly");
       input.value = data.value || "08:00";
       sendValue();
       input.onchange = sendValue;
       input.oninput = sendValue;
-      Streamlit.setFrameHeight(72);
+      input.onclick = function(){ try { input.showPicker && input.showPicker(); } catch(e) {} };
+      Streamlit.setFrameHeight(78);
     }
 
     Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
     Streamlit.setComponentReady();
-    Streamlit.setFrameHeight(72);
+    Streamlit.setFrameHeight(78);
   </script>
 </body>
 </html>

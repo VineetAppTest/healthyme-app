@@ -858,3 +858,10 @@
 - Restored visible timing-window validation feedback.
 - Improved mobile number_input look and feel for Water Intake and Poop Rounds.
 - Desktop/default branch remains unchanged.
+
+## v92.1 - Mobile Time Active + Number Button Size Fix
+
+- Improved custom mobile time input styling so it does not look greyed out.
+- Explicitly removed disabled/readonly attributes from the custom time input.
+- Increased Water Intake and Poop Rounds number_input button/icon size on mobile.
+- No save/business logic changed.
