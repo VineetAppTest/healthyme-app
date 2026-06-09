@@ -80,6 +80,66 @@ user_id = st.session_state["user_id"]
 compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
+def get_device_mode_for_spike():
+    """
+    v90A controlled mobile-detection spike.
+
+    Desktop remains default. Mobile branch activates only with:
+    ?device=mobile
+    """
+    try:
+        qp = st.query_params
+        raw = qp.get("device", "desktop")
+        if isinstance(raw, list):
+            raw = raw[0] if raw else "desktop"
+        raw = str(raw).strip().lower()
+    except Exception:
+        raw = "desktop"
+    return "mobile" if raw == "mobile" else "desktop"
+
+def to_time_input_value(value):
+    raw = (value or "").strip().upper()
+    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
+    if not m:
+        return None
+    h = int(m.group(1))
+    minute = int(m.group(2))
+    period = m.group(3)
+    if period == "AM":
+        hour24 = 0 if h == 12 else h
+    else:
+        hour24 = 12 if h == 12 else h + 12
+    return time(hour24, minute)
+
+def from_time_input_value(value):
+    if value is None:
+        return ""
+    hour24 = value.hour
+    minute = value.minute
+    period = "AM" if hour24 < 12 else "PM"
+    h12 = hour24 % 12
+    if h12 == 0:
+        h12 = 12
+    return f"{h12:02d}:{minute:02d} {period}"
+
+def render_v90a_chip_selector(label, options, current_value, key_prefix, columns=4):
+    st.markdown(f"<div class='hm-v90a-chip-label'>{label}</div>", unsafe_allow_html=True)
+    selected = st.session_state.get(key_prefix, current_value)
+    if selected not in options:
+        selected = current_value if current_value in options else options[0]
+    st.session_state[key_prefix] = selected
+
+    for start in range(0, len(options), columns):
+        cols = st.columns(columns)
+        for col, option in zip(cols, options[start:start + columns]):
+            button_label = str(option)
+            safe_label = button_label.replace(" ", "_").replace("+", "plus").replace(".", "_")
+            with col:
+                if st.button(button_label, key=f"{key_prefix}_{safe_label}", use_container_width=True):
+                    st.session_state[key_prefix] = option
+                    st.rerun()
+    return st.session_state.get(key_prefix, selected)
+
 device_mode_v90a = get_device_mode_for_spike()
 is_mobile_mode_v90a = device_mode_v90a == "mobile"
 rendered_controls_v90a = "mobile test controls" if is_mobile_mode_v90a else "desktop controls"
@@ -152,67 +212,6 @@ def is_dirty(existing_meals, section_key, section_label):
     cur = current_widget_payload(section_key, section_label)
     saved = saved_payload_for(existing_meals, section_key, section_label)
     return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "portion_size", "mood_energy"])
-
-
-def get_device_mode_for_spike():
-    """
-    v90A controlled mobile-detection spike.
-
-    Desktop remains default. Mobile branch activates only with:
-    ?device=mobile
-    """
-    try:
-        qp = st.query_params
-        raw = qp.get("device", "desktop")
-        if isinstance(raw, list):
-            raw = raw[0] if raw else "desktop"
-        raw = str(raw).strip().lower()
-    except Exception:
-        raw = "desktop"
-    return "mobile" if raw == "mobile" else "desktop"
-
-def to_time_input_value(value):
-    raw = (value or "").strip().upper()
-    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
-    if not m:
-        return None
-    h = int(m.group(1))
-    minute = int(m.group(2))
-    period = m.group(3)
-    if period == "AM":
-        hour24 = 0 if h == 12 else h
-    else:
-        hour24 = 12 if h == 12 else h + 12
-    return time(hour24, minute)
-
-def from_time_input_value(value):
-    if value is None:
-        return ""
-    hour24 = value.hour
-    minute = value.minute
-    period = "AM" if hour24 < 12 else "PM"
-    h12 = hour24 % 12
-    if h12 == 0:
-        h12 = 12
-    return f"{h12:02d}:{minute:02d} {period}"
-
-def render_v90a_chip_selector(label, options, current_value, key_prefix, columns=4):
-    st.markdown(f"<div class='hm-v90a-chip-label'>{label}</div>", unsafe_allow_html=True)
-    selected = st.session_state.get(key_prefix, current_value)
-    if selected not in options:
-        selected = current_value if current_value in options else options[0]
-    st.session_state[key_prefix] = selected
-
-    for start in range(0, len(options), columns):
-        cols = st.columns(columns)
-        for col, option in zip(cols, options[start:start + columns]):
-            button_label = str(option)
-            safe_label = button_label.replace(" ", "_").replace("+", "plus").replace(".", "_")
-            with col:
-                if st.button(button_label, key=f"{key_prefix}_{safe_label}", use_container_width=True):
-                    st.session_state[key_prefix] = option
-                    st.rerun()
-    return st.session_state.get(key_prefix, selected)
 
 
 def split_12h_time_parts(value):

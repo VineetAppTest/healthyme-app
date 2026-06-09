@@ -810,3 +810,9 @@
 - Desktop default keeps v90 dropdown controls.
 - Mobile test branch renders native time picker and segmented/chip controls only when explicitly activated.
 - No save/business logic changed beyond mapping selected input values to the existing payload fields.
+
+## v90A.1 - Mobile Detection NameError Fix
+
+- Fixed Daily Log NameError by moving `get_device_mode_for_spike()` definition above the diagnostic call.
+- Added scan to verify helper definitions occur before their first call.
+- No save/business logic changed.
