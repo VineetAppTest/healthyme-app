@@ -881,3 +881,10 @@
 - Retained visible timing validation.
 - No custom component added.
 - No save/business logic changed.
+
+## v92.4 - Input Format Schema Alignment
+
+- Aligned Meal Timing, Water Intake, and Poop Rounds into consistent HealthyMe-style input bands.
+- Matched label hierarchy, border, radius, color, control height, and spacing.
+- Collapsed duplicate Streamlit labels where schema labels are shown.
+- No save/business logic changed.

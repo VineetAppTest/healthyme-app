@@ -337,6 +337,107 @@ st.markdown(
   }
 }
 
+
+/* --- v92.4 Input Format Schema Alignment --- */
+.hm-schema-input-band{
+  border:1.4px solid #E2C98F;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9ED 100%);
+  border-radius:16px;
+  padding:.72rem .78rem .62rem .78rem;
+  margin:.35rem 0 .75rem 0;
+  box-shadow:0 6px 18px rgba(15,23,42,.045);
+}
+.hm-schema-input-label{
+  color:#064E3B;
+  font-size:.84rem;
+  font-weight:900;
+  line-height:1.15;
+  margin:0 0 .4rem 0;
+}
+.hm-schema-input-band .hm-compact-section-note{
+  color:#064E3B!important;
+  font-weight:900!important;
+  margin-bottom:.36rem!important;
+}
+.hm-schema-input-band div[data-testid="stSelectbox"],
+.hm-schema-input-band div[data-testid="stNumberInput"]{
+  margin-bottom:0!important;
+}
+.hm-schema-input-band div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
+  min-height:2.42rem!important;
+  height:2.42rem!important;
+  background:#FFFFFF!important;
+  border:1.45px solid #D4A63A!important;
+  border-radius:13px!important;
+  box-shadow:0 3px 12px rgba(15,23,42,.04)!important;
+}
+.hm-schema-input-band div[data-testid="stSelectbox"] [data-baseweb="select"] div{
+  color:#064E3B!important;
+  font-weight:850!important;
+  font-size:.92rem!important;
+}
+.hm-schema-input-band div[data-testid="stSelectbox"] svg{
+  color:#064E3B!important;
+  fill:#064E3B!important;
+}
+.hm-schema-input-band div[data-testid="stNumberInput"] input{
+  min-height:2.42rem!important;
+  height:2.42rem!important;
+  background:#FFFFFF!important;
+  border:1.45px solid #D4A63A!important;
+  border-radius:13px!important;
+  color:#064E3B!important;
+  -webkit-text-fill-color:#064E3B!important;
+  font-size:.98rem!important;
+  font-weight:900!important;
+  text-align:center!important;
+  box-shadow:0 3px 12px rgba(15,23,42,.04)!important;
+}
+.hm-schema-input-band div[data-testid="stNumberInput"] button{
+  min-height:2.42rem!important;
+  height:2.42rem!important;
+  min-width:2.42rem!important;
+  background:#FFFDF8!important;
+  border:1.35px solid #D4A63A!important;
+  border-radius:13px!important;
+  color:#064E3B!important;
+}
+.hm-schema-input-band div[data-testid="stNumberInput"] button svg{
+  width:1.1rem!important;
+  height:1.1rem!important;
+  stroke-width:3!important;
+}
+.hm-schema-input-band .hm-full-day-helper{
+  color:#6B7280!important;
+  font-size:.78rem!important;
+  line-height:1.2!important;
+  margin-top:.35rem!important;
+}
+@media (max-width:768px){
+  .hm-schema-input-band{
+    padding:.62rem .64rem .58rem .64rem!important;
+    border-radius:15px!important;
+    margin:.28rem 0 .62rem 0!important;
+  }
+  .hm-schema-input-label{
+    font-size:.8rem!important;
+    margin-bottom:.32rem!important;
+  }
+  .hm-schema-input-band div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+  .hm-schema-input-band div[data-testid="stNumberInput"] input,
+  .hm-schema-input-band div[data-testid="stNumberInput"] button{
+    min-height:2.28rem!important;
+    height:2.28rem!important;
+    border-radius:12px!important;
+  }
+  .hm-schema-input-band div[data-testid="stSelectbox"] [data-baseweb="select"] div{
+    font-size:.86rem!important;
+  }
+  .hm-schema-input-band div[data-testid="stNumberInput"] input{
+    font-size:.92rem!important;
+  }
+}
+
 </style>
     """,
     unsafe_allow_html=True,
@@ -438,7 +539,7 @@ rendered_controls_v90a = "stable Streamlit mobile controls" if is_mobile_mode_v9
 
 st.markdown(f"""
 <div class='hm-v90a-diagnostic'>
-  <b>v92.3 Mobile Input Diagnostic</b><br>
+  <b>v92.4 Mobile Input Diagnostic</b><br>
   Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
   Rendered controls: <b>{rendered_controls_v90a}</b><br>
   Use the toggle above on phone if mobile controls are not active. Override: <code>?device=mobile</code> / <code>?device=desktop</code>.
@@ -791,6 +892,7 @@ pre_h, pre_m, pre_p = split_12h_time_parts(prior.get("time", ""))
 st.session_state.setdefault(f"{active_key}_time_h", pre_h)
 st.session_state.setdefault(f"{active_key}_time_m", pre_m)
 st.session_state.setdefault(f"{active_key}_time_p", pre_p)
+st.markdown("<div class='hm-schema-input-band'>", unsafe_allow_html=True)
 st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
 if is_mobile_mode_v90a:
     # v92.2: Custom component removed because it fails to load on Streamlit Cloud.
@@ -859,6 +961,7 @@ else:
             label_visibility="collapsed",
         )
 st.markdown(f"<div class='hm-full-day-helper'>{time_guidance}</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 selected_meal_time_for_validation = f"{st.session_state.get(f'{active_key}_time_h', 'HH')}:{st.session_state.get(f'{active_key}_time_m', 'MM')} {st.session_state.get(f'{active_key}_time_p', 'AM/PM')}"
 if selected_meal_time_for_validation and "HH" not in selected_meal_time_for_validation and "MM" not in selected_meal_time_for_validation and "AM/PM" not in selected_meal_time_for_validation:
@@ -899,6 +1002,7 @@ card_start()
 st.subheader("Full-day details")
 top_left, top_right = st.columns(2)
 with top_left:
+    st.markdown("<div class='hm-schema-input-band'><div class='hm-schema-input-label'>Water intake for the full day</div>", unsafe_allow_html=True)
     water_options = ["Select"] + [
         "0 Litres",
         "0.5 Litres",
@@ -965,8 +1069,11 @@ with top_left:
             "Water intake for the full day",
             water_options,
             index=water_options.index(existing_water) if existing_water in water_options else 0,
+            label_visibility="collapsed",
         )
+    st.markdown("</div>", unsafe_allow_html=True)
 with top_right:
+    st.markdown("<div class='hm-schema-input-band'><div class='hm-schema-input-label'>Poop rounds</div>", unsafe_allow_html=True)
     poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
     existing_poop_rounds = existing.get("poop_rounds", "Select")
     if existing_poop_rounds in ("", None):
@@ -990,7 +1097,10 @@ with top_right:
             "Poop rounds",
             poop_options,
             index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
+            label_visibility="collapsed",
         )
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 poop_timings = []
 existing_timings = existing.get("poop_timings", []) or []

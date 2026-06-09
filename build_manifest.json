@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v92_3_Input_Styling_Alignment",
-  "version": "v92_3_input_styling_alignment",
-  "updated_on": "2026-06-09T14:00:33.126454+00:00",
+  "build_name": "HealthyMe_v92_4_Input_Format_Schema_Alignment",
+  "version": "v92_4_input_format_schema_alignment",
+  "updated_on": "2026-06-09T14:10:17.995731+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Matched Meal Timing dropdown styling to Water/Poop number input color schema on mobile.",
-    "Retained safe Streamlit-native 3-cell Meal Timing controls.",
-    "Retained visible meal timing validation.",
-    "Retained Water/Poop number input styling.",
-    "No custom component added; avoids Streamlit Cloud component loading failure.",
+    "Aligned Meal Timing, Water Intake, and Poop Rounds into HealthyMe-style schema input bands.",
+    "Matched label hierarchy, border, radius, color, height, and spacing across the three controls.",
+    "Collapsed duplicate native Streamlit labels where schema label is already shown.",
+    "Retained safe Streamlit controls and visible timing validation.",
+    "No custom component added.",
     "No Body-Mind, report, login, LAF/NSP, or nutritionist-note logic changed."
   ],
   "required_setup": [
