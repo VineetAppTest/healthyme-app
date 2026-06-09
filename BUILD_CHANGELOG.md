@@ -873,3 +873,11 @@
 - Kept meal timing validation visible.
 - Kept improved number_input styling for Water Intake and Poop Rounds.
 - No save/business logic changed.
+
+## v92.3 - Input Styling Alignment
+
+- Matched Meal Timing selectbox styling with Water/Poop number input color schema on mobile.
+- Retained safe 3-cell Meal Timing controls.
+- Retained visible timing validation.
+- No custom component added.
+- No save/business logic changed.

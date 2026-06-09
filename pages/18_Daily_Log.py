@@ -272,6 +272,71 @@ st.markdown(
   }
 }
 
+
+/* --- v92.3 Input Styling Alignment --- */
+.hm-compact-section-note{
+  color:#064E3B!important;
+  font-weight:850!important;
+}
+@media (max-width:768px){
+  /* Match Meal Timing selectboxes to Water/Poop number input schema */
+  div[data-testid="stSelectbox"]{
+    margin-bottom:.4rem!important;
+  }
+  div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
+    min-height:2.65rem!important;
+    height:2.65rem!important;
+    background:#FFFFFF!important;
+    border:1.6px solid #D4A63A!important;
+    border-radius:14px!important;
+    box-shadow:0 4px 14px rgba(15,23,42,.045)!important;
+  }
+  div[data-testid="stSelectbox"] [data-baseweb="select"] div{
+    color:#064E3B!important;
+    font-weight:900!important;
+    font-size:1rem!important;
+  }
+  div[data-testid="stSelectbox"] svg{
+    color:#064E3B!important;
+    fill:#064E3B!important;
+  }
+
+  /* Keep Water/Poop number input aligned to same schema */
+  div[data-testid="stNumberInput"]{
+    margin-top:.05rem!important;
+    margin-bottom:.65rem!important;
+  }
+  div[data-testid="stNumberInput"] input{
+    min-height:2.65rem!important;
+    height:2.65rem!important;
+    font-size:1.08rem!important;
+    font-weight:900!important;
+    text-align:center!important;
+    color:#064E3B!important;
+    -webkit-text-fill-color:#064E3B!important;
+    background:#FFFFFF!important;
+    border:1.6px solid #D4A63A!important;
+    border-radius:14px!important;
+    box-shadow:0 4px 14px rgba(15,23,42,.045)!important;
+  }
+  div[data-testid="stNumberInput"] button{
+    min-width:2.65rem!important;
+    min-height:2.65rem!important;
+    height:2.65rem!important;
+    font-size:1.45rem!important;
+    font-weight:900!important;
+    color:#064E3B!important;
+    background:#FFFDF8!important;
+    border:1.4px solid #D4A63A!important;
+    border-radius:14px!important;
+  }
+
+  .hm-full-day-helper,
+  .hm-time-preview{
+    color:#064E3B!important;
+  }
+}
+
 </style>
     """,
     unsafe_allow_html=True,
@@ -373,7 +438,7 @@ rendered_controls_v90a = "stable Streamlit mobile controls" if is_mobile_mode_v9
 
 st.markdown(f"""
 <div class='hm-v90a-diagnostic'>
-  <b>v92.2 Mobile Input Diagnostic</b><br>
+  <b>v92.3 Mobile Input Diagnostic</b><br>
   Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
   Rendered controls: <b>{rendered_controls_v90a}</b><br>
   Use the toggle above on phone if mobile controls are not active. Override: <code>?device=mobile</code> / <code>?device=desktop</code>.
