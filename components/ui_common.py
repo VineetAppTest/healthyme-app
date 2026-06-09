@@ -7475,8 +7475,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v85"
-APP_BUILD_LABEL = "Date Context Emphasis Polish"
+APP_BUILD_VERSION = "v87"
+APP_BUILD_LABEL = "Body-Mind Loader Regression Guard"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7598,3 +7598,9 @@ def render_build_text_v84(): return None
 
 
 def render_build_text_v85(): return None
+
+
+def render_build_text_v86(): return None
+
+
+def render_build_text_v87(): return None

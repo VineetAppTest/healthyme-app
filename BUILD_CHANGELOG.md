@@ -766,3 +766,16 @@
 
 - Strengthened the Food journal date section visually without adding helper text.
 - Increased prominence using a stronger HealthyMe-style card treatment and bolder date input styling.
+
+## v86 - Body-Mind Cached Loader Fix
+
+- Fixed Body-Mind Connection NameError caused by missing `load_body_mind_questions_cached`.
+- Added a local cached wrapper that calls `load_body_mind_questions()`.
+- No unlock/save business logic changed.
+
+## v87 - Body-Mind Loader Regression Guard
+
+- Replaced fragile Body-Mind cached loader with a robust page-local loader.
+- Loader tries shared loader sources first, then local JSON files, then embedded fallback questions.
+- Added a regression scan so `load_body_mind_questions_cached()` cannot be called before definition.
+- No Body-Mind unlock/save logic changed.

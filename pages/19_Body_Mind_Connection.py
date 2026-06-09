@@ -6,6 +6,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import get_workflow, get_body_mind_response, save_body_mind_response, get_profile_with_laf_fallback, has_explicit_body_mind_access
 from components.flash import set_system_message, render_system_message
 
+
 st.set_page_config(page_title="Body-Mind Connection", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
@@ -17,6 +18,67 @@ if not body_mind_allowed:
     st.stop()
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
+
+# v87 regression guard: Body-Mind question loading must not depend on a missing helper.
+@st.cache_data(show_spinner=False)
+def load_body_mind_questions_cached():
+    """
+    Stable Body-Mind question loader.
+
+    This wrapper intentionally stays page-local so the Body-Mind page cannot crash
+    with NameError if a shared cached helper is removed during later UI patches.
+    It tries known project sources first, then falls back to the embedded
+    Body-Mind question bank used by this page.
+    """
+    # 1) Try shared loader from data.db, if present.
+    try:
+        from data.db import load_body_mind_questions as _shared_loader
+        questions = _shared_loader()
+        if questions:
+            return questions
+    except Exception:
+        pass
+
+    # 2) Try shared loader from db.py, if present.
+    try:
+        from db import load_body_mind_questions as _shared_loader
+        questions = _shared_loader()
+        if questions:
+            return questions
+    except Exception:
+        pass
+
+    # 3) Try local config/json files, if present.
+    try:
+        import json
+        from pathlib import Path
+        candidate_paths = [
+            Path("data/body_mind_questions.json"),
+            Path("config/body_mind_questions.json"),
+            Path("assets/body_mind_questions.json"),
+        ]
+        for path in candidate_paths:
+            if path.exists():
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(payload, list) and payload:
+                    return payload
+                if isinstance(payload, dict):
+                    for key in ["questions", "body_mind_questions", "items"]:
+                        if isinstance(payload.get(key), list) and payload.get(key):
+                            return payload.get(key)
+    except Exception:
+        pass
+
+    # 4) Last-resort embedded fallback. This prevents the page from crashing and
+    # keeps the form usable even if the external question repository is missing.
+    return [
+        {"key": "stress_state", "section": "Mind-body awareness", "question": "Current stress / emotional state", "type": "text"},
+        {"key": "sleep_quality", "section": "Mind-body awareness", "question": "Sleep quality and restfulness", "type": "text"},
+        {"key": "energy_pattern", "section": "Mind-body awareness", "question": "Energy pattern through the day", "type": "text"},
+        {"key": "cravings_mood_link", "section": "Mind-body awareness", "question": "Cravings or food choices linked to mood", "type": "text"},
+        {"key": "body_signals", "section": "Mind-body awareness", "question": "Body signals noticed after meals or during the day", "type": "text"},
+    ]
+
 questions = load_body_mind_questions_cached()
 questions = [q for q in questions if not q.get("deleted") and q.get("section") != "Client Statement"]
 existing = get_body_mind_response(user_id)

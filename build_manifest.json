@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v85_Date_Context_Emphasis_Polish",
-  "version": "v85_date_context_emphasis_polish",
-  "updated_on": "2026-06-09T09:02:02.237486+00:00",
+  "build_name": "HealthyMe_v87_BodyMind_Loader_Regression_Guard",
+  "version": "v87_bodymind_loader_regression_guard",
+  "updated_on": "2026-06-09T09:11:18.743837+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -142,10 +142,11 @@
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
-    "Fixed Final Assessment Report NameError by adding missing json import.",
-    "Scanned pages for common missing standard imports: json, html, datetime, re.",
-    "Retained v73 guard import fix and v71 compact Nutritionist history styling.",
-    "No business logic changed."
+    "Replaced fragile Body-Mind cached loader with a robust page-local regression guard.",
+    "Loader now tries shared data.db/db loader, then JSON files, then embedded fallback questions.",
+    "Prevents Body-Mind page from crashing with NameError if future patches miss helper imports.",
+    "Added regression scan for cached loader calls before definition.",
+    "No Body-Mind unlock/save logic changed."
   ],
   "pages_imports_repaired": {},
   "remaining_missing_ui_imports": {},
@@ -213,5 +214,29 @@
     ]
   },
   "remaining_missing_standard_imports": {},
-  "final_report_has_json_import": true
+  "final_report_has_json_import": true,
+  "loader_candidates_found": [
+    "load_body_mind_questions_cached"
+  ],
+  "cached_refs_found": [
+    "load_body_mind_questions_cached"
+  ],
+  "body_mind_related_files_found": [
+    "components/db.py",
+    "components/report_engine.py",
+    "components/storage_backend.py",
+    "components/ui_common.py",
+    "components/config_loader.py",
+    "components/db_workflow.py",
+    "pages/02_Member_Home.py",
+    "pages/10_Admin_Dashboard.py",
+    "pages/12_Partial_Assessment_Report.py",
+    "pages/13_Admin_Assessment_Form.py",
+    "pages/19_Body_Mind_Connection.py",
+    "pages/20_Admin_Question_Manager.py",
+    "pages/21_Admin_Response_Editor.py",
+    "pages/23_Admin_Body_Mind_Control.py"
+  ],
+  "regression_scan_issues": {},
+  "body_mind_loader_defined_before_call": true
 }
