@@ -71,7 +71,29 @@ st.markdown(
     div[data-testid="stVerticalBlock"] > div:has(.hm-meal-title) {
         gap: .2rem !important;
     }
-    </style>
+    
+/* --- v91 Mobile-only Stepper Input Controls --- */
+.hm-v91-stepper-value{
+  min-height:2.25rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1.4px solid #D9C399;
+  background:#FFFDF8;
+  border-radius:14px;
+  color:#064E3B;
+  font-size:1rem;
+  font-weight:900;
+  box-shadow:0 4px 14px rgba(15,23,42,.04);
+}
+@media (max-width:768px){
+  .hm-v91-stepper-value{
+    min-height:2rem!important;
+    font-size:.92rem!important;
+  }
+}
+
+</style>
     """,
     unsafe_allow_html=True,
 )
@@ -142,7 +164,7 @@ def render_v90a_chip_selector(label, options, current_value, key_prefix, columns
 
 device_mode_v90a = get_device_mode_for_spike()
 is_mobile_mode_v90a = device_mode_v90a == "mobile"
-rendered_controls_v90a = "mobile test controls" if is_mobile_mode_v90a else "desktop controls"
+rendered_controls_v90a = "mobile stepper controls" if is_mobile_mode_v90a else "desktop controls"
 
 st.markdown(f"""
 <div class='hm-v90a-diagnostic'>
@@ -212,6 +234,59 @@ def is_dirty(existing_meals, section_key, section_label):
     cur = current_widget_payload(section_key, section_label)
     saved = saved_payload_for(existing_meals, section_key, section_label)
     return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "portion_size", "mood_energy"])
+
+
+
+def _clamp_number(value, minimum, maximum):
+    try:
+        numeric = float(value)
+    except Exception:
+        numeric = minimum
+    return max(minimum, min(maximum, numeric))
+
+def render_v91_stepper(label, current_value, key_prefix, minimum, maximum, step, suffix="", as_int=False):
+    st.markdown(f"<div class='hm-v90a-chip-label'>{label}</div>", unsafe_allow_html=True)
+
+    state_key = f"{key_prefix}_value"
+    if state_key not in st.session_state:
+        st.session_state[state_key] = current_value
+
+    current = _clamp_number(st.session_state.get(state_key, current_value), minimum, maximum)
+    if as_int:
+        current = int(round(current))
+    else:
+        current = round(current, 1)
+    st.session_state[state_key] = current
+
+    minus_col, value_col, plus_col = st.columns([0.75, 1.45, 0.75])
+    with minus_col:
+        if st.button("−", key=f"{key_prefix}_minus", use_container_width=True):
+            next_value = _clamp_number(current - step, minimum, maximum)
+            st.session_state[state_key] = int(round(next_value)) if as_int else round(next_value, 1)
+            st.rerun()
+
+    with value_col:
+        display_value = int(current) if as_int else current
+        st.markdown(
+            f"<div class='hm-v91-stepper-value'>{display_value}{suffix}</div>",
+            unsafe_allow_html=True,
+        )
+
+    with plus_col:
+        if st.button("+", key=f"{key_prefix}_plus", use_container_width=True):
+            next_value = _clamp_number(current + step, minimum, maximum)
+            st.session_state[state_key] = int(round(next_value)) if as_int else round(next_value, 1)
+            st.rerun()
+
+    return st.session_state[state_key]
+
+def water_stepper_to_litres(value):
+    value = round(float(value), 1)
+    if value == 1:
+        return "1 Litre"
+    if value == int(value):
+        return f"{int(value)} Litres"
+    return f"{value} Litres"
 
 
 def split_12h_time_parts(value):
@@ -514,16 +589,44 @@ with top_left:
         "9.5 Litres",
         "10 Litres",
     ]
-    mobile_water_options = ["Select", "0 Litres", "0.5 Litres", "1 Litre", "1.5 Litres", "2 Litres", "2.5 Litres", "3 Litres", "3.5 Litres", "4 Litres", "4.5 Litres", "5+ Litres"]
     existing_water = existing.get("water_litres", "Select") or "Select"
     if is_mobile_mode_v90a:
-        water_litres = render_v90a_chip_selector(
+        water_value_map = {
+            "Select": 0,
+            "0 Litres": 0,
+            "0.5 Litres": 0.5,
+            "1 Litre": 1,
+            "1.5 Litres": 1.5,
+            "2 Litres": 2,
+            "2.5 Litres": 2.5,
+            "3 Litres": 3,
+            "3.5 Litres": 3.5,
+            "4 Litres": 4,
+            "4.5 Litres": 4.5,
+            "5 Litres": 5,
+            "5.5 Litres": 5.5,
+            "6 Litres": 6,
+            "6.5 Litres": 6.5,
+            "7 Litres": 7,
+            "7.5 Litres": 7.5,
+            "8 Litres": 8,
+            "8.5 Litres": 8.5,
+            "9 Litres": 9,
+            "9.5 Litres": 9.5,
+            "10 Litres": 10,
+        }
+        starting_water_value = water_value_map.get(existing_water, 0)
+        selected_water_value = render_v91_stepper(
             "Water intake for the full day",
-            mobile_water_options,
-            existing_water if existing_water in mobile_water_options else "Select",
-            "v90a_mobile_water_litres",
-            columns=4,
+            starting_water_value,
+            "v91_mobile_water_litres",
+            0,
+            10,
+            0.5,
+            " L",
+            as_int=False,
         )
+        water_litres = water_stepper_to_litres(selected_water_value)
     else:
         water_litres = st.selectbox(
             "Water intake for the full day",
@@ -538,12 +641,16 @@ with top_right:
     if str(existing_poop_rounds).isdigit():
         existing_poop_rounds = int(existing_poop_rounds)
     if is_mobile_mode_v90a:
-        poop_rounds = render_v90a_chip_selector(
+        starting_poop_rounds = existing_poop_rounds if isinstance(existing_poop_rounds, int) else 0
+        poop_rounds = render_v91_stepper(
             "Poop rounds",
-            poop_options,
-            existing_poop_rounds if existing_poop_rounds in poop_options else "Select",
-            "v90a_mobile_poop_rounds",
-            columns=4,
+            starting_poop_rounds,
+            "v91_mobile_poop_rounds",
+            0,
+            6,
+            1,
+            "",
+            as_int=True,
         )
     else:
         poop_rounds = st.selectbox(

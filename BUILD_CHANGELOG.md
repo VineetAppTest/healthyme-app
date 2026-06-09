@@ -816,3 +816,12 @@
 - Fixed Daily Log NameError by moving `get_device_mode_for_spike()` definition above the diagnostic call.
 - Added scan to verify helper definitions occur before their first call.
 - No save/business logic changed.
+
+## v91 - Mobile-only Stepper Input Controls
+
+- Mobile-only branch: Water Intake uses a stepper from 0 to 10 litres in 0.5 increments.
+- Mobile-only branch: Poop Rounds uses a stepper from 0 to 6.
+- Mobile-only branch: Meal Timing keeps native time picker.
+- Desktop/default branch remains unchanged with dropdown controls.
+- Mobile mode activates only with `?device=mobile`.
+- No save/business logic changed beyond mapping the selected values to existing payload fields.
