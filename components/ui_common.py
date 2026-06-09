@@ -2842,6 +2842,48 @@ button[kind="primary"]{
   width:100%;
 }
 
+/* --- v85 Date Context Emphasis Polish --- */
+.hm-daily-date-shell{
+  position:relative;
+  border:1.8px solid #DDBE7D !important;
+  border-radius:18px !important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9ED 100%) !important;
+  box-shadow:0 10px 26px rgba(15,23,42,.05), inset 0 1px 0 rgba(255,255,255,.65) !important;
+  padding:1rem 1rem .8rem 1rem !important;
+  margin:.15rem 0 1.1rem 0 !important;
+}
+.hm-daily-date-shell::before{
+  content:"";
+  position:absolute;
+  left:0; top:0; bottom:0;
+  width:6px;
+  border-radius:18px 0 0 18px;
+  background:linear-gradient(180deg,#0F766E 0%, #D4A63A 100%);
+}
+.hm-daily-date-title{
+  color:#064E3B !important;
+  font-size:.95rem !important;
+  font-weight:900 !important;
+  letter-spacing:.01em !important;
+  margin:0 0 .42rem .2rem !important;
+}
+.hm-daily-date-shell [data-testid="stDateInput"]{
+  margin:0 0 0 .15rem !important;
+}
+.hm-daily-date-shell [data-testid="stDateInput"] > div{
+  background:transparent !important;
+}
+.hm-daily-date-shell [data-testid="stDateInput"] input{
+  background:#FFFFFF !important;
+  border:1.4px solid #E4D1AA !important;
+  border-radius:14px !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.8), 0 6px 16px rgba(15,23,42,.045) !important;
+  color:#064E3B !important;
+  font-size:1.08rem !important;
+  font-weight:800 !important;
+  padding:.78rem .95rem !important;
+}
+
 </style>
 """
 
@@ -7433,8 +7475,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v84"
-APP_BUILD_LABEL = "Date + Button + Header Alignment Polish"
+APP_BUILD_VERSION = "v85"
+APP_BUILD_LABEL = "Date Context Emphasis Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7553,3 +7595,6 @@ def render_build_text_v83(): return None
 
 
 def render_build_text_v84(): return None
+
+
+def render_build_text_v85(): return None

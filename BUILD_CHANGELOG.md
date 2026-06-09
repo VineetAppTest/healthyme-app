@@ -761,3 +761,8 @@
 - Made the Food journal date section more prominent.
 - Restored Save Full-Day Journal to standard HealthyMe button styling.
 - Improved Recent saved days header alignment.
+
+## v85 - Date Context Emphasis Polish
+
+- Strengthened the Food journal date section visually without adding helper text.
+- Increased prominence using a stronger HealthyMe-style card treatment and bolder date input styling.

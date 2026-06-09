@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v84_Date_Button_Header_Alignment_Polish",
-  "version": "v84_date_button_header_alignment_polish",
-  "updated_on": "2026-06-09T08:48:23.347064+00:00",
+  "build_name": "HealthyMe_v85_Date_Context_Emphasis_Polish",
+  "version": "v85_date_context_emphasis_polish",
+  "updated_on": "2026-06-09T09:02:02.237486+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,9 +17,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Made Food journal date section stand out using a HealthyMe-style highlighted shell.",
-    "Changed Save Full-Day Journal button back to standard schema styling (no dark primary fill).",
-    "Improved Recent saved days table header alignment with dedicated header cells."
+    "Strengthened the Food journal date visual treatment without adding any extra text.",
+    "Date section now uses a more prominent HealthyMe-style highlighted card with stronger hierarchy.",
+    "No logic or page structure changed from v84."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
