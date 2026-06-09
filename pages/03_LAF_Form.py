@@ -7,7 +7,6 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import get_form_response, save_form_response, update_workflow, sync_profile_from_laf, load_db
 from components.flash import set_system_message, render_system_message
 from components.config_cache import load_config_json
-from components.config_loader import load_laf_questions_cached
 
 st.set_page_config(page_title="LAF", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
@@ -580,30 +579,9 @@ stat_grid([
 ])
 
 if validation_errors:
-    toggle_key = f"laf_validation_items_open_{user_id}"
-    if toggle_key not in st.session_state:
-        st.session_state[toggle_key] = False
-
-    button_label = (
-        f"Hide validation items ({len(validation_errors)})"
-        if st.session_state[toggle_key]
-        else f"Review validation items ({len(validation_errors)})"
-    )
-    if st.button(button_label, key="laf_validation_review_toggle", use_container_width=True):
-        st.session_state[toggle_key] = not st.session_state[toggle_key]
-        st.rerun()
-
-    if st.session_state[toggle_key]:
-        items_html = "".join(f"<li>{html.escape(str(err))}</li>" for err in validation_errors)
-        st.markdown(
-            f"""
-            <div class='hm-validation-review-card'>
-              <div class='hm-validation-review-title'>Validation items to review</div>
-              <ul>{items_html}</ul>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    with st.expander("Validation items to review", expanded=False):
+        for err in validation_errors:
+            st.write(f"- {err}")
 
 
 # Auto-save current LAF state on every interaction/rerun.

@@ -1,25 +1,27 @@
 {
-  "build_name": "HealthyMe v76X Mobile-Only UX Optimization",
-  "version": "v76X_mobile_only_ux_optimization",
-  "updated_on": "2026-05-28T21:01:43+00:00",
+  "build_name": "HealthyMe v76 Mobile Daily Log Timing Fix",
+  "version": "v76_mobile_daily_log_timing_fix",
+  "updated_on": "2026-06-09T05:48:34.193946+00:00",
   "scope": [
-    "Mobile-only Daily Food Journal UX optimization using max-width responsive CSS only",
-    "Desktop Recent Saved Days table and desktop structure preserved as-is",
-    "Recent Saved Days continues to render as desktop table on laptop/desktop and mobile cards on phone",
-    "Mobile cards made more readable with stacked labels, compact spacing, full-width-friendly actions, and safer text wrapping",
-    "Includes latest date-scoped Food Log widget state from v76W"
+    "UI-only patch for Daily Log Recent saved days",
+    "Replaced plain dataframe with premium rounded card/table layout",
+    "Kept current headers: Date, Meals Logged, Water, Notes, Nutritionist Notes, Action",
+    "Meals Logged displayed as simple text progress like 3/5",
+    "View history button opens same-date nutritionist note history only",
+    "Business logic unchanged"
   ],
   "excluded": [
-    "No desktop table or desktop layout redesign",
     "No scoring changes",
     "No authentication changes",
     "No report calculation changes",
-    "No database schema changes"
+    "No new feature expansion"
   ],
   "latest_fix": [
-    "Created current-order build for the previously discussed v76R Mobile-Only UX Optimization scope.",
-    "Kept all desktop behavior untouched; changes are contained inside @media (max-width: 760px).",
-    "Retained Food Log date-scoped widget keys from v76W."
+    "Poop Timing fields now render in row-major order: 1,2,3 then 4,5,6 then 7,8,9, so mobile stacks correctly.",
+    "Selecting Poop Rounds activates the matching number of Poop Timing fields.",
+    "Active Poop Timing placeholder now says Enter the Poop Time; inactive fields remain Not active.",
+    "Meal Timing placeholder/help updated by meal type: Breakfast 6 AM-11 AM, Lunch 12 PM-3 PM, Snacks 4 PM-6 PM, Dinner 7 PM-10 PM, Other outside standard windows.",
+    "No business logic changed outside Daily Log UI/input guidance."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -135,7 +137,10 @@
     "25_Admin_Daily_Log_Settings.py": 148
   },
   "compile_repair": "Fixed Final Assessment Report ui_common multiline import after Back to Top injection.",
-  "notes": "Adds 0 poop rounds, fixes mobile meal/timing order, and keeps timing slots inactive until selected.",
+  "notes": [
+    "If the browser still auto-logs in after reboot, that means the Auth0/OIDC identity cookie is still active in the browser; the app now calls st.logout directly to clear it.",
+    "Old Daily Food Journal rows are grouped by date for admin view."
+  ],
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
@@ -210,7 +215,5 @@
     ]
   },
   "remaining_missing_standard_imports": {},
-  "final_report_has_json_import": true,
-  "build": "v76X",
-  "label": "Mobile-Only UX Optimization"
+  "final_report_has_json_import": true
 }

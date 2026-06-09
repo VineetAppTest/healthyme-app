@@ -1,6 +1,6 @@
 import streamlit as st
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, compact_topbar, utility_logout_bar, render_back_to_top, card_start, card_end
+from components.ui_common import inject_global_styles, apply_luxe_theme, compact_topbar, utility_logout_bar, render_back_to_top
 from components.db import list_members, queue_member_message, get_member_messages
 
 st.set_page_config(page_title="Admin-Member Communication", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -42,13 +42,8 @@ if not members:
     st.stop()
 
 member_options = {f"{m['name']} — {m['email']}": m["id"] for m in members}
-card_start()
-st.markdown("### 👤 Communication Context")
-st.caption("This member selection controls who will receive the message below.")
-selected_label = st.selectbox("👤 Member", list(member_options.keys()))
+selected_label = st.selectbox("Select member", list(member_options.keys()))
 member_id = member_options[selected_label]
-st.markdown(f"<div class='hm-date-emphasis'>👤 Message recipient: {selected_label}</div>", unsafe_allow_html=True)
-card_end()
 
 subject = st.text_input("Subject", placeholder="Example: Please review your daily log")
 message = st.text_area(

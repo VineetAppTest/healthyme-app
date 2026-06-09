@@ -45,8 +45,3 @@ No scoring logic, authentication logic, or database secrets were changed.
 - Confirm Download Final Report is visible near the top.
 - Confirm Final report structure is at the end.
 - Confirm Back/Evaluation/Dashboard navigation is visible at top and bottom.
-
-
-## v76T Mobile Meal Button Order Fix
-- Fixed actual mobile meal button order by rendering meal section buttons row-wise instead of column-bucket-wise.
-- Preserves desktop row layout while preventing mobile stacking from changing the visible order.

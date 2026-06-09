@@ -17,13 +17,8 @@ if not members:
     st.info("No members available.")
     st.stop()
 
-card_start()
-st.markdown("### 👤 Reassessment Context")
-st.caption("This member selection controls whose reassessment history and request options are visible below.")
-selected = st.selectbox("👤 Member", [f"{m['id']} — {m['name']} — {m['email']}" for m in members])
+selected = st.selectbox("Select member", [f"{m['id']} — {m['name']} — {m['email']}" for m in members])
 member_id = selected.split(" — ")[0]
-st.markdown(f"<div class='hm-date-emphasis'>👤 Managing reassessment for: {selected}</div>", unsafe_allow_html=True)
-card_end()
 member = next(m for m in members if m["id"] == member_id)
 instances = get_assessment_instances(member_id)
 

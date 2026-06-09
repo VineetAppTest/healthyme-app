@@ -2629,26 +2629,6 @@ h4:has(+ .info-banner), h4 {
 .hm-v74-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
 .hm-v74-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
 
-
-
-/* --- v76 Context selector and daily log UX --- */
-.hm-context-card{background:linear-gradient(135deg,#FFFDF8 0%,#FFFFFF 70%,#FFF4DE 100%);border:1.5px solid #D7C391;border-radius:22px;padding:1rem 1.05rem;margin:.35rem 0 1rem 0;box-shadow:0 12px 28px rgba(25,36,31,.07);position:sticky;top:.25rem;z-index:5;}
-.hm-context-title{font-size:1.04rem;font-weight:950;color:#064E3B;margin-bottom:.65rem;letter-spacing:-.02em;}
-.hm-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;}
-.hm-context-chip{background:#FFFFFF;border:1px solid #E7D8BE;border-radius:16px;padding:.78rem .9rem;box-shadow:0 6px 18px rgba(25,36,31,.04);}
-.hm-context-chip span{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.055em;font-weight:900;color:#92702A;margin-bottom:.2rem;}
-.hm-context-chip b{display:block;font-size:1rem;color:#063F32;overflow-wrap:anywhere;}
-.hm-context-note{margin-top:.55rem;color:#64748B;font-size:.86rem;font-weight:650;}
-.hm-date-emphasis{background:#FFF8E8;border:1px solid #E8D39E;border-radius:18px;padding:.8rem .95rem;margin:.5rem 0 1rem 0;color:#064E3B;font-weight:950;font-size:1.08rem;}
-.hm-disabled-poop input:disabled{opacity:.95!important;color:#9CA3AF!important;background:#F1F5F9!important;border-color:#E5E7EB!important;}
-@media(max-width:640px){.hm-context-grid{grid-template-columns:1fr}.hm-context-card{position:relative;top:auto}}
-/* --- v76H Scoped Page Context Selector Enforcement --- */
-.hm-page-context-intro{font-size:.86rem;color:#64748B;font-weight:650;margin:.05rem 0 .55rem 0;}
-div[data-testid="stForm"], div[data-testid="stExpander"]{border-radius:18px!important;}
-/* IMPORTANT: v76H removes global Selectbox/DateInput card styling.
-   Selector card treatment must be applied page-locally only on review/report pages,
-   saved-day views, context selectors, and Daily Food Journal input. */
-
 /* --- v75 Final Report Diagnostics UI --- */
 .hm-v75-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
 .hm-v75-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
@@ -2706,135 +2686,21 @@ div[data-testid="stForm"], div[data-testid="stExpander"]{border-radius:18px!impo
   .hm-v75-diagnostics-grid{grid-template-columns:1fr;}
 }
 
-
-/* --- v76G LAF validation review button/card polish --- */
-.hm-validation-review-card{
-  margin:.75rem 0 1rem 0;
-  padding:1rem 1.05rem;
-  border:1px solid #E7C98E;
-  background:linear-gradient(135deg,#FFF9EC 0%,#FFFFFF 100%);
-  border-radius:18px;
-  box-shadow:0 10px 26px rgba(76,53,20,.08);
+/* --- v76 Mobile Daily Log Timing Fix --- */
+.hm-v76-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v76-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v76-version-inline{color:#64748B;font-size:.72rem;font-weight:800;}
+/* Poop timing fields are rendered row-major: 1-2-3, 4-5-6, 7-8-9.
+   On mobile Streamlit stacks each row before moving to the next row, so the order remains 1,2,3,4... */
+.hm-poop-timing-grid-anchor + div [data-testid="column"]{
+  margin-bottom:.25rem !important;
 }
-.hm-validation-review-title{
-  font-weight:950;
-  color:#064E3B;
-  font-size:1rem;
-  margin-bottom:.55rem;
-}
-.hm-validation-review-card ul{
-  margin:.25rem 0 0 1.15rem;
-  padding:0;
-}
-.hm-validation-review-card li{
-  margin:.35rem 0;
-  color:#4B5563;
-  line-height:1.45;
-}
-
-
-/* --- v76M Compact Bordered Recent Saved Days Table --- */
-.hm-compact-section-head{
-  margin:.08rem 0 .30rem 0 !important;
-  padding:0 !important;
-}
-.hm-compact-section-title{
-  color:#064E3B !important;
-  font-weight:950 !important;
-  font-size:.98rem !important;
-  line-height:1.05 !important;
-  margin:0 0 .08rem 0 !important;
-}
-.hm-compact-section-note{
-  color:#52637A !important;
-  font-size:.76rem !important;
-  line-height:1.15 !important;
-  margin:0 !important;
-}
-.hm-rsd-native-shell{
-  border:1.6px solid #CFAE76 !important;
-  border-radius:12px !important;
-  background:#FFFDF8 !important;
-  box-shadow:0 2px 8px rgba(6,78,59,.04) !important;
-  padding:0 !important;
-  margin-top:.22rem !important;
-  overflow:hidden !important;
-}
-.hm-rsd-native-shell [data-testid="column"]{
-  display:flex !important;
-  align-items:center !important;
-  min-height:1.68rem !important;
-  padding:.02rem .38rem !important;
-  border-right:1px solid #E4D1AE !important;
-}
-.hm-rsd-native-shell [data-testid="column"]:last-child{
-  border-right:none !important;
-}
-.hm-rsd-native-shell [data-testid="stHorizontalBlock"]:first-of-type{
-  background:#FFF8EA !important;
-  border-bottom:1.4px solid #CFAE76 !important;
-}
-.hm-rsd-native-shell [data-testid="stHorizontalBlock"]{
-  margin:0 !important;
-  gap:0 !important;
-}
-.hm-rsd-native-shell [data-testid="stMarkdownContainer"] p{
-  margin:0 !important;
-  line-height:1.05 !important;
-}
-.hm-rsd-native-shell strong{
-  font-size:.82rem !important;
-  color:#334155 !important;
-  font-weight:850 !important;
-}
-.hm-rsd-native-divider{
-  height:1px !important;
-  background:#E4D1AE !important;
-  margin:0 !important;
-}
-.hm-rsd-native-date{
-  font-size:.80rem !important;
-  line-height:1.05 !important;
-  font-weight:900 !important;
-}
-.hm-rsd-native-meals,.hm-rsd-native-cell,.hm-rsd-native-note{
-  font-size:.76rem !important;
-  line-height:1.08 !important;
-  margin:0 !important;
-}
-.hm-rsd-native-shell .stButton > button{
-  min-height:1.45rem !important;
-  height:1.45rem !important;
-  padding:.02rem .38rem !important;
-  font-size:.68rem !important;
-  border-radius:10px !important;
-}
-.hm-reference-shell{
-  border:1.25px solid #D7BE91 !important;
-  border-radius:14px !important;
-  background:#FFFDF8 !important;
-  box-shadow:none !important;
-  padding:.55rem .7rem .48rem .7rem !important;
-  margin:.8rem 0 .55rem 0 !important;
-}
-.hm-reference-row{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:.75rem !important;}
-.hm-reference-title{
-  color:#064E3B !important;
-  font-size:.92rem !important;
-  font-weight:950 !important;
-  line-height:1.15 !important;
-  margin:0 0 .12rem 0 !important;
-}
-.hm-reference-shell .stButton{margin-top:.35rem !important;}
-.hm-reference-shell .stButton > button{
-  min-height:2rem !important;
-  height:2rem !important;
-  border-radius:12px !important;
-  font-size:.82rem !important;
-}
-@media (max-width:760px){
-  .hm-rsd-native-shell{padding:.35rem .45rem .15rem .45rem !important;border-radius:12px !important;}
-  .hm-rsd-native-shell [data-testid="column"]{min-height:1.75rem !important;}
+@media (max-width: 760px){
+  .hm-poop-timing-grid-anchor + div [data-testid="column"],
+  .hm-poop-timing-grid-anchor + div + div [data-testid="column"],
+  .hm-poop-timing-grid-anchor + div + div + div [data-testid="column"]{
+    margin-bottom:.35rem !important;
+  }
 }
 
 </style>
@@ -7203,13 +7069,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v75: Final Report Diagnostics UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v76N"
-APP_BUILD_LABEL = "Poop Default and Brand Marker Cleanup"
-
-def _build_badge_html():
-    # Brand hygiene: never render internal build/version markers beside or under HealthyMe.
-    # Build labels remain available in filenames, patches, manifests, and diagnostics only.
-    return ""
+APP_BUILD_VERSION = "v75"
+APP_BUILD_LABEL = "Final Report Diagnostics UI"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7217,7 +7078,7 @@ def topbar(title, subtitle="", kicker="HealthyMe premium"):
         <div class='hero-shell'>
           <div class='hm-v75-brand-row'>
             <span class='hm-v75-brand'>HealthyMe</span>
-            {_build_badge_html()}
+            <span class='hm-v75-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
           </div>
           <div class='hero-kicker'>{kicker}</div>
           <div class='hero-title'>{title}</div>
@@ -7234,7 +7095,7 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         <div class='hero-shell hm-compact-page-section'>
           <div class='hm-v75-brand-row'>
             <span class='hm-v75-brand'>HealthyMe</span>
-            {_build_badge_html()}
+            <span class='hm-v75-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
           </div>
           <div class='hero-kicker'>{kicker}</div>
           <div class='hero-title'>{title}</div>
@@ -7244,19 +7105,119 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         unsafe_allow_html=True,
     )
 
-def render_context_selector_header(title, items, note=""):
-    chips = "".join([f"<div class='hm-context-chip'><span>{label}</span><b>{value}</b></div>" for label, value in items])
+def render_build_text_v75(): return None
+def render_build_text_v74(): return None
+def render_build_text_v73(): return None
+def render_build_text_v72(): return None
+def render_build_text_v71(): return None
+def render_build_text_v70(): return None
+def render_build_text_v69(): return None
+def render_build_text_v68(): return None
+def render_build_text_v67(): return None
+def render_build_text_v66(): return None
+def render_build_text_v65(): return None
+def render_build_text_v64(): return None
+def render_build_text_v63(): return None
+def render_build_text_v62(): return None
+def render_build_text_v61(): return None
+def render_build_text_v60(): return None
+def render_build_text_v59(): return None
+def render_build_text_v58(): return None
+def render_build_text_v57(): return None
+def render_build_text_v56(): return None
+def render_build_text_v55(): return None
+def render_build_text_v54(): return None
+def render_build_text_v53(): return None
+def render_build_text_v52(): return None
+def render_build_text_v51(): return None
+def render_build_text_v50(): return None
+def render_build_text_v49(): return None
+def render_build_text_v48(): return None
+def render_build_text_v47(): return None
+def render_build_text_v46(): return None
+def render_build_text_v45(): return None
+def render_build_text_v44(): return None
+def render_build_text_v43(): return None
+def render_build_text_v42(): return None
+def render_build_text_v41(): return None
+def render_build_text_v40(): return None
+def render_build_text_v39(): return None
+def render_build_text_v38(): return None
+def render_build_text_v37(): return None
+def render_build_text_v36(): return None
+def render_build_text_v35(): return None
+def render_build_text_v34(): return None
+def render_build_text_v33(): return None
+def render_build_text_v32(): return None
+def render_build_text_v31(): return None
+def render_build_text_v30(): return None
+def render_build_text_v29(): return None
+def render_build_text_v28(): return None
+def render_build_text_v27(): return None
+def render_build_text_v26(): return None
+def render_build_text_v25(): return None
+def render_build_text_v24(): return None
+def render_build_text_v23(): return None
+def render_build_text_v22(): return None
+def render_build_text_v21(): return None
+def render_build_text_v20(): return None
+def render_build_text_v19(): return None
+def render_build_text_v18(): return None
+def render_build_text_v17(): return None
+def render_build_text_v16(): return None
+def render_build_text_v15(): return None
+def render_build_text_v14(): return None
+def render_build_text_v13(): return None
+def render_build_text_v12(): return None
+def render_build_text_v11(): return None
+def build_marker_v11(): return None
+def build_marker_v10(): return None
+def build_marker_v9(): return None
+def build_marker_v8(): return None
+def build_marker_v7(): return None
+def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v76: Mobile Daily Log Timing Fix
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v76"
+APP_BUILD_LABEL = "Mobile Daily Log Timing Fix"
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
         f"""
-        <div class='hm-context-card'>
-          <div class='hm-context-title'>{title}</div>
-          <div class='hm-context-grid'>{chips}</div>
-          {f"<div class='hm-context-note'>{note}</div>" if note else ""}
+        <div class='hero-shell'>
+          <div class='hm-v76-brand-row'>
+            <span class='hm-v76-brand'>HealthyMe</span>
+            <span class='hm-v76-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          <div class='hero-subtitle'>{subtitle}</div>
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+def compact_topbar(title, subtitle="", kicker="HealthyMe"):
+    st.markdown(
+        f"""
+        <div class='hero-shell hm-compact-page-section'>
+          <div class='hm-v76-brand-row'>
+            <span class='hm-v76-brand'>HealthyMe</span>
+            <span class='hm-v76-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_build_text_v76(): return None
 def render_build_text_v75(): return None
 def render_build_text_v74(): return None
 def render_build_text_v73(): return None

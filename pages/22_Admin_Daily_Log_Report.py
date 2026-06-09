@@ -6,21 +6,6 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, format_local_ts, render_back_to_top, compact_topbar
-
-def render_context_selector_header(title, items, note=""):
-    """Page-local fallback so Daily Log pages do not crash if shared UI helper is stale on deployment."""
-    chips = "".join([f"<div class='hm-context-chip'><span>{label}</span><b>{value}</b></div>" for label, value in items])
-    note_html = f"<div class='hm-context-note'>{note}</div>" if note else ""
-    st.markdown(
-        f"""
-        <div class='hm-context-card'>
-          <div class='hm-context-title'>{title}</div>
-          <div class='hm-context-grid'>{chips}</div>
-          {note_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 from components.db import (
     list_members,
     get_daily_food_journal_days,
@@ -39,127 +24,21 @@ render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_eval
 
 MEAL_KEYS = [(r["key"], r["label"]) for r in get_meal_type_repository()]
 
-
-def display_date(d):
-    try:
-        return date.fromisoformat(str(d)).strftime("%d/%m/%Y")
-    except Exception:
-        return str(d or "")
-
-def meal_text(meal):
-    meal = meal or {}
-    tm = str(meal.get("time", "")).strip()
-    food = str(meal.get("food", "")).strip()
-    if tm and food:
-        return f"{tm}: {food}"
-    return food
-
-
-def parse_time_minutes(value):
-    import re
-    raw = str(value or "").strip().upper().replace(":", ".")
-    m = re.match(r"^(\d{1,2})(?:\.(\d{2}))?\s*(AM|PM)$", raw)
-    if not m:
-        return None
-    hour = int(m.group(1))
-    minute = int(m.group(2) or 0)
-    mer = m.group(3)
-    if hour == 12:
-        hour = 0
-    if mer == "PM":
-        hour += 12
-    return hour * 60 + minute
-
-DEFAULT_MEAL_ANCHORS = {"breakfast": 8*60, "lunch": 13*60, "evening_snack": 17*60, "dinner": 20*60, "bedtime": 22*60}
-SNACK_KEYS = {"evening_snack", "snack", "snacks", "snacking"}
-
-def is_snack_key(key):
-    key = str(key or "").lower()
-    return key.startswith("other_") or key in SNACK_KEYS or "snack" in key
-
-def _meal_time_map(meals):
-    anchors = dict(DEFAULT_MEAL_ANCHORS)
-    for key in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]:
-        parsed = parse_time_minutes((meals.get(key, {}) or {}).get("time"))
-        if parsed is not None:
-            anchors[key] = parsed
-    return anchors
-
-def _snack_number(key):
-    try:
-        key_l = str(key or "").lower()
-        return int(key_l.split("_")[1]) if key_l.startswith("other_") else 0
-    except Exception:
-        return 0
-
-STANDARD_MEAL_ORDER_RANK = {"breakfast": 1000, "lunch": 3000, "evening_snack": 5000, "dinner": 7000, "bedtime": 9000}
-
-def dynamic_meal_sort_key(item, anchors):
-    key, meal = item
-    key_l = str(key or "").lower()
-    if key_l in STANDARD_MEAL_ORDER_RANK:
-        return (STANDARD_MEAL_ORDER_RANK[key_l], 0, 0)
-    if is_snack_key(key_l):
-        t = parse_time_minutes((meal or {}).get("time"))
-        if t is None:
-            t = DEFAULT_MEAL_ANCHORS["evening_snack"]
-        breakfast_t = anchors.get("breakfast", DEFAULT_MEAL_ANCHORS["breakfast"])
-        lunch_t = anchors.get("lunch", DEFAULT_MEAL_ANCHORS["lunch"])
-        snacks_t = anchors.get("evening_snack", DEFAULT_MEAL_ANCHORS["evening_snack"])
-        dinner_t = anchors.get("dinner", DEFAULT_MEAL_ANCHORS["dinner"])
-        bedtime_t = anchors.get("bedtime", DEFAULT_MEAL_ANCHORS["bedtime"])
-        if t <= breakfast_t:
-            t = breakfast_t + 1
-        elif t >= bedtime_t:
-            t = bedtime_t - 1
-        if t < lunch_t:
-            bucket = 2000
-        elif t < snacks_t:
-            bucket = 4000
-        elif t < dinner_t:
-            bucket = 6000
-        else:
-            bucket = 8000
-        return (bucket, t, _snack_number(key_l))
-    return (9999, 9, key_l)
-
-def labelled_poop_timings(day):
-    timings = [str(x or "").strip() for x in (day.get("poop_timings", []) or []) if str(x or "").strip()]
-    return ", ".join([f"Poop Timing {idx + 1}: {val}" for idx, val in enumerate(timings)])
-
 def meal_keys_for_day(day):
-    meals = day.get("meals", {}) or {}
-    configured = {k: ("Snacks" if str(label).lower() in {"other", "evening snack", "snack", "snacking"} else label) for k, label in MEAL_KEYS}
-    keys = []
-    known = set()
-    for key in ["breakfast", "lunch", "evening_snack", "dinner", "bedtime"]:
-        if key in configured or key in meals:
-            label = configured.get(key, key.replace("_", " ").title())
-            if key == "evening_snack":
-                label = "Snacks"
-            keys.append((key, label))
-            known.add(key)
-    for k, meal in meals.items():
-        if k in known:
-            continue
-        if str(k).startswith("other_"):
-            label = meal.get("label") or f"Snack {_snack_number(k)}"
-        else:
-            label = meal.get("label", configured.get(k, k.replace("_", " ").title()))
-        if str(label).lower().startswith("other"):
-            label = "Snack"
-        keys.append((k, label))
-        known.add(k)
-    anchors = _meal_time_map(meals)
-    return sorted(keys, key=lambda item: dynamic_meal_sort_key((item[0], meals.get(item[0], {})), anchors))
+    keys = list(MEAL_KEYS)
+    known = {k for k, _label in keys}
+    for k, meal in (day.get("meals", {}) or {}).items():
+        if k not in known:
+            keys.append((k, meal.get("label", k.replace("_", " ").title())))
+    return keys
 
 def flatten_day(day, supervision_notes=None):
     base = {
-        "Date": display_date(day.get("date", "")),
+        "Date": day.get("date", ""),
         "Water": day.get("water_litres", ""),
         "Physical Activity": day.get("physical_activity", ""),
         "Poop Rounds": day.get("poop_rounds", ""),
-        "Poop Timings": labelled_poop_timings(day),
+        "Poop Timings": ", ".join([str(x) for x in (day.get("poop_timings", []) or []) if str(x).strip()]),
         "Feeling After Poop": day.get("feeling_after_poop", ""),
         "Overall Notes": day.get("notes", ""),
         "Nutritionist Notes": " | ".join([n.get("note", "") for n in (supervision_notes or [])]),
@@ -167,7 +46,6 @@ def flatten_day(day, supervision_notes=None):
     meals = day.get("meals", {}) or {}
     for key, label in meal_keys_for_day(day):
         meal = meals.get(key, {}) or {}
-        base[f"{label}"] = meal_text(meal)
         base[f"{label} Time"] = meal.get("time", "")
         base[f"{label} Food"] = meal.get("food", "")
         base[f"{label} Portion"] = meal.get("portion_size", "")
@@ -216,35 +94,6 @@ def build_excel(member, days):
 
 compact_topbar("Daily Food Journal Report", "", "Admin report")
 
-# v76H: Admin Daily Log Report keeps prominent context selector styling locally.
-st.markdown("""
-<style>
-.hm-page-context-intro{font-size:.86rem;color:#64748B;font-weight:650;margin:.05rem 0 .55rem 0;}
-div[data-testid="stSelectbox"]{
-  background:linear-gradient(180deg,#FFFFFF 0%,#FFFBF4 100%)!important;
-  border:1.5px solid #E7D8BE!important;
-  border-radius:16px!important;
-  padding:.68rem .82rem .78rem .82rem!important;
-  box-shadow:0 6px 18px rgba(25,36,31,.045)!important;
-  margin-bottom:.45rem!important;
-}
-div[data-testid="stSelectbox"] label{
-  text-transform:uppercase!important;
-  letter-spacing:.055em!important;
-  font-size:.72rem!important;
-  font-weight:900!important;
-  color:#92702A!important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFFFF!important;
-  border-color:#E7D8BE!important;
-  min-height:2.65rem!important;
-  font-weight:760!important;
-  color:#063F32!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
 members = list_members()
 if not members:
     st.info("No members available.")
@@ -259,27 +108,17 @@ if default_member:
             default_index = idx
             break
 
-with st.container(border=True):
-    st.markdown("### 📋 Currently Reviewing")
-    st.markdown("<div class='hm-page-context-intro'>This section controls the member, report, note area, and saved-day view below.</div>", unsafe_allow_html=True)
-    selector_col_1, selector_col_2 = st.columns(2)
-    with selector_col_1:
-        selected = st.selectbox("👤 Member Loaded", options, index=default_index)
+selector_col_1, selector_col_2 = st.columns(2)
+with selector_col_1:
+    selected = st.selectbox("Select member", options, index=default_index)
 
-    member_id = selected.split(" — ")[0]
-    member = next(m for m in members if m["id"] == member_id)
-    days = get_daily_food_journal_days(member_id)
-    available_dates = [d.get("date") for d in days if d.get("date")]
+member_id = selected.split(" — ")[0]
+member = next(m for m in members if m["id"] == member_id)
+days = get_daily_food_journal_days(member_id)
+available_dates = [d.get("date") for d in days if d.get("date")]
 
-    with selector_col_2:
-        selected_date = st.selectbox("📅 Food Log Date Loaded", available_dates or [str(date.today())], format_func=display_date)
-
-    st.markdown(
-        f"""
-        <div class='hm-context-note'>Changing either selection reloads the visible report and note section. Current view: <b>{member.get('name', '')}</b> · <b>{display_date(selected_date)}</b></div>
-        """,
-        unsafe_allow_html=True,
-    )
+with selector_col_2:
+    selected_date = st.selectbox("Select food log date for review / note", available_dates or [str(date.today())])
 
 selected_day = get_daily_food_journal_day(member_id, selected_date) or next((d for d in days if d.get("date") == selected_date), {"date": selected_date, "meals": {}})
 date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selected_date)
@@ -287,12 +126,12 @@ date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selec
 stat_grid([
     {"label": "Member", "value": member.get("name", ""), "note": "Selected member"},
     {"label": "Saved Days", "value": len(days), "note": "Full-day food logs"},
-    {"label": "Selected Date", "value": display_date(selected_date), "note": "Current review"},
+    {"label": "Selected Date", "value": selected_date, "note": "Current review"},
     {"label": "Notes", "value": len(date_notes), "note": "For selected day"},
 ])
 
 card_start()
-st.subheader(f"Food journal for {display_date(selected_date)}")
+st.subheader(f"Food journal for {selected_date}")
 if not selected_day or not selected_day.get("meals"):
     st.info("No food journal available for this date.")
 else:
@@ -311,7 +150,8 @@ else:
     st.markdown(f"**Water Intake:** {selected_day.get('water_litres','') or '-'}")
     st.markdown(f"**Physical Activity:** {selected_day.get('physical_activity','') or '-'}")
     st.markdown(f"**Poop rounds:** {selected_day.get('poop_rounds','') or '-'}")
-    st.markdown(f"**Poop timings:** {labelled_poop_timings(selected_day) or '-'}")
+    timings = selected_day.get("poop_timings", []) or []
+    st.markdown(f"**Poop timings:** {', '.join([str(x) for x in timings if str(x).strip()]) or '-'}")
     st.markdown(f"**Feeling after poop:** {selected_day.get('feeling_after_poop','') or '-'}")
     st.markdown(f"**Overall Notes:** {selected_day.get('notes','') or '-'}")
 
@@ -325,7 +165,7 @@ else:
 card_end()
 
 card_start()
-st.subheader(f"Nutritionist note for {display_date(selected_date)}")
+st.subheader(f"Nutritionist note for {selected_date}")
 note = st.text_area("Nutritionist note", placeholder="Example: Please add water quantity for lunch and dinner tomorrow.")
 if st.button("Save Supervision Note / Notify Member", type="primary", use_container_width=True):
     if not note.strip():
@@ -365,14 +205,15 @@ else:
         latest_note_text = ""
         if latest_note:
             latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
-        meal_order_text = " | ".join([f"{label}: {meal_text((d.get('meals', {}).get(key, {}) or {}))}" for key, label in meal_keys_for_day(d) if meal_text((d.get('meals', {}).get(key, {}) or {}))])
         rows.append({
-            "Date": display_date(d.get("date", "")),
-            "Meal Order": meal_order_text,
+            "Date": d.get("date", ""),
+            "Breakfast": (d.get("meals", {}).get("breakfast", {}) or {}).get("food", ""),
+            "Lunch": (d.get("meals", {}).get("lunch", {}) or {}).get("food", ""),
+            "Dinner": (d.get("meals", {}).get("dinner", {}) or {}).get("food", ""),
             "Water": d.get("water_litres", ""),
             "Activity": d.get("physical_activity", ""),
             "Poop Rounds": d.get("poop_rounds", ""),
-            "Poop Timings": labelled_poop_timings(d),
+            "Poop Timings": ", ".join([str(x) for x in (d.get("poop_timings", []) or []) if str(x).strip()]),
             "Feeling After Poop": d.get("feeling_after_poop", ""),
             "Notes": d.get("notes", ""),
             "Nutritionist Notes": latest_note_text,

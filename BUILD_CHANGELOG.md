@@ -694,24 +694,10 @@
 - Removed Download Final Report explanatory helper text.
 - UI-only cleanup; business logic unchanged.
 
-## v76 - Daily Log UX + Data Integrity Pack
-- Removed internal build diagnostics from member-facing topbars while keeping admin/developer build visibility.
-- Simplified member Body-Mind locked-state wording by removing admin-process wording.
-- Daily Food Journal: made date prominent and displayed dates in DD/MM/YYYY format.
-- Daily Food Journal: enforced meal order as Breakfast, Lunch, Evening Snack, Dinner, Bedtime, then Snacking slots.
-- Daily Food Journal: renamed Other flow to Snacking / Snacking 1 / Snacking 2.
-- Daily Food Journal: added validation to prevent blank meal, day-details, and full-day journal saves.
-- Daily Food Journal: replaced free-text meal and poop timing with controlled 12-hour time options.
-- Daily Food Journal: all 9 poop timing slots are visible, with inactive slots disabled until poop rounds are selected.
-- Admin Daily Food Journal Report: added prominent Review Context selector card for member/date.
-- Admin Daily Food Journal Report: included meal time with food in All Saved Days and Excel export.
-- Admin Daily Food Journal Report: labelled poop timing values as Poop Timing 1, Poop Timing 2, etc.
 
+## v76 - Mobile Daily Log Timing Fix
 
-## v76O - Poop and Mobile Daily Log Fixes
-- Added 0 to Poop Rounds.
-- Kept all 9 timing slots visible but inactive for Select/0.
-- Prevented Poop Rounds selection from resetting on rerun.
-- Moved Feeling after poop after Poop Rounds.
-- Rendered Poop Timing 1-9 in strict order for mobile.
-- Enforced meal display order in Recent Saved Days.
+- Fixed mobile Poop Timing order to show 1,2,3,4... instead of column order 1,4,7.
+- Active Poop Timing fields now show placeholder: Enter the Poop Time.
+- Inactive Poop Timing fields remain disabled with placeholder: Not active.
+- Meal Timing now shows recommended timing by meal type.

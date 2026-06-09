@@ -275,11 +275,8 @@ else:
     if not member_options:
         st.info("No members available.")
     else:
-        st.markdown("### 👤 Demo Fill Context")
-        st.caption("This member selection controls whose assessment data will be auto-filled below.")
-        selected = st.selectbox("👤 Member to auto-fill", member_options)
+        selected = st.selectbox("Select member to auto-fill", member_options)
         member_id = selected.split(" — ")[0]
-        st.markdown(f"<div class='hm-date-emphasis'>👤 Demo fill target: {selected}</div>", unsafe_allow_html=True)
         if st.button("Fill Selected Member Now", type="primary", use_container_width=True):
             fill_demo_for_member(member_id, submit_for_review=submit_for_review)
             set_system_message(

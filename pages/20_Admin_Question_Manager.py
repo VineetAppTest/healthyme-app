@@ -37,12 +37,7 @@ st.info("This page now shows all questions, not only active ones. Inactive/delet
 tab1, tab2 = st.tabs(["LAF / NSP / Body-Mind Questions", "5 Admin Assessment Pages"])
 
 with tab1:
-    card_start()
-    st.markdown("### 🧭 Question Form Context")
-    st.caption("This form selection controls which question set is visible and editable below.")
-    selected_form = st.selectbox("🧭 Form", list(CONFIGS.keys()))
-    st.markdown(f"<div class='hm-date-emphasis'>🧭 Editing question set: {selected_form}</div>", unsafe_allow_html=True)
-    card_end()
+    selected_form = st.selectbox("Select form", list(CONFIGS.keys()))
     path = CONFIGS[selected_form]
     data = load_json(path)
     show_filter = st.radio("Show", ["All questions", "Active only", "Inactive/deleted only"], horizontal=True)
