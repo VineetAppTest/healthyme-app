@@ -438,6 +438,78 @@ st.markdown(
   }
 }
 
+
+/* --- v92.5 Daily Log Input Schema Repair --- */
+.hm-compact-section-note,
+.hm-v90a-chip-label,
+label[data-testid="stWidgetLabel"]{
+  color:#064E3B!important;
+  font-weight:850!important;
+}
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+div[data-testid="stNumberInput"] input{
+  background:#FFFFFF!important;
+  border:1.45px solid #D4A63A!important;
+  border-radius:13px!important;
+  color:#064E3B!important;
+  -webkit-text-fill-color:#064E3B!important;
+  font-weight:850!important;
+  min-height:2.42rem!important;
+  height:2.42rem!important;
+  box-shadow:0 3px 12px rgba(15,23,42,.04)!important;
+}
+div[data-testid="stSelectbox"] [data-baseweb="select"] div{
+  color:#064E3B!important;
+  font-weight:850!important;
+}
+div[data-testid="stSelectbox"] svg{
+  color:#064E3B!important;
+  fill:#064E3B!important;
+}
+div[data-testid="stNumberInput"] input{
+  text-align:center!important;
+  font-size:.98rem!important;
+}
+div[data-testid="stNumberInput"] button{
+  min-height:2.42rem!important;
+  height:2.42rem!important;
+  min-width:2.42rem!important;
+  background:#FFFDF8!important;
+  border:1.35px solid #D4A63A!important;
+  border-radius:13px!important;
+  color:#064E3B!important;
+}
+div[data-testid="stNumberInput"] button svg{
+  width:1.1rem!important;
+  height:1.1rem!important;
+  stroke-width:3!important;
+}
+div[data-testid="stTextArea"] textarea,
+div[data-testid="stTextInput"] input{
+  background:#F3F6FA!important;
+  border:1.2px solid transparent!important;
+  border-radius:10px!important;
+  color:#102A43!important;
+}
+@media (max-width:768px){
+  div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+  div[data-testid="stNumberInput"] input,
+  div[data-testid="stNumberInput"] button{
+    min-height:2.28rem!important;
+    height:2.28rem!important;
+    border-radius:12px!important;
+  }
+  div[data-testid="stSelectbox"] [data-baseweb="select"] div{
+    font-size:.86rem!important;
+  }
+  div[data-testid="stNumberInput"] input{
+    font-size:.92rem!important;
+  }
+  div[data-testid="stTextArea"] textarea{
+    min-height:5.2rem!important;
+  }
+}
+
 </style>
     """,
     unsafe_allow_html=True,
@@ -539,7 +611,7 @@ rendered_controls_v90a = "stable Streamlit mobile controls" if is_mobile_mode_v9
 
 st.markdown(f"""
 <div class='hm-v90a-diagnostic'>
-  <b>v92.4 Mobile Input Diagnostic</b><br>
+  <b>v92.5 Mobile Input Diagnostic</b><br>
   Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
   Rendered controls: <b>{rendered_controls_v90a}</b><br>
   Use the toggle above on phone if mobile controls are not active. Override: <code>?device=mobile</code> / <code>?device=desktop</code>.
@@ -781,7 +853,6 @@ def validate_meal_time(section_key, section_label, time_value):
 # Fixed Daily Log meal structure.
 st.markdown("<div class='hm-daily-date-shell'><div class='hm-daily-date-title'>Food journal date</div>", unsafe_allow_html=True)
 log_date = st.date_input("Food journal date", value=date.today(), label_visibility="collapsed")
-st.markdown("</div>", unsafe_allow_html=True)
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
 
@@ -892,7 +963,6 @@ pre_h, pre_m, pre_p = split_12h_time_parts(prior.get("time", ""))
 st.session_state.setdefault(f"{active_key}_time_h", pre_h)
 st.session_state.setdefault(f"{active_key}_time_m", pre_m)
 st.session_state.setdefault(f"{active_key}_time_p", pre_p)
-st.markdown("<div class='hm-schema-input-band'>", unsafe_allow_html=True)
 st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
 if is_mobile_mode_v90a:
     # v92.2: Custom component removed because it fails to load on Streamlit Cloud.
@@ -961,7 +1031,6 @@ else:
             label_visibility="collapsed",
         )
 st.markdown(f"<div class='hm-full-day-helper'>{time_guidance}</div>", unsafe_allow_html=True)
-st.markdown("</div>", unsafe_allow_html=True)
 
 selected_meal_time_for_validation = f"{st.session_state.get(f'{active_key}_time_h', 'HH')}:{st.session_state.get(f'{active_key}_time_m', 'MM')} {st.session_state.get(f'{active_key}_time_p', 'AM/PM')}"
 if selected_meal_time_for_validation and "HH" not in selected_meal_time_for_validation and "MM" not in selected_meal_time_for_validation and "AM/PM" not in selected_meal_time_for_validation:
@@ -1002,7 +1071,6 @@ card_start()
 st.subheader("Full-day details")
 top_left, top_right = st.columns(2)
 with top_left:
-    st.markdown("<div class='hm-schema-input-band'><div class='hm-schema-input-label'>Water intake for the full day</div>", unsafe_allow_html=True)
     water_options = ["Select"] + [
         "0 Litres",
         "0.5 Litres",
@@ -1069,11 +1137,8 @@ with top_left:
             "Water intake for the full day",
             water_options,
             index=water_options.index(existing_water) if existing_water in water_options else 0,
-            label_visibility="collapsed",
         )
-    st.markdown("</div>", unsafe_allow_html=True)
 with top_right:
-    st.markdown("<div class='hm-schema-input-band'><div class='hm-schema-input-label'>Poop rounds</div>", unsafe_allow_html=True)
     poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
     existing_poop_rounds = existing.get("poop_rounds", "Select")
     if existing_poop_rounds in ("", None):
@@ -1097,11 +1162,9 @@ with top_right:
             "Poop rounds",
             poop_options,
             index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
-            label_visibility="collapsed",
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
+    
 poop_timings = []
 existing_timings = existing.get("poop_timings", []) or []
 active_poop_count = int(poop_rounds) if poop_rounds != "Select" else 0
@@ -1126,17 +1189,18 @@ for row_start in range(0, 6, 3):
 
 feel_col, phys_col = st.columns([1.0, 1.0])
 with feel_col:
-    feeling_after_poop = st.text_input(
+    feeling_after_poop = st.text_area(
         "Feeling after poop",
         value=existing.get("feeling_after_poop", ""),
         placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
+        height=88,
     )
 with phys_col:
     physical_activity = st.text_area(
         "Physical activity - time of day and duration",
         value=existing.get("physical_activity", ""),
         placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
-        height=96,
+        height=88,
     )
 
 poop = ""
@@ -1249,8 +1313,7 @@ else:
                         )
                 else:
                     st.info("No nutritionist notes found for the selected date.")
-            st.markdown("</div>", unsafe_allow_html=True)
-card_end()
+            card_end()
 
 
 # Reference moved to bottom, with more aesthetic and compact expander.
@@ -1268,7 +1331,6 @@ if st.button("Show / Hide sample journal format", use_container_width=True):
     st.session_state["show_daily_reference_sample"] = not st.session_state["show_daily_reference_sample"]
 if st.session_state["show_daily_reference_sample"]:
     st.dataframe(SAMPLE_ROWS, use_container_width=True, hide_index=True)
-st.markdown("</div>", unsafe_allow_html=True)
 
 if st.button("Back to Home", use_container_width=True):
     st.switch_page("pages/02_Member_Home.py")

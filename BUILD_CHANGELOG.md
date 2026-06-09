@@ -888,3 +888,12 @@
 - Matched label hierarchy, border, radius, color, control height, and spacing.
 - Collapsed duplicate Streamlit labels where schema labels are shown.
 - No save/business logic changed.
+
+## v92.5 - Daily Log Input Schema Repair
+
+- Removed unreliable HTML schema-band wrapping around Streamlit widgets.
+- Applied direct styling to actual selectbox and number_input widgets.
+- Fixed duplicate/collapsed label mismatch for Water and Poop controls.
+- Balanced Feeling after poop and Physical activity heights.
+- Kept timing validation active.
+- No save/business logic changed.

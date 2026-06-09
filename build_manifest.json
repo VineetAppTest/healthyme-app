@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v92_4_Input_Format_Schema_Alignment",
-  "version": "v92_4_input_format_schema_alignment",
-  "updated_on": "2026-06-09T14:10:17.995731+00:00",
+  "build_name": "HealthyMe_v92_5_Daily_Log_Input_Schema_Repair",
+  "version": "v92_5_daily_log_input_schema_repair",
+  "updated_on": "2026-06-09T14:24:49.639261+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Aligned Meal Timing, Water Intake, and Poop Rounds into HealthyMe-style schema input bands.",
-    "Matched label hierarchy, border, radius, color, height, and spacing across the three controls.",
-    "Collapsed duplicate native Streamlit labels where schema label is already shown.",
-    "Retained safe Streamlit controls and visible timing validation.",
+    "Removed unreliable custom HTML schema-band wrapping around Streamlit widgets.",
+    "Applied direct styling to actual Streamlit selectbox and number_input controls.",
+    "Restored one visible label per Water/Poop field instead of duplicate/collapsed mismatch.",
+    "Kept Meal Timing as one visible label with collapsed HH/MM/AMPM inner labels.",
+    "Balanced Feeling after poop and Physical activity by making both equal-height text areas.",
+    "Kept timing validation active.",
     "No custom component added.",
     "No Body-Mind, report, login, LAF/NSP, or nutritionist-note logic changed."
   ],
@@ -280,5 +282,6 @@
   "native_time_note": [
     "True guaranteed native mobile time picker in Streamlit requires either a fully bundled custom component or a native/Flutter frontend.",
     "Current build keeps stable Streamlit controls and aligns visual styling."
-  ]
+  ],
+  "compile_check": true
 }
