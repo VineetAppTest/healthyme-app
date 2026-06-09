@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v91_1_Mobile_AutoDetect_Stepper_Compact_Fix",
-  "version": "v91_1_mobile_autodetect_stepper_compact_fix",
-  "updated_on": "2026-06-09T12:54:33.851651+00:00",
+  "build_name": "HealthyMe_v91_2_Mobile_Time_And_Horizontal_Stepper_Fix",
+  "version": "v91_2_mobile_time_and_horizontal_stepper_fix",
+  "updated_on": "2026-06-09T13:04:40.869457+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,12 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Mobile mode now attempts automatic mobile browser/user-agent detection.",
-    "Query overrides retained: ?device=mobile and ?device=desktop.",
-    "Native time picker should appear when mobile mode is active.",
-    "Stepper controls compacted for mobile.",
-    "Plus button changed to visible full-width plus symbol \uff0b.",
-    "Desktop/default branch remains dropdown based.",
+    "Added manual 'Use mobile input controls' toggle when auto mobile detection fails.",
+    "Native time picker is tied to the mobile-control branch and can now be forced from the toggle or ?device=mobile.",
+    "Stepper layout changed from visual vertical stack to horizontal - value + layout.",
+    "Stepper plus button remains the visible \uff0b symbol.",
+    "Desktop/default branch remains dropdown based unless mobile mode is explicitly activated.",
     "No Body-Mind, report, login, LAF/NSP, or nutritionist-note logic changed."
   ],
   "required_setup": [
@@ -263,7 +262,7 @@
     "This spike therefore restores dropdown controls that are acceptable on desktop and mobile instead of applying mobile-only controls globally."
   ],
   "test_urls": [
-    "Auto mobile: open normally on phone and verify diagnostic says mobile.",
+    "Auto mobile: open normally on phone; if diagnostic still says desktop, use the toggle.",
     "Force mobile: /Daily_Log?device=mobile",
     "Force desktop: /Daily_Log?device=desktop"
   ],

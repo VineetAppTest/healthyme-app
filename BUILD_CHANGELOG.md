@@ -834,3 +834,10 @@
 - Changed plus button to visible `＋`.
 - Desktop/default branch remains dropdown based.
 - No save/business logic changed.
+
+## v91.2 - Mobile Time + Horizontal Stepper Fix
+
+- Added manual `Use mobile input controls` fallback toggle.
+- Native time picker is available when mobile controls are active.
+- Changed stepper styling to force a compact horizontal `- value +` layout where Streamlit allows.
+- No save/business logic changed.

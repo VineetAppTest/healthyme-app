@@ -116,6 +116,48 @@ st.markdown(
   }
 }
 
+
+/* --- v91.2 Mobile Time + Horizontal Stepper Fix --- */
+.hm-v912-horizontal-stepper-anchor{
+  margin-top:-.05rem!important;
+}
+.hm-v912-horizontal-stepper-anchor + div[data-testid="stHorizontalBlock"]{
+  display:grid!important;
+  grid-template-columns:minmax(2.2rem,.75fr) minmax(4.2rem,1.35fr) minmax(2.2rem,.75fr)!important;
+  gap:.35rem!important;
+  align-items:center!important;
+}
+.hm-v912-horizontal-stepper-anchor + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+  width:100%!important;
+  min-width:0!important;
+  flex:unset!important;
+}
+.hm-v912-horizontal-stepper-anchor + div[data-testid="stHorizontalBlock"] button{
+  min-height:1.72rem!important;
+  height:1.72rem!important;
+  padding:0!important;
+  font-size:1rem!important;
+  border-radius:10px!important;
+}
+.hm-v912-horizontal-stepper-anchor + div[data-testid="stHorizontalBlock"] .hm-v91-stepper-value{
+  min-height:1.72rem!important;
+  height:1.72rem!important;
+  font-size:.86rem!important;
+  border-radius:10px!important;
+}
+@media (max-width:768px){
+  .hm-v912-horizontal-stepper-anchor + div[data-testid="stHorizontalBlock"]{
+    display:grid!important;
+    grid-template-columns:2.25rem minmax(3.9rem,1fr) 2.25rem!important;
+    gap:.28rem!important;
+  }
+  .hm-v912-horizontal-stepper-anchor + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+    width:100%!important;
+    flex:unset!important;
+    min-width:0!important;
+  }
+}
+
 </style>
     """,
     unsafe_allow_html=True,
@@ -206,15 +248,21 @@ def render_v90a_chip_selector(label, options, current_value, key_prefix, columns
     return st.session_state.get(key_prefix, selected)
 
 device_mode_v90a = get_device_mode_for_spike()
-is_mobile_mode_v90a = device_mode_v90a == "mobile"
+manual_mobile_toggle_v912 = st.toggle(
+    "Use mobile input controls",
+    value=(device_mode_v90a == "mobile"),
+    key="v912_use_mobile_controls",
+    help="Use this on phone if automatic mobile detection does not activate.",
+)
+is_mobile_mode_v90a = (device_mode_v90a == "mobile") or manual_mobile_toggle_v912
 rendered_controls_v90a = "mobile stepper controls" if is_mobile_mode_v90a else "desktop controls"
 
 st.markdown(f"""
 <div class='hm-v90a-diagnostic'>
-  <b>v90A Mobile Detection Spike</b><br>
+  <b>v91.2 Mobile Input Diagnostic</b><br>
   Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
   Rendered controls: <b>{rendered_controls_v90a}</b><br>
-  Auto-detects mobile when possible. Override: <code>?device=mobile</code> or <code>?device=desktop</code>.
+  Auto-detects mobile when possible. Override: <code>?device=mobile</code> / <code>?device=desktop</code>, or use the toggle above.
 </div>
 """, unsafe_allow_html=True)
 
@@ -301,8 +349,10 @@ def render_v91_stepper(label, current_value, key_prefix, minimum, maximum, step,
         current = round(current, 1)
     st.session_state[state_key] = current
 
-    st.markdown("<div class='hm-v91-stepper-shell'>", unsafe_allow_html=True)
-    minus_col, value_col, plus_col = st.columns([0.55, 1.55, 0.55], gap="small")
+    # v91.2: horizontal stepper marker. CSS below prevents the three controls from
+    # looking like large stacked mobile blocks as far as Streamlit allows.
+    st.markdown("<div class='hm-v912-horizontal-stepper-anchor'></div>", unsafe_allow_html=True)
+    minus_col, value_col, plus_col = st.columns([0.75, 1.35, 0.75], gap="small")
     with minus_col:
         if st.button("−", key=f"{key_prefix}_minus", use_container_width=True):
             next_value = _clamp_number(current - step, minimum, maximum)
@@ -321,7 +371,6 @@ def render_v91_stepper(label, current_value, key_prefix, minimum, maximum, step,
             next_value = _clamp_number(current + step, minimum, maximum)
             st.session_state[state_key] = int(round(next_value)) if as_int else round(next_value, 1)
             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
     return st.session_state[state_key]
 
