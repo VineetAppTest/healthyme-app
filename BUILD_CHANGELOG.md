@@ -865,3 +865,11 @@
 - Explicitly removed disabled/readonly attributes from the custom time input.
 - Increased Water Intake and Poop Rounds number_input button/icon size on mobile.
 - No save/business logic changed.
+
+## v92.2 - Component Rollback + Mobile Stability Fix
+
+- Removed failing custom Streamlit component for mobile time input.
+- Restored safe Streamlit-native 3-cell Meal Timing controls in mobile mode.
+- Kept meal timing validation visible.
+- Kept improved number_input styling for Water Intake and Poop Rounds.
+- No save/business logic changed.

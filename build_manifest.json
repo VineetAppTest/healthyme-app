@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v92_1_Mobile_Time_Active_And_Number_Button_Size_Fix",
-  "version": "v92_1_mobile_time_active_and_number_button_size_fix",
-  "updated_on": "2026-06-09T13:44:47.773039+00:00",
+  "build_name": "HealthyMe_v92_2_Component_Rollback_Stability_Fix",
+  "version": "v92_2_component_rollback_stability_fix",
+  "updated_on": "2026-06-09T13:51:03.297617+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -144,10 +144,12 @@
   "known_auth0_note": "If Auth0 provider SSO cookie remains active in browser, Auth0 may still authenticate quickly after clicking Continue with Auth0. The app now prevents automatic in-app restore after logout.",
   "timezone_note": "Timestamp display continues to use format_local_ts with app default Asia/Kolkata unless profile-level timezone fields are added.",
   "hotfix": [
-    "Fixed NameError by defining get_device_mode_for_spike before first use.",
-    "Moved v90A detection helpers above diagnostic/device-mode call.",
-    "Added regression scan to verify helper definitions appear before calls.",
-    "No save logic, Body-Mind logic, report logic, or nutritionist-note logic changed."
+    "Removed failing custom Streamlit component for mobile time input.",
+    "Restored safe Streamlit-native 3-cell Meal Timing controls in mobile mode.",
+    "Kept visible meal timing validation.",
+    "Kept improved mobile number_input styling for Water Intake and Poop Rounds.",
+    "Desktop/default branch remains unchanged.",
+    "No Body-Mind, report, login, LAF/NSP, or nutritionist-note logic changed."
   ],
   "pages_imports_repaired": {},
   "remaining_missing_ui_imports": {},
@@ -269,5 +271,9 @@
   "important_note": [
     "The custom time component uses streamlit-component-lib from CDN. Streamlit Cloud should allow this, but if CDN is blocked, the component may not render.",
     "This is a component spike; validate on Android Chrome and desktop before making it production default."
+  ],
+  "reason": [
+    "Streamlit Cloud could not load components.mobile_time_input_component.healthyme_mobile_time_input frontend assets.",
+    "Rollback avoids app-breaking component load failure."
   ]
 }

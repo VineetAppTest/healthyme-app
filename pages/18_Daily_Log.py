@@ -19,7 +19,6 @@ from components.db import (
     get_latest_daily_log_note_for_date,
 )
 from components.flash import set_system_message, render_system_message
-from components.mobile_time_input_component import mobile_time_input
 
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
@@ -207,9 +206,6 @@ st.markdown(
 
 /* --- v92.1 Mobile Time Active + Number Button Size Fix --- */
 @media (max-width:768px){
-  iframe[title="healthyme_mobile_time_input"]{
-    min-height:78px!important;
-  }
   div[data-testid="stNumberInput"]{
     margin-top:.05rem!important;
     margin-bottom:.65rem!important;
@@ -241,6 +237,38 @@ st.markdown(
     width:1.2rem!important;
     height:1.2rem!important;
     stroke-width:3!important;
+  }
+}
+
+
+/* --- v92.2 Component Rollback + Number Input Stability --- */
+@media (max-width:768px){
+  div[data-testid="stNumberInput"]{
+    margin-top:.05rem!important;
+    margin-bottom:.65rem!important;
+  }
+  div[data-testid="stNumberInput"] input{
+    min-height:2.65rem!important;
+    height:2.65rem!important;
+    font-size:1.08rem!important;
+    font-weight:900!important;
+    text-align:center!important;
+    color:#064E3B!important;
+    -webkit-text-fill-color:#064E3B!important;
+    background:#FFFFFF!important;
+    border:1.6px solid #D4A63A!important;
+    border-radius:14px!important;
+  }
+  div[data-testid="stNumberInput"] button{
+    min-width:2.65rem!important;
+    min-height:2.65rem!important;
+    height:2.65rem!important;
+    font-size:1.45rem!important;
+    font-weight:900!important;
+    color:#064E3B!important;
+    background:#FFFDF8!important;
+    border:1.4px solid #D4A63A!important;
+    border-radius:14px!important;
   }
 }
 
@@ -341,11 +369,11 @@ manual_mobile_toggle_v912 = st.toggle(
     help="Use this on phone if automatic mobile detection does not activate.",
 )
 is_mobile_mode_v90a = (device_mode_v90a == "mobile") or manual_mobile_toggle_v912
-rendered_controls_v90a = "custom mobile time + stable number controls" if is_mobile_mode_v90a else "desktop controls"
+rendered_controls_v90a = "stable Streamlit mobile controls" if is_mobile_mode_v90a else "desktop controls"
 
 st.markdown(f"""
 <div class='hm-v90a-diagnostic'>
-  <b>v92.1 Mobile Input Diagnostic</b><br>
+  <b>v92.2 Mobile Input Diagnostic</b><br>
   Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
   Rendered controls: <b>{rendered_controls_v90a}</b><br>
   Use the toggle above on phone if mobile controls are not active. Override: <code>?device=mobile</code> / <code>?device=desktop</code>.
@@ -501,35 +529,6 @@ def water_stepper_to_litres(value):
     return f"{value} Litres"
 
 
-
-def _time_12h_to_24h_value(value):
-    raw = (value or "").strip().upper()
-    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
-    if not m:
-        return "08:00"
-    h = int(m.group(1))
-    minute = int(m.group(2))
-    period = m.group(3)
-    if period == "AM":
-        hour24 = 0 if h == 12 else h
-    else:
-        hour24 = 12 if h == 12 else h + 12
-    return f"{hour24:02d}:{minute:02d}"
-
-def _time_24h_to_12h_text(value):
-    raw = (value or "").strip()
-    m = re.match(r"^([0-2][0-9]):([0-5][0-9])$", raw)
-    if not m:
-        return ""
-    h24 = int(m.group(1))
-    minute = int(m.group(2))
-    if h24 > 23:
-        return ""
-    period = "AM" if h24 < 12 else "PM"
-    h12 = h24 % 12
-    if h12 == 0:
-        h12 = 12
-    return f"{h12:02d}:{minute:02d} {period}"
 
 
 def split_12h_time_parts(value):
@@ -729,18 +728,39 @@ st.session_state.setdefault(f"{active_key}_time_m", pre_m)
 st.session_state.setdefault(f"{active_key}_time_p", pre_p)
 st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
 if is_mobile_mode_v90a:
-    prior_24h = _time_12h_to_24h_value(prior.get("time", ""))
-    selected_time_24h = mobile_time_input(
-        "Select Meal Timing",
-        value=prior_24h,
-        key=f"{active_key}_v92_mobile_time_component",
-    )
-    native_time_text = _time_24h_to_12h_text(selected_time_24h) or _time_24h_to_12h_text(prior_24h)
-    time_h, time_m, time_p = split_12h_time_parts(native_time_text)
-    st.session_state[f"{active_key}_time_h"] = time_h
-    st.session_state[f"{active_key}_time_m"] = time_m
-    st.session_state[f"{active_key}_time_p"] = time_p
-    st.markdown(f"<div class='hm-time-preview'>Selected: {native_time_text}</div>", unsafe_allow_html=True)
+    # v92.2: Custom component removed because it fails to load on Streamlit Cloud.
+    # Use safe Streamlit-native 3-cell timing controls while keeping validation active.
+    th, tm, tp = st.columns([1, 1, 1])
+    with th:
+        hour_options = ["HH"] + [f"{i:02d}" for i in range(1, 13)]
+        current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
+        st.selectbox(
+            "HH",
+            hour_options,
+            index=hour_options.index(current_h) if current_h in hour_options else 0,
+            key=f"{active_key}_time_h",
+            label_visibility="collapsed",
+        )
+    with tm:
+        minute_options = ["MM"] + [f"{i:02d}" for i in range(0, 60)]
+        current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
+        st.selectbox(
+            "MM",
+            minute_options,
+            index=minute_options.index(current_m) if current_m in minute_options else 0,
+            key=f"{active_key}_time_m",
+            label_visibility="collapsed",
+        )
+    with tp:
+        ampm_options = ["AM/PM", "AM", "PM"]
+        current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
+        st.selectbox(
+            "AM/PM",
+            ampm_options,
+            index=ampm_options.index(current_p) if current_p in ampm_options else 0,
+            key=f"{active_key}_time_p",
+            label_visibility="collapsed",
+        )
 else:
     th, tm, tp = st.columns([1, 1, 1])
     with th:
