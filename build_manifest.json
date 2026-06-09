@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe v77 Meal Timing + Daily Log UI Alignment Fix",
-  "version": "v77_meal_timing_dailylog_ui_alignment_fix",
-  "updated_on": "2026-06-09T06:45:46.375339+00:00",
+  "build_name": "HealthyMe_v79_Micro_Polish_Build",
+  "version": "v79_micro_polish_build",
+  "updated_on": "2026-06-09T07:09:02.027523+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,14 +17,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Restored fixed standard meal sections: Breakfast, Lunch, Evening Snacks, Dinner, Bedtime.",
-    "Replaced Other with + Snacking and repeatable Snacking 1, Snacking 2, etc.",
-    "Meal Timing uses 12-hour HH:MM AM/PM format.",
-    "Validation added for standard meal timing windows and Snacking outside standard windows.",
-    "Bedtime window set to 11:00 PM to 12:00 AM.",
-    "Boundary times accepted for standard meals.",
-    "Recent saved days table vertical alignment improved.",
-    "Save buttons standardized to HealthyMe color schema."
+    "Tightened Daily Log meal-section spacing and helper text.",
+    "Rebalanced the Full-day details layout for laptop view.",
+    "Moved Feeling after poop to a full-width compact row to remove blank space.",
+    "Applied a cleaner compact pass to Daily Log controls without changing business logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"

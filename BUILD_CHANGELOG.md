@@ -712,3 +712,17 @@
 - Snacking is allowed only outside standard meal windows.
 - Improved Recent saved days table vertical alignment.
 - Standardized save button colors to HealthyMe schema.
+
+## v78 - Daily Log Compact Time Picker and Layout Polish
+
+- Removed visible version text from member-facing header branding.
+- Meal Timing now uses Hour / Minute / AM-PM selectors.
+- Reduced Feeling after poop vertical space.
+- Save meal button now spans the full row.
+
+## v79 - Micro Polish Build
+
+- Tightened Daily Log meal selector spacing and helper text.
+- Rebalanced the laptop Full-day details layout.
+- Moved Feeling after poop to a full-width compact row to remove excess blank space.
+- Applied compact polish to Daily Log controls while keeping business logic unchanged.

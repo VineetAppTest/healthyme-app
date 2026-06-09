@@ -33,11 +33,27 @@ st.markdown(
         line-height: 1.25;
     }
     .hm-meal-title {
-        margin-top: .25rem;
-        margin-bottom: .15rem;
-        font-size: 1.08rem;
+        margin-top: .2rem;
+        margin-bottom: .1rem;
+        font-size: 1.05rem;
         font-weight: 850;
         color: #064E3B;
+    }
+    .hm-snack-helper {
+        margin-top: .45rem;
+        color: #7C8A96;
+        font-size: .82rem;
+        line-height: 1.2;
+    }
+    .hm-section-mini-gap {
+        margin-top: .15rem;
+        margin-bottom: .15rem;
+    }
+    .hm-full-day-helper {
+        margin-top: -.1rem;
+        margin-bottom: .35rem;
+        color: #7C8A96;
+        font-size: .81rem;
     }
     .hm-reference-shell {
         border: 1px solid #E7D8BE;
@@ -69,11 +85,20 @@ def meal_has_data(meal):
     return any((meal or {}).get(x) for x in ["time", "food", "portion_size", "mood_energy"])
 
 def current_widget_payload(section_key, section_label):
+    hour = st.session_state.get(f"{section_key}_time_h", "HH")
+    minute = st.session_state.get(f"{section_key}_time_m", "MM")
+    period = st.session_state.get(f"{section_key}_time_p", "AM/PM")
+    if hour == "HH" and minute == "MM" and period == "AM/PM":
+        time_value = ""
+    elif hour != "HH" and minute != "MM" and period in ["AM", "PM"]:
+        time_value = f"{hour}:{minute} {period}"
+    else:
+        time_value = "__PARTIAL__"
     return {
         "label": section_label,
-        "time": st.session_state.get(f"{section_key}_time", "").strip(),
+        "time": time_value,
         "food": st.session_state.get(f"{section_key}_food", "").strip(),
-                "portion_size": st.session_state.get(f"{section_key}_portion", "").strip(),
+        "portion_size": st.session_state.get(f"{section_key}_portion", "").strip(),
         "mood_energy": st.session_state.get(f"{section_key}_mood", "").strip(),
     }
 
@@ -83,7 +108,7 @@ def saved_payload_for(existing_meals, section_key, section_label):
         "label": prior.get("label", section_label),
         "time": prior.get("time", ""),
         "food": prior.get("food", ""),
-                "portion_size": prior.get("portion_size", ""),
+        "portion_size": prior.get("portion_size", ""),
         "mood_energy": prior.get("mood_energy", ""),
     }
 
@@ -93,6 +118,13 @@ def is_dirty(existing_meals, section_key, section_label):
     cur = current_widget_payload(section_key, section_label)
     saved = saved_payload_for(existing_meals, section_key, section_label)
     return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "portion_size", "mood_energy"])
+
+def split_12h_time_parts(value):
+    raw = (value or "").strip().upper()
+    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
+    if not m:
+        return ("HH", "MM", "AM/PM")
+    return (f"{int(m.group(1)):02d}", m.group(2), m.group(3))
 
 def parse_12h_time_to_minutes(value):
     raw = (value or "").strip().upper()
@@ -154,7 +186,7 @@ def validate_meal_time(section_key, section_label, time_value):
         return True, ""
     minutes = parse_12h_time_to_minutes(raw)
     if minutes is None:
-        return False, "Please enter time in HH:MM AM/PM format, for example 08:30 AM."
+        return False, "Please complete meal timing using Hour, Minute, and AM/PM, for example 08:30 AM."
     window_key = meal_window_key(section_key, section_label)
     if window_key == "snacking":
         inside_standard = any(in_window(minutes, start, end) for _label, start, end in STANDARD_MEAL_WINDOWS.values())
@@ -218,7 +250,7 @@ if "active_daily_meal_section" not in st.session_state or st.session_state["acti
 
 card_start()
 st.subheader("Meal sections")
-st.markdown("<div class='hm-compact-section-note'>Tap a meal to open it. Save the current meal before moving to another section.</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-compact-section-note hm-section-mini-gap'>Tap a meal to open it. Save the current meal before moving to another section.</div>", unsafe_allow_html=True)
 
 active_key = st.session_state["active_daily_meal_section"]
 active_label = next((label for key, label in meal_sections if key == active_key), meal_sections[0][1])
@@ -238,7 +270,7 @@ for idx, (key, label) in enumerate(meal_sections):
                 st.rerun()
 
 # Other is now very visible directly below the buttons.
-add_cols = st.columns([1, 2])
+add_cols = st.columns([1.1, 2.4])
 with add_cols[0]:
     if st.button("+ Snacking", use_container_width=True, help="Add another snacking time outside the standard meal windows."):
         if is_dirty(existing_meals, active_key, active_label):
@@ -248,21 +280,27 @@ with add_cols[0]:
             st.session_state["active_daily_meal_section"] = f"snacking_{st.session_state['daily_log_snacking_count']}"
             st.rerun()
 with add_cols[1]:
-    st.caption("Use Snacking for food or drinks taken outside the standard meal windows.")
+    st.markdown("<div class='hm-snack-helper'>Use Snacking for food or drinks taken outside the standard meal windows.</div>", unsafe_allow_html=True)
 
 st.markdown(f"<div class='hm-meal-title'>{active_label}</div>", unsafe_allow_html=True)
 prior = existing_meals.get(active_key, {}) if existing_meals else {}
 
 time_guidance = meal_time_guidance(active_key, active_label)
-time_text = st.text_input(
-    "Meal Timing (HH:MM AM/PM)",
-    value=prior.get("time", ""),
-    key=f"{active_key}_time",
-    placeholder=time_guidance,
-    help=f"Recommended timing for {active_label}: {time_guidance}",
-)
+pre_h, pre_m, pre_p = split_12h_time_parts(prior.get("time", ""))
+st.session_state.setdefault(f"{active_key}_time_h", pre_h)
+st.session_state.setdefault(f"{active_key}_time_m", pre_m)
+st.session_state.setdefault(f"{active_key}_time_p", pre_p)
+st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
+th, tm, tp = st.columns([1, 1, 1])
+with th:
+    st.selectbox("Hour", ["HH"] + [f"{i:02d}" for i in range(1, 13)], key=f"{active_key}_time_h", label_visibility="collapsed")
+with tm:
+    st.selectbox("Minute", ["MM"] + [f"{i:02d}" for i in range(0, 60)], key=f"{active_key}_time_m", label_visibility="collapsed")
+with tp:
+    st.selectbox("AM/PM", ["AM/PM", "AM", "PM"], key=f"{active_key}_time_p", label_visibility="collapsed")
+st.markdown(f"<div class='hm-full-day-helper'>{time_guidance}</div>", unsafe_allow_html=True)
 
-food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=85)
+food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=78)
 
 c3, c4 = st.columns([1, 1])
 with c3:
@@ -276,22 +314,19 @@ meal_time_valid, meal_time_error = validate_meal_time(active_key, active_label, 
 if active_payload.get("time") and not meal_time_valid:
     st.error(meal_time_error)
 
-c_save, c_status = st.columns([1, 1])
-with c_save:
-    if st.button(f"Save {active_label}", use_container_width=True):
-        if not meal_time_valid:
-            st.error(meal_time_error)
-        else:
-            save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
-            set_system_message(f"{active_label} saved for {log_date}.", "success")
-            st.rerun()
-with c_status:
-    if meal_dirty:
-        st.warning(f"Unsaved changes in {active_label}.")
-    elif meal_has_data(prior):
-        st.success(f"{active_label} saved.")
+if st.button(f"Save {active_label}", use_container_width=True):
+    if not meal_time_valid:
+        st.error(meal_time_error)
     else:
-        st.caption("No saved entry yet.")
+        save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
+        set_system_message(f"{active_label} saved for {log_date}.", "success")
+        st.rerun()
+if meal_dirty:
+    st.warning(f"Unsaved changes in {active_label}.")
+elif meal_has_data(prior):
+    st.success(f"{active_label} saved.")
+else:
+    st.caption("No saved entry yet.")
 card_end()
 
 card_start()
@@ -300,19 +335,13 @@ water_options = ['Select', '0 Litres', '0.5 Litres', '1 Litre', '1.5 Litres', '2
 existing_water = existing.get("water_litres", "Select") or "Select"
 water_index = water_options.index(existing_water) if existing_water in water_options else 0
 water_litres = st.selectbox("Water intake for the full day", water_options, index=water_index)
-left_col, right_col = st.columns(2)
+left_col, right_col = st.columns([1, 1.1])
 with left_col:
     physical_activity = st.text_area(
         "Physical activity - time of day and duration",
         value=existing.get("physical_activity", ""),
         placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
-        height=90,
-    )
-    feeling_after_poop = st.text_area(
-        "Feeling after poop",
-        value=existing.get("feeling_after_poop", ""),
-        placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
-        height=160,
+        height=88,
     )
 
 with right_col:
@@ -326,7 +355,7 @@ with right_col:
     poop_timings = []
     existing_timings = existing.get("poop_timings", []) or []
     active_poop_count = int(poop_rounds) if poop_rounds != "Select" else 0
-    st.caption("Record timing for each poop round.")
+    st.markdown("<div class='hm-full-day-helper'>Record timing for each poop round.</div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-poop-timing-grid-anchor'></div>", unsafe_allow_html=True)
     for row_start in range(0, 9, 3):
         timing_cols = st.columns(3)
@@ -344,8 +373,15 @@ with right_col:
                     disabled=not is_active,
                 )
                 poop_timings.append(value if is_active else "")
+
+feeling_after_poop = st.text_area(
+    "Feeling after poop",
+    value=existing.get("feeling_after_poop", ""),
+    placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
+    height=88,
+)
 poop = ""
-day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=85)
+day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=78)
 
 c_save_1, c_save_2 = st.columns(2)
 with c_save_1:

@@ -7360,7 +7360,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v77"
+APP_BUILD_VERSION = "v79"
 APP_BUILD_LABEL = "Meal Timing + Daily Log UI Alignment Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7369,7 +7369,6 @@ def topbar(title, subtitle="", kicker="HealthyMe premium"):
         <div class='hero-shell'>
           <div class='hm-v77-brand-row'>
             <span class='hm-v77-brand'>HealthyMe</span>
-            <span class='hm-v77-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
           </div>
           <div class='hero-kicker'>{kicker}</div>
           <div class='hero-title'>{title}</div>
@@ -7386,7 +7385,6 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         <div class='hero-shell hm-compact-page-section'>
           <div class='hm-v77-brand-row'>
             <span class='hm-v77-brand'>HealthyMe</span>
-            <span class='hm-v77-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
           </div>
           <div class='hero-kicker'>{kicker}</div>
           <div class='hero-title'>{title}</div>
