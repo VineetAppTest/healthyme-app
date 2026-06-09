@@ -2809,6 +2809,39 @@ button[kind="primary"]{
 .hm-full-day-helper{margin-top:.05rem !important;margin-bottom:.35rem !important;color:#7C8A96 !important;font-size:.81rem !important;}
 .hm-poop-timing-grid-anchor{margin-top:-.05rem !important;}
 
+/* --- v84 Date + Button + Header Alignment Polish --- */
+.hm-daily-date-shell{
+  border:1.4px solid #E6D6BB;
+  border-radius:16px;
+  background:#FFFDF8;
+  box-shadow:0 8px 22px rgba(15,23,42,.045);
+  padding:.8rem .95rem .55rem .95rem;
+  margin:.1rem 0 1rem 0;
+}
+.hm-daily-date-title{
+  color:#064E3B;
+  font-size:.84rem;
+  font-weight:850;
+  margin-bottom:.25rem;
+}
+.hm-daily-date-shell [data-testid="stDateInput"]{
+  margin-top:.1rem !important;
+}
+.hm-daily-date-shell [data-testid="stDateInput"] input{
+  font-size:1rem !important;
+  font-weight:700 !important;
+}
+.hm-rsd-header-cell{
+  display:flex !important;
+  align-items:center !important;
+  min-height:2rem !important;
+  color:#3F4C5F !important;
+  font-size:.80rem !important;
+  font-weight:850 !important;
+  line-height:1.15 !important;
+  width:100%;
+}
+
 </style>
 """
 
@@ -7400,8 +7433,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v83"
-APP_BUILD_LABEL = "Physical Activity Height Balance Fix"
+APP_BUILD_VERSION = "v84"
+APP_BUILD_LABEL = "Date + Button + Header Alignment Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7517,3 +7550,6 @@ def render_build_text_v82(): return None
 
 
 def render_build_text_v83(): return None
+
+
+def render_build_text_v84(): return None

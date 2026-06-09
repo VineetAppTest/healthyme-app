@@ -755,3 +755,9 @@
 
 - Increased the Physical activity text area height in Full-day details to reduce empty space on laptop.
 - No other logic or layout behavior changed from v82.
+
+## v84 - Date + Button + Header Alignment Polish
+
+- Made the Food journal date section more prominent.
+- Restored Save Full-Day Journal to standard HealthyMe button styling.
+- Improved Recent saved days header alignment.

@@ -201,7 +201,9 @@ def validate_meal_time(section_key, section_label, time_value):
 
 
 # Fixed Daily Log meal structure.
-log_date = st.date_input("Food journal date", value=date.today())
+st.markdown("<div class='hm-daily-date-shell'><div class='hm-daily-date-title'>Food journal date</div>", unsafe_allow_html=True)
+log_date = st.date_input("Food journal date", value=date.today(), label_visibility="collapsed")
+st.markdown("</div>", unsafe_allow_html=True)
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
 
@@ -421,7 +423,7 @@ with c_save_1:
         set_system_message("Day details saved.", "success")
         st.rerun()
 with c_save_2:
-    if st.button("Save Full-Day Journal", type="primary", use_container_width=True):
+    if st.button("Save Full-Day Journal", use_container_width=True):
         if not meal_time_valid:
             st.error(meal_time_error)
             st.stop()
@@ -460,12 +462,12 @@ else:
     st.markdown("<div class='hm-rsd-native-shell'>", unsafe_allow_html=True)
 
     h1, h2, h3, h4, h5, h6 = st.columns([1.05, 1.75, .9, .9, 2.05, .85])
-    h1.markdown("**Date**")
-    h2.markdown("**Meal type and food**")
-    h3.markdown("**Water**")
-    h4.markdown("**Notes**")
-    h5.markdown("**Nutritionist Notes**")
-    h6.markdown("**Action**")
+    h1.markdown("<div class='hm-rsd-header-cell'>Date</div>", unsafe_allow_html=True)
+    h2.markdown("<div class='hm-rsd-header-cell'>Meal type and food</div>", unsafe_allow_html=True)
+    h3.markdown("<div class='hm-rsd-header-cell'>Water</div>", unsafe_allow_html=True)
+    h4.markdown("<div class='hm-rsd-header-cell'>Notes</div>", unsafe_allow_html=True)
+    h5.markdown("<div class='hm-rsd-header-cell'>Nutritionist Notes</div>", unsafe_allow_html=True)
+    h6.markdown("<div class='hm-rsd-header-cell'>Action</div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-rsd-native-divider'></div>", unsafe_allow_html=True)
 
     for day in days[:14]:
