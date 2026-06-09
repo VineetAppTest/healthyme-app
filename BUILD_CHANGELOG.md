@@ -734,3 +734,19 @@
 - Snacking sections render separately as Snacking 1, Snacking 2, Snacking 3.
 - Tightened Full-day details layout to reduce laptop blank space.
 - No timing/save/business logic changed.
+
+## v81 - Daily Log Full-day Rebalance + Poop Zero Fix
+
+- Restored 0 option in Poop rounds.
+- Rebalanced Full-day details for laptop view.
+- Moved Overall notes under Physical activity to remove unused blank space.
+- Kept Feeling after poop as a compact full-width row.
+- No meal timing or save logic changed.
+
+## v82 - Full-day Details HealthyMe Structure Alignment
+
+- Implemented the accepted Full-day details structure in HealthyMe style.
+- Water intake and Poop rounds aligned in the top row.
+- Physical activity aligned left; Poop timings and Feeling after poop aligned right.
+- Overall notes moved to a full-width row.
+- Poop rounds reduced to 0-6 and Poop timings reduced to 6 fields.

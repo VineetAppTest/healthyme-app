@@ -2792,6 +2792,23 @@ button[kind="primary"]{
   }
 }
 
+/* --- v81 Daily Log Full-day Rebalance + Poop Zero Fix --- */
+.hm-full-day-helper{
+  margin-top:.08rem !important;
+  margin-bottom:.28rem !important;
+  color:#7C8A96 !important;
+  font-size:.81rem !important;
+}
+@media (min-width: 900px){
+  .hm-poop-timing-grid-anchor{
+    margin-top:-.1rem !important;
+  }
+}
+
+/* --- v82 Full-day Details HealthyMe Structure Alignment --- */
+.hm-full-day-helper{margin-top:.05rem !important;margin-bottom:.35rem !important;color:#7C8A96 !important;font-size:.81rem !important;}
+.hm-poop-timing-grid-anchor{margin-top:-.05rem !important;}
+
 </style>
 """
 
@@ -7383,8 +7400,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v80"
-APP_BUILD_LABEL = "Meal Timing + Daily Log UI Alignment Fix"
+APP_BUILD_VERSION = "v82"
+APP_BUILD_LABEL = "Full-day Details HealthyMe Structure Alignment"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7492,3 +7509,8 @@ def build_marker_v7(): return None
 def render_version_tag(): return None
 
 def render_build_text_v80(): return None
+
+def render_build_text_v81(): return None
+
+
+def render_build_text_v82(): return None

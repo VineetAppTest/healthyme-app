@@ -355,30 +355,36 @@ st.subheader("Full-day details")
 water_options = ['Select', '0 Litres', '0.5 Litres', '1 Litre', '1.5 Litres', '2 Litres', '2.5 Litres', '3 Litres', '3.5 Litres', '4 Litres', '4.5 Litres', '5 Litres', '5.5 Litres', '6 Litres', '6.5 Litres', '7 Litres', '7.5 Litres', '8 Litres', '8.5 Litres', '9 Litres', '9.5 Litres', '10 Litres']
 existing_water = existing.get("water_litres", "Select") or "Select"
 water_index = water_options.index(existing_water) if existing_water in water_options else 0
-water_litres = st.selectbox("Water intake for the full day", water_options, index=water_index)
-left_col, right_col = st.columns([1, 1.1])
-with left_col:
-    physical_activity = st.text_area(
-        "Physical activity - time of day and duration",
-        value=existing.get("physical_activity", ""),
-        placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
-        height=78,
-    )
 
-with right_col:
-    poop_options = ["Select"] + list(range(1, 10))
-    existing_poop_rounds = existing.get("poop_rounds", "Select") or "Select"
+top_left, top_right = st.columns(2)
+with top_left:
+    water_litres = st.selectbox("Water intake for the full day", water_options, index=water_index)
+with top_right:
+    poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
+    existing_poop_rounds = existing.get("poop_rounds", "Select")
+    if existing_poop_rounds in ("", None):
+        existing_poop_rounds = "Select"
     if str(existing_poop_rounds).isdigit():
         existing_poop_rounds = int(existing_poop_rounds)
     poop_round_index = poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0
     poop_rounds = st.selectbox("Poop rounds", poop_options, index=poop_round_index)
 
+body_left, body_right = st.columns([1.0, 1.32])
+with body_left:
+    physical_activity = st.text_area(
+        "Physical activity - time of day and duration",
+        value=existing.get("physical_activity", ""),
+        placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
+        height=210,
+    )
+
+with body_right:
     poop_timings = []
     existing_timings = existing.get("poop_timings", []) or []
     active_poop_count = int(poop_rounds) if poop_rounds != "Select" else 0
     st.markdown("<div class='hm-full-day-helper'>Record timing for each poop round.</div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-poop-timing-grid-anchor'></div>", unsafe_allow_html=True)
-    for row_start in range(0, 9, 3):
+    for row_start in range(0, 6, 3):
         timing_cols = st.columns(3)
         for col_offset in range(3):
             idx = row_start + col_offset
@@ -394,15 +400,19 @@ with right_col:
                     disabled=not is_active,
                 )
                 poop_timings.append(value if is_active else "")
+    feeling_after_poop = st.text_input(
+        "Feeling after poop",
+        value=existing.get("feeling_after_poop", ""),
+        placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
+    )
 
-feeling_after_poop = st.text_area(
-    "Feeling after poop",
-    value=existing.get("feeling_after_poop", ""),
-    placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
-    height=72,
-)
 poop = ""
-day_notes = st.text_area("Overall notes for the day", value=existing.get("notes", ""), placeholder="Any cravings, bloating, missed meals, late meals, etc.", height=72)
+day_notes = st.text_area(
+    "Overall notes for the day",
+    value=existing.get("notes", ""),
+    placeholder="Any cravings, bloating, missed meals, late meals, etc.",
+    height=90,
+)
 
 c_save_1, c_save_2 = st.columns(2)
 with c_save_1:
