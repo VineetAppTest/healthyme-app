@@ -43,6 +43,38 @@ st.markdown("""
   margin-top:.15rem;
   margin-bottom:.35rem;
 }
+
+/* --- v92.10 Daily Food Journal Report Surface Fix --- */
+.hm-dfjr-empty-note{
+  background:#E9EEF5;
+  border-radius:10px;
+  padding:14px 16px;
+  margin:.25rem 0 1.15rem 0;
+  color:#334155;
+  width:100%;
+  box-sizing:border-box;
+  min-height:52px;
+  display:flex;
+  align-items:center;
+}
+.hm-dfjr-note-wrap{
+  margin-top:.2rem;
+}
+.hm-dfjr-note-wrap [data-testid="stWidgetLabel"],
+.hm-dfjr-note-wrap label{
+  display:none!important;
+}
+.hm-dfjr-note-wrap textarea{
+  background:#E9EEF5!important;
+  border:0!important;
+  border-radius:10px!important;
+  color:#102A43!important;
+  min-height:96px!important;
+}
+.hm-dfjr-spacer{
+  height:.45rem;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -202,7 +234,7 @@ card_end()
 st.subheader(f"Food journal for {selected_date}")
 st.markdown("<div class='hm-dfjr-tight'></div>", unsafe_allow_html=True)
 if not selected_day or not selected_day.get("meals"):
-    st.info("No food journal available for this date.")
+    st.markdown("<div class='hm-dfjr-empty-note'>No food journal available for this date.</div>", unsafe_allow_html=True)
 else:
     meal_rows = []
     for key, label in meal_keys_for_day(selected_day):
@@ -226,29 +258,17 @@ else:
     st.markdown("<div class='hm-full-day-black-row'></div>", unsafe_allow_html=True)
 card_end()
 
+st.markdown("<div class='hm-dfjr-spacer'></div>", unsafe_allow_html=True)
 st.subheader(f"Nutritionist note for {selected_date}")
 st.markdown("<div class='hm-dfjr-tight'></div>", unsafe_allow_html=True)
-note = st.text_area("Nutritionist note", placeholder="Example: Please add water quantity for lunch and dinner tomorrow.")
-if st.button("Save Supervision Note / Notify Member", type="primary", use_container_width=True):
-    if not note.strip():
-        st.error("Please write a nutritionist note before saving.")
-    else:
-        save_daily_log_supervision_note(member_id, note.strip(), actor_id=st.session_state.get("user_id", "admin"), log_date=selected_date)
-        st.success("Nutritionist note saved. Member notification is now visible on Member Home and queued for email.")
-        st.rerun()
-
-if date_notes:
-    st.markdown("#### Notes for this day")
-    for n in date_notes[:8]:
-        st.markdown(
-            f"""
-            <div class='info-banner'>
-              <b>{format_local_ts(n.get('ts',''))}</b><br>
-              {n.get('note','')}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+st.markdown("<div class='hm-dfjr-note-wrap'>", unsafe_allow_html=True)
+note = st.text_area(
+    "Nutritionist note",
+    placeholder="Example: Please add water quantity for lunch and dinner tomorrow.",
+    label_visibility="collapsed",
+    height=120,
+)
+st.markdown("</div>", unsafe_allow_html=True)
 
 if st.button("Send gentle Daily Log reminder", type="secondary", use_container_width=True):
     queue_daily_log_reminder(member_id)

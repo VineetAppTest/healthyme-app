@@ -912,3 +912,10 @@
 - Restored Full-day details heading and added the black row after that section.
 - Kept Back/Dashboard navigation at page bottom.
 - No save/business logic changed.
+
+## v92.10 - Daily Food Journal Report Surface Fix
+
+- Removed visible redundant Nutritionist note label.
+- Aligned Food Journal empty-state box and Nutritionist note text area surface treatment.
+- Added spacing balance between the two sections.
+- No report business logic changed.
