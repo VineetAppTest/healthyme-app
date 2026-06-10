@@ -919,3 +919,9 @@
 - Aligned Food Journal empty-state box and Nutritionist note text area surface treatment.
 - Added spacing balance between the two sections.
 - No report business logic changed.
+
+## v92.11 - Daily Food Journal Report Hard UI Patch
+
+- Hard-patched Food Journal no-data surface and Nutritionist note textarea surface.
+- Collapsed and scoped the redundant Nutritionist note label.
+- No report business logic changed.

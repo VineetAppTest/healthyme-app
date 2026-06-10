@@ -75,6 +75,54 @@ st.markdown("""
   height:.45rem;
 }
 
+
+/* --- v92.11 Daily Food Journal Report Hard UI Patch --- */
+.hm-dfjr-no-data-box{
+  width:100%;
+  box-sizing:border-box;
+  background:#E9EEF5;
+  border:0;
+  border-radius:10px;
+  min-height:96px;
+  padding:16px 18px;
+  color:#334155;
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  margin:.25rem 0 1.55rem 0;
+}
+.hm-dfjr-note-hard-wrap{
+  width:100%;
+  margin:.25rem 0 .8rem 0;
+}
+.hm-dfjr-note-hard-wrap [data-testid="stWidgetLabel"],
+.hm-dfjr-note-hard-wrap label,
+.hm-dfjr-note-hard-wrap p{
+  display:none!important;
+  visibility:hidden!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+.hm-dfjr-note-hard-wrap textarea{
+  width:100%!important;
+  box-sizing:border-box!important;
+  background:#E9EEF5!important;
+  border:0!important;
+  border-radius:10px!important;
+  min-height:96px!important;
+  color:#102A43!important;
+  padding:16px 18px!important;
+  box-shadow:none!important;
+}
+.hm-dfjr-note-hard-wrap textarea::placeholder{
+  color:#748094!important;
+}
+.hm-dfjr-section-gap{height:.2rem;}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -234,7 +282,7 @@ card_end()
 st.subheader(f"Food journal for {selected_date}")
 st.markdown("<div class='hm-dfjr-tight'></div>", unsafe_allow_html=True)
 if not selected_day or not selected_day.get("meals"):
-    st.markdown("<div class='hm-dfjr-empty-note'>No food journal available for this date.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-dfjr-no-data-box'>No food journal available for this date.</div>", unsafe_allow_html=True)
 else:
     meal_rows = []
     for key, label in meal_keys_for_day(selected_day):
@@ -261,13 +309,15 @@ card_end()
 st.markdown("<div class='hm-dfjr-spacer'></div>", unsafe_allow_html=True)
 st.subheader(f"Nutritionist note for {selected_date}")
 st.markdown("<div class='hm-dfjr-tight'></div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-dfjr-note-wrap'>", unsafe_allow_html=True)
+st.markdown("<div class='hm-dfjr-note-hard-wrap'>", unsafe_allow_html=True)
 note = st.text_area(
     "Nutritionist note",
     placeholder="Example: Please add water quantity for lunch and dinner tomorrow.",
+    height=96,
     label_visibility="collapsed",
-    height=120,
+    key=f"nutritionist_note_{member_id}_{selected_date}",
 )
+st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
 if st.button("Send gentle Daily Log reminder", type="secondary", use_container_width=True):

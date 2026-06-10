@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v92_10_Daily_Food_Journal_Report_Surface_Fix",
-  "version": "v92_10_daily_food_journal_report_surface_fix",
-  "updated_on": "2026-06-10T12:23:45.366235+00:00",
+  "build_name": "HealthyMe_v92_11_Daily_Food_Journal_Report_Hard_UI_Patch",
+  "version": "v92_11_daily_food_journal_report_hard_ui_patch",
+  "updated_on": "2026-06-10T12:31:48.714138+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,9 +17,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed visible redundant Nutritionist note label using label_visibility collapsed.",
-    "Aligned Food Journal empty-state box and Nutritionist note text area color/width/surface.",
-    "Added balanced spacing between the Food Journal empty-state section and Nutritionist note section.",
+    "Hard-patched the Food Journal no-data box to match the Nutritionist note textarea surface.",
+    "Hard-patched the Nutritionist note textarea with label_visibility collapsed.",
+    "Added scoped CSS to hide any residual Streamlit label inside the note wrapper.",
     "No report business logic changed."
   ],
   "required_setup": [
@@ -287,10 +287,10 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "custom_empty_box": true,
-    "note_label_collapsed": true,
-    "note_wrapper": true,
-    "nutritionist_visible_label_removed_in_call": true,
-    "surface_css": true
+    "no_data_box_used": true,
+    "hard_note_wrap_used": true,
+    "textarea_collapsed_label": true,
+    "no_st_info_no_data": true,
+    "css_marker_present": true
   }
 }
