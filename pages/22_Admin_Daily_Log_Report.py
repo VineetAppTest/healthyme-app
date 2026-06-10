@@ -21,7 +21,6 @@ from components.db import (
 st.set_page_config(page_title="Daily Food Journal Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
-
 st.markdown("""
 <style>
 .hm-full-day-black-row{
@@ -31,8 +30,23 @@ st.markdown("""
   margin:.75rem 0 .85rem 0;
   width:100%;
 }
+.hm-dfjr-empty-note{
+  background:#E9EEF5;
+  border-radius:10px;
+  padding:14px 16px;
+  margin:.35rem 0 1rem 0;
+  color:#4B5563;
+  width:100%;
+  box-sizing:border-box;
+}
+.hm-dfjr-tight{
+  margin-top:.15rem;
+  margin-bottom:.35rem;
+}
 </style>
 """, unsafe_allow_html=True)
+
+
 
 
 
@@ -186,6 +200,7 @@ else:
 card_end()
 
 st.subheader(f"Food journal for {selected_date}")
+st.markdown("<div class='hm-dfjr-tight'></div>", unsafe_allow_html=True)
 if not selected_day or not selected_day.get("meals"):
     st.info("No food journal available for this date.")
 else:
@@ -212,6 +227,7 @@ else:
 card_end()
 
 st.subheader(f"Nutritionist note for {selected_date}")
+st.markdown("<div class='hm-dfjr-tight'></div>", unsafe_allow_html=True)
 note = st.text_area("Nutritionist note", placeholder="Example: Please add water quantity for lunch and dinner tomorrow.")
 if st.button("Save Supervision Note / Notify Member", type="primary", use_container_width=True):
     if not note.strip():

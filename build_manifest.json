@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v92_8_Daily_Food_Journal_Report_Correction",
-  "version": "v92_8_daily_food_journal_report_correction",
-  "updated_on": "2026-06-10T11:01:14.546121+00:00",
+  "build_name": "HealthyMe_v92_9_Daily_Food_Journal_Report_Spacing_Polish",
+  "version": "v92_9_daily_food_journal_report_spacing_polish",
+  "updated_on": "2026-06-10T11:51:28.839671+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,12 +17,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Confirmed All saved days remains above Food journal for selected date.",
-    "Moved Download Daily Food Journal Excel directly under All saved days table.",
-    "Changed date selector to date_input so all calendar dates remain selectable.",
-    "Kept default date as latest saved/full-entry date when available.",
-    "Kept Back/Dashboard navigation at the bottom of the page.",
-    "Restored Full-day details heading and added black row after the Full-day Details section."
+    "Aligned the empty-state Food Journal box with the Nutritionist Note field surface/width.",
+    "Removed the redundant visible 'Nutritionist note' label above the textarea.",
+    "Applied spacing polish to make the page feel more balanced and evenly spaced.",
+    "No report business logic changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
