@@ -897,3 +897,9 @@
 - Balanced Feeling after poop and Physical activity heights.
 - Kept timing validation active.
 - No save/business logic changed.
+
+## v92.6 - Daily Food Journal Report Date Selector Fix
+
+- Moved All saved days above selected-date journal detail where detected.
+- Removed date_input min/max restrictions so all calendar dates can be selected.
+- No save/business logic changed.

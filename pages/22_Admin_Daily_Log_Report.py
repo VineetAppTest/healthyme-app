@@ -131,6 +131,35 @@ stat_grid([
 ])
 
 card_start()
+st.subheader("All saved days")
+if not days:
+    st.info("No daily food logs available.")
+else:
+    rows = []
+    for d in days:
+        notes_for_day = get_daily_log_supervision_notes(member_id, limit=20, log_date=d.get("date"))
+        latest_note = get_latest_daily_log_note_for_date(member_id, d.get("date", ""))
+        latest_note_text = ""
+        if latest_note:
+            latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
+        rows.append({
+            "Date": d.get("date", ""),
+            "Breakfast": (d.get("meals", {}).get("breakfast", {}) or {}).get("food", ""),
+            "Lunch": (d.get("meals", {}).get("lunch", {}) or {}).get("food", ""),
+            "Dinner": (d.get("meals", {}).get("dinner", {}) or {}).get("food", ""),
+            "Water": d.get("water_litres", ""),
+            "Activity": d.get("physical_activity", ""),
+            "Poop Rounds": d.get("poop_rounds", ""),
+            "Poop Timings": ", ".join([str(x) for x in (d.get("poop_timings", []) or []) if str(x).strip()]),
+            "Feeling After Poop": d.get("feeling_after_poop", ""),
+            "Notes": d.get("notes", ""),
+            "Nutritionist Notes": latest_note_text,
+        })
+    st.dataframe(rows, use_container_width=True, hide_index=True)
+card_end()
+
+render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
+
 st.subheader(f"Food journal for {selected_date}")
 if not selected_day or not selected_day.get("meals"):
     st.info("No food journal available for this date.")
@@ -194,31 +223,3 @@ if st.button("Send gentle Daily Log reminder", type="secondary", use_container_w
 card_end()
 
 card_start()
-st.subheader("All saved days")
-if not days:
-    st.info("No daily food logs available.")
-else:
-    rows = []
-    for d in days:
-        notes_for_day = get_daily_log_supervision_notes(member_id, limit=20, log_date=d.get("date"))
-        latest_note = get_latest_daily_log_note_for_date(member_id, d.get("date", ""))
-        latest_note_text = ""
-        if latest_note:
-            latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
-        rows.append({
-            "Date": d.get("date", ""),
-            "Breakfast": (d.get("meals", {}).get("breakfast", {}) or {}).get("food", ""),
-            "Lunch": (d.get("meals", {}).get("lunch", {}) or {}).get("food", ""),
-            "Dinner": (d.get("meals", {}).get("dinner", {}) or {}).get("food", ""),
-            "Water": d.get("water_litres", ""),
-            "Activity": d.get("physical_activity", ""),
-            "Poop Rounds": d.get("poop_rounds", ""),
-            "Poop Timings": ", ".join([str(x) for x in (d.get("poop_timings", []) or []) if str(x).strip()]),
-            "Feeling After Poop": d.get("feeling_after_poop", ""),
-            "Notes": d.get("notes", ""),
-            "Nutritionist Notes": latest_note_text,
-        })
-    st.dataframe(rows, use_container_width=True, hide_index=True)
-card_end()
-
-render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")

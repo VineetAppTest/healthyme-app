@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v92_5_Daily_Log_Input_Schema_Repair",
-  "version": "v92_5_daily_log_input_schema_repair",
-  "updated_on": "2026-06-09T14:24:49.639261+00:00",
+  "build_name": "HealthyMe_v92_6_Daily_Food_Journal_Report_Date_Selector_Fix",
+  "version": "v92_6_daily_food_journal_report_date_selector_fix",
+  "updated_on": "2026-06-10T09:33:37.433420+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,14 +17,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed unreliable custom HTML schema-band wrapping around Streamlit widgets.",
-    "Applied direct styling to actual Streamlit selectbox and number_input controls.",
-    "Restored one visible label per Water/Poop field instead of duplicate/collapsed mismatch.",
-    "Kept Meal Timing as one visible label with collapsed HH/MM/AMPM inner labels.",
-    "Balanced Feeling after poop and Physical activity by making both equal-height text areas.",
-    "Kept timing validation active.",
-    "No custom component added.",
-    "No Body-Mind, report, login, LAF/NSP, or nutritionist-note logic changed."
+    "Daily Food Journal Report: moves All saved days above selected-date journal detail where the page order was detected.",
+    "Daily Food Journal Report: removes min/max restrictions from date_input so all dates can be selected.",
+    "Default selected date remains the page's existing default/latest full-entry date.",
+    "No Daily Log save logic, Body-Mind, login, LAF/NSP, or nutritionist-note logic changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -283,5 +279,11 @@
     "True guaranteed native mobile time picker in Streamlit requires either a fully bundled custom component or a native/Flutter frontend.",
     "Current build keeps stable Streamlit controls and aligns visual styling."
   ],
-  "compile_check": true
+  "compile_check": true,
+  "patched_files": [
+    "pages/22_Admin_Daily_Log_Report.py"
+  ],
+  "searched_files": [
+    "pages/22_Admin_Daily_Log_Report.py"
+  ]
 }
