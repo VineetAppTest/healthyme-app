@@ -903,3 +903,12 @@
 - Moved All saved days above selected-date journal detail where detected.
 - Removed date_input min/max restrictions so all calendar dates can be selected.
 - No save/business logic changed.
+
+## v92.8 - Daily Food Journal Report Correction
+
+- Corrected v92.7 implementation gaps.
+- Moved Download Daily Food Journal Excel directly under All saved days.
+- Ensured date selector is a date_input allowing all calendar dates.
+- Restored Full-day details heading and added the black row after that section.
+- Kept Back/Dashboard navigation at page bottom.
+- No save/business logic changed.

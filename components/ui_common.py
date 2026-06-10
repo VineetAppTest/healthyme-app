@@ -3028,8 +3028,8 @@ def build_marker_v9():
     st.markdown("<div class='hm-build-marker'>✅ Build v9 active · Compact tooltip layout loaded</div>", unsafe_allow_html=True)
 
 
-APP_BUILD_VERSION = "v92.7"
-APP_BUILD_LABEL = "Daily Food Journal Report Layout Update"
+APP_BUILD_VERSION = "v92.8"
+APP_BUILD_LABEL = "Daily Food Journal Report Correction"
 
 def render_build_text_v11():
     """Small non-intrusive build text. Not a visual tag."""
@@ -7682,3 +7682,6 @@ def render_build_text_v92_6(): return None
 
 
 def render_build_text_v92_7(): return None
+
+
+def render_build_text_v92_8(): return None

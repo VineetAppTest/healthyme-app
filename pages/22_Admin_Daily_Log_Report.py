@@ -22,19 +22,20 @@ st.set_page_config(page_title="Daily Food Journal Report", page_icon="💚", lay
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 
-
 st.markdown("""
 <style>
 .hm-full-day-black-row{
   background:#111827;
-  color:#FFFFFF;
-  border-radius:10px;
-  padding:10px 14px;
-  font-weight:800;
-  margin: .6rem 0 .8rem 0;
+  border-radius:8px;
+  height:12px;
+  margin:.75rem 0 .85rem 0;
+  width:100%;
 }
 </style>
 """, unsafe_allow_html=True)
+
+
+
 
 MEAL_KEYS = [(r["key"], r["label"]) for r in get_meal_type_repository()]
 
@@ -150,7 +151,6 @@ stat_grid([
     {"label": "Notes", "value": len(date_notes), "note": "For selected day"},
 ])
 
-card_start()
 st.subheader("All saved days")
 if not days:
     st.info("No daily food logs available.")
@@ -176,6 +176,13 @@ else:
             "Nutritionist Notes": latest_note_text,
         })
     st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.download_button(
+        "Download Daily Food Journal Excel",
+        data=build_excel(member, days),
+        file_name=f"{member.get('name','member').replace(' ','_')}_daily_food_journal.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True,
+    )
 card_end()
 
 st.subheader(f"Food journal for {selected_date}")
@@ -193,7 +200,7 @@ else:
             "Mood/Energy": meal.get("mood_energy", ""),
         })
     st.dataframe(meal_rows, use_container_width=True, hide_index=True)
-    st.markdown("<div class='hm-full-day-black-row'>Full-day details</div>", unsafe_allow_html=True)
+    st.markdown("#### Full-day details")
     st.markdown(f"**Water Intake:** {selected_day.get('water_litres','') or '-'}")
     st.markdown(f"**Physical Activity:** {selected_day.get('physical_activity','') or '-'}")
     st.markdown(f"**Poop rounds:** {selected_day.get('poop_rounds','') or '-'}")
@@ -201,9 +208,9 @@ else:
     st.markdown(f"**Poop timings:** {', '.join([str(x) for x in timings if str(x).strip()]) or '-'}")
     st.markdown(f"**Feeling after poop:** {selected_day.get('feeling_after_poop','') or '-'}")
     st.markdown(f"**Overall Notes:** {selected_day.get('notes','') or '-'}")
+    st.markdown("<div class='hm-full-day-black-row'></div>", unsafe_allow_html=True)
 card_end()
 
-card_start()
 st.subheader(f"Nutritionist note for {selected_date}")
 note = st.text_area("Nutritionist note", placeholder="Example: Please add water quantity for lunch and dinner tomorrow.")
 if st.button("Save Supervision Note / Notify Member", type="primary", use_container_width=True):
@@ -235,4 +242,5 @@ card_end()
 render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
 
 
-card_start()
+
+
