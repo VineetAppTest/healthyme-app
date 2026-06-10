@@ -22,6 +22,20 @@ st.set_page_config(page_title="Daily Food Journal Report", page_icon="💚", lay
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 
+
+st.markdown("""
+<style>
+.hm-full-day-black-row{
+  background:#111827;
+  color:#FFFFFF;
+  border-radius:10px;
+  padding:10px 14px;
+  font-weight:800;
+  margin: .6rem 0 .8rem 0;
+}
+</style>
+""", unsafe_allow_html=True)
+
 MEAL_KEYS = [(r["key"], r["label"]) for r in get_meal_type_repository()]
 
 def meal_keys_for_day(day):
@@ -116,9 +130,15 @@ member_id = selected.split(" — ")[0]
 member = next(m for m in members if m["id"] == member_id)
 days = get_daily_food_journal_days(member_id)
 available_dates = [d.get("date") for d in days if d.get("date")]
+default_date_str = available_dates[0] if available_dates else str(date.today())
+try:
+    default_date_obj = date.fromisoformat(default_date_str)
+except Exception:
+    default_date_obj = date.today()
 
 with selector_col_2:
-    selected_date = st.selectbox("Select food log date for review / note", available_dates or [str(date.today())])
+    selected_date_obj = st.date_input("Select food log date for review / note", value=default_date_obj)
+    selected_date = selected_date_obj.isoformat() if hasattr(selected_date_obj, "isoformat") else str(selected_date_obj)
 
 selected_day = get_daily_food_journal_day(member_id, selected_date) or next((d for d in days if d.get("date") == selected_date), {"date": selected_date, "meals": {}})
 date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selected_date)
@@ -158,8 +178,6 @@ else:
     st.dataframe(rows, use_container_width=True, hide_index=True)
 card_end()
 
-render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
-
 st.subheader(f"Food journal for {selected_date}")
 if not selected_day or not selected_day.get("meals"):
     st.info("No food journal available for this date.")
@@ -175,7 +193,7 @@ else:
             "Mood/Energy": meal.get("mood_energy", ""),
         })
     st.dataframe(meal_rows, use_container_width=True, hide_index=True)
-    st.markdown("#### Full-day details")
+    st.markdown("<div class='hm-full-day-black-row'>Full-day details</div>", unsafe_allow_html=True)
     st.markdown(f"**Water Intake:** {selected_day.get('water_litres','') or '-'}")
     st.markdown(f"**Physical Activity:** {selected_day.get('physical_activity','') or '-'}")
     st.markdown(f"**Poop rounds:** {selected_day.get('poop_rounds','') or '-'}")
@@ -183,14 +201,6 @@ else:
     st.markdown(f"**Poop timings:** {', '.join([str(x) for x in timings if str(x).strip()]) or '-'}")
     st.markdown(f"**Feeling after poop:** {selected_day.get('feeling_after_poop','') or '-'}")
     st.markdown(f"**Overall Notes:** {selected_day.get('notes','') or '-'}")
-
-    st.download_button(
-        "Download Daily Food Journal Excel",
-        data=build_excel(member, days),
-        file_name=f"{member.get('name','member').replace(' ','_')}_daily_food_journal.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True,
-    )
 card_end()
 
 card_start()
@@ -221,5 +231,8 @@ if st.button("Send gentle Daily Log reminder", type="secondary", use_container_w
     queue_daily_log_reminder(member_id)
     st.success("Reminder queued for the member and marked for email notification.")
 card_end()
+
+render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
+
 
 card_start()
