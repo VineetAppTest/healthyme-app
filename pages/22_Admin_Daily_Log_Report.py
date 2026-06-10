@@ -76,24 +76,24 @@ st.markdown("""
 }
 
 
-/* --- v92.11 Daily Food Journal Report Hard UI Patch --- */
+/* --- v92.12 Daily Food Journal Report Compact Surface Alignment --- */
 .hm-dfjr-no-data-box{
   width:100%;
   box-sizing:border-box;
   background:#E9EEF5;
   border:0;
   border-radius:10px;
-  min-height:96px;
+  min-height:92px;
   padding:16px 18px;
   color:#334155;
   display:flex;
   align-items:flex-start;
   justify-content:flex-start;
-  margin:.25rem 0 1.55rem 0;
+  margin:.2rem 0 .9rem 0;
 }
 .hm-dfjr-note-hard-wrap{
   width:100%;
-  margin:.25rem 0 .8rem 0;
+  margin:.15rem 0 .55rem 0;
 }
 .hm-dfjr-note-hard-wrap [data-testid="stWidgetLabel"],
 .hm-dfjr-note-hard-wrap label,
@@ -113,7 +113,7 @@ st.markdown("""
   background:#E9EEF5!important;
   border:0!important;
   border-radius:10px!important;
-  min-height:96px!important;
+  min-height:92px!important;
   color:#102A43!important;
   padding:16px 18px!important;
   box-shadow:none!important;
@@ -121,7 +121,14 @@ st.markdown("""
 .hm-dfjr-note-hard-wrap textarea::placeholder{
   color:#748094!important;
 }
-.hm-dfjr-section-gap{height:.2rem;}
+.hm-dfjr-tight{
+  margin-top:.05rem;
+  margin-bottom:.2rem;
+}
+.hm-dfjr-subsection{
+  margin-top:1.1rem;
+}
+.hm-dfjr-section-gap{height:0;}
 
 </style>
 """, unsafe_allow_html=True)
@@ -247,7 +254,7 @@ stat_grid([
 
 st.subheader("All saved days")
 if not days:
-    st.info("No daily food logs available.")
+    st.markdown("<div class='hm-dfjr-no-data-box'>No daily food logs available.</div>", unsafe_allow_html=True)
 else:
     rows = []
     for d in days:
@@ -306,18 +313,17 @@ else:
     st.markdown("<div class='hm-full-day-black-row'></div>", unsafe_allow_html=True)
 card_end()
 
-st.markdown("<div class='hm-dfjr-spacer'></div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-dfjr-subsection'></div>", unsafe_allow_html=True)
 st.subheader(f"Nutritionist note for {selected_date}")
 st.markdown("<div class='hm-dfjr-tight'></div>", unsafe_allow_html=True)
 st.markdown("<div class='hm-dfjr-note-hard-wrap'>", unsafe_allow_html=True)
 note = st.text_area(
     "Nutritionist note",
     placeholder="Example: Please add water quantity for lunch and dinner tomorrow.",
-    height=96,
+    height=92,
     label_visibility="collapsed",
     key=f"nutritionist_note_{member_id}_{selected_date}",
 )
-st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
 if st.button("Send gentle Daily Log reminder", type="secondary", use_container_width=True):

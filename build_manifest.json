@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v92_11_Daily_Food_Journal_Report_Hard_UI_Patch",
-  "version": "v92_11_daily_food_journal_report_hard_ui_patch",
-  "updated_on": "2026-06-10T12:31:48.714138+00:00",
+  "build_name": "HealthyMe_v92_12_Daily_Food_Journal_Report_Compact_Alignment",
+  "version": "v92.12",
+  "updated_on": "2026-06-10T12:42:07.651406Z",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Hard-patched the Food Journal no-data box to match the Nutritionist note textarea surface.",
-    "Hard-patched the Nutritionist note textarea with label_visibility collapsed.",
-    "Added scoped CSS to hide any residual Streamlit label inside the note wrapper.",
-    "No report business logic changed."
+    "Reduced vertical spacing between Daily Food Journal Report sections.",
+    "Aligned the Nutritionist note text area surface with the Food Journal empty-state box schema.",
+    "Applied the same styled empty-state box to All saved days when no logs are available.",
+    "Removed stray extra wrapper close after the Nutritionist note textarea."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
