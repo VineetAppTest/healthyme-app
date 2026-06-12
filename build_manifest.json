@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_8_Admin_Version_Placement_Action_Height_Fix",
-  "version": "v95.8",
-  "updated_on": "2026-06-12T14:27:25.911236Z",
+  "build_name": "HealthyMe_v95_9_EvalStatus_Nav_Button_Normalization",
+  "version": "v95.9",
+  "updated_on": "2026-06-12T14:35:52.810989Z",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
