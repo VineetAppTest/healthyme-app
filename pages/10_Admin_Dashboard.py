@@ -1,14 +1,18 @@
 
 import streamlit as st
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, stat_grid, utility_logout_bar, render_build_text_v14, render_back_to_top, render_admin_build_version, card_start, card_end
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, stat_grid, utility_logout_bar, render_build_text_v14, render_back_to_top, card_start, card_end
 from components.db import get_admin_dashboard_snapshot
 from components.flash import render_system_message
 from components.storage_backend import get_storage_status
 
 st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
-render_admin_build_version()
+st.markdown("""
+<style>
+.hm-v95-8-inline-version{margin-left:.5rem;color:#6B7280;font-size:.72rem;font-weight:700;vertical-align:middle;}
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_data(show_spinner=False, ttl=90)
 def cached_dashboard_snapshot():
@@ -26,7 +30,22 @@ finalized_count = snapshot["finalized_count"]
 db_status = cached_storage_status()
 
 render_build_text_v14()
-topbar("Admin Dashboard", "Daily review, assessment, allocation, and communication command center.", "Admin")
+st.markdown(
+    """
+    <div class='hero-shell'>
+      <div class='hm-v77-brand-row'>
+        <span class='hm-v77-brand'>HealthyMe</span>
+        <span class='hm-v95-8-inline-version'>v95.8 · Admin Version Placement + Action Height Fix</span>
+      </div>
+      <div class='hero-kicker'>Admin</div>
+      <div class='hero-title'>Admin Dashboard</div>
+      <div class='hero-subtitle'>Daily review, assessment, allocation, and communication command center.</div>
+      <div><span class='meta-pill'>Guided wellness workflow</span></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 render_system_message()
 
 if db_status.get("mode") != "SUPABASE":

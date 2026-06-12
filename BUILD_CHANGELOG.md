@@ -1041,3 +1041,9 @@
 - Changed Evaluation Status action buttons to the general HealthyMe outlined button style.
 - Preserved fixed 4-column layout for Partial Report, Admin Page, Full Report and Daily Logs.
 - Retained v95.6 fixed action grid and all earlier v95 fixes.
+
+## v95.8 - Admin Version Placement + Action Height Fix
+
+- Corrected the admin build version display to v95.8.
+- Removed the separate version pill and placed the version inline beside HealthyMe on admin headers.
+- Normalized the Evaluation Status action buttons so Full Report matches the other buttons in height and proportions.

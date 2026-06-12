@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_7_Admin_Version_Button_Template_Fix",
-  "version": "v95_7_admin_version_button_template_fix",
-  "updated_on": "2026-06-12T14:14:35.231370+00:00",
+  "build_name": "HealthyMe_v95_8_Admin_Version_Placement_Action_Height_Fix",
+  "version": "v95.8",
+  "updated_on": "2026-06-12T14:27:25.911236Z",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added visible Admin Build version marker on Admin Dashboard and Evaluation Status for deployment verification.",
-    "Changed Evaluation Status member action buttons from dark primary styling to the general HealthyMe outlined button template.",
-    "Kept fixed 4-column equal action grid for Partial Report, Admin Page, Full Report and Daily Logs.",
-    "Normalized width, height, radius, padding, border and text color using page-scoped v95.7 CSS.",
-    "Retained v95.6 fixed action grid and all prior v95 reassessment/final-report fixes."
+    "Removed the separate admin version pill and placed the admin version inline beside HealthyMe in admin headers.",
+    "Corrected the displayed admin build version to v95.8.",
+    "Strengthened Evaluation Status action-button sizing so Partial Report, Admin Page, Full Report and Daily Logs share the same fixed height and proportions."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"

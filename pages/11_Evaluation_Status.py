@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, stat_grid, render_page_nav, render_build_text_v15, render_back_to_top, render_admin_build_version
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, stat_grid, render_page_nav, render_build_text_v15, render_back_to_top
 from components.db import list_members
 
 st.set_page_config(page_title="Eval Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -9,10 +9,8 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 
 st.markdown("""
 <style>
-/* --- v95.7 Admin Evaluation Status button template fix --- */
-
-/* Member toggle rows */
-.hm-v95-7-member-list-anchor ~ div div[data-testid="stButton"] > button{
+/* --- v95.8 Admin version placement + action button height fix --- */
+.hm-v95-8-member-list-anchor ~ div div[data-testid="stButton"] > button{
   background:#FFFFFF!important;
   color:#064E3B!important;
   border:1.4px solid #CDBB8F!important;
@@ -25,15 +23,14 @@ st.markdown("""
   justify-content:center!important;
   font-weight:850!important;
   box-shadow:0 4px 12px rgba(25,36,31,.055)!important;
-  line-height:1.1!important;
+  line-height:1.05!important;
 }
-.hm-v95-7-member-list-anchor ~ div div[data-testid="stButton"] > button *{
+.hm-v95-8-member-list-anchor ~ div div[data-testid="stButton"] > button *{
   color:#064E3B!important;
-  line-height:1.1!important;
+  line-height:1.05!important;
 }
 
-/* Opened-member action row: fixed equal 4-column grid */
-.hm-v95-7-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
+.hm-v95-8-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
   display:grid!important;
   grid-template-columns:repeat(4, minmax(0, 1fr))!important;
   gap:1rem!important;
@@ -41,18 +38,24 @@ st.markdown("""
   width:100%!important;
   margin:.35rem 0 .55rem 0!important;
 }
-.hm-v95-7-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+.hm-v95-8-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
   width:100%!important;
   min-width:0!important;
   max-width:none!important;
   flex:unset!important;
   display:block!important;
+  align-self:stretch!important;
 }
-.hm-v95-7-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
-.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"]{
+.hm-v95-8-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
+.hm-v95-8-action-grid-anchor + div div[data-testid="stButton"]{
   width:100%!important;
+  height:46px!important;
+  min-height:46px!important;
+  max-height:46px!important;
 }
-.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button{
+.hm-v95-8-action-grid-anchor + div div[data-testid="stButton"] > button,
+.hm-v95-8-action-grid-anchor + div div[data-testid="stButton"] > button[kind="secondary"],
+.hm-v95-8-action-grid-anchor + div div[data-testid="stButton"] > button[data-testid="baseButton-secondary"]{
   width:100%!important;
   min-width:100%!important;
   max-width:100%!important;
@@ -65,7 +68,7 @@ st.markdown("""
   align-items:center!important;
   justify-content:center!important;
   white-space:nowrap!important;
-  line-height:1.1!important;
+  line-height:1!important;
   font-weight:850!important;
   box-sizing:border-box!important;
   background:#FFFFFF!important;
@@ -73,29 +76,38 @@ st.markdown("""
   border:1.4px solid #CDBB8F!important;
   box-shadow:0 4px 12px rgba(25,36,31,.06)!important;
 }
-
-/* Override primary kind so these admin action buttons follow the general HealthyMe outline template */
-.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button[kind="primary"],
-.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button[data-testid="baseButton-primary"]{
-  background:#FFFFFF!important;
-  color:#064E3B!important;
-  border:1.4px solid #CDBB8F!important;
+.hm-v95-8-action-grid-anchor + div div[data-testid="stButton"] > button > div{
+  width:100%!important;
+  height:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0!important;
+  margin:0!important;
 }
-.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button *,
-.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button[kind="primary"] *,
-.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button[data-testid="baseButton-primary"] *{
-  color:#064E3B!important;
-  line-height:1.1!important;
+.hm-v95-8-action-grid-anchor + div div[data-testid="stButton"] > button p,
+.hm-v95-8-action-grid-anchor + div div[data-testid="stButton"] > button span{
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+  font-weight:850!important;
 }
 
-.hm-v95-7-instruction{
+.hm-v95-8-inline-version{
+  margin:-.45rem 0 .2rem 0;
+  padding-left:.9rem;
+  color:#6B7280;
+  font-size:.72rem;
+  font-weight:700;
+}
+.hm-v95-8-instruction{
   color:#102A43;
   font-size:.96rem;
   margin:.15rem 0 .65rem 0;
 }
 
 @media(max-width:768px){
-  .hm-v95-7-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
+  .hm-v95-8-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
     grid-template-columns:1fr 1fr!important;
     gap:.65rem!important;
   }
@@ -107,17 +119,27 @@ st.markdown("""
 
 
 render_build_text_v15()
-render_admin_build_version()
 
 rows = list_members()
 
 render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 
-topbar(
-    "Evaluation Status of All Members",
-    "Track member progress, then open a member row below to continue admin assessment.",
-    "Review workflow"
+st.markdown(
+    """
+    <div class='hero-shell'>
+      <div class='hm-v77-brand-row'>
+        <span class='hm-v77-brand'>HealthyMe</span>
+        <span class='hm-v95-8-inline-version'>v95.8 · Admin Version Placement + Action Height Fix</span>
+      </div>
+      <div class='hero-kicker'>Review workflow</div>
+      <div class='hero-title'>Evaluation Status of All Members</div>
+      <div class='hero-subtitle'>Track member progress, then open a member row below to continue admin assessment.</div>
+      <div><span class='meta-pill'>Guided wellness workflow</span></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
+
 
 def pretty_status(raw):
     return (raw or "not_started").replace("_", " ").title()
@@ -294,11 +316,11 @@ else:
             )
 
             st.markdown(
-                "<div class='eval-section-note hm-v95-7-instruction'>Use the buttons below to continue work for this selected member.</div>",
+                "<div class='eval-section-note hm-v95-8-instruction'>Use the buttons below to continue work for this selected member.</div>",
                 unsafe_allow_html=True
             )
 
-            st.markdown("<div class='hm-v95-7-action-grid-anchor'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='hm-v95-8-action-grid-anchor'></div>", unsafe_allow_html=True)
             b1, b2, b3, b4 = st.columns(4)
             with b1:
                 if st.button("Partial Report", key=f"pr_{member['id']}", type="secondary", use_container_width=True):
