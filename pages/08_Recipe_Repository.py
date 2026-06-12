@@ -108,28 +108,71 @@ def inject_recipe_css():
   .hm-detail-grid{grid-template-columns:1fr 1fr;gap:.55rem;}
   .hm-detail-pill{padding:.72rem .72rem;}
 }
+
+/* --- v94.2 Recipe Content UI Alignment --- */
+.hm-module-brand{
+  text-align:left!important;
+  margin:.15rem 0 .6rem 0!important;
+}
+.hm-module-brand .hm-logo-text{
+  font-family:inherit!important;
+  color:#064E3B!important;
+  font-size:1.55rem!important;
+  font-weight:900!important;
+  letter-spacing:0!important;
+}
+.hm-module-tabs{
+  display:none!important;
+}
+.hm-module-tools{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 3.1rem 3.1rem!important;
+  gap:.55rem!important;
+  align-items:center!important;
+  margin:.55rem 0 .7rem 0!important;
+}
+.hm-module-tools .stTextInput,
+.hm-module-tools [data-testid="stTextInput"]{
+  margin:0!important;
+}
+.hm-module-tools input{
+  background:#EEF2F7!important;
+  border-radius:10px!important;
+  min-height:44px!important;
+}
+.hm-tool-circle{
+  width:3.1rem!important;
+  height:3.1rem!important;
+  border-radius:999px!important;
+  background:#FFFDF8!important;
+  border:1px solid #E5D2A9!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#064E3B!important;
+  font-size:1.15rem!important;
+  font-weight:900!important;
+  margin:0!important;
+}
+@media(max-width:768px){
+  .hm-module-brand .hm-logo-text{font-size:1.35rem!important;}
+  .hm-module-tools{grid-template-columns:minmax(0,1fr) 2.6rem 2.6rem!important;gap:.4rem!important;}
+  .hm-tool-circle{width:2.6rem!important;height:2.6rem!important;font-size:1rem!important;}
+}
+
 </style>
 """, unsafe_allow_html=True)
 
 
 def render_landing(df):
     st.markdown("<div class='hm-module-shell'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-module-brand'><div class='hm-logo-text'>HealthyMe</div></div>", unsafe_allow_html=True)
-    st.markdown("""
-<div class='hm-module-tabs'>
-  <div class='hm-module-tab-active'>🍲 RECIPES</div>
-  <div class='hm-module-tab'>🏃 EXERCISES</div>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown("<div class='hm-module-brand'><div class='hm-logo-text'>Recipe Repository</div></div>", unsafe_allow_html=True)
 
     st.markdown("<div class='hm-module-tools'>", unsafe_allow_html=True)
     search = st.text_input("Search recipes", placeholder="Search recipes...", label_visibility="collapsed", key="recipe_search_v93")
     st.markdown("<div class='hm-tool-circle'>☷</div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-tool-circle'>♡</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
-
-    if st.button("Open Exercises", use_container_width=True, help="Switch to Exercise module"):
-        st.switch_page("pages/09_Exercise_Repository.py")
 
     results = df
     if search.strip():

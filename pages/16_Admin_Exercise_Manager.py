@@ -32,6 +32,21 @@ def save(df):
     ensure_columns(df).to_csv(PATH, index=False)
 
 
+
+def is_valid_image_url(value):
+    value = str(value or "").strip()
+    if value.lower() in {"nan", "none", "null"}:
+        return False
+    return value.startswith("http://") or value.startswith("https://")
+
+
+def clean_image_value(value):
+    value = str(value or "").strip()
+    if value.lower() in {"nan", "none", "null"}:
+        return ""
+    return value
+
+
 def exercise_form(prefix, row=None):
     row = row or {}
     st.markdown("#### Core display fields")
@@ -42,7 +57,7 @@ def exercise_form(prefix, row=None):
         duration_or_reps = st.text_input("Timing / duration / reps", value=str(row.get("duration_or_reps", "")), key=f"{prefix}_duration")
         calories = st.text_input("Calories", value=str(row.get("calories", "")), key=f"{prefix}_calories")
     with c2:
-        image_url = st.text_input("Manual Image URL / fallback", value=str(row.get("image_url", "")), key=f"{prefix}_image_url", help="Optional fallback. Uploaded Supabase image takes priority.")
+        image_url = st.text_input("Manual Image URL / fallback", value=clean_image_value(row.get("image_url", "")), key=f"{prefix}_image_url", help="Optional fallback. Uploaded Supabase image takes priority.")
         image_access_type = st.selectbox(
             "Uploaded image visibility",
             ["public", "private"],
@@ -64,10 +79,10 @@ def exercise_form(prefix, row=None):
         uploaded_meta = st.session_state.get(f"{prefix}_uploaded_image_meta", {})
         image_bucket = uploaded_meta.get("image_bucket", image_bucket)
         image_path = uploaded_meta.get("image_path", image_path)
-        if uploaded_meta.get("image_url"):
+        if is_valid_image_url(uploaded_meta.get("image_url")):
             image_url = uploaded_meta.get("image_url")
             st.image(image_url, caption="Uploaded image preview", use_container_width=True)
-        elif image_url:
+        elif is_valid_image_url(image_url):
             st.image(image_url, caption="Current image preview", use_container_width=True)
         difficulty = st.text_input("Difficulty", value=str(row.get("difficulty", "")), key=f"{prefix}_difficulty")
         equipment = st.text_input("Equipment", value=str(row.get("equipment", "")), key=f"{prefix}_equipment")

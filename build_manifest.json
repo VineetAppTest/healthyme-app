@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v94_Supabase_Storage_Hybrid_Image_Upload",
-  "version": "v94_supabase_storage_hybrid_image_upload",
-  "updated_on": "2026-06-12T08:27:00.757575+00:00",
+  "build_name": "HealthyMe_v94_2_Member_Content_UI_Alignment",
+  "version": "v94_2_member_content_ui_alignment",
+  "updated_on": "2026-06-12T10:59:15.404055+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,14 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added Supabase Storage helper for hybrid public/private image asset upload.",
-    "Public bucket default: healthyme-public-assets.",
-    "Private bucket default: healthyme-private-content-assets.",
-    "Admin Recipe Manager now supports image upload, visibility choice, metadata save and preview.",
-    "Admin Exercise Manager now supports image upload, visibility choice, metadata save and preview.",
-    "Recipe/Exercise CSV schemas now include image_bucket, image_path and image_access_type.",
-    "Member recipe/exercise pages resolve images from Supabase public URL or private signed URL at runtime, with manual image_url fallback.",
-    "Added SUPABASE_STORAGE_SETUP_v94.md with bucket/environment/policy setup guidance."
+    "Aligned Recipe and Exercise member page headers closer to HealthyMe app style.",
+    "Removed the large Recipe/Exercise tab header block from member content pages.",
+    "Kept search, filter and favourite controls in one horizontal row through page-level CSS.",
+    "Removed the extra Open Recipe/Open Exercise redirection buttons.",
+    "Adjusted Member Home Body-Mind primary button usage where directly applied.",
+    "Retained v94.1 image preview guard and v94 Supabase Storage hybrid upload logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -291,11 +289,14 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "no_data_box_used": true,
-    "hard_note_wrap_used": true,
-    "textarea_collapsed_label": true,
-    "no_st_info_no_data": true,
-    "css_marker_present": true
+    "recipe_header_updated": true,
+    "exercise_header_updated": true,
+    "recipe_redirect_removed": true,
+    "exercise_redirect_removed": true,
+    "recipe_visible_tabs_removed": true,
+    "exercise_visible_tabs_removed": true,
+    "recipe_v94_2_css": true,
+    "exercise_v94_2_css": true
   },
   "storage_model": {
     "public_bucket": "healthyme-public-assets",

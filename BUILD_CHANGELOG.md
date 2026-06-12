@@ -940,3 +940,17 @@
 - Admin can upload images and select visibility.
 - Member pages resolve public URLs or signed private URLs at runtime.
 - CSV schemas expanded with image_bucket, image_path and image_access_type.
+
+## v94.1 - Image Preview Guard Fix
+
+- Fixed Admin Recipe Manager image preview crash when image_url is blank, nan, none, or a non-URL value.
+- Added the same preview guard to Admin Exercise Manager.
+- No storage upload logic or member-side UX changed.
+
+## v94.2 - Member Content UI Alignment
+
+- Aligned Recipe and Exercise page headers closer to HealthyMe app style.
+- Removed the large Recipe/Exercise tab header block.
+- Kept search + filter + favourite controls in one line.
+- Removed the extra Open Recipes/Open Exercises redirection buttons.
+- Retained v94.1 image preview guard and v94 Supabase Storage hybrid logic.
