@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v92_12_Daily_Food_Journal_Report_Compact_Alignment",
-  "version": "v92.12",
-  "updated_on": "2026-06-10T12:42:07.651406Z",
+  "build_name": "HealthyMe_v94_Supabase_Storage_Hybrid_Image_Upload",
+  "version": "v94_supabase_storage_hybrid_image_upload",
+  "updated_on": "2026-06-12T08:27:00.757575+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,14 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Reduced vertical spacing between Daily Food Journal Report sections.",
-    "Aligned the Nutritionist note text area surface with the Food Journal empty-state box schema.",
-    "Applied the same styled empty-state box to All saved days when no logs are available.",
-    "Removed stray extra wrapper close after the Nutritionist note textarea."
+    "Added Supabase Storage helper for hybrid public/private image asset upload.",
+    "Public bucket default: healthyme-public-assets.",
+    "Private bucket default: healthyme-private-content-assets.",
+    "Admin Recipe Manager now supports image upload, visibility choice, metadata save and preview.",
+    "Admin Exercise Manager now supports image upload, visibility choice, metadata save and preview.",
+    "Recipe/Exercise CSV schemas now include image_bucket, image_path and image_access_type.",
+    "Member recipe/exercise pages resolve images from Supabase public URL or private signed URL at runtime, with manual image_url fallback.",
+    "Added SUPABASE_STORAGE_SETUP_v94.md with bucket/environment/policy setup guidance."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -268,8 +272,8 @@
   ],
   "helper_defined_before_call": true,
   "important_note": [
-    "The custom time component uses streamlit-component-lib from CDN. Streamlit Cloud should allow this, but if CDN is blocked, the component may not render.",
-    "This is a component spike; validate on Android Chrome and desktop before making it production default."
+    "This build uses public image URLs in CSV/admin forms. Production-grade upload persistence should move images to Supabase Storage or another persistent object store.",
+    "Existing CSV-based repository persistence is retained as per current app architecture."
   ],
   "reason": [
     "Streamlit Cloud could not load components.mobile_time_input_component.healthyme_mobile_time_input frontend assets.",
@@ -292,5 +296,17 @@
     "textarea_collapsed_label": true,
     "no_st_info_no_data": true,
     "css_marker_present": true
+  },
+  "storage_model": {
+    "public_bucket": "healthyme-public-assets",
+    "private_bucket": "healthyme-private-content-assets",
+    "public_use": "generic exercise images, generic recipe placeholders, public wellness visuals",
+    "private_use": "nutritionist-created recipes, premium content assets",
+    "stored_fields": [
+      "image_bucket",
+      "image_path",
+      "image_access_type",
+      "image_url"
+    ]
   }
 }

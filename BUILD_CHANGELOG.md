@@ -925,3 +925,18 @@
 - Hard-patched Food Journal no-data surface and Nutritionist note textarea surface.
 - Collapsed and scoped the redundant Nutritionist note label.
 - No report business logic changed.
+
+## v93 - Recipe + Exercise UX/Admin Upgrade
+
+- Upgraded existing Recipe and Exercise member modules to mockup-inspired landing and detail flows.
+- Added admin-side fields for image URL, title, timing/duration, calories and details.
+- Expanded recipe/exercise CSV schemas while retaining existing allocation logic.
+- Kept current CSV repository architecture; persistent image upload should later use Supabase Storage.
+
+## v94 - Supabase Storage Hybrid Image Upload
+
+- Added Supabase Storage image upload helper.
+- Added public/private bucket handling for recipe and exercise assets.
+- Admin can upload images and select visibility.
+- Member pages resolve public URLs or signed private URLs at runtime.
+- CSV schemas expanded with image_bucket, image_path and image_access_type.
