@@ -9,15 +9,19 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 
 st.markdown("""
 <style>
-/* --- v95.13 Full Report button DOM normalization --- */
+/* --- v95.14 Eval Status nav spacing cleanup --- */
 
 /* Tighten only this page without touching other admin pages */
 .block-container{
-  padding-top:.55rem!important;
+  padding-top:.35rem!important;
 }
 
+/* Remove legacy empty nav shell spacing on this page */
+.hm-native-nav-shell{display:none!important;}
+
+
 /* Inline version beside HealthyMe */
-.hm-v95-13-inline-version{
+.hm-v95-14-inline-version{
   margin-left:.5rem;
   color:#6B7280;
   font-size:.72rem;
@@ -208,7 +212,7 @@ st.markdown(
     <div class='hero-shell'>
       <div class='hm-v77-brand-row'>
         <span class='hm-v77-brand'>HealthyMe</span>
-        <span class='hm-v95-13-inline-version'>v95.13 · Full Report Button DOM Normalization</span>
+        <span class='hm-v95-14-inline-version'>v95.14 · Eval Status Nav Spacing Fix</span>
       </div>
       <div class='hero-kicker'>Review workflow</div>
       <div class='hero-title'>Evaluation Status of All Members</div>

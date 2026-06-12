@@ -3202,9 +3202,9 @@ def render_version_tag():
 def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_Admin_Dashboard.py', evaluation_page='pages/11_Evaluation_Status.py', *, location='top', show_dashboard=True, show_evaluation=True):
     if location == 'top':
         page_anchor_top()
-        st.markdown("<div class='hm-native-nav-shell'>", unsafe_allow_html=True)
     else:
-        st.markdown("<div class='hm-bottom-nav-shell hm-native-nav-shell'>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:.55rem;'></div>", unsafe_allow_html=True)
+
     cols = st.columns(3)
     with cols[0]:
         if back_page:
@@ -3221,7 +3221,7 @@ def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_A
             _safe_page_link(dashboard_page, 'Dashboard')
         else:
             st.empty()
-    st.markdown('</div>', unsafe_allow_html=True)
+
     if location != 'top':
         st.markdown("<div style='margin:.45rem 0 0 0;'><a href='#top'>↑ Back to top</a></div>", unsafe_allow_html=True)
 
