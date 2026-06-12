@@ -1027,3 +1027,10 @@
 - Added explicit [+] and [−] markers to member buttons.
 - Added hard action-row styling for Partial Report / Admin Page / Full Report / Daily Logs.
 - Retained v95.4, v95.3 and v95.2 fixes.
+
+## v95.6 - Eval Status Fixed Action Grid
+
+- Replaced repeated wrapper-based attempts with a fixed 4-column action grid.
+- Forced Partial Report, Admin Page, Full Report and Daily Logs into equal-width grid cells.
+- Normalized action-button height, width, radius, padding and visual styling.
+- Retained v95.5 member row fix and all prior v95 fixes.

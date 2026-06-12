@@ -9,10 +9,10 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 
 st.markdown("""
 <style>
-/* --- v95.5 Evaluation Status member row + action button fix --- */
+/* --- v95.6 Evaluation Status fixed action grid --- */
 
-/* Member toggle rows: remove the old broken wrapper effect and style the real Streamlit buttons directly. */
-.hm-v95-5-member-list-anchor ~ div div[data-testid="stButton"] > button{
+/* Member toggle rows */
+.hm-v95-6-member-list-anchor ~ div div[data-testid="stButton"] > button{
   background:#FFFFFF!important;
   color:#064E3B!important;
   border:1.4px solid #CDBB8F!important;
@@ -27,28 +27,35 @@ st.markdown("""
   box-shadow:0 4px 12px rgba(25,36,31,.055)!important;
   line-height:1.1!important;
 }
-.hm-v95-5-member-list-anchor ~ div div[data-testid="stButton"] > button *{
+.hm-v95-6-member-list-anchor ~ div div[data-testid="stButton"] > button *{
   color:#064E3B!important;
   line-height:1.1!important;
 }
 
-/* Action buttons inside opened member details: same height, same visual weight, same width behaviour. */
-.hm-v95-5-action-anchor + div [data-testid="stHorizontalBlock"]{
-  display:flex!important;
+/* The opened-member action row is now forced into a fixed 4-column grid. */
+.hm-v95-6-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
+  display:grid!important;
+  grid-template-columns:repeat(4, minmax(0, 1fr))!important;
+  gap:1rem!important;
   align-items:stretch!important;
-  gap:.9rem!important;
-  margin:.1rem 0 .35rem 0!important;
+  width:100%!important;
+  margin:.2rem 0 .45rem 0!important;
 }
-.hm-v95-5-action-anchor + div [data-testid="column"]{
-  display:flex!important;
-  align-items:stretch!important;
+.hm-v95-6-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  flex:unset!important;
+  display:block!important;
 }
-.hm-v95-5-action-anchor + div [data-testid="column"] > div,
-.hm-v95-5-action-anchor + div div[data-testid="stButton"]{
+.hm-v95-6-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
+.hm-v95-6-action-grid-anchor + div div[data-testid="stButton"]{
   width:100%!important;
 }
-.hm-v95-5-action-anchor + div div[data-testid="stButton"] > button{
+.hm-v95-6-action-grid-anchor + div div[data-testid="stButton"] > button{
   width:100%!important;
+  min-width:100%!important;
+  max-width:100%!important;
   min-height:48px!important;
   height:48px!important;
   max-height:48px!important;
@@ -66,19 +73,26 @@ st.markdown("""
   border:1px solid #064E3B!important;
   box-shadow:0 8px 18px rgba(6,78,59,.13)!important;
 }
-.hm-v95-5-action-anchor + div div[data-testid="stButton"] > button *{
+.hm-v95-6-action-grid-anchor + div div[data-testid="stButton"] > button *{
   color:#FFFFFF!important;
   line-height:1.1!important;
 }
 
-/* Tighten the instruction/member list spacing. */
-.hm-v95-5-instruction{
+.hm-v95-6-instruction{
   color:#102A43;
   font-size:.96rem;
   margin:.15rem 0 .65rem 0;
 }
+
+@media(max-width:768px){
+  .hm-v95-6-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
+    grid-template-columns:1fr 1fr!important;
+    gap:.65rem!important;
+  }
+}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 render_build_text_v15()
@@ -268,12 +282,12 @@ else:
             )
 
             st.markdown(
-                "<div class='eval-section-note hm-v95-4-workflow-note'>Use the buttons below to continue work for this selected member.</div>",
+                "<div class='eval-section-note hm-v95-6-instruction'>Use the buttons below to continue work for this selected member.</div>",
                 unsafe_allow_html=True
             )
 
-            st.markdown("<div class='hm-v95-5-action-anchor'></div>", unsafe_allow_html=True)
-            b1, b2, b3, b4 = st.columns([1, 1, 1, 1], gap="medium")
+            st.markdown("<div class='hm-v95-6-action-grid-anchor'></div>", unsafe_allow_html=True)
+            b1, b2, b3, b4 = st.columns(4)
             with b1:
                 if st.button("Partial Report", key=f"pr_{member['id']}", type="primary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]

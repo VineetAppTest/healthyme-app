@@ -3028,8 +3028,8 @@ def build_marker_v9():
     st.markdown("<div class='hm-build-marker'>✅ Build v9 active · Compact tooltip layout loaded</div>", unsafe_allow_html=True)
 
 
-APP_BUILD_VERSION = "v95.5"
-APP_BUILD_LABEL = "Eval Status Member Row Action Fix"
+APP_BUILD_VERSION = "v95.6"
+APP_BUILD_LABEL = "Eval Status Fixed Action Grid"
 
 def render_build_text_v11():
     """Small non-intrusive build text. Not a visual tag."""
@@ -7730,3 +7730,6 @@ def render_build_text_v95_2(): return None
 
 
 def render_build_text_v95_5(): return None
+
+
+def render_build_text_v95_6(): return None
