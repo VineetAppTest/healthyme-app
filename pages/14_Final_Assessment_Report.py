@@ -2,7 +2,7 @@ import streamlit as st
 import json
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top, compact_topbar
-from components.db import load_db, get_workflow, get_admin_assessment
+from components.db import load_db, get_workflow, get_admin_assessment, is_instance_final_report_ready
 from components.report_engine import build_full_admin_report, summary_preview_rows, prepare_report_db, report_data_diagnostics
 
 @st.cache_data(show_spinner=False, ttl=300)
@@ -27,10 +27,11 @@ selected_instance_id = report_diag.get("selected_instance_id", selected_instance
 users = {u["id"]: u for u in db.get("users", [])}
 member = users.get(mid, {})
 wf = get_workflow(mid)
-admin_assessment = get_admin_assessment(mid)
+admin_assessment = get_admin_assessment(mid, selected_instance_id)
+final_report_ready = is_instance_final_report_ready(mid, selected_instance_id)
 member_name = member.get("name") or member.get("email") or "Selected member"
 
-if not (admin_assessment and wf.get("final_report_ready")):
+if not (admin_assessment and final_report_ready):
     compact_topbar(
         "Final Assessment Report",
         "Locked until Admin Assessment is completed.",
@@ -70,7 +71,7 @@ stat_grid([
     {"label": "NSP1 Used", "value": report_diag.get("nsp1_answer_count", 0), "note": report_diag.get("nsp_source", "source")},
     {"label": "NSP2 Used", "value": report_diag.get("nsp2_answer_count", 0), "note": f"Instance: {report_diag.get('selected_instance_id','') or 'legacy'}"},
     {"label": "Digestive Score", "value": report_diag.get("digestive_score", 0), "note": "NSP system score"},
-    {"label": "Final Status", "value": "Ready" if wf.get("final_report_ready") else "Draft", "note": "Workflow state"},
+    {"label": "Final Status", "value": "Ready" if final_report_ready else "Draft", "note": "Instance/workflow state"},
 ])
 
 
@@ -113,6 +114,7 @@ if st.session_state.get("show_report_data_diagnostics"):
             <div><b>Digestive score</b><br><span>{report_diag.get('digestive_score')}</span></div>
             <div><b>Legacy NSP1 / NSP2 counts</b><br><span>{report_diag.get('legacy_nsp1_answer_count')} / {report_diag.get('legacy_nsp2_answer_count')}</span></div>
             <div><b>Instance NSP1 / NSP2 counts</b><br><span>{report_diag.get('instance_nsp1_answer_count')} / {report_diag.get('instance_nsp2_answer_count')}</span></div>
+            <div><b>Admin Source</b><br><span>{report_diag.get('admin_source', 'legacy')}</span></div>
           </div>
         </div>
         """,

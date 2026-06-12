@@ -48,8 +48,7 @@ else:
                 st.session_state["selected_instance_id"] = row["instance_id"]
                 st.switch_page("pages/13_Admin_Assessment_Form.py")
         with c4:
-            wf = get_workflow(row["member_id"])
-            final_unlocked = bool(wf.get("final_report_ready"))
+            final_unlocked = bool(row.get("final_report_ready"))
             if st.button("Final Report", key=f"fr_{row['instance_id']}", use_container_width=True, disabled=not final_unlocked):
                 st.session_state["selected_member_id"] = row["member_id"]
                 st.session_state["selected_instance_id"] = row["instance_id"]

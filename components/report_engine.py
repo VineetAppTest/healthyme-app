@@ -108,6 +108,16 @@ def prepare_report_db(db, member_id, selected_instance_id=None):
             safe_db.setdefault("nsp1_responses", {})[member_id] = inst_nsp1
             safe_db.setdefault("nsp2_responses", {})[member_id] = inst_nsp2
 
+    admin_source = "legacy_member_admin_assessment"
+    inst_admin = {}
+    if selected_instance_id:
+        inst_admin_record = safe_db.get("admin_assessments_by_instance", {}).get(selected_instance_id, {}) or {}
+        if isinstance(inst_admin_record, dict):
+            inst_admin = inst_admin_record.get("data", {}) or {}
+        if isinstance(inst_admin, dict) and inst_admin:
+            safe_db.setdefault("admin_assessments", {})[member_id] = inst_admin
+            admin_source = "assessment_instance_admin_assessment"
+
     nsp1_final = safe_db.get("nsp1_responses", {}).get(member_id, {}) or {}
     nsp2_final = safe_db.get("nsp2_responses", {}).get(member_id, {}) or {}
     rows = calculate_systems_rating(nsp1_final, nsp2_final)
@@ -124,6 +134,8 @@ def prepare_report_db(db, member_id, selected_instance_id=None):
         "legacy_nsp2_answer_count": _count_answers(legacy_nsp2),
         "instance_nsp1_answer_count": _count_answers(inst_nsp1),
         "instance_nsp2_answer_count": _count_answers(inst_nsp2),
+        "admin_source": admin_source,
+        "instance_admin_answer_count": _count_answers(inst_admin) if isinstance(inst_admin, dict) else 0,
     }
     return safe_db, safe_db["_report_meta"]
 

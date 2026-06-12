@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v94_6_Page_Level_Button_Normalization",
-  "version": "v94_6_page_level_button_normalization",
-  "updated_on": "2026-06-12T12:28:23.900398+00:00",
+  "build_name": "HealthyMe_v95_NSP_Reassessment_Instance_Hardening",
+  "version": "v95_nsp_reassessment_instance_hardening",
+  "updated_on": "2026-06-12T12:54:23.540224+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Applied page-level button normalization on Recipe and Exercise member pages so Streamlit wrapper differences cannot bypass card action styling.",
-    "Forced View and favourite buttons to same height.",
-    "Kept View button wide and heart button compact through 5:1 columns and fixed heart column width.",
-    "Set View and favourite buttons to secondary button type for consistent HealthyMe schema.",
-    "Retained v94 Supabase Storage hybrid upload, v94.1 preview guard and v94.4 functional toolbar logic."
+    "Kept reassessment scope restricted to NSP Page 1, NSP Page 2, or both pages as confirmed by client.",
+    "Added instance-aware admin assessment storage using admin_assessments_by_instance.",
+    "Admin Assessment page now opens selected reassessment instances even when the member's initial workflow is already finalized.",
+    "Final report readiness is now checked at selected instance level when selected_instance_id is present.",
+    "Report engine now injects selected instance admin assessment into report-safe DB.",
+    "Review Queue no longer unlocks Final Report based only on global member final_report_ready.",
+    "Preserved existing NSP reassessment trigger/member completion/NSP compare modules."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -288,16 +290,18 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "recipe_v94_6_css": true,
-    "exercise_v94_6_css": true,
-    "recipe_page_level_button_height": true,
-    "exercise_page_level_button_height": true,
-    "recipe_action_ratio": true,
-    "exercise_action_ratio": true,
-    "recipe_view_secondary": true,
-    "exercise_view_secondary": true,
-    "recipe_fav_secondary": true,
-    "exercise_fav_secondary": true
+    "scope_doc_present": true,
+    "db_instance_admin_helpers": true,
+    "db_finalize_instance_id": true,
+    "report_injects_instance_admin": true,
+    "admin_page_gets_instance_admin": true,
+    "admin_page_instance_lock": true,
+    "admin_page_saves_instance": true,
+    "admin_page_finalizes_instance": true,
+    "final_report_uses_instance_admin": true,
+    "final_report_uses_instance_ready": true,
+    "review_queue_uses_instance_ready": true,
+    "queue_rows_include_final_ready": true
   },
   "storage_model": {
     "public_bucket": "healthyme-public-assets",
@@ -309,6 +313,19 @@
       "image_path",
       "image_access_type",
       "image_url"
+    ]
+  },
+  "client_confirmed_scope": {
+    "reassessment_forms": [
+      "NSP Page 1",
+      "NSP Page 2",
+      "Both NSP Pages"
+    ],
+    "excluded_forms": [
+      "LAF",
+      "Daily Food Journal",
+      "Body-Mind",
+      "Other forms"
     ]
   }
 }

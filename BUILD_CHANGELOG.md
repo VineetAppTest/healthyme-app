@@ -983,3 +983,11 @@
 - Forced View and favourite buttons to the same height.
 - Kept View button wide and favourite button compact/proportional.
 - Retained v94 Storage, v94.1 preview guard and v94.4 functional search/filter/favourite logic.
+
+## v95 - NSP Reassessment Instance Hardening
+
+- Client confirmed reassessment scope is NSP Page 1, NSP Page 2, or both only.
+- Added instance-aware admin assessment storage.
+- Admin Assessment page can open reassessment instances even if initial member workflow is already finalized.
+- Final Report and report engine now respect selected instance admin review/final readiness.
+- Review Queue uses instance-level final readiness instead of global workflow readiness.

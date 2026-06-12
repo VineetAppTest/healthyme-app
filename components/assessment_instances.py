@@ -211,6 +211,9 @@ def list_review_queue():
                     "requested_pages": ", ".join(_page_title(p) for p in inst.get("requested_pages", [])),
                     "submitted_date": inst.get("submitted_date", ""),
                     "status": inst.get("status", ""),
+                    "admin_completed": bool(inst.get("admin_completed")),
+                    "final_report_ready": bool(inst.get("final_report_ready")),
+                    "review_status": inst.get("review_status", ""),
                 })
     rows.sort(key=lambda x: (x.get("submitted_date", ""), x.get("member_name", "")), reverse=True)
     return rows

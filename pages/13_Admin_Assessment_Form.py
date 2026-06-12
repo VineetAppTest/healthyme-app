@@ -3,7 +3,7 @@ import json
 import streamlit as st, json, pathlib
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12, render_back_to_top, compact_topbar
-from components.db import get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization, sync_member_finalization_state, has_explicit_body_mind_access
+from components.db import load_db, get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization, sync_member_finalization_state, has_explicit_body_mind_access
 from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
 from components.admin_value_resolver import resolve_admin_linked_value
@@ -12,28 +12,31 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 mid=st.session_state.get("selected_member_id")
 if not mid: st.switch_page("pages/11_Evaluation_Status.py")
 templates=json.loads((pathlib.Path(__file__).resolve().parents[1]/"config"/"admin_templates.json").read_text())
-existing=get_admin_assessment(mid); current_wf = get_workflow(mid)
 selected_instance_id = st.session_state.get("selected_instance_id")
-if selected_instance_id:
-    db_tmp = load_db() if "load_db" in globals() else None
-    # load_db may not be imported in older builds; fall back below if unavailable
+existing=get_admin_assessment(mid, selected_instance_id)
+current_wf = get_workflow(mid)
 try:
-    from components.db import load_db as _hm_load_db
-    _db_for_instance = _hm_load_db()
+    _db_for_instance = load_db()
+    _selected_instance = next((i for i in _db_for_instance.get("assessment_instances", {}).get(mid, []) if i.get("instance_id") == selected_instance_id), {}) if selected_instance_id else {}
     _inst_resp = _db_for_instance.get("assessment_instance_responses", {}).get(selected_instance_id, {}) if selected_instance_id else {}
 except Exception:
+    _selected_instance = {}
     _inst_resp = {}
 nsp1=_inst_resp.get("nsp1") or get_form_response("nsp1_responses", mid)
 nsp2=_inst_resp.get("nsp2") or get_form_response("nsp2_responses", mid)
 laf=get_form_response("laf_responses", mid)
 render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="top")
-compact_topbar("Fill Admin Page","Linked items are auto-pulled; manual items can be NA, 1, 2, or 3.","Admin assessment")
+compact_topbar("Fill Admin Page", f"Linked items are auto-pulled; manual items can be NA, 1, 2, or 3.{' Instance: ' + selected_instance_id if selected_instance_id else ''}", "Admin assessment")
 render_system_message()
 
 # v26 finalization lock:
 # Once final report/admin review is complete, the form is frozen.
 current_wf = get_workflow(mid)
-is_finalized = bool(current_wf.get("admin_completed")) or bool(current_wf.get("final_report_ready"))
+if selected_instance_id:
+    _selected_status = str(_selected_instance.get("status", "")).lower()
+    is_finalized = bool(_selected_instance.get("admin_completed")) or bool(_selected_instance.get("final_report_ready")) or _selected_status == "finalized"
+else:
+    is_finalized = bool(current_wf.get("admin_completed")) or bool(current_wf.get("final_report_ready"))
 
 if is_finalized:
 
@@ -115,7 +118,7 @@ else:
 
 # v39: Auto-save Admin Assessment draft on every interaction/rerun.
 # This saves the five admin pages as draft only. Final report generation remains manual.
-save_admin_assessment(mid, all_data)
+save_admin_assessment(mid, all_data, selected_instance_id)
 if body_mind_unlock_choice and not bool(get_workflow(mid).get("body_mind_unlocked")):
     request_body_mind_activation(mid)
 st.markdown("<div class='autosave-note'>Auto-saved draft. Use Save and Generate Final Report only when the admin review is final.</div>", unsafe_allow_html=True)
@@ -131,7 +134,7 @@ c1,c2=st.columns(2)
 with c1:
     if st.button("Save Draft / Confirm Changes", use_container_width=True):
         old_body_mind_visibility = bool(get_workflow(mid).get("body_mind_unlocked"))
-        save_admin_assessment(mid, all_data)
+        save_admin_assessment(mid, all_data, selected_instance_id)
         if body_mind_unlock_choice:
             request_body_mind_activation(mid)
         if body_mind_unlock_choice and not old_body_mind_visibility:
@@ -152,6 +155,7 @@ with c2:
                     mid,
                     all_data,
                     activation_selected=bool(body_mind_unlock_choice),
+                    instance_id=selected_instance_id,
                 )
 
             if result.get("body_mind_unlocked"):

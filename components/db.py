@@ -172,8 +172,71 @@ def submit_member_for_review_once(user_id):
 
     save_db(db)
     return not was_already_submitted
-def save_admin_assessment(user_id,data): db=load_db(); db["admin_assessments"][user_id]=data; save_db(db)
-def get_admin_assessment(user_id): return load_db().get("admin_assessments",{}).get(user_id,{})
+
+# --------------------------------------------------------------------
+# v95: Instance-aware admin assessment helpers for NSP reassessment
+# --------------------------------------------------------------------
+def _now_iso_v95():
+    return datetime.datetime.now().isoformat(timespec="seconds")
+
+def _today_iso_v95():
+    return datetime.date.today().isoformat()
+
+def _find_assessment_instance(db, user_id, instance_id):
+    if not instance_id:
+        return None
+    for inst in db.get("assessment_instances", {}).get(user_id, []) or []:
+        if inst.get("instance_id") == instance_id:
+            return inst
+    return None
+
+def save_admin_assessment(user_id, data, instance_id=None):
+    db = load_db()
+    db.setdefault("admin_assessments", {})
+    db.setdefault("admin_assessments_by_instance", {})
+
+    if instance_id:
+        db["admin_assessments_by_instance"][instance_id] = {
+            "member_id": user_id,
+            "instance_id": instance_id,
+            "updated_at": _now_iso_v95(),
+            "data": data,
+        }
+        inst = _find_assessment_instance(db, user_id, instance_id)
+        if inst:
+            inst["admin_draft_saved"] = True
+            inst["admin_draft_saved_at"] = _now_iso_v95()
+
+    # Keep legacy member-level storage for non-instance flows and initial assessment compatibility.
+    if not instance_id:
+        db["admin_assessments"][user_id] = data
+    else:
+        inst = _find_assessment_instance(db, user_id, instance_id)
+        if inst and int(inst.get("instance_number", 0) or 0) == 1:
+            db["admin_assessments"][user_id] = data
+
+    save_db(db)
+
+def get_admin_assessment(user_id, instance_id=None):
+    db = load_db()
+    if instance_id:
+        record = db.get("admin_assessments_by_instance", {}).get(instance_id)
+        if isinstance(record, dict):
+            data = record.get("data", {})
+            if isinstance(data, dict) and data:
+                return data
+    return db.get("admin_assessments", {}).get(user_id, {})
+
+def is_instance_final_report_ready(user_id, instance_id=None):
+    db = load_db()
+    if instance_id:
+        inst = _find_assessment_instance(db, user_id, instance_id)
+        if not inst:
+            return False
+        return bool(inst.get("final_report_ready")) or bool(inst.get("admin_completed")) or str(inst.get("status", "")).lower() == "finalized"
+    wf = normalize_workflow(db.get("workflow", {}).get(user_id, {}))
+    return bool(wf.get("final_report_ready"))
+
 def member_has_meaningful_data(user_id): return bool(get_form_response("laf_responses",user_id) or get_form_response("nsp1_responses",user_id) or get_form_response("nsp2_responses",user_id))
 def list_members():
     db=load_db(); rows=[]
@@ -901,15 +964,77 @@ def clear_body_mind_activation(user_id):
     return True
 
 
+
 # --------------------------------------------------------------------
-# v26: Finalize admin assessment safely
+# v95: Finalize admin assessment safely, with reassessment instance support
 # --------------------------------------------------------------------
-def finalize_admin_assessment(user_id, assessment_data, activation_selected=False):
-    """Save admin assessment, mark final report ready, and sync workflow + instance status."""
+def finalize_admin_assessment(user_id, assessment_data, activation_selected=False, instance_id=None):
+    """Save admin assessment and mark final report ready.
+
+    For normal/legacy flow, this keeps existing global workflow finalization behavior.
+    For reassessment flow, this finalizes only the selected assessment instance and stores
+    the admin review under admin_assessments_by_instance[instance_id].
+    """
     db = load_db()
-    db.setdefault("admin_assessments", {})[user_id] = assessment_data
+    db.setdefault("admin_assessments", {})
+    db.setdefault("admin_assessments_by_instance", {})
+
     wf_before = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
     already_finalized = bool(wf_before.get("admin_completed")) or bool(wf_before.get("final_report_ready"))
+
+    if instance_id:
+        db["admin_assessments_by_instance"][instance_id] = {
+            "member_id": user_id,
+            "instance_id": instance_id,
+            "updated_at": _now_iso_v95(),
+            "finalized_at": _now_iso_v95(),
+            "data": assessment_data,
+        }
+
+        selected_inst = _find_assessment_instance(db, user_id, instance_id)
+        selected_inst_number = int(selected_inst.get("instance_number", 0) or 0) if selected_inst else 0
+        selected_inst_type = str(selected_inst.get("instance_type", "")).lower() if selected_inst else ""
+
+        if selected_inst:
+            selected_inst["admin_completed"] = True
+            selected_inst["final_report_ready"] = True
+            selected_inst["review_status"] = "finalized"
+            selected_inst["status"] = "finalized"
+            selected_inst["admin_completed_date"] = _today_iso_v95()
+            selected_inst["finalized_date"] = _today_iso_v95()
+
+        # Preserve legacy member-level admin assessment for initial assessment compatibility only.
+        if selected_inst_number == 1 or selected_inst_type == "initial assessment":
+            db["admin_assessments"][user_id] = assessment_data
+
+        # Keep global workflow finalized if already finalized; if this is the first/initial finalization,
+        # finalize global workflow too. Reassessment finalization should not corrupt older instances.
+        wf = normalize_workflow(db.setdefault("workflow", {}).setdefault(user_id, {}))
+        if selected_inst_number == 1 or not bool(wf.get("final_report_ready")):
+            wf["admin_completed"] = True
+            wf["final_report_ready"] = True
+            wf["workflow_status"] = "finalized"
+            wf["submitted_for_review"] = True
+
+        if activation_selected:
+            wf["body_mind_activation_requested"] = True
+            wf["body_mind_unlocked"] = True
+            db.setdefault("body_mind_access", {})[user_id] = True
+
+        db["workflow"][user_id] = normalize_workflow(wf)
+        save_db(db)
+
+        final_wf = get_workflow(user_id)
+        return {
+            "already_finalized": already_finalized,
+            "body_mind_unlocked": bool(final_wf.get("body_mind_unlocked")),
+            "body_mind_activation_requested": bool(final_wf.get("body_mind_activation_requested")),
+            "instance_id": instance_id,
+            "instance_final_report_ready": True,
+        }
+
+    # Legacy/global flow.
+    db["admin_assessments"][user_id] = assessment_data
     save_db(db)
 
     final_wf = sync_member_finalization_state(
@@ -921,11 +1046,9 @@ def finalize_admin_assessment(user_id, assessment_data, activation_selected=Fals
         "already_finalized": already_finalized,
         "body_mind_unlocked": bool(final_wf.get("body_mind_unlocked")),
         "body_mind_activation_requested": bool(final_wf.get("body_mind_activation_requested")),
+        "instance_id": "",
+        "instance_final_report_ready": False,
     }
-
-
-
-
 
 
 # --------------------------------------------------------------------

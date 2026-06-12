@@ -3028,8 +3028,8 @@ def build_marker_v9():
     st.markdown("<div class='hm-build-marker'>✅ Build v9 active · Compact tooltip layout loaded</div>", unsafe_allow_html=True)
 
 
-APP_BUILD_VERSION = "v94.6"
-APP_BUILD_LABEL = "Page-Level Button Normalization"
+APP_BUILD_VERSION = "v95"
+APP_BUILD_LABEL = "NSP Reassessment Instance Hardening"
 
 def render_build_text_v11():
     """Small non-intrusive build text. Not a visual tag."""
@@ -7718,3 +7718,6 @@ def render_build_text_v94_5(): return None
 
 
 def render_build_text_v94_6(): return None
+
+
+def render_build_text_v95(): return None
