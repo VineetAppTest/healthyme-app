@@ -970,3 +970,9 @@
 - Rebuilt Recipe/Exercise toolbar with functional search, filter and favourites.
 - Added card-level favourite toggles.
 - Retained v94 Supabase Storage and v94.1 image preview guard.
+
+## v94.5 - Card Action Button Proportion Fix
+
+- Aligned Recipe and Exercise card action buttons to same height.
+- Kept the View button wide and the favourite button compact/square.
+- Retained v94 Storage, v94.1 preview guard and v94.4 functional filter/favourite logic.

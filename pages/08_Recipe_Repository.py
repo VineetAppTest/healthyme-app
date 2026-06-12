@@ -282,6 +282,80 @@ def inject_recipe_css():
   }
 }
 
+
+/* --- v94.5 Recipe Card Action Button Proportion Fix --- */
+.hm-card-action-row{
+  margin:-.35rem 0 1rem 0!important;
+}
+.hm-card-action-row + div [data-testid="stHorizontalBlock"]{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  gap:.55rem!important;
+  align-items:stretch!important;
+}
+.hm-card-action-row + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child{
+  flex:1 1 auto!important;
+  min-width:0!important;
+}
+.hm-card-action-row + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2){
+  flex:0 0 72px!important;
+  min-width:72px!important;
+  max-width:72px!important;
+}
+.hm-card-action-row + div [data-testid="stHorizontalBlock"] .stButton{
+  height:44px!important;
+  margin:0!important;
+}
+.hm-card-action-row + div [data-testid="stHorizontalBlock"] .stButton > button{
+  height:44px!important;
+  min-height:44px!important;
+  max-height:44px!important;
+  padding:0 .9rem!important;
+  border-radius:14px!important;
+  border:1.3px solid #CDBB8F!important;
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  box-shadow:0 3px 10px rgba(25,36,31,.045)!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+  font-weight:500!important;
+}
+.hm-card-action-row + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) .stButton > button{
+  width:72px!important;
+  min-width:72px!important;
+  max-width:72px!important;
+  padding:0!important;
+  font-size:1rem!important;
+}
+.hm-card-action-row + div [data-testid="stHorizontalBlock"] .stButton > button *,
+.hm-card-action-row + div [data-testid="stHorizontalBlock"] button *{
+  color:#064E3B!important;
+}
+@media(max-width:768px){
+  .hm-card-action-row + div [data-testid="stHorizontalBlock"]{
+    gap:.45rem!important;
+  }
+  .hm-card-action-row + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2){
+    flex-basis:52px!important;
+    min-width:52px!important;
+    max-width:52px!important;
+  }
+  .hm-card-action-row + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) .stButton > button{
+    width:52px!important;
+    min-width:52px!important;
+    max-width:52px!important;
+  }
+  .hm-card-action-row + div [data-testid="stHorizontalBlock"] .stButton,
+  .hm-card-action-row + div [data-testid="stHorizontalBlock"] .stButton > button{
+    height:42px!important;
+    min-height:42px!important;
+    max-height:42px!important;
+  }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -382,7 +456,7 @@ def render_landing(df):
 </div>
 """, unsafe_allow_html=True)
                     st.markdown("<div class='hm-card-action-row'>", unsafe_allow_html=True)
-                    ac1, ac2 = st.columns([3, 1])
+                    ac1, ac2 = st.columns([5, 1], gap="small")
                     with ac1:
                         if st.button("View recipe", key=f"view_recipe_{idx}", use_container_width=True):
                             st.session_state["hm_recipe_selected_id"] = rid

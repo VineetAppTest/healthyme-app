@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v94_4_Content_Button_Functional_Alignment",
-  "version": "v94_4_content_button_functional_alignment",
-  "updated_on": "2026-06-12T12:05:41.514928+00:00",
+  "build_name": "HealthyMe_v94_5_Card_Action_Button_Proportion_Fix",
+  "version": "v94_5_card_action_button_proportion_fix",
+  "updated_on": "2026-06-12T12:19:47.546435+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,13 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Normalized Body-Mind Connection member-home button to secondary/general HealthyMe button style.",
-    "Normalized Body-Mind page Submit button to secondary/general HealthyMe button style.",
-    "Kept Recipe and Exercise pages on standard compact_topbar header.",
-    "Rebuilt Recipe and Exercise search/filter/favourite toolbar with functional Streamlit controls.",
-    "Filter button now opens a filter panel; favourite button toggles favourites-only view.",
-    "Recipe/Exercise cards now include functional favourite toggle buttons.",
-    "Retained v94 Supabase Storage hybrid upload and v94.1 image preview guard."
+    "Aligned Recipe and Exercise card action buttons to same height.",
+    "Kept View recipe/exercise as wide button and favourite as compact proportional button.",
+    "Updated card action column ratio to 5:1 with small gap.",
+    "Added card-action scoped CSS so button height, border radius and visual schema remain consistent.",
+    "Retained v94 Supabase Storage hybrid upload, v94.1 preview guard and v94.4 functional filter/favourite logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -290,20 +288,12 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "member_home_bodymind_secondary": true,
-    "member_home_bodymind_anchor_css": true,
-    "body_mind_submit_secondary": true,
-    "body_mind_page_anchor_css": true,
-    "recipe_toolbar_anchor": true,
-    "exercise_toolbar_anchor": true,
-    "recipe_filter_functional": true,
-    "exercise_filter_functional": true,
-    "recipe_favourite_functional": true,
-    "exercise_favourite_functional": true,
-    "recipe_standard_header": true,
-    "exercise_standard_header": true,
-    "recipe_no_custom_tabs_markup": true,
-    "exercise_no_custom_tabs_markup": true
+    "recipe_v94_5_css": true,
+    "exercise_v94_5_css": true,
+    "recipe_columns_ratio_updated": true,
+    "exercise_columns_ratio_updated": true,
+    "recipe_button_height_fixed": true,
+    "exercise_button_height_fixed": true
   },
   "storage_model": {
     "public_bucket": "healthyme-public-assets",
