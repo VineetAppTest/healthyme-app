@@ -6,6 +6,34 @@ from components.db import list_members
 
 st.set_page_config(page_title="Eval Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+
+st.markdown("""
+<style>
+/* --- v95.1 Evaluation Status action button alignment --- */
+.hm-v15-action-emphasis [data-testid="stHorizontalBlock"]{
+  display:flex!important;
+  align-items:stretch!important;
+  gap:1rem!important;
+}
+.hm-v15-action-emphasis [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+  flex:1 1 0!important;
+  min-width:0!important;
+}
+.hm-v15-action-emphasis div[data-testid="stButton"] > button{
+  width:100%!important;
+  min-height:44px!important;
+  height:44px!important;
+  border-radius:14px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0 .9rem!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 render_build_text_v15()
 
 rows = list_members()
@@ -210,12 +238,11 @@ else:
                     st.session_state["selected_member_id"] = member["id"]
                     st.switch_page("pages/13_Admin_Assessment_Form.py")
             with b3:
-                final_unlocked = bool(member.get("final_report_ready"))
-                if st.button("Full Report", help="Open final assessment report", key=f"fr_{member['id']}", type="primary", use_container_width=True, disabled=not final_unlocked):
+                # v95.1: Keep Full Report button clickable and visually consistent.
+                # If the report is not ready, the Final Report page will show the proper pending message.
+                if st.button("Full Report", help="Open final assessment report", key=f"fr_{member['id']}", type="primary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]
                     st.switch_page("pages/14_Final_Assessment_Report.py")
-                if not final_unlocked:
-                    pass
 
             with b4:
                 if st.button("Daily Logs", key=f"dl_{member['id']}", type="primary", use_container_width=True):

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_NSP_Reassessment_Instance_Hardening",
-  "version": "v95_nsp_reassessment_instance_hardening",
-  "updated_on": "2026-06-12T12:54:23.540224+00:00",
+  "build_name": "HealthyMe_v95_1_Full_Report_Button_Status_Fix",
+  "version": "v95_1_full_report_button_status_fix",
+  "updated_on": "2026-06-12T13:08:28.160878+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,13 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Kept reassessment scope restricted to NSP Page 1, NSP Page 2, or both pages as confirmed by client.",
-    "Added instance-aware admin assessment storage using admin_assessments_by_instance.",
-    "Admin Assessment page now opens selected reassessment instances even when the member's initial workflow is already finalized.",
-    "Final report readiness is now checked at selected instance level when selected_instance_id is present.",
-    "Report engine now injects selected instance admin assessment into report-safe DB.",
-    "Review Queue no longer unlocks Final Report based only on global member final_report_ready.",
-    "Preserved existing NSP reassessment trigger/member completion/NSP compare modules."
+    "Fixed Evaluation Status member action row where Full Report button was disabled and visually different when final report was pending.",
+    "Full Report button is now always clickable from Evaluation Status and navigates to Final Assessment Report page.",
+    "If report is not ready, Final Assessment Report page handles the pending-state message.",
+    "Added action-row CSS to keep Partial Report, Admin Page, Full Report and Daily Logs buttons aligned.",
+    "Retained v95 NSP reassessment instance hardening."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -290,18 +288,10 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "scope_doc_present": true,
-    "db_instance_admin_helpers": true,
-    "db_finalize_instance_id": true,
-    "report_injects_instance_admin": true,
-    "admin_page_gets_instance_admin": true,
-    "admin_page_instance_lock": true,
-    "admin_page_saves_instance": true,
-    "admin_page_finalizes_instance": true,
-    "final_report_uses_instance_admin": true,
-    "final_report_uses_instance_ready": true,
-    "review_queue_uses_instance_ready": true,
-    "queue_rows_include_final_ready": true
+    "full_report_disabled_removed": true,
+    "full_report_clickable": true,
+    "full_report_switch_page": true,
+    "button_css_present": true
   },
   "storage_model": {
     "public_bucket": "healthyme-public-assets",
@@ -327,5 +317,6 @@
       "Body-Mind",
       "Other forms"
     ]
-  }
+  },
+  "patched_page": "pages/11_Evaluation_Status.py"
 }

@@ -991,3 +991,11 @@
 - Admin Assessment page can open reassessment instances even if initial member workflow is already finalized.
 - Final Report and report engine now respect selected instance admin review/final readiness.
 - Review Queue uses instance-level final readiness instead of global workflow readiness.
+
+## v95.1 - Full Report Button Status Fix
+
+- Fixed Evaluation Status member action row.
+- Full Report button is no longer disabled when report is pending.
+- Button now navigates to Final Assessment Report page, where pending state is handled.
+- Added CSS to keep the four action buttons aligned.
+- Retained v95 NSP reassessment instance hardening.
