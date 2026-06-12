@@ -1019,3 +1019,11 @@
 - Refined vertical spacing around the workflow note and button row.
 - Normalized the action-button shadow and visual weight to better match the HealthyMe standard template.
 - Retained all existing v95.3 and v95.2 behavior and fixes.
+
+## v95.5 - Eval Status Member Row Action Fix
+
+- Removed the broken member-toggle wrapper that was causing blank thin rows.
+- Updated the member row instruction to match actual behavior.
+- Added explicit [+] and [−] markers to member buttons.
+- Added hard action-row styling for Partial Report / Admin Page / Full Report / Daily Logs.
+- Retained v95.4, v95.3 and v95.2 fixes.

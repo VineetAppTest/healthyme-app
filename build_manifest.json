@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_4_EvalStatus_Micro_Polish",
-  "version": "v95_4_evalstatus_micro_polish",
-  "updated_on": "2026-06-12T13:44:36.536740+00:00",
+  "build_name": "HealthyMe_v95_5_EvalStatus_Member_Row_Action_Fix",
+  "version": "v95_5_evalstatus_member_row_action_fix",
+  "updated_on": "2026-06-12T13:58:29.021275+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,9 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Applied a micro-polish pass to the Evaluation Status member action button row.",
-    "Tuned spacing above and below the workflow note and action buttons.",
-    "Aligned button shadow, radius, spacing, and visual weight closer to the HealthyMe standard template while preserving existing behavior."
+    "Removed broken member-toggle wrapper that created blank rows above member buttons.",
+    "Updated instruction text to match actual interaction.",
+    "Member rows now show explicit [+] and [\u2212] markers in the button label.",
+    "Added hard styling for opened-member action buttons so Partial Report, Admin Page, Full Report and Daily Logs render evenly.",
+    "Retained v95.4/v95.3/v95.2 logic and fixes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -286,10 +288,14 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "helper_present": true,
-    "digestive_score_card_removed": true,
-    "top_card_uses_selected_system": true,
-    "top_card_note_updated": true
+    "broken_member_wrapper_removed": true,
+    "member_anchor_present": true,
+    "action_anchor_present": true,
+    "new_instruction_present": true,
+    "old_instruction_removed": true,
+    "explicit_plus_minus_labels": true,
+    "action_columns_medium": true,
+    "v95_5_css_present": true
   },
   "storage_model": {
     "public_bucket": "healthyme-public-assets",

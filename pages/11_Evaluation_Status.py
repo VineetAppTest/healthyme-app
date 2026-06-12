@@ -9,56 +9,77 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 
 st.markdown("""
 <style>
-/* --- v95.4 Evaluation Status micro-polish --- */
-/* Keep the four member action buttons visually identical and aligned to HealthyMe standard. */
-div[data-testid="stButton"] > button{
+/* --- v95.5 Evaluation Status member row + action button fix --- */
+
+/* Member toggle rows: remove the old broken wrapper effect and style the real Streamlit buttons directly. */
+.hm-v95-5-member-list-anchor ~ div div[data-testid="stButton"] > button{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.4px solid #CDBB8F!important;
   border-radius:14px!important;
+  min-height:44px!important;
+  height:44px!important;
+  padding:0 1rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-weight:850!important;
+  box-shadow:0 4px 12px rgba(25,36,31,.055)!important;
+  line-height:1.1!important;
 }
-/* Normalize and polish the workflow action row on this page. */
-.hm-v95-4-workflow-note{
-  margin:0.25rem 0 0.8rem 0!important;
+.hm-v95-5-member-list-anchor ~ div div[data-testid="stButton"] > button *{
+  color:#064E3B!important;
+  line-height:1.1!important;
 }
-.hm-v95-4-workflow-note + div [data-testid="stHorizontalBlock"]{
+
+/* Action buttons inside opened member details: same height, same visual weight, same width behaviour. */
+.hm-v95-5-action-anchor + div [data-testid="stHorizontalBlock"]{
+  display:flex!important;
   align-items:stretch!important;
-  gap:0.85rem!important;
-  margin:0.05rem 0 0.35rem 0!important;
+  gap:.9rem!important;
+  margin:.1rem 0 .35rem 0!important;
 }
-.hm-v95-4-workflow-note + div [data-testid="column"]{
+.hm-v95-5-action-anchor + div [data-testid="column"]{
   display:flex!important;
   align-items:stretch!important;
 }
-.hm-v95-4-workflow-note + div [data-testid="column"] > div{
+.hm-v95-5-action-anchor + div [data-testid="column"] > div,
+.hm-v95-5-action-anchor + div div[data-testid="stButton"]{
   width:100%!important;
 }
-.hm-v95-4-workflow-note + div div[data-testid="stButton"]{
+.hm-v95-5-action-anchor + div div[data-testid="stButton"] > button{
   width:100%!important;
-}
-.hm-v95-4-workflow-note + div div[data-testid="stButton"] > button{
-  width:100%!important;
-  min-height:52px!important;
-  height:52px!important;
+  min-height:48px!important;
+  height:48px!important;
+  max-height:48px!important;
   padding:0 1rem!important;
-  border-radius:16px!important;
+  border-radius:14px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
   white-space:nowrap!important;
   line-height:1.1!important;
-  font-weight:900!important;
-  letter-spacing:0.01em!important;
+  font-weight:850!important;
   box-sizing:border-box!important;
-  box-shadow:0 10px 20px rgba(6, 78, 59, 0.12)!important;
-}
-.hm-v95-4-workflow-note + div div[data-testid="stButton"] > button[kind="primary"]{
   background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
   color:#FFFFFF!important;
   border:1px solid #064E3B!important;
+  box-shadow:0 8px 18px rgba(6,78,59,.13)!important;
 }
-.hm-v95-4-workflow-note + div div[data-testid="stButton"] > button[kind="primary"] *{
+.hm-v95-5-action-anchor + div div[data-testid="stButton"] > button *{
   color:#FFFFFF!important;
+  line-height:1.1!important;
+}
+
+/* Tighten the instruction/member list spacing. */
+.hm-v95-5-instruction{
+  color:#102A43;
+  font-size:.96rem;
+  margin:.15rem 0 .65rem 0;
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 render_build_text_v15()
 
@@ -179,22 +200,20 @@ else:
 
     st.markdown("<div class='eval-section-title'>Select Member to Continue Admin Assessment</div>", unsafe_allow_html=True)
     st.markdown(
-        "<div class='eval-section-note'>Click the + icon row to open a member. Click − to close it.</div>",
+        "<div class='eval-section-note'>Click a member name to open details. Click the same member again to close it.</div>",
         unsafe_allow_html=True
     )
 
     for member in filtered:
         is_open = st.session_state.get("open_member_id") == member["id"]
-        toggle_label = f"{'−' if is_open else '+'}  {member['name']}"
+        toggle_label = f"{'[−]' if is_open else '[+]'}  {member['name']}"
 
-        st.markdown("<div class='member-toggle-card'>", unsafe_allow_html=True)
         if st.button(toggle_label, key=f"toggle_{member['id']}", use_container_width=True):
             if is_open:
                 st.session_state["open_member_id"] = None
             else:
                 st.session_state["open_member_id"] = member["id"]
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
 
         if is_open:
             st.markdown("<div class='member-detail-panel'>", unsafe_allow_html=True)
@@ -253,7 +272,8 @@ else:
                 unsafe_allow_html=True
             )
 
-            b1, b2, b3, b4 = st.columns([1, 1, 1, 1], gap="small")
+            st.markdown("<div class='hm-v95-5-action-anchor'></div>", unsafe_allow_html=True)
+            b1, b2, b3, b4 = st.columns([1, 1, 1, 1], gap="medium")
             with b1:
                 if st.button("Partial Report", key=f"pr_{member['id']}", type="primary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]
@@ -274,6 +294,5 @@ else:
                     st.session_state["selected_member_id"] = member["id"]
                     st.session_state["selected_daily_log_member_id"] = member["id"]
                     st.switch_page("pages/22_Admin_Daily_Log_Report.py")
-            st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
