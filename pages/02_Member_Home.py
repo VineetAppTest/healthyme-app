@@ -8,6 +8,25 @@ from components.flash import render_system_message, set_system_message
 st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
+st.markdown("""
+<style>
+/* --- v94.4 Body-Mind button normalization --- */
+.hm-bodymind-btn-anchor + div [data-testid="stButton"] > button,
+.hm-bodymind-btn-anchor + div .stButton > button{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.5px solid #CDBB8F!important;
+  border-radius:14px!important;
+  box-shadow:0 4px 12px rgba(25,36,31,.06)!important;
+}
+.hm-bodymind-btn-anchor + div [data-testid="stButton"] > button *,
+.hm-bodymind-btn-anchor + div .stButton > button *{
+  color:#064E3B!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
 # v32 hard sync:
@@ -137,7 +156,8 @@ with right:
 
     if body_mind_unlocked:
         label = "Body-Mind Connection" if not wf.get("body_mind_completed") else "Body-Mind Connection ✓"
-        if st.button(label, type="primary", use_container_width=True):
+        st.markdown("<div class='hm-bodymind-btn-anchor'></div>", unsafe_allow_html=True)
+        if st.button(label, type="secondary", use_container_width=True, key="member_home_body_mind_connection"):
             st.switch_page("pages/19_Body_Mind_Connection.py")
     else:
         activation_requested = bool(wf.get("body_mind_activation_requested"))

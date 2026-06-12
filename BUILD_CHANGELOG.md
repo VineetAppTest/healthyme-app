@@ -954,3 +954,19 @@
 - Kept search + filter + favourite controls in one line.
 - Removed the extra Open Recipes/Open Exercises redirection buttons.
 - Retained v94.1 image preview guard and v94 Supabase Storage hybrid logic.
+
+## v94.3 - Member Content Hard Layout Fix
+
+- Directly removed Body-Mind Connection primary button styling from Member Home.
+- Replaced Recipe/Exercise custom header with standard HealthyMe compact topbar.
+- Rebuilt search/filter/favourite controls using real Streamlit columns.
+- Removed extra Recipe/Exercise redirect buttons.
+- Retained v94 Storage and v94.1 preview guard logic.
+
+## v94.4 - Content Button Functional Alignment
+
+- Normalized Body-Mind member-home and page buttons to general HealthyMe button style.
+- Kept Recipe/Exercise pages on compact_topbar header.
+- Rebuilt Recipe/Exercise toolbar with functional search, filter and favourites.
+- Added card-level favourite toggles.
+- Retained v94 Supabase Storage and v94.1 image preview guard.

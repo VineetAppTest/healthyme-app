@@ -10,6 +10,23 @@ from components.flash import set_system_message, render_system_message
 st.set_page_config(page_title="Body-Mind Connection", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
+st.markdown("""
+<style>
+/* --- v94.4 Body-Mind page button normalization --- */
+.hm-bodymind-page-actions + div [data-testid="stHorizontalBlock"] button{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.5px solid #CDBB8F!important;
+  border-radius:14px!important;
+  box-shadow:0 4px 12px rgba(25,36,31,.06)!important;
+}
+.hm-bodymind-page-actions + div [data-testid="stHorizontalBlock"] button *{
+  color:#064E3B!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
 body_mind_allowed = bool(wf.get("body_mind_unlocked")) or has_explicit_body_mind_access(user_id)
@@ -124,7 +141,7 @@ with c1:
         save_body_mind_response(user_id, answers, completed=False)
         st.switch_page("pages/02_Member_Home.py")
 with c2:
-    if st.button("Submit Body-Mind Page", type="primary", use_container_width=True):
+    if st.button("Submit Body-Mind Page", type="secondary", use_container_width=True):
         save_body_mind_response(user_id, answers, completed=True)
         set_system_message("Body-Mind page submitted successfully.", "success", celebrate=True)
         st.switch_page("pages/02_Member_Home.py")

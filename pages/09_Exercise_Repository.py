@@ -11,6 +11,7 @@ from components.ui_common import (
     utility_logout_bar,
     render_back_to_top,
     render_page_nav,
+    compact_topbar,
 )
 from components.storage_assets import resolve_content_image_url
 from components.db import get_workflow, get_resource_assignments
@@ -18,6 +19,7 @@ from components.db import get_workflow, get_resource_assignments
 
 st.set_page_config(page_title="Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
+compact_topbar("Exercise Repository", "", "Member content")
 
 DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
 
@@ -158,31 +160,197 @@ def inject_exercise_css():
   .hm-tool-circle{width:2.6rem!important;height:2.6rem!important;font-size:1rem!important;}
 }
 
+
+/* --- v94.3 Exercise Hard Layout Fix --- */
+.hm-module-shell{
+  max-width:1120px;
+  margin:0 auto;
+  padding:.25rem 0 1.5rem 0;
+}
+.hm-module-brand,.hm-module-tabs{
+  display:none!important;
+}
+.hm-tool-circle{
+  width:44px!important;
+  height:44px!important;
+  border-radius:999px!important;
+  background:#FFFDF8!important;
+  border:1px solid #E5D2A9!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#064E3B!important;
+  font-size:1.05rem!important;
+  font-weight:900!important;
+  margin:0 auto!important;
+}
+[data-testid="column"] [data-testid="stTextInput"]{
+  margin-bottom:0!important;
+}
+[data-testid="column"] input{
+  min-height:44px!important;
+  background:#EEF2F7!important;
+  border-radius:10px!important;
+}
+@media(max-width:768px){
+  .hm-tool-circle{width:40px!important;height:40px!important;font-size:.95rem!important;}
+}
+
+
+/* --- v94.4 Exercise Functional Toolbar --- */
+.hm-module-shell{
+  max-width:1120px;
+  margin:0 auto;
+  padding:.2rem 0 1.5rem 0;
+}
+.hm-module-brand,.hm-module-tabs{
+  display:none!important;
+}
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"]{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  gap:.45rem!important;
+  align-items:flex-start!important;
+}
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  width:auto!important;
+}
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2),
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3){
+  flex:0 0 48px!important;
+  min-width:48px!important;
+  width:48px!important;
+}
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] [data-testid="stTextInput"]{
+  margin-bottom:0!important;
+}
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] input{
+  min-height:44px!important;
+  background:#EEF2F7!important;
+  border-radius:10px!important;
+}
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] .stButton > button,
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] button{
+  min-height:44px!important;
+  height:44px!important;
+  width:44px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  background:#FFFDF8!important;
+  border:1px solid #E5D2A9!important;
+  color:#064E3B!important;
+  box-shadow:none!important;
+  font-size:1.05rem!important;
+}
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] .stButton > button *,
+.hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] button *{
+  color:#064E3B!important;
+}
+.hm-filter-panel{
+  background:#FFFDF8;
+  border:1px solid #E5D2A9;
+  border-radius:16px;
+  padding:.8rem .9rem;
+  margin:.5rem 0 .8rem 0;
+}
+.hm-filter-note{
+  color:#64705F;
+  font-size:.86rem;
+  margin:.2rem 0 .4rem 0;
+}
+.hm-card-action-row{
+  margin:-.35rem 0 1rem 0;
+}
+@media(max-width:768px){
+  .hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"]{flex-wrap:nowrap!important;}
+  .hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2),
+  .hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3){
+    flex-basis:42px!important;
+    min-width:42px!important;
+    width:42px!important;
+  }
+  .hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] .stButton > button,
+  .hm-content-toolbar-anchor + div [data-testid="stHorizontalBlock"] button{
+    width:40px!important;
+    height:40px!important;
+    min-height:40px!important;
+  }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
 
+
 def render_landing(df):
     st.markdown("<div class='hm-module-shell'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-module-brand'><div class='hm-logo-text'>Exercise Repository</div></div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='hm-module-tools'>", unsafe_allow_html=True)
-    search = st.text_input("Search exercises", placeholder="Search exercises...", label_visibility="collapsed", key="exercise_search_v93")
-    st.markdown("<div class='hm-tool-circle'>☷</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-tool-circle'>♡</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    if "hm_exercise_filter_open" not in st.session_state:
+        st.session_state["hm_exercise_filter_open"] = False
+    if "hm_exercise_fav_only" not in st.session_state:
+        st.session_state["hm_exercise_fav_only"] = False
+    if "hm_exercise_favorites" not in st.session_state:
+        st.session_state["hm_exercise_favorites"] = set()
 
-    results = df
+    st.markdown("<div class='hm-content-toolbar-anchor'></div>", unsafe_allow_html=True)
+    tool_search_col, tool_filter_col, tool_fav_col = st.columns([12, 1, 1], gap="small")
+    with tool_search_col:
+        search = st.text_input("Search exercises", placeholder="Search exercises...", label_visibility="collapsed", key="exercise_search_v94_4")
+    with tool_filter_col:
+        if st.button("☷", key="exercise_filter_toggle_v94_4", help="Filter exercises"):
+            st.session_state["hm_exercise_filter_open"] = not st.session_state["hm_exercise_filter_open"]
+            st.rerun()
+    with tool_fav_col:
+        fav_label = "♥" if st.session_state["hm_exercise_fav_only"] else "♡"
+        if st.button(fav_label, key="exercise_fav_only_toggle_v94_4", help="Show favourites only"):
+            st.session_state["hm_exercise_fav_only"] = not st.session_state["hm_exercise_fav_only"]
+            st.rerun()
+
+    category_filter = "All"
+    difficulty_filter = "All"
+    if st.session_state["hm_exercise_filter_open"]:
+        st.markdown("<div class='hm-filter-panel'>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-filter-note'>Filter exercises by category or difficulty.</div>", unsafe_allow_html=True)
+        fc1, fc2, fc3 = st.columns([1, 1, .7])
+        category_options = ["All"] + sorted([x for x in df.get("category", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
+        difficulty_options = ["All"] + sorted([x for x in df.get("difficulty", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
+        with fc1:
+            category_filter = st.selectbox("Category", category_options, key="exercise_category_filter_v94_4")
+        with fc2:
+            difficulty_filter = st.selectbox("Difficulty", difficulty_options, key="exercise_difficulty_filter_v94_4")
+        with fc3:
+            if st.button("Clear filters", use_container_width=True, key="exercise_clear_filters_v94_4"):
+                st.session_state["exercise_category_filter_v94_4"] = "All"
+                st.session_state["exercise_difficulty_filter_v94_4"] = "All"
+                st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    results = df.copy()
     if search.strip():
         q = search.strip().lower()
         cols = ["title","description","category","difficulty","goal_tags","condition_tags","instructions","benefits","equipment"]
-        mask = pd.Series(False, index=df.index)
+        mask = pd.Series(False, index=results.index)
         for c in cols:
-            if c in df.columns:
-                mask = mask | df[c].fillna("").astype(str).str.lower().str.contains(q, regex=False)
-        results = df[mask]
+            if c in results.columns:
+                mask = mask | results[c].fillna("").astype(str).str.lower().str.contains(q, regex=False)
+        results = results[mask]
 
-    st.markdown(f"<div class='hm-displaying'>Displaying - {'All' if not search.strip() else esc(search.strip())}</div>", unsafe_allow_html=True)
+    category_filter = st.session_state.get("exercise_category_filter_v94_4", category_filter)
+    difficulty_filter = st.session_state.get("exercise_difficulty_filter_v94_4", difficulty_filter)
+    if category_filter and category_filter != "All" and "category" in results.columns:
+        results = results[results["category"].fillna("").astype(str).eq(category_filter)]
+    if difficulty_filter and difficulty_filter != "All" and "difficulty" in results.columns:
+        results = results[results["difficulty"].fillna("").astype(str).eq(difficulty_filter)]
+
+    favs = set(st.session_state.get("hm_exercise_favorites", set()))
+    if st.session_state["hm_exercise_fav_only"]:
+        results = results[results.index.astype(str).isin(favs)]
+
+    display_label = "Favourites" if st.session_state["hm_exercise_fav_only"] else ("All" if not search.strip() else esc(search.strip()))
+    st.markdown(f"<div class='hm-displaying'>Displaying - {display_label}</div>", unsafe_allow_html=True)
 
     if results.empty:
         st.info("No matching exercises found.")
@@ -195,6 +363,8 @@ def render_landing(df):
                     title = esc(row.get("title", "Untitled Exercise"))
                     duration = esc(first_value(row, ["duration_or_reps"], ""))
                     cal = esc(first_value(row, ["calories"], ""))
+                    eid = str(idx)
+                    fav_mark = "♥" if eid in favs else "♡"
                     st.markdown(f"""
 <div class='hm-content-card'>
   <img src='{esc(img)}'>
@@ -204,16 +374,28 @@ def render_landing(df):
       <span>◷ {duration or "-"}</span>
       <span>•</span>
       <span>🔥 {cal or "-"} cal</span>
-      <span style='margin-left:auto;'>♡</span>
+      <span style='margin-left:auto;'>{fav_mark}</span>
     </div>
   </div>
 </div>
 """, unsafe_allow_html=True)
-                    if st.button("View exercise", key=f"view_exercise_{idx}", use_container_width=True):
-                        st.session_state["hm_exercise_selected_id"] = str(idx)
-                        st.rerun()
+                    st.markdown("<div class='hm-card-action-row'>", unsafe_allow_html=True)
+                    ac1, ac2 = st.columns([3, 1])
+                    with ac1:
+                        if st.button("View exercise", key=f"view_exercise_{idx}", use_container_width=True):
+                            st.session_state["hm_exercise_selected_id"] = eid
+                            st.rerun()
+                    with ac2:
+                        if st.button(fav_mark, key=f"fav_exercise_{idx}", help="Add/remove favourite", use_container_width=True):
+                            favs = set(st.session_state.get("hm_exercise_favorites", set()))
+                            if eid in favs:
+                                favs.remove(eid)
+                            else:
+                                favs.add(eid)
+                            st.session_state["hm_exercise_favorites"] = favs
+                            st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
-
 
 def render_detail(row, idx):
     img = image_for(row, idx)
