@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_1_Full_Report_Button_Status_Fix",
-  "version": "v95_1_full_report_button_status_fix",
-  "updated_on": "2026-06-12T13:08:28.160878+00:00",
+  "build_name": "HealthyMe_v95_2_Final_Report_Top_System_Card_Fix",
+  "version": "v95_2_final_report_top_system_card_fix",
+  "updated_on": "2026-06-12T13:22:06.103112+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Fixed Evaluation Status member action row where Full Report button was disabled and visually different when final report was pending.",
-    "Full Report button is now always clickable from Evaluation Status and navigates to Final Assessment Report page.",
-    "If report is not ready, Final Assessment Report page handles the pending-state message.",
-    "Added action-row CSS to keep Partial Report, Admin Page, Full Report and Daily Logs buttons aligned.",
-    "Retained v95 NSP reassessment instance hardening."
+    "Fixed Final Report top summary card that was hardcoded/showing Digestive Score even when Nervous or another system was the highest NSP system.",
+    "Top summary card now uses the first selected top NSP system from selected_systems.",
+    "Card note changed from NSP system score to Highest NSP system score.",
+    "Retained v95 NSP reassessment hardening and v95.1 Full Report button fix."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -288,10 +287,10 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "full_report_disabled_removed": true,
-    "full_report_clickable": true,
-    "full_report_switch_page": true,
-    "button_css_present": true
+    "helper_present": true,
+    "digestive_score_card_removed": true,
+    "top_card_uses_selected_system": true,
+    "top_card_note_updated": true
   },
   "storage_model": {
     "public_bucket": "healthyme-public-assets",

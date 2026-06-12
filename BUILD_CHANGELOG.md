@@ -999,3 +999,10 @@
 - Button now navigates to Final Assessment Report page, where pending state is handled.
 - Added CSS to keep the four action buttons aligned.
 - Retained v95 NSP reassessment instance hardening.
+
+## v95.2 - Final Report Top System Card Fix
+
+- Fixed top summary card on Final Report.
+- Removed hardcoded Digestive Score card.
+- Card now shows the highest selected NSP system and score, matching Selected top systems preview.
+- Retained v95 NSP reassessment hardening and v95.1 Full Report button fix.

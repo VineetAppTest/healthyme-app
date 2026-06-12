@@ -67,10 +67,22 @@ compact_topbar(
 
 selected_systems, subheaders, findings = summary_preview_rows(db, mid)
 
+
+# v95.2: Top card must reflect highest selected NSP system, not a hardcoded Digestive score.
+_top_nsp_system_name = "Top NSP System"
+_top_nsp_system_score = "-"
+try:
+    if selected_systems:
+        _top_nsp_system_name = str(selected_systems[0].get("system", "Top NSP System") or "Top NSP System")
+        _top_nsp_system_score = selected_systems[0].get("score", "-")
+except Exception:
+    _top_nsp_system_name = "Top NSP System"
+    _top_nsp_system_score = "-"
+
 stat_grid([
     {"label": "NSP1 Used", "value": report_diag.get("nsp1_answer_count", 0), "note": report_diag.get("nsp_source", "source")},
     {"label": "NSP2 Used", "value": report_diag.get("nsp2_answer_count", 0), "note": f"Instance: {report_diag.get('selected_instance_id','') or 'legacy'}"},
-    {"label": "Digestive Score", "value": report_diag.get("digestive_score", 0), "note": "NSP system score"},
+    {"label": _top_nsp_system_name, "value": _top_nsp_system_score, "note": "Highest NSP system score"},
     {"label": "Final Status", "value": "Ready" if final_report_ready else "Draft", "note": "Instance/workflow state"},
 ])
 
