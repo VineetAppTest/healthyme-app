@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_2_Final_Report_Top_System_Card_Fix",
-  "version": "v95_2_final_report_top_system_card_fix",
-  "updated_on": "2026-06-12T13:22:06.103112+00:00",
+  "build_name": "HealthyMe_v95_4_EvalStatus_Micro_Polish",
+  "version": "v95_4_evalstatus_micro_polish",
+  "updated_on": "2026-06-12T13:44:36.536740+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Fixed Final Report top summary card that was hardcoded/showing Digestive Score even when Nervous or another system was the highest NSP system.",
-    "Top summary card now uses the first selected top NSP system from selected_systems.",
-    "Card note changed from NSP system score to Highest NSP system score.",
-    "Retained v95 NSP reassessment hardening and v95.1 Full Report button fix."
+    "Applied a micro-polish pass to the Evaluation Status member action button row.",
+    "Tuned spacing above and below the workflow note and action buttons.",
+    "Aligned button shadow, radius, spacing, and visual weight closer to the HealthyMe standard template while preserving existing behavior."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"

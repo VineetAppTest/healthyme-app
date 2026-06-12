@@ -1006,3 +1006,16 @@
 - Removed hardcoded Digestive Score card.
 - Card now shows the highest selected NSP system and score, matching Selected top systems preview.
 - Retained v95 NSP reassessment hardening and v95.1 Full Report button fix.
+
+## v95.3 - Evaluation Status Button Normalization
+
+- Fixed the four action buttons on Evaluation Status so they render with the same height and equal-width column behavior.
+- Aligned button radius, padding, and primary styling to the HealthyMe standard template.
+- Retained v95.2 Final Report top system card fix.
+
+## v95.4 - Evaluation Status Micro-Polish
+
+- Added a micro-polish pass to the Evaluation Status member action block.
+- Refined vertical spacing around the workflow note and button row.
+- Normalized the action-button shadow and visual weight to better match the HealthyMe standard template.
+- Retained all existing v95.3 and v95.2 behavior and fixes.

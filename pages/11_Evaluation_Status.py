@@ -9,27 +9,53 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 
 st.markdown("""
 <style>
-/* --- v95.1 Evaluation Status action button alignment --- */
-.hm-v15-action-emphasis [data-testid="stHorizontalBlock"]{
+/* --- v95.4 Evaluation Status micro-polish --- */
+/* Keep the four member action buttons visually identical and aligned to HealthyMe standard. */
+div[data-testid="stButton"] > button{
+  border-radius:14px!important;
+}
+/* Normalize and polish the workflow action row on this page. */
+.hm-v95-4-workflow-note{
+  margin:0.25rem 0 0.8rem 0!important;
+}
+.hm-v95-4-workflow-note + div [data-testid="stHorizontalBlock"]{
+  align-items:stretch!important;
+  gap:0.85rem!important;
+  margin:0.05rem 0 0.35rem 0!important;
+}
+.hm-v95-4-workflow-note + div [data-testid="column"]{
   display:flex!important;
   align-items:stretch!important;
-  gap:1rem!important;
 }
-.hm-v15-action-emphasis [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
-  flex:1 1 0!important;
-  min-width:0!important;
-}
-.hm-v15-action-emphasis div[data-testid="stButton"] > button{
+.hm-v95-4-workflow-note + div [data-testid="column"] > div{
   width:100%!important;
-  min-height:44px!important;
-  height:44px!important;
-  border-radius:14px!important;
+}
+.hm-v95-4-workflow-note + div div[data-testid="stButton"]{
+  width:100%!important;
+}
+.hm-v95-4-workflow-note + div div[data-testid="stButton"] > button{
+  width:100%!important;
+  min-height:52px!important;
+  height:52px!important;
+  padding:0 1rem!important;
+  border-radius:16px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
-  padding:0 .9rem!important;
-  line-height:1!important;
   white-space:nowrap!important;
+  line-height:1.1!important;
+  font-weight:900!important;
+  letter-spacing:0.01em!important;
+  box-sizing:border-box!important;
+  box-shadow:0 10px 20px rgba(6, 78, 59, 0.12)!important;
+}
+.hm-v95-4-workflow-note + div div[data-testid="stButton"] > button[kind="primary"]{
+  background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
+  color:#FFFFFF!important;
+  border:1px solid #064E3B!important;
+}
+.hm-v95-4-workflow-note + div div[data-testid="stButton"] > button[kind="primary"] *{
+  color:#FFFFFF!important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -223,12 +249,11 @@ else:
             )
 
             st.markdown(
-                "<div class='eval-section-note'>Use the buttons below to continue work for this selected member.</div>",
+                "<div class='eval-section-note hm-v95-4-workflow-note'>Use the buttons below to continue work for this selected member.</div>",
                 unsafe_allow_html=True
             )
 
-            st.markdown("<div class='hm-v15-action-emphasis'>", unsafe_allow_html=True)
-            b1, b2, b3, b4 = st.columns(4)
+            b1, b2, b3, b4 = st.columns([1, 1, 1, 1], gap="small")
             with b1:
                 if st.button("Partial Report", key=f"pr_{member['id']}", type="primary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]
@@ -249,7 +274,6 @@ else:
                     st.session_state["selected_member_id"] = member["id"]
                     st.session_state["selected_daily_log_member_id"] = member["id"]
                     st.switch_page("pages/22_Admin_Daily_Log_Report.py")
-            st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
