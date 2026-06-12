@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_6_EvalStatus_Fixed_Action_Grid",
-  "version": "v95_6_evalstatus_fixed_action_grid",
-  "updated_on": "2026-06-12T14:05:02.765761+00:00",
+  "build_name": "HealthyMe_v95_7_Admin_Version_Button_Template_Fix",
+  "version": "v95_7_admin_version_button_template_fix",
+  "updated_on": "2026-06-12T14:14:35.231370+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Replaced prior wrapper/column button styling with a fixed CSS grid for the Evaluation Status opened-member action row.",
-    "Partial Report, Admin Page, Full Report and Daily Logs are now forced into four equal-width grid columns.",
-    "All four action buttons receive identical width, height, radius, padding and visual styling.",
-    "Mobile falls back to a 2x2 grid for usability.",
-    "Retained v95.5 member row fix and all prior v95 fixes."
+    "Added visible Admin Build version marker on Admin Dashboard and Evaluation Status for deployment verification.",
+    "Changed Evaluation Status member action buttons from dark primary styling to the general HealthyMe outlined button template.",
+    "Kept fixed 4-column equal action grid for Partial Report, Admin Page, Full Report and Daily Logs.",
+    "Normalized width, height, radius, padding, border and text color using page-scoped v95.7 CSS.",
+    "Retained v95.6 fixed action grid and all prior v95 reassessment/final-report fixes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -288,13 +288,16 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "fixed_grid_css_present": true,
-    "grid_columns_repeat_4": true,
+    "version_function_exists": true,
+    "eval_imports_admin_version": true,
+    "eval_calls_admin_version": true,
+    "dashboard_calls_admin_version": true,
+    "v95_7_css_present": true,
+    "fixed_grid_present": true,
     "action_anchor_present": true,
     "member_anchor_present": true,
-    "old_v95_5_action_anchor_removed": true,
-    "standard_columns_used": true,
-    "explicit_member_markers": true
+    "secondary_buttons_present": true,
+    "old_v95_6_anchor_removed": true
   },
   "storage_model": {
     "public_bucket": "healthyme-public-assets",

@@ -3028,8 +3028,8 @@ def build_marker_v9():
     st.markdown("<div class='hm-build-marker'>✅ Build v9 active · Compact tooltip layout loaded</div>", unsafe_allow_html=True)
 
 
-APP_BUILD_VERSION = "v95.6"
-APP_BUILD_LABEL = "Eval Status Fixed Action Grid"
+APP_BUILD_VERSION = "v95.7"
+APP_BUILD_LABEL = "Admin Version + Button Template Fix"
 
 def render_build_text_v11():
     """Small non-intrusive build text. Not a visual tag."""
@@ -7733,3 +7733,35 @@ def render_build_text_v95_5(): return None
 
 
 def render_build_text_v95_6(): return None
+
+
+def render_admin_build_version(location="top"):
+    """Visible admin-side build/version marker for deployment verification."""
+    try:
+        st.markdown(
+            f"""
+            <div style="
+                display:inline-flex;
+                align-items:center;
+                gap:.4rem;
+                padding:.28rem .7rem;
+                margin:.25rem 0 .65rem 0;
+                border-radius:999px;
+                border:1px solid #E5D2A9;
+                background:#FFFDF8;
+                color:#064E3B;
+                font-size:.78rem;
+                font-weight:800;
+                box-shadow:0 4px 12px rgba(25,36,31,.045);
+            ">
+                Admin Build · {APP_BUILD_VERSION} · {APP_BUILD_LABEL}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    except Exception:
+        pass
+
+
+
+def render_build_text_v95_7(): return None

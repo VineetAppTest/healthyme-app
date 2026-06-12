@@ -1034,3 +1034,10 @@
 - Forced Partial Report, Admin Page, Full Report and Daily Logs into equal-width grid cells.
 - Normalized action-button height, width, radius, padding and visual styling.
 - Retained v95.5 member row fix and all prior v95 fixes.
+
+## v95.7 - Admin Version + Button Template Fix
+
+- Added visible Admin Build version marker on Admin Dashboard and Evaluation Status.
+- Changed Evaluation Status action buttons to the general HealthyMe outlined button style.
+- Preserved fixed 4-column layout for Partial Report, Admin Page, Full Report and Daily Logs.
+- Retained v95.6 fixed action grid and all earlier v95 fixes.

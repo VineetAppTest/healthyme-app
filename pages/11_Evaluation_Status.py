@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, stat_grid, render_page_nav, render_build_text_v15, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, stat_grid, render_page_nav, render_build_text_v15, render_back_to_top, render_admin_build_version
 from components.db import list_members
 
 st.set_page_config(page_title="Eval Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -9,10 +9,10 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 
 st.markdown("""
 <style>
-/* --- v95.6 Evaluation Status fixed action grid --- */
+/* --- v95.7 Admin Evaluation Status button template fix --- */
 
 /* Member toggle rows */
-.hm-v95-6-member-list-anchor ~ div div[data-testid="stButton"] > button{
+.hm-v95-7-member-list-anchor ~ div div[data-testid="stButton"] > button{
   background:#FFFFFF!important;
   color:#064E3B!important;
   border:1.4px solid #CDBB8F!important;
@@ -27,38 +27,38 @@ st.markdown("""
   box-shadow:0 4px 12px rgba(25,36,31,.055)!important;
   line-height:1.1!important;
 }
-.hm-v95-6-member-list-anchor ~ div div[data-testid="stButton"] > button *{
+.hm-v95-7-member-list-anchor ~ div div[data-testid="stButton"] > button *{
   color:#064E3B!important;
   line-height:1.1!important;
 }
 
-/* The opened-member action row is now forced into a fixed 4-column grid. */
-.hm-v95-6-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
+/* Opened-member action row: fixed equal 4-column grid */
+.hm-v95-7-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
   display:grid!important;
   grid-template-columns:repeat(4, minmax(0, 1fr))!important;
   gap:1rem!important;
   align-items:stretch!important;
   width:100%!important;
-  margin:.2rem 0 .45rem 0!important;
+  margin:.35rem 0 .55rem 0!important;
 }
-.hm-v95-6-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+.hm-v95-7-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
   width:100%!important;
   min-width:0!important;
   max-width:none!important;
   flex:unset!important;
   display:block!important;
 }
-.hm-v95-6-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
-.hm-v95-6-action-grid-anchor + div div[data-testid="stButton"]{
+.hm-v95-7-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
+.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"]{
   width:100%!important;
 }
-.hm-v95-6-action-grid-anchor + div div[data-testid="stButton"] > button{
+.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button{
   width:100%!important;
   min-width:100%!important;
   max-width:100%!important;
-  min-height:48px!important;
-  height:48px!important;
-  max-height:48px!important;
+  min-height:46px!important;
+  height:46px!important;
+  max-height:46px!important;
   padding:0 1rem!important;
   border-radius:14px!important;
   display:flex!important;
@@ -68,24 +68,34 @@ st.markdown("""
   line-height:1.1!important;
   font-weight:850!important;
   box-sizing:border-box!important;
-  background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
-  color:#FFFFFF!important;
-  border:1px solid #064E3B!important;
-  box-shadow:0 8px 18px rgba(6,78,59,.13)!important;
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.4px solid #CDBB8F!important;
+  box-shadow:0 4px 12px rgba(25,36,31,.06)!important;
 }
-.hm-v95-6-action-grid-anchor + div div[data-testid="stButton"] > button *{
-  color:#FFFFFF!important;
+
+/* Override primary kind so these admin action buttons follow the general HealthyMe outline template */
+.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button[kind="primary"],
+.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button[data-testid="baseButton-primary"]{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.4px solid #CDBB8F!important;
+}
+.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button *,
+.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button[kind="primary"] *,
+.hm-v95-7-action-grid-anchor + div div[data-testid="stButton"] > button[data-testid="baseButton-primary"] *{
+  color:#064E3B!important;
   line-height:1.1!important;
 }
 
-.hm-v95-6-instruction{
+.hm-v95-7-instruction{
   color:#102A43;
   font-size:.96rem;
   margin:.15rem 0 .65rem 0;
 }
 
 @media(max-width:768px){
-  .hm-v95-6-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
+  .hm-v95-7-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
     grid-template-columns:1fr 1fr!important;
     gap:.65rem!important;
   }
@@ -95,7 +105,9 @@ st.markdown("""
 
 
 
+
 render_build_text_v15()
+render_admin_build_version()
 
 rows = list_members()
 
@@ -282,29 +294,29 @@ else:
             )
 
             st.markdown(
-                "<div class='eval-section-note hm-v95-6-instruction'>Use the buttons below to continue work for this selected member.</div>",
+                "<div class='eval-section-note hm-v95-7-instruction'>Use the buttons below to continue work for this selected member.</div>",
                 unsafe_allow_html=True
             )
 
-            st.markdown("<div class='hm-v95-6-action-grid-anchor'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='hm-v95-7-action-grid-anchor'></div>", unsafe_allow_html=True)
             b1, b2, b3, b4 = st.columns(4)
             with b1:
-                if st.button("Partial Report", key=f"pr_{member['id']}", type="primary", use_container_width=True):
+                if st.button("Partial Report", key=f"pr_{member['id']}", type="secondary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]
                     st.switch_page("pages/12_Partial_Assessment_Report.py")
             with b2:
-                if st.button("Admin Page", key=f"ap_{member['id']}", type="primary", use_container_width=True):
+                if st.button("Admin Page", key=f"ap_{member['id']}", type="secondary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]
                     st.switch_page("pages/13_Admin_Assessment_Form.py")
             with b3:
                 # v95.1: Keep Full Report button clickable and visually consistent.
                 # If the report is not ready, the Final Report page will show the proper pending message.
-                if st.button("Full Report", help="Open final assessment report", key=f"fr_{member['id']}", type="primary", use_container_width=True):
+                if st.button("Full Report", help="Open final assessment report", key=f"fr_{member['id']}", type="secondary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]
                     st.switch_page("pages/14_Final_Assessment_Report.py")
 
             with b4:
-                if st.button("Daily Logs", key=f"dl_{member['id']}", type="primary", use_container_width=True):
+                if st.button("Daily Logs", key=f"dl_{member['id']}", type="secondary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]
                     st.session_state["selected_daily_log_member_id"] = member["id"]
                     st.switch_page("pages/22_Admin_Daily_Log_Report.py")
