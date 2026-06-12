@@ -976,3 +976,10 @@
 - Aligned Recipe and Exercise card action buttons to same height.
 - Kept the View button wide and the favourite button compact/square.
 - Retained v94 Storage, v94.1 preview guard and v94.4 functional filter/favourite logic.
+
+## v94.6 - Page-Level Button Normalization
+
+- Applied page-level Recipe/Exercise button normalization because wrapper-scoped CSS was not affecting Streamlit's rendered button structure.
+- Forced View and favourite buttons to the same height.
+- Kept View button wide and favourite button compact/proportional.
+- Retained v94 Storage, v94.1 preview guard and v94.4 functional search/filter/favourite logic.

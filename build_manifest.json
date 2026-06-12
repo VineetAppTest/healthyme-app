@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v94_5_Card_Action_Button_Proportion_Fix",
-  "version": "v94_5_card_action_button_proportion_fix",
-  "updated_on": "2026-06-12T12:19:47.546435+00:00",
+  "build_name": "HealthyMe_v94_6_Page_Level_Button_Normalization",
+  "version": "v94_6_page_level_button_normalization",
+  "updated_on": "2026-06-12T12:28:23.900398+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Aligned Recipe and Exercise card action buttons to same height.",
-    "Kept View recipe/exercise as wide button and favourite as compact proportional button.",
-    "Updated card action column ratio to 5:1 with small gap.",
-    "Added card-action scoped CSS so button height, border radius and visual schema remain consistent.",
-    "Retained v94 Supabase Storage hybrid upload, v94.1 preview guard and v94.4 functional filter/favourite logic."
+    "Applied page-level button normalization on Recipe and Exercise member pages so Streamlit wrapper differences cannot bypass card action styling.",
+    "Forced View and favourite buttons to same height.",
+    "Kept View button wide and heart button compact through 5:1 columns and fixed heart column width.",
+    "Set View and favourite buttons to secondary button type for consistent HealthyMe schema.",
+    "Retained v94 Supabase Storage hybrid upload, v94.1 preview guard and v94.4 functional toolbar logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -288,12 +288,16 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "recipe_v94_5_css": true,
-    "exercise_v94_5_css": true,
-    "recipe_columns_ratio_updated": true,
-    "exercise_columns_ratio_updated": true,
-    "recipe_button_height_fixed": true,
-    "exercise_button_height_fixed": true
+    "recipe_v94_6_css": true,
+    "exercise_v94_6_css": true,
+    "recipe_page_level_button_height": true,
+    "exercise_page_level_button_height": true,
+    "recipe_action_ratio": true,
+    "exercise_action_ratio": true,
+    "recipe_view_secondary": true,
+    "exercise_view_secondary": true,
+    "recipe_fav_secondary": true,
+    "exercise_fav_secondary": true
   },
   "storage_model": {
     "public_bucket": "healthyme-public-assets",

@@ -354,6 +354,89 @@ def inject_exercise_css():
   }
 }
 
+
+/* --- v94.6 Exercise Page-Level Button Normalization --- */
+
+/* Normalise all module buttons first; this is intentionally page-level because
+   Streamlit wraps buttons unpredictably inside column containers. */
+div[data-testid="stButton"] > button{
+  min-height:44px!important;
+  height:44px!important;
+  max-height:44px!important;
+  border-radius:14px!important;
+  border:1.3px solid #CDBB8F!important;
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  box-shadow:0 3px 10px rgba(25,36,31,.045)!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+  padding:0 .9rem!important;
+  font-weight:500!important;
+  white-space:nowrap!important;
+}
+div[data-testid="stButton"] > button *{
+  color:#064E3B!important;
+  line-height:1!important;
+}
+
+/* Card action rows: the code gives View button a 5-column width and heart a
+   1-column width; this locks both to the same height while keeping the heart compact. */
+.hm-card-action-row + div div[data-testid="stHorizontalBlock"]{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:stretch!important;
+  gap:.55rem!important;
+}
+.hm-card-action-row + div div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child{
+  flex:1 1 auto!important;
+  min-width:0!important;
+}
+.hm-card-action-row + div div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2){
+  flex:0 0 64px!important;
+  width:64px!important;
+  min-width:64px!important;
+  max-width:64px!important;
+}
+.hm-card-action-row + div div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) div[data-testid="stButton"] > button{
+  width:64px!important;
+  min-width:64px!important;
+  max-width:64px!important;
+  padding:0!important;
+}
+
+/* Toolbar buttons remain compact circular despite page-level button normalisation. */
+.hm-content-toolbar-anchor + div div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) div[data-testid="stButton"] > button,
+.hm-content-toolbar-anchor + div div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3) div[data-testid="stButton"] > button{
+  width:44px!important;
+  min-width:44px!important;
+  max-width:44px!important;
+  border-radius:999px!important;
+  padding:0!important;
+}
+
+/* Mobile proportion */
+@media(max-width:768px){
+  div[data-testid="stButton"] > button{
+    min-height:42px!important;
+    height:42px!important;
+    max-height:42px!important;
+    border-radius:13px!important;
+  }
+  .hm-card-action-row + div div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2){
+    flex-basis:52px!important;
+    width:52px!important;
+    min-width:52px!important;
+    max-width:52px!important;
+  }
+  .hm-card-action-row + div div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) div[data-testid="stButton"] > button{
+    width:52px!important;
+    min-width:52px!important;
+    max-width:52px!important;
+  }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -456,11 +539,11 @@ def render_landing(df):
                     st.markdown("<div class='hm-card-action-row'>", unsafe_allow_html=True)
                     ac1, ac2 = st.columns([5, 1], gap="small")
                     with ac1:
-                        if st.button("View exercise", key=f"view_exercise_{idx}", use_container_width=True):
+                        if st.button("View exercise", key=f"view_exercise_{idx}", type="secondary", use_container_width=True):
                             st.session_state["hm_exercise_selected_id"] = eid
                             st.rerun()
                     with ac2:
-                        if st.button(fav_mark, key=f"fav_exercise_{idx}", help="Add/remove favourite", use_container_width=True):
+                        if st.button(fav_mark, key=f"fav_exercise_{idx}", help="Add/remove favourite", type="secondary", use_container_width=True):
                             favs = set(st.session_state.get("hm_exercise_favorites", set()))
                             if eid in favs:
                                 favs.remove(eid)
