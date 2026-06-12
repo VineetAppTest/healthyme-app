@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_9_EvalStatus_Nav_Button_Normalization",
-  "version": "v95.9",
-  "updated_on": "2026-06-12T14:35:52.810989Z",
+  "build_name": "HealthyMe_v95_12_EvalStatus_Final_Micro_Polish",
+  "version": "v95.12",
+  "updated_on": "2026-06-12T18:33:17.791511+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,9 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed the separate admin version pill and placed the admin version inline beside HealthyMe in admin headers.",
-    "Corrected the displayed admin build version to v95.8.",
-    "Strengthened Evaluation Status action-button sizing so Partial Report, Admin Page, Full Report and Daily Logs share the same fixed height and proportions."
+    "Final micro-polish pass limited to pages/11_Evaluation_Status.py.",
+    "Tightened Evaluation Status nav, hero, member list, status cards and action row spacing.",
+    "Kept Full Report button height locked to the same height as the other three action buttons.",
+    "Kept version inline beside HealthyMe as v95.12.",
+    "No reassessment, report, storage, Recipe or Exercise logic changed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"

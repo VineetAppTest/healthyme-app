@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, stat_grid, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, stat_grid, render_page_nav, render_back_to_top
 from components.db import list_members
 
 st.set_page_config(page_title="Eval Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -9,116 +9,179 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 
 st.markdown("""
 <style>
-/* --- v95.9 EvalStatus whitespace + button normalization fix --- */
-.hm-v95-9-inline-version{margin-left:.5rem;color:#6B7280;font-size:.72rem;font-weight:700;vertical-align:middle;}
-.hm-v95-9-instruction{color:#102A43;font-size:.96rem;margin:.2rem 0 .7rem 0;}
+/* --- v95.12 Evaluation Status final micro-polish --- */
 
-.hm-v95-9-top-nav-anchor ~ div[data-testid="stHorizontalBlock"],
-.hm-v95-9-bottom-nav-anchor ~ div[data-testid="stHorizontalBlock"]{
-  gap:1rem!important;
-  align-items:stretch!important;
-  margin:.1rem 0 .65rem 0!important;
+/* Tighten only this page without touching other admin pages */
+.block-container{
+  padding-top:.55rem!important;
 }
-.hm-v95-9-top-nav-anchor ~ div[data-testid="stHorizontalBlock"] > div[data-testid="column"],
-.hm-v95-9-bottom-nav-anchor ~ div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
-  flex:1 1 0!important;
-  width:100%!important;
-  min-width:0!important;
-  max-width:none!important;
+
+/* Inline version beside HealthyMe */
+.hm-v95-12-inline-version{
+  margin-left:.5rem;
+  color:#6B7280;
+  font-size:.72rem;
+  font-weight:700;
+  vertical-align:middle;
 }
-.hm-v95-9-top-nav-anchor ~ div[data-testid="stHorizontalBlock"] div[data-testid="stPageLink"] a,
-.hm-v95-9-bottom-nav-anchor ~ div[data-testid="stHorizontalBlock"] div[data-testid="stPageLink"] a{
+
+/* Top/bottom page nav on Evaluation Status */
+.hm-native-nav-shell{
+  margin:.18rem 0 .62rem 0!important;
+  padding:.42rem .52rem!important;
+  border-radius:16px!important;
+  box-shadow:0 5px 14px rgba(25,36,31,.04)!important;
+}
+.hm-native-nav-shell div[data-testid="stPageLink"] a{
   min-height:42px!important;
   height:42px!important;
-  border:1.4px solid #CDBB8F!important;
   border-radius:14px!important;
-  background:#FFFFFF!important;
-  color:#064E3B!important;
-  font-weight:900!important;
-  box-shadow:0 4px 12px rgba(25,36,31,.06)!important;
+  display:flex!important;
+  align-items:center!important;
   justify-content:center!important;
-}
-.hm-v95-9-top-nav-anchor ~ div[data-testid="stHorizontalBlock"] div[data-testid="stPageLink"] a *,
-.hm-v95-9-bottom-nav-anchor ~ div[data-testid="stHorizontalBlock"] div[data-testid="stPageLink"] a *{
-  color:#064E3B!important;
   font-weight:900!important;
 }
 
-.hm-v95-9-member-list-anchor ~ div div[data-testid="stButton"] > button{
+/* Hero/card spacing */
+.hero-shell{
+  margin:.4rem 0 1rem 0!important;
+  padding:1.15rem 1.25rem!important;
+}
+.hero-title{
+  line-height:1.08!important;
+}
+.hero-subtitle{
+  margin-top:.25rem!important;
+}
+
+/* Search/filter panel */
+.member-filter-panel{
+  margin:.85rem 0 .65rem 0!important;
+  padding:.95rem 1rem!important;
+  border-radius:18px!important;
+}
+
+/* Member list instruction */
+.hm-v95-12-member-row-note{
+  color:#102A43;
+  font-size:.96rem;
+  margin:.2rem 0 .72rem 0;
+}
+
+/* Member toggle rows */
+.hm-v95-12-member-list-anchor ~ div div[data-testid="stButton"] > button{
   background:#FFFFFF!important;
   color:#064E3B!important;
-  border:1.4px solid #CDBB8F!important;
+  border:1.35px solid #CDBB8F!important;
   border-radius:14px!important;
-  min-height:44px!important;
-  height:44px!important;
+  min-height:43px!important;
+  height:43px!important;
   padding:0 1rem!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
   font-weight:850!important;
-  box-shadow:0 4px 12px rgba(25,36,31,.055)!important;
+  box-shadow:0 4px 12px rgba(25,36,31,.05)!important;
   line-height:1.05!important;
 }
-.hm-v95-9-member-list-anchor ~ div div[data-testid="stButton"] > button *{
+.hm-v95-12-member-list-anchor ~ div div[data-testid="stButton"] > button *{
   color:#064E3B!important;
   line-height:1.05!important;
 }
 
-.hm-v95-9-action-grid-anchor ~ div[data-testid="stHorizontalBlock"]{
+/* Open member detail panel */
+.member-detail-panel{
+  margin:.75rem 0 1.15rem 0!important;
+  padding:1rem 1.05rem 1.1rem 1.05rem!important;
+  border-radius:18px!important;
+}
+.member-row-header{
+  margin-bottom:.65rem!important;
+}
+.eval-status-grid{
+  gap:.65rem!important;
+  margin:.55rem 0 .75rem 0!important;
+}
+.eval-status-card{
+  min-height:74px!important;
+  padding:.78rem .9rem!important;
+  border-radius:16px!important;
+}
+.eval-section-note{
+  margin:.55rem 0 .65rem 0!important;
+}
+
+/* Final action grid: locked and scoped only to the opened-member button row */
+.hm-v95-12-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
   display:grid!important;
   grid-template-columns:repeat(4,minmax(0,1fr))!important;
-  gap:1rem!important;
+  gap:.9rem!important;
   align-items:stretch!important;
   width:100%!important;
-  margin:.35rem 0 .55rem 0!important;
+  margin:.25rem 0 .5rem 0!important;
 }
-.hm-v95-9-action-grid-anchor ~ div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+.hm-v95-12-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
   width:100%!important;
   min-width:0!important;
   max-width:none!important;
   flex:unset!important;
   display:block!important;
-  align-self:stretch!important;
 }
-.hm-v95-9-action-grid-anchor ~ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
-.hm-v95-9-action-grid-anchor ~ div div[data-testid="stButton"]{
+.hm-v95-12-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
+.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"]{
   width:100%!important;
+  min-height:44px!important;
+  height:44px!important;
+  max-height:44px!important;
 }
-.hm-v95-9-action-grid-anchor ~ div div[data-testid="stButton"] > button,
-.hm-v95-9-action-grid-anchor ~ div div[data-testid="stButton"] > button[kind="secondary"],
-.hm-v95-9-action-grid-anchor ~ div div[data-testid="stButton"] > button[data-testid="baseButton-secondary"]{
+.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button{
+  appearance:none!important;
+  -webkit-appearance:none!important;
   width:100%!important;
   min-width:100%!important;
   max-width:100%!important;
-  min-height:42px!important;
-  height:42px!important;
-  max-height:42px!important;
+  min-height:44px!important;
+  height:44px!important;
+  max-height:44px!important;
   padding:0 1rem!important;
   margin:0!important;
   border-radius:14px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
+  align-self:stretch!important;
   white-space:nowrap!important;
+  overflow:hidden!important;
   line-height:1!important;
+  font-size:1rem!important;
   font-weight:850!important;
   box-sizing:border-box!important;
-  background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
-  color:#FFFFFF!important;
-  border:1px solid #064E3B!important;
-  box-shadow:0 6px 14px rgba(6,78,59,.12)!important;
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.35px solid #CDBB8F!important;
+  box-shadow:0 4px 12px rgba(25,36,31,.055)!important;
 }
-.hm-v95-9-action-grid-anchor ~ div div[data-testid="stButton"] > button > div{
-  width:100%!important;height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;margin:0!important;
-}
-.hm-v95-9-action-grid-anchor ~ div div[data-testid="stButton"] > button p,
-.hm-v95-9-action-grid-anchor ~ div div[data-testid="stButton"] > button span,
-.hm-v95-9-action-grid-anchor ~ div div[data-testid="stButton"] > button *{
-  margin:0!important;padding:0!important;line-height:1!important;font-weight:850!important;color:#FFFFFF!important;
+.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button > div,
+.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button > div > p,
+.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button p,
+.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button span,
+.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button *{
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+  font-size:1rem!important;
+  font-weight:850!important;
+  color:inherit!important;
 }
 
 @media(max-width:768px){
-  .hm-v95-9-action-grid-anchor ~ div[data-testid="stHorizontalBlock"]{grid-template-columns:1fr 1fr!important;gap:.65rem!important;}
+  .hm-v95-12-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
+    grid-template-columns:1fr 1fr!important;
+    gap:.65rem!important;
+  }
+  .hero-shell{
+    padding:1rem!important;
+  }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -127,20 +190,14 @@ st.markdown("""
 
 rows = list_members()
 
-st.markdown("<div class='hm-v95-9-top-nav-anchor'></div>", unsafe_allow_html=True)
-nav_top_left, nav_top_right = st.columns(2)
-with nav_top_left:
-    st.page_link("pages/10_Admin_Dashboard.py", label="Back", icon=":material/arrow_back:", use_container_width=True)
-with nav_top_right:
-    st.page_link("pages/10_Admin_Dashboard.py", label="Dashboard", icon=":material/dashboard:", use_container_width=True)
-
+render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 
 st.markdown(
     """
     <div class='hero-shell'>
       <div class='hm-v77-brand-row'>
         <span class='hm-v77-brand'>HealthyMe</span>
-        <span class='hm-v95-9-inline-version'>v95.9 · Eval Status Nav + Button Normalization</span>
+        <span class='hm-v95-12-inline-version'>v95.12 · Evaluation Status Final Micro-Polish</span>
       </div>
       <div class='hero-kicker'>Review workflow</div>
       <div class='hero-title'>Evaluation Status of All Members</div>
@@ -327,11 +384,11 @@ else:
             )
 
             st.markdown(
-                "<div class='eval-section-note hm-v95-9-instruction'>Use the buttons below to continue work for this selected member.</div>",
+                "<div class='eval-section-note hm-v95-12-member-row-note'>Use the buttons below to continue work for this selected member.</div>",
                 unsafe_allow_html=True
             )
 
-            st.markdown("<div class='hm-v95-9-action-grid-anchor'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='hm-v95-12-action-grid-anchor'></div>", unsafe_allow_html=True)
             b1, b2, b3, b4 = st.columns(4)
             with b1:
                 if st.button("Partial Report", key=f"pr_{member['id']}", type="secondary", use_container_width=True):
@@ -354,9 +411,4 @@ else:
                     st.session_state["selected_daily_log_member_id"] = member["id"]
                     st.switch_page("pages/22_Admin_Daily_Log_Report.py")
 
-st.markdown("<div class='hm-v95-9-bottom-nav-anchor'></div>", unsafe_allow_html=True)
-nav_bottom_left, nav_bottom_right = st.columns(2)
-with nav_bottom_left:
-    st.page_link("pages/10_Admin_Dashboard.py", label="Back", icon=":material/arrow_back:", use_container_width=True)
-with nav_bottom_right:
-    st.page_link("pages/10_Admin_Dashboard.py", label="Dashboard", icon=":material/dashboard:", use_container_width=True)
+render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")

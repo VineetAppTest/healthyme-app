@@ -1047,3 +1047,24 @@
 - Corrected the admin build version display to v95.8.
 - Removed the separate version pill and placed the version inline beside HealthyMe on admin headers.
 - Normalized the Evaluation Status action buttons so Full Report matches the other buttons in height and proportions.
+
+## v95.10 - Eval Status Nav Row Revert Fix
+
+- Fixed the broken Back/Dashboard overlap introduced in v95.9.
+- Restored Evaluation Status top and bottom nav to stable render_page_nav.
+- Removed overly broad CSS sibling selectors affecting unrelated rows.
+- Kept action buttons scoped to the opened-member action grid.
+
+## v95.11 - Full Report Button Height Hard Fix
+
+- Hard-normalized Partial Report, Admin Page, Full Report, and Daily Logs to the same height.
+- Added stricter action-row-only CSS to prevent Full Report from rendering taller.
+- Retained the v95.10 safe navigation-row fix.
+
+## v95.12 - Evaluation Status Final Micro-Polish
+
+- Final polish pass limited to Evaluation Status page only.
+- Refined top/bottom nav spacing, hero spacing, member row spacing, member status cards and action row rhythm.
+- Kept action buttons locked to the same height, including Full Report.
+- Updated inline admin version label to v95.12.
+- No logic changes.
