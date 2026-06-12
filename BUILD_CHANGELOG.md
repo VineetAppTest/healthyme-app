@@ -1068,3 +1068,10 @@
 - Kept action buttons locked to the same height, including Full Report.
 - Updated inline admin version label to v95.12.
 - No logic changes.
+
+## v95.13 - Full Report Button DOM Normalization
+
+- Removed the `help="Open final assessment report"` parameter from the Full Report button.
+- This makes Full Report render with the same Streamlit button structure as the other three action buttons.
+- Added a scoped action-row hardener for child/pseudo-element height consistency.
+- No logic changes.

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_12_EvalStatus_Final_Micro_Polish",
-  "version": "v95.12",
-  "updated_on": "2026-06-12T18:33:17.791511+00:00",
+  "build_name": "HealthyMe_v95_13_Full_Report_Button_DOM_Normalization",
+  "version": "v95.13",
+  "updated_on": "2026-06-12T18:58:54.378555+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Final micro-polish pass limited to pages/11_Evaluation_Status.py.",
-    "Tightened Evaluation Status nav, hero, member list, status cards and action row spacing.",
-    "Kept Full Report button height locked to the same height as the other three action buttons.",
-    "Kept version inline beside HealthyMe as v95.12.",
+    "Removed the help/tooltip parameter from the Full Report action button.",
+    "Full Report button now uses the same st.button signature as Partial Report, Admin Page and Daily Logs.",
+    "Added scoped hardener to prevent pseudo-element/child DOM from changing action button height.",
+    "Kept Evaluation Status v95.12 final micro-polish intact.",
     "No reassessment, report, storage, Recipe or Exercise logic changed."
   ],
   "required_setup": [

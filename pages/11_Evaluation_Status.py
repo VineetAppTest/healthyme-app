@@ -9,7 +9,7 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 
 st.markdown("""
 <style>
-/* --- v95.12 Evaluation Status final micro-polish --- */
+/* --- v95.13 Full Report button DOM normalization --- */
 
 /* Tighten only this page without touching other admin pages */
 .block-container{
@@ -17,7 +17,7 @@ st.markdown("""
 }
 
 /* Inline version beside HealthyMe */
-.hm-v95-12-inline-version{
+.hm-v95-13-inline-version{
   margin-left:.5rem;
   color:#6B7280;
   font-size:.72rem;
@@ -62,14 +62,14 @@ st.markdown("""
 }
 
 /* Member list instruction */
-.hm-v95-12-member-row-note{
+.hm-v95-13-member-row-note{
   color:#102A43;
   font-size:.96rem;
   margin:.2rem 0 .72rem 0;
 }
 
 /* Member toggle rows */
-.hm-v95-12-member-list-anchor ~ div div[data-testid="stButton"] > button{
+.hm-v95-13-member-list-anchor ~ div div[data-testid="stButton"] > button{
   background:#FFFFFF!important;
   color:#064E3B!important;
   border:1.35px solid #CDBB8F!important;
@@ -84,7 +84,7 @@ st.markdown("""
   box-shadow:0 4px 12px rgba(25,36,31,.05)!important;
   line-height:1.05!important;
 }
-.hm-v95-12-member-list-anchor ~ div div[data-testid="stButton"] > button *{
+.hm-v95-13-member-list-anchor ~ div div[data-testid="stButton"] > button *{
   color:#064E3B!important;
   line-height:1.05!important;
 }
@@ -112,7 +112,7 @@ st.markdown("""
 }
 
 /* Final action grid: locked and scoped only to the opened-member button row */
-.hm-v95-12-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
+.hm-v95-13-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
   display:grid!important;
   grid-template-columns:repeat(4,minmax(0,1fr))!important;
   gap:.9rem!important;
@@ -120,21 +120,21 @@ st.markdown("""
   width:100%!important;
   margin:.25rem 0 .5rem 0!important;
 }
-.hm-v95-12-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+.hm-v95-13-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
   width:100%!important;
   min-width:0!important;
   max-width:none!important;
   flex:unset!important;
   display:block!important;
 }
-.hm-v95-12-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
-.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"]{
+.hm-v95-13-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"]{
   width:100%!important;
   min-height:44px!important;
   height:44px!important;
   max-height:44px!important;
 }
-.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button{
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button{
   appearance:none!important;
   -webkit-appearance:none!important;
   width:100%!important;
@@ -161,11 +161,11 @@ st.markdown("""
   border:1.35px solid #CDBB8F!important;
   box-shadow:0 4px 12px rgba(25,36,31,.055)!important;
 }
-.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button > div,
-.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button > div > p,
-.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button p,
-.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button span,
-.hm-v95-12-action-grid-anchor + div div[data-testid="stButton"] > button *{
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button > div,
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button > div > p,
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button p,
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button span,
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button *{
   margin:0!important;
   padding:0!important;
   line-height:1!important;
@@ -174,8 +174,19 @@ st.markdown("""
   color:inherit!important;
 }
 
+
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"]{
+  line-height:1!important;
+  overflow:hidden!important;
+}
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button::after,
+.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button::before{
+  display:none!important;
+  content:""!important;
+}
+
 @media(max-width:768px){
-  .hm-v95-12-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
+  .hm-v95-13-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
     grid-template-columns:1fr 1fr!important;
     gap:.65rem!important;
   }
@@ -197,7 +208,7 @@ st.markdown(
     <div class='hero-shell'>
       <div class='hm-v77-brand-row'>
         <span class='hm-v77-brand'>HealthyMe</span>
-        <span class='hm-v95-12-inline-version'>v95.12 · Evaluation Status Final Micro-Polish</span>
+        <span class='hm-v95-13-inline-version'>v95.13 · Full Report Button DOM Normalization</span>
       </div>
       <div class='hero-kicker'>Review workflow</div>
       <div class='hero-title'>Evaluation Status of All Members</div>
@@ -384,11 +395,11 @@ else:
             )
 
             st.markdown(
-                "<div class='eval-section-note hm-v95-12-member-row-note'>Use the buttons below to continue work for this selected member.</div>",
+                "<div class='eval-section-note hm-v95-13-member-row-note'>Use the buttons below to continue work for this selected member.</div>",
                 unsafe_allow_html=True
             )
 
-            st.markdown("<div class='hm-v95-12-action-grid-anchor'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='hm-v95-13-action-grid-anchor'></div>", unsafe_allow_html=True)
             b1, b2, b3, b4 = st.columns(4)
             with b1:
                 if st.button("Partial Report", key=f"pr_{member['id']}", type="secondary", use_container_width=True):
@@ -399,9 +410,8 @@ else:
                     st.session_state["selected_member_id"] = member["id"]
                     st.switch_page("pages/13_Admin_Assessment_Form.py")
             with b3:
-                # v95.1: Keep Full Report button clickable and visually consistent.
-                # If the report is not ready, the Final Report page will show the proper pending message.
-                if st.button("Full Report", help="Open final assessment report", key=f"fr_{member['id']}", type="secondary", use_container_width=True):
+                # v95.13: same signature as the other action buttons; no tooltip/help DOM.
+                if st.button("Full Report", key=f"fr_{member['id']}", type="secondary", use_container_width=True):
                     st.session_state["selected_member_id"] = member["id"]
                     st.switch_page("pages/14_Final_Assessment_Report.py")
 
