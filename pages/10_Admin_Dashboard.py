@@ -1,195 +1,133 @@
-
 import streamlit as st
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, stat_grid, utility_logout_bar, render_build_text_v14, render_back_to_top, card_start, card_end
-from components.db import get_admin_dashboard_snapshot
-from components.flash import render_system_message
-from components.storage_backend import get_storage_status
+from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, render_back_to_top
 
 st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles()
+apply_luxe_theme()
+require_admin()
+utility_logout_bar()
+render_back_to_top()
+
 st.markdown("""
 <style>
-.hm-v95-8-inline-version{margin-left:.5rem;color:#6B7280;font-size:.72rem;font-weight:700;vertical-align:middle;}
+/* v96.8 Admin Dashboard compact workflow layout */
+.block-container{
+  padding-top:.45rem!important;
+  padding-bottom:1rem!important;
+  max-width:1080px!important;
+}
+.hm-admin-title{
+  margin:.1rem 0 .5rem 0!important;
+  color:#064E3B!important;
+  font-size:1.05rem!important;
+  font-weight:900!important;
+}
+.hm-dash-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.75rem 1rem;
+  align-items:start;
+}
+.hm-dash-card{
+  background:rgba(255,255,255,.62);
+  border:1px solid #D8C89D;
+  border-radius:4px;
+  padding:.42rem .55rem .52rem .55rem;
+  margin:0 0 .55rem 0;
+  box-shadow:none;
+}
+.hm-dash-section-title{
+  margin:0 0 .28rem 0;
+  color:#064E3B;
+  font-size:.82rem;
+  line-height:1.05;
+  font-weight:900;
+}
+.hm-dash-card [data-testid="stButton"]{
+  margin:0 0 .28rem 0!important;
+}
+.hm-dash-card [data-testid="stButton"] > button{
+  min-height:31px!important;
+  height:31px!important;
+  padding:0 .55rem!important;
+  border-radius:9px!important;
+  font-size:.76rem!important;
+  line-height:1!important;
+  font-weight:720!important;
+  box-shadow:none!important;
+}
+.hm-dash-card [data-testid="stButton"] p{
+  font-size:.76rem!important;
+  line-height:1!important;
+  margin:0!important;
+}
+.hm-dash-placeholder{
+  min-height:31px;
+  border:1px solid #D8C89D;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#64705F;
+  font-size:.76rem;
+  background:#FAF8F1;
+  margin-bottom:.28rem;
+}
+@media(max-width:760px){
+  .hm-dash-grid{
+    grid-template-columns:1fr;
+  }
+}
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data(show_spinner=False, ttl=90)
-def cached_dashboard_snapshot():
-    return get_admin_dashboard_snapshot()
+st.markdown("<div class='hm-admin-title'>Main Workflows</div>", unsafe_allow_html=True)
 
-@st.cache_data(show_spinner=False, ttl=180)
-def cached_storage_status():
-    return get_storage_status(force_check=False)
+left, right = st.columns(2, gap="large")
 
-snapshot = cached_dashboard_snapshot()
-member_count = snapshot["member_count"]
-initial_pending = snapshot["initial_pending"]
-reassess_pending = snapshot["reassess_pending"]
-finalized_count = snapshot["finalized_count"]
-db_status = cached_storage_status()
+def workflow_card(title):
+    st.markdown(f"<div class='hm-dash-card'><div class='hm-dash-section-title'>{title}</div>", unsafe_allow_html=True)
 
-render_build_text_v14()
-st.markdown(
-    """
-    <div class='hero-shell'>
-      <div class='hm-v77-brand-row'>
-        <span class='hm-v77-brand'>HealthyMe</span>
-        <span class='hm-v95-8-inline-version'>v95.8 · Admin Version Placement + Action Height Fix</span>
-      </div>
-      <div class='hero-kicker'>Admin</div>
-      <div class='hero-title'>Admin Dashboard</div>
-      <div class='hero-subtitle'>Daily review, assessment, allocation, and communication command center.</div>
-      <div><span class='meta-pill'>Guided wellness workflow</span></div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-render_system_message()
-
-if db_status.get("mode") != "SUPABASE":
-    st.warning("Database is running in local fallback mode. Verify Supabase before production use.")
-
-stat_grid([
-    {"label": "Members", "value": member_count, "note": "Member accounts"},
-    {"label": "Initial Reviews", "value": len(initial_pending), "note": "Pending review"},
-    {"label": "Reassessments", "value": len(reassess_pending), "note": "Follow-up review"},
-    {"label": "Finalized", "value": finalized_count, "note": "Reports ready"},
-])
-
-st.subheader("Today's Priority")
-
-def priority_card(kicker, number, button, page, key, micro, help_text):
-    with st.container(border=True):
-        st.markdown("<div class='hm-v14-priority-card'>", unsafe_allow_html=True)
-        st.markdown(
-            f"""
-            <div class='hm-v14-kicker'>{kicker}</div>
-            <div class='hm-v14-number'>{number}</div>
-            """,
-            unsafe_allow_html=True,
-        )
-        if st.button(button, key=key, use_container_width=True, help=help_text):
-            st.switch_page(page)
-        st.markdown(f"<div class='hm-v14-micro'>{micro}</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-p1, p2, p3 = st.columns(3, gap="medium")
-with p1:
-    priority_card(
-        "Initial Reviews",
-        len(initial_pending),
-        "Review",
-        "pages/26_Admin_Review_Queue.py",
-        "v14_priority_review",
-        "Pending admin review",
-        "Open submitted assessments waiting for admin review.",
-    )
-with p2:
-    priority_card(
-        "Final Reports",
-        finalized_count,
-        "Evaluation Status",
-        "pages/11_Evaluation_Status.py",
-        "v14_priority_eval",
-        "Reports and member status",
-        "Open all-member evaluation status and final report access.",
-    )
-with p3:
-    priority_card(
-        "Reassessments",
-        len(reassess_pending),
-        "Reassessments",
-        "pages/25_Admin_Reassessment_Manager.py",
-        "v14_priority_reassess",
-        "Follow-up review",
-        "Open reassessment manager for follow-up NSP submissions.",
-    )
-
-st.subheader("Main Workflows")
-
-def workflow_card(title, actions):
-    with st.container(border=True):
-        st.markdown("<div class='hm-v14-workflow-card'>", unsafe_allow_html=True)
-        st.markdown(f"<div class='hm-v14-workflow-title'>{title}</div>", unsafe_allow_html=True)
-        for label, page, key, help_text in actions:
-            if st.button(label, key=key, use_container_width=True, help=help_text):
-                st.switch_page(page)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-w1, w2 = st.columns(2, gap="medium")
-with w1:
-    workflow_card("Review & Assessment", [
-        ("Review", "pages/26_Admin_Review_Queue.py", "v14_review_queue", "Review newly submitted assessments."),
-        ("Evaluation Status", "pages/11_Evaluation_Status.py", "v14_eval_status", "See all member statuses and open reports."),
-        ("Reassessments", "pages/25_Admin_Reassessment_Manager.py", "v14_reassess", "Manage follow-up submissions."),
-        ("NSP Compare", "pages/27_Comparative_NSP_Report.py", "v14_compare", "Compare NSP progress."),
-    ])
-
-with w2:
-    workflow_card("Member & Access", [
-        ("Create Users", "pages/17_Admin_User_Manager.py", "v14_users", "Create members and admins."),
-        ("Access Manager", "pages/30_Admin_User_Access_Manager.py", "v14_access", "Deactivate/reactivate users."),
-# v96: Body-Mind Control hidden from Admin Dashboard; accessible through Create Task Request.
-#         ("Body-Mind Access", "pages/23_Admin_Body_Mind_Control.py", "v14_bodymind", "Control content visibility."),
-    ])
-
-w3, w4 = st.columns(2, gap="medium")
-with w3:
-    workflow_card("Content & Allocation", [
-        ("Recipes", "pages/15_Admin_Recipe_Manager.py", "v14_recipes", "Allocate or manage recipes."),
-        ("Exercises", "pages/16_Admin_Exercise_Manager.py", "v14_exercises", "Allocate or manage exercises."),
-    ])
-
-with w4:
-    workflow_card("Reports & Logs", [
-        ("Daily Logs", "pages/22_Admin_Daily_Log_Report.py", "v14_daily", "Download logs and send reminders."),
-        ("Questions", "pages/20_Admin_Question_Manager.py", "v14_questions", "Manage assessment questions."),
-        ("Responses", "pages/21_Admin_Response_Editor.py", "v14_responses", "Correct member responses with audit notes."),
-    ])
-
-w5, w6 = st.columns(2, gap="medium")
-with w5:
-    workflow_card("Communication", [
-        ("Messages", "pages/31_Admin_Member_Communication.py", "v14_messages", "Send in-app messages and queue email notification."),
-    ])
-
-with w6:
-    workflow_card("System Tools", [
-        ("Database", "pages/28_Admin_Database_Status.py", "v14_database", "Check Supabase/local fallback status."),
-        ("Demo", "pages/29_Admin_Demo_Mode.py", "v14_demo", "Manage demo walkthrough controls."),
-    ])
-
-st.subheader("Recommended Flow")
-with st.container(border=True):
-    st.markdown("<div class='hm-v14-flow-card'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-v14-flow-title'>Suggested operating sequence</div>", unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div class='hm-v14-flow-list'>
-          <div class='hm-v14-flow-step'><b>1. New submission</b><br>Review → Evaluation Status → Final Report</div>
-          <div class='hm-v14-flow-step'><b>2. Follow-up</b><br>Reassessments → NSP Compare</div>
-          <div class='hm-v14-flow-step'><b>3. Access issue</b><br>Access Manager</div>
-          <div class='hm-v14-flow-step'><b>4. Allocation</b><br>Recipes / Exercises</div>
-          <div class='hm-v14-flow-step'><b>5. Troubleshooting</b><br>Database</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+def end_card():
     st.markdown("</div>", unsafe_allow_html=True)
 
-# v43 Daily Log Settings quick access
-card_start()
-st.subheader("Daily Log Configuration")
+def nav_button(label, page, key):
+    if st.button(label, key=key, use_container_width=True):
+        st.switch_page(page)
 
-if st.button("Daily Log Settings", use_container_width=True):
-    st.switch_page("pages/25_Admin_Daily_Log_Settings.py")
-card_end()
+with left:
+    workflow_card("Review & Assessment")
+    nav_button("Review", "pages/26_Admin_Review_Queue.py", "dash_review_v96_8")
+    nav_button("Evaluation Status", "pages/11_Evaluation_Status.py", "dash_eval_status_v96_8")
+    nav_button("Reassessment", "pages/25_Admin_Reassessment_Manager.py", "dash_reassessment_v96_8")
+    nav_button("NSP Compare", "pages/27_Comparative_NSP_Report.py", "dash_nsp_compare_v96_8")
+    end_card()
 
+    workflow_card("Content & Allocation")
+    nav_button("Recipes", "pages/15_Admin_Recipe_Manager.py", "dash_recipes_v96_8")
+    nav_button("Exercises", "pages/16_Admin_Exercise_Manager.py", "dash_exercises_v96_8")
+    end_card()
 
-# v57 Dietary Habits placeholder
-card_start()
-st.subheader("Dietary Habits")
-st.button("Dietary Habits Form - Coming Soon", disabled=True, use_container_width=True)
-card_end()
+    workflow_card("Member & Access")
+    nav_button("Create Users", "pages/17_Admin_User_Manager.py", "dash_create_users_v96_8")
+    nav_button("Access Manager", "pages/30_Admin_User_Access_Manager.py", "dash_access_manager_v96_8")
+    end_card()
+
+with right:
+    workflow_card("Communication & Scheduling")
+    nav_button("Messages", "pages/31_Admin_Member_Communication.py", "dash_messages_v96_8")
+    st.markdown("<div class='hm-dash-placeholder'>Scheduling</div>", unsafe_allow_html=True)
+
+    end_card()
+
+    workflow_card("Reports & Logs")
+    nav_button("Daily Logs", "pages/22_Admin_Daily_Log_Report.py", "dash_daily_logs_v96_8")
+    nav_button("Questions", "pages/20_Admin_Question_Manager.py", "dash_questions_v96_8")
+    nav_button("Responses", "pages/21_Admin_Response_Editor.py", "dash_responses_v96_8")
+    end_card()
+
+    workflow_card("System Tools")
+    nav_button("Database", "pages/28_Admin_Database_Status.py", "dash_database_v96_8")
+    nav_button("Demo", "pages/29_Admin_Demo_Mode.py", "dash_demo_v96_8")
+    end_card()

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_7_Recipe_Exercise_Navigation_HTML_Fix",
-  "version": "v96.7",
-  "updated_on": "2026-06-13T09:03:08.431227+00:00",
+  "build_name": "HealthyMe_v96_8_Admin_Dashboard_Compact_Workflows",
+  "version": "v96.8",
+  "updated_on": "2026-06-13T10:33:11.551880+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,13 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Fixed raw HTML span showing in Exercise Repository cards by removing inline favourite span from card HTML.",
-    "Removed inline favourite span from Recipe Repository cards as preventive cleanup.",
-    "Removed top Back to exercises button from Exercise detail page.",
-    "Removed top Back to recipes button from Recipe detail page.",
-    "Bottom Back button on Exercise detail now returns to Exercise Repository list.",
-    "Bottom Back button on Recipe detail now returns to Recipe Repository list.",
-    "Exercise calories/estimate pill removed from Exercise detail."
+    "Realigned Admin Dashboard Main Workflows into compact two-column structure as per reference screenshot.",
+    "Left column: Review & Assessment, Content & Allocation, Member & Access.",
+    "Right column: Communication & Scheduling, Reports & Logs, System Tools.",
+    "Reduced dashboard card spacing, button height and vertical gaps.",
+    "Kept existing admin routes intact; Scheduling appears as a placeholder if no scheduling page exists."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -320,5 +318,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_6_BodyMind_NextSteps_Pending_Fix.zip"
+  "base_build": "HealthyMe_v96_7_Recipe_Exercise_Navigation_HTML_Fix.zip"
 }

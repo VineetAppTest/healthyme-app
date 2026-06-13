@@ -1135,3 +1135,11 @@
 - Detail-page bottom Back now returns to the corresponding repository list.
 - Dashboard button from detail returns to Member Home.
 - Removed Exercise detail calories/estimate pill.
+
+## v96.8 - Admin Dashboard Compact Workflows
+
+- Realigned Admin Dashboard Main Workflows into compact two-column structure.
+- Left column: Review & Assessment, Content & Allocation, Member & Access.
+- Right column: Communication & Scheduling, Reports & Logs, System Tools.
+- Reduced vertical spacing and button/card height.
+- Scheduling is shown as a placeholder when no scheduling page exists yet.
