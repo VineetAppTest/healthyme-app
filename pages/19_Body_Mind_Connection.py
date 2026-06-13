@@ -32,7 +32,7 @@ user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
 current_instance = get_current_assessment_instance(user_id)
 body_mind_task_requested = "body_mind" in (current_instance.get("requested_pages", []) or []) and not current_instance.get("submitted_for_review")
-body_mind_allowed = bool(wf.get("body_mind_unlocked")) or has_explicit_body_mind_access(user_id) or body_mind_task_requested
+body_mind_allowed = bool(wf.get("body_mind_unlocked")) or bool(wf.get("admin_completed")) or has_explicit_body_mind_access(user_id) or body_mind_task_requested
 if not body_mind_allowed:
     st.warning("This page will be available after your evaluator enables it.")
     st.stop()

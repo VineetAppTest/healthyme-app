@@ -1119,3 +1119,10 @@
 - Added Task allocation date under Submission Status → Assessment history.
 - Uses existing assessment instance created_date as the allocation date.
 - Retains v96.4 allocation date display in Member Home and Admin Task Request Manager.
+
+## v96.6 - Body-Mind Next Steps Pending Fix
+
+- Body-Mind Connection now appears under Member Home → Your next steps until completed.
+- It appears even if the active task request only includes NSP Page 1 / NSP Page 2, provided Body-Mind is pending and available through the member workflow.
+- Body-Mind remains removed from Personalized Content.
+- Body-Mind page access now supports admin-completed/unlocked and task-request paths.

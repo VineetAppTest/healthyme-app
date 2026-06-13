@@ -38,6 +38,24 @@ if (wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflo
 current_instance = get_current_assessment_instance(user_id)
 
 
+
+def should_show_body_mind_next_step_v96_6(wf_state, current_inst):
+    """Body-Mind remains a member next-step until completed.
+
+    It should be visible under Your next steps if:
+    - it is explicitly requested in the active task instance, OR
+    - it is unlocked/activated for the member, OR
+    - admin/final review is complete and Body-Mind is still not completed.
+    """
+    if bool(wf_state.get("body_mind_completed")) or bool(current_inst.get("body_mind_completed")):
+        return False
+    requested = current_inst.get("requested_pages", []) or []
+    if "body_mind" in requested:
+        return True
+    if bool(wf_state.get("body_mind_unlocked")) or bool(wf_state.get("admin_completed")):
+        return True
+    return False
+
 def task_title_v96_2(task_key):
     return {
         "nsp1": "NSP Page 1",
@@ -112,6 +130,8 @@ with left:
 
     if is_task_instance:
         visible_tasks = [p for p in requested_pages if p in ["nsp1", "nsp2", "body_mind"]]
+        if should_show_body_mind_next_step_v96_6(wf, current_instance) and "body_mind" not in visible_tasks:
+            visible_tasks.append("body_mind")
         st.markdown(
             f"""
             <div class='info-banner'>
@@ -169,6 +189,10 @@ with left:
         with b3:
             if st.button("3. Fill NSP Pg 2", use_container_width=True, disabled=("nsp2" not in requested_pages)):
                 st.switch_page("pages/05_NSP_Page2.py")
+
+        if should_show_body_mind_next_step_v96_6(wf, current_instance):
+            if st.button("Start Body-Mind Connection", use_container_width=True):
+                st.switch_page("pages/19_Body_Mind_Connection.py")
 
     st.divider()
     if st.button("Submit / Status", use_container_width=True):

@@ -28,6 +28,7 @@ stat_grid([
     {"label": "Current Instance", "value": current.get("instance_number"), "note": current.get("instance_type")},
     {"label": "Current Status", "value": current.get("status", "").replace("_", " ").title(), "note": "Latest assessment"},
     {"label": "LAF", "value": "Completed" if wf.get("laf_completed") else "Pending", "note": "Initial only; not repeated for task requests"},
+    {"label": "Body-Mind Status", "value": "Completed" if wf.get("body_mind_completed") or inst.get("body_mind_completed") else "Pending", "note": "Shown until completed"},
     {"label": "Admin Review", "value": "Pending" if current.get("submitted_for_review") else "Not Submitted", "note": "Review status"},
 ])
 

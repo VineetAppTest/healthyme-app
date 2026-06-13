@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_5_Submission_Status_Task_Date_History",
-  "version": "v96.5",
-  "updated_on": "2026-06-13T08:23:27.324339+00:00",
+  "build_name": "HealthyMe_v96_6_BodyMind_NextSteps_Pending_Fix",
+  "version": "v96.6",
+  "updated_on": "2026-06-13T08:33:33.637209+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,9 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added Task allocation date under member-side Submission Status \u2192 Assessment history.",
-    "Uses existing assessment instance created_date as the allocation date.",
-    "Retained v96.4 Member Home and Admin Task Request Manager allocation date display."
+    "Body-Mind Connection now appears under Member Home \u2192 Your next steps until completed.",
+    "Body-Mind appears even when the active task request only selected NSP Page 1 / NSP Page 2, provided Body-Mind is unlocked/admin review complete and not completed.",
+    "Body-Mind stays removed from Personalized Content.",
+    "Body-Mind page access allows admin-completed/unlocked flow and task-request flow.",
+    "Submission Status includes Body-Mind pending/completed status where supported."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -316,5 +318,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_4_Task_Allocation_Date_Display.zip"
+  "base_build": "HealthyMe_v96_5_Submission_Status_Task_Date_History.zip"
 }
