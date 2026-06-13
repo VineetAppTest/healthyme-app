@@ -11,8 +11,21 @@ from components.db import list_members, get_resource_assignments, save_resource_
 st.set_page_config(page_title="Manage & Allocate Recipes", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 
+st.markdown("""
+<style>
+/* v96.10 Recipe Manager compact layout */
+.block-container{padding-top:.45rem!important;max-width:1120px!important;}
+.hero-shell{margin:.45rem 0 .75rem 0!important;padding:1rem 1.15rem!important;}
+[data-testid="stTabs"]{margin-top:.25rem!important;}
+[data-testid="stTabs"] button p{font-size:.82rem!important;}
+div[data-testid="stTextInput"], div[data-testid="stSelectbox"], div[data-testid="stFileUploader"]{margin-bottom:.35rem!important;}
+textarea{min-height:92px!important;}
+</style>
+""", unsafe_allow_html=True)
+
+
 PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "recipes.csv"
-RECIPE_COLUMNS = ['title', 'description', 'meal_type', 'diet_type', 'goal_tags', 'condition_tags', 'prep_time', 'calories', 'servings', 'portion_size', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'ingredients', 'steps', 'nutrition', 'status']
+RECIPE_COLUMNS = ['title', 'description', 'meal_type', 'diet_type', 'goal_tags', 'condition_tags', 'prep_time', 'calories', 'protein', 'fat', 'carbohydrates', 'additional_nutrition', 'servings', 'portion_size', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'ingredients', 'steps', 'nutrition', 'status']
 
 
 def ensure_columns(df):
@@ -56,6 +69,9 @@ def recipe_form(prefix, row=None):
         meal_type = st.text_input("Meal type", value=str(row.get("meal_type", "")), key=f"{prefix}_meal_type")
         prep_time = st.text_input("Timing / prep time in minutes", value=str(row.get("prep_time", "")), key=f"{prefix}_prep_time")
         calories = st.text_input("Calories", value=str(row.get("calories", "")), key=f"{prefix}_calories")
+        protein = st.text_input("Protein", value=str(row.get("protein", "")), key=f"{prefix}_protein")
+        fat = st.text_input("Fat", value=str(row.get("fat", "")), key=f"{prefix}_fat")
+        carbohydrates = st.text_input("Carbohydrates", value=str(row.get("carbohydrates", "")), key=f"{prefix}_carbohydrates")
     with c2:
         image_url = st.text_input("Manual Image URL / fallback", value=clean_image_value(row.get("image_url", "")), key=f"{prefix}_image_url", help="Optional fallback. Uploaded Supabase image takes priority.")
         image_access_type = st.selectbox(
@@ -93,6 +109,7 @@ def recipe_form(prefix, row=None):
     ingredients = st.text_area("Ingredients", value=str(row.get("ingredients", "")), key=f"{prefix}_ingredients", help="Use one line per ingredient or separate with semicolons.")
     steps = st.text_area("Instructions / steps", value=str(row.get("steps", "")), key=f"{prefix}_steps", help="Use one line per instruction or separate with semicolons.")
     nutrition = st.text_area("Nutrition details", value=str(row.get("nutrition", "")), key=f"{prefix}_nutrition")
+    additional_nutrition = st.text_area("Additional nutrition metrics", value=str(row.get("additional_nutrition", "")), key=f"{prefix}_additional_nutrition", placeholder="Example: Fibre: 8g; Sodium: 120mg")
     c3, c4 = st.columns(2)
     with c3:
         goal_tags = st.text_input("Goal tags", value=str(row.get("goal_tags", "")), key=f"{prefix}_goal_tags")
@@ -108,10 +125,10 @@ def recipe_form(prefix, row=None):
         "condition_tags": condition_tags,
         "prep_time": prep_time,
         "calories": calories,
-            "protein": protein,
-            "fat": fat,
-            "carbohydrates": carbohydrates,
-            "additional_nutrition": additional_nutrition,
+        "protein": protein,
+        "fat": fat,
+        "carbohydrates": carbohydrates,
+        "additional_nutrition": additional_nutrition,
         "servings": servings,
         "portion_size": portion_size,
         "image_url": image_url,
@@ -126,11 +143,11 @@ def recipe_form(prefix, row=None):
 
 
 render_page_nav("Recipes", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
-topbar("Manage & Allocate Recipes", "Manage image, title, timing, calories, recipe details and member allocation.", "Admin content manager")
+topbar("Manage & Allocate Recipes", "Manage image, title, timing, calories, macros, recipe details and member allocation.", "Admin content manager")
 
-tabs = st.tabs(["Allocate to Member", "Current Repository", "Add Recipe", "Import CSV", "Edit / Delete"])
+tabs = st.tabs(["Current Repository", "Add Recipe", "Import CSV", "Edit / Delete", "Allocate to Member"])
 
-with tabs[0]:
+with tabs[4]:
     st.subheader("Allocate Recipes to Member")
     members = list_members()
     df = load()
@@ -170,7 +187,7 @@ with tabs[0]:
             key = f"recipe_alloc_{member_id}_{rid}"
             if key not in st.session_state:
                 st.session_state[key] = rid in st.session_state[state_key]
-            checked = st.checkbox(f"{row.get('title', 'Untitled Recipe')} · {row.get('prep_time','')} mins · {row.get('calories','')} cal", key=key)
+            checked = st.checkbox(f"{row.get('title', 'Untitled Recipe')} · {row.get('prep_time','')} mins", key=key)
             if checked:
                 selected.append(rid)
 
@@ -179,11 +196,11 @@ with tabs[0]:
             st.session_state[state_key] = set(selected)
             st.success("Recipe allocation saved. Member notification/email has been queued.")
 
-with tabs[1]:
+with tabs[0]:
     st.subheader("Current Recipe Repository")
     st.dataframe(load(), use_container_width=True, hide_index=False)
 
-with tabs[2]:
+with tabs[1]:
     st.subheader("Add New Recipe")
     values = recipe_form("new_recipe_v93")
     if st.button("Save Recipe", type="primary", use_container_width=True):
@@ -196,9 +213,9 @@ with tabs[2]:
             st.success("Recipe saved.")
             st.rerun()
 
-with tabs[3]:
+with tabs[2]:
     st.subheader("Import Recipe CSV")
-    st.markdown("CSV can include image_url, image_bucket, image_path, image_access_type, title, prep_time, calories, ingredients, steps and nutrition. Missing columns will be added.")
+    st.markdown("CSV can include image_url, image_bucket, image_path, image_access_type, title, prep_time, calories, protein, fat, carbohydrates, additional_nutrition, ingredients, steps and nutrition. Missing columns will be added.")
     csv_file = st.file_uploader("Choose recipe CSV file", type=["csv"], key="recipe_csv_upload_v93")
     if st.button("Import CSV", type="primary", disabled=csv_file is None, use_container_width=True):
         imported = pd.read_csv(csv_file)
@@ -207,7 +224,7 @@ with tabs[3]:
         st.success("CSV imported.")
         st.rerun()
 
-with tabs[4]:
+with tabs[3]:
     st.subheader("Edit or Delete Recipe")
     df = load()
     if df.empty:

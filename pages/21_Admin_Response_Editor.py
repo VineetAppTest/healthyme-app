@@ -126,6 +126,9 @@ def set_current_value(db, member_id, form_name, field, new_value):
         store, _ = FORM_STORES[form_name]
         db.setdefault(store, {}).setdefault(member_id, {})[field["field_code"]] = str(new_value)
 
+if st.session_state.pop("response_editor_success_message", None):
+    st.success("Response updated. Please download a fresh final report.")
+
 topbar(
     "Admin Response Editor",
     "Edit any member response, including blank/unanswered fields, and record rationale with timestamp.",
@@ -173,6 +176,7 @@ else:
     selected_field_display = st.selectbox("Select field to edit", [f["display"] for f in filtered_fields])
     field = next(f for f in filtered_fields if f["display"] == selected_field_display)
     old_value = get_current_value(db, member_id, selected_form, field)
+    rationale_key_v96_10 = f"resp_rationale_{member_id}_{selected_form}_{field['field_code']}"
 
     st.markdown(f"**Question:** {field['question']}")
     st.markdown(f"**Current value:** `{old_value}`")
@@ -191,7 +195,7 @@ else:
     else:
         new_value = st.text_area("New value", value=str(old_value), height=120)
 
-    rationale = st.text_area("Rationale / note for change", placeholder="Mandatory. Example: Corrected after conversation with member.", height=100)
+    rationale = st.text_area("Rationale / note for change", placeholder="Mandatory. Example: Corrected after conversation with member.", height=100, key=rationale_key_v96_10)
 
     if st.button("Save Edited Response with Audit Note", type="primary", use_container_width=True):
         if str(new_value) == str(old_value):
@@ -210,7 +214,8 @@ else:
                 str(new_value),
                 rationale.strip(),
             )
-            st.success("Response updated and audit note saved with timestamp.")
+            st.session_state.pop(rationale_key_v96_10, None)
+            st.session_state["response_editor_success_message"] = True
             st.rerun()
 card_end()
 

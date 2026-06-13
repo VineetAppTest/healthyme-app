@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_9_Admin_Dashboard_Uniform_Subpoint_Boxes",
-  "version": "v96.9",
-  "updated_on": "2026-06-13T10:42:12.961823+00:00",
+  "build_name": "HealthyMe_v96_10_Task_Recipe_Response_Fixes",
+  "version": "v96.10",
+  "updated_on": "2026-06-13T18:56:58.612292+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,14 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Admin Dashboard Main Workflows now uses the screenshot/reference structure.",
-    "Main headers: Review & Assessment, Content & Allocation, Member & Access, Communication & Scheduling, Reports & Logs, System Tools.",
-    "All subpoints use the same scheduling-style compact box schema.",
-    "Clickable boxes retain existing routes.",
-    "Scheduling remains a placeholder if no scheduling page exists."
+    "Task Request Manager cleaned: removed top info message, removed Task Type text, moved Body-Mind Control below Send Task Request.",
+    "Task Request creation blocked when current/latest instance is not completed/submitted.",
+    "Create Task Request and Assessment history arranged in adjacent columns.",
+    "Recipe Manager macros fixed: Protein, Fat, Carbohydrates and Additional nutrition metrics added to schema/form.",
+    "Recipe Manager NameError for protein/fat/carbohydrates fixed.",
+    "Recipe Manager allocation tab moved to last.",
+    "Recipe Repository member detail now displays Protein, Fat, Carbohydrates and additional nutrition metrics.",
+    "Admin Response Editor now shows fresh-report download success message and clears rationale field after save."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -318,5 +321,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_8_Admin_Dashboard_Compact_Workflows.zip"
+  "base_build": "HealthyMe_v96_9_Admin_Dashboard_Uniform_Subpoint_Boxes.zip"
 }

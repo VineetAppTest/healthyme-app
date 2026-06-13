@@ -565,6 +565,10 @@ def render_detail(row, idx):
 
     prep = first_value(row, ["prep_time"], "-")
     calories = first_value(row, ["calories"], "-")
+    protein = first_value(row, ["protein"], "-")
+    fat = first_value(row, ["fat"], "-")
+    carbohydrates = first_value(row, ["carbohydrates"], "-")
+    additional_nutrition = str(row.get("additional_nutrition", "") or "").strip()
     servings = first_value(row, ["servings"], "-")
     portion = first_value(row, ["portion_size"], "-")
 
@@ -572,6 +576,9 @@ def render_detail(row, idx):
 <div class='hm-detail-grid'>
   <div class='hm-detail-pill'><b>◷ {esc(prep)} Minutes</b><span>Prep time</span></div>
   <div class='hm-detail-pill'><b>🔥 {esc(calories)} Calories</b><span>Per serving</span></div>
+  <div class='hm-detail-pill'><b>{esc(protein)}</b><span>Protein</span></div>
+  <div class='hm-detail-pill'><b>{esc(fat)}</b><span>Fat</span></div>
+  <div class='hm-detail-pill'><b>{esc(carbohydrates)}</b><span>Carbohydrates</span></div>
   <div class='hm-detail-pill'><b>👥 {esc(servings)} Servings</b><span>Makes</span></div>
   <div class='hm-detail-pill'><b>↗ {esc(portion)}</b><span>Portion</span></div>
 </div>
@@ -597,7 +604,14 @@ def render_detail(row, idx):
     with tab3:
         nutrition = str(row.get("nutrition", "") or "").strip()
         st.markdown("<div class='hm-detail-section-card'>", unsafe_allow_html=True)
-        st.write(nutrition or "No nutrition details added yet.")
+        st.markdown(f"**Protein:** {esc(protein)}  \n**Fat:** {esc(fat)}  \n**Carbohydrates:** {esc(carbohydrates)}")
+        if additional_nutrition:
+            st.markdown("**Additional nutrition metrics:**")
+            st.write(additional_nutrition)
+        elif nutrition:
+            st.write(nutrition)
+        else:
+            st.write("No nutrition details added yet.")
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.button("Submit feedback on recipe 🌿", type="primary", use_container_width=True)

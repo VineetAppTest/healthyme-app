@@ -1150,3 +1150,15 @@
 - Main headers: Review & Assessment, Content & Allocation, Member & Access, Communication & Scheduling, Reports & Logs, System Tools.
 - All subpoints use the same scheduling-style compact box schema.
 - Existing routes retained.
+
+## v96.10 - Task / Recipe / Response Fixes
+
+- Task Request Manager cleaned and rebuilt into adjacent Create Task Request + Assessment History columns.
+- Removed top Body-Mind access info message and bottom select-task info message.
+- Removed “Select Task Type(s)” text.
+- Moved Body-Mind Control button below Send Task Request.
+- Blocked new task allocation when the current/latest instance is not completed/submitted.
+- Fixed Recipe Manager macro schema and NameError for protein/fat/carbohydrates/additional nutrition.
+- Moved Allocate to Member tab to the last tab in Recipe Manager.
+- Added Recipe Repository macro display for Protein, Fat, Carbohydrates and additional nutrition metrics.
+- Updated Admin Response Editor success message and clears rationale after save.
