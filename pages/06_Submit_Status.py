@@ -37,7 +37,8 @@ for inst in sorted(instances, key=lambda x: x.get("instance_number", 0)):
     st.markdown(
         f"""
         **Instance {inst.get('instance_number')} — {inst.get('instance_type')}**  
-        Requested: {', '.join([task_title_v96_2(p) for p in inst.get('requested_pages', [])])}  
+        Task allocation date: {inst.get('created_date') or '-'}  
+Requested: {', '.join([task_title_v96_2(p) for p in inst.get('requested_pages', [])])}  
         Status: `{inst.get('status')}` | Submitted: `{inst.get('submitted_date') or '-'}`
         """
     )

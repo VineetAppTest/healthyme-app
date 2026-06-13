@@ -1113,3 +1113,9 @@
 - Added Task allocation date under Member Home → Your next steps task information.
 - Added Task allocation date under Admin Task Request Manager → Assessment history.
 - Uses the existing assessment instance created_date as the allocation date.
+
+## v96.5 - Submission Status Task Allocation Date History
+
+- Added Task allocation date under Submission Status → Assessment history.
+- Uses existing assessment instance created_date as the allocation date.
+- Retains v96.4 allocation date display in Member Home and Admin Task Request Manager.

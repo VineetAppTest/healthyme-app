@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_4_Task_Allocation_Date_Display",
-  "version": "v96.4",
-  "updated_on": "2026-06-13T08:11:52.968284+00:00",
+  "build_name": "HealthyMe_v96_5_Submission_Status_Task_Date_History",
+  "version": "v96.5",
+  "updated_on": "2026-06-13T08:23:27.324339+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added Task allocation date in Member Home under Your next steps task information box.",
-    "Added Task allocation date in Admin Task Request Manager Assessment history.",
-    "Uses existing assessment instance created_date field as the allocation date.",
-    "Retained v96.3 Member Home task cleanup."
+    "Added Task allocation date under member-side Submission Status \u2192 Assessment history.",
+    "Uses existing assessment instance created_date as the allocation date.",
+    "Retained v96.4 Member Home and Admin Task Request Manager allocation date display."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -317,5 +316,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_3_Member_Home_Task_Cleanup.zip"
+  "base_build": "HealthyMe_v96_4_Task_Allocation_Date_Display.zip"
 }
