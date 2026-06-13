@@ -1143,3 +1143,10 @@
 - Right column: Communication & Scheduling, Reports & Logs, System Tools.
 - Reduced vertical spacing and button/card height.
 - Scheduling is shown as a placeholder when no scheduling page exists yet.
+
+## v96.9 - Admin Dashboard Uniform Subpoint Boxes
+
+- Admin Dashboard Main Workflows now follows the reference structure.
+- Main headers: Review & Assessment, Content & Allocation, Member & Access, Communication & Scheduling, Reports & Logs, System Tools.
+- All subpoints use the same scheduling-style compact box schema.
+- Existing routes retained.
