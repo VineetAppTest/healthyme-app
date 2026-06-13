@@ -13,6 +13,23 @@ user_id = st.session_state["user_id"]
 inst = get_current_assessment_instance(user_id)
 profile = get_profile_with_laf_fallback(user_id)
 
+
+def task_title_v96_2(task_key):
+    return {
+        "nsp1": "NSP Page 1",
+        "nsp2": "NSP Page 2",
+        "body_mind": "Body-Mind Connection",
+    }.get(str(task_key), str(task_key))
+
+def task_done_v96_2(inst, task_key):
+    if task_key == "nsp1":
+        return bool(inst.get("nsp1_completed"))
+    if task_key == "nsp2":
+        return bool(inst.get("nsp2_completed"))
+    if task_key == "body_mind":
+        return bool(inst.get("body_mind_completed"))
+    return True
+
 topbar(
     "Consent & Submit",
     f"{inst.get('instance_type')} — Instance {inst.get('instance_number')}",
@@ -23,7 +40,7 @@ render_system_message()
 card_start()
 stat_grid([
     {"label": "Instance", "value": inst.get("instance_number"), "note": inst.get("instance_type")},
-    {"label": "Requested Pages", "value": ", ".join(["NSP1" if p=="nsp1" else "NSP2" for p in inst.get("requested_pages", [])]), "note": "Admin request"},
+    {"label": "Requested Tasks", "value": ", ".join([task_title_v96_2(p) for p in inst.get("requested_pages", [])]), "note": "Nutritionist request"},
     {"label": "Status", "value": inst.get("status", "").replace("_", " ").title(), "note": "Current state"},
     {"label": "Due Date", "value": inst.get("due_date") or "-", "note": "If set by admin"},
 ])
@@ -58,7 +75,11 @@ with c1:
             st.switch_page("pages/02_Member_Home.py")
 with c2:
     if st.button("Submit Assessment for Admin Review", type="primary", use_container_width=True):
-        if not accepted:
+        incomplete_tasks = [task_title_v96_2(p) for p in inst.get("requested_pages", []) if not task_done_v96_2(inst, p)]
+        if incomplete_tasks:
+            set_system_message("Please complete the requested task(s) before submitting: " + ", ".join(incomplete_tasks), "error")
+            st.rerun()
+        elif not accepted:
             set_system_message("Please tick I accept before submitting.", "error")
             st.rerun()
         elif not name.strip():

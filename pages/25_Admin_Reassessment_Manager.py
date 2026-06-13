@@ -12,7 +12,7 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 st.markdown("<div class='info-banner'><b>Body-Mind Access:</b> Body-Mind Control is hidden from the dashboard and available here for admin access management.</div>", unsafe_allow_html=True)
 st.page_link("pages/23_Admin_Body_Mind_Control.py", label="Open Body-Mind Control", icon=":material/psychology:", use_container_width=True)
 
-topbar("Task Request Manager", "Request NSP Page 1, NSP Page 2, or both for follow-up assessment.", "Admin reassessment")
+topbar("Task Request Manager", "Allocate NSP Page 1, NSP Page 2 and/or Body-Mind Connection as member tasks.", "Admin task request")
 render_system_message()
 
 members = list_members()
@@ -27,7 +27,7 @@ instances = get_assessment_instances(member_id)
 
 open_reassessment = [
     i for i in instances
-    if i.get("instance_type") == "Reassessment" and not i.get("submitted_for_review") and i.get("status") in ["pending", "in_progress"]
+    if i.get("instance_type") == "Task Request" and not i.get("submitted_for_review") and i.get("status") in ["pending", "in_progress"]
 ]
 
 stat_grid([
@@ -43,33 +43,37 @@ for inst in sorted(instances, key=lambda x: x.get("instance_number", 0)):
     st.markdown(
         f"""
         **Instance {inst.get('instance_number')} — {inst.get('instance_type')}**  
-        Pages: {', '.join(['NSP Page 1' if p=='nsp1' else 'NSP Page 2' for p in inst.get('requested_pages', [])])}  
+        Tasks: {', '.join(['NSP Page 1' if p=='nsp1' else 'NSP Page 2' if p=='nsp2' else 'Body-Mind Connection' if p=='body_mind' else p for p in inst.get('requested_pages', [])])}  
         Status: `{inst.get('status')}` | Submitted: `{inst.get('submitted_date') or '-'}`
         """
     )
 card_end()
 
 card_start()
-st.subheader("Create reassessment request")
+st.subheader("Create Task Request")
 if open_reassessment:
-    st.warning("This member already has an open reassessment request. Ask the member to complete it before creating another one.")
+    st.warning("This member already has an open task request. Ask the member to complete it before creating another one.")
 else:
-    option = st.radio(
-        "What should the member refill?",
-        ["Both NSP Page 1 and NSP Page 2", "NSP Page 1 only", "NSP Page 2 only"],
-        horizontal=False,
-    )
-    if option == "Both NSP Page 1 and NSP Page 2":
-        requested_pages = ["nsp1", "nsp2"]
-    elif option == "NSP Page 1 only":
-        requested_pages = ["nsp1"]
-    else:
-        requested_pages = ["nsp2"]
+    st.markdown("#### Select Task Type(s)")
+    task_nsp1 = st.checkbox("NSP Page 1", key="v96_2_task_nsp1")
+    task_nsp2 = st.checkbox("NSP Page 2", key="v96_2_task_nsp2")
+    task_body_mind = st.checkbox("Body-Mind Connection", key="v96_2_task_body_mind")
+
+    requested_pages = []
+    if task_nsp1:
+        requested_pages.append("nsp1")
+    if task_nsp2:
+        requested_pages.append("nsp2")
+    if task_body_mind:
+        requested_pages.append("body_mind")
 
     due = st.date_input("Due date", value=date.today() + timedelta(days=14))
-    note = st.text_area("Optional note to member", placeholder="Example: Please complete this 2-month reassessment before your follow-up call.")
+    note = st.text_area("Optional note to member", placeholder="Example: Please complete the allocated task before your follow-up call.")
 
-    if st.button("Send Reassessment Request", type="primary", use_container_width=True):
+    if not requested_pages:
+        st.info("Select at least one task before creating the request.")
+
+    if st.button("Send Task Request", type="primary", use_container_width=True, disabled=not bool(requested_pages)):
         inst, created = create_reassessment_request(
             member_id,
             requested_pages,
@@ -77,28 +81,14 @@ else:
             admin_note=note.strip(),
             admin_id=st.session_state.get("user_id", "admin"),
         )
+        task_names = ", ".join(["NSP Page 1" if p == "nsp1" else "NSP Page 2" if p == "nsp2" else "Body-Mind Connection" for p in requested_pages])
         if created:
-            set_system_message(f"Reassessment request created for {member['name']} — Instance {inst.get('instance_number')}.", "success")
+            set_system_message(f"Task request created for {member['name']} — Instance {inst.get('instance_number')} ({task_names}).", "success")
         else:
-            set_system_message("An open reassessment request already exists for this member.", "warning")
+            set_system_message("An open task request already exists for this member.", "warning")
         st.rerun()
 card_end()
 
 if st.button("Back to Dashboard"):
     st.switch_page("pages/10_Admin_Dashboard.py")
 
-st.markdown("#### Select Task Type(s)")
-task_nsp1 = st.checkbox("NSP Page 1", key="v96_task_nsp1")
-task_nsp2 = st.checkbox("NSP Page 2", key="v96_task_nsp2")
-task_body_mind = st.checkbox("Body-Mind Connection", key="v96_task_body_mind")
-
-requested_pages = []
-if task_nsp1:
-    requested_pages.append("nsp1")
-if task_nsp2:
-    requested_pages.append("nsp2")
-if task_body_mind:
-    requested_pages.append("body_mind")
-
-if not requested_pages:
-    st.info("Select at least one task before creating the request.")

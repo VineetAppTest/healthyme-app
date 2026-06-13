@@ -1084,3 +1084,17 @@
 - Review Queue wording moves toward Review/Admin Review.
 - Recipe nutrition expands with Protein, Fat, Carbohydrates and additional metrics.
 - Exercise calories removed from admin/member exercise UI.
+
+## v96.1 - LAF Cached Loader Fix
+
+- Fixed LAF Form NameError caused by missing cached loader.
+- Added local cached question loader guard for LAF.
+- Added equivalent guard checks for NSP Page 1 and NSP Page 2 where needed.
+- Retained v96 Task Request core changes.
+
+## v96.2 - Task Instance Visibility Fix
+
+- LAF no longer appears as a fillable action in second/task instances.
+- Member Home now shows only requested task items for active Task Requests.
+- Body-Mind Connection is now stored as a task request item and can be completed against the active instance.
+- Consent/Submit now checks requested task completion before allowing submission.

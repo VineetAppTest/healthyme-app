@@ -5,6 +5,7 @@ from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12, render_back_to_top, compact_topbar
 from components.db import get_workflow, get_body_mind_response, save_body_mind_response, get_profile_with_laf_fallback, has_explicit_body_mind_access
 from components.flash import set_system_message, render_system_message
+from components.assessment_instances import get_current_assessment_instance, mark_body_mind_completed_for_current_instance
 
 
 st.set_page_config(page_title="Body-Mind Connection", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -29,7 +30,9 @@ st.markdown("""
 
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
-body_mind_allowed = bool(wf.get("body_mind_unlocked")) or has_explicit_body_mind_access(user_id)
+current_instance = get_current_assessment_instance(user_id)
+body_mind_task_requested = "body_mind" in (current_instance.get("requested_pages", []) or []) and not current_instance.get("submitted_for_review")
+body_mind_allowed = bool(wf.get("body_mind_unlocked")) or has_explicit_body_mind_access(user_id) or body_mind_task_requested
 if not body_mind_allowed:
     st.warning("This page will be available after your evaluator enables it.")
     st.stop()
@@ -145,5 +148,6 @@ with c1:
 with c2:
     if st.button("Submit Body-Mind Page", type="secondary", use_container_width=True):
         save_body_mind_response(user_id, answers, completed=True)
-        set_system_message("Body-Mind page submitted successfully.", "success", celebrate=True)
+        mark_body_mind_completed_for_current_instance(user_id, answers)
+        set_system_message("Body-Mind page submitted successfully. Body-Mind task marked completed.", "success", celebrate=True)
         st.switch_page("pages/02_Member_Home.py")

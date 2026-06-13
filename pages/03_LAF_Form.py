@@ -9,6 +9,17 @@ from components.flash import set_system_message, render_system_message
 from components.config_cache import load_config_json
 
 st.set_page_config(page_title="LAF", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+
+
+# v96.1: Local cached question loader guard.
+# Prevents NameError if shared cached loader is not imported/available.
+@st.cache_data(show_spinner=False)
+def load_laf_questions_cached():
+    import json
+    import pathlib
+    config_path = pathlib.Path(__file__).resolve().parents[1] / "config" / "laf_questions.json"
+    return json.loads(config_path.read_text(encoding="utf-8"))
+
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
 questions = load_laf_questions_cached()

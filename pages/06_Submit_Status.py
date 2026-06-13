@@ -13,13 +13,21 @@ wf = get_workflow(user_id)
 instances = get_assessment_instances(user_id)
 current = get_current_assessment_instance(user_id)
 
+
+def task_title_v96_2(task_key):
+    return {
+        "nsp1": "NSP Page 1",
+        "nsp2": "NSP Page 2",
+        "body_mind": "Body-Mind Connection",
+    }.get(str(task_key), str(task_key))
+
 topbar("Submission Status", "Track your assessment and reassessment submissions.", "Member status")
 render_system_message()
 
 stat_grid([
     {"label": "Current Instance", "value": current.get("instance_number"), "note": current.get("instance_type")},
     {"label": "Current Status", "value": current.get("status", "").replace("_", " ").title(), "note": "Latest assessment"},
-    {"label": "LAF", "value": "Completed" if wf.get("laf_completed") else "Pending", "note": "Initial requirement"},
+    {"label": "LAF", "value": "Completed" if wf.get("laf_completed") else "Pending", "note": "Initial only; not repeated for task requests"},
     {"label": "Admin Review", "value": "Pending" if current.get("submitted_for_review") else "Not Submitted", "note": "Review status"},
 ])
 
@@ -29,7 +37,7 @@ for inst in sorted(instances, key=lambda x: x.get("instance_number", 0)):
     st.markdown(
         f"""
         **Instance {inst.get('instance_number')} — {inst.get('instance_type')}**  
-        Requested: {', '.join(['NSP Page 1' if p=='nsp1' else 'NSP Page 2' for p in inst.get('requested_pages', [])])}  
+        Requested: {', '.join([task_title_v96_2(p) for p in inst.get('requested_pages', [])])}  
         Status: `{inst.get('status')}` | Submitted: `{inst.get('submitted_date') or '-'}`
         """
     )

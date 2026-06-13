@@ -8,7 +8,7 @@ def _today_iso():
     return datetime.date.today().isoformat()
 
 def _page_title(page):
-    return {"nsp1": "NSP Page 1", "nsp2": "NSP Page 2"}.get(page, page)
+    return {"nsp1": "NSP Page 1", "nsp2": "NSP Page 2", "body_mind": "Body-Mind Connection"}.get(page, page)
 
 def ensure_assessment_instances(user_id):
     """Create initial assessment instance if missing and migrate current NSP data into it."""
@@ -107,7 +107,7 @@ def create_reassessment_request(member_id, requested_pages, due_date="", admin_n
 
     next_num = max([int(i.get("instance_number", 0)) for i in instances] + [0]) + 1
     instance_id = f"{member_id}_inst_{next_num}"
-    pages = [p for p in requested_pages if p in ["nsp1", "nsp2"]] or ["nsp1", "nsp2"]
+    pages = [p for p in requested_pages if p in ["nsp1", "nsp2", "body_mind"]] or ["nsp1", "nsp2"]
 
     inst = {
         "instance_id": instance_id,
@@ -121,8 +121,10 @@ def create_reassessment_request(member_id, requested_pages, due_date="", admin_n
         "admin_note": admin_note,
         "nsp1_required": "nsp1" in pages,
         "nsp2_required": "nsp2" in pages,
+        "body_mind_required": "body_mind" in pages,
         "nsp1_completed": False,
         "nsp2_completed": False,
+        "body_mind_completed": False,
         "consent_accepted": False,
         "submitted_for_review": False,
         "submitted_date": "",
@@ -130,12 +132,12 @@ def create_reassessment_request(member_id, requested_pages, due_date="", admin_n
     }
     instances.append(inst)
     db["assessment_instances"][member_id] = instances
-    db.setdefault("assessment_instance_responses", {})[instance_id] = {"nsp1": {}, "nsp2": {}, "consent": {}}
+    db.setdefault("assessment_instance_responses", {})[instance_id] = {"nsp1": {}, "nsp2": {}, "body_mind": {}, "consent": {}}
     db.setdefault("notifications", []).append({
         "ts": _now_iso(),
         "kind": "member_reassessment_request",
         "user_id": member_id,
-        "message": f"Reassessment requested: {', '.join(_page_title(p) for p in pages)}",
+        "message": f"Nutritionist has allocated a Task: {', '.join(_page_title(p) for p in pages)}",
         "status": "queued",
     })
     save_db(db)
@@ -246,3 +248,40 @@ def task_label_v96(task_key):
         "body_mind": "Body-Mind Connection",
     }
     return labels.get(str(task_key), str(task_key))
+
+
+# v96.2: Mark Body-Mind task complete on the active Task Request instance.
+def mark_body_mind_completed_for_current_instance(user_id, response_data=None):
+    db = load_db()
+    ensure_assessment_instances(user_id)
+    db = load_db()
+    current = get_current_assessment_instance(user_id)
+    instance_id = current.get("instance_id")
+    requested = current.get("requested_pages", []) or []
+
+    if "body_mind" not in requested:
+        return False
+
+    db.setdefault("assessment_instance_responses", {}).setdefault(instance_id, {}).setdefault("body_mind", {})
+    if response_data is not None:
+        db["assessment_instance_responses"][instance_id]["body_mind"] = response_data
+
+    for inst in db.get("assessment_instances", {}).get(user_id, []):
+        if inst.get("instance_id") == instance_id:
+            inst["body_mind_required"] = True
+            inst["body_mind_completed"] = True
+            if not inst.get("submitted_for_review"):
+                inst["status"] = "in_progress"
+            break
+
+    save_db(db)
+    return True
+
+
+def task_completion_status_v96(instance):
+    requested = instance.get("requested_pages", []) or []
+    return {
+        "nsp1": bool(instance.get("nsp1_completed")) if "nsp1" in requested else True,
+        "nsp2": bool(instance.get("nsp2_completed")) if "nsp2" in requested else True,
+        "body_mind": bool(instance.get("body_mind_completed")) if "body_mind" in requested else True,
+    }

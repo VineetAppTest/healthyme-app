@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_Task_Request_Core_Build",
-  "version": "v96",
-  "updated_on": "2026-06-12T20:23:19.438034+00:00",
+  "build_name": "HealthyMe_v96_2_Task_Instance_Visibility_Fix",
+  "version": "v96.2",
+  "updated_on": "2026-06-13T07:30:30.668932+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,13 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Create Task Request uses checkboxes for NSP Page 1, NSP Page 2 and Body-Mind Connection.",
-    "Visible reassessment wording is moved toward Task Request language without renaming internal functions.",
-    "Body-Mind Control hidden from Admin Dashboard and linked from Create Task Request.",
-    "Review Queue wording moved toward Review/Admin Review.",
-    "Recipe admin/member pages extended for Protein, Fat, Carbohydrates and additional metrics.",
-    "Exercise calories removed from admin/member exercise UI.",
-    "Added hooks/notes for response editor fresh-report message and admin success messages."
+    "Fixed second/task instance Member Home visibility so LAF is inherited as completed and not shown as a fillable action.",
+    "Task instances now show only requested tasks: NSP Page 1, NSP Page 2 and/or Body-Mind Connection.",
+    "Create Task Request now stores Body-Mind Connection as a real requested task instead of dropping it.",
+    "Body-Mind page can open when Body-Mind is part of the active task request, even without global Body-Mind unlock.",
+    "Submitting Body-Mind marks the active task instance Body-Mind item completed.",
+    "Consent/Submit blocks submission until all requested tasks, including Body-Mind, are completed."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -290,16 +289,9 @@
     "pages/22_Admin_Daily_Log_Report.py"
   ],
   "validation_checks": {
-    "version_function_exists": true,
-    "eval_imports_admin_version": true,
-    "eval_calls_admin_version": true,
-    "dashboard_calls_admin_version": true,
-    "v95_7_css_present": true,
-    "fixed_grid_present": true,
-    "action_anchor_present": true,
-    "member_anchor_present": true,
-    "secondary_buttons_present": true,
-    "old_v95_6_anchor_removed": true
+    "laf": true,
+    "nsp1": false,
+    "nsp2": false
   },
   "storage_model": {
     "public_bucket": "healthyme-public-assets",
@@ -327,5 +319,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v95_14_EvalStatus_Nav_Spacing_Fix.zip"
+  "base_build": "HealthyMe_v96_1_LAF_Cached_Loader_Fix.zip"
 }

@@ -37,10 +37,28 @@ if (wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflo
 
 current_instance = get_current_assessment_instance(user_id)
 
+
+def task_title_v96_2(task_key):
+    return {
+        "nsp1": "NSP Page 1",
+        "nsp2": "NSP Page 2",
+        "body_mind": "Body-Mind Connection",
+    }.get(str(task_key), str(task_key))
+
+def task_status_done_v96_2(instance, wf_state, task_key):
+    if task_key == "nsp1":
+        return bool(instance.get("nsp1_completed"))
+    if task_key == "nsp2":
+        return bool(instance.get("nsp2_completed"))
+    if task_key == "body_mind":
+        return bool(instance.get("body_mind_completed")) or bool(wf_state.get("body_mind_completed"))
+    return False
+
 # v31: workflow finalization overrides stale instance review status.
 workflow_finalized = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready")) or wf.get("workflow_status") == "finalized"
 requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
-is_reassessment = current_instance.get("instance_type") == "Task Request" and not current_instance.get("submitted_for_review")
+is_task_instance = current_instance.get("instance_type") in ["Task Request", "Reassessment"] and not current_instance.get("submitted_for_review")
+is_reassessment = is_task_instance
 
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 render_system_message()
@@ -80,31 +98,40 @@ if messages:
 stat_grid([
     {"label": "LAF", "value": "Completed" if wf.get("laf_completed") else "Pending", "note": "Lifestyle intake"},
     {"label": "Current Instance", "value": current_instance.get("instance_number"), "note": current_instance.get("instance_type")},
-    {"label": "Requested NSP", "value": ", ".join(["Pg 1" if p=="nsp1" else "Pg 2" for p in requested_pages]), "note": "Current requirement"},
+    {"label": "Requested Tasks", "value": ", ".join([task_title_v96_2(p) for p in requested_pages]), "note": "Current requirement"},
     {"label": "Status", "value": current_instance.get("status", wf.get("workflow_status")).replace("_", " ").title(), "note": "Current stage"},
 ])
 
-if is_reassessment:
+if is_task_instance:
     card_start()
-    st.subheader("Task Request requested")
+    st.subheader("Task Requested")
     st.markdown(
         f"""
         <div class='info-banner'>
           <b>Nutritionist has allocated a Task {current_instance.get('instance_number')}.</b><br>
-          Please complete: <b>{', '.join(['NSP Page 1' if p=='nsp1' else 'NSP Page 2' for p in requested_pages])}</b><br>
+          Please complete: <b>{', '.join([task_title_v96_2(p) for p in requested_pages])}</b><br>
           Due date: <b>{current_instance.get('due_date') or 'Not set'}</b><br>
           Note: {current_instance.get('admin_note') or '-'}
         </div>
         """,
         unsafe_allow_html=True,
     )
-    c1, c2 = st.columns(2)
-    with c1:
-        if "nsp1" in requested_pages and st.button("Start NSP Page 1", type="primary", use_container_width=True):
-            st.switch_page("pages/04_NSP_Page1.py")
-    with c2:
-        if "nsp2" in requested_pages and st.button("Start NSP Page 2", type="primary", use_container_width=True):
-            st.switch_page("pages/05_NSP_Page2.py")
+    task_cols = st.columns(max(1, min(3, len(requested_pages))))
+    col_index = 0
+    if "nsp1" in requested_pages:
+        with task_cols[col_index]:
+            if st.button("Start NSP Page 1", type="primary", use_container_width=True):
+                st.switch_page("pages/04_NSP_Page1.py")
+        col_index += 1
+    if "nsp2" in requested_pages:
+        with task_cols[col_index]:
+            if st.button("Start NSP Page 2", type="primary", use_container_width=True):
+                st.switch_page("pages/05_NSP_Page2.py")
+        col_index += 1
+    if "body_mind" in requested_pages:
+        with task_cols[col_index]:
+            if st.button("Start Body-Mind", type="primary", use_container_width=True):
+                st.switch_page("pages/19_Body_Mind_Connection.py")
     card_end()
 
 left, right = st.columns([1.15, .85], gap="large")
@@ -113,15 +140,38 @@ with left:
     card_start()
     st.subheader("Your next steps")
 
-    if not wf.get("laf_completed"):
+    if is_task_instance:
+        st.info("This is a follow-up task request. LAF is already completed from the original assessment and is not required again.")
+        visible_tasks = [p for p in requested_pages if p in ["nsp1", "nsp2", "body_mind"]]
+        if not visible_tasks:
+            st.warning("No active task is selected for this request.")
+        else:
+            task_cols = st.columns(max(1, min(3, len(visible_tasks))))
+            col_index = 0
+            if "nsp1" in visible_tasks:
+                with task_cols[col_index]:
+                    if st.button("NSP Page 1", use_container_width=True):
+                        st.switch_page("pages/04_NSP_Page1.py")
+                col_index += 1
+            if "nsp2" in visible_tasks:
+                with task_cols[col_index]:
+                    if st.button("NSP Page 2", use_container_width=True):
+                        st.switch_page("pages/05_NSP_Page2.py")
+                col_index += 1
+            if "body_mind" in visible_tasks:
+                with task_cols[col_index]:
+                    body_label = "Body-Mind Connection" if not task_status_done_v96_2(current_instance, wf, "body_mind") else "Body-Mind Completed"
+                    if st.button(body_label, use_container_width=True, disabled=task_status_done_v96_2(current_instance, wf, "body_mind")):
+                        st.switch_page("pages/19_Body_Mind_Connection.py")
+    elif not wf.get("laf_completed"):
         if st.button("1. Fill LAF", type="primary", use_container_width=True):
             st.switch_page("pages/03_LAF_Form.py")
-    elif current_instance.get("submitted_for_review") and not is_reassessment:
+    elif current_instance.get("submitted_for_review"):
         st.info("Your latest evaluation has been submitted and is under review.")
     else:
         b1, b2, b3 = st.columns(3)
         with b1:
-            if st.button("1. Fill LAF", use_container_width=True, disabled=is_reassessment):
+            if st.button("1. Fill LAF", use_container_width=True):
                 st.switch_page("pages/03_LAF_Form.py")
         with b2:
             if st.button("2. Fill NSP Pg 1", use_container_width=True, disabled=("nsp1" not in requested_pages)):
@@ -154,7 +204,7 @@ with right:
     body_mind_unlocked = bool(wf.get("body_mind_unlocked")) or has_explicit_body_mind_access(user_id)
     admin_completed = bool(wf.get("admin_completed"))
 
-    if body_mind_unlocked:
+    if body_mind_unlocked and not ("body_mind" in requested_pages and is_task_instance):
         label = "Body-Mind Connection" if not wf.get("body_mind_completed") else "Body-Mind Connection ✓"
         st.markdown("<div class='hm-bodymind-btn-anchor'></div>", unsafe_allow_html=True)
         if st.button(label, type="secondary", use_container_width=True, key="member_home_body_mind_connection"):
@@ -198,6 +248,9 @@ with right:
           </div>
           <div class="member-summary-item {'member-summary-ok' if current_instance.get('nsp2_completed') else 'member-summary-warn'}">
             <div class="member-summary-label">NSP Page 2</div><div class="member-summary-value">{'Completed' if current_instance.get('nsp2_completed') else 'Pending'}</div>
+          </div>
+          <div class="member-summary-item {'member-summary-ok' if task_status_done_v96_2(current_instance, wf, 'body_mind') else 'member-summary-warn'}">
+            <div class="member-summary-label">Body-Mind</div><div class="member-summary-value">{'Completed' if task_status_done_v96_2(current_instance, wf, 'body_mind') else 'Pending' if 'body_mind' in requested_pages else 'Not Requested'}</div>
           </div>
           <div class="member-summary-item member-summary-info">
             <div class="member-summary-label">Instance</div><div class="member-summary-value">{current_instance.get('instance_number')} - {current_instance.get('instance_type')}</div>
