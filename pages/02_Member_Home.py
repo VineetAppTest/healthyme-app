@@ -116,6 +116,7 @@ with left:
             f"""
             <div class='info-banner'>
               <b>Nutritionist has allocated a Task.</b><br>
+              Task allocation date: <b>{current_instance.get('created_date') or '-'}</b><br>
               Please complete: <b>{', '.join([task_title_v96_2(p) for p in visible_tasks])}</b><br>
               Due date: <b>{current_instance.get('due_date') or 'Not set'}</b><br>
               Note: {current_instance.get('admin_note') or '-'}<br><br>

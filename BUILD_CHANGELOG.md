@@ -1107,3 +1107,9 @@
 - Updated task action buttons to Start NSP Page 1 / Start NSP Page 2 / Start Body-Mind Connection.
 - Removed member progress/status summary block because it duplicated the task/action view.
 - Removed Body-Mind from Personalized Content; it is shown under Your next steps only when requested.
+
+## v96.4 - Task Allocation Date Display
+
+- Added Task allocation date under Member Home → Your next steps task information.
+- Added Task allocation date under Admin Task Request Manager → Assessment history.
+- Uses the existing assessment instance created_date as the allocation date.

@@ -44,6 +44,7 @@ for inst in sorted(instances, key=lambda x: x.get("instance_number", 0)):
         f"""
         **Instance {inst.get('instance_number')} — {inst.get('instance_type')}**  
         Tasks: {', '.join(['NSP Page 1' if p=='nsp1' else 'NSP Page 2' if p=='nsp2' else 'Body-Mind Connection' if p=='body_mind' else p for p in inst.get('requested_pages', [])])}  
+        Task allocation date: `{inst.get('created_date') or '-'}`  
         Status: `{inst.get('status')}` | Submitted: `{inst.get('submitted_date') or '-'}`
         """
     )
