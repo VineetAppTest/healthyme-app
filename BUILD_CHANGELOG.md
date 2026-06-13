@@ -1098,3 +1098,12 @@
 - Member Home now shows only requested task items for active Task Requests.
 - Body-Mind Connection is now stored as a task request item and can be completed against the active instance.
 - Consent/Submit now checks requested task completion before allowing submission.
+
+## v96.3 - Member Home Task Cleanup
+
+- Removed redundant Task Requested block from Member Home.
+- Moved task request details into Your next steps information box.
+- Updated copy to “Nutritionist has allocated a Task.”
+- Updated task action buttons to Start NSP Page 1 / Start NSP Page 2 / Start Body-Mind Connection.
+- Removed member progress/status summary block because it duplicated the task/action view.
+- Removed Body-Mind from Personalized Content; it is shown under Your next steps only when requested.

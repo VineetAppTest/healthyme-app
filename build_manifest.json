@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_2_Task_Instance_Visibility_Fix",
-  "version": "v96.2",
-  "updated_on": "2026-06-13T07:30:30.668932+00:00",
+  "build_name": "HealthyMe_v96_3_Member_Home_Task_Cleanup",
+  "version": "v96.3",
+  "updated_on": "2026-06-13T08:03:03.354535+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,12 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Fixed second/task instance Member Home visibility so LAF is inherited as completed and not shown as a fillable action.",
-    "Task instances now show only requested tasks: NSP Page 1, NSP Page 2 and/or Body-Mind Connection.",
-    "Create Task Request now stores Body-Mind Connection as a real requested task instead of dropping it.",
-    "Body-Mind page can open when Body-Mind is part of the active task request, even without global Body-Mind unlock.",
-    "Submitting Body-Mind marks the active task instance Body-Mind item completed.",
-    "Consent/Submit blocks submission until all requested tasks, including Body-Mind, are completed."
+    "Removed redundant Task Requested section from Member Home.",
+    "Moved task request information into Your next steps information box.",
+    "Updated copy to 'Nutritionist has allocated a Task' without task instance number.",
+    "Changed requested-task buttons to Start NSP Page 1 / Start NSP Page 2 / Start Body-Mind Connection.",
+    "Removed member progress/status summary block because it duplicated visible task/action information.",
+    "Removed Body-Mind Connection from Personalized Content; it appears under Your next steps only when requested."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -319,5 +319,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_1_LAF_Cached_Loader_Fix.zip"
+  "base_build": "HealthyMe_v96_2_Task_Instance_Visibility_Fix.zip"
 }

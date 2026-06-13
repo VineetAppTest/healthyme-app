@@ -102,38 +102,8 @@ stat_grid([
     {"label": "Status", "value": current_instance.get("status", wf.get("workflow_status")).replace("_", " ").title(), "note": "Current stage"},
 ])
 
-if is_task_instance:
-    card_start()
-    st.subheader("Task Requested")
-    st.markdown(
-        f"""
-        <div class='info-banner'>
-          <b>Nutritionist has allocated a Task {current_instance.get('instance_number')}.</b><br>
-          Please complete: <b>{', '.join([task_title_v96_2(p) for p in requested_pages])}</b><br>
-          Due date: <b>{current_instance.get('due_date') or 'Not set'}</b><br>
-          Note: {current_instance.get('admin_note') or '-'}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    task_cols = st.columns(max(1, min(3, len(requested_pages))))
-    col_index = 0
-    if "nsp1" in requested_pages:
-        with task_cols[col_index]:
-            if st.button("Start NSP Page 1", type="primary", use_container_width=True):
-                st.switch_page("pages/04_NSP_Page1.py")
-        col_index += 1
-    if "nsp2" in requested_pages:
-        with task_cols[col_index]:
-            if st.button("Start NSP Page 2", type="primary", use_container_width=True):
-                st.switch_page("pages/05_NSP_Page2.py")
-        col_index += 1
-    if "body_mind" in requested_pages:
-        with task_cols[col_index]:
-            if st.button("Start Body-Mind", type="primary", use_container_width=True):
-                st.switch_page("pages/19_Body_Mind_Connection.py")
-    card_end()
 
+# v96.3: Redundant task-request card removed; details now live under Your next steps.
 left, right = st.columns([1.15, .85], gap="large")
 
 with left:
@@ -141,33 +111,52 @@ with left:
     st.subheader("Your next steps")
 
     if is_task_instance:
-        st.info("This is a follow-up task request. LAF is already completed from the original assessment and is not required again.")
         visible_tasks = [p for p in requested_pages if p in ["nsp1", "nsp2", "body_mind"]]
+        st.markdown(
+            f"""
+            <div class='info-banner'>
+              <b>Nutritionist has allocated a Task.</b><br>
+              Please complete: <b>{', '.join([task_title_v96_2(p) for p in visible_tasks])}</b><br>
+              Due date: <b>{current_instance.get('due_date') or 'Not set'}</b><br>
+              Note: {current_instance.get('admin_note') or '-'}<br><br>
+              LAF is already completed from the original assessment and is not required again.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         if not visible_tasks:
             st.warning("No active task is selected for this request.")
         else:
             task_cols = st.columns(max(1, min(3, len(visible_tasks))))
             col_index = 0
+
             if "nsp1" in visible_tasks:
                 with task_cols[col_index]:
-                    if st.button("NSP Page 1", use_container_width=True):
+                    if st.button("Start NSP Page 1", use_container_width=True):
                         st.switch_page("pages/04_NSP_Page1.py")
                 col_index += 1
+
             if "nsp2" in visible_tasks:
                 with task_cols[col_index]:
-                    if st.button("NSP Page 2", use_container_width=True):
+                    if st.button("Start NSP Page 2", use_container_width=True):
                         st.switch_page("pages/05_NSP_Page2.py")
                 col_index += 1
+
             if "body_mind" in visible_tasks:
                 with task_cols[col_index]:
-                    body_label = "Body-Mind Connection" if not task_status_done_v96_2(current_instance, wf, "body_mind") else "Body-Mind Completed"
-                    if st.button(body_label, use_container_width=True, disabled=task_status_done_v96_2(current_instance, wf, "body_mind")):
+                    body_done = task_status_done_v96_2(current_instance, wf, "body_mind")
+                    body_label = "Start Body-Mind Connection" if not body_done else "Body-Mind Completed"
+                    if st.button(body_label, use_container_width=True, disabled=body_done):
                         st.switch_page("pages/19_Body_Mind_Connection.py")
+
     elif not wf.get("laf_completed"):
         if st.button("1. Fill LAF", type="primary", use_container_width=True):
             st.switch_page("pages/03_LAF_Form.py")
+
     elif current_instance.get("submitted_for_review"):
         st.info("Your latest evaluation has been submitted and is under review.")
+
     else:
         b1, b2, b3 = st.columns(3)
         with b1:
@@ -181,48 +170,22 @@ with left:
                 st.switch_page("pages/05_NSP_Page2.py")
 
     st.divider()
-    x1, x2, x3 = st.columns(3)
-    with x1:
-        if st.button("Submit / Status", use_container_width=True):
-            st.switch_page("pages/06_Submit_Status.py")
-    with x2:
-        if st.button("My Profile", use_container_width=True):
-            st.switch_page("pages/07_My_Profile.py")
-    with x3:
-        if st.button("Daily Log", use_container_width=True):
-            st.switch_page("pages/18_Daily_Log.py")
+    if st.button("Submit / Status", use_container_width=True):
+        st.switch_page("pages/06_Submit_Status.py")
+
     card_end()
 
 with right:
     card_start()
     st.subheader("Personalized content")
 
-    # v19 fix:
-    # Body-Mind visibility is controlled by body_mind_unlocked.
-    # It should not be hidden only because admin_completed is False.
-    # Recipes/exercises remain locked until admin_completed.
-    body_mind_unlocked = bool(wf.get("body_mind_unlocked")) or has_explicit_body_mind_access(user_id)
     admin_completed = bool(wf.get("admin_completed"))
 
-    if body_mind_unlocked and not ("body_mind" in requested_pages and is_task_instance):
-        label = "Body-Mind Connection" if not wf.get("body_mind_completed") else "Body-Mind Connection ✓"
-        st.markdown("<div class='hm-bodymind-btn-anchor'></div>", unsafe_allow_html=True)
-        if st.button(label, type="secondary", use_container_width=True, key="member_home_body_mind_connection"):
-            st.switch_page("pages/19_Body_Mind_Connection.py")
-    else:
-        activation_requested = bool(wf.get("body_mind_activation_requested"))
-        if admin_completed and activation_requested:
-            body_mind_msg = "Activation was requested but not synced. Ask admin to activate once from Body-Mind Access Control."
-        elif admin_completed:
-            body_mind_msg = "Final review is complete. Admin must manually activate Body-Mind for it to appear."
-        elif activation_requested:
-            body_mind_msg = "Body-Mind activation is selected and will open after final admin completion."
-        else:
-            body_mind_msg = "Admin final assessment is required first, then admin must manually activate Body-Mind."
-        st.markdown(
-            f"<div class='lock-card'><b>Body-Mind Connection is not activated yet.</b><br>{body_mind_msg}</div>",
-            unsafe_allow_html=True,
-        )
+    if st.button("My Profile", use_container_width=True):
+        st.switch_page("pages/07_My_Profile.py")
+
+    if st.button("Daily Log", use_container_width=True):
+        st.switch_page("pages/18_Daily_Log.py")
 
     if not admin_completed:
         st.markdown(
@@ -235,28 +198,7 @@ with right:
         if st.button("Exercise Repository", use_container_width=True):
             st.switch_page("pages/09_Exercise_Repository.py")
 
-    st.markdown("<div class='hm-journey-compact-spacer'></div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-journey-compact-title'>Journey summary</div>", unsafe_allow_html=True)
-    st.markdown(
-        f"""
-        <div class="member-summary-grid">
-          <div class="member-summary-item {'member-summary-ok' if wf.get('laf_completed') else 'member-summary-warn'}">
-            <div class="member-summary-label">LAF</div><div class="member-summary-value">{'Completed' if wf.get('laf_completed') else 'Pending'}</div>
-          </div>
-          <div class="member-summary-item {'member-summary-ok' if current_instance.get('nsp1_completed') else 'member-summary-warn'}">
-            <div class="member-summary-label">NSP Page 1</div><div class="member-summary-value">{'Completed' if current_instance.get('nsp1_completed') else 'Pending'}</div>
-          </div>
-          <div class="member-summary-item {'member-summary-ok' if current_instance.get('nsp2_completed') else 'member-summary-warn'}">
-            <div class="member-summary-label">NSP Page 2</div><div class="member-summary-value">{'Completed' if current_instance.get('nsp2_completed') else 'Pending'}</div>
-          </div>
-          <div class="member-summary-item {'member-summary-ok' if task_status_done_v96_2(current_instance, wf, 'body_mind') else 'member-summary-warn'}">
-            <div class="member-summary-label">Body-Mind</div><div class="member-summary-value">{'Completed' if task_status_done_v96_2(current_instance, wf, 'body_mind') else 'Pending' if 'body_mind' in requested_pages else 'Not Requested'}</div>
-          </div>
-          <div class="member-summary-item member-summary-info">
-            <div class="member-summary-label">Instance</div><div class="member-summary-value">{current_instance.get('instance_number')} - {current_instance.get('instance_type')}</div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
     card_end()
+
+# v96.3: Progress/status summary block removed from Member Home because it duplicated member-facing task/action information.
+# v96.3: Body-Mind Connection removed from Personalized Content; it appears under Your next steps only when requested.
