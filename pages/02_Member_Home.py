@@ -40,7 +40,7 @@ current_instance = get_current_assessment_instance(user_id)
 # v31: workflow finalization overrides stale instance review status.
 workflow_finalized = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready")) or wf.get("workflow_status") == "finalized"
 requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
-is_reassessment = current_instance.get("instance_type") == "Reassessment" and not current_instance.get("submitted_for_review")
+is_reassessment = current_instance.get("instance_type") == "Task Request" and not current_instance.get("submitted_for_review")
 
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 render_system_message()
@@ -86,11 +86,11 @@ stat_grid([
 
 if is_reassessment:
     card_start()
-    st.subheader("Reassessment requested")
+    st.subheader("Task Request requested")
     st.markdown(
         f"""
         <div class='info-banner'>
-          <b>Admin has requested Reassessment {current_instance.get('instance_number')}.</b><br>
+          <b>Nutritionist has allocated a Task {current_instance.get('instance_number')}.</b><br>
           Please complete: <b>{', '.join(['NSP Page 1' if p=='nsp1' else 'NSP Page 2' for p in requested_pages])}</b><br>
           Due date: <b>{current_instance.get('due_date') or 'Not set'}</b><br>
           Note: {current_instance.get('admin_note') or '-'}

@@ -101,7 +101,7 @@ def create_reassessment_request(member_id, requested_pages, due_date="", admin_n
     db = load_db()
     instances = db.setdefault("assessment_instances", {}).setdefault(member_id, [])
 
-    open_request = [i for i in instances if not i.get("submitted_for_review") and i.get("instance_type") == "Reassessment" and i.get("status") in ["pending", "in_progress"]]
+    open_request = [i for i in instances if not i.get("submitted_for_review") and i.get("instance_type") == "Task Request" and i.get("status") in ["pending", "in_progress"]]
     if open_request:
         return open_request[-1], False
 
@@ -113,7 +113,7 @@ def create_reassessment_request(member_id, requested_pages, due_date="", admin_n
         "instance_id": instance_id,
         "member_id": member_id,
         "instance_number": next_num,
-        "instance_type": "Reassessment",
+        "instance_type": "Task Request",
         "requested_pages": pages,
         "created_by_admin": admin_id,
         "created_date": _today_iso(),
@@ -237,3 +237,12 @@ def get_all_member_instances():
                 **inst,
             })
     return rows
+
+# v96: UI labels for Task Request options. Keeps existing reassessment function names intact.
+def task_label_v96(task_key):
+    labels = {
+        "nsp1": "NSP Page 1",
+        "nsp2": "NSP Page 2",
+        "body_mind": "Body-Mind Connection",
+    }
+    return labels.get(str(task_key), str(task_key))

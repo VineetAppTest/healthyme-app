@@ -6,11 +6,11 @@ from components.assessment_instances import list_review_queue
 from components.db import get_workflow
 from components.flash import render_system_message
 
-st.set_page_config(page_title="Admin Review Queue", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Admin Review", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 render_build_text_v14()
 
-topbar("Admin Review Queue", "Review initial assessments and reassessments separately.", "Admin workflow")
+topbar("Admin Review", "Review initial assessments and reassessments separately.", "Admin workflow")
 render_build_text_v14()
 render_system_message()
 

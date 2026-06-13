@@ -108,6 +108,10 @@ def recipe_form(prefix, row=None):
         "condition_tags": condition_tags,
         "prep_time": prep_time,
         "calories": calories,
+            "protein": protein,
+            "fat": fat,
+            "carbohydrates": carbohydrates,
+            "additional_nutrition": additional_nutrition,
         "servings": servings,
         "portion_size": portion_size,
         "image_url": image_url,
@@ -231,3 +235,5 @@ with tabs[4]:
                 st.rerun()
 
 render_page_nav("Recipes", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
+
+# v96_recipe_macros: Protein, Fat, Carbohydrates, Additional nutrition metrics

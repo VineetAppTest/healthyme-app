@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v95_13_Full_Report_Button_DOM_Normalization",
-  "version": "v95.13",
-  "updated_on": "2026-06-12T18:58:54.378555+00:00",
+  "build_name": "HealthyMe_v96_Task_Request_Core_Build",
+  "version": "v96",
+  "updated_on": "2026-06-12T20:23:19.438034+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed the help/tooltip parameter from the Full Report action button.",
-    "Full Report button now uses the same st.button signature as Partial Report, Admin Page and Daily Logs.",
-    "Added scoped hardener to prevent pseudo-element/child DOM from changing action button height.",
-    "Kept Evaluation Status v95.12 final micro-polish intact.",
-    "No reassessment, report, storage, Recipe or Exercise logic changed."
+    "Create Task Request uses checkboxes for NSP Page 1, NSP Page 2 and Body-Mind Connection.",
+    "Visible reassessment wording is moved toward Task Request language without renaming internal functions.",
+    "Body-Mind Control hidden from Admin Dashboard and linked from Create Task Request.",
+    "Review Queue wording moved toward Review/Admin Review.",
+    "Recipe admin/member pages extended for Protein, Fat, Carbohydrates and additional metrics.",
+    "Exercise calories removed from admin/member exercise UI.",
+    "Added hooks/notes for response editor fresh-report message and admin success messages."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -324,5 +326,6 @@
       "Other forms"
     ]
   },
-  "patched_page": "pages/11_Evaluation_Status.py"
+  "patched_page": "pages/11_Evaluation_Status.py",
+  "base_build": "HealthyMe_v95_14_EvalStatus_Nav_Spacing_Fix.zip"
 }

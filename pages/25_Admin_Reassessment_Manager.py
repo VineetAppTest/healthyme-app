@@ -6,10 +6,13 @@ from components.db import list_members
 from components.assessment_instances import get_assessment_instances, create_reassessment_request
 from components.flash import set_system_message, render_system_message
 
-st.set_page_config(page_title="Reassessment Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Task Request Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 
-topbar("Reassessment Manager", "Request NSP Page 1, NSP Page 2, or both for follow-up assessment.", "Admin reassessment")
+st.markdown("<div class='info-banner'><b>Body-Mind Access:</b> Body-Mind Control is hidden from the dashboard and available here for admin access management.</div>", unsafe_allow_html=True)
+st.page_link("pages/23_Admin_Body_Mind_Control.py", label="Open Body-Mind Control", icon=":material/psychology:", use_container_width=True)
+
+topbar("Task Request Manager", "Request NSP Page 1, NSP Page 2, or both for follow-up assessment.", "Admin reassessment")
 render_system_message()
 
 members = list_members()
@@ -83,3 +86,19 @@ card_end()
 
 if st.button("Back to Dashboard"):
     st.switch_page("pages/10_Admin_Dashboard.py")
+
+st.markdown("#### Select Task Type(s)")
+task_nsp1 = st.checkbox("NSP Page 1", key="v96_task_nsp1")
+task_nsp2 = st.checkbox("NSP Page 2", key="v96_task_nsp2")
+task_body_mind = st.checkbox("Body-Mind Connection", key="v96_task_body_mind")
+
+requested_pages = []
+if task_nsp1:
+    requested_pages.append("nsp1")
+if task_nsp2:
+    requested_pages.append("nsp2")
+if task_body_mind:
+    requested_pages.append("body_mind")
+
+if not requested_pages:
+    st.info("Select at least one task before creating the request.")

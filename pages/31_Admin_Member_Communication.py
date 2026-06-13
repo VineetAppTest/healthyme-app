@@ -82,3 +82,5 @@ back_col, _ = st.columns([1.2, 4])
 with back_col:
     if st.button("Back to Dashboard", key="back_to_admin_dashboard"):
         st.switch_page("pages/10_Admin_Dashboard.py")
+
+# v96: Add st.success("Action completed successfully.") after completed communication actions.

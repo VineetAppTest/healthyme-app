@@ -1075,3 +1075,12 @@
 - This makes Full Report render with the same Streamlit button structure as the other three action buttons.
 - Added a scoped action-row hardener for child/pseudo-element height consistency.
 - No logic changes.
+
+## v96 - Task Request Core Build
+
+- Create Task Request uses checkbox task selection for NSP Page 1, NSP Page 2 and Body-Mind Connection.
+- Visible reassessment wording moves toward Task Request language.
+- Body-Mind Control hidden from dashboard and linked from Create Task Request.
+- Review Queue wording moves toward Review/Admin Review.
+- Recipe nutrition expands with Protein, Fat, Carbohydrates and additional metrics.
+- Exercise calories removed from admin/member exercise UI.

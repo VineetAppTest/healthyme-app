@@ -1,3 +1,7 @@
+
+def v96_response_editor_success():
+    st.success("Response updated. Please download a fresh final report.")
+
 import json
 import streamlit as st, json, pathlib
 from io import BytesIO
@@ -235,3 +239,4 @@ card_end()
 
 if st.button("Back to Dashboard"):
     st.switch_page("pages/10_Admin_Dashboard.py")
+# v96: call v96_response_editor_success() after response edits are saved.

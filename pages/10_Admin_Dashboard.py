@@ -80,7 +80,7 @@ with p1:
     priority_card(
         "Initial Reviews",
         len(initial_pending),
-        "Review Queue",
+        "Review",
         "pages/26_Admin_Review_Queue.py",
         "v14_priority_review",
         "Pending admin review",
@@ -121,7 +121,7 @@ def workflow_card(title, actions):
 w1, w2 = st.columns(2, gap="medium")
 with w1:
     workflow_card("Review & Assessment", [
-        ("Review Queue", "pages/26_Admin_Review_Queue.py", "v14_review_queue", "Review newly submitted assessments."),
+        ("Review", "pages/26_Admin_Review_Queue.py", "v14_review_queue", "Review newly submitted assessments."),
         ("Evaluation Status", "pages/11_Evaluation_Status.py", "v14_eval_status", "See all member statuses and open reports."),
         ("Reassessments", "pages/25_Admin_Reassessment_Manager.py", "v14_reassess", "Manage follow-up submissions."),
         ("NSP Compare", "pages/27_Comparative_NSP_Report.py", "v14_compare", "Compare NSP progress."),
@@ -131,7 +131,8 @@ with w2:
     workflow_card("Member & Access", [
         ("Create Users", "pages/17_Admin_User_Manager.py", "v14_users", "Create members and admins."),
         ("Access Manager", "pages/30_Admin_User_Access_Manager.py", "v14_access", "Deactivate/reactivate users."),
-        ("Body-Mind Access", "pages/23_Admin_Body_Mind_Control.py", "v14_bodymind", "Control content visibility."),
+# v96: Body-Mind Control hidden from Admin Dashboard; accessible through Create Task Request.
+#         ("Body-Mind Access", "pages/23_Admin_Body_Mind_Control.py", "v14_bodymind", "Control content visibility."),
     ])
 
 w3, w4 = st.columns(2, gap="medium")
@@ -167,7 +168,7 @@ with st.container(border=True):
     st.markdown(
         """
         <div class='hm-v14-flow-list'>
-          <div class='hm-v14-flow-step'><b>1. New submission</b><br>Review Queue → Evaluation Status → Final Report</div>
+          <div class='hm-v14-flow-step'><b>1. New submission</b><br>Review → Evaluation Status → Final Report</div>
           <div class='hm-v14-flow-step'><b>2. Follow-up</b><br>Reassessments → NSP Compare</div>
           <div class='hm-v14-flow-step'><b>3. Access issue</b><br>Access Manager</div>
           <div class='hm-v14-flow-step'><b>4. Allocation</b><br>Recipes / Exercises</div>

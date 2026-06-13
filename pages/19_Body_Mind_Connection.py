@@ -102,6 +102,8 @@ existing = get_body_mind_response(user_id)
 profile = get_profile_with_laf_fallback(user_id)
 
 compact_topbar("Body-Mind Connection", "This section is enabled by the admin after assessment review.", "Member reflection")
+
+st.markdown("<div class='info-banner v96_body_mind_task_status'><b>Task Status:</b> Submit this page to complete the Body-Mind Connection task.</div>", unsafe_allow_html=True)
 render_system_message()
 
 st.markdown("""

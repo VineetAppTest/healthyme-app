@@ -23,7 +23,7 @@ compact_topbar("Exercise Repository", "", "Member content")
 
 DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
 
-EXERCISE_COLUMNS = ['title', 'description', 'category', 'difficulty', 'goal_tags', 'condition_tags', 'duration_or_reps', 'calories', 'equipment', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'instructions', 'benefits', 'status']
+EXERCISE_COLUMNS = ['title', 'description', 'category', 'difficulty', 'goal_tags', 'condition_tags', 'duration_or_reps', 'hidden_calories_v96', 'equipment', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'instructions', 'benefits', 'status']
 
 FALLBACK_IMAGES = [
     "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80",
@@ -519,7 +519,7 @@ def render_landing(df):
                     img = image_for(row, idx)
                     title = esc(row.get("title", "Untitled Exercise"))
                     duration = esc(first_value(row, ["duration_or_reps"], ""))
-                    cal = esc(first_value(row, ["calories"], ""))
+                    cal = esc(first_value(row, ["hidden_calories_v96"], ""))
                     eid = str(idx)
                     fav_mark = "♥" if eid in favs else "♡"
                     st.markdown(f"""
@@ -530,7 +530,7 @@ def render_landing(df):
     <div class='hm-content-meta'>
       <span>◷ {duration or "-"}</span>
       <span>•</span>
-      <span>🔥 {cal or "-"} cal</span>
+      
       <span style='margin-left:auto;'>{fav_mark}</span>
     </div>
   </div>
@@ -566,14 +566,14 @@ def render_detail(row, idx):
     st.markdown(f"<div class='hm-detail-title'>{esc(title)}</div>", unsafe_allow_html=True)
 
     duration = first_value(row, ["duration_or_reps"], "-")
-    calories = first_value(row, ["calories"], "-")
+    hidden_calories_v96 = first_value(row, ["hidden_calories_v96"], "-")
     difficulty = first_value(row, ["difficulty"], "-")
     equipment = first_value(row, ["equipment"], "-")
 
     st.markdown(f"""
 <div class='hm-detail-grid'>
   <div class='hm-detail-pill'><b>◷ {esc(duration)}</b><span>Duration / reps</span></div>
-  <div class='hm-detail-pill'><b>🔥 {esc(calories)} Calories</b><span>Estimate</span></div>
+  <div class='hm-detail-pill'><b>🔥 {esc(hidden_calories_v96)} </b><span>Estimate</span></div>
   <div class='hm-detail-pill'><b>📈 {esc(difficulty)}</b><span>Difficulty</span></div>
   <div class='hm-detail-pill'><b>⚙ {esc(equipment)}</b><span>Equipment</span></div>
 </div>

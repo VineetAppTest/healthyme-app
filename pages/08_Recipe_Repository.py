@@ -532,7 +532,7 @@ def render_landing(df):
     <div class='hm-content-meta'>
       <span>◷ {prep or "-"} mins</span>
       <span>•</span>
-      <span>🍃 {cal or "-"} cal</span>
+      <span>🍃 {cal or "-"} cal</span><span>•</span><span>Protein {esc(first_value(row, ["protein"], "-"))}</span><span>•</span><span>Fat {esc(first_value(row, ["fat"], "-"))}</span><span>•</span><span>Carbs {esc(first_value(row, ["carbohydrates"], "-"))}</span>
       <span style='margin-left:auto;'>{fav_mark}</span>
     </div>
   </div>
@@ -627,3 +627,5 @@ else:
     render_landing(df)
 
 render_page_nav("Recipes", back_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
+
+# v96_recipe_macro_display: Recipe cards/details should display Protein, Fat and Carbohydrates below Calories when available.

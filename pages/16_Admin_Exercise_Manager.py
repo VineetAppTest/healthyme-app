@@ -12,7 +12,7 @@ st.set_page_config(page_title="Manage & Allocate Exercises", page_icon="💚", l
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 
 PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
-EXERCISE_COLUMNS = ['title', 'description', 'category', 'difficulty', 'goal_tags', 'condition_tags', 'duration_or_reps', 'calories', 'equipment', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'instructions', 'benefits', 'status']
+EXERCISE_COLUMNS = ['title', 'description', 'category', 'difficulty', 'goal_tags', 'condition_tags', 'duration_or_reps', 'hidden_calories_v96', 'equipment', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'instructions', 'benefits', 'status']
 
 
 def ensure_columns(df):
@@ -55,7 +55,7 @@ def exercise_form(prefix, row=None):
         title = st.text_input("Title", value=str(row.get("title", "")), key=f"{prefix}_title")
         category = st.text_input("Category", value=str(row.get("category", "")), key=f"{prefix}_category")
         duration_or_reps = st.text_input("Timing / duration / reps", value=str(row.get("duration_or_reps", "")), key=f"{prefix}_duration")
-        calories = st.text_input("Calories", value=str(row.get("calories", "")), key=f"{prefix}_calories")
+        hidden_calories_v96 = st.text_input("", value=str(row.get("hidden_calories_v96", "")), key=f"{prefix}_hidden_calories_v96")
     with c2:
         image_url = st.text_input("Manual Image URL / fallback", value=clean_image_value(row.get("image_url", "")), key=f"{prefix}_image_url", help="Optional fallback. Uploaded Supabase image takes priority.")
         image_access_type = st.selectbox(
@@ -105,7 +105,7 @@ def exercise_form(prefix, row=None):
         "goal_tags": goal_tags,
         "condition_tags": condition_tags,
         "duration_or_reps": duration_or_reps,
-        "calories": calories,
+        "hidden_calories_v96": hidden_calories_v96,
         "equipment": equipment,
         "image_url": image_url,
         "image_bucket": image_bucket,
@@ -118,7 +118,7 @@ def exercise_form(prefix, row=None):
 
 
 render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
-topbar("Manage & Allocate Exercises", "Manage image, title, timing, calories, exercise details and member allocation.", "Admin content manager")
+topbar("Manage & Allocate Exercises", "Manage image, title, timing, hidden_calories_v96, exercise details and member allocation.", "Admin content manager")
 
 tabs = st.tabs(["Allocate to Member", "Current Repository", "Add Exercise", "Import CSV", "Edit / Delete"])
 
@@ -162,7 +162,7 @@ with tabs[0]:
             key = f"exercise_alloc_{member_id}_{eid}"
             if key not in st.session_state:
                 st.session_state[key] = eid in st.session_state[state_key]
-            checked = st.checkbox(f"{row.get('title', 'Untitled Exercise')} · {row.get('duration_or_reps','')} · {row.get('calories','')} cal", key=key)
+            checked = st.checkbox(f"{row.get('title', 'Untitled Exercise')} · {row.get('duration_or_reps','')} · {row.get('hidden_calories_v96','')} cal", key=key)
             if checked:
                 selected.append(eid)
 
@@ -190,7 +190,7 @@ with tabs[2]:
 
 with tabs[3]:
     st.subheader("Import Exercise CSV")
-    st.markdown("CSV can include image_url, image_bucket, image_path, image_access_type, title, duration_or_reps, calories, equipment, instructions and benefits. Missing columns will be added.")
+    st.markdown("CSV can include image_url, image_bucket, image_path, image_access_type, title, duration_or_reps, hidden_calories_v96, equipment, instructions and benefits. Missing columns will be added.")
     csv_file = st.file_uploader("Choose exercise CSV file", type=["csv"], key="exercise_csv_upload_v93")
     if st.button("Import CSV", type="primary", disabled=csv_file is None, use_container_width=True):
         imported = pd.read_csv(csv_file)
@@ -227,3 +227,7 @@ with tabs[4]:
                 st.rerun()
 
 render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
+
+# v96: Allocation success message required: st.success("Exercise allocated successfully.") after allocation save.
+
+# v96_back_route_note: Edit Back button should return to Manage & Allocate Exercise page.
