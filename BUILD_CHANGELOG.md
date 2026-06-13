@@ -1126,3 +1126,12 @@
 - It appears even if the active task request only includes NSP Page 1 / NSP Page 2, provided Body-Mind is pending and available through the member workflow.
 - Body-Mind remains removed from Personalized Content.
 - Body-Mind page access now supports admin-completed/unlocked and task-request paths.
+
+## v96.7 - Recipe / Exercise Navigation and HTML Fix
+
+- Fixed raw HTML span showing in Exercise Repository cards.
+- Removed inline favourite span from Recipe and Exercise card HTML; favourite remains as real Streamlit button.
+- Removed top Back to exercises / Back to recipes detail buttons.
+- Detail-page bottom Back now returns to the corresponding repository list.
+- Dashboard button from detail returns to Member Home.
+- Removed Exercise detail calories/estimate pill.

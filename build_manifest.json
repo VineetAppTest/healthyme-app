@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_6_BodyMind_NextSteps_Pending_Fix",
-  "version": "v96.6",
-  "updated_on": "2026-06-13T08:33:33.637209+00:00",
+  "build_name": "HealthyMe_v96_7_Recipe_Exercise_Navigation_HTML_Fix",
+  "version": "v96.7",
+  "updated_on": "2026-06-13T09:03:08.431227+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Body-Mind Connection now appears under Member Home \u2192 Your next steps until completed.",
-    "Body-Mind appears even when the active task request only selected NSP Page 1 / NSP Page 2, provided Body-Mind is unlocked/admin review complete and not completed.",
-    "Body-Mind stays removed from Personalized Content.",
-    "Body-Mind page access allows admin-completed/unlocked flow and task-request flow.",
-    "Submission Status includes Body-Mind pending/completed status where supported."
+    "Fixed raw HTML span showing in Exercise Repository cards by removing inline favourite span from card HTML.",
+    "Removed inline favourite span from Recipe Repository cards as preventive cleanup.",
+    "Removed top Back to exercises button from Exercise detail page.",
+    "Removed top Back to recipes button from Recipe detail page.",
+    "Bottom Back button on Exercise detail now returns to Exercise Repository list.",
+    "Bottom Back button on Recipe detail now returns to Recipe Repository list.",
+    "Exercise calories/estimate pill removed from Exercise detail."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -318,5 +320,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_5_Submission_Status_Task_Date_History.zip"
+  "base_build": "HealthyMe_v96_6_BodyMind_NextSteps_Pending_Fix.zip"
 }

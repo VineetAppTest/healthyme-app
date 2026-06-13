@@ -533,7 +533,6 @@ def render_landing(df):
       <span>◷ {prep or "-"} mins</span>
       <span>•</span>
       <span>🍃 {cal or "-"} cal</span><span>•</span><span>Protein {esc(first_value(row, ["protein"], "-"))}</span><span>•</span><span>Fat {esc(first_value(row, ["fat"], "-"))}</span><span>•</span><span>Carbs {esc(first_value(row, ["carbohydrates"], "-"))}</span>
-      <span style='margin-left:auto;'>{fav_mark}</span>
     </div>
   </div>
 </div>
@@ -559,9 +558,6 @@ def render_landing(df):
 def render_detail(row, idx):
     img = image_for(row, idx)
     title = str(row.get("title", "Untitled Recipe") or "Untitled Recipe")
-    if st.button("← Back to recipes"):
-        st.session_state.pop("hm_recipe_selected_id", None)
-        st.rerun()
 
     st.markdown("<div class='hm-module-shell'>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-detail-hero'><img src='{esc(img)}'></div>", unsafe_allow_html=True)
@@ -621,11 +617,24 @@ if assigned_ids:
     df = df[df.index.astype(str).isin(assigned_ids)].copy()
 
 selected_id = st.session_state.get("hm_recipe_selected_id")
-if selected_id is not None and selected_id.isdigit() and int(selected_id) in df.index:
+is_detail_view = selected_id is not None and selected_id.isdigit() and int(selected_id) in df.index
+
+if is_detail_view:
     render_detail(df.loc[int(selected_id)], int(selected_id))
 else:
     render_landing(df)
 
-render_page_nav("Recipes", back_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
+if is_detail_view:
+    nav_back, nav_dashboard = st.columns(2)
+    with nav_back:
+        if st.button("← Back", key="recipe_detail_bottom_back", use_container_width=True):
+            st.session_state.pop("hm_recipe_selected_id", None)
+            st.rerun()
+    with nav_dashboard:
+        if st.button("Dashboard", key="recipe_detail_bottom_dashboard", use_container_width=True):
+            st.session_state.pop("hm_recipe_selected_id", None)
+            st.switch_page("pages/02_Member_Home.py")
+else:
+    render_page_nav("Recipes", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
 
 # v96_recipe_macro_display: Recipe cards/details should display Protein, Fat and Carbohydrates below Calories when available.

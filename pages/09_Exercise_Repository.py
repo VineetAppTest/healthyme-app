@@ -519,7 +519,6 @@ def render_landing(df):
                     img = image_for(row, idx)
                     title = esc(row.get("title", "Untitled Exercise"))
                     duration = esc(first_value(row, ["duration_or_reps"], ""))
-                    cal = esc(first_value(row, ["hidden_calories_v96"], ""))
                     eid = str(idx)
                     fav_mark = "♥" if eid in favs else "♡"
                     st.markdown(f"""
@@ -529,9 +528,6 @@ def render_landing(df):
     <div class='hm-content-title'>{title}</div>
     <div class='hm-content-meta'>
       <span>◷ {duration or "-"}</span>
-      <span>•</span>
-      
-      <span style='margin-left:auto;'>{fav_mark}</span>
     </div>
   </div>
 </div>
@@ -557,23 +553,18 @@ def render_landing(df):
 def render_detail(row, idx):
     img = image_for(row, idx)
     title = str(row.get("title", "Untitled Exercise") or "Untitled Exercise")
-    if st.button("← Back to exercises"):
-        st.session_state.pop("hm_exercise_selected_id", None)
-        st.rerun()
 
     st.markdown("<div class='hm-module-shell'>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-detail-hero'><img src='{esc(img)}'></div>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-detail-title'>{esc(title)}</div>", unsafe_allow_html=True)
 
     duration = first_value(row, ["duration_or_reps"], "-")
-    hidden_calories_v96 = first_value(row, ["hidden_calories_v96"], "-")
     difficulty = first_value(row, ["difficulty"], "-")
     equipment = first_value(row, ["equipment"], "-")
 
     st.markdown(f"""
 <div class='hm-detail-grid'>
   <div class='hm-detail-pill'><b>◷ {esc(duration)}</b><span>Duration / reps</span></div>
-  <div class='hm-detail-pill'><b>🔥 {esc(hidden_calories_v96)} </b><span>Estimate</span></div>
   <div class='hm-detail-pill'><b>📈 {esc(difficulty)}</b><span>Difficulty</span></div>
   <div class='hm-detail-pill'><b>⚙ {esc(equipment)}</b><span>Equipment</span></div>
 </div>
@@ -618,9 +609,22 @@ if assigned_ids:
     df = df[df.index.astype(str).isin(assigned_ids)].copy()
 
 selected_id = st.session_state.get("hm_exercise_selected_id")
-if selected_id is not None and selected_id.isdigit() and int(selected_id) in df.index:
+is_detail_view = selected_id is not None and selected_id.isdigit() and int(selected_id) in df.index
+
+if is_detail_view:
     render_detail(df.loc[int(selected_id)], int(selected_id))
 else:
     render_landing(df)
 
-render_page_nav("Exercises", back_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
+if is_detail_view:
+    nav_back, nav_dashboard = st.columns(2)
+    with nav_back:
+        if st.button("← Back", key="exercise_detail_bottom_back", use_container_width=True):
+            st.session_state.pop("hm_exercise_selected_id", None)
+            st.rerun()
+    with nav_dashboard:
+        if st.button("Dashboard", key="exercise_detail_bottom_dashboard", use_container_width=True):
+            st.session_state.pop("hm_exercise_selected_id", None)
+            st.switch_page("pages/02_Member_Home.py")
+else:
+    render_page_nav("Exercises", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
