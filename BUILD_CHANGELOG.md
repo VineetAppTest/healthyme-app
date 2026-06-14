@@ -1236,3 +1236,13 @@
 - Food Journal Date label and date picker now use real Streamlit columns in one row.
 - Removed the thin section break before Poop Rounds.
 - Retained the subtle dropdown font/color styling that passed review.
+
+## v97.6 - Daily Log Bordered Compact Fluid Correction
+
+- Added elegant visible borders to Food Journal Date and Other Fluids logical sections using Streamlit border containers.
+- Food Journal Date label and picker remain in the same row with improved style.
+- Added better spacing above and below Fluid type.
+- Reduced Fluid type dropdown to half-row width.
+- Moved Quantity to the next line with Notes.
+- Kept each Other Fluid entry compact in two rows.
+- Retained the subtle dropdown styling approved in earlier build.
