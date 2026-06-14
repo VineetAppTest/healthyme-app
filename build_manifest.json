@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_0_Other_Fluids_Functional_Build",
-  "version": "v97.0",
-  "updated_on": "2026-06-14T18:28:02.156244+00:00",
+  "build_name": "HealthyMe_v97_1_OtherFluids_Layout_TimeRefinement",
+  "version": "v97.1",
+  "updated_on": "2026-06-14T19:09:57.449078+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -319,5 +319,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_13_Task_Manager_Spacing_Polish.zip"
+  "base_build": "HealthyMe_v97_0_Other_Fluids_Functional_Build.zip"
 }

@@ -560,6 +560,11 @@ render_system_message()
 st.markdown("""
 <style>
 /* v97 Other Fluids functional styling */
+
+.hm-other-fluid-entry-title{color:#064E3B;font-weight:900;margin:.32rem 0 .18rem 0;}
+.hm-other-fluid-inline-time-label{color:#064E3B;font-size:.78rem;font-weight:850;margin:0 0 .22rem 0;}
+/* v97.1 Other Fluids compact timing */
+
 .hm-other-fluids-box{
   border:1px solid #E7D8BE;
   border-radius:14px;
@@ -1201,51 +1206,30 @@ with top_left:
             index=water_options.index(existing_water) if existing_water in water_options else 0,
         )
 with top_right:
-    poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
-    existing_poop_rounds = existing.get("poop_rounds", "Select")
-    if existing_poop_rounds in ("", None):
-        existing_poop_rounds = "Select"
-    if str(existing_poop_rounds).isdigit():
-        existing_poop_rounds = int(existing_poop_rounds)
-    if is_mobile_mode_v90a:
-        starting_poop_rounds = existing_poop_rounds if isinstance(existing_poop_rounds, int) else 0
-        poop_rounds = render_v91_stepper(
-            "Poop rounds",
-            starting_poop_rounds,
-            "v91_mobile_poop_rounds",
-            0,
-            6,
-            1,
-            "",
-            as_int=True,
-        )
-    else:
-        poop_rounds = st.selectbox(
-            "Poop rounds",
-            poop_options,
-            index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
-        )
+    existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
+    default_other_count = min(max(len(existing_other_fluids), 0), 5)
+    other_count_options = [0, 1, 2, 3, 4, 5]
+    other_fluid_count = st.selectbox(
+        "Other Fluids consumed (Record non-water fluids such as herbal tea, coconut water, juices or cold drink outside standard meal windows)",
+        other_count_options,
+        index=other_count_options.index(default_other_count) if default_other_count in other_count_options else 0,
+        key=f"other_fluid_count_{log_date}",
+    )
 
 
 # v97: Other Fluids outside standard meal windows
-st.markdown("<div class='hm-other-fluids-box'><div class='hm-other-fluids-title'>Other Fluids</div><div class='hm-other-fluids-note'>Record non-water fluids outside standard meal windows, such as herbal tea, coconut water, juices or cold drink.</div>", unsafe_allow_html=True)
-
-existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
-default_other_count = min(max(len(existing_other_fluids), 0), 5)
-other_count_options = [0, 1, 2, 3, 4, 5]
-other_fluid_count = st.selectbox(
-    "Number of other fluid entries",
-    other_count_options,
-    index=other_count_options.index(default_other_count) if default_other_count in other_count_options else 0,
-    key=f"other_fluid_count_{log_date}",
-)
+st.markdown("<div class='hm-other-fluids-box'>", unsafe_allow_html=True)
 
 other_fluids = []
 fluid_type_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
 for i in range(other_fluid_count):
     prior_fluid = existing_other_fluids[i] if i < len(existing_other_fluids) else {}
-    st.markdown(f"**Other Fluid {i+1}**")
-    f1, f2, f3 = st.columns([1.15, .85, .9])
+    pre_h, pre_m, pre_p = split_12h_time_parts(prior_fluid.get("time", ""))
+    st.session_state.setdefault(f"other_fluid_h_{log_date}_{i}", pre_h)
+    st.session_state.setdefault(f"other_fluid_m_{log_date}_{i}", pre_m)
+    st.session_state.setdefault(f"other_fluid_p_{log_date}_{i}", pre_p)
+    st.markdown(f"<div class='hm-other-fluid-entry-title'>Other Fluid {i+1}</div>", unsafe_allow_html=True)
+    f1, t1, t2, t3, f3 = st.columns([1.18, 0.42, 0.42, 0.68, 0.9])
     with f1:
         existing_type = prior_fluid.get("type", "Select") or "Select"
         fluid_type = st.selectbox(
@@ -1254,12 +1238,38 @@ for i in range(other_fluid_count):
             index=fluid_type_options.index(existing_type) if existing_type in fluid_type_options else 0,
             key=f"other_fluid_type_{log_date}_{i}",
         )
-    with f2:
-        fluid_time = st.text_input(
-            "Time",
-            value=prior_fluid.get("time", ""),
-            placeholder="Example: 4:30 PM",
-            key=f"other_fluid_time_{log_date}_{i}",
+    with t1:
+        st.markdown("<div class='hm-other-fluid-inline-time-label'>Meal Timing</div>", unsafe_allow_html=True)
+        hour_options = ["HH"] + [f"{n:02d}" for n in range(1, 13)]
+        current_h = st.session_state.get(f"other_fluid_h_{log_date}_{i}", pre_h)
+        st.selectbox(
+            "HH",
+            hour_options,
+            index=hour_options.index(current_h) if current_h in hour_options else 0,
+            key=f"other_fluid_h_{log_date}_{i}",
+            label_visibility="collapsed",
+        )
+    with t2:
+        st.markdown("<div class='hm-other-fluid-inline-time-label'>&nbsp;</div>", unsafe_allow_html=True)
+        minute_options = ["MM"] + [f"{n:02d}" for n in range(0, 60)]
+        current_m = st.session_state.get(f"other_fluid_m_{log_date}_{i}", pre_m)
+        st.selectbox(
+            "MM",
+            minute_options,
+            index=minute_options.index(current_m) if current_m in minute_options else 0,
+            key=f"other_fluid_m_{log_date}_{i}",
+            label_visibility="collapsed",
+        )
+    with t3:
+        st.markdown("<div class='hm-other-fluid-inline-time-label'>&nbsp;</div>", unsafe_allow_html=True)
+        ampm_options = ["AM/PM", "AM", "PM"]
+        current_p = st.session_state.get(f"other_fluid_p_{log_date}_{i}", pre_p)
+        st.selectbox(
+            "AM/PM",
+            ampm_options,
+            index=ampm_options.index(current_p) if current_p in ampm_options else 0,
+            key=f"other_fluid_p_{log_date}_{i}",
+            label_visibility="collapsed",
         )
     with f3:
         fluid_qty = st.text_input(
@@ -1275,6 +1285,10 @@ for i in range(other_fluid_count):
         key=f"other_fluid_notes_{log_date}_{i}",
     )
     type_value = "" if fluid_type == "Select" else fluid_type
+    hour_value = st.session_state.get(f"other_fluid_h_{log_date}_{i}", "HH")
+    minute_value = st.session_state.get(f"other_fluid_m_{log_date}_{i}", "MM")
+    period_value = st.session_state.get(f"other_fluid_p_{log_date}_{i}", "AM/PM")
+    fluid_time = f"{hour_value}:{minute_value} {period_value}" if hour_value != "HH" and minute_value != "MM" and period_value in ["AM", "PM"] else ""
     if type_value or fluid_time.strip() or fluid_qty.strip() or fluid_notes.strip():
         other_fluids.append({
             "type": type_value,
@@ -1282,6 +1296,31 @@ for i in range(other_fluid_count):
             "quantity": fluid_qty.strip(),
             "notes": fluid_notes.strip(),
         })
+
+poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
+existing_poop_rounds = existing.get("poop_rounds", "Select")
+if existing_poop_rounds in ("", None):
+    existing_poop_rounds = "Select"
+if str(existing_poop_rounds).isdigit():
+    existing_poop_rounds = int(existing_poop_rounds)
+if is_mobile_mode_v90a:
+    starting_poop_rounds = existing_poop_rounds if isinstance(existing_poop_rounds, int) else 0
+    poop_rounds = render_v91_stepper(
+        "Poop rounds",
+        starting_poop_rounds,
+        "v91_mobile_poop_rounds",
+        0,
+        6,
+        1,
+        "",
+        as_int=True,
+    )
+else:
+    poop_rounds = st.selectbox(
+        "Poop rounds",
+        poop_options,
+        index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
+    )
 
 st.markdown("</div>", unsafe_allow_html=True)
 

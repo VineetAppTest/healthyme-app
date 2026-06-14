@@ -1194,3 +1194,10 @@
 - Shows Other Fluids in Member Recent Saved Days.
 - Shows Other Fluids in Admin Daily Log Report and Excel export.
 - Final beautification/balancing is deferred to v97 closure.
+
+## v97.1 - Other Fluids Layout and Time Refinement
+
+- Moved Other Fluids consumed selector to the top-right position in Full-day details.
+- Repositioned Poop rounds below Other Fluids notes.
+- Replaced Other Fluid time text input with compact HH / MM / AM-PM timing selectors.
+- Updated label language per approved wording.
