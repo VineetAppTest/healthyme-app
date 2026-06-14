@@ -118,7 +118,7 @@ def exercise_form(prefix, row=None):
 
 
 render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
-topbar("Manage & Allocate Exercises", "Manage image, title, timing, hidden_calories_v96, exercise details and member allocation.", "Admin content manager")
+topbar("Manage & Allocate Exercises", "Manage image, title, timing, exercise details and member allocation.", "Admin content manager")
 
 tabs = st.tabs(["Allocate to Member", "Current Repository", "Add Exercise", "Import CSV", "Edit / Delete"])
 
@@ -190,7 +190,9 @@ with tabs[2]:
 
 with tabs[3]:
     st.subheader("Import Exercise CSV")
-    st.markdown("CSV can include image_url, image_bucket, image_path, image_access_type, title, duration_or_reps, hidden_calories_v96, equipment, instructions and benefits. Missing columns will be added.")
+    st.download_button("Download Exercise CSV Format", data='title,description,category,difficulty,duration_or_reps,equipment,image_url,image_file_name_to_upload,image_access_type,instructions,benefits,goal_tags,condition_tags,status\r\nBrisk Walking,Easy cardio starter,Cardio,Beginner,20 min,None,https://example.com/brisk-walking.jpg,brisk_walking.jpg,public,Warm up; Walk briskly; Cool down,Improves stamina; Supports metabolism,cardio;weight management,general wellness,active\r\n', file_name="healthyme_exercise_upload_format.csv", mime="text/csv", use_container_width=True)
+    st.caption("Use image_url for hosted images, or fill image_file_name_to_upload to track the image file that will be uploaded separately.")
+    st.markdown("CSV can include image_url, image_bucket, image_path, image_access_type, title, duration_or_reps, equipment, instructions and benefits. Missing columns will be added.")
     csv_file = st.file_uploader("Choose exercise CSV file", type=["csv"], key="exercise_csv_upload_v93")
     if st.button("Import CSV", type="primary", disabled=csv_file is None, use_container_width=True):
         imported = pd.read_csv(csv_file)

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_10_Task_Recipe_Response_Fixes",
-  "version": "v96.10",
-  "updated_on": "2026-06-13T18:56:58.612292+00:00",
+  "build_name": "HealthyMe_v96_11_KeepAlive_TaskCompact_CSVTemplates",
+  "version": "v96.11",
+  "updated_on": "2026-06-14T10:14:46.027492+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,14 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Task Request Manager cleaned: removed top info message, removed Task Type text, moved Body-Mind Control below Send Task Request.",
-    "Task Request creation blocked when current/latest instance is not completed/submitted.",
-    "Create Task Request and Assessment history arranged in adjacent columns.",
-    "Recipe Manager macros fixed: Protein, Fat, Carbohydrates and Additional nutrition metrics added to schema/form.",
-    "Recipe Manager NameError for protein/fat/carbohydrates fixed.",
-    "Recipe Manager allocation tab moved to last.",
-    "Recipe Repository member detail now displays Protein, Fat, Carbohydrates and additional nutrition metrics.",
-    "Admin Response Editor now shows fresh-report download success message and clears rationale field after save."
+    "Added app-level browser keep-alive guard while app tab is open.",
+    "Task Request Manager made more compact with Create Task Request on left and Assessment History + Body-Mind Control section on right.",
+    "Body-Mind Control is now shown as its own section instead of only a redirection button.",
+    "Added Recipe CSV format download button including image_url and image_file_name_to_upload fields.",
+    "Added Exercise CSV format download button including image_url and image_file_name_to_upload fields."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -321,5 +318,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_9_Admin_Dashboard_Uniform_Subpoint_Boxes.zip"
+  "base_build": "HealthyMe_v96_10_Task_Recipe_Response_Fixes.zip"
 }

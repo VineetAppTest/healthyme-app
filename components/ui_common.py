@@ -7765,3 +7765,40 @@ def render_admin_build_version(location="top"):
 
 
 def render_build_text_v95_7(): return None
+
+
+# --------------------------------------------------------------------
+# v96.11: lightweight browser keep-alive guard
+# --------------------------------------------------------------------
+def inject_keepalive_guard_v96_11():
+    """Keep the Streamlit app warm while a browser tab is open.
+
+    Note: no client-side code can prevent sleep when nobody has the app open.
+    """
+    import streamlit.components.v1 as components
+    components.html(
+        """
+        <script>
+        (function(){
+          if (window.__healthymeKeepAliveV9611) return;
+          window.__healthymeKeepAliveV9611 = true;
+
+          async function pingHealthyMe(){
+            try {
+              await fetch(window.location.origin + "/_stcore/health", {cache: "no-store", credentials: "same-origin"});
+            } catch(e) {}
+            try {
+              await fetch(window.location.pathname + "?hm_keepalive=" + Date.now(), {cache: "no-store", credentials: "same-origin"});
+            } catch(e) {}
+          }
+
+          pingHealthyMe();
+          setInterval(pingHealthyMe, 240000);
+          document.addEventListener("visibilitychange", function(){
+            if (!document.hidden) pingHealthyMe();
+          });
+        })();
+        </script>
+        """,
+        height=0,
+    )

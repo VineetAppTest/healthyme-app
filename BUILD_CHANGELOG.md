@@ -1162,3 +1162,11 @@
 - Moved Allocate to Member tab to the last tab in Recipe Manager.
 - Added Recipe Repository macro display for Protein, Fat, Carbohydrates and additional nutrition metrics.
 - Updated Admin Response Editor success message and clears rationale after save.
+
+## v96.11 - KeepAlive / Task Compact / CSV Templates
+
+- Added browser keep-alive guard while the app tab is open.
+- Reworked Task Request Manager into compact columns.
+- Right column now contains Assessment History and a Body-Mind Control section.
+- Added CSV format download button to Recipe Manager import tab.
+- Added CSV format download button to Exercise Manager import tab.

@@ -215,6 +215,8 @@ with tabs[1]:
 
 with tabs[2]:
     st.subheader("Import Recipe CSV")
+    st.download_button("Download Recipe CSV Format", data='title,description,meal_type,diet_type,goal_tags,condition_tags,prep_time,calories,protein,fat,carbohydrates,additional_nutrition,servings,portion_size,image_url,image_file_name_to_upload,image_access_type,ingredients,steps,nutrition,status\r\nMoong Dal Chilla,Light protein-rich breakfast option,Breakfast,Vegetarian,weight management;energy,general wellness,15,180,10g,5g,24g,Fibre: 4g; Sodium: 120mg,1,2 chillas,https://example.com/moong-dal-chilla.jpg,moong_dal_chilla.jpg,public,Moong dal; Ginger; Green chilli; Salt,Soak dal; Blend batter; Cook on pan,Balanced breakfast with protein and fibre,active\r\n', file_name="healthyme_recipe_upload_format.csv", mime="text/csv", use_container_width=True)
+    st.caption("Use image_url for hosted images, or fill image_file_name_to_upload to track the image file that will be uploaded separately.")
     st.markdown("CSV can include image_url, image_bucket, image_path, image_access_type, title, prep_time, calories, protein, fat, carbohydrates, additional_nutrition, ingredients, steps and nutrition. Missing columns will be added.")
     csv_file = st.file_uploader("Choose recipe CSV file", type=["csv"], key="recipe_csv_upload_v93")
     if st.button("Import CSV", type="primary", disabled=csv_file is None, use_container_width=True):

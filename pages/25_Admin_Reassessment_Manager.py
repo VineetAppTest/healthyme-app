@@ -1,24 +1,34 @@
 import streamlit as st
 from datetime import date, timedelta
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_back_to_top, inject_keepalive_guard_v96_11
 from components.db import list_members
 from components.assessment_instances import get_assessment_instances, create_reassessment_request
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Task Request Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); inject_keepalive_guard_v96_11(); render_back_to_top()
 
 st.markdown("""
 <style>
-/* v96.10 Task Request layout cleanup */
-.block-container{padding-top:.45rem!important;max-width:1120px!important;}
-.hero-shell{margin:.55rem 0 .85rem 0!important;padding:1rem 1.15rem!important;}
-.hm-task-two-col{margin-top:.55rem!important;}
-.hm-task-history-card{font-size:.92rem;line-height:1.35;}
-.hm-task-history-card p{margin:.2rem 0 .55rem 0!important;}
-.hm-task-checkbox-note{font-size:.82rem;color:#4B5A57;margin:.2rem 0 .55rem 0;}
-div[data-testid="stCheckbox"] label p{font-size:.95rem!important;}
+/* v96.11 compact Task Request Manager */
+.block-container{padding-top:.35rem!important;max-width:1120px!important;}
+.hero-shell{margin:.45rem 0 .65rem 0!important;padding:.9rem 1.05rem!important;}
+.hero-title{font-size:1.75rem!important;}
+.hero-subtitle{font-size:.92rem!important;margin-top:.2rem!important;}
+.kpi-grid{margin:.15rem 0 .55rem 0!important;gap:.45rem!important;}
+.kpi-card{padding:.65rem .75rem!important;border-radius:14px!important;}
+.kpi-value{font-size:1.3rem!important;}
+.kpi-label{font-size:.68rem!important;}
+.kpi-note{font-size:.72rem!important;}
+.hm-task-card-compact{font-size:.88rem;line-height:1.32;}
+.hm-task-card-compact div[data-testid="stCheckbox"]{margin-bottom:.2rem!important;}
+.hm-task-card-compact div[data-testid="stCheckbox"] label p{font-size:.9rem!important;}
+.hm-task-card-compact div[data-testid="stTextArea"], .hm-task-card-compact div[data-testid="stDateInput"]{margin-bottom:.35rem!important;}
+.hm-task-card-compact textarea{min-height:78px!important;}
+.hm-bodymind-control-box{background:#FFFDF8;border:1px solid #E5D2A9;border-radius:14px;padding:.75rem .85rem;margin-top:.65rem;}
+.hm-bodymind-control-box b{color:#064E3B;}
+.hm-bodymind-control-box p{font-size:.82rem;color:#4B5A57;margin:.2rem 0 .6rem 0;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -61,20 +71,20 @@ open_task_requests = [
     i for i in instances
     if i.get("instance_type") == "Task Request" and is_instance_open(i)
 ]
-open_any_instance = [i for i in instances if is_instance_open(i)]
 current_assessment_incomplete = bool(latest_instance) and not is_instance_complete_enough(latest_instance)
 
 stat_grid([
     {"label": "Member", "value": member["name"], "note": member["email"]},
-    {"label": "Instances", "value": len(instances), "note": "Assessment history"},
-    {"label": "Open Request", "value": "Yes" if open_task_requests else "No", "note": "Pending task request"},
+    {"label": "Instances", "value": len(instances), "note": "History"},
+    {"label": "Open Request", "value": "Yes" if open_task_requests else "No", "note": "Pending"},
     {"label": "Next Instance", "value": max([i.get("instance_number", 0) for i in instances] + [0]) + 1, "note": "If created"},
 ])
 
-left, right = st.columns([1.05, .95], gap="large")
+left, right = st.columns([1, 1], gap="large")
 
 with left:
     card_start()
+    st.markdown("<div class='hm-task-card-compact'>", unsafe_allow_html=True)
     st.subheader("Create Task Request")
 
     if current_assessment_incomplete:
@@ -86,9 +96,13 @@ with left:
     else:
         can_create = True
 
-    task_nsp1 = st.checkbox("NSP Page 1", key="v96_10_task_nsp1", disabled=not can_create)
-    task_nsp2 = st.checkbox("NSP Page 2", key="v96_10_task_nsp2", disabled=not can_create)
-    task_body_mind = st.checkbox("Body-Mind Connection", key="v96_10_task_body_mind", disabled=not can_create)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        task_nsp1 = st.checkbox("NSP Page 1", key="v96_11_task_nsp1", disabled=not can_create)
+    with c2:
+        task_nsp2 = st.checkbox("NSP Page 2", key="v96_11_task_nsp2", disabled=not can_create)
+    with c3:
+        task_body_mind = st.checkbox("Body-Mind Connection", key="v96_11_task_body_mind", disabled=not can_create)
 
     requested_pages = []
     if task_nsp1:
@@ -120,9 +134,7 @@ with left:
             set_system_message("An open task request already exists for this member.", "warning")
         st.rerun()
 
-    if st.button("Open Body-Mind Control", key="open_body_mind_control_v96_10", use_container_width=True):
-        st.switch_page("pages/23_Admin_Body_Mind_Control.py")
-
+    st.markdown("</div>", unsafe_allow_html=True)
     card_end()
 
 with right:
@@ -131,7 +143,6 @@ with right:
     if not instances_sorted:
         st.info("No assessment history available.")
     else:
-        st.markdown("<div class='hm-task-history-card'>", unsafe_allow_html=True)
         for inst in instances_sorted:
             tasks = ", ".join(task_title(p) for p in inst.get("requested_pages", [])) or "-"
             st.markdown(
@@ -142,8 +153,19 @@ with right:
                 Status: `{inst.get('status')}` | Submitted: `{inst.get('submitted_date') or '-'}`
                 """
             )
-        st.markdown("</div>", unsafe_allow_html=True)
     card_end()
+
+    st.markdown(
+        """
+        <div class='hm-bodymind-control-box'>
+          <b>Body-Mind Control</b>
+          <p>Admin-only access control for activating or reviewing Body-Mind Connection access.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("Open Body-Mind Control", key="open_body_mind_control_v96_11", use_container_width=True):
+        st.switch_page("pages/23_Admin_Body_Mind_Control.py")
 
 if st.button("Back to Dashboard"):
     st.switch_page("pages/10_Admin_Dashboard.py")

@@ -1,12 +1,12 @@
 import streamlit as st
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, render_back_to_top
+from components.ui_common import inject_keepalive_guard_v96_11, inject_global_styles, apply_luxe_theme, utility_logout_bar, render_back_to_top
 
 st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
 require_admin()
-utility_logout_bar()
+utility_logout_bar(); inject_keepalive_guard_v96_11()
 render_back_to_top()
 
 st.markdown("""
