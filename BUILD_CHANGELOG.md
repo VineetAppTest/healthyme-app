@@ -1178,3 +1178,10 @@
 - Activate/disable Body-Mind directly from Task Request Manager.
 - Recipe and Exercise CSV import tabs now show Download CSV Format and Import CSV side by side.
 - CSV import supports matching local images using image_file_name_to_upload and the uploaded image files.
+
+## v96.13 - Task Manager Spacing Polish
+
+- Polished Task Request Manager right-column spacing.
+- Removed the empty-looking strip above Body-Mind Control by rendering the section as one closed block.
+- Body-Mind Control remains directly actionable from Task Request Manager.
+- GitHub workflow remains the primary always-awake mechanism; browser keep-alive remains supplementary while a tab is open.

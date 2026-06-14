@@ -26,12 +26,36 @@ st.markdown("""
 .hm-task-card-compact div[data-testid="stCheckbox"] label p{font-size:.88rem!important;}
 .hm-task-card-compact div[data-testid="stTextArea"], .hm-task-card-compact div[data-testid="stDateInput"]{margin-bottom:.28rem!important;}
 .hm-task-card-compact textarea{min-height:70px!important;}
-.hm-bodymind-control-box{background:#FFFDF8;border:1px solid #E5D2A9;border-radius:14px;padding:.7rem .8rem;margin-top:.55rem;}
-.hm-bodymind-control-title{color:#064E3B;font-weight:900;margin:0 0 .4rem 0;font-size:1rem;}
-.hm-bodymind-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;margin:.2rem 0 .55rem 0;}
-.hm-bodymind-mini{border:1px solid #E5D2A9;background:#fff;border-radius:10px;padding:.45rem .5rem;}
+.hm-bodymind-control-box{background:#FFFDF8;border:1px solid #E5D2A9;border-radius:14px;padding:.72rem .82rem .78rem .82rem;margin-top:.35rem;margin-bottom:.35rem;box-shadow:0 4px 12px rgba(15,23,42,.035);}
+.hm-bodymind-control-title{color:#064E3B;font-weight:900;margin:0 0 .42rem 0;font-size:1rem;line-height:1.05;}
+.hm-bodymind-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:.38rem;margin:.2rem 0 0 0;}
+.hm-bodymind-mini{border:1px solid #E5D2A9;background:#fff;border-radius:10px;padding:.42rem .5rem;min-height:45px;}
 .hm-bodymind-mini b{display:block;color:#064E3B;font-size:.9rem;line-height:1.1;}
 .hm-bodymind-mini span{display:block;color:#5B675D;font-size:.68rem;margin-top:.12rem;}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
+<style>
+/* v96.13 Task Request Manager spacing polish */
+.hm-task-card-compact{
+  margin-bottom:.25rem!important;
+}
+.hm-task-card-compact div[data-testid="stTextArea"] textarea{
+  min-height:72px!important;
+}
+.hm-task-right-spacer{
+  height:.35rem;
+}
+.hm-bodymind-action-anchor + div[data-testid="stButton"]{
+  margin-top:.25rem!important;
+}
+.hm-bodymind-action-anchor + div[data-testid="stButton"] > button{
+  min-height:34px!important;
+  height:34px!important;
+  border-radius:9px!important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -169,30 +193,31 @@ with right:
             )
     card_end()
 
-    st.markdown("<div class='hm-bodymind-control-box'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-bodymind-control-title'>Body-Mind Control</div>", unsafe_allow_html=True)
     st.markdown(
         f"""
-        <div class='hm-bodymind-mini-grid'>
-          <div class='hm-bodymind-mini'><b>{'Active' if body_mind_active else 'Hidden'}</b><span>Member access</span></div>
-          <div class='hm-bodymind-mini'><b>{'Completed' if wf.get('body_mind_completed') else 'Pending'}</b><span>Member progress</span></div>
-          <div class='hm-bodymind-mini'><b>{'Yes' if admin_final_completed else 'No'}</b><span>Final report/admin complete</span></div>
-          <div class='hm-bodymind-mini'><b>{'Available' if body_response else 'No response'}</b><span>Stored response</span></div>
+        <div class='hm-bodymind-control-box'>
+          <div class='hm-bodymind-control-title'>Body-Mind Control</div>
+          <div class='hm-bodymind-mini-grid'>
+            <div class='hm-bodymind-mini'><b>{'Active' if body_mind_active else 'Hidden'}</b><span>Member access</span></div>
+            <div class='hm-bodymind-mini'><b>{'Completed' if wf.get('body_mind_completed') else 'Pending'}</b><span>Member progress</span></div>
+            <div class='hm-bodymind-mini'><b>{'Yes' if admin_final_completed else 'No'}</b><span>Final report/admin complete</span></div>
+            <div class='hm-bodymind-mini'><b>{'Available' if body_response else 'No response'}</b><span>Stored response</span></div>
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+    st.markdown("<div class='hm-bodymind-action-anchor'></div>", unsafe_allow_html=True)
     if body_mind_active:
-        if st.button("Disable Body-Mind Visibility", key="disable_body_mind_v96_12", use_container_width=True):
+        if st.button("Disable Body-Mind Visibility", key="disable_body_mind_v96_13", use_container_width=True):
             clear_body_mind_activation(member_id)
             set_system_message("Body-Mind Connection disabled for this member.", "warning")
             st.rerun()
     else:
-        if st.button("Activate Body-Mind Connection", key="activate_body_mind_v96_12", type="primary", use_container_width=True, disabled=not admin_final_completed):
+        if st.button("Activate Body-Mind Connection", key="activate_body_mind_v96_13", type="primary", use_container_width=True, disabled=not admin_final_completed):
             ok, msg = manually_unlock_body_mind_after_finalization(member_id)
             set_system_message(msg, "success" if ok else "error", celebrate=ok)
             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 if st.button("Back to Dashboard"):
     st.switch_page("pages/10_Admin_Dashboard.py")

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_12_TaskBodyMind_CSVImage_UX_Fix",
-  "version": "v96.12",
-  "updated_on": "2026-06-14T11:27:12.679340+00:00",
+  "build_name": "HealthyMe_v96_13_Task_Manager_Spacing_Polish",
+  "version": "v96.13",
+  "updated_on": "2026-06-14T11:48:11.286390+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,12 +17,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Task Request Manager: compacted create/history layout and moved Body-Mind Control into right column as an actionable section.",
-    "Task Request Manager: removed Body-Mind informational message and removed redirect-only Body-Mind button.",
-    "Body-Mind Control can now activate/disable access directly from Task Request Manager.",
-    "Recipe Manager Import CSV: download format and import button are side by side.",
-    "Exercise Manager Import CSV: download format and import button are side by side.",
-    "CSV import supports local image files by matching image_file_name_to_upload with uploaded image filenames and uploading them to Supabase Storage."
+    "Polished Task Request Manager right-column spacing.",
+    "Removed empty-looking strip above Body-Mind Control by rendering the section as one closed block.",
+    "Body-Mind Control remains directly actionable from Task Request Manager.",
+    "GitHub workflow remains the primary always-awake mechanism; browser keep-alive remains supplementary while a tab is open."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -319,5 +317,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_11_KeepAlive_TaskCompact_CSVTemplates.zip"
+  "base_build": "HealthyMe_v96_12_TaskBodyMind_CSVImage_UX_Fix.zip"
 }
