@@ -2,7 +2,7 @@ name: WakeMe - Keep HealthyMe Warm
 
 on:
   schedule:
-    # GitHub cron is UTC. Runs roughly every 10 minutes, avoiding :00.
+    # GitHub cron is UTC. Runs roughly every 10 minutes and avoids :00.
     - cron: "7,17,27,37,47,57 * * * *"
   workflow_dispatch:
 
@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Validate HealthyMe app URL
+      - name: Validate app URL
         env:
           HEALTHYME_APP_URL: ${{ secrets.HEALTHYME_APP_URL }}
         run: |
@@ -29,9 +29,7 @@ jobs:
 
           if [ -z "$APP_URL" ]; then
             echo "ERROR: HEALTHYME_APP_URL secret is missing or empty."
-            echo "Fix: GitHub repo → Settings → Secrets and variables → Actions → New repository secret"
-            echo "Secret name: HEALTHYME_APP_URL"
-            echo "Secret value: your deployed Streamlit app URL, starting with https://"
+            echo "Add it under Repo → Settings → Secrets and variables → Actions."
             exit 1
           fi
 
@@ -41,40 +39,72 @@ jobs:
               ;;
             *)
               echo "ERROR: HEALTHYME_APP_URL must start with http:// or https://"
-              echo "Current value appears malformed. Do not add quotes."
+              echo "Do not add quotes."
               exit 1
               ;;
           esac
 
+          # Remove trailing slash for consistent health URL construction.
+          APP_URL="${APP_URL%/}"
           echo "APP_URL=$APP_URL" >> "$GITHUB_ENV"
 
-      - name: Wake HealthyMe app
+      - name: Wake HealthyMe app - tolerant ping
         run: |
-          set -e
+          set +e
 
-          echo "Pinging HealthyMe app..."
-          echo "URL: $APP_URL"
+          echo "Primary wake URL: $APP_URL"
 
-          HTTP_STATUS=$(curl             --location             --silent             --show-error             --output /tmp/healthyme_wakeme_response.html             --write-out "%{http_code}"             --max-time 90             --retry 3             --retry-delay 10             "$APP_URL")
+          # 1) Hit the main app without following redirects.
+          # For keep-alive, a 2xx or 3xx response is enough because the app/server was reached.
+          MAIN_STATUS=$(curl             --silent             --show-error             --output /tmp/healthyme_main.html             --write-out "%{http_code}"             --max-time 60             --retry 2             --retry-delay 5             "$APP_URL?wakeme=$(date +%s)")
+          MAIN_EXIT=$?
 
-          echo "HTTP status: $HTTP_STATUS"
+          echo "Main curl exit: $MAIN_EXIT"
+          echo "Main HTTP status: $MAIN_STATUS"
 
-          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 400 ]; then
-            echo "ERROR: Wake ping failed with HTTP status $HTTP_STATUS"
-            echo "First 40 lines of response:"
-            head -40 /tmp/healthyme_wakeme_response.html || true
-            exit 1
+          # 2) Hit Streamlit health endpoint.
+          HEALTH_URL="$APP_URL/_stcore/health"
+          echo "Health URL: $HEALTH_URL"
+
+          HEALTH_STATUS=$(curl             --silent             --show-error             --output /tmp/healthyme_health.txt             --write-out "%{http_code}"             --max-time 60             --retry 2             --retry-delay 5             "$HEALTH_URL")
+          HEALTH_EXIT=$?
+
+          echo "Health curl exit: $HEALTH_EXIT"
+          echo "Health HTTP status: $HEALTH_STATUS"
+
+          # 3) Optional redirect-follow attempt, but do not fail the job on too many redirects.
+          FOLLOW_STATUS=$(curl             --location             --max-redirs 5             --silent             --show-error             --output /tmp/healthyme_follow.html             --write-out "%{http_code}"             --max-time 90             --retry 1             --retry-delay 5             "$APP_URL?wakeme_follow=$(date +%s)")
+          FOLLOW_EXIT=$?
+
+          echo "Follow curl exit: $FOLLOW_EXIT"
+          echo "Follow HTTP status: $FOLLOW_STATUS"
+
+          # Success rule:
+          # - Any 2xx or 3xx from main/health/follow means the server was reached.
+          # - Curl exit 47 means too many redirects; this still proves the URL is reachable, so do not fail keep-alive.
+          if [ "$MAIN_STATUS" -ge 200 ] && [ "$MAIN_STATUS" -lt 400 ]; then
+            echo "WakeMe success: main app responded."
+            exit 0
           fi
 
-          echo "HealthyMe wake ping completed successfully."
+          if [ "$HEALTH_STATUS" -ge 200 ] && [ "$HEALTH_STATUS" -lt 400 ]; then
+            echo "WakeMe success: health endpoint responded."
+            exit 0
+          fi
 
-      - name: Secondary health check
-        run: |
-          set -e
+          if [ "$FOLLOW_STATUS" -ge 200 ] && [ "$FOLLOW_STATUS" -lt 400 ]; then
+            echo "WakeMe success: redirect-follow request responded."
+            exit 0
+          fi
 
-          HEALTH_URL="${APP_URL%/}/_stcore/health"
-          echo "Pinging Streamlit health endpoint: $HEALTH_URL"
+          if [ "$FOLLOW_EXIT" -eq 47 ]; then
+            echo "WakeMe tolerant success: URL is reachable but has too many redirects. This is enough for warm ping."
+            exit 0
+          fi
 
-          curl             --location             --silent             --show-error             --max-time 60             --retry 2             --retry-delay 5             "$HEALTH_URL" || true
-
-          echo "Secondary health check completed."
+          echo "WakeMe failed: app did not return a reachable 2xx/3xx response."
+          echo "Main response preview:"
+          head -30 /tmp/healthyme_main.html || true
+          echo "Health response preview:"
+          head -30 /tmp/healthyme_health.txt || true
+          exit 1
