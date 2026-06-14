@@ -2,8 +2,7 @@ name: WakeMe - Keep HealthyMe Warm
 
 on:
   schedule:
-    # Runs around every 10 minutes, avoiding :00 where GitHub Actions load is often higher.
-    # GitHub cron runs in UTC.
+    # GitHub cron is UTC. Runs roughly every 10 minutes, avoiding :00.
     - cron: "7,17,27,37,47,57 * * * *"
   workflow_dispatch:
 
@@ -17,27 +16,65 @@ concurrency:
 jobs:
   keep-warm:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
 
     steps:
-      - name: Wake HealthyMe app
+      - name: Validate HealthyMe app URL
         env:
-          # Preferred: add this as a GitHub repository secret.
-          # Repo → Settings → Secrets and variables → Actions → New repository secret
-          # Name: HEALTHYME_APP_URL
-          # Value: your deployed Streamlit app URL
           HEALTHYME_APP_URL: ${{ secrets.HEALTHYME_APP_URL }}
         run: |
           set -e
 
-          if [ -z "$HEALTHYME_APP_URL" ]; then
-            echo "HEALTHYME_APP_URL secret is missing."
-            echo "Add it under GitHub repo → Settings → Secrets and variables → Actions."
+          APP_URL="$(printf '%s' "$HEALTHYME_APP_URL" | tr -d '\r' | xargs)"
+
+          if [ -z "$APP_URL" ]; then
+            echo "ERROR: HEALTHYME_APP_URL secret is missing or empty."
+            echo "Fix: GitHub repo → Settings → Secrets and variables → Actions → New repository secret"
+            echo "Secret name: HEALTHYME_APP_URL"
+            echo "Secret value: your deployed Streamlit app URL, starting with https://"
             exit 1
           fi
 
-          echo "Pinging HealthyMe app: $HEALTHYME_APP_URL"
+          case "$APP_URL" in
+            http://*|https://*)
+              echo "URL format looks valid."
+              ;;
+            *)
+              echo "ERROR: HEALTHYME_APP_URL must start with http:// or https://"
+              echo "Current value appears malformed. Do not add quotes."
+              exit 1
+              ;;
+          esac
 
-          curl --fail --silent --show-error --location --max-time 60 --retry 3 --retry-delay 5 "$HEALTHYME_APP_URL" > /dev/null
+          echo "APP_URL=$APP_URL" >> "$GITHUB_ENV"
+
+      - name: Wake HealthyMe app
+        run: |
+          set -e
+
+          echo "Pinging HealthyMe app..."
+          echo "URL: $APP_URL"
+
+          HTTP_STATUS=$(curl             --location             --silent             --show-error             --output /tmp/healthyme_wakeme_response.html             --write-out "%{http_code}"             --max-time 90             --retry 3             --retry-delay 10             "$APP_URL")
+
+          echo "HTTP status: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 400 ]; then
+            echo "ERROR: Wake ping failed with HTTP status $HTTP_STATUS"
+            echo "First 40 lines of response:"
+            head -40 /tmp/healthyme_wakeme_response.html || true
+            exit 1
+          fi
 
           echo "HealthyMe wake ping completed successfully."
+
+      - name: Secondary health check
+        run: |
+          set -e
+
+          HEALTH_URL="${APP_URL%/}/_stcore/health"
+          echo "Pinging Streamlit health endpoint: $HEALTH_URL"
+
+          curl             --location             --silent             --show-error             --max-time 60             --retry 2             --retry-delay 5             "$HEALTH_URL" || true
+
+          echo "Secondary health check completed."
