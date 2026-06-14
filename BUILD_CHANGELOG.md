@@ -1170,3 +1170,11 @@
 - Right column now contains Assessment History and a Body-Mind Control section.
 - Added CSV format download button to Recipe Manager import tab.
 - Added CSV format download button to Exercise Manager import tab.
+
+## v96.12 - Task Body-Mind / CSV Image UX Fix
+
+- Body-Mind Control in Task Request Manager is now an actionable right-column section.
+- Removed the Body-Mind informational message and redirect-only control button.
+- Activate/disable Body-Mind directly from Task Request Manager.
+- Recipe and Exercise CSV import tabs now show Download CSV Format and Import CSV side by side.
+- CSV import supports matching local images using image_file_name_to_upload and the uploaded image files.

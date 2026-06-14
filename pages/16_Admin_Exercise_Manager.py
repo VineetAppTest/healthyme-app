@@ -47,6 +47,24 @@ def clean_image_value(value):
     return value
 
 
+def attach_uploaded_images_to_import(imported, uploaded_images, module_name):
+    uploaded_images = uploaded_images or []
+    image_map = {getattr(f, "name", ""): f for f in uploaded_images}
+    upload_count = 0
+    if "image_file_name_to_upload" not in imported.columns:
+        return imported, upload_count
+    for idx, row in imported.iterrows():
+        file_name = str(row.get("image_file_name_to_upload", "") or "").strip()
+        if not file_name or file_name not in image_map:
+            continue
+        access_type = str(row.get("image_access_type", "public") or "public").strip().lower()
+        title = str(row.get("title", module_name) or module_name)
+        meta = upload_content_image(image_map[file_name], module_name, title, access_type)
+        for key in ["image_url", "image_bucket", "image_path", "image_access_type"]:
+            imported.at[idx, key] = meta.get(key, "")
+        upload_count += 1
+    return imported, upload_count
+
 def exercise_form(prefix, row=None):
     row = row or {}
     st.markdown("#### Core display fields")
@@ -190,16 +208,24 @@ with tabs[2]:
 
 with tabs[3]:
     st.subheader("Import Exercise CSV")
-    st.download_button("Download Exercise CSV Format", data='title,description,category,difficulty,duration_or_reps,equipment,image_url,image_file_name_to_upload,image_access_type,instructions,benefits,goal_tags,condition_tags,status\r\nBrisk Walking,Easy cardio starter,Cardio,Beginner,20 min,None,https://example.com/brisk-walking.jpg,brisk_walking.jpg,public,Warm up; Walk briskly; Cool down,Improves stamina; Supports metabolism,cardio;weight management,general wellness,active\r\n', file_name="healthyme_exercise_upload_format.csv", mime="text/csv", use_container_width=True)
-    st.caption("Use image_url for hosted images, or fill image_file_name_to_upload to track the image file that will be uploaded separately.")
-    st.markdown("CSV can include image_url, image_bucket, image_path, image_access_type, title, duration_or_reps, equipment, instructions and benefits. Missing columns will be added.")
-    csv_file = st.file_uploader("Choose exercise CSV file", type=["csv"], key="exercise_csv_upload_v93")
-    if st.button("Import CSV", type="primary", disabled=csv_file is None, use_container_width=True):
-        imported = pd.read_csv(csv_file)
-        df = pd.concat([load(), ensure_columns(imported)], ignore_index=True)
-        save(df)
-        st.success("CSV imported.")
-        st.rerun()
+    st.caption("CSV can include exercise details and image reference fields. For local images, fill image_file_name_to_upload in the CSV and upload matching image files below.")
+    csv_file = st.file_uploader("Choose exercise CSV file", type=["csv"], key="exercise_csv_upload_v96_12")
+    uploaded_images = st.file_uploader("Upload exercise images referenced in CSV", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True, key="exercise_csv_images_v96_12")
+    c_download, c_import = st.columns(2, gap="large")
+    with c_download:
+        st.download_button("Download CSV Format", data='title,description,category,difficulty,duration_or_reps,equipment,image_url,image_file_name_to_upload,image_access_type,instructions,benefits,goal_tags,condition_tags,status\r\nBrisk Walking,Easy cardio starter,Cardio,Beginner,20 min,None,https://example.com/brisk-walking.jpg,brisk_walking.jpg,public,Warm up; Walk briskly; Cool down,Improves stamina; Supports metabolism,cardio;weight management,general wellness,active\r\n', file_name="healthyme_exercise_upload_format.csv", mime="text/csv", use_container_width=True)
+    with c_import:
+        if st.button("Import CSV", type="primary", disabled=csv_file is None, use_container_width=True):
+            imported = pd.read_csv(csv_file)
+            try:
+                imported, upload_count = attach_uploaded_images_to_import(imported, uploaded_images, "exercises")
+            except Exception as exc:
+                st.error(f"Image upload failed: {exc}")
+                st.stop()
+            df = pd.concat([load(), ensure_columns(imported)], ignore_index=True)
+            save(df)
+            st.success(f"CSV imported. {upload_count} image(s) uploaded and linked.")
+            st.rerun()
 
 with tabs[4]:
     st.subheader("Edit or Delete Exercise")

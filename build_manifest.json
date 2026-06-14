@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_11_KeepAlive_TaskCompact_CSVTemplates",
-  "version": "v96.11",
-  "updated_on": "2026-06-14T10:14:46.027492+00:00",
+  "build_name": "HealthyMe_v96_12_TaskBodyMind_CSVImage_UX_Fix",
+  "version": "v96.12",
+  "updated_on": "2026-06-14T11:27:12.679340+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,11 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added app-level browser keep-alive guard while app tab is open.",
-    "Task Request Manager made more compact with Create Task Request on left and Assessment History + Body-Mind Control section on right.",
-    "Body-Mind Control is now shown as its own section instead of only a redirection button.",
-    "Added Recipe CSV format download button including image_url and image_file_name_to_upload fields.",
-    "Added Exercise CSV format download button including image_url and image_file_name_to_upload fields."
+    "Task Request Manager: compacted create/history layout and moved Body-Mind Control into right column as an actionable section.",
+    "Task Request Manager: removed Body-Mind informational message and removed redirect-only Body-Mind button.",
+    "Body-Mind Control can now activate/disable access directly from Task Request Manager.",
+    "Recipe Manager Import CSV: download format and import button are side by side.",
+    "Exercise Manager Import CSV: download format and import button are side by side.",
+    "CSV import supports local image files by matching image_file_name_to_upload with uploaded image filenames and uploading them to Supabase Storage."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -318,5 +319,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_10_Task_Recipe_Response_Fixes.zip"
+  "base_build": "HealthyMe_v96_11_KeepAlive_TaskCompact_CSVTemplates.zip"
 }
