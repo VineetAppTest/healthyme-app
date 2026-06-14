@@ -561,6 +561,32 @@ st.markdown("""
 <style>
 /* v97 Other Fluids functional styling */
 
+/* v97.2 Other Fluids positioning and thin break */
+.hm-v97-thin-break{
+  height:1px!important;
+  min-height:1px!important;
+  max-height:1px!important;
+  background:#E7D8BE!important;
+  border:0!important;
+  margin:.42rem 0 .55rem 0!important;
+  padding:0!important;
+  line-height:1px!important;
+}
+.hm-other-fluids-box{
+  border:0!important;
+  background:transparent!important;
+  padding:.15rem 0 .05rem 0!important;
+  margin:.25rem 0 .25rem 0!important;
+}
+.hm-other-fluid-entry-title{
+  margin:.18rem 0 .08rem 0!important;
+}
+.hm-other-fluids-box div[data-testid="stTextInput"],
+.hm-other-fluids-box div[data-testid="stSelectbox"]{
+  margin-bottom:.22rem!important;
+}
+
+
 .hm-other-fluid-entry-title{color:#064E3B;font-weight:900;margin:.32rem 0 .18rem 0;}
 .hm-other-fluid-inline-time-label{color:#064E3B;font-size:.78rem;font-weight:850;margin:0 0 .22rem 0;}
 /* v97.1 Other Fluids compact timing */
@@ -836,6 +862,27 @@ def water_stepper_to_litres(value):
 
 
 
+
+
+def meal_time_selector_options_v97_2(section_key):
+    """Limit meal timing controls to the approved meal window.
+
+    Validation still remains active. These options make the dropdown itself
+    cleaner and prevent obvious wrong AM/PM choices such as Breakfast PM.
+    """
+    if section_key == "breakfast":
+        return (["HH"] + [f"{i:02d}" for i in range(6, 12)], ["AM/PM", "AM"])
+    if section_key == "lunch":
+        return (["HH", "12", "01", "02", "03"], ["AM/PM", "PM"])
+    if section_key == "evening_snacks":
+        return (["HH", "04", "05", "06"], ["AM/PM", "PM"])
+    if section_key == "dinner":
+        return (["HH", "07", "08", "09", "10"], ["AM/PM", "PM"])
+    if section_key == "bedtime":
+        return (["HH", "11", "12"], ["AM/PM", "PM", "AM"])
+    # Snacking and dynamic sections remain flexible but are still validated.
+    return (["HH"] + [f"{i:02d}" for i in range(1, 13)], ["AM/PM", "AM", "PM"])
+
 def split_12h_time_parts(value):
     raw = (value or "").strip().upper()
     m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
@@ -1031,13 +1078,17 @@ st.session_state.setdefault(f"{active_key}_time_h", pre_h)
 st.session_state.setdefault(f"{active_key}_time_m", pre_m)
 st.session_state.setdefault(f"{active_key}_time_p", pre_p)
 st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
+meal_hour_options, meal_ampm_options = meal_time_selector_options_v97_2(active_key)
 if is_mobile_mode_v90a:
     # v92.2: Custom component removed because it fails to load on Streamlit Cloud.
     # Use safe Streamlit-native 3-cell timing controls while keeping validation active.
     th, tm, tp = st.columns([1, 1, 1])
     with th:
-        hour_options = ["HH"] + [f"{i:02d}" for i in range(1, 13)]
+        hour_options = meal_hour_options
         current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
+        if current_h not in hour_options:
+            st.session_state[f"{active_key}_time_h"] = "HH"
+            current_h = "HH"
         st.selectbox(
             "HH",
             hour_options,
@@ -1056,8 +1107,11 @@ if is_mobile_mode_v90a:
             label_visibility="collapsed",
         )
     with tp:
-        ampm_options = ["AM/PM", "AM", "PM"]
+        ampm_options = meal_ampm_options
         current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
+        if current_p not in ampm_options:
+            st.session_state[f"{active_key}_time_p"] = "AM/PM"
+            current_p = "AM/PM"
         st.selectbox(
             "AM/PM",
             ampm_options,
@@ -1068,8 +1122,11 @@ if is_mobile_mode_v90a:
 else:
     th, tm, tp = st.columns([1, 1, 1])
     with th:
-        hour_options = ["HH"] + [f"{i:02d}" for i in range(1, 13)]
+        hour_options = meal_hour_options
         current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
+        if current_h not in hour_options:
+            st.session_state[f"{active_key}_time_h"] = "HH"
+            current_h = "HH"
         st.selectbox(
             "HH",
             hour_options,
@@ -1088,8 +1145,11 @@ else:
             label_visibility="collapsed",
         )
     with tp:
-        ampm_options = ["AM/PM", "AM", "PM"]
+        ampm_options = meal_ampm_options
         current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
+        if current_p not in ampm_options:
+            st.session_state[f"{active_key}_time_p"] = "AM/PM"
+            current_p = "AM/PM"
         st.selectbox(
             "AM/PM",
             ampm_options,
@@ -1210,7 +1270,7 @@ with top_right:
     default_other_count = min(max(len(existing_other_fluids), 0), 5)
     other_count_options = [0, 1, 2, 3, 4, 5]
     other_fluid_count = st.selectbox(
-        "Other Fluids consumed (Record non-water fluids such as herbal tea, coconut water, juices or cold drink outside standard meal windows)",
+        "Other Fluids consumed outside standard meal window",
         other_count_options,
         index=other_count_options.index(default_other_count) if default_other_count in other_count_options else 0,
         key=f"other_fluid_count_{log_date}",
@@ -1297,6 +1357,9 @@ for i in range(other_fluid_count):
             "notes": fluid_notes.strip(),
         })
 
+st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v97-thin-break'></div>", unsafe_allow_html=True)
+
 poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
 existing_poop_rounds = existing.get("poop_rounds", "Select")
 if existing_poop_rounds in ("", None):
@@ -1322,7 +1385,6 @@ else:
         index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
     )
 
-st.markdown("</div>", unsafe_allow_html=True)
 
 poop_timings = []
 existing_timings = existing.get("poop_timings", []) or []

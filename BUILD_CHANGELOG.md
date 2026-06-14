@@ -1201,3 +1201,10 @@
 - Repositioned Poop rounds below Other Fluids notes.
 - Replaced Other Fluid time text input with compact HH / MM / AM-PM timing selectors.
 - Updated label language per approved wording.
+
+## v97.2 - Other Fluids Position and Meal Time Window Fix
+
+- Renamed Other Fluids consumed selector label.
+- Made the divider between Other Fluids and Poop Rounds very thin.
+- Ensured Other Fluid 1 / 2 / 3 sections appear above the divider.
+- Restricted Meal Timing hour and AM/PM selectors by meal window.
