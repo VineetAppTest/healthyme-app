@@ -1227,3 +1227,12 @@
 - Added elegant borders and softer section structure.
 - Added thin section break before Poop Rounds.
 - Preserved mobile responsive single-column fallback.
+
+## v97.5 - Daily Log Compact Alignment Correction
+
+- Corrected Other Fluids to a compact two-row layout per entry.
+- Row 1 contains Fluid type, HH, MM, AM/PM and Quantity.
+- Row 2 contains Notes only.
+- Food Journal Date label and date picker now use real Streamlit columns in one row.
+- Removed the thin section break before Poop Rounds.
+- Retained the subtle dropdown font/color styling that passed review.
