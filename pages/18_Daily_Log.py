@@ -58,6 +58,13 @@ def other_fluids_summary_v97(items):
             rows.append(f"{idx}. " + " · ".join(bits))
     return " | ".join(rows) if rows else "—"
 
+
+def parse_date_safe_v97_3(value):
+    try:
+        return datetime.date.fromisoformat(str(value))
+    except Exception:
+        return None
+
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
@@ -559,6 +566,92 @@ render_system_message()
 
 st.markdown("""
 <style>
+/* v97.3 Daily Log UI polish */
+.hm-daily-date-shell{
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF8EA 100%)!important;
+  border:1.5px solid #D9B458!important;
+  border-left:6px solid #0F766E!important;
+  border-radius:16px!important;
+  padding:.78rem .95rem .85rem .95rem!important;
+  margin:.45rem 0 .9rem 0!important;
+  box-shadow:0 8px 20px rgba(15,23,42,.055)!important;
+}
+.hm-daily-date-title{
+  color:#064E3B!important;
+  font-weight:950!important;
+  font-size:.96rem!important;
+  letter-spacing:.01em!important;
+  margin-bottom:.38rem!important;
+}
+.hm-daily-date-shell div[data-testid="stDateInput"]{
+  margin-bottom:0!important;
+}
+.hm-daily-date-shell div[data-testid="stDateInput"] input{
+  background:#FFFFFF!important;
+  border:1.25px solid #E2C98F!important;
+  border-radius:13px!important;
+  min-height:2.4rem!important;
+  height:2.4rem!important;
+  color:#064E3B!important;
+  font-weight:850!important;
+}
+
+/* Softer, more compact dropdowns on Food Journal page */
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
+  background:#FFFDF8!important;
+  border:1.15px solid #DCC690!important;
+  border-radius:12px!important;
+  min-height:2.25rem!important;
+  height:2.25rem!important;
+  box-shadow:0 2px 8px rgba(15,23,42,.028)!important;
+}
+div[data-testid="stSelectbox"] [data-baseweb="select"] div{
+  color:#064E3B!important;
+  font-weight:760!important;
+  font-size:.88rem!important;
+}
+div[data-testid="stSelectbox"] svg{
+  color:#0F766E!important;
+  fill:#0F766E!important;
+}
+.hm-recent-filter-box{
+  border:1px solid #E7D8BE;
+  background:#FFFDF8;
+  border-radius:14px;
+  padding:.65rem .75rem .25rem .75rem;
+  margin:.4rem 0 .65rem 0;
+}
+.hm-recent-filter-title{
+  color:#064E3B;
+  font-weight:900;
+  font-size:.9rem;
+  margin-bottom:.35rem;
+}
+@media (max-width:768px){
+  .hm-daily-date-shell{
+    padding:.68rem .72rem .75rem .72rem!important;
+    margin:.35rem 0 .75rem 0!important;
+    border-radius:15px!important;
+  }
+  .hm-daily-date-title{
+    font-size:.88rem!important;
+  }
+  div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
+    min-height:2.18rem!important;
+    height:2.18rem!important;
+  }
+  div[data-testid="stSelectbox"] [data-baseweb="select"] div{
+    font-size:.84rem!important;
+  }
+  .hm-recent-filter-box{
+    padding:.58rem .62rem .18rem .62rem!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
 /* v97 Other Fluids functional styling */
 
 /* v97.2 Other Fluids positioning and thin break */
@@ -693,23 +786,9 @@ def render_v90a_chip_selector(label, options, current_value, key_prefix, columns
     return st.session_state.get(key_prefix, selected)
 
 device_mode_v90a = get_device_mode_for_spike()
-manual_mobile_toggle_v912 = st.toggle(
-    "Use mobile input controls on this device",
-    value=(device_mode_v90a == "mobile"),
-    key="v912_use_mobile_controls",
-    help="Use this on phone if automatic mobile detection does not activate.",
-)
-is_mobile_mode_v90a = (device_mode_v90a == "mobile") or manual_mobile_toggle_v912
+is_mobile_mode_v90a = (device_mode_v90a == "mobile")
 rendered_controls_v90a = "stable Streamlit mobile controls" if is_mobile_mode_v90a else "desktop controls"
-
-st.markdown(f"""
-<div class='hm-v90a-diagnostic'>
-  <b>v92.5 Mobile Input Diagnostic</b><br>
-  Device mode: <b>{device_mode_v90a}</b> &nbsp;|&nbsp;
-  Rendered controls: <b>{rendered_controls_v90a}</b><br>
-  Use the toggle above on phone if mobile controls are not active. Override: <code>?device=mobile</code> / <code>?device=desktop</code>.
-</div>
-""", unsafe_allow_html=True)
+# v97.3: mobile input diagnostic UI removed.
 
 
 st.markdown("""
@@ -965,7 +1044,7 @@ def validate_meal_time(section_key, section_label, time_value):
 
 
 # Fixed Daily Log meal structure.
-st.markdown("<div class='hm-daily-date-shell'><div class='hm-daily-date-title'>Food journal date</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-daily-date-shell'><div class='hm-daily-date-title'>Food Journal Date</div>", unsafe_allow_html=True)
 log_date = st.date_input("Food journal date", value=date.today(), label_visibility="collapsed")
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
@@ -1476,9 +1555,33 @@ days = get_daily_food_journal_days(user_id)
 if not days:
     st.info("No food journal days saved yet.")
 else:
+
+    # v97.3 Recent Saved Days date filter
+    available_saved_dates_v97_3 = sorted([d for d in [parse_date_safe_v97_3(x.get("date")) for x in days] if d], reverse=True)
+    if available_saved_dates_v97_3:
+        st.markdown("<div class='hm-recent-filter-box'><div class='hm-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+        rf1, rf2 = st.columns(2)
+        with rf1:
+            recent_from_v97_3 = st.date_input(
+                "From date",
+                value=min(available_saved_dates_v97_3),
+                key="v97_3_recent_filter_from",
+            )
+        with rf2:
+            recent_to_v97_3 = st.date_input(
+                "To date",
+                value=max(available_saved_dates_v97_3),
+                key="v97_3_recent_filter_to",
+            )
+        st.markdown("</div>", unsafe_allow_html=True)
+        days = [
+            x for x in days
+            if parse_date_safe_v97_3(x.get("date")) and recent_from_v97_3 <= parse_date_safe_v97_3(x.get("date")) <= recent_to_v97_3
+        ]
+
     st.markdown("<div class='hm-rsd-mobile-shell'>", unsafe_allow_html=True)
 
-    for day in days[:14]:
+    for day in days:
         day_date = day.get("date", "")
         meal_summary = []
         for _k, meal in (day.get("meals", {}) or {}).items():
@@ -1547,7 +1650,6 @@ SAMPLE_ROWS = [
     {"Time": "7:30 - 8:00 PM", "Meal Type": "Dinner", "Food": "Soup / light dinner", "Portion Size": "1 big bowl", "Mood/Energy": "Energetic", "Activity": "", "Poop": "", "Notes": ""},
 ]
 
-st.markdown("<div class='hm-reference-shell'><div class='hm-reference-title'>Reference format from sample journal</div><div class='hm-compact-section-note'>Use only when needed.</div>", unsafe_allow_html=True)
 if "show_daily_reference_sample" not in st.session_state:
     st.session_state["show_daily_reference_sample"] = False
 if st.button("Show / Hide sample journal format", use_container_width=True):

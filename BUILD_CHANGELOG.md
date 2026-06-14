@@ -1208,3 +1208,13 @@
 - Made the divider between Other Fluids and Poop Rounds very thin.
 - Ensured Other Fluid 1 / 2 / 3 sections appear above the divider.
 - Restricted Meal Timing hour and AM/PM selectors by meal window.
+
+## v97.3 - Daily Log UI Filter Mobile Polish
+
+- Removed mobile input diagnostic section from Daily Log.
+- Made Food Journal Date visually prominent and elegant.
+- Softened and compacted dropdown styling.
+- Removed sample format information message.
+- Added From / To date filters to Recent Saved Days.
+- Kept Recent Saved Days default as all saved days, recent to old.
+- Added mobile-friendly responsive styling checks.

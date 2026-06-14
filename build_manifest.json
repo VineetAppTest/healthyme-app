@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_2_OtherFluids_Position_TimeWindow_Fix",
-  "version": "v97.2",
-  "updated_on": "2026-06-14T19:25:57.019800+00:00",
+  "build_name": "HealthyMe_v97_3_DailyLog_UI_Filter_Mobile_Polish",
+  "version": "v97.3",
+  "updated_on": "2026-06-14T19:53:04.340109+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Updated Other Fluids label",
-    "Made page break/divider between Other Fluids and Poop Rounds very thin",
-    "Moved Other Fluid entry blocks above the divider/page break",
-    "Restricted meal timing hour and AM/PM options based on approved meal windows"
+    "Removed mobile input diagnostic section from Daily Log.",
+    "Made Food Journal Date more prominent and elegant.",
+    "Softened and compacted dropdown styling on Food Journal page.",
+    "Removed sample format information message.",
+    "Added From/To date filters for Recent Saved Days with default all-date visibility.",
+    "Added responsive CSS checks for mobile-friendly layout."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -317,5 +319,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v97_1_OtherFluids_Layout_TimeRefinement.zip"
+  "base_build": "HealthyMe_v97_2_OtherFluids_Position_TimeWindow_Fix.zip"
 }
