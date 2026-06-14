@@ -1185,3 +1185,12 @@
 - Removed the empty-looking strip above Body-Mind Control by rendering the section as one closed block.
 - Body-Mind Control remains directly actionable from Task Request Manager.
 - GitHub workflow remains the primary always-awake mechanism; browser keep-alive remains supplementary while a tab is open.
+
+## v97.0 - Other Fluids Functional Build
+
+- Added Other Fluids section to Member Daily Log.
+- Captures type, time, quantity and notes for multiple non-water fluids.
+- Stores Other Fluids in daily food journal day data.
+- Shows Other Fluids in Member Recent Saved Days.
+- Shows Other Fluids in Admin Daily Log Report and Excel export.
+- Final beautification/balancing is deferred to v97 closure.

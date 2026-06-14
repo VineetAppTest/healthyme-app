@@ -2062,3 +2062,78 @@ def get_member_archived_messages(member_id, limit=50):
     if changed:
         save_db(db)
     return rows[:limit]
+
+
+# --------------------------------------------------------------------
+# v97: Full-day details with Other Fluids support
+# --------------------------------------------------------------------
+def save_daily_food_journal_day_details(
+    user_id,
+    log_date,
+    physical_activity="",
+    poop="",
+    notes="",
+    water_litres="",
+    poop_rounds="Select",
+    poop_timings=None,
+    feeling_after_poop="",
+    other_fluids=None,
+):
+    """Save full-day details including water, structured poop and other fluids."""
+    db = load_db()
+    store = _daily_food_journal_store(db).setdefault(user_id, {})
+    day = store.get(str(log_date), {
+        "date": str(log_date),
+        "meals": {},
+        "log_type": "daily_food_journal_day",
+    })
+
+    poop_timings = poop_timings or []
+    clean_timings = [str(x or "").strip() for x in poop_timings]
+
+    cleaned_other_fluids = []
+    for item in (other_fluids or []):
+        if not isinstance(item, dict):
+            continue
+        fluid_type = str(item.get("type", "") or "").strip()
+        time_text = str(item.get("time", "") or "").strip()
+        quantity = str(item.get("quantity", "") or "").strip()
+        note = str(item.get("notes", "") or "").strip()
+        if fluid_type or time_text or quantity or note:
+            cleaned_other_fluids.append({
+                "type": fluid_type,
+                "time": time_text,
+                "quantity": quantity,
+                "notes": note,
+            })
+
+    structured_summary = ""
+    if poop_rounds and str(poop_rounds) != "Select":
+        timing_text = ", ".join([x for x in clean_timings if x])
+        structured_summary = f"{poop_rounds} round(s)"
+        if timing_text:
+            structured_summary += f" at {timing_text}"
+        if feeling_after_poop:
+            structured_summary += f" / {feeling_after_poop}"
+
+    day["physical_activity"] = physical_activity
+    day["poop"] = structured_summary or poop
+    day["poop_rounds"] = poop_rounds
+    day["poop_timings"] = clean_timings
+    day["feeling_after_poop"] = feeling_after_poop
+    day["notes"] = notes
+    day["water_litres"] = water_litres
+    day["other_fluids"] = cleaned_other_fluids
+    day["timestamp"] = datetime.datetime.now().isoformat(timespec="seconds")
+    day["log_type"] = "daily_food_journal_day"
+    store[str(log_date)] = day
+
+    db.setdefault("daily_logs", {}).setdefault(user_id, [])
+    legacy = [
+        x for x in db["daily_logs"][user_id]
+        if not (x.get("log_type") == "daily_food_journal_day" and x.get("date") == str(log_date))
+    ]
+    legacy.append(day)
+    db["daily_logs"][user_id] = legacy[-120:]
+    save_db(db)
+    return day

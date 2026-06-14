@@ -20,6 +20,44 @@ from components.db import (
 )
 from components.flash import set_system_message, render_system_message
 
+
+# --------------------------------------------------------------------
+# v97: Other Fluids helpers
+# --------------------------------------------------------------------
+def normalise_other_fluids_v97(items):
+    cleaned = []
+    for item in (items or []):
+        if not isinstance(item, dict):
+            continue
+        fluid_type = str(item.get("type", "") or "").strip()
+        time_text = str(item.get("time", "") or "").strip()
+        quantity = str(item.get("quantity", "") or "").strip()
+        notes = str(item.get("notes", "") or "").strip()
+        if fluid_type or time_text or quantity or notes:
+            cleaned.append({
+                "type": fluid_type,
+                "time": time_text,
+                "quantity": quantity,
+                "notes": notes,
+            })
+    return cleaned
+
+def other_fluids_summary_v97(items):
+    rows = []
+    for idx, item in enumerate(normalise_other_fluids_v97(items), start=1):
+        bits = []
+        if item.get("time"):
+            bits.append(item.get("time"))
+        if item.get("type"):
+            bits.append(item.get("type"))
+        if item.get("quantity"):
+            bits.append(item.get("quantity"))
+        if item.get("notes"):
+            bits.append(item.get("notes"))
+        if bits:
+            rows.append(f"{idx}. " + " · ".join(bits))
+    return " | ".join(rows) if rows else "—"
+
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
@@ -518,6 +556,30 @@ div[data-testid="stTextInput"] input{
 user_id = st.session_state["user_id"]
 compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
+
+st.markdown("""
+<style>
+/* v97 Other Fluids functional styling */
+.hm-other-fluids-box{
+  border:1px solid #E7D8BE;
+  border-radius:14px;
+  background:#FFFDF8;
+  padding:.75rem .85rem;
+  margin:.7rem 0 .75rem 0;
+}
+.hm-other-fluids-title{
+  font-weight:900;
+  color:#064E3B;
+  font-size:.98rem;
+  margin-bottom:.18rem;
+}
+.hm-other-fluids-note{
+  color:#64748B;
+  font-size:.8rem;
+  margin-bottom:.45rem;
+}
+</style>
+""", unsafe_allow_html=True)
 
 def get_device_mode_for_spike():
     """
@@ -1164,7 +1226,65 @@ with top_right:
             index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
         )
 
-    
+
+# v97: Other Fluids outside standard meal windows
+st.markdown("<div class='hm-other-fluids-box'><div class='hm-other-fluids-title'>Other Fluids</div><div class='hm-other-fluids-note'>Record non-water fluids outside standard meal windows, such as herbal tea, coconut water, juices or cold drink.</div>", unsafe_allow_html=True)
+
+existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
+default_other_count = min(max(len(existing_other_fluids), 0), 5)
+other_count_options = [0, 1, 2, 3, 4, 5]
+other_fluid_count = st.selectbox(
+    "Number of other fluid entries",
+    other_count_options,
+    index=other_count_options.index(default_other_count) if default_other_count in other_count_options else 0,
+    key=f"other_fluid_count_{log_date}",
+)
+
+other_fluids = []
+fluid_type_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
+for i in range(other_fluid_count):
+    prior_fluid = existing_other_fluids[i] if i < len(existing_other_fluids) else {}
+    st.markdown(f"**Other Fluid {i+1}**")
+    f1, f2, f3 = st.columns([1.15, .85, .9])
+    with f1:
+        existing_type = prior_fluid.get("type", "Select") or "Select"
+        fluid_type = st.selectbox(
+            "Fluid type",
+            fluid_type_options,
+            index=fluid_type_options.index(existing_type) if existing_type in fluid_type_options else 0,
+            key=f"other_fluid_type_{log_date}_{i}",
+        )
+    with f2:
+        fluid_time = st.text_input(
+            "Time",
+            value=prior_fluid.get("time", ""),
+            placeholder="Example: 4:30 PM",
+            key=f"other_fluid_time_{log_date}_{i}",
+        )
+    with f3:
+        fluid_qty = st.text_input(
+            "Quantity",
+            value=prior_fluid.get("quantity", ""),
+            placeholder="Example: 200 ml",
+            key=f"other_fluid_qty_{log_date}_{i}",
+        )
+    fluid_notes = st.text_input(
+        "Notes",
+        value=prior_fluid.get("notes", ""),
+        placeholder="Example: unsweetened / with sugar / packaged",
+        key=f"other_fluid_notes_{log_date}_{i}",
+    )
+    type_value = "" if fluid_type == "Select" else fluid_type
+    if type_value or fluid_time.strip() or fluid_qty.strip() or fluid_notes.strip():
+        other_fluids.append({
+            "type": type_value,
+            "time": fluid_time.strip(),
+            "quantity": fluid_qty.strip(),
+            "notes": fluid_notes.strip(),
+        })
+
+st.markdown("</div>", unsafe_allow_html=True)
+
 poop_timings = []
 existing_timings = existing.get("poop_timings", []) or []
 active_poop_count = int(poop_rounds) if poop_rounds != "Select" else 0
@@ -1214,7 +1334,7 @@ day_notes = st.text_area(
 c_save_1, c_save_2 = st.columns(2)
 with c_save_1:
     if st.button("Save Day Details Only", use_container_width=True):
-        save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop, day_notes.strip(), water_litres, poop_rounds, poop_timings, feeling_after_poop.strip())
+        save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop, day_notes.strip(), water_litres, poop_rounds, poop_timings, feeling_after_poop.strip(), other_fluids)
         set_system_message("Day details saved.", "success")
         st.rerun()
 with c_save_2:
@@ -1238,6 +1358,7 @@ with c_save_2:
             ),
             "notes": day_notes.strip(),
             "water_litres": water_litres,
+            "other_fluids": other_fluids,
         }
         save_daily_food_journal_day(user_id, str(log_date), payload)
         set_system_message("Full-day food journal saved.", "success")
@@ -1277,6 +1398,7 @@ else:
                 ("Date", day_date or "—"),
                 ("Meal type and food", meal_display_text),
                 ("Water", day.get('water_litres') or '—'),
+                ("Other Fluids", other_fluids_summary_v97(day.get("other_fluids", []))),
                 ("Notes", day.get('notes') or '—'),
                 ("Nutritionist Note", latest_note_text),
             ]

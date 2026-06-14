@@ -138,6 +138,44 @@ st.markdown("""
 
 
 
+
+# --------------------------------------------------------------------
+# v97: Other Fluids report helpers
+# --------------------------------------------------------------------
+def normalise_other_fluids_v97(items):
+    cleaned = []
+    for item in (items or []):
+        if not isinstance(item, dict):
+            continue
+        fluid_type = str(item.get("type", "") or "").strip()
+        time_text = str(item.get("time", "") or "").strip()
+        quantity = str(item.get("quantity", "") or "").strip()
+        notes = str(item.get("notes", "") or "").strip()
+        if fluid_type or time_text or quantity or notes:
+            cleaned.append({
+                "type": fluid_type,
+                "time": time_text,
+                "quantity": quantity,
+                "notes": notes,
+            })
+    return cleaned
+
+def other_fluids_summary_v97(items):
+    rows = []
+    for idx, item in enumerate(normalise_other_fluids_v97(items), start=1):
+        bits = []
+        if item.get("time"):
+            bits.append(item.get("time"))
+        if item.get("type"):
+            bits.append(item.get("type"))
+        if item.get("quantity"):
+            bits.append(item.get("quantity"))
+        if item.get("notes"):
+            bits.append(item.get("notes"))
+        if bits:
+            rows.append(f"{idx}. " + " · ".join(bits))
+    return " | ".join(rows) if rows else "—"
+
 MEAL_KEYS = [(r["key"], r["label"]) for r in get_meal_type_repository()]
 
 def meal_keys_for_day(day):
@@ -152,6 +190,7 @@ def flatten_day(day, supervision_notes=None):
     base = {
         "Date": day.get("date", ""),
         "Water": day.get("water_litres", ""),
+        "Other Fluids": other_fluids_summary_v97(day.get("other_fluids", [])),
         "Physical Activity": day.get("physical_activity", ""),
         "Poop Rounds": day.get("poop_rounds", ""),
         "Poop Timings": ", ".join([str(x) for x in (day.get("poop_timings", []) or []) if str(x).strip()]),
@@ -269,6 +308,7 @@ else:
             "Lunch": (d.get("meals", {}).get("lunch", {}) or {}).get("food", ""),
             "Dinner": (d.get("meals", {}).get("dinner", {}) or {}).get("food", ""),
             "Water": d.get("water_litres", ""),
+            "Other Fluids": other_fluids_summary_v97(d.get("other_fluids", [])),
             "Activity": d.get("physical_activity", ""),
             "Poop Rounds": d.get("poop_rounds", ""),
             "Poop Timings": ", ".join([str(x) for x in (d.get("poop_timings", []) or []) if str(x).strip()]),
@@ -304,6 +344,12 @@ else:
     st.dataframe(meal_rows, use_container_width=True, hide_index=True)
     st.markdown("#### Full-day details")
     st.markdown(f"**Water Intake:** {selected_day.get('water_litres','') or '-'}")
+    st.markdown("#### Other Fluids")
+    other_fluid_rows = normalise_other_fluids_v97(selected_day.get("other_fluids", []))
+    if other_fluid_rows:
+        st.dataframe(other_fluid_rows, use_container_width=True, hide_index=True)
+    else:
+        st.markdown("—")
     st.markdown(f"**Physical Activity:** {selected_day.get('physical_activity','') or '-'}")
     st.markdown(f"**Poop rounds:** {selected_day.get('poop_rounds','') or '-'}")
     timings = selected_day.get("poop_timings", []) or []

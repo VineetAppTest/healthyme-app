@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v96_13_Task_Manager_Spacing_Polish",
-  "version": "v96.13",
-  "updated_on": "2026-06-14T11:48:11.286390+00:00",
+  "build_name": "HealthyMe_v97_0_Other_Fluids_Functional_Build",
+  "version": "v97.0",
+  "updated_on": "2026-06-14T18:28:02.156244+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Polished Task Request Manager right-column spacing.",
-    "Removed empty-looking strip above Body-Mind Control by rendering the section as one closed block.",
-    "Body-Mind Control remains directly actionable from Task Request Manager.",
-    "GitHub workflow remains the primary always-awake mechanism; browser keep-alive remains supplementary while a tab is open."
+    "Added Other Fluids section to Member Daily Log.",
+    "Other Fluids supports multiple entries with type, time, quantity and notes.",
+    "Other Fluids are saved into daily_food_journals and legacy daily_logs.",
+    "Member Recent Saved Days displays Other Fluids summary.",
+    "Admin Daily Log Report displays Other Fluids in all saved days, selected-day details and Excel export.",
+    "Beautification and final layout balancing intentionally deferred to final v97 closure step."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -317,5 +319,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v96_12_TaskBodyMind_CSVImage_UX_Fix.zip"
+  "base_build": "HealthyMe_v96_13_Task_Manager_Spacing_Polish.zip"
 }
