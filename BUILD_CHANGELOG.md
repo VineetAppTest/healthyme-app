@@ -1218,3 +1218,12 @@
 - Added From / To date filters to Recent Saved Days.
 - Kept Recent Saved Days default as all saved days, recent to old.
 - Added mobile-friendly responsive styling checks.
+
+## v97.4 - Daily Log Alignment Date Row Border Polish
+
+- Aligned Other Fluids dropdowns and quantity field using a stable grid layout.
+- Food Journal Date label and date picker now sit in the same row on desktop.
+- Food Journal Date section made more prominent and elegant.
+- Added elegant borders and softer section structure.
+- Added thin section break before Poop Rounds.
+- Preserved mobile responsive single-column fallback.

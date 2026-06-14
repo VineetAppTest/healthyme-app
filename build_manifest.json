@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_3_DailyLog_UI_Filter_Mobile_Polish",
-  "version": "v97.3",
-  "updated_on": "2026-06-14T19:53:04.340109+00:00",
+  "build_name": "HealthyMe_v97_4_DailyLog_Alignment_DateRow_Border_Polish",
+  "version": "v97.4",
+  "updated_on": "2026-06-14T20:20:37.703565+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,12 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed mobile input diagnostic section from Daily Log.",
-    "Made Food Journal Date more prominent and elegant.",
-    "Softened and compacted dropdown styling on Food Journal page.",
-    "Removed sample format information message.",
-    "Added From/To date filters for Recent Saved Days with default all-date visibility.",
-    "Added responsive CSS checks for mobile-friendly layout."
+    "Aligned Other Fluids dropdowns and quantity field into a stable grid.",
+    "Placed Food Journal Date label and picker in the same row.",
+    "Made Food Journal Date stand out elegantly.",
+    "Added elegant bordered structure to Daily Log sections.",
+    "Added thin section break before Poop Rounds.",
+    "Kept mobile responsive fallback for narrow screens."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -319,5 +319,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v97_2_OtherFluids_Position_TimeWindow_Fix.zip"
+  "base_build": "HealthyMe_v97_3_DailyLog_UI_Filter_Mobile_Polish.zip"
 }
