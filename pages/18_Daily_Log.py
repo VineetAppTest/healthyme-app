@@ -725,6 +725,50 @@ active_label = next((label for key, label in meal_sections if key == active_key)
 # Row 2: Dinner / Bedtime
 # Row 3: +Snacking action
 # Row 4+: Snacking 1..n
+
+# --------------------------------------------------------------------
+# v97.11: Meal helper hotfix
+# --------------------------------------------------------------------
+
+def current_widget_payload(active_key, active_label):
+    hour = st.session_state.get(f"{active_key}_time_h", "HH")
+    minute = st.session_state.get(f"{active_key}_time_m", "MM")
+    period = st.session_state.get(f"{active_key}_time_p", "AM/PM")
+    meal_time = f"{hour}:{minute} {period}" if hour != "HH" and minute != "MM" and period in ["AM", "PM"] else ""
+    return {
+        "label": active_label,
+        "time": meal_time,
+        "food": st.session_state.get(f"{active_key}_food", ""),
+        "portion_size": st.session_state.get(f"{active_key}_portion", ""),
+        "mood_energy": st.session_state.get(f"{active_key}_mood", ""),
+    }
+
+def meal_has_data(meal):
+    """Return True when a saved meal section contains any meaningful user entry."""
+    if not isinstance(meal, dict):
+        return False
+    fields = ["time", "food", "portion_size", "mood_energy", "notes", "meal_type", "label"]
+    for field in fields:
+        value = meal.get(field)
+        if value is not None and str(value).strip():
+            return True
+    return False
+
+def is_dirty(existing_meals, active_key, active_label):
+    """Detect unsaved changes in the active meal section without breaking page render."""
+    try:
+        existing = existing_meals.get(active_key, {}) if isinstance(existing_meals, dict) else {}
+        current = current_widget_payload(active_key, active_label)
+        if not meal_has_data(current) and not meal_has_data(existing):
+            return False
+        check_fields = ["time", "food", "portion_size", "mood_energy"]
+        for field in check_fields:
+            if str(current.get(field, "") or "").strip() != str(existing.get(field, "") or "").strip():
+                return True
+        return False
+    except Exception:
+        return False
+
 def render_meal_section_button(key, label):
     saved = meal_has_data(existing_meals.get(key, {}))
     short_label = f"{'● ' if key == active_key else ''}{label}{' ✓' if saved else ''}"
@@ -1273,6 +1317,28 @@ if not days:
     st.info("No food journal days saved yet.")
 else:
 
+
+
+    # v97.11 From / To filter for Recent Saved Days
+    available_saved_dates_v97_11 = sorted([d for d in [parse_date_safe_v97_10(x.get("date")) for x in days] if d], reverse=True)
+    st.markdown("<div class='hm-v979-recent-filter'><div class='hm-v979-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+    if available_saved_dates_v97_11:
+        rf1, rf2 = st.columns(2)
+        with rf1:
+            recent_from_v97_11 = st.date_input("From date", value=min(available_saved_dates_v97_11), key="v97_11_recent_filter_from")
+        with rf2:
+            recent_to_v97_11 = st.date_input("To date", value=max(available_saved_dates_v97_11), key="v97_11_recent_filter_to")
+        days = [
+            x for x in days
+            if parse_date_safe_v97_10(x.get("date")) and recent_from_v97_11 <= parse_date_safe_v97_10(x.get("date")) <= recent_to_v97_11
+        ]
+    else:
+        rf1, rf2 = st.columns(2)
+        with rf1:
+            st.date_input("From date", value=date.today(), key="v97_11_recent_filter_from_empty")
+        with rf2:
+            st.date_input("To date", value=date.today(), key="v97_11_recent_filter_to_empty")
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='hm-rsd-mobile-shell'>", unsafe_allow_html=True)
 
