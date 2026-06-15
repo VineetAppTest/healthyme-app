@@ -102,6 +102,17 @@ def parse_date_safe_v97_15(value):
     except Exception:
         return None
 
+
+def parse_date_safe_v97_16(value):
+    try:
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        raw = raw.replace("/", "-")
+        return datetime.date.fromisoformat(raw)
+    except Exception:
+        return None
+
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
@@ -686,7 +697,7 @@ st.markdown("""
 .block-container{padding-top:.45rem!important;}
 .hero-shell{margin-bottom:.35rem!important;}
 .hm-v9715-date-row{
-  margin:.05rem 0 .35rem 0!important;
+  margin:0 0 .05rem 0!important;
   padding:0!important;
 }
 .hm-v9715-date-label-wrap{
@@ -731,7 +742,7 @@ st.markdown("""
 }
 @media (max-width:768px){
   .hero-shell{margin-bottom:.25rem!important;}
-  .hm-v9715-date-row{margin:.03rem 0 .28rem 0!important;}
+  .hm-v9715-date-row{margin:0 0 .04rem 0!important;}
   .hm-v9715-date-label-wrap{align-items:flex-start;gap:.25rem;min-height:auto;}
 }
 </style>
@@ -1059,6 +1070,33 @@ def validate_meal_time(section_key, section_label, time_value):
 
 
 
+
+
+st.markdown("""
+<style>
+/* v97.16 Food Journal Date to Meal Sections gap correction */
+.hm-v9715-date-row{
+  margin:0 0 .05rem 0!important;
+  padding:0!important;
+}
+.hm-v9715-meal-anchor{
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:0!important;
+}
+.hm-v9715-meal-anchor + div{
+  margin-top:0!important;
+  padding-top:0!important;
+}
+@media (max-width:768px){
+  .hm-v9715-date-row{
+    margin:0 0 .04rem 0!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Fixed Daily Log meal structure.
 st.markdown("<div class='hm-v9715-date-row'>", unsafe_allow_html=True)
@@ -1672,53 +1710,51 @@ st.markdown(
     unsafe_allow_html=True,
 )
 days = get_daily_food_journal_days(user_id)
-if not days:
-    st.markdown("<div class='hm-v9715-recent-filter'><div class='hm-v9715-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+filtered_days = list(days or [])
+
+# v97.16 Functional From / To filter for Recent Saved Days
+st.markdown("<div class='hm-v9715-recent-filter'><div class='hm-v9715-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+available_saved_dates_v97_16 = sorted(
+    [d for d in [parse_date_safe_v97_16(x.get("date")) for x in filtered_days] if d],
+    reverse=True,
+)
+
+if available_saved_dates_v97_16:
     rf1, rf2 = st.columns(2)
     with rf1:
-        st.date_input("From date", value=date.today(), key="v97_15_recent_filter_from_empty")
+        recent_from_v97_16 = st.date_input(
+            "From date",
+            value=min(available_saved_dates_v97_16),
+            key="v97_16_recent_filter_from",
+        )
     with rf2:
-        st.date_input("To date", value=date.today(), key="v97_15_recent_filter_to_empty")
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.info("No food journal days saved yet.")
-else:
-    # v97.15 From / To filter for Recent Saved Days
-    available_saved_dates_v97_15 = sorted(
-        [d for d in [parse_date_safe_v97_15(x.get("date")) for x in days] if d],
-        reverse=True,
-    )
-    st.markdown("<div class='hm-v9715-recent-filter'><div class='hm-v9715-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
-    if available_saved_dates_v97_15:
-        rf1, rf2 = st.columns(2)
-        with rf1:
-            recent_from_v97_15 = st.date_input(
-                "From date",
-                value=min(available_saved_dates_v97_15),
-                key="v97_15_recent_filter_from",
-            )
-        with rf2:
-            recent_to_v97_15 = st.date_input(
-                "To date",
-                value=max(available_saved_dates_v97_15),
-                key="v97_15_recent_filter_to",
-            )
-        days = [
-            x for x in days
-            if parse_date_safe_v97_15(x.get("date")) and recent_from_v97_15 <= parse_date_safe_v97_15(x.get("date")) <= recent_to_v97_15
-        ]
-        if not days:
-            st.caption("No saved days found for the selected date range.")
-    else:
-        rf1, rf2 = st.columns(2)
-        with rf1:
-            st.date_input("From date", value=date.today(), key="v97_15_recent_filter_from_no_parse")
-        with rf2:
-            st.date_input("To date", value=date.today(), key="v97_15_recent_filter_to_no_parse")
-    st.markdown("</div>", unsafe_allow_html=True)
+        recent_to_v97_16 = st.date_input(
+            "To date",
+            value=max(available_saved_dates_v97_16),
+            key="v97_16_recent_filter_to",
+        )
 
+    filtered_days = [
+        x for x in filtered_days
+        if parse_date_safe_v97_16(x.get("date"))
+        and recent_from_v97_16 <= parse_date_safe_v97_16(x.get("date")) <= recent_to_v97_16
+    ]
+else:
+    rf1, rf2 = st.columns(2)
+    with rf1:
+        st.date_input("From date", value=date.today(), key="v97_16_recent_filter_from_empty")
+    with rf2:
+        st.date_input("To date", value=date.today(), key="v97_16_recent_filter_to_empty")
+st.markdown("</div>", unsafe_allow_html=True)
+
+if not days:
+    st.info("No food journal days saved yet.")
+elif not filtered_days:
+    st.caption("No saved days found for the selected date range.")
+else:
     st.markdown("<div class='hm-rsd-mobile-shell'>", unsafe_allow_html=True)
 
-    for day in days:
+    for day in filtered_days:
         day_date = day.get("date", "")
         meal_summary = []
         for _k, meal in (day.get("meals", {}) or {}).items():

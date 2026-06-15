@@ -43,3 +43,10 @@
 - Rebuilt Recent Saved Days filter inside the actual display path.
 - Filter now applies before saved-day rows/cards are rendered.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.16 - Daily Log Meal Gap + Recent Filter Functional Fix
+
+- Reduced gap between Food Journal Date and Meal Sections using targeted spacing overrides.
+- Rebuilt Recent Saved Days filter to create filtered_days and render only filtered_days.
+- From Date / To Date filter now applies before cards are displayed.
+- No changes to meal timing, snacking, other fluids, or save logic.
