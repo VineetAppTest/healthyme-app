@@ -50,3 +50,12 @@
 - Rebuilt Recent Saved Days filter to create filtered_days and render only filtered_days.
 - From Date / To Date filter now applies before cards are displayed.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.17 - Daily Log Structural Stabilization
+
+- Stabilized Daily Log by restoring the v97.8 functional page baseline.
+- Moved all style-only blocks above the Daily Food Journal header.
+- Kept Food Journal Date and Meal Sections in a clean render order.
+- Rebuilt Recent Saved Days into one clean filter-render path.
+- From Date / To Date filter now renders filtered_days only.
+- No changes to meal timing, snacking, other fluids, or save logic.
