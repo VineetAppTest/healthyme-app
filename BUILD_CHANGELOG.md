@@ -159,3 +159,11 @@
 - Updated filter count wording to card-dated rows for UAT visibility.
 - Retained Food Journal Date alignment from v97.32.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.34 - Daily Log Clear Filter Resets Date Inputs
+
+- Clear Filter / Show All now resets the From Date and To Date widget values.
+- Added reset flag and rerun flow to clear Streamlit date_input keyed state.
+- Apply Date Filter reruns after activation when matching code path is present.
+- Retained visible-card-date filter from v97.33 and Food Journal Date alignment from v97.32.
+- No changes to meal timing, snacking, other fluids, or save logic.

@@ -2572,6 +2572,15 @@ with st.container(border=True):
     st.markdown("<div class='hm-v9729-section-title'>Recent Saved Days</div>", unsafe_allow_html=True)
     all_days = get_daily_food_journal_days(user_id) or []
 
+# v97.34 Reset date widgets when Clear Filter / Show All is clicked
+if st.session_state.pop("daily_log_saved_days_filter_reset_v97_34", False):
+    st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
+    st.session_state.pop("daily_log_saved_days_filter_from_v97_23", None)
+    st.session_state.pop("daily_log_saved_days_filter_to_v97_23", None)
+    st.session_state.pop("v97_23_recent_filter_from", None)
+    st.session_state.pop("v97_23_recent_filter_to", None)
+
+
     # v97.33 Button-driven From / To filter for Recent Saved Days using visible card date
     all_parseable_dates_v97_23 = sorted(
         [d for d in [get_saved_day_card_filter_date_v97_33(day) for day in all_days] if d],
@@ -2613,14 +2622,14 @@ with st.container(border=True):
                 st.session_state["daily_log_saved_days_filter_active_v97_23"] = True
                 st.session_state["daily_log_saved_days_filter_from_v97_23"] = selected_from_v97_23
                 st.session_state["daily_log_saved_days_filter_to_v97_23"] = selected_to_v97_23
+                st.rerun()
             else:
                 st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
                 st.warning("From date cannot be after To date. Showing all saved days.")
 
         if clear_filter_v97_23:
-            st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
-            st.session_state.pop("daily_log_saved_days_filter_from_v97_23", None)
-            st.session_state.pop("daily_log_saved_days_filter_to_v97_23", None)
+            st.session_state["daily_log_saved_days_filter_reset_v97_34"] = True
+            st.rerun()
 
     else:
         rf1, rf2 = st.columns(2)
