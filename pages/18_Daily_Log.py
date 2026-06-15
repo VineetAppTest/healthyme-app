@@ -150,9 +150,17 @@ def get_saved_day_filter_date_v97_20(day):
     return None
 
 def get_saved_day_display_date_v97_20(day):
-    """Use the same source as the filter for displayed saved-day date."""
+    """Use the same source as the filter for displayed saved-day date without recursion."""
     parsed = get_saved_day_filter_date_v97_20(day)
-    return str(parsed) if parsed else get_saved_day_display_date_v97_20(day)
+    if parsed:
+        return str(parsed)
+    if isinstance(day, dict):
+        for field in ("_journal_date_key", "date", "log_date", "journal_date", "food_journal_date"):
+            value = day.get(field)
+            if value is not None and str(value).strip():
+                return str(value)
+    return ""
+
 
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()

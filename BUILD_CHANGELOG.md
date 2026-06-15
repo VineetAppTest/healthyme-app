@@ -83,3 +83,10 @@
 - Recent Saved Days filter now prioritizes _journal_date_key before date/log_date/journal_date/food_journal_date.
 - Cards display the same date source used by the filter.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.21 - Daily Log Display Date Recursion Hotfix
+
+- Fixed RecursionError in get_saved_day_display_date_v97_20.
+- Replaced recursive fallback with safe field fallback.
+- Retained v97.20 source-of-truth date filtering.
+- No changes to meal timing, snacking, other fluids, or save logic.
