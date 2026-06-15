@@ -132,3 +132,10 @@
 - Removed Recent Saved Days explanatory note from render path.
 - Promoted Filter Recent Saved Days to subsection title without duplicate text.
 - Retained button-driven filter, Fluid Timing label, meal timing, snacking, other fluids save logic, and food journal save logic.
+
+## v97.30 - Daily Log Food Journal Date Alignment
+
+- Aligned Food Journal Date label/help stack vertically with the date picker.
+- Matched label-stack and date-input row heights.
+- Adjusted date row column ratio for better horizontal balance.
+- No changes to section structure, button-driven filter, meal timing, snacking, other fluids, or save logic.

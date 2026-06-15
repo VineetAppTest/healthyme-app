@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_29_DailyLog_Native_Bordered_Sections",
-  "version": "v97.29",
-  "updated_on": "2026-06-15T18:44:06.216652+00:00",
+  "build_name": "HealthyMe_v97_30_DailyLog_FoodJournalDate_Alignment",
+  "version": "v97.30",
+  "updated_on": "2026-06-15T18:57:35.100527+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,12 +17,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Rolled Daily Log visual structure back to clean v97.25 base and rebuilt sections using native Streamlit bordered containers.",
-    "Created four true section blocks: Food Journal Date, Meal Sections, Full Day Details, Recent Saved Days.",
-    "Kept Meal Sections and active meal entry within one continuous bordered block.",
-    "Removed Recent Saved Days explanatory note from render path.",
-    "Promoted Filter Recent Saved Days to subsection title without duplicate text.",
-    "Retained button-driven filter, Fluid Timing label, meal timing, snacking, other fluids save logic, and food journal save logic."
+    "Aligned Food Journal Date label/help stack vertically with the date picker.",
+    "Matched label-stack and date-input row heights.",
+    "Adjusted date row column ratio for better horizontal balance.",
+    "No changes to section structure, button-driven filter, meal timing, snacking, other fluids, or save logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -319,6 +317,6 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v97_25_DailyLog_DateRow_VerticalAlignment.zip",
+  "base_build": "HealthyMe_v97_29_DailyLog_Native_Bordered_Sections.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip"
 }
