@@ -1433,133 +1433,48 @@ div[data-testid="stDateInput"] input{
 
 st.markdown("""
 <style>
-/* v97.27 visible section separation and Daily Log header alignment */
-.hm-v9727-section-separator{
-  height:1px;
-  background:#E4D5BB;
-  margin:1.05rem 0 .72rem 0;
-}
-.hm-v9727-section-header{
+/* v97.29 native bordered Daily Log sections */
+.hm-v9729-section-title{
   color:#064E3B;
-  font-size:1.08rem;
+  font-size:1.10rem;
   line-height:1.08;
   font-weight:950;
   margin:0 0 .18rem 0!important;
   padding:0!important;
 }
-.hm-v9727-section-note{
+.hm-v9729-section-note{
   color:#64748B;
   font-size:.82rem;
-  line-height:1.14;
+  line-height:1.15;
   font-weight:700;
-  margin:0 0 .42rem 0!important;
+  margin:0 0 .44rem 0!important;
   padding:0!important;
 }
-.hm-v9727-subsection-header{
+.hm-v9729-subsection-title{
   color:#064E3B;
   font-size:.98rem;
   line-height:1.08;
   font-weight:925;
-  margin:.1rem 0 .34rem 0!important;
+  margin:.22rem 0 .34rem 0!important;
   padding:0!important;
 }
-.hm-v9727-date-left{
-  min-height:2.55rem!important;
+.hm-v9729-date-stack{
+  min-height:2.45rem!important;
   display:flex!important;
   flex-direction:column!important;
   justify-content:center!important;
   align-items:flex-start!important;
   gap:.08rem!important;
 }
-.hm-v9727-date-input div[data-testid="stDateInput"] input{
-  height:2.55rem!important;
-  min-height:2.55rem!important;
-}
-.hm-v9718-filter-title{display:none!important;}
-.hm-v9718-filter{
-  border:1px solid #E7D8BE!important;
-  background:#FFFDF8!important;
-  border-radius:14px!important;
-  padding:.70rem .78rem .28rem .78rem!important;
-  margin:.28rem 0 .60rem 0!important;
-}
-.hm-rsd-mobile-card{
-  border-top:1px solid #E4D5BB!important;
-  padding-top:.82rem!important;
-  margin-top:.70rem!important;
-}
-@media (max-width:768px){
-  .hm-v9727-section-separator{margin:.82rem 0 .56rem 0;}
-  .hm-v9727-date-left{min-height:auto!important;justify-content:flex-start!important;}
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v97.28 strong visible section cards */
-.hm-v9728-section-open{
-  border:1px solid #DCC89A;
-  border-bottom:0;
-  background:#FFFDF8;
-  border-radius:16px 16px 0 0;
-  padding:.72rem .86rem .48rem .86rem;
-  margin:1.05rem 0 0 0;
-  box-shadow:0 6px 18px rgba(15,23,42,.025);
-}
-.hm-v9728-section-body-open{
-  border-left:1px solid #DCC89A;
-  border-right:1px solid #DCC89A;
-  background:#FFFDF8;
-  padding:.10rem .86rem .18rem .86rem;
-}
-.hm-v9728-section-close{
-  height:.78rem;
-  border:1px solid #DCC89A;
-  border-top:0;
-  background:#FFFDF8;
-  border-radius:0 0 16px 16px;
-  margin:0 0 1.05rem 0;
-  box-shadow:0 6px 18px rgba(15,23,42,.025);
-}
-.hm-v9728-section-title{
-  color:#064E3B;
-  font-size:1.10rem;
-  line-height:1.08;
-  font-weight:950;
+.hm-v9729-date-stack .hm-v9729-section-title,
+.hm-v9729-date-stack .hm-v9729-section-note{
   margin:0!important;
-  padding:0!important;
 }
-.hm-v9728-section-note{
-  color:#64748B;
-  font-size:.82rem;
-  line-height:1.15;
-  font-weight:700;
-  margin:.16rem 0 0 0!important;
-  padding:0!important;
-}
-.hm-v9728-subsection-title{
-  color:#064E3B;
-  font-size:.98rem;
-  line-height:1.08;
-  font-weight:925;
-  margin:.20rem 0 .35rem 0!important;
-  padding:0!important;
-}
-.hm-v9728-date-left{
-  min-height:2.45rem!important;
-  display:flex!important;
-  flex-direction:column!important;
-  justify-content:center!important;
-  align-items:flex-start!important;
-}
-.hm-v9728-date-input div[data-testid="stDateInput"] input{
+.hm-v9729-date-input div[data-testid="stDateInput"] input{
   height:2.45rem!important;
   min-height:2.45rem!important;
 }
-.hm-v9718-filter-title,
-.hm-table-note{
+.hm-v9718-filter-title{
   display:none!important;
 }
 .hm-v9718-filter{
@@ -1575,18 +1490,9 @@ st.markdown("""
   margin-top:.70rem!important;
 }
 @media (max-width:768px){
-  .hm-v9728-section-open{
-    margin:.82rem 0 0 0;
-    padding:.64rem .68rem .42rem .68rem;
-  }
-  .hm-v9728-section-body-open{
-    padding:.08rem .68rem .16rem .68rem;
-  }
-  .hm-v9728-section-close{
-    margin:0 0 .82rem 0;
-  }
-  .hm-v9728-date-left{
+  .hm-v9729-date-stack{
     min-height:auto!important;
+    justify-content:flex-start!important;
   }
 }
 </style>
@@ -1916,17 +1822,14 @@ def validate_meal_time(section_key, section_label, time_value):
 
 
 # Fixed Daily Log meal structure.
-st.markdown("<div class='hm-v9728-section-open'><div class='hm-v9728-section-title'>Food Journal Date</div></div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v9728-section-body-open'>", unsafe_allow_html=True)
-
-date_label_col, date_picker_col = st.columns([1.15, 1.55], gap="small")
-with date_label_col:
-    st.markdown("<div class='hm-v9728-date-left'><div class='hm-v9728-section-title'>Food Journal Date</div><div class='hm-v9728-section-note'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
-with date_picker_col:
-    st.markdown("<div class='hm-v9728-date-input'>", unsafe_allow_html=True)
-    log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
-    st.markdown("</div>", unsafe_allow_html=True)
-st.markdown("</div><div class='hm-v9728-section-close'></div>", unsafe_allow_html=True)
+with st.container(border=True):
+    date_label_col, date_picker_col = st.columns([1.15, 1.55], gap="small")
+    with date_label_col:
+        st.markdown("<div class='hm-v9729-date-stack'><div class='hm-v9729-section-title'>Food Journal Date</div><div class='hm-v9729-section-note'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
+    with date_picker_col:
+        st.markdown("<div class='hm-v9729-date-input'>", unsafe_allow_html=True)
+        log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
@@ -1974,694 +1877,686 @@ if "active_daily_meal_section" not in st.session_state or st.session_state["acti
     st.session_state["active_daily_meal_section"] = meal_sections[0][0]
 
 
-card_start()
-st.markdown("<div class='hm-v9728-section-open'><div class='hm-v9728-section-title'>Meal Sections</div><div class='hm-v9728-section-note'>Tap a meal to open it. Save the current meal before moving to another section.</div></div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v9728-section-body-open'>", unsafe_allow_html=True)
+with st.container(border=True):
+    st.markdown("<div class='hm-v9729-section-title'>Meal Sections</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v9729-section-note'>Tap a meal to open it. Save the current meal before moving to another section.</div>", unsafe_allow_html=True)
 
-active_key = st.session_state["active_daily_meal_section"]
-active_label = next((label for key, label in meal_sections if key == active_key), meal_sections[0][1])
+    active_key = st.session_state["active_daily_meal_section"]
+    active_label = next((label for key, label in meal_sections if key == active_key), meal_sections[0][1])
 
-# v88 balanced meal selector:
-# Row 1: Breakfast / Lunch / Evening Snacks
-# Row 2: Dinner / Bedtime
-# Row 3: +Snacking action
-# Row 4+: Snacking 1..n
-def render_meal_section_button(key, label):
-    saved = meal_has_data(existing_meals.get(key, {}))
-    short_label = f"{'● ' if key == active_key else ''}{label}{' ✓' if saved else ''}"
-    if st.button(short_label, key=f"section_btn_{key}", use_container_width=True):
-        if key != active_key and is_dirty(existing_meals, active_key, active_label):
-            st.warning(f"Please save the section ({active_label}) before moving to next section.")
-        else:
-            st.session_state["active_daily_meal_section"] = key
+    # v88 balanced meal selector:
+    # Row 1: Breakfast / Lunch / Evening Snacks
+    # Row 2: Dinner / Bedtime
+    # Row 3: +Snacking action
+    # Row 4+: Snacking 1..n
+    def render_meal_section_button(key, label):
+        saved = meal_has_data(existing_meals.get(key, {}))
+        short_label = f"{'● ' if key == active_key else ''}{label}{' ✓' if saved else ''}"
+        if st.button(short_label, key=f"section_btn_{key}", use_container_width=True):
+            if key != active_key and is_dirty(existing_meals, active_key, active_label):
+                st.warning(f"Please save the section ({active_label}) before moving to next section.")
+            else:
+                st.session_state["active_daily_meal_section"] = key
+                st.rerun()
+
+    row1 = [("breakfast", "Breakfast"), ("lunch", "Lunch"), ("evening_snacks", "Evening Snacks")]
+    row1_cols = st.columns(3)
+    for col, (key, label) in zip(row1_cols, row1):
+        with col:
+            render_meal_section_button(key, label)
+
+    row2 = [("dinner", "Dinner"), ("bedtime", "Bedtime")]
+    row2_cols = st.columns(3)
+    for col, item in zip(row2_cols[:2], row2):
+        with col:
+            render_meal_section_button(item[0], item[1])
+    with row2_cols[2]:
+        st.markdown("<div class='hm-v88-balanced-empty'></div>", unsafe_allow_html=True)
+
+    add_cols = st.columns([1.15, 1.85])
+    with add_cols[0]:
+        if st.button("+ Snacking", use_container_width=True, help="Add another snacking time outside the standard meal windows."):
+            st.session_state["daily_log_snacking_count"] = st.session_state.get("daily_log_snacking_count", 0) + 1
+            st.session_state["active_daily_meal_section"] = f"snacking_{st.session_state['daily_log_snacking_count']}"
             st.rerun()
+    with add_cols[1]:
+        st.markdown("<div class='hm-snack-helper hm-snack-helper-tight'>Snacking is for entries outside standard meal windows.</div>", unsafe_allow_html=True)
 
-row1 = [("breakfast", "Breakfast"), ("lunch", "Lunch"), ("evening_snacks", "Evening Snacks")]
-row1_cols = st.columns(3)
-for col, (key, label) in zip(row1_cols, row1):
-    with col:
-        render_meal_section_button(key, label)
+    snacking_sections = [(key, label) for key, label in meal_sections if key.startswith("snacking_")]
+    if snacking_sections:
+        for start in range(0, len(snacking_sections), 3):
+            snack_cols = st.columns(3)
+            for col, item in zip(snack_cols, snacking_sections[start:start + 3]):
+                with col:
+                    render_meal_section_button(item[0], item[1])
 
-row2 = [("dinner", "Dinner"), ("bedtime", "Bedtime")]
-row2_cols = st.columns(3)
-for col, item in zip(row2_cols[:2], row2):
-    with col:
-        render_meal_section_button(item[0], item[1])
-with row2_cols[2]:
-    st.markdown("<div class='hm-v88-balanced-empty'></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='hm-v9729-subsection-title'>{active_label}</div>", unsafe_allow_html=True)
+    prior = existing_meals.get(active_key, {}) if existing_meals else {}
 
-add_cols = st.columns([1.15, 1.85])
-with add_cols[0]:
-    if st.button("+ Snacking", use_container_width=True, help="Add another snacking time outside the standard meal windows."):
-        st.session_state["daily_log_snacking_count"] = st.session_state.get("daily_log_snacking_count", 0) + 1
-        st.session_state["active_daily_meal_section"] = f"snacking_{st.session_state['daily_log_snacking_count']}"
-        st.rerun()
-with add_cols[1]:
-    st.markdown("<div class='hm-snack-helper hm-snack-helper-tight'>Snacking is for entries outside standard meal windows.</div>", unsafe_allow_html=True)
-
-snacking_sections = [(key, label) for key, label in meal_sections if key.startswith("snacking_")]
-if snacking_sections:
-    for start in range(0, len(snacking_sections), 3):
-        snack_cols = st.columns(3)
-        for col, item in zip(snack_cols, snacking_sections[start:start + 3]):
-            with col:
-                render_meal_section_button(item[0], item[1])
-
-st.markdown(f"<div class='hm-meal-title'>{active_label}</div>", unsafe_allow_html=True)
-prior = existing_meals.get(active_key, {}) if existing_meals else {}
-
-time_guidance = meal_time_guidance(active_key, active_label)
-pre_h, pre_m, pre_p = split_12h_time_parts(prior.get("time", ""))
-st.session_state.setdefault(f"{active_key}_time_h", pre_h)
-st.session_state.setdefault(f"{active_key}_time_m", pre_m)
-st.session_state.setdefault(f"{active_key}_time_p", pre_p)
-st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
-meal_hour_options, meal_ampm_options = meal_time_selector_options_v97_2(active_key)
-if is_mobile_mode_v90a:
-    # v92.2: Custom component removed because it fails to load on Streamlit Cloud.
-    # Use safe Streamlit-native 3-cell timing controls while keeping validation active.
-    th, tm, tp = st.columns([1, 1, 1])
-    with th:
-        hour_options = meal_hour_options
-        current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
-        if current_h not in hour_options:
-            st.session_state[f"{active_key}_time_h"] = "HH"
-            current_h = "HH"
-        st.selectbox(
-            "HH",
-            hour_options,
-            index=hour_options.index(current_h) if current_h in hour_options else 0,
-            key=f"{active_key}_time_h",
-            label_visibility="collapsed",
-        )
-    with tm:
-        minute_options = ["MM"] + [f"{i:02d}" for i in range(0, 60)]
-        current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
-        st.selectbox(
-            "MM",
-            minute_options,
-            index=minute_options.index(current_m) if current_m in minute_options else 0,
-            key=f"{active_key}_time_m",
-            label_visibility="collapsed",
-        )
-    with tp:
-        ampm_options = meal_ampm_options
-        current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
-        if current_p not in ampm_options:
-            st.session_state[f"{active_key}_time_p"] = "AM/PM"
-            current_p = "AM/PM"
-        st.selectbox(
-            "AM/PM",
-            ampm_options,
-            index=ampm_options.index(current_p) if current_p in ampm_options else 0,
-            key=f"{active_key}_time_p",
-            label_visibility="collapsed",
-        )
-else:
-    th, tm, tp = st.columns([1, 1, 1])
-    with th:
-        hour_options = meal_hour_options
-        current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
-        if current_h not in hour_options:
-            st.session_state[f"{active_key}_time_h"] = "HH"
-            current_h = "HH"
-        st.selectbox(
-            "HH",
-            hour_options,
-            index=hour_options.index(current_h) if current_h in hour_options else 0,
-            key=f"{active_key}_time_h",
-            label_visibility="collapsed",
-        )
-    with tm:
-        minute_options = ["MM"] + [f"{i:02d}" for i in range(0, 60)]
-        current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
-        st.selectbox(
-            "MM",
-            minute_options,
-            index=minute_options.index(current_m) if current_m in minute_options else 0,
-            key=f"{active_key}_time_m",
-            label_visibility="collapsed",
-        )
-    with tp:
-        ampm_options = meal_ampm_options
-        current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
-        if current_p not in ampm_options:
-            st.session_state[f"{active_key}_time_p"] = "AM/PM"
-            current_p = "AM/PM"
-        st.selectbox(
-            "AM/PM",
-            ampm_options,
-            index=ampm_options.index(current_p) if current_p in ampm_options else 0,
-            key=f"{active_key}_time_p",
-            label_visibility="collapsed",
-        )
-st.markdown(f"<div class='hm-full-day-helper'>{time_guidance}</div>", unsafe_allow_html=True)
-
-selected_meal_time_for_validation = f"{st.session_state.get(f'{active_key}_time_h', 'HH')}:{st.session_state.get(f'{active_key}_time_m', 'MM')} {st.session_state.get(f'{active_key}_time_p', 'AM/PM')}"
-if selected_meal_time_for_validation and "HH" not in selected_meal_time_for_validation and "MM" not in selected_meal_time_for_validation and "AM/PM" not in selected_meal_time_for_validation:
-    if not validate_meal_time_window(active_key, selected_meal_time_for_validation):
-        st.warning(f"{active_label} timing is outside the allowed window. {time_guidance}")
-
-
-food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=78)
-
-c3, c4 = st.columns([1, 1])
-with c3:
-    portion = st.text_input("Portion Size", value=prior.get("portion_size", ""), key=f"{active_key}_portion", placeholder="Example: 1 bowl / 2 rotis / 250 ml")
-with c4:
-    mood = st.text_input("Mood / Energy", value=prior.get("mood_energy", ""), key=f"{active_key}_mood", placeholder="Example: fresh / heavy / energetic")
-
-active_payload = current_widget_payload(active_key, active_label)
-meal_dirty = is_dirty(existing_meals, active_key, active_label)
-meal_time_valid, meal_time_error = validate_meal_time(active_key, active_label, active_payload.get("time", ""))
-if active_payload.get("time") and not meal_time_valid:
-    st.error(meal_time_error)
-
-if st.button(f"Save {active_label}", use_container_width=True):
-    if not meal_time_valid:
-        st.error(meal_time_error)
-    else:
-        save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
-        set_system_message(f"{active_label} saved for {log_date}.", "success")
-        st.rerun()
-if meal_dirty:
-    st.warning(f"Unsaved changes in {active_label}.")
-elif meal_has_data(prior):
-    st.success(f"{active_label} saved.")
-else:
-    st.caption("No saved entry yet.")
-card_end()
-
-card_start()
-st.markdown("</div><div class='hm-v9728-section-close'></div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v9728-section-open'><div class='hm-v9728-section-title'>Full Day Details</div></div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v9728-section-body-open'>", unsafe_allow_html=True)
-
-top_left, top_right = st.columns(2)
-with top_left:
-    water_options = ["Select"] + [
-        "0 Litres",
-        "0.5 Litres",
-        "1 Litre",
-        "1.5 Litres",
-        "2 Litres",
-        "2.5 Litres",
-        "3 Litres",
-        "3.5 Litres",
-        "4 Litres",
-        "4.5 Litres",
-        "5 Litres",
-        "5.5 Litres",
-        "6 Litres",
-        "6.5 Litres",
-        "7 Litres",
-        "7.5 Litres",
-        "8 Litres",
-        "8.5 Litres",
-        "9 Litres",
-        "9.5 Litres",
-        "10 Litres",
-    ]
-    existing_water = existing.get("water_litres", "Select") or "Select"
+    time_guidance = meal_time_guidance(active_key, active_label)
+    pre_h, pre_m, pre_p = split_12h_time_parts(prior.get("time", ""))
+    st.session_state.setdefault(f"{active_key}_time_h", pre_h)
+    st.session_state.setdefault(f"{active_key}_time_m", pre_m)
+    st.session_state.setdefault(f"{active_key}_time_p", pre_p)
+    st.markdown("<div class='hm-compact-section-note'>Meal Timing</div>", unsafe_allow_html=True)
+    meal_hour_options, meal_ampm_options = meal_time_selector_options_v97_2(active_key)
     if is_mobile_mode_v90a:
-        water_value_map = {
-            "Select": 0,
-            "0 Litres": 0,
-            "0.5 Litres": 0.5,
-            "1 Litre": 1,
-            "1.5 Litres": 1.5,
-            "2 Litres": 2,
-            "2.5 Litres": 2.5,
-            "3 Litres": 3,
-            "3.5 Litres": 3.5,
-            "4 Litres": 4,
-            "4.5 Litres": 4.5,
-            "5 Litres": 5,
-            "5.5 Litres": 5.5,
-            "6 Litres": 6,
-            "6.5 Litres": 6.5,
-            "7 Litres": 7,
-            "7.5 Litres": 7.5,
-            "8 Litres": 8,
-            "8.5 Litres": 8.5,
-            "9 Litres": 9,
-            "9.5 Litres": 9.5,
-            "10 Litres": 10,
-        }
-        starting_water_value = water_value_map.get(existing_water, 0)
-        selected_water_value = render_v91_stepper(
-            "Water intake for the full day",
-            starting_water_value,
-            "v91_mobile_water_litres",
-            0,
-            10,
-            0.5,
-            " L",
-            as_int=False,
-        )
-        water_litres = water_stepper_to_litres(selected_water_value)
-    else:
-        water_litres = st.selectbox(
-            "Water intake for the full day",
-            water_options,
-            index=water_options.index(existing_water) if existing_water in water_options else 0,
-        )
-with top_right:
-    existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
-    default_other_count = min(max(len(existing_other_fluids), 0), 5)
-    other_count_options = [0, 1, 2, 3, 4, 5]
-    other_fluid_count_key = f"other_fluid_count_{log_date}"
-    if other_fluid_count_key not in st.session_state:
-        st.session_state[other_fluid_count_key] = default_other_count
-    st.selectbox(
-        "Other Fluids consumed outside standard meal window",
-        other_count_options,
-        index=other_count_options.index(st.session_state.get(other_fluid_count_key, default_other_count)) if st.session_state.get(other_fluid_count_key, default_other_count) in other_count_options else 0,
-        key=other_fluid_count_key,
-    )
-    other_fluid_count = int(st.session_state.get(other_fluid_count_key, 0) or 0)
-
-
-
-st.markdown("""
-<style>
-/* v97.7 Other Fluids no-border compact width fix */
-.hm-v977-fluid-entry{
-  padding:.48rem 0 .58rem 0;
-  margin:.18rem 0 .42rem 0;
-}
-.hm-v977-fluid-title{
-  color:#064E3B;
-  font-weight:950;
-  font-size:.98rem;
-  margin:.22rem 0 .48rem 0;
-}
-.hm-v977-field-label{
-  color:#334155;
-  font-size:.82rem;
-  font-weight:780;
-  line-height:1.05;
-  margin:0 0 .28rem 0;
-}
-.hm-v977-row2{
-  margin-top:.34rem;
-}
-.hm-v977-fluid-entry div[data-testid="stSelectbox"],
-.hm-v977-fluid-entry div[data-testid="stTextInput"]{
-  margin-bottom:0!important;
-}
-.hm-v977-fluid-entry div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  border-radius:12px!important;
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
-}
-.hm-v977-fluid-entry div[data-testid="stTextInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-}
-@media (max-width:768px){
-  .hm-v977-fluid-entry{
-    padding:.36rem 0 .46rem 0!important;
-  }
-  .hm-v977-fluid-entry div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-  .hm-v977-fluid-entry div[data-testid="stTextInput"] input{
-    min-height:2.18rem!important;
-    height:2.18rem!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
-# v97: Other Fluids outside standard meal windows
-other_fluids = []
-fluid_type_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
-
-for i in range(other_fluid_count):
-    prior_fluid = existing_other_fluids[i] if i < len(existing_other_fluids) else {}
-    pre_h, pre_m, pre_p = split_12h_time_parts(prior_fluid.get("time", ""))
-    st.session_state.setdefault(f"other_fluid_h_{log_date}_{i}", pre_h)
-    st.session_state.setdefault(f"other_fluid_m_{log_date}_{i}", pre_m)
-    st.session_state.setdefault(f"other_fluid_p_{log_date}_{i}", pre_p)
-
-    st.markdown("<div class='hm-v977-fluid-entry'>", unsafe_allow_html=True)
-    st.markdown(f"<div class='hm-v977-fluid-title'>Other Fluid {i+1}</div>", unsafe_allow_html=True)
-
-    # Row 1: Fluid type reduced materially; Fluid Timing remains beside it.
-    fluid_type_col, timing_col, empty_col = st.columns([0.72, 1.62, 0.50], gap="medium")
-
-    with fluid_type_col:
-        st.markdown("<div class='hm-v977-field-label'>Fluid type</div>", unsafe_allow_html=True)
-        existing_type = prior_fluid.get("type", "Select") or "Select"
-        fluid_type = st.selectbox(
-            "Fluid type",
-            fluid_type_options,
-            index=fluid_type_options.index(existing_type) if existing_type in fluid_type_options else 0,
-            key=f"other_fluid_type_{log_date}_{i}",
-            label_visibility="collapsed",
-        )
-
-    with timing_col:
-        st.markdown("<div class='hm-v977-field-label'>Fluid Timing</div>", unsafe_allow_html=True)
-        h_col, m_col, p_col = st.columns([0.55, 0.55, 0.90], gap="small")
-        with h_col:
-            hour_options = ["HH"] + [f"{n:02d}" for n in range(1, 13)]
-            current_h = st.session_state.get(f"other_fluid_h_{log_date}_{i}", pre_h)
+        # v92.2: Custom component removed because it fails to load on Streamlit Cloud.
+        # Use safe Streamlit-native 3-cell timing controls while keeping validation active.
+        th, tm, tp = st.columns([1, 1, 1])
+        with th:
+            hour_options = meal_hour_options
+            current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
+            if current_h not in hour_options:
+                st.session_state[f"{active_key}_time_h"] = "HH"
+                current_h = "HH"
             st.selectbox(
                 "HH",
                 hour_options,
                 index=hour_options.index(current_h) if current_h in hour_options else 0,
-                key=f"other_fluid_h_{log_date}_{i}",
+                key=f"{active_key}_time_h",
                 label_visibility="collapsed",
             )
-        with m_col:
-            minute_options = ["MM"] + [f"{n:02d}" for n in range(0, 60)]
-            current_m = st.session_state.get(f"other_fluid_m_{log_date}_{i}", pre_m)
+        with tm:
+            minute_options = ["MM"] + [f"{i:02d}" for i in range(0, 60)]
+            current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
             st.selectbox(
                 "MM",
                 minute_options,
                 index=minute_options.index(current_m) if current_m in minute_options else 0,
-                key=f"other_fluid_m_{log_date}_{i}",
+                key=f"{active_key}_time_m",
                 label_visibility="collapsed",
             )
-        with p_col:
-            ampm_options = ["AM/PM", "AM", "PM"]
-            current_p = st.session_state.get(f"other_fluid_p_{log_date}_{i}", pre_p)
+        with tp:
+            ampm_options = meal_ampm_options
+            current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
+            if current_p not in ampm_options:
+                st.session_state[f"{active_key}_time_p"] = "AM/PM"
+                current_p = "AM/PM"
             st.selectbox(
                 "AM/PM",
                 ampm_options,
                 index=ampm_options.index(current_p) if current_p in ampm_options else 0,
-                key=f"other_fluid_p_{log_date}_{i}",
+                key=f"{active_key}_time_p",
+                label_visibility="collapsed",
+            )
+    else:
+        th, tm, tp = st.columns([1, 1, 1])
+        with th:
+            hour_options = meal_hour_options
+            current_h = st.session_state.get(f"{active_key}_time_h", pre_h)
+            if current_h not in hour_options:
+                st.session_state[f"{active_key}_time_h"] = "HH"
+                current_h = "HH"
+            st.selectbox(
+                "HH",
+                hour_options,
+                index=hour_options.index(current_h) if current_h in hour_options else 0,
+                key=f"{active_key}_time_h",
+                label_visibility="collapsed",
+            )
+        with tm:
+            minute_options = ["MM"] + [f"{i:02d}" for i in range(0, 60)]
+            current_m = st.session_state.get(f"{active_key}_time_m", pre_m)
+            st.selectbox(
+                "MM",
+                minute_options,
+                index=minute_options.index(current_m) if current_m in minute_options else 0,
+                key=f"{active_key}_time_m",
+                label_visibility="collapsed",
+            )
+        with tp:
+            ampm_options = meal_ampm_options
+            current_p = st.session_state.get(f"{active_key}_time_p", pre_p)
+            if current_p not in ampm_options:
+                st.session_state[f"{active_key}_time_p"] = "AM/PM"
+                current_p = "AM/PM"
+            st.selectbox(
+                "AM/PM",
+                ampm_options,
+                index=ampm_options.index(current_p) if current_p in ampm_options else 0,
+                key=f"{active_key}_time_p",
+                label_visibility="collapsed",
+            )
+    st.markdown(f"<div class='hm-full-day-helper'>{time_guidance}</div>", unsafe_allow_html=True)
+
+    selected_meal_time_for_validation = f"{st.session_state.get(f'{active_key}_time_h', 'HH')}:{st.session_state.get(f'{active_key}_time_m', 'MM')} {st.session_state.get(f'{active_key}_time_p', 'AM/PM')}"
+    if selected_meal_time_for_validation and "HH" not in selected_meal_time_for_validation and "MM" not in selected_meal_time_for_validation and "AM/PM" not in selected_meal_time_for_validation:
+        if not validate_meal_time_window(active_key, selected_meal_time_for_validation):
+            st.warning(f"{active_label} timing is outside the allowed window. {time_guidance}")
+
+
+    food = st.text_area("Food", value=prior.get("food", ""), key=f"{active_key}_food", placeholder=f"What did you have for {active_label.lower()}?", height=78)
+
+    c3, c4 = st.columns([1, 1])
+    with c3:
+        portion = st.text_input("Portion Size", value=prior.get("portion_size", ""), key=f"{active_key}_portion", placeholder="Example: 1 bowl / 2 rotis / 250 ml")
+    with c4:
+        mood = st.text_input("Mood / Energy", value=prior.get("mood_energy", ""), key=f"{active_key}_mood", placeholder="Example: fresh / heavy / energetic")
+
+    active_payload = current_widget_payload(active_key, active_label)
+    meal_dirty = is_dirty(existing_meals, active_key, active_label)
+    meal_time_valid, meal_time_error = validate_meal_time(active_key, active_label, active_payload.get("time", ""))
+    if active_payload.get("time") and not meal_time_valid:
+        st.error(meal_time_error)
+
+    if st.button(f"Save {active_label}", use_container_width=True):
+        if not meal_time_valid:
+            st.error(meal_time_error)
+        else:
+            save_daily_food_journal_meal(user_id, str(log_date), active_key, active_payload)
+            set_system_message(f"{active_label} saved for {log_date}.", "success")
+            st.rerun()
+    if meal_dirty:
+        st.warning(f"Unsaved changes in {active_label}.")
+    elif meal_has_data(prior):
+        st.success(f"{active_label} saved.")
+    else:
+        st.caption("No saved entry yet.")
+
+
+with st.container(border=True):
+    st.markdown("<div class='hm-v9729-section-title'>Full Day Details</div>", unsafe_allow_html=True)
+    top_left, top_right = st.columns(2)
+    with top_left:
+        water_options = ["Select"] + [
+            "0 Litres",
+            "0.5 Litres",
+            "1 Litre",
+            "1.5 Litres",
+            "2 Litres",
+            "2.5 Litres",
+            "3 Litres",
+            "3.5 Litres",
+            "4 Litres",
+            "4.5 Litres",
+            "5 Litres",
+            "5.5 Litres",
+            "6 Litres",
+            "6.5 Litres",
+            "7 Litres",
+            "7.5 Litres",
+            "8 Litres",
+            "8.5 Litres",
+            "9 Litres",
+            "9.5 Litres",
+            "10 Litres",
+        ]
+        existing_water = existing.get("water_litres", "Select") or "Select"
+        if is_mobile_mode_v90a:
+            water_value_map = {
+                "Select": 0,
+                "0 Litres": 0,
+                "0.5 Litres": 0.5,
+                "1 Litre": 1,
+                "1.5 Litres": 1.5,
+                "2 Litres": 2,
+                "2.5 Litres": 2.5,
+                "3 Litres": 3,
+                "3.5 Litres": 3.5,
+                "4 Litres": 4,
+                "4.5 Litres": 4.5,
+                "5 Litres": 5,
+                "5.5 Litres": 5.5,
+                "6 Litres": 6,
+                "6.5 Litres": 6.5,
+                "7 Litres": 7,
+                "7.5 Litres": 7.5,
+                "8 Litres": 8,
+                "8.5 Litres": 8.5,
+                "9 Litres": 9,
+                "9.5 Litres": 9.5,
+                "10 Litres": 10,
+            }
+            starting_water_value = water_value_map.get(existing_water, 0)
+            selected_water_value = render_v91_stepper(
+                "Water intake for the full day",
+                starting_water_value,
+                "v91_mobile_water_litres",
+                0,
+                10,
+                0.5,
+                " L",
+                as_int=False,
+            )
+            water_litres = water_stepper_to_litres(selected_water_value)
+        else:
+            water_litres = st.selectbox(
+                "Water intake for the full day",
+                water_options,
+                index=water_options.index(existing_water) if existing_water in water_options else 0,
+            )
+    with top_right:
+        existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
+        default_other_count = min(max(len(existing_other_fluids), 0), 5)
+        other_count_options = [0, 1, 2, 3, 4, 5]
+        other_fluid_count_key = f"other_fluid_count_{log_date}"
+        if other_fluid_count_key not in st.session_state:
+            st.session_state[other_fluid_count_key] = default_other_count
+        st.selectbox(
+            "Other Fluids consumed outside standard meal window",
+            other_count_options,
+            index=other_count_options.index(st.session_state.get(other_fluid_count_key, default_other_count)) if st.session_state.get(other_fluid_count_key, default_other_count) in other_count_options else 0,
+            key=other_fluid_count_key,
+        )
+        other_fluid_count = int(st.session_state.get(other_fluid_count_key, 0) or 0)
+
+
+
+    st.markdown("""
+    <style>
+    /* v97.7 Other Fluids no-border compact width fix */
+    .hm-v977-fluid-entry{
+      padding:.48rem 0 .58rem 0;
+      margin:.18rem 0 .42rem 0;
+    }
+    .hm-v977-fluid-title{
+      color:#064E3B;
+      font-weight:950;
+      font-size:.98rem;
+      margin:.22rem 0 .48rem 0;
+    }
+    .hm-v977-field-label{
+      color:#334155;
+      font-size:.82rem;
+      font-weight:780;
+      line-height:1.05;
+      margin:0 0 .28rem 0;
+    }
+    .hm-v977-row2{
+      margin-top:.34rem;
+    }
+    .hm-v977-fluid-entry div[data-testid="stSelectbox"],
+    .hm-v977-fluid-entry div[data-testid="stTextInput"]{
+      margin-bottom:0!important;
+    }
+    .hm-v977-fluid-entry div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
+      background:#FFFDF8!important;
+      border:1.15px solid #DCC690!important;
+      border-radius:12px!important;
+      min-height:2.28rem!important;
+      height:2.28rem!important;
+      box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
+    }
+    .hm-v977-fluid-entry div[data-testid="stTextInput"] input{
+      min-height:2.28rem!important;
+      height:2.28rem!important;
+      border-radius:12px!important;
+    }
+    @media (max-width:768px){
+      .hm-v977-fluid-entry{
+        padding:.36rem 0 .46rem 0!important;
+      }
+      .hm-v977-fluid-entry div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+      .hm-v977-fluid-entry div[data-testid="stTextInput"] input{
+        min-height:2.18rem!important;
+        height:2.18rem!important;
+      }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # v97: Other Fluids outside standard meal windows
+    other_fluids = []
+    fluid_type_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
+
+    for i in range(other_fluid_count):
+        prior_fluid = existing_other_fluids[i] if i < len(existing_other_fluids) else {}
+        pre_h, pre_m, pre_p = split_12h_time_parts(prior_fluid.get("time", ""))
+        st.session_state.setdefault(f"other_fluid_h_{log_date}_{i}", pre_h)
+        st.session_state.setdefault(f"other_fluid_m_{log_date}_{i}", pre_m)
+        st.session_state.setdefault(f"other_fluid_p_{log_date}_{i}", pre_p)
+
+        st.markdown("<div class='hm-v977-fluid-entry'>", unsafe_allow_html=True)
+        st.markdown(f"<div class='hm-v977-fluid-title'>Other Fluid {i+1}</div>", unsafe_allow_html=True)
+
+        # Row 1: Fluid type reduced materially; Fluid Timing remains beside it.
+        fluid_type_col, timing_col, empty_col = st.columns([0.72, 1.62, 0.50], gap="medium")
+
+        with fluid_type_col:
+            st.markdown("<div class='hm-v977-field-label'>Fluid type</div>", unsafe_allow_html=True)
+            existing_type = prior_fluid.get("type", "Select") or "Select"
+            fluid_type = st.selectbox(
+                "Fluid type",
+                fluid_type_options,
+                index=fluid_type_options.index(existing_type) if existing_type in fluid_type_options else 0,
+                key=f"other_fluid_type_{log_date}_{i}",
                 label_visibility="collapsed",
             )
 
-    # Row 2: Quantity and Notes together.
-    st.markdown("<div class='hm-v977-row2'></div>", unsafe_allow_html=True)
-    qty_col, notes_col = st.columns([0.72, 2.12], gap="medium")
-    with qty_col:
-        st.markdown("<div class='hm-v977-field-label'>Quantity</div>", unsafe_allow_html=True)
-        fluid_qty = st.text_input(
-            "Quantity",
-            value=prior_fluid.get("quantity", ""),
-            placeholder="Example: 200 ml",
-            key=f"other_fluid_qty_{log_date}_{i}",
-            label_visibility="collapsed",
-        )
-    with notes_col:
-        st.markdown("<div class='hm-v977-field-label'>Notes</div>", unsafe_allow_html=True)
-        fluid_notes = st.text_input(
-            "Notes",
-            value=prior_fluid.get("notes", ""),
-            placeholder="Example: unsweetened / with sugar / packaged",
-            key=f"other_fluid_notes_{log_date}_{i}",
-            label_visibility="collapsed",
-        )
+        with timing_col:
+            st.markdown("<div class='hm-v977-field-label'>Fluid Timing</div>", unsafe_allow_html=True)
+            h_col, m_col, p_col = st.columns([0.55, 0.55, 0.90], gap="small")
+            with h_col:
+                hour_options = ["HH"] + [f"{n:02d}" for n in range(1, 13)]
+                current_h = st.session_state.get(f"other_fluid_h_{log_date}_{i}", pre_h)
+                st.selectbox(
+                    "HH",
+                    hour_options,
+                    index=hour_options.index(current_h) if current_h in hour_options else 0,
+                    key=f"other_fluid_h_{log_date}_{i}",
+                    label_visibility="collapsed",
+                )
+            with m_col:
+                minute_options = ["MM"] + [f"{n:02d}" for n in range(0, 60)]
+                current_m = st.session_state.get(f"other_fluid_m_{log_date}_{i}", pre_m)
+                st.selectbox(
+                    "MM",
+                    minute_options,
+                    index=minute_options.index(current_m) if current_m in minute_options else 0,
+                    key=f"other_fluid_m_{log_date}_{i}",
+                    label_visibility="collapsed",
+                )
+            with p_col:
+                ampm_options = ["AM/PM", "AM", "PM"]
+                current_p = st.session_state.get(f"other_fluid_p_{log_date}_{i}", pre_p)
+                st.selectbox(
+                    "AM/PM",
+                    ampm_options,
+                    index=ampm_options.index(current_p) if current_p in ampm_options else 0,
+                    key=f"other_fluid_p_{log_date}_{i}",
+                    label_visibility="collapsed",
+                )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    type_value = "" if fluid_type == "Select" else fluid_type
-    hour_value = st.session_state.get(f"other_fluid_h_{log_date}_{i}", "HH")
-    minute_value = st.session_state.get(f"other_fluid_m_{log_date}_{i}", "MM")
-    period_value = st.session_state.get(f"other_fluid_p_{log_date}_{i}", "AM/PM")
-    fluid_time = f"{hour_value}:{minute_value} {period_value}" if hour_value != "HH" and minute_value != "MM" and period_value in ["AM", "PM"] else ""
-    if type_value or fluid_time.strip() or fluid_qty.strip() or fluid_notes.strip():
-        other_fluids.append({
-            "type": type_value,
-            "time": fluid_time.strip(),
-            "quantity": fluid_qty.strip(),
-            "notes": fluid_notes.strip(),
-        })
-
-poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
-existing_poop_rounds = existing.get("poop_rounds", "Select")
-if existing_poop_rounds in ("", None):
-    existing_poop_rounds = "Select"
-if str(existing_poop_rounds).isdigit():
-    existing_poop_rounds = int(existing_poop_rounds)
-if is_mobile_mode_v90a:
-    starting_poop_rounds = existing_poop_rounds if isinstance(existing_poop_rounds, int) else 0
-    poop_rounds = render_v91_stepper(
-        "Poop rounds",
-        starting_poop_rounds,
-        "v91_mobile_poop_rounds",
-        0,
-        6,
-        1,
-        "",
-        as_int=True,
-    )
-else:
-    poop_rounds = st.selectbox(
-        "Poop rounds",
-        poop_options,
-        index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
-    )
-
-
-poop_timings = []
-existing_timings = existing.get("poop_timings", []) or []
-active_poop_count = int(poop_rounds) if poop_rounds != "Select" else 0
-st.markdown("<div class='hm-full-day-helper hm-full-day-helper-tight'>Record poop timings.</div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-poop-timing-grid-anchor'></div>", unsafe_allow_html=True)
-for row_start in range(0, 6, 3):
-    timing_cols = st.columns(3)
-    for col_offset in range(3):
-        idx = row_start + col_offset
-        timing_no = idx + 1
-        is_active = timing_no <= active_poop_count
-        default_timing = existing_timings[idx] if idx < len(existing_timings) else ""
-        with timing_cols[col_offset]:
-            value = st.text_input(
-                f"Poop Timing {timing_no}",
-                value=default_timing if is_active else "",
-                key=f"poop_timing_{timing_no}",
-                placeholder="Enter the Poop Time" if is_active else "Not active",
-                disabled=not is_active,
+        # Row 2: Quantity and Notes together.
+        st.markdown("<div class='hm-v977-row2'></div>", unsafe_allow_html=True)
+        qty_col, notes_col = st.columns([0.72, 2.12], gap="medium")
+        with qty_col:
+            st.markdown("<div class='hm-v977-field-label'>Quantity</div>", unsafe_allow_html=True)
+            fluid_qty = st.text_input(
+                "Quantity",
+                value=prior_fluid.get("quantity", ""),
+                placeholder="Example: 200 ml",
+                key=f"other_fluid_qty_{log_date}_{i}",
+                label_visibility="collapsed",
             )
-            poop_timings.append(value if is_active else "")
+        with notes_col:
+            st.markdown("<div class='hm-v977-field-label'>Notes</div>", unsafe_allow_html=True)
+            fluid_notes = st.text_input(
+                "Notes",
+                value=prior_fluid.get("notes", ""),
+                placeholder="Example: unsweetened / with sugar / packaged",
+                key=f"other_fluid_notes_{log_date}_{i}",
+                label_visibility="collapsed",
+            )
 
-feel_col, phys_col = st.columns([1.0, 1.0])
-with feel_col:
-    feeling_after_poop = st.text_area(
-        "Feeling after poop",
-        value=existing.get("feeling_after_poop", ""),
-        placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
-        height=88,
-    )
-with phys_col:
-    physical_activity = st.text_area(
-        "Physical activity - time of day and duration",
-        value=existing.get("physical_activity", ""),
-        placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
-        height=88,
-    )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-poop = ""
-day_notes = st.text_area(
-    "Overall notes for the day",
-    value=existing.get("notes", ""),
-    placeholder="Any cravings, bloating, missed meals, late meals, etc.",
-    height=90,
-)
+        type_value = "" if fluid_type == "Select" else fluid_type
+        hour_value = st.session_state.get(f"other_fluid_h_{log_date}_{i}", "HH")
+        minute_value = st.session_state.get(f"other_fluid_m_{log_date}_{i}", "MM")
+        period_value = st.session_state.get(f"other_fluid_p_{log_date}_{i}", "AM/PM")
+        fluid_time = f"{hour_value}:{minute_value} {period_value}" if hour_value != "HH" and minute_value != "MM" and period_value in ["AM", "PM"] else ""
+        if type_value or fluid_time.strip() or fluid_qty.strip() or fluid_notes.strip():
+            other_fluids.append({
+                "type": type_value,
+                "time": fluid_time.strip(),
+                "quantity": fluid_qty.strip(),
+                "notes": fluid_notes.strip(),
+            })
 
-c_save_1, c_save_2 = st.columns(2)
-with c_save_1:
-    if st.button("Save Day Details Only", use_container_width=True):
-        save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop, day_notes.strip(), water_litres, poop_rounds, poop_timings, feeling_after_poop.strip(), other_fluids)
-        set_system_message("Day details saved.", "success")
-        st.rerun()
-with c_save_2:
-    if st.button("Save Full-Day Journal", use_container_width=True):
-        if not meal_time_valid:
-            st.error(meal_time_error)
-            st.stop()
-        merged_meals = dict(existing_meals or {})
-        merged_meals[active_key] = active_payload
-        payload = {
-            "date": str(log_date),
-            "meals": merged_meals,
-            "physical_activity": physical_activity.strip(),
-            "poop_rounds": poop_rounds,
-            "poop_timings": [x.strip() for x in poop_timings],
-            "feeling_after_poop": feeling_after_poop.strip(),
-            "poop": (
-                (f"{poop_rounds} round(s)" if poop_rounds != "Select" else "")
-                + (f" at {', '.join([x.strip() for x in poop_timings if x.strip()])}" if poop_rounds != "Select" and any(x.strip() for x in poop_timings) else "")
-                + (f" / {feeling_after_poop.strip()}" if feeling_after_poop.strip() else "")
-            ),
-            "notes": day_notes.strip(),
-            "water_litres": water_litres,
-            "other_fluids": other_fluids,
-        }
-        save_daily_food_journal_day(user_id, str(log_date), payload)
-        set_system_message("Full-day food journal saved.", "success")
-        st.rerun()
-card_end()
-
-card_start()
-st.markdown("</div><div class='hm-v9728-section-close'></div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v9728-section-open'><div class='hm-v9728-section-title'>Recent Saved Days</div></div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v9728-section-body-open'>", unsafe_allow_html=True)
-
-all_days = get_daily_food_journal_days(user_id) or []
-
-# v97.23 Button-driven From / To filter for Recent Saved Days
-all_parseable_dates_v97_23 = sorted(
-    [d for d in [get_saved_day_filter_date_v97_20(day) for day in all_days] if d],
-    reverse=True,
-)
-
-if "daily_log_saved_days_filter_active_v97_23" not in st.session_state:
-    st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
-
-st.markdown("<div class='hm-v9727-subsection-header'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v9728-subsection-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v9718-filter'><div class='hm-v9718-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
-
-if all_parseable_dates_v97_23:
-    default_from_v97_23 = st.session_state.get("daily_log_saved_days_filter_from_v97_23", min(all_parseable_dates_v97_23))
-    default_to_v97_23 = st.session_state.get("daily_log_saved_days_filter_to_v97_23", max(all_parseable_dates_v97_23))
-
-    rf1, rf2 = st.columns(2)
-    with rf1:
-        selected_from_v97_23 = st.date_input(
-            "From date",
-            value=default_from_v97_23,
-            key="v97_23_recent_filter_from",
+    poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
+    existing_poop_rounds = existing.get("poop_rounds", "Select")
+    if existing_poop_rounds in ("", None):
+        existing_poop_rounds = "Select"
+    if str(existing_poop_rounds).isdigit():
+        existing_poop_rounds = int(existing_poop_rounds)
+    if is_mobile_mode_v90a:
+        starting_poop_rounds = existing_poop_rounds if isinstance(existing_poop_rounds, int) else 0
+        poop_rounds = render_v91_stepper(
+            "Poop rounds",
+            starting_poop_rounds,
+            "v91_mobile_poop_rounds",
+            0,
+            6,
+            1,
+            "",
+            as_int=True,
         )
-    with rf2:
-        selected_to_v97_23 = st.date_input(
-            "To date",
-            value=default_to_v97_23,
-            key="v97_23_recent_filter_to",
-        )
-
-    apply_col, clear_col = st.columns([1, 1])
-    with apply_col:
-        apply_filter_v97_23 = st.button("Apply Date Filter", key="v97_23_apply_recent_saved_filter", use_container_width=True)
-    with clear_col:
-        clear_filter_v97_23 = st.button("Clear Filter / Show All", key="v97_23_clear_recent_saved_filter", use_container_width=True)
-
-    if apply_filter_v97_23:
-        if selected_from_v97_23 <= selected_to_v97_23:
-            st.session_state["daily_log_saved_days_filter_active_v97_23"] = True
-            st.session_state["daily_log_saved_days_filter_from_v97_23"] = selected_from_v97_23
-            st.session_state["daily_log_saved_days_filter_to_v97_23"] = selected_to_v97_23
-        else:
-            st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
-            st.warning("From date cannot be after To date. Showing all saved days.")
-
-    if clear_filter_v97_23:
-        st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
-        st.session_state.pop("daily_log_saved_days_filter_from_v97_23", None)
-        st.session_state.pop("daily_log_saved_days_filter_to_v97_23", None)
-
-else:
-    rf1, rf2 = st.columns(2)
-    with rf1:
-        st.date_input("From date", value=date.today(), key="v97_23_recent_filter_from_empty")
-    with rf2:
-        st.date_input("To date", value=date.today(), key="v97_23_recent_filter_to_empty")
-    st.caption("Saved-day dates could not be parsed. Showing complete saved-day history.")
-
-st.markdown("</div>", unsafe_allow_html=True)
-
-filtered_days = list(all_days)
-filter_status_v97_23 = "Filter inactive — showing all saved days"
-
-if all_parseable_dates_v97_23 and st.session_state.get("daily_log_saved_days_filter_active_v97_23"):
-    active_from_v97_23 = st.session_state.get("daily_log_saved_days_filter_from_v97_23")
-    active_to_v97_23 = st.session_state.get("daily_log_saved_days_filter_to_v97_23")
-    if active_from_v97_23 and active_to_v97_23 and active_from_v97_23 <= active_to_v97_23:
-        filtered_days = [
-            day for day in all_days
-            if get_saved_day_filter_date_v97_20(day)
-            and active_from_v97_23 <= get_saved_day_filter_date_v97_20(day) <= active_to_v97_23
-        ]
-        filter_status_v97_23 = f"Filter active: {active_from_v97_23} to {active_to_v97_23}"
     else:
-        filtered_days = list(all_days)
-        filter_status_v97_23 = "Filter could not be applied — showing all saved days"
+        poop_rounds = st.selectbox(
+            "Poop rounds",
+            poop_options,
+            index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
+        )
 
-st.markdown(
-    f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_23)} · {filter_status_v97_23}</div>",
-    unsafe_allow_html=True,
-)
 
-if not all_days:
-    st.info("No food journal days saved yet.")
-elif not filtered_days:
-    st.caption("No saved days found for the selected date range.")
-else:
-    st.markdown("<div class='hm-rsd-mobile-shell'>", unsafe_allow_html=True)
+    poop_timings = []
+    existing_timings = existing.get("poop_timings", []) or []
+    active_poop_count = int(poop_rounds) if poop_rounds != "Select" else 0
+    st.markdown("<div class='hm-full-day-helper hm-full-day-helper-tight'>Record poop timings.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-poop-timing-grid-anchor'></div>", unsafe_allow_html=True)
+    for row_start in range(0, 6, 3):
+        timing_cols = st.columns(3)
+        for col_offset in range(3):
+            idx = row_start + col_offset
+            timing_no = idx + 1
+            is_active = timing_no <= active_poop_count
+            default_timing = existing_timings[idx] if idx < len(existing_timings) else ""
+            with timing_cols[col_offset]:
+                value = st.text_input(
+                    f"Poop Timing {timing_no}",
+                    value=default_timing if is_active else "",
+                    key=f"poop_timing_{timing_no}",
+                    placeholder="Enter the Poop Time" if is_active else "Not active",
+                    disabled=not is_active,
+                )
+                poop_timings.append(value if is_active else "")
 
-    for day in filtered_days:
-        day_date = get_saved_day_display_date_v97_20(day)
-        meal_summary = []
-        for _k, meal in (day.get("meals", {}) or {}).items():
-            if meal.get("food"):
-                meal_summary.append(f"{meal.get('label','')}: {meal.get('food','')}")
-        meal_display_text = " | ".join(meal_summary) if meal_summary else "—"
+    feel_col, phys_col = st.columns([1.0, 1.0])
+    with feel_col:
+        feeling_after_poop = st.text_area(
+            "Feeling after poop",
+            value=existing.get("feeling_after_poop", ""),
+            placeholder="Example: relieved / constipated / bloated / loose stool / incomplete",
+            height=88,
+        )
+    with phys_col:
+        physical_activity = st.text_area(
+            "Physical activity - time of day and duration",
+            value=existing.get("physical_activity", ""),
+            placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
+            height=88,
+        )
 
-        latest_note = get_latest_daily_log_note_for_date(user_id, day_date)
-        latest_note_text = "—"
-        has_notes = False
-        if latest_note:
-            has_notes = True
-            latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
+    poop = ""
+    day_notes = st.text_area(
+        "Overall notes for the day",
+        value=existing.get("notes", ""),
+        placeholder="Any cravings, bloating, missed meals, late meals, etc.",
+        height=90,
+    )
 
-        with st.container():
-            st.markdown("<div class='hm-rsd-mobile-card'>", unsafe_allow_html=True)
-            rows = [
-                ("Date", day_date or "—"),
-                ("Meal type and food", meal_display_text),
-                ("Water", day.get('water_litres') or '—'),
-                ("Other Fluids", other_fluids_summary_v97(day.get("other_fluids", []))),
-                ("Notes", day.get('notes') or '—'),
-                ("Nutritionist Note", latest_note_text),
-            ]
-            for label, value in rows:
-                lc, vc = st.columns([1.0, 2.2])
-                lc.markdown(f"<div class='hm-rsd-mobile-label'>{label}</div>", unsafe_allow_html=True)
-                vc.markdown(f"<div class='hm-rsd-mobile-value'>{value}</div>", unsafe_allow_html=True)
+    c_save_1, c_save_2 = st.columns(2)
+    with c_save_1:
+        if st.button("Save Day Details Only", use_container_width=True):
+            save_daily_food_journal_day_details(user_id, str(log_date), physical_activity.strip(), poop, day_notes.strip(), water_litres, poop_rounds, poop_timings, feeling_after_poop.strip(), other_fluids)
+            set_system_message("Day details saved.", "success")
+            st.rerun()
+    with c_save_2:
+        if st.button("Save Full-Day Journal", use_container_width=True):
+            if not meal_time_valid:
+                st.error(meal_time_error)
+                st.stop()
+            merged_meals = dict(existing_meals or {})
+            merged_meals[active_key] = active_payload
+            payload = {
+                "date": str(log_date),
+                "meals": merged_meals,
+                "physical_activity": physical_activity.strip(),
+                "poop_rounds": poop_rounds,
+                "poop_timings": [x.strip() for x in poop_timings],
+                "feeling_after_poop": feeling_after_poop.strip(),
+                "poop": (
+                    (f"{poop_rounds} round(s)" if poop_rounds != "Select" else "")
+                    + (f" at {', '.join([x.strip() for x in poop_timings if x.strip()])}" if poop_rounds != "Select" and any(x.strip() for x in poop_timings) else "")
+                    + (f" / {feeling_after_poop.strip()}" if feeling_after_poop.strip() else "")
+                ),
+                "notes": day_notes.strip(),
+                "water_litres": water_litres,
+                "other_fluids": other_fluids,
+            }
+            save_daily_food_journal_day(user_id, str(log_date), payload)
+            set_system_message("Full-day food journal saved.", "success")
+            st.rerun()
 
-            action_lc, action_vc = st.columns([1.0, 2.2])
-            action_lc.markdown("<div class='hm-rsd-mobile-label'>Action</div>", unsafe_allow_html=True)
-            selected_date = st.session_state.get("selected_daily_note_history_date")
-            button_label = "Hide history" if selected_date == day_date else "View history"
-            with action_vc:
-                if st.button(button_label, key=f"rsd_mobile_history_{day_date}", disabled=not has_notes):
-                    if selected_date == day_date:
-                        st.session_state["selected_daily_note_history_date"] = None
-                    else:
-                        st.session_state["selected_daily_note_history_date"] = day_date
-                    st.rerun()
 
-            if st.session_state.get("selected_daily_note_history_date") == day_date:
-                note_history = get_daily_log_notes_by_date(user_id, day_date, limit=20)
-                if note_history:
-                    st.markdown(f"#### Nutritionist note history for {day_date}")
-                    for n in note_history:
-                        st.markdown(
-                            f"""
-                            <div class='info-banner'>
-                              <b>{format_local_ts(n.get('ts',''))}</b><br>
-                              <p>{n.get('note','')}</p>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
-                else:
-                    st.info("No nutritionist notes found for the selected date.")
-            st.markdown("</div>", unsafe_allow_html=True)
+with st.container(border=True):
+    st.markdown("<div class='hm-v9729-section-title'>Recent Saved Days</div>", unsafe_allow_html=True)
+    all_days = get_daily_food_journal_days(user_id) or []
+
+    # v97.23 Button-driven From / To filter for Recent Saved Days
+    all_parseable_dates_v97_23 = sorted(
+        [d for d in [get_saved_day_filter_date_v97_20(day) for day in all_days] if d],
+        reverse=True,
+    )
+
+    if "daily_log_saved_days_filter_active_v97_23" not in st.session_state:
+        st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
+
+    st.markdown("<div class='hm-v9729-subsection-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v9718-filter'>", unsafe_allow_html=True)
+
+    if all_parseable_dates_v97_23:
+        default_from_v97_23 = st.session_state.get("daily_log_saved_days_filter_from_v97_23", min(all_parseable_dates_v97_23))
+        default_to_v97_23 = st.session_state.get("daily_log_saved_days_filter_to_v97_23", max(all_parseable_dates_v97_23))
+
+        rf1, rf2 = st.columns(2)
+        with rf1:
+            selected_from_v97_23 = st.date_input(
+                "From date",
+                value=default_from_v97_23,
+                key="v97_23_recent_filter_from",
+            )
+        with rf2:
+            selected_to_v97_23 = st.date_input(
+                "To date",
+                value=default_to_v97_23,
+                key="v97_23_recent_filter_to",
+            )
+
+        apply_col, clear_col = st.columns([1, 1])
+        with apply_col:
+            apply_filter_v97_23 = st.button("Apply Date Filter", key="v97_23_apply_recent_saved_filter", use_container_width=True)
+        with clear_col:
+            clear_filter_v97_23 = st.button("Clear Filter / Show All", key="v97_23_clear_recent_saved_filter", use_container_width=True)
+
+        if apply_filter_v97_23:
+            if selected_from_v97_23 <= selected_to_v97_23:
+                st.session_state["daily_log_saved_days_filter_active_v97_23"] = True
+                st.session_state["daily_log_saved_days_filter_from_v97_23"] = selected_from_v97_23
+                st.session_state["daily_log_saved_days_filter_to_v97_23"] = selected_to_v97_23
+            else:
+                st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
+                st.warning("From date cannot be after To date. Showing all saved days.")
+
+        if clear_filter_v97_23:
+            st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
+            st.session_state.pop("daily_log_saved_days_filter_from_v97_23", None)
+            st.session_state.pop("daily_log_saved_days_filter_to_v97_23", None)
+
+    else:
+        rf1, rf2 = st.columns(2)
+        with rf1:
+            st.date_input("From date", value=date.today(), key="v97_23_recent_filter_from_empty")
+        with rf2:
+            st.date_input("To date", value=date.today(), key="v97_23_recent_filter_to_empty")
+        st.caption("Saved-day dates could not be parsed. Showing complete saved-day history.")
 
     st.markdown("</div>", unsafe_allow_html=True)
-card_end()
 
-st.markdown("</div><div class='hm-v9728-section-close'></div>", unsafe_allow_html=True)
+    filtered_days = list(all_days)
+    filter_status_v97_23 = "Filter inactive — showing all saved days"
+
+    if all_parseable_dates_v97_23 and st.session_state.get("daily_log_saved_days_filter_active_v97_23"):
+        active_from_v97_23 = st.session_state.get("daily_log_saved_days_filter_from_v97_23")
+        active_to_v97_23 = st.session_state.get("daily_log_saved_days_filter_to_v97_23")
+        if active_from_v97_23 and active_to_v97_23 and active_from_v97_23 <= active_to_v97_23:
+            filtered_days = [
+                day for day in all_days
+                if get_saved_day_filter_date_v97_20(day)
+                and active_from_v97_23 <= get_saved_day_filter_date_v97_20(day) <= active_to_v97_23
+            ]
+            filter_status_v97_23 = f"Filter active: {active_from_v97_23} to {active_to_v97_23}"
+        else:
+            filtered_days = list(all_days)
+            filter_status_v97_23 = "Filter could not be applied — showing all saved days"
+
+    st.markdown(
+        f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_23)} · {filter_status_v97_23}</div>",
+        unsafe_allow_html=True,
+    )
+
+    if not all_days:
+        st.info("No food journal days saved yet.")
+    elif not filtered_days:
+        st.caption("No saved days found for the selected date range.")
+    else:
+        st.markdown("<div class='hm-rsd-mobile-shell'>", unsafe_allow_html=True)
+
+        for day in filtered_days:
+            day_date = get_saved_day_display_date_v97_20(day)
+            meal_summary = []
+            for _k, meal in (day.get("meals", {}) or {}).items():
+                if meal.get("food"):
+                    meal_summary.append(f"{meal.get('label','')}: {meal.get('food','')}")
+            meal_display_text = " | ".join(meal_summary) if meal_summary else "—"
+
+            latest_note = get_latest_daily_log_note_for_date(user_id, day_date)
+            latest_note_text = "—"
+            has_notes = False
+            if latest_note:
+                has_notes = True
+                latest_note_text = f"{format_local_ts(latest_note.get('ts',''))} — {latest_note.get('note','')}"
+
+            with st.container():
+                st.markdown("<div class='hm-rsd-mobile-card'>", unsafe_allow_html=True)
+                rows = [
+                    ("Date", day_date or "—"),
+                    ("Meal type and food", meal_display_text),
+                    ("Water", day.get('water_litres') or '—'),
+                    ("Other Fluids", other_fluids_summary_v97(day.get("other_fluids", []))),
+                    ("Notes", day.get('notes') or '—'),
+                    ("Nutritionist Note", latest_note_text),
+                ]
+                for label, value in rows:
+                    lc, vc = st.columns([1.0, 2.2])
+                    lc.markdown(f"<div class='hm-rsd-mobile-label'>{label}</div>", unsafe_allow_html=True)
+                    vc.markdown(f"<div class='hm-rsd-mobile-value'>{value}</div>", unsafe_allow_html=True)
+
+                action_lc, action_vc = st.columns([1.0, 2.2])
+                action_lc.markdown("<div class='hm-rsd-mobile-label'>Action</div>", unsafe_allow_html=True)
+                selected_date = st.session_state.get("selected_daily_note_history_date")
+                button_label = "Hide history" if selected_date == day_date else "View history"
+                with action_vc:
+                    if st.button(button_label, key=f"rsd_mobile_history_{day_date}", disabled=not has_notes):
+                        if selected_date == day_date:
+                            st.session_state["selected_daily_note_history_date"] = None
+                        else:
+                            st.session_state["selected_daily_note_history_date"] = day_date
+                        st.rerun()
+
+                if st.session_state.get("selected_daily_note_history_date") == day_date:
+                    note_history = get_daily_log_notes_by_date(user_id, day_date, limit=20)
+                    if note_history:
+                        st.markdown(f"#### Nutritionist note history for {day_date}")
+                        for n in note_history:
+                            st.markdown(
+                                f"""
+                                <div class='info-banner'>
+                                  <b>{format_local_ts(n.get('ts',''))}</b><br>
+                                  <p>{n.get('note','')}</p>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                    else:
+                        st.info("No nutritionist notes found for the selected date.")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
 # Reference moved to bottom, with more aesthetic and compact expander.
 SAMPLE_ROWS = [
     {"Time": "10:00 - 10:30 AM", "Meal Type": "Breakfast", "Food": "Boiled eggs / omelet / moong dal chilla / poha", "Portion Size": "2 eggs / 2 chilla / 1 bowl poha", "Mood/Energy": "Fresh", "Activity": "1 PM - 2 PM", "Poop": "2-3 times / felt relieved", "Notes": "Mention exact items."},

@@ -124,20 +124,11 @@
 - Rebuilt the date label/help as one stacked block for proper alignment.
 - No changes to saved-days filter, meal timing, snacking, other fluids, or save logic.
 
-## v97.27 - Daily Log Visible Section Separation Fix
+## v97.29 - Daily Log Native Bordered Sections
 
-- Added visible section separators and consistent section headers for Food Journal Date, Meal Sections, Full Day Details, Recent Saved Days.
-- Rebuilt Food Journal Date row with direct vertical alignment structure.
-- Removed Recent Saved Days explanatory note.
-- Promoted Filter Recent Saved Days to visible subsection header.
-- Applied consistent subsection style for active meal section heading.
-- No changes to button-driven filter logic, meal timing, snacking, other fluids, or save logic.
-
-## v97.28 - Daily Log Strong Section Cards
-
-- Added strong visible section cards using open/body/close rails for Food Journal Date, Meal Sections, Full Day Details, Recent Saved Days.
-- Food Journal Date is now placed inside its own visible section block.
-- Meal Sections and active meal entry remain inside one continuous visible section block.
-- Recent Saved Days explanatory note removed from render path.
-- Filter Recent Saved Days promoted to subsection title.
-- No changes to button-driven filter logic, meal timing, snacking, other fluids, or save logic.
+- Rolled Daily Log visual structure back to clean v97.25 base and rebuilt sections using native Streamlit bordered containers.
+- Created four true section blocks: Food Journal Date, Meal Sections, Full Day Details, Recent Saved Days.
+- Kept Meal Sections and active meal entry within one continuous bordered block.
+- Removed Recent Saved Days explanatory note from render path.
+- Promoted Filter Recent Saved Days to subsection title without duplicate text.
+- Retained button-driven filter, Fluid Timing label, meal timing, snacking, other fluids save logic, and food journal save logic.
