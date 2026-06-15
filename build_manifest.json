@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_34_DailyLog_ClearFilter_ResetDates",
-  "version": "v97.34",
-  "updated_on": "2026-06-15T20:15:41.415585+00:00",
+  "build_name": "HealthyMe_v97_36_Rollback_v9733_ClearFilter_DynamicKeys",
+  "version": "v97.36",
+  "updated_on": "2026-06-15T20:45:25.611370+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Clear Filter / Show All now resets the From Date and To Date widget values.",
-    "Added reset flag and rerun flow to clear Streamlit date_input keyed state.",
-    "Apply Date Filter reruns after activation when matching code path is present.",
-    "Retained visible-card-date filter from v97.33 and Food Journal Date alignment from v97.32.",
+    "Rolled back to v97.33 as requested.",
+    "Rebuilt Recent Saved Days filter with dynamic Streamlit date-input keys.",
+    "Clear Filter / Show All now clears active filter state and recreates From/To date widgets at full range.",
+    "Apply Date Filter reruns after activation for consistent display.",
+    "Retained v97.33 visible-card-date filtering and v97.32 Food Journal Date alignment.",
     "No changes to meal timing, snacking, other fluids, or save logic."
   ],
   "required_setup": [

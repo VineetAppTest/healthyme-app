@@ -160,10 +160,11 @@
 - Retained Food Journal Date alignment from v97.32.
 - No changes to meal timing, snacking, other fluids, or save logic.
 
-## v97.34 - Daily Log Clear Filter Resets Date Inputs
+## v97.36 - Rollback to v97.33 + Clear Filter Dynamic Keys
 
-- Clear Filter / Show All now resets the From Date and To Date widget values.
-- Added reset flag and rerun flow to clear Streamlit date_input keyed state.
-- Apply Date Filter reruns after activation when matching code path is present.
-- Retained visible-card-date filter from v97.33 and Food Journal Date alignment from v97.32.
+- Rolled back to v97.33 as requested.
+- Rebuilt Recent Saved Days filter with dynamic Streamlit date-input keys.
+- Clear Filter / Show All now clears active filter state and recreates From/To date widgets at full range.
+- Apply Date Filter reruns after activation for consistent display.
+- Retained v97.33 visible-card-date filtering and v97.32 Food Journal Date alignment.
 - No changes to meal timing, snacking, other fluids, or save logic.
