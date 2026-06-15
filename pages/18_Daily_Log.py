@@ -1320,6 +1320,76 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v97.24 Daily Log mini polish pass */
+
+/* Space tuning around Food Journal Date and Meal Sections */
+.hm-v9718-date-title{
+  margin-top:.42rem!important;
+}
+.hm-v9718-date-help{
+  margin-top:.08rem!important;
+}
+.hm-v9718-date-spacer{
+  height:0!important;
+  min-height:0!important;
+  line-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-v9718-meal-title{
+  margin:.03rem 0 .08rem 0!important;
+  padding:0!important;
+}
+.hm-v9718-meal-note{
+  margin:0 0 .48rem 0!important;
+  padding:0!important;
+}
+
+/* Soft visual polish / border accents for main Daily Log areas */
+.hm-v9718-meal-title,
+.hm-meal-title,
+div[data-testid="stVerticalBlock"] > div:has(.hm-v9718-filter-title){
+  border-top:1px solid #E8DCC5!important;
+  padding-top:.62rem!important;
+}
+.hm-v9718-filter{
+  border:1px solid #E7D8BE!important;
+  background:#FFFDF8!important;
+  border-radius:14px!important;
+  box-shadow:0 4px 12px rgba(15,23,42,.025)!important;
+}
+.hm-rsd-mobile-card{
+  border-top:1px solid #E4D5BB!important;
+  padding-top:.78rem!important;
+  margin-top:.65rem!important;
+}
+
+/* Slightly strengthen section buttons without changing their behavior */
+div[data-testid="stButton"] button{
+  border-color:#D9C28F!important;
+  box-shadow:0 4px 12px rgba(15,23,42,.025)!important;
+}
+
+/* Other Fluids layout polish */
+.hm-v977-fluid-entry{
+  border-top:1px solid #EFE4CF!important;
+  padding-top:.62rem!important;
+}
+
+@media (max-width:768px){
+  .hm-v9718-date-title{
+    margin-top:.34rem!important;
+  }
+  .hm-v9718-meal-note{
+    margin-bottom:.40rem!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
+
 compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
@@ -2030,7 +2100,7 @@ for i in range(other_fluid_count):
     st.markdown("<div class='hm-v977-fluid-entry'>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-v977-fluid-title'>Other Fluid {i+1}</div>", unsafe_allow_html=True)
 
-    # Row 1: Fluid type reduced materially; Meal Timing remains beside it.
+    # Row 1: Fluid type reduced materially; Fluid Timing remains beside it.
     fluid_type_col, timing_col, empty_col = st.columns([0.72, 1.62, 0.50], gap="medium")
 
     with fluid_type_col:
@@ -2045,7 +2115,7 @@ for i in range(other_fluid_count):
         )
 
     with timing_col:
-        st.markdown("<div class='hm-v977-field-label'>Meal Timing</div>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v977-field-label'>Fluid Timing</div>", unsafe_allow_html=True)
         h_col, m_col, p_col = st.columns([0.55, 0.55, 0.90], gap="small")
         with h_col:
             hour_options = ["HH"] + [f"{n:02d}" for n in range(1, 13)]

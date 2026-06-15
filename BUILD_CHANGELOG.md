@@ -107,3 +107,13 @@
 - Clear Filter / Show All returns to complete saved-day data.
 - If filter cannot be applied, page falls back to complete data.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.24 - Daily Log Mini Polish, Spacing, Fluid Timing
+
+- Added a little space above Food Journal Date.
+- Reduced space between the date helper line and Meal Sections.
+- Added a little space below the Meal Sections instruction line.
+- Changed Other Fluids label from Meal Timing to Fluid Timing.
+- Added light border/section accents for Daily Log sections.
+- Retained v97.23 button-driven saved-days filter.
+- No changes to meal timing, snacking, other fluids save logic, or food journal save logic.
