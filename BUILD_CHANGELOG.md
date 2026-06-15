@@ -98,3 +98,12 @@
 - Parser supports YYYY/MM/DD, YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, and datetime strings.
 - Retained source-of-truth filtering using _journal_date_key.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.23 - Daily Log Button-Driven Saved Days Filter
+
+- Changed Recent Saved Days to button-driven filtering.
+- Default view shows complete saved-day data.
+- Apply Date Filter explicitly activates From/To filtering.
+- Clear Filter / Show All returns to complete saved-day data.
+- If filter cannot be applied, page falls back to complete data.
+- No changes to meal timing, snacking, other fluids, or save logic.

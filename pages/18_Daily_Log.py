@@ -2230,43 +2230,84 @@ st.markdown(
 
 all_days = get_daily_food_journal_days(user_id) or []
 
-# v97.20 Source-of-truth From / To filter for Recent Saved Days
-all_parseable_dates_v97_18 = sorted(
+# v97.23 Button-driven From / To filter for Recent Saved Days
+all_parseable_dates_v97_23 = sorted(
     [d for d in [get_saved_day_filter_date_v97_20(day) for day in all_days] if d],
     reverse=True,
 )
 
+if "daily_log_saved_days_filter_active_v97_23" not in st.session_state:
+    st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
+
 st.markdown("<div class='hm-v9718-filter'><div class='hm-v9718-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
-if all_parseable_dates_v97_18:
+
+if all_parseable_dates_v97_23:
+    default_from_v97_23 = st.session_state.get("daily_log_saved_days_filter_from_v97_23", min(all_parseable_dates_v97_23))
+    default_to_v97_23 = st.session_state.get("daily_log_saved_days_filter_to_v97_23", max(all_parseable_dates_v97_23))
+
     rf1, rf2 = st.columns(2)
     with rf1:
-        recent_from_v97_18 = st.date_input(
+        selected_from_v97_23 = st.date_input(
             "From date",
-            value=min(all_parseable_dates_v97_18),
-            key="v97_18_recent_filter_from",
+            value=default_from_v97_23,
+            key="v97_23_recent_filter_from",
         )
     with rf2:
-        recent_to_v97_18 = st.date_input(
+        selected_to_v97_23 = st.date_input(
             "To date",
-            value=max(all_parseable_dates_v97_18),
-            key="v97_18_recent_filter_to",
+            value=default_to_v97_23,
+            key="v97_23_recent_filter_to",
         )
-    filtered_days = [
-        day for day in all_days
-        if get_saved_day_filter_date_v97_20(day)
-        and recent_from_v97_18 <= get_saved_day_filter_date_v97_20(day) <= recent_to_v97_18
-    ]
+
+    apply_col, clear_col = st.columns([1, 1])
+    with apply_col:
+        apply_filter_v97_23 = st.button("Apply Date Filter", key="v97_23_apply_recent_saved_filter", use_container_width=True)
+    with clear_col:
+        clear_filter_v97_23 = st.button("Clear Filter / Show All", key="v97_23_clear_recent_saved_filter", use_container_width=True)
+
+    if apply_filter_v97_23:
+        if selected_from_v97_23 <= selected_to_v97_23:
+            st.session_state["daily_log_saved_days_filter_active_v97_23"] = True
+            st.session_state["daily_log_saved_days_filter_from_v97_23"] = selected_from_v97_23
+            st.session_state["daily_log_saved_days_filter_to_v97_23"] = selected_to_v97_23
+        else:
+            st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
+            st.warning("From date cannot be after To date. Showing all saved days.")
+
+    if clear_filter_v97_23:
+        st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
+        st.session_state.pop("daily_log_saved_days_filter_from_v97_23", None)
+        st.session_state.pop("daily_log_saved_days_filter_to_v97_23", None)
+
 else:
     rf1, rf2 = st.columns(2)
     with rf1:
-        st.date_input("From date", value=date.today(), key="v97_18_recent_filter_from_empty")
+        st.date_input("From date", value=date.today(), key="v97_23_recent_filter_from_empty")
     with rf2:
-        st.date_input("To date", value=date.today(), key="v97_18_recent_filter_to_empty")
-    filtered_days = list(all_days)
+        st.date_input("To date", value=date.today(), key="v97_23_recent_filter_to_empty")
+    st.caption("Saved-day dates could not be parsed. Showing complete saved-day history.")
 
 st.markdown("</div>", unsafe_allow_html=True)
+
+filtered_days = list(all_days)
+filter_status_v97_23 = "Filter inactive — showing all saved days"
+
+if all_parseable_dates_v97_23 and st.session_state.get("daily_log_saved_days_filter_active_v97_23"):
+    active_from_v97_23 = st.session_state.get("daily_log_saved_days_filter_from_v97_23")
+    active_to_v97_23 = st.session_state.get("daily_log_saved_days_filter_to_v97_23")
+    if active_from_v97_23 and active_to_v97_23 and active_from_v97_23 <= active_to_v97_23:
+        filtered_days = [
+            day for day in all_days
+            if get_saved_day_filter_date_v97_20(day)
+            and active_from_v97_23 <= get_saved_day_filter_date_v97_20(day) <= active_to_v97_23
+        ]
+        filter_status_v97_23 = f"Filter active: {active_from_v97_23} to {active_to_v97_23}"
+    else:
+        filtered_days = list(all_days)
+        filter_status_v97_23 = "Filter could not be applied — showing all saved days"
+
 st.markdown(
-    f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_18)} · source key · parser fixed</div>",
+    f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_23)} · {filter_status_v97_23}</div>",
     unsafe_allow_html=True,
 )
 

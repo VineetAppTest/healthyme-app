@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_22_DailyLog_DateParser_Filter_Hotfix",
-  "version": "v97.22",
-  "updated_on": "2026-06-15T10:42:30.261730+00:00",
+  "build_name": "HealthyMe_v97_23_DailyLog_ButtonDriven_SavedDays_Filter",
+  "version": "v97.23",
+  "updated_on": "2026-06-15T11:24:32.397686+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Fixed Recent Saved Days date parser so dated rows should no longer remain zero.",
-    "Parser now works with direct date/datetime imports used in the app.",
-    "Parser supports YYYY/MM/DD, YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, and datetime strings.",
-    "Retained source-of-truth filtering using _journal_date_key.",
+    "Changed Recent Saved Days to button-driven filtering.",
+    "Default view shows complete saved-day data.",
+    "Apply Date Filter explicitly activates From/To filtering.",
+    "Clear Filter / Show All returns to complete saved-day data.",
+    "If filter cannot be applied, page falls back to complete data.",
     "No changes to meal timing, snacking, other fluids, or save logic."
   ],
   "required_setup": [
@@ -318,6 +319,6 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v97_21_DailyLog_DisplayDate_Recursion_Hotfix.zip",
+  "base_build": "HealthyMe_v97_22_DailyLog_DateParser_Filter_Hotfix.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip"
 }
