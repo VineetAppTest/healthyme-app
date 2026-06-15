@@ -117,3 +117,9 @@
 - Added light border/section accents for Daily Log sections.
 - Retained v97.23 button-driven saved-days filter.
 - No changes to meal timing, snacking, other fluids save logic, or food journal save logic.
+
+## v97.25 - Daily Log Food Journal Date Vertical Alignment
+
+- Vertically center-aligned Food Journal Date label/help with the date input.
+- Rebuilt the date label/help as one stacked block for proper alignment.
+- No changes to saved-days filter, meal timing, snacking, other fluids, or save logic.

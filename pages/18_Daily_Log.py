@@ -1390,6 +1390,46 @@ div[data-testid="stButton"] button{
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v97.25 Food Journal Date vertical alignment */
+.hm-v9725-date-label-stack{
+  min-height:2.38rem!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:flex-start!important;
+  gap:.10rem!important;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-v9725-date-label-stack .hm-v9718-date-title{
+  margin:0!important;
+  padding:0!important;
+  line-height:1.05!important;
+}
+.hm-v9725-date-label-stack .hm-v9718-date-help{
+  margin:0!important;
+  padding:0!important;
+  line-height:1.05!important;
+}
+div[data-testid="stDateInput"]{
+  margin-top:0!important;
+}
+div[data-testid="stDateInput"] input{
+  min-height:2.38rem!important;
+  height:2.38rem!important;
+}
+@media (max-width:768px){
+  .hm-v9725-date-label-stack{
+    min-height:auto!important;
+    justify-content:flex-start!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
+
 compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
@@ -1716,8 +1756,7 @@ def validate_meal_time(section_key, section_label, time_value):
 # Fixed Daily Log meal structure.
 date_label_col, date_picker_col = st.columns([1.18, 1.52], gap="small")
 with date_label_col:
-    st.markdown("<div class='hm-v9718-date-title'>Food Journal Date</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-v9718-date-help'>Select the date for this food journal entry.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v9725-date-label-stack'><div class='hm-v9718-date-title'>Food Journal Date</div><div class='hm-v9718-date-help'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
 with date_picker_col:
     log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
 st.markdown("<div class='hm-v9718-date-spacer'></div>", unsafe_allow_html=True)

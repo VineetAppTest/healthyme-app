@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_24_DailyLog_MiniPolish_Spacing_FluidTiming",
-  "version": "v97.24",
-  "updated_on": "2026-06-15T11:43:04.498299+00:00",
+  "build_name": "HealthyMe_v97_25_DailyLog_DateRow_VerticalAlignment",
+  "version": "v97.25",
+  "updated_on": "2026-06-15T12:46:29.742846+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,13 +17,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added a little space above Food Journal Date.",
-    "Reduced space between the date helper line and Meal Sections.",
-    "Added a little space below the Meal Sections instruction line.",
-    "Changed Other Fluids label from Meal Timing to Fluid Timing.",
-    "Added light border/section accents for Daily Log sections.",
-    "Retained v97.23 button-driven saved-days filter.",
-    "No changes to meal timing, snacking, other fluids save logic, or food journal save logic."
+    "Vertically center-aligned Food Journal Date label/help with the date input.",
+    "Rebuilt the date label/help as one stacked block for proper alignment.",
+    "No changes to saved-days filter, meal timing, snacking, other fluids, or save logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -320,6 +316,6 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v97_23_DailyLog_ButtonDriven_SavedDays_Filter.zip",
+  "base_build": "HealthyMe_v97_24_DailyLog_MiniPolish_Spacing_FluidTiming.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip"
 }
