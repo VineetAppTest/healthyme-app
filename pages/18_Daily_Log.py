@@ -1430,6 +1430,168 @@ div[data-testid="stDateInput"] input{
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v97.27 visible section separation and Daily Log header alignment */
+.hm-v9727-section-separator{
+  height:1px;
+  background:#E4D5BB;
+  margin:1.05rem 0 .72rem 0;
+}
+.hm-v9727-section-header{
+  color:#064E3B;
+  font-size:1.08rem;
+  line-height:1.08;
+  font-weight:950;
+  margin:0 0 .18rem 0!important;
+  padding:0!important;
+}
+.hm-v9727-section-note{
+  color:#64748B;
+  font-size:.82rem;
+  line-height:1.14;
+  font-weight:700;
+  margin:0 0 .42rem 0!important;
+  padding:0!important;
+}
+.hm-v9727-subsection-header{
+  color:#064E3B;
+  font-size:.98rem;
+  line-height:1.08;
+  font-weight:925;
+  margin:.1rem 0 .34rem 0!important;
+  padding:0!important;
+}
+.hm-v9727-date-left{
+  min-height:2.55rem!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:flex-start!important;
+  gap:.08rem!important;
+}
+.hm-v9727-date-input div[data-testid="stDateInput"] input{
+  height:2.55rem!important;
+  min-height:2.55rem!important;
+}
+.hm-v9718-filter-title{display:none!important;}
+.hm-v9718-filter{
+  border:1px solid #E7D8BE!important;
+  background:#FFFDF8!important;
+  border-radius:14px!important;
+  padding:.70rem .78rem .28rem .78rem!important;
+  margin:.28rem 0 .60rem 0!important;
+}
+.hm-rsd-mobile-card{
+  border-top:1px solid #E4D5BB!important;
+  padding-top:.82rem!important;
+  margin-top:.70rem!important;
+}
+@media (max-width:768px){
+  .hm-v9727-section-separator{margin:.82rem 0 .56rem 0;}
+  .hm-v9727-date-left{min-height:auto!important;justify-content:flex-start!important;}
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
+<style>
+/* v97.28 strong visible section cards */
+.hm-v9728-section-open{
+  border:1px solid #DCC89A;
+  border-bottom:0;
+  background:#FFFDF8;
+  border-radius:16px 16px 0 0;
+  padding:.72rem .86rem .48rem .86rem;
+  margin:1.05rem 0 0 0;
+  box-shadow:0 6px 18px rgba(15,23,42,.025);
+}
+.hm-v9728-section-body-open{
+  border-left:1px solid #DCC89A;
+  border-right:1px solid #DCC89A;
+  background:#FFFDF8;
+  padding:.10rem .86rem .18rem .86rem;
+}
+.hm-v9728-section-close{
+  height:.78rem;
+  border:1px solid #DCC89A;
+  border-top:0;
+  background:#FFFDF8;
+  border-radius:0 0 16px 16px;
+  margin:0 0 1.05rem 0;
+  box-shadow:0 6px 18px rgba(15,23,42,.025);
+}
+.hm-v9728-section-title{
+  color:#064E3B;
+  font-size:1.10rem;
+  line-height:1.08;
+  font-weight:950;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-v9728-section-note{
+  color:#64748B;
+  font-size:.82rem;
+  line-height:1.15;
+  font-weight:700;
+  margin:.16rem 0 0 0!important;
+  padding:0!important;
+}
+.hm-v9728-subsection-title{
+  color:#064E3B;
+  font-size:.98rem;
+  line-height:1.08;
+  font-weight:925;
+  margin:.20rem 0 .35rem 0!important;
+  padding:0!important;
+}
+.hm-v9728-date-left{
+  min-height:2.45rem!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:flex-start!important;
+}
+.hm-v9728-date-input div[data-testid="stDateInput"] input{
+  height:2.45rem!important;
+  min-height:2.45rem!important;
+}
+.hm-v9718-filter-title,
+.hm-table-note{
+  display:none!important;
+}
+.hm-v9718-filter{
+  border:1px solid #E7D8BE!important;
+  background:#FFFDF8!important;
+  border-radius:14px!important;
+  padding:.70rem .78rem .28rem .78rem!important;
+  margin:.28rem 0 .60rem 0!important;
+}
+.hm-rsd-mobile-card{
+  border-top:1px solid #E4D5BB!important;
+  padding-top:.82rem!important;
+  margin-top:.70rem!important;
+}
+@media (max-width:768px){
+  .hm-v9728-section-open{
+    margin:.82rem 0 0 0;
+    padding:.64rem .68rem .42rem .68rem;
+  }
+  .hm-v9728-section-body-open{
+    padding:.08rem .68rem .16rem .68rem;
+  }
+  .hm-v9728-section-close{
+    margin:0 0 .82rem 0;
+  }
+  .hm-v9728-date-left{
+    min-height:auto!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
+
 compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
@@ -1754,12 +1916,18 @@ def validate_meal_time(section_key, section_label, time_value):
 
 
 # Fixed Daily Log meal structure.
-date_label_col, date_picker_col = st.columns([1.18, 1.52], gap="small")
+st.markdown("<div class='hm-v9728-section-open'><div class='hm-v9728-section-title'>Food Journal Date</div></div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v9728-section-body-open'>", unsafe_allow_html=True)
+
+date_label_col, date_picker_col = st.columns([1.15, 1.55], gap="small")
 with date_label_col:
-    st.markdown("<div class='hm-v9725-date-label-stack'><div class='hm-v9718-date-title'>Food Journal Date</div><div class='hm-v9718-date-help'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v9728-date-left'><div class='hm-v9728-section-title'>Food Journal Date</div><div class='hm-v9728-section-note'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
 with date_picker_col:
+    st.markdown("<div class='hm-v9728-date-input'>", unsafe_allow_html=True)
     log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
-st.markdown("<div class='hm-v9718-date-spacer'></div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("</div><div class='hm-v9728-section-close'></div>", unsafe_allow_html=True)
+
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
 
@@ -1807,8 +1975,8 @@ if "active_daily_meal_section" not in st.session_state or st.session_state["acti
 
 
 card_start()
-st.markdown("<div class='hm-v9718-meal-title'>Meal sections</div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v9718-meal-note'>Tap a meal to open it. Save the current meal before moving to another section.</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v9728-section-open'><div class='hm-v9728-section-title'>Meal Sections</div><div class='hm-v9728-section-note'>Tap a meal to open it. Save the current meal before moving to another section.</div></div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v9728-section-body-open'>", unsafe_allow_html=True)
 
 active_key = st.session_state["active_daily_meal_section"]
 active_label = next((label for key, label in meal_sections if key == active_key), meal_sections[0][1])
@@ -1985,7 +2153,10 @@ else:
 card_end()
 
 card_start()
-st.subheader("Full-day details")
+st.markdown("</div><div class='hm-v9728-section-close'></div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v9728-section-open'><div class='hm-v9728-section-title'>Full Day Details</div></div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v9728-section-body-open'>", unsafe_allow_html=True)
+
 top_left, top_right = st.columns(2)
 with top_left:
     water_options = ["Select"] + [
@@ -2331,11 +2502,9 @@ with c_save_2:
 card_end()
 
 card_start()
-st.subheader("Recent saved days")
-st.markdown(
-    "<div class='hm-table-note'>View your saved day entries and the latest note from your nutritionist.</div>",
-    unsafe_allow_html=True,
-)
+st.markdown("</div><div class='hm-v9728-section-close'></div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v9728-section-open'><div class='hm-v9728-section-title'>Recent Saved Days</div></div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v9728-section-body-open'>", unsafe_allow_html=True)
 
 all_days = get_daily_food_journal_days(user_id) or []
 
@@ -2348,6 +2517,8 @@ all_parseable_dates_v97_23 = sorted(
 if "daily_log_saved_days_filter_active_v97_23" not in st.session_state:
     st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
 
+st.markdown("<div class='hm-v9727-subsection-header'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v9728-subsection-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
 st.markdown("<div class='hm-v9718-filter'><div class='hm-v9718-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
 
 if all_parseable_dates_v97_23:
@@ -2490,6 +2661,7 @@ else:
     st.markdown("</div>", unsafe_allow_html=True)
 card_end()
 
+st.markdown("</div><div class='hm-v9728-section-close'></div>", unsafe_allow_html=True)
 # Reference moved to bottom, with more aesthetic and compact expander.
 SAMPLE_ROWS = [
     {"Time": "10:00 - 10:30 AM", "Meal Type": "Breakfast", "Food": "Boiled eggs / omelet / moong dal chilla / poha", "Portion Size": "2 eggs / 2 chilla / 1 bowl poha", "Mood/Energy": "Fresh", "Activity": "1 PM - 2 PM", "Poop": "2-3 times / felt relieved", "Notes": "Mention exact items."},
