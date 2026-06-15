@@ -1368,12 +1368,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]{
 }
 
 /* Other Fluids compact layout */
-.hm-v976-section-title{
-  color:#064E3B;
-  font-weight:950;
-  font-size:1rem;
-  margin:.05rem 0 .14rem 0;
-}
 .hm-v976-fluid-title{
   color:#064E3B;
   font-weight:950;
@@ -1399,11 +1393,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]{
 }
 
 /* Reduce unwanted vertical looseness around Other Fluids widgets */
-.hm-v976-fluid-band div[data-testid="stSelectbox"],
-.hm-v976-fluid-band div[data-testid="stTextInput"]{
-  margin-bottom:.1rem!important;
-}
-
 @media (max-width:768px){
   .hm-v976-date-label{
     line-height:1.3rem!important;
@@ -1741,107 +1730,158 @@ with top_right:
     )
 
 
+
+st.markdown("""
+<style>
+/* v97.7 Other Fluids no-border compact width fix */
+.hm-v977-fluid-entry{
+  padding:.48rem 0 .58rem 0;
+  margin:.18rem 0 .42rem 0;
+}
+.hm-v977-fluid-title{
+  color:#064E3B;
+  font-weight:950;
+  font-size:.98rem;
+  margin:.22rem 0 .48rem 0;
+}
+.hm-v977-field-label{
+  color:#334155;
+  font-size:.82rem;
+  font-weight:780;
+  line-height:1.05;
+  margin:0 0 .28rem 0;
+}
+.hm-v977-row2{
+  margin-top:.34rem;
+}
+.hm-v977-fluid-entry div[data-testid="stSelectbox"],
+.hm-v977-fluid-entry div[data-testid="stTextInput"]{
+  margin-bottom:0!important;
+}
+.hm-v977-fluid-entry div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
+  background:#FFFDF8!important;
+  border:1.15px solid #DCC690!important;
+  border-radius:12px!important;
+  min-height:2.28rem!important;
+  height:2.28rem!important;
+  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
+}
+.hm-v977-fluid-entry div[data-testid="stTextInput"] input{
+  min-height:2.28rem!important;
+  height:2.28rem!important;
+  border-radius:12px!important;
+}
+@media (max-width:768px){
+  .hm-v977-fluid-entry{
+    padding:.36rem 0 .46rem 0!important;
+  }
+  .hm-v977-fluid-entry div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+  .hm-v977-fluid-entry div[data-testid="stTextInput"] input{
+    min-height:2.18rem!important;
+    height:2.18rem!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
+
 # v97: Other Fluids outside standard meal windows
 other_fluids = []
 fluid_type_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
 
-with st.container(border=True):
-    st.markdown("<div class='hm-v976-section-title'>Other Fluids consumed outside standard meal window</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-v976-fluid-band'>", unsafe_allow_html=True)
+for i in range(other_fluid_count):
+    prior_fluid = existing_other_fluids[i] if i < len(existing_other_fluids) else {}
+    pre_h, pre_m, pre_p = split_12h_time_parts(prior_fluid.get("time", ""))
+    st.session_state.setdefault(f"other_fluid_h_{log_date}_{i}", pre_h)
+    st.session_state.setdefault(f"other_fluid_m_{log_date}_{i}", pre_m)
+    st.session_state.setdefault(f"other_fluid_p_{log_date}_{i}", pre_p)
 
-    for i in range(other_fluid_count):
-        prior_fluid = existing_other_fluids[i] if i < len(existing_other_fluids) else {}
-        pre_h, pre_m, pre_p = split_12h_time_parts(prior_fluid.get("time", ""))
-        st.session_state.setdefault(f"other_fluid_h_{log_date}_{i}", pre_h)
-        st.session_state.setdefault(f"other_fluid_m_{log_date}_{i}", pre_m)
-        st.session_state.setdefault(f"other_fluid_p_{log_date}_{i}", pre_p)
+    st.markdown("<div class='hm-v977-fluid-entry'>", unsafe_allow_html=True)
+    st.markdown(f"<div class='hm-v977-fluid-title'>Other Fluid {i+1}</div>", unsafe_allow_html=True)
 
-        st.markdown(f"<div class='hm-v976-fluid-title'>Other Fluid {i+1}</div>", unsafe_allow_html=True)
+    # Row 1: Fluid type reduced materially; Meal Timing remains beside it.
+    fluid_type_col, timing_col, empty_col = st.columns([0.72, 1.62, 0.50], gap="medium")
 
-        # Row 1: Fluid type is half-width; meal timing occupies the other half.
-        left_half, right_half = st.columns([1, 1], gap="medium")
+    with fluid_type_col:
+        st.markdown("<div class='hm-v977-field-label'>Fluid type</div>", unsafe_allow_html=True)
+        existing_type = prior_fluid.get("type", "Select") or "Select"
+        fluid_type = st.selectbox(
+            "Fluid type",
+            fluid_type_options,
+            index=fluid_type_options.index(existing_type) if existing_type in fluid_type_options else 0,
+            key=f"other_fluid_type_{log_date}_{i}",
+            label_visibility="collapsed",
+        )
 
-        with left_half:
-            st.markdown("<div class='hm-v976-field-label'>Fluid type</div>", unsafe_allow_html=True)
-            existing_type = prior_fluid.get("type", "Select") or "Select"
-            fluid_type = st.selectbox(
-                "Fluid type",
-                fluid_type_options,
-                index=fluid_type_options.index(existing_type) if existing_type in fluid_type_options else 0,
-                key=f"other_fluid_type_{log_date}_{i}",
+    with timing_col:
+        st.markdown("<div class='hm-v977-field-label'>Meal Timing</div>", unsafe_allow_html=True)
+        h_col, m_col, p_col = st.columns([0.55, 0.55, 0.90], gap="small")
+        with h_col:
+            hour_options = ["HH"] + [f"{n:02d}" for n in range(1, 13)]
+            current_h = st.session_state.get(f"other_fluid_h_{log_date}_{i}", pre_h)
+            st.selectbox(
+                "HH",
+                hour_options,
+                index=hour_options.index(current_h) if current_h in hour_options else 0,
+                key=f"other_fluid_h_{log_date}_{i}",
+                label_visibility="collapsed",
+            )
+        with m_col:
+            minute_options = ["MM"] + [f"{n:02d}" for n in range(0, 60)]
+            current_m = st.session_state.get(f"other_fluid_m_{log_date}_{i}", pre_m)
+            st.selectbox(
+                "MM",
+                minute_options,
+                index=minute_options.index(current_m) if current_m in minute_options else 0,
+                key=f"other_fluid_m_{log_date}_{i}",
+                label_visibility="collapsed",
+            )
+        with p_col:
+            ampm_options = ["AM/PM", "AM", "PM"]
+            current_p = st.session_state.get(f"other_fluid_p_{log_date}_{i}", pre_p)
+            st.selectbox(
+                "AM/PM",
+                ampm_options,
+                index=ampm_options.index(current_p) if current_p in ampm_options else 0,
+                key=f"other_fluid_p_{log_date}_{i}",
                 label_visibility="collapsed",
             )
 
-        with right_half:
-            st.markdown("<div class='hm-v976-field-label'>Meal Timing</div>", unsafe_allow_html=True)
-            h_col, m_col, p_col = st.columns([.55, .55, .9], gap="small")
-            with h_col:
-                hour_options = ["HH"] + [f"{n:02d}" for n in range(1, 13)]
-                current_h = st.session_state.get(f"other_fluid_h_{log_date}_{i}", pre_h)
-                st.selectbox(
-                    "HH",
-                    hour_options,
-                    index=hour_options.index(current_h) if current_h in hour_options else 0,
-                    key=f"other_fluid_h_{log_date}_{i}",
-                    label_visibility="collapsed",
-                )
-            with m_col:
-                minute_options = ["MM"] + [f"{n:02d}" for n in range(0, 60)]
-                current_m = st.session_state.get(f"other_fluid_m_{log_date}_{i}", pre_m)
-                st.selectbox(
-                    "MM",
-                    minute_options,
-                    index=minute_options.index(current_m) if current_m in minute_options else 0,
-                    key=f"other_fluid_m_{log_date}_{i}",
-                    label_visibility="collapsed",
-                )
-            with p_col:
-                ampm_options = ["AM/PM", "AM", "PM"]
-                current_p = st.session_state.get(f"other_fluid_p_{log_date}_{i}", pre_p)
-                st.selectbox(
-                    "AM/PM",
-                    ampm_options,
-                    index=ampm_options.index(current_p) if current_p in ampm_options else 0,
-                    key=f"other_fluid_p_{log_date}_{i}",
-                    label_visibility="collapsed",
-                )
-
-        # Row 2: Quantity and Notes.
-        st.markdown("<div class='hm-v976-row2-spacer'></div>", unsafe_allow_html=True)
-        qty_col, notes_col = st.columns([.85, 2.15], gap="medium")
-        with qty_col:
-            st.markdown("<div class='hm-v976-field-label'>Quantity</div>", unsafe_allow_html=True)
-            fluid_qty = st.text_input(
-                "Quantity",
-                value=prior_fluid.get("quantity", ""),
-                placeholder="Example: 200 ml",
-                key=f"other_fluid_qty_{log_date}_{i}",
-                label_visibility="collapsed",
-            )
-        with notes_col:
-            st.markdown("<div class='hm-v976-field-label'>Notes</div>", unsafe_allow_html=True)
-            fluid_notes = st.text_input(
-                "Notes",
-                value=prior_fluid.get("notes", ""),
-                placeholder="Example: unsweetened / with sugar / packaged",
-                key=f"other_fluid_notes_{log_date}_{i}",
-                label_visibility="collapsed",
-            )
-
-        type_value = "" if fluid_type == "Select" else fluid_type
-        hour_value = st.session_state.get(f"other_fluid_h_{log_date}_{i}", "HH")
-        minute_value = st.session_state.get(f"other_fluid_m_{log_date}_{i}", "MM")
-        period_value = st.session_state.get(f"other_fluid_p_{log_date}_{i}", "AM/PM")
-        fluid_time = f"{hour_value}:{minute_value} {period_value}" if hour_value != "HH" and minute_value != "MM" and period_value in ["AM", "PM"] else ""
-        if type_value or fluid_time.strip() or fluid_qty.strip() or fluid_notes.strip():
-            other_fluids.append({
-                "type": type_value,
-                "time": fluid_time.strip(),
-                "quantity": fluid_qty.strip(),
-                "notes": fluid_notes.strip(),
-            })
+    # Row 2: Quantity and Notes together.
+    st.markdown("<div class='hm-v977-row2'></div>", unsafe_allow_html=True)
+    qty_col, notes_col = st.columns([0.72, 2.12], gap="medium")
+    with qty_col:
+        st.markdown("<div class='hm-v977-field-label'>Quantity</div>", unsafe_allow_html=True)
+        fluid_qty = st.text_input(
+            "Quantity",
+            value=prior_fluid.get("quantity", ""),
+            placeholder="Example: 200 ml",
+            key=f"other_fluid_qty_{log_date}_{i}",
+            label_visibility="collapsed",
+        )
+    with notes_col:
+        st.markdown("<div class='hm-v977-field-label'>Notes</div>", unsafe_allow_html=True)
+        fluid_notes = st.text_input(
+            "Notes",
+            value=prior_fluid.get("notes", ""),
+            placeholder="Example: unsweetened / with sugar / packaged",
+            key=f"other_fluid_notes_{log_date}_{i}",
+            label_visibility="collapsed",
+        )
 
     st.markdown("</div>", unsafe_allow_html=True)
+
+    type_value = "" if fluid_type == "Select" else fluid_type
+    hour_value = st.session_state.get(f"other_fluid_h_{log_date}_{i}", "HH")
+    minute_value = st.session_state.get(f"other_fluid_m_{log_date}_{i}", "MM")
+    period_value = st.session_state.get(f"other_fluid_p_{log_date}_{i}", "AM/PM")
+    fluid_time = f"{hour_value}:{minute_value} {period_value}" if hour_value != "HH" and minute_value != "MM" and period_value in ["AM", "PM"] else ""
+    if type_value or fluid_time.strip() or fluid_qty.strip() or fluid_notes.strip():
+        other_fluids.append({
+            "type": type_value,
+            "time": fluid_time.strip(),
+            "quantity": fluid_qty.strip(),
+            "notes": fluid_notes.strip(),
+        })
 
 poop_options = ["Select", 0, 1, 2, 3, 4, 5, 6]
 existing_poop_rounds = existing.get("poop_rounds", "Select")

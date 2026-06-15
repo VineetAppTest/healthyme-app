@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_6_DailyLog_Bordered_Compact_Fluid_Correction",
-  "version": "v97.6",
-  "updated_on": "2026-06-14T21:45:54.948638+00:00",
+  "build_name": "HealthyMe_v97_7_OtherFluids_NoBorder_CompactWidth_Fix",
+  "version": "v97.7",
+  "updated_on": "2026-06-14T22:29:15.231373+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,13 +17,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added elegant visible borders to Food Journal Date and Other Fluids logical sections using Streamlit border containers.",
-    "Improved Food Journal Date style while keeping label and picker in the same row.",
-    "Added padding above and below Fluid type area.",
-    "Reduced Fluid type dropdown to half-row width.",
-    "Moved Quantity to the next line with Notes.",
-    "Kept Other Fluids entry compact in two rows.",
-    "Retained the subtle dropdown styling that was approved."
+    "Removed highlighted Other Fluids section statement from UI.",
+    "Removed Other Fluids border/container from UI.",
+    "Reduced Fluid type dropdown materially versus previous width.",
+    "Kept Meal Timing beside Fluid type in first row.",
+    "Moved Quantity with Notes on second row.",
+    "Added spacing above and below Fluid type/Other Fluid entry."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -320,5 +319,5 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v97_5_DailyLog_Compact_Alignment_Correction.zip"
+  "base_build": "HealthyMe_v97_6_DailyLog_Bordered_Compact_Fluid_Correction.zip"
 }

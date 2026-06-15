@@ -1246,3 +1246,12 @@
 - Moved Quantity to the next line with Notes.
 - Kept each Other Fluid entry compact in two rows.
 - Retained the subtle dropdown styling approved in earlier build.
+
+## v97.7 - Other Fluids No Border Compact Width Fix
+
+- Removed highlighted Other Fluids section statement from UI.
+- Removed border/container around Other Fluids block from UI.
+- Reduced Fluid type dropdown materially versus previous width.
+- Kept Meal Timing beside Fluid type in first row.
+- Moved Quantity with Notes on second row.
+- Added spacing above and below Fluid type/Other Fluid entry.
