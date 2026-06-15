@@ -1462,27 +1462,37 @@ def get_daily_food_journal_day(user_id, log_date):
 def get_daily_food_journal_days(user_id):
     db = load_db()
     store = db.get("daily_food_journals", {}).get(user_id, {}) or {}
-    merged = {str(k): v for k, v in store.items()}
+    merged = {}
+
+    # v97.19: always preserve the saved-day key as a usable date on the returned row.
+    for k, v in store.items():
+        row = dict(v or {})
+        row.setdefault("date", str(k))
+        row.setdefault("_journal_date_key", str(k))
+        merged[str(k)] = row
 
     # Include old day records in daily_logs.
     for x in db.get("daily_logs", {}).get(user_id, []) or []:
         if x.get("log_type") == "daily_food_journal_day" and x.get("date") and str(x.get("date")) not in merged:
-            merged[str(x.get("date"))] = x
+            row = dict(x or {})
+            row.setdefault("date", str(x.get("date")))
+            row.setdefault("_journal_date_key", str(x.get("date")))
+            merged[str(x.get("date"))] = row
 
     # Include old row-based food_journal records grouped by date.
     legacy = _legacy_food_journal_days_for_user(db, user_id)
     for d, day in legacy.items():
         if d not in merged:
-            merged[d] = day
+            row = dict(day or {})
+            row.setdefault("date", str(d))
+            row.setdefault("_journal_date_key", str(d))
+            merged[d] = row
 
     rows = list(merged.values())
-    rows.sort(key=lambda r: (r.get("date", ""), r.get("timestamp", "")), reverse=True)
+    rows.sort(key=lambda r: (str(r.get("date", "")), str(r.get("timestamp", ""))), reverse=True)
     return rows
 
 
-# --------------------------------------------------------------------
-# v48: Nutritionist message archive/read support
-# --------------------------------------------------------------------
 def mark_member_message_read(member_id, message_id):
     """Mark one member message as read/archive it from the main screen."""
     db = load_db()

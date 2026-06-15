@@ -68,3 +68,10 @@
 - Added visible Showing X of Y saved days count.
 - Filter parses saved dates from date, log_date, journal_date, and food_journal_date fields.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.19 - Daily Log Saved-Day Date-Key Filter Fix
+
+- Fixed saved-day filter at data layer by injecting date/_journal_date_key into every row returned by get_daily_food_journal_days.
+- Updated Daily Log filter to read _journal_date_key along with date/log_date/journal_date/food_journal_date.
+- Kept visible Showing X of Y saved days count with dated-row visibility.
+- No changes to meal timing, snacking, other fluids, or save logic.

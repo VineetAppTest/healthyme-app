@@ -121,7 +121,7 @@ def get_saved_day_date_v97_18(day):
     """Return first parseable saved-date from known row fields."""
     if not isinstance(day, dict):
         return None
-    for field in ("date", "log_date", "journal_date", "food_journal_date"):
+    for field in ("date", "_journal_date_key", "log_date", "journal_date", "food_journal_date"):
         parsed = parse_date_safe_v97_18(day.get(field))
         if parsed:
             return parsed
@@ -131,7 +131,7 @@ def get_saved_day_date_text_v97_18(day):
     """Return display text for saved-day date from known row fields."""
     if not isinstance(day, dict):
         return ""
-    for field in ("date", "log_date", "journal_date", "food_journal_date"):
+    for field in ("date", "_journal_date_key", "log_date", "journal_date", "food_journal_date"):
         value = day.get(field)
         if value:
             return str(value)
@@ -2219,7 +2219,7 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(
-    f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days</div>",
+    f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_18)}</div>",
     unsafe_allow_html=True,
 )
 
