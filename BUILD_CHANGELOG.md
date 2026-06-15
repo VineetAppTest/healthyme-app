@@ -59,3 +59,12 @@
 - Rebuilt Recent Saved Days into one clean filter-render path.
 - From Date / To Date filter now renders filtered_days only.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.18 - Daily Log Top Layout + Measurable Recent Filter Fix
+
+- Rebuilt Food Journal Date top area without split HTML wrappers around Streamlit columns.
+- Replaced Meal Sections st.subheader with compact markdown title to avoid Streamlit subheader margin.
+- Rebuilt Recent Saved Days with measurable filtered_days render path.
+- Added visible Showing X of Y saved days count.
+- Filter parses saved dates from date, log_date, journal_date, and food_journal_date fields.
+- No changes to meal timing, snacking, other fluids, or save logic.
