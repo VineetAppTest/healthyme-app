@@ -1353,18 +1353,28 @@ div[data-testid="stVerticalBlockBorderWrapper"]{
 }
 
 /* Food Journal Date row */
-.hm-v976-date-label{
+.hm-v978-date-wrap{
+  margin:.10rem 0 .45rem 0!important;
+  padding:.22rem 0 .10rem 0!important;
+}
+.hm-v978-date-left{
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  min-height:2.35rem;
+  flex-wrap:wrap;
+}
+.hm-v978-date-label{
   color:#064E3B;
   font-weight:950;
-  font-size:1rem;
-  line-height:2.35rem;
-  padding-left:.15rem;
+  font-size:1.14rem;
+  line-height:1.1;
+  padding-left:.05rem;
 }
-.hm-v976-date-help{
+.hm-v978-date-help{
   color:#64748B;
-  font-size:.78rem;
-  margin-top:-.22rem;
-  padding-left:.15rem;
+  font-size:.84rem;
+  line-height:1.2;
 }
 
 /* Other Fluids compact layout */
@@ -1394,13 +1404,16 @@ div[data-testid="stVerticalBlockBorderWrapper"]{
 
 /* Reduce unwanted vertical looseness around Other Fluids widgets */
 @media (max-width:768px){
-  .hm-v976-date-label{
-    line-height:1.3rem!important;
-    padding-bottom:.25rem!important;
+  .hm-v978-date-left{
+    align-items:flex-start!important;
+    gap:.3rem!important;
   }
-  .hm-v976-date-help{
-    margin-top:0!important;
-    padding-bottom:.2rem!important;
+  .hm-v978-date-label{
+    font-size:1.02rem!important;
+    padding-bottom:0!important;
+  }
+  .hm-v978-date-help{
+    font-size:.78rem!important;
   }
   div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
   div[data-testid="stTextInput"] input,
@@ -1413,13 +1426,13 @@ div[data-testid="stVerticalBlockBorderWrapper"]{
 """, unsafe_allow_html=True)
 
 # Fixed Daily Log meal structure.
-with st.container(border=True):
-    date_label_col, date_picker_col = st.columns([1.0, 1.15])
-    with date_label_col:
-        st.markdown("<div class='hm-v976-date-label'>Food Journal Date</div>", unsafe_allow_html=True)
-        st.markdown("<div class='hm-v976-date-help'>Select the date for this food journal entry.</div>", unsafe_allow_html=True)
-    with date_picker_col:
-        log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
+st.markdown("<div class='hm-v978-date-wrap'>", unsafe_allow_html=True)
+date_label_col, date_picker_col = st.columns([1.35, 1.65])
+with date_label_col:
+    st.markdown("<div class='hm-v978-date-left'><div class='hm-v978-date-label'>Food Journal Date</div><div class='hm-v978-date-help'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
+with date_picker_col:
+    log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
+st.markdown("</div>", unsafe_allow_html=True)
 existing = get_daily_food_journal_day(user_id, str(log_date))
 existing_meals = existing.get("meals", {}) if existing else {}
 
@@ -1505,12 +1518,9 @@ with row2_cols[2]:
 add_cols = st.columns([1.15, 1.85])
 with add_cols[0]:
     if st.button("+ Snacking", use_container_width=True, help="Add another snacking time outside the standard meal windows."):
-        if is_dirty(existing_meals, active_key, active_label):
-            st.warning(f"Please save the section ({active_label}) before adding another Snacking section.")
-        else:
-            st.session_state["daily_log_snacking_count"] = st.session_state.get("daily_log_snacking_count", 0) + 1
-            st.session_state["active_daily_meal_section"] = f"snacking_{st.session_state['daily_log_snacking_count']}"
-            st.rerun()
+        st.session_state["daily_log_snacking_count"] = st.session_state.get("daily_log_snacking_count", 0) + 1
+        st.session_state["active_daily_meal_section"] = f"snacking_{st.session_state['daily_log_snacking_count']}"
+        st.rerun()
 with add_cols[1]:
     st.markdown("<div class='hm-snack-helper hm-snack-helper-tight'>Snacking is for entries outside standard meal windows.</div>", unsafe_allow_html=True)
 
@@ -1722,12 +1732,16 @@ with top_right:
     existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
     default_other_count = min(max(len(existing_other_fluids), 0), 5)
     other_count_options = [0, 1, 2, 3, 4, 5]
-    other_fluid_count = st.selectbox(
+    other_fluid_count_key = f"other_fluid_count_{log_date}"
+    if other_fluid_count_key not in st.session_state:
+        st.session_state[other_fluid_count_key] = default_other_count
+    st.selectbox(
         "Other Fluids consumed outside standard meal window",
         other_count_options,
-        index=other_count_options.index(default_other_count) if default_other_count in other_count_options else 0,
-        key=f"other_fluid_count_{log_date}",
+        index=other_count_options.index(st.session_state.get(other_fluid_count_key, default_other_count)) if st.session_state.get(other_fluid_count_key, default_other_count) in other_count_options else 0,
+        key=other_fluid_count_key,
     )
+    other_fluid_count = int(st.session_state.get(other_fluid_count_key, 0) or 0)
 
 
 
