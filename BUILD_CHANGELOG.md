@@ -27,3 +27,19 @@
 - Re-added only From Date / To Date filter for Recent Saved Days.
 - Avoided further changes to meal timing, snacking, other fluids, and header styling.
 - Removed helper regressions introduced in later Daily Log patches.
+
+## v97.14 - Daily Log Spacing + Recent Filter Correction
+
+- Removed style-only blocks between hero banner and Food Journal Date to reduce visual gap.
+- Reduced spacing between Food Journal Date and Meal Sections.
+- Replaced duplicate Recent Saved Days filters with one working From Date / To Date filter.
+- Recent Saved Days filter now supports both YYYY-MM-DD and YYYY/MM/DD saved date formats.
+- No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.15 - Daily Log Physical Order + Recent Filter Hard Fix
+
+- Physically moved Food Journal Date immediately after Daily Food Journal header.
+- Reduced Food Journal Date to Meal Sections gap.
+- Rebuilt Recent Saved Days filter inside the actual display path.
+- Filter now applies before saved-day rows/cards are rendered.
+- No changes to meal timing, snacking, other fluids, or save logic.

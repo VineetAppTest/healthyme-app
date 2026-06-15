@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_13_DailyLog_FunctionalRollback_RecentFilter",
-  "version": "v97.13",
-  "updated_on": "2026-06-15T06:54:35.091473+00:00",
+  "build_name": "HealthyMe_v97_15_DailyLog_PhysicalOrder_RecentFilter_HardFix",
+  "version": "v97.15",
+  "updated_on": "2026-06-15T07:54:47.515734+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,10 +17,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Rolled back pages/18_Daily_Log.py to the last stable functional v97.8 Daily Log baseline.",
-    "Re-added only From Date / To Date filter for Recent Saved Days.",
-    "Avoided further changes to meal timing, snacking, other fluids, and header styling.",
-    "Removed the helper regressions introduced in the later Daily Log patches."
+    "Physically moved Food Journal Date immediately after Daily Food Journal header.",
+    "Reduced Food Journal Date to Meal Sections gap.",
+    "Rebuilt Recent Saved Days filter inside the actual display path.",
+    "Filter now applies before saved-day rows/cards are rendered.",
+    "No changes to meal timing, snacking, other fluids, or save logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -317,6 +318,6 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v97_12_DailyLog_TimingHelper_HeaderGap_Hotfix.zip",
+  "base_build": "HealthyMe_v97_14_DailyLog_Spacing_RecentFilter_Correction.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip"
 }

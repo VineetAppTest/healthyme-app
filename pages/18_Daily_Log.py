@@ -61,14 +61,44 @@ def other_fluids_summary_v97(items):
 
 def parse_date_safe_v97_3(value):
     try:
-        return datetime.date.fromisoformat(str(value))
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        raw = raw.replace("/", "-")
+        return datetime.date.fromisoformat(raw)
     except Exception:
         return None
 
 
 def parse_date_safe_v97_13(value):
     try:
-        return datetime.date.fromisoformat(str(value))
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        raw = raw.replace("/", "-")
+        return datetime.date.fromisoformat(raw)
+    except Exception:
+        return None
+
+
+def parse_date_safe_v97_14(value):
+    try:
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        raw = raw.replace("/", "-")
+        return datetime.date.fromisoformat(raw)
+    except Exception:
+        return None
+
+
+def parse_date_safe_v97_15(value):
+    try:
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        raw = raw.replace("/", "-")
+        return datetime.date.fromisoformat(raw)
     except Exception:
         return None
 
@@ -568,420 +598,147 @@ div[data-testid="stTextInput"] input{
 )
 
 user_id = st.session_state["user_id"]
-compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
-render_system_message()
 
 st.markdown("""
 <style>
-/* v97.5 Daily Log compact alignment correction */
+/* v97.14 Daily Log spacing and saved-days filter correction */
 
-/* Keep the softer dropdown look that worked */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  border-radius:12px!important;
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  color:#064E3B!important;
-  font-weight:760!important;
-  font-size:.88rem!important;
-}
-div[data-testid="stSelectbox"] svg{
-  color:#0F766E!important;
-  fill:#0F766E!important;
-}
-
-/* Actual Streamlit-column date row styling */
-.hm-v975-date-band{
-  border:1.4px solid #D9B458;
-  border-left:6px solid #0F766E;
-  border-radius:16px;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF8EA 100%);
-  padding:.35rem .55rem;
-  margin:.35rem 0 .85rem 0;
-  box-shadow:0 8px 20px rgba(15,23,42,.045);
-}
-.hm-v975-date-label{
-  color:#064E3B;
-  font-weight:950;
-  font-size:1rem;
-  line-height:2.35rem;
-  padding-left:.35rem;
-}
-.hm-v975-date-band div[data-testid="stDateInput"]{
-  margin-bottom:0!important;
-}
-.hm-v975-date-band div[data-testid="stDateInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-  border:1.15px solid #DCC690!important;
-  background:#FFFFFF!important;
-  color:#064E3B!important;
-  font-weight:850!important;
-}
-
-/* Other Fluids compact 2-row structure */
-.hm-v975-section-band{
-  border:1.15px solid #E2C98F;
-  border-radius:16px;
-  background:#FFFDF8;
-  padding:.72rem .82rem .78rem .82rem;
-  margin:.65rem 0 .72rem 0;
-  box-shadow:0 5px 14px rgba(15,23,42,.03);
-}
-.hm-v975-fluid-title{
-  color:#064E3B;
-  font-weight:950;
-  font-size:.98rem;
-  margin:.05rem 0 .35rem 0;
-}
-.hm-v975-field-label{
-  color:#334155;
-  font-size:.82rem;
-  font-weight:750;
-  line-height:1.05;
-  margin:0 0 .25rem 0;
-  min-height:1rem;
-}
-.hm-v975-empty-label{
-  color:transparent;
-  font-size:.82rem;
-  line-height:1.05;
-  margin:0 0 .25rem 0;
-  min-height:1rem;
-}
-.hm-v975-fluid-notes div[data-testid="stTextInput"] input,
-div[data-testid="stTextInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-}
-
-/* Section borders for structure without adding thick page breaks */
-.hm-other-fluids-box{
-  border:1.15px solid #E2C98F!important;
-  border-radius:16px!important;
-  background:#FFFDF8!important;
-  padding:.72rem .82rem .78rem .82rem!important;
-  margin:.65rem 0 .72rem 0!important;
-  box-shadow:0 5px 14px rgba(15,23,42,.03)!important;
-}
-
-@media (max-width:768px){
-  .hm-v975-date-label{
-    line-height:1.35rem!important;
-    padding:.1rem 0 .25rem .1rem!important;
-  }
-  .hm-v975-date-band{
-    padding:.55rem .62rem!important;
-    border-radius:15px!important;
-  }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-  div[data-testid="stTextInput"] input,
-  .hm-v975-date-band div[data-testid="stDateInput"] input{
-    min-height:2.18rem!important;
-    height:2.18rem!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-/* v97.4 Daily Log Alignment / Date Row / Border Polish */
-
-/* Elegant same-row date selector */
-.hm-daily-date-shell{
-  display:grid!important;
-  grid-template-columns:minmax(210px, 1fr) minmax(260px, 420px)!important;
-  align-items:center!important;
-  gap:1rem!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF8EA 100%)!important;
-  border:1.5px solid #D9B458!important;
-  border-left:6px solid #0F766E!important;
-  border-radius:16px!important;
-  padding:.78rem .95rem!important;
-  margin:.45rem 0 .9rem 0!important;
-  box-shadow:0 8px 20px rgba(15,23,42,.055)!important;
-}
-.hm-daily-date-title{
-  color:#064E3B!important;
-  font-weight:950!important;
-  font-size:1rem!important;
-  letter-spacing:.01em!important;
+/* Hide style-only Streamlit markdown wrappers if any later style blocks exist. */
+div[data-testid="stElementContainer"]:has(style),
+div[data-testid="stMarkdownContainer"]:has(style){
+  display:none!important;
+  height:0!important;
+  min-height:0!important;
   margin:0!important;
-}
-.hm-daily-date-shell div[data-testid="stDateInput"]{
-  margin-bottom:0!important;
-}
-.hm-daily-date-shell div[data-testid="stDateInput"] input{
-  background:#FFFFFF!important;
-  border:1.25px solid #E2C98F!important;
-  border-radius:13px!important;
-  min-height:2.34rem!important;
-  height:2.34rem!important;
-  color:#064E3B!important;
-  font-weight:850!important;
+  padding:0!important;
 }
 
-/* Elegant bordered structure for Daily Log major sections */
-.hm-v97-bordered-section,
-.hm-other-fluids-box,
-.hm-daily-date-shell,
-.hm-recent-filter-box,
-.hm-rsd-mobile-shell{
-  border-color:#E2C98F!important;
+/* Reduce space after the hero banner. */
+.hero-shell{
+  margin-bottom:.35rem!important;
 }
-.hm-other-fluids-box{
-  border:1.2px solid #E2C98F!important;
-  border-radius:16px!important;
-  background:#FFFDF8!important;
-  padding:.82rem .9rem .9rem .9rem!important;
-  margin:.7rem 0 .72rem 0!important;
-  box-shadow:0 6px 16px rgba(15,23,42,.035)!important;
-}
-.hm-other-fluid-entry-title{
-  color:#064E3B!important;
-  font-weight:950!important;
-  font-size:.98rem!important;
-  margin:.12rem 0 .42rem 0!important;
-  padding-bottom:.32rem!important;
-  border-bottom:1px solid #EFE2C7!important;
+.block-container{
+  padding-top:.55rem!important;
 }
 
-/* Other Fluids row alignment */
-.hm-other-fluid-entry-grid{
-  display:grid;
-  grid-template-columns:minmax(180px, 1.28fr) minmax(82px,.45fr) minmax(82px,.45fr) minmax(120px,.7fr) minmax(170px,.95fr);
-  gap:.78rem;
-  align-items:end;
-  margin-bottom:.58rem;
+/* Food Journal Date row: keep existing structure but remove excess vertical padding. */
+.hm-v978-date-wrap{
+  margin:0 0 .32rem 0!important;
+  padding:0!important;
 }
-.hm-other-fluid-field label,
-.hm-other-fluid-time-label,
-.hm-other-fluid-qty-label{
-  display:block;
-  color:#334155!important;
-  font-size:.84rem!important;
-  font-weight:700!important;
-  line-height:1.1!important;
-  margin:0 0 .34rem 0!important;
-  min-height:1.05rem!important;
+.hm-v978-date-left{
+  min-height:2.05rem!important;
+  align-items:center!important;
 }
-.hm-other-fluid-field div[data-testid="stSelectbox"],
-.hm-other-fluid-field div[data-testid="stTextInput"]{
-  margin-bottom:0!important;
+.hm-v978-date-label{
+  font-size:1.12rem!important;
+  line-height:1.05!important;
 }
-.hm-other-fluid-field div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-.hm-other-fluid-field div[data-testid="stTextInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
+.hm-v978-date-help{
+  font-size:.82rem!important;
+  line-height:1.10!important;
 }
-.hm-other-fluid-field div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  font-size:.86rem!important;
-  font-weight:780!important;
-}
-.hm-other-fluid-notes{
-  margin-top:.12rem!important;
-}
-.hm-other-fluid-notes div[data-testid="stTextInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-  background:#F4F7FB!important;
-  border:1px solid #E3E9F2!important;
+.hm-v978-date-wrap div[data-testid="stDateInput"] input{
+  min-height:2.12rem!important;
+  height:2.12rem!important;
 }
 
-/* Softer compact dropdowns globally on this page */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  border-radius:12px!important;
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  color:#064E3B!important;
-  font-weight:760!important;
-  font-size:.88rem!important;
-}
-div[data-testid="stSelectbox"] svg{
-  color:#0F766E!important;
-  fill:#0F766E!important;
+/* Reduce date row to Meal Sections gap. */
+.hm-v978-date-wrap + div,
+.hm-v978-date-wrap ~ div[data-testid="stVerticalBlock"]{
+  margin-top:0!important;
 }
 
-/* Thin section separation */
-
-/* Mobile responsiveness */
-@media (max-width:768px){
-  .hm-daily-date-shell{
-    grid-template-columns:1fr!important;
-    gap:.5rem!important;
-    padding:.68rem .72rem .75rem .72rem!important;
-    margin:.35rem 0 .75rem 0!important;
-    border-radius:15px!important;
-  }
-  .hm-daily-date-title{
-    font-size:.9rem!important;
-  }
-  .hm-other-fluid-entry-grid{
-    grid-template-columns:1fr!important;
-    gap:.42rem!important;
-  }
-  .hm-other-fluid-field label,
-  .hm-other-fluid-time-label,
-  .hm-other-fluid-qty-label{
-    margin-bottom:.2rem!important;
-    min-height:auto!important;
-  }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-  .hm-other-fluid-field div[data-testid="stTextInput"] input{
-    min-height:2.18rem!important;
-    height:2.18rem!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-/* v97.3 Daily Log UI polish */
-.hm-daily-date-shell{
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF8EA 100%)!important;
-  border:1.5px solid #D9B458!important;
-  border-left:6px solid #0F766E!important;
-  border-radius:16px!important;
-  padding:.78rem .95rem .85rem .95rem!important;
-  margin:.45rem 0 .9rem 0!important;
-  box-shadow:0 8px 20px rgba(15,23,42,.055)!important;
-}
-.hm-daily-date-title{
-  color:#064E3B!important;
-  font-weight:950!important;
-  font-size:.96rem!important;
-  letter-spacing:.01em!important;
-  margin-bottom:.38rem!important;
-}
-.hm-daily-date-shell div[data-testid="stDateInput"]{
-  margin-bottom:0!important;
-}
-.hm-daily-date-shell div[data-testid="stDateInput"] input{
-  background:#FFFFFF!important;
-  border:1.25px solid #E2C98F!important;
-  border-radius:13px!important;
-  min-height:2.4rem!important;
-  height:2.4rem!important;
-  color:#064E3B!important;
-  font-weight:850!important;
-}
-
-/* Softer, more compact dropdowns on Food Journal page */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  border-radius:12px!important;
-  min-height:2.25rem!important;
-  height:2.25rem!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.028)!important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  color:#064E3B!important;
-  font-weight:760!important;
-  font-size:.88rem!important;
-}
-div[data-testid="stSelectbox"] svg{
-  color:#0F766E!important;
-  fill:#0F766E!important;
-}
-.hm-recent-filter-box{
+/* Recent Saved Days filter */
+.hm-v9714-recent-filter{
   border:1px solid #E7D8BE;
   background:#FFFDF8;
   border-radius:14px;
   padding:.65rem .75rem .25rem .75rem;
-  margin:.4rem 0 .65rem 0;
+  margin:.35rem 0 .7rem 0;
+  box-shadow:0 4px 12px rgba(15,23,42,.025);
 }
-.hm-recent-filter-title{
+.hm-v9714-recent-filter-title{
   color:#064E3B;
   font-weight:900;
   font-size:.9rem;
   margin-bottom:.35rem;
 }
 @media (max-width:768px){
-  .hm-daily-date-shell{
-    padding:.68rem .72rem .75rem .72rem!important;
-    margin:.35rem 0 .75rem 0!important;
-    border-radius:15px!important;
+  .hero-shell{
+    margin-bottom:.25rem!important;
   }
-  .hm-daily-date-title{
-    font-size:.88rem!important;
+  .hm-v978-date-wrap{
+    margin:0 0 .25rem 0!important;
   }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-    min-height:2.18rem!important;
-    height:2.18rem!important;
-  }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-    font-size:.84rem!important;
-  }
-  .hm-recent-filter-box{
-    padding:.58rem .62rem .18rem .62rem!important;
+  .hm-v978-date-left{
+    align-items:flex-start!important;
+    min-height:auto!important;
   }
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 st.markdown("""
 <style>
-/* v97 Other Fluids functional styling */
-
-/* v97.2 Other Fluids positioning and thin break */
-.hm-other-fluids-box{
-  border:0!important;
-  background:transparent!important;
-  padding:.15rem 0 .05rem 0!important;
-  margin:.25rem 0 .25rem 0!important;
+/* v97.15 Daily Log physical order spacing + working recent filter */
+.block-container{padding-top:.45rem!important;}
+.hero-shell{margin-bottom:.35rem!important;}
+.hm-v9715-date-row{
+  margin:.05rem 0 .35rem 0!important;
+  padding:0!important;
 }
-.hm-other-fluid-entry-title{
-  margin:.18rem 0 .08rem 0!important;
+.hm-v9715-date-label-wrap{
+  display:flex;
+  align-items:center;
+  min-height:2.1rem;
+  gap:.55rem;
+  flex-wrap:wrap;
 }
-.hm-other-fluids-box div[data-testid="stTextInput"],
-.hm-other-fluids-box div[data-testid="stSelectbox"]{
-  margin-bottom:.22rem!important;
-}
-
-
-.hm-other-fluid-entry-title{color:#064E3B;font-weight:900;margin:.32rem 0 .18rem 0;}
-.hm-other-fluid-inline-time-label{color:#064E3B;font-size:.78rem;font-weight:850;margin:0 0 .22rem 0;}
-/* v97.1 Other Fluids compact timing */
-
-.hm-other-fluids-box{
-  border:1px solid #E7D8BE;
-  border-radius:14px;
-  background:#FFFDF8;
-  padding:.75rem .85rem;
-  margin:.7rem 0 .75rem 0;
-}
-.hm-other-fluids-title{
-  font-weight:900;
+.hm-v9715-date-title{
   color:#064E3B;
-  font-size:.98rem;
-  margin-bottom:.18rem;
+  font-weight:950;
+  font-size:1.05rem;
+  line-height:1.05;
 }
-.hm-other-fluids-note{
+.hm-v9715-date-help{
   color:#64748B;
-  font-size:.8rem;
-  margin-bottom:.45rem;
+  font-size:.80rem;
+  line-height:1.1;
+}
+.hm-v9715-date-row div[data-testid="stDateInput"] input{
+  min-height:2.12rem!important;
+  height:2.12rem!important;
+}
+.hm-v9715-meal-anchor{
+  margin-top:0!important;
+  padding-top:0!important;
+}
+.hm-v9715-recent-filter{
+  border:1px solid #E7D8BE;
+  background:#FFFDF8;
+  border-radius:14px;
+  padding:.62rem .72rem .2rem .72rem;
+  margin:.32rem 0 .7rem 0;
+  box-shadow:0 4px 12px rgba(15,23,42,.025);
+}
+.hm-v9715-recent-filter-title{
+  color:#064E3B;
+  font-weight:900;
+  font-size:.9rem;
+  margin-bottom:.32rem;
+}
+@media (max-width:768px){
+  .hero-shell{margin-bottom:.25rem!important;}
+  .hm-v9715-date-row{margin:.03rem 0 .28rem 0!important;}
+  .hm-v9715-date-label-wrap{align-items:flex-start;gap:.25rem;min-height:auto;}
 }
 </style>
 """, unsafe_allow_html=True)
+
+compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
+render_system_message()
 
 def get_device_mode_for_spike():
     """
@@ -1068,25 +825,6 @@ is_mobile_mode_v90a = (device_mode_v90a == "mobile")
 rendered_controls_v90a = "stable Streamlit mobile controls" if is_mobile_mode_v90a else "desktop controls"
 # v97.3: mobile input diagnostic UI removed.
 
-
-st.markdown("""
-<style>
-.hm-v88-balanced-empty{min-height:.1rem!important;}
-.hm-snack-helper-tight{margin-top:.05rem!important;font-size:.78rem!important;line-height:1.15!important;}
-.hm-rsd-mobile-shell{margin-top:.15rem!important;}
-.hm-rsd-mobile-card{border-top:1.15px solid #E5D2A9;padding:.52rem 0 .48rem 0;}
-.hm-rsd-mobile-label{color:#36506A;font-size:.78rem;font-weight:850;line-height:1.15;padding:.10rem 0;}
-.hm-rsd-mobile-value{color:#102A43;font-size:.84rem;line-height:1.25;padding:.10rem 0;}
-.hm-rsd-mobile-card [data-testid="column"]{display:flex!important;align-items:flex-start!important;}
-.hm-rsd-mobile-card .stButton > button{min-height:1.75rem!important;padding:.12rem .55rem!important;font-size:.74rem!important;}
-@media (max-width:768px){
-  .hm-v88-balanced-empty{display:none!important;}
-  .hm-snack-helper-tight{margin-top:-.05rem!important;}
-  .hm-rsd-mobile-label{font-size:.76rem!important;}
-  .hm-rsd-mobile-value{font-size:.82rem!important;}
-}
-</style>
-""", unsafe_allow_html=True)
 
 auto_archive_expired_nutritionist_messages(user_id)
 
@@ -1322,121 +1060,11 @@ def validate_meal_time(section_key, section_label, time_value):
 
 
 
-st.markdown("""
-<style>
-/* v97.6 Daily Log bordered compact fluid correction */
-
-/* Keep subtle dropdown look, but make controls consistent */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  border-radius:12px!important;
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  color:#064E3B!important;
-  font-weight:760!important;
-  font-size:.88rem!important;
-}
-div[data-testid="stSelectbox"] svg{
-  color:#0F766E!important;
-  fill:#0F766E!important;
-}
-div[data-testid="stTextInput"] input,
-div[data-testid="stDateInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-}
-
-/* Streamlit border container polish: elegant, visible, not harsh */
-div[data-testid="stVerticalBlockBorderWrapper"]{
-  border-color:#E2C98F!important;
-  border-radius:16px!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFFDF5 100%)!important;
-  box-shadow:0 6px 16px rgba(15,23,42,.026)!important;
-}
-
-/* Food Journal Date row */
-.hm-v978-date-wrap{
-  margin:.10rem 0 .45rem 0!important;
-  padding:.22rem 0 .10rem 0!important;
-}
-.hm-v978-date-left{
-  display:flex;
-  align-items:center;
-  gap:.55rem;
-  min-height:2.35rem;
-  flex-wrap:wrap;
-}
-.hm-v978-date-label{
-  color:#064E3B;
-  font-weight:950;
-  font-size:1.14rem;
-  line-height:1.1;
-  padding-left:.05rem;
-}
-.hm-v978-date-help{
-  color:#64748B;
-  font-size:.84rem;
-  line-height:1.2;
-}
-
-/* Other Fluids compact layout */
-.hm-v976-fluid-title{
-  color:#064E3B;
-  font-weight:950;
-  font-size:.98rem;
-  margin:.18rem 0 .42rem 0;
-  padding-top:.12rem;
-}
-.hm-v976-field-label{
-  color:#334155;
-  font-size:.82rem;
-  font-weight:780;
-  line-height:1.05;
-  margin:0 0 .26rem 0;
-}
-.hm-v976-empty-label{
-  color:transparent;
-  font-size:.82rem;
-  line-height:1.05;
-  margin:0 0 .26rem 0;
-}
-.hm-v976-row2-spacer{
-  height:.08rem;
-}
-
-/* Reduce unwanted vertical looseness around Other Fluids widgets */
-@media (max-width:768px){
-  .hm-v978-date-left{
-    align-items:flex-start!important;
-    gap:.3rem!important;
-  }
-  .hm-v978-date-label{
-    font-size:1.02rem!important;
-    padding-bottom:0!important;
-  }
-  .hm-v978-date-help{
-    font-size:.78rem!important;
-  }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-  div[data-testid="stTextInput"] input,
-  div[data-testid="stDateInput"] input{
-    min-height:2.18rem!important;
-    height:2.18rem!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
 # Fixed Daily Log meal structure.
-st.markdown("<div class='hm-v978-date-wrap'>", unsafe_allow_html=True)
-date_label_col, date_picker_col = st.columns([1.35, 1.65])
+st.markdown("<div class='hm-v9715-date-row'>", unsafe_allow_html=True)
+date_label_col, date_picker_col = st.columns([1.18, 1.52], gap="small")
 with date_label_col:
-    st.markdown("<div class='hm-v978-date-left'><div class='hm-v978-date-label'>Food Journal Date</div><div class='hm-v978-date-help'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v9715-date-label-wrap'><div class='hm-v9715-date-title'>Food Journal Date</div><div class='hm-v9715-date-help'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
 with date_picker_col:
     log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
 st.markdown("</div>", unsafe_allow_html=True)
@@ -1486,6 +1114,7 @@ if "active_daily_meal_section" not in st.session_state or st.session_state["acti
     st.session_state["active_daily_meal_section"] = meal_sections[0][0]
 
 
+st.markdown("<div class='hm-v9715-meal-anchor'></div>", unsafe_allow_html=True)
 card_start()
 st.subheader("Meal sections")
 st.markdown("<div class='hm-compact-section-note hm-section-mini-gap'>Tap a meal to open it. Save the current meal before moving to another section.</div>", unsafe_allow_html=True)
@@ -2044,60 +1673,47 @@ st.markdown(
 )
 days = get_daily_food_journal_days(user_id)
 if not days:
+    st.markdown("<div class='hm-v9715-recent-filter'><div class='hm-v9715-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+    rf1, rf2 = st.columns(2)
+    with rf1:
+        st.date_input("From date", value=date.today(), key="v97_15_recent_filter_from_empty")
+    with rf2:
+        st.date_input("To date", value=date.today(), key="v97_15_recent_filter_to_empty")
+    st.markdown("</div>", unsafe_allow_html=True)
     st.info("No food journal days saved yet.")
 else:
-
-    # v97.3 Recent Saved Days date filter
-    available_saved_dates_v97_3 = sorted([d for d in [parse_date_safe_v97_3(x.get("date")) for x in days] if d], reverse=True)
-    if available_saved_dates_v97_3:
-        st.markdown("<div class='hm-recent-filter-box'><div class='hm-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+    # v97.15 From / To filter for Recent Saved Days
+    available_saved_dates_v97_15 = sorted(
+        [d for d in [parse_date_safe_v97_15(x.get("date")) for x in days] if d],
+        reverse=True,
+    )
+    st.markdown("<div class='hm-v9715-recent-filter'><div class='hm-v9715-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+    if available_saved_dates_v97_15:
         rf1, rf2 = st.columns(2)
         with rf1:
-            recent_from_v97_3 = st.date_input(
+            recent_from_v97_15 = st.date_input(
                 "From date",
-                value=min(available_saved_dates_v97_3),
-                key="v97_3_recent_filter_from",
+                value=min(available_saved_dates_v97_15),
+                key="v97_15_recent_filter_from",
             )
         with rf2:
-            recent_to_v97_3 = st.date_input(
+            recent_to_v97_15 = st.date_input(
                 "To date",
-                value=max(available_saved_dates_v97_3),
-                key="v97_3_recent_filter_to",
-            )
-        st.markdown("</div>", unsafe_allow_html=True)
-        days = [
-            x for x in days
-            if parse_date_safe_v97_3(x.get("date")) and recent_from_v97_3 <= parse_date_safe_v97_3(x.get("date")) <= recent_to_v97_3
-        ]
-
-
-    # v97.13 From / To filter for Recent Saved Days
-    available_saved_dates_v97_13 = sorted([d for d in [parse_date_safe_v97_13(x.get("date")) for x in days] if d], reverse=True)
-    st.markdown("<div class='hm-v9713-recent-filter'><div class='hm-v9713-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
-    if available_saved_dates_v97_13:
-        rf1, rf2 = st.columns(2)
-        with rf1:
-            recent_from_v97_13 = st.date_input(
-                "From date",
-                value=min(available_saved_dates_v97_13),
-                key="v97_13_recent_filter_from",
-            )
-        with rf2:
-            recent_to_v97_13 = st.date_input(
-                "To date",
-                value=max(available_saved_dates_v97_13),
-                key="v97_13_recent_filter_to",
+                value=max(available_saved_dates_v97_15),
+                key="v97_15_recent_filter_to",
             )
         days = [
             x for x in days
-            if parse_date_safe_v97_13(x.get("date")) and recent_from_v97_13 <= parse_date_safe_v97_13(x.get("date")) <= recent_to_v97_13
+            if parse_date_safe_v97_15(x.get("date")) and recent_from_v97_15 <= parse_date_safe_v97_15(x.get("date")) <= recent_to_v97_15
         ]
+        if not days:
+            st.caption("No saved days found for the selected date range.")
     else:
         rf1, rf2 = st.columns(2)
         with rf1:
-            st.date_input("From date", value=date.today(), key="v97_13_recent_filter_from_empty")
+            st.date_input("From date", value=date.today(), key="v97_15_recent_filter_from_no_parse")
         with rf2:
-            st.date_input("To date", value=date.today(), key="v97_13_recent_filter_to_empty")
+            st.date_input("To date", value=date.today(), key="v97_15_recent_filter_to_no_parse")
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='hm-rsd-mobile-shell'>", unsafe_allow_html=True)
