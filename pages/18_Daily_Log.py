@@ -1458,7 +1458,7 @@ st.markdown("""
   margin:.22rem 0 .34rem 0!important;
   padding:0!important;
 }
-.hm-v9729-date-stack{
+.hm-v9731-date-stack{
   min-height:2.45rem!important;
   display:flex!important;
   flex-direction:column!important;
@@ -1466,11 +1466,11 @@ st.markdown("""
   align-items:flex-start!important;
   gap:.08rem!important;
 }
-.hm-v9729-date-stack .hm-v9729-section-title,
-.hm-v9729-date-stack .hm-v9729-section-note{
+.hm-v9731-date-stack .hm-v9729-section-title,
+.hm-v9731-date-stack .hm-v9729-section-note{
   margin:0!important;
 }
-.hm-v9729-date-input div[data-testid="stDateInput"] input{
+.hm-v9731-date-input div[data-testid="stDateInput"] input{
   height:2.45rem!important;
   min-height:2.45rem!important;
 }
@@ -1490,7 +1490,7 @@ st.markdown("""
   margin-top:.70rem!important;
 }
 @media (max-width:768px){
-  .hm-v9729-date-stack{
+  .hm-v9731-date-stack{
     min-height:auto!important;
     justify-content:flex-start!important;
   }
@@ -1502,7 +1502,7 @@ st.markdown("""
 st.markdown("""
 <style>
 /* v97.30 Food Journal Date row alignment */
-.hm-v9730-date-stack{
+.hm-v9731-date-stack{
   min-height:2.62rem!important;
   height:2.62rem!important;
   display:flex!important;
@@ -1513,42 +1513,87 @@ st.markdown("""
   margin:0!important;
   padding:.03rem 0 0 0!important;
 }
-.hm-v9730-date-stack .hm-v9729-section-title{
+.hm-v9731-date-stack .hm-v9729-section-title{
   margin:0!important;
   padding:0!important;
   line-height:1.02!important;
 }
-.hm-v9730-date-stack .hm-v9729-section-note{
+.hm-v9731-date-stack .hm-v9729-section-note{
   margin:0!important;
   padding:0!important;
   line-height:1.05!important;
 }
-.hm-v9730-date-input{
+.hm-v9731-date-input{
   height:2.62rem!important;
   min-height:2.62rem!important;
   display:flex!important;
   align-items:center!important;
 }
-.hm-v9730-date-input div[data-testid="stDateInput"]{
+.hm-v9731-date-input div[data-testid="stDateInput"]{
   width:100%!important;
   margin:0!important;
   padding:0!important;
 }
-.hm-v9730-date-input div[data-testid="stDateInput"] input{
+.hm-v9731-date-input div[data-testid="stDateInput"] input{
   min-height:2.38rem!important;
   height:2.38rem!important;
   margin:0!important;
 }
 @media (max-width:768px){
-  .hm-v9730-date-stack{
+  .hm-v9731-date-stack{
     height:auto!important;
     min-height:auto!important;
     justify-content:flex-start!important;
     padding:.02rem 0 .08rem 0!important;
   }
-  .hm-v9730-date-input{
+  .hm-v9731-date-input{
     height:auto!important;
     min-height:auto!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
+<style>
+/* v97.31 Food Journal Date render-position alignment */
+.hm-v9731-date-stack{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  gap:.10rem!important;
+  margin-top:1.02rem!important;
+  padding:0!important;
+}
+.hm-v9731-date-stack .hm-v9729-section-title{
+  margin:0!important;
+  padding:0!important;
+  line-height:1.02!important;
+}
+.hm-v9731-date-stack .hm-v9729-section-note{
+  margin:0!important;
+  padding:0!important;
+  line-height:1.05!important;
+}
+.hm-v9731-date-input{
+  display:block!important;
+  margin-top:0!important;
+  padding-top:0!important;
+}
+.hm-v9731-date-input div[data-testid="stDateInput"]{
+  margin-top:0!important;
+  padding-top:0!important;
+  width:100%!important;
+}
+.hm-v9731-date-input div[data-testid="stDateInput"] input{
+  min-height:2.38rem!important;
+  height:2.38rem!important;
+}
+@media (max-width:768px){
+  .hm-v9731-date-stack{
+    margin-top:.18rem!important;
   }
 }
 </style>
@@ -1881,9 +1926,9 @@ def validate_meal_time(section_key, section_label, time_value):
 with st.container(border=True):
     date_label_col, date_picker_col = st.columns([1.05, 1.65], gap="small")
     with date_label_col:
-        st.markdown("<div class='hm-v9730-date-stack'><div class='hm-v9729-section-title'>Food Journal Date</div><div class='hm-v9729-section-note'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v9731-date-stack'><div class='hm-v9729-section-title'>Food Journal Date</div><div class='hm-v9729-section-note'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
     with date_picker_col:
-        st.markdown("<div class='hm-v9730-date-input'>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v9731-date-input'>", unsafe_allow_html=True)
         log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
         st.markdown("</div>", unsafe_allow_html=True)
 

@@ -139,3 +139,9 @@
 - Matched label-stack and date-input row heights.
 - Adjusted date row column ratio for better horizontal balance.
 - No changes to section structure, button-driven filter, meal timing, snacking, other fluids, or save logic.
+
+## v97.31 - Daily Log Date Picker Render Alignment
+
+- Adjusted Food Journal Date label/help block to match Streamlit date picker rendered position.
+- Used physical render-position offset instead of relying on vertical centering alone.
+- No changes to native bordered sections, button-driven filter, Fluid Timing label, meal timing, snacking, other fluids, or save logic.
