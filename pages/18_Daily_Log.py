@@ -162,6 +162,18 @@ def get_saved_day_display_date_v97_20(day):
     return str(parsed) if parsed else ""
 
 
+def get_saved_day_card_filter_date_v97_33(day):
+    """Use the visible saved-day card date as the filter source."""
+    try:
+        visible_date = get_saved_day_display_date_v97_20(day)
+        parsed = parse_date_safe_v97_18(visible_date)
+        if parsed:
+            return parsed
+        return get_saved_day_filter_date_v97_20(day)
+    except Exception:
+        return None
+
+
 def get_saved_day_filter_date_v97_20(day):
     """Use the saved-day key as source of truth for filtering."""
     if not isinstance(day, dict):
@@ -2560,9 +2572,9 @@ with st.container(border=True):
     st.markdown("<div class='hm-v9729-section-title'>Recent Saved Days</div>", unsafe_allow_html=True)
     all_days = get_daily_food_journal_days(user_id) or []
 
-    # v97.23 Button-driven From / To filter for Recent Saved Days
+    # v97.33 Button-driven From / To filter for Recent Saved Days using visible card date
     all_parseable_dates_v97_23 = sorted(
-        [d for d in [get_saved_day_filter_date_v97_20(day) for day in all_days] if d],
+        [d for d in [get_saved_day_card_filter_date_v97_33(day) for day in all_days] if d],
         reverse=True,
     )
 
@@ -2629,8 +2641,8 @@ with st.container(border=True):
         if active_from_v97_23 and active_to_v97_23 and active_from_v97_23 <= active_to_v97_23:
             filtered_days = [
                 day for day in all_days
-                if get_saved_day_filter_date_v97_20(day)
-                and active_from_v97_23 <= get_saved_day_filter_date_v97_20(day) <= active_to_v97_23
+                if get_saved_day_card_filter_date_v97_33(day)
+                and active_from_v97_23 <= get_saved_day_card_filter_date_v97_33(day) <= active_to_v97_23
             ]
             filter_status_v97_23 = f"Filter active: {active_from_v97_23} to {active_to_v97_23}"
         else:
@@ -2638,7 +2650,7 @@ with st.container(border=True):
             filter_status_v97_23 = "Filter could not be applied — showing all saved days"
 
     st.markdown(
-        f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_23)} · {filter_status_v97_23}</div>",
+        f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · card-dated rows {len(all_parseable_dates_v97_23)} · {filter_status_v97_23}</div>",
         unsafe_allow_html=True,
     )
 

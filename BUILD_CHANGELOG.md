@@ -151,3 +151,11 @@
 - Added a structural spacer inside the Food Journal Date label column to align it with the rendered date picker.
 - Stopped relying only on vertical-centering CSS against Streamlit date_input internals.
 - No changes to section structure, button-driven filter, Fluid Timing label, meal timing, snacking, other fluids, or save logic.
+
+## v97.33 - Daily Log Filter Uses Visible Card Date
+
+- Fixed Recent Saved Days filter to use the same visible date shown on each saved-day card.
+- Button-driven filter now compares From/To against card display date, not stale/internal source fields.
+- Updated filter count wording to card-dated rows for UAT visibility.
+- Retained Food Journal Date alignment from v97.32.
+- No changes to meal timing, snacking, other fluids, or save logic.
