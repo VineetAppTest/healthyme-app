@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v97_31_DailyLog_DatePicker_RenderAlignment",
-  "version": "v97.31",
-  "updated_on": "2026-06-15T19:06:20.314561+00:00",
+  "build_name": "HealthyMe_v97_32_DailyLog_DateLabel_StructuralSpacer",
+  "version": "v97.32",
+  "updated_on": "2026-06-15T19:16:22.766905+00:00",
   "scope": [
     "UI-only patch for Daily Log Recent saved days",
     "Replaced plain dataframe with premium rounded card/table layout",
@@ -17,9 +17,9 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Adjusted Food Journal Date label/help block to match Streamlit date picker rendered position.",
-    "Used physical render-position offset instead of relying on vertical centering alone.",
-    "No changes to native bordered sections, button-driven filter, Fluid Timing label, meal timing, snacking, other fluids, or save logic."
+    "Added a structural spacer inside the Food Journal Date label column to align it with the rendered date picker.",
+    "Stopped relying only on vertical-centering CSS against Streamlit date_input internals.",
+    "No changes to section structure, button-driven filter, Fluid Timing label, meal timing, snacking, other fluids, or save logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -316,6 +316,6 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v97_30_DailyLog_FoodJournalDate_Alignment.zip",
+  "base_build": "HealthyMe_v97_31_DailyLog_DatePicker_RenderAlignment.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip"
 }

@@ -145,3 +145,9 @@
 - Adjusted Food Journal Date label/help block to match Streamlit date picker rendered position.
 - Used physical render-position offset instead of relying on vertical centering alone.
 - No changes to native bordered sections, button-driven filter, Fluid Timing label, meal timing, snacking, other fluids, or save logic.
+
+## v97.32 - Daily Log Food Journal Date Structural Spacer
+
+- Added a structural spacer inside the Food Journal Date label column to align it with the rendered date picker.
+- Stopped relying only on vertical-centering CSS against Streamlit date_input internals.
+- No changes to section structure, button-driven filter, Fluid Timing label, meal timing, snacking, other fluids, or save logic.

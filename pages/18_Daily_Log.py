@@ -1599,6 +1599,59 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v97.32 Food Journal Date structural spacer alignment */
+.hm-v9732-date-left-spacer{
+  height:1.10rem!important;
+  min-height:1.10rem!important;
+  line-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-v9732-date-stack{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  gap:.08rem!important;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-v9732-date-stack .hm-v9729-section-title{
+  margin:0!important;
+  padding:0!important;
+  line-height:1.02!important;
+}
+.hm-v9732-date-stack .hm-v9729-section-note{
+  margin:0!important;
+  padding:0!important;
+  line-height:1.05!important;
+}
+.hm-v9732-date-input{
+  margin:0!important;
+  padding:0!important;
+}
+.hm-v9732-date-input div[data-testid="stDateInput"]{
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-v9732-date-input div[data-testid="stDateInput"] input{
+  min-height:2.38rem!important;
+  height:2.38rem!important;
+  margin:0!important;
+}
+@media (max-width:768px){
+  .hm-v9732-date-left-spacer{
+    height:.90rem!important;
+    min-height:.90rem!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
+
 compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
@@ -1926,9 +1979,10 @@ def validate_meal_time(section_key, section_label, time_value):
 with st.container(border=True):
     date_label_col, date_picker_col = st.columns([1.05, 1.65], gap="small")
     with date_label_col:
-        st.markdown("<div class='hm-v9731-date-stack'><div class='hm-v9729-section-title'>Food Journal Date</div><div class='hm-v9729-section-note'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v9732-date-left-spacer'></div>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v9732-date-stack'><div class='hm-v9729-section-title'>Food Journal Date</div><div class='hm-v9729-section-note'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
     with date_picker_col:
-        st.markdown("<div class='hm-v9731-date-input'>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v9732-date-input'>", unsafe_allow_html=True)
         log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
         st.markdown("</div>", unsafe_allow_html=True)
 
