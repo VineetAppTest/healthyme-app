@@ -13,3 +13,10 @@
 - Added defensive is_dirty helper.
 - Restored visible From Date / To Date filter for Recent Saved Days.
 - Retained v97.10 header gap work.
+
+## v97.12 - Daily Log Timing Helper / Header Gap Hotfix
+
+- Fixed NameError: meal_time_guidance was not defined.
+- Restored split_12h_time_parts, meal_time_selector_options_v97_2, meal_time_guidance, validate_meal_time_window and validate_meal_time.
+- Applied stronger header-to-date whitespace reduction.
+- Retained visible Recent Saved Days From/To filter.

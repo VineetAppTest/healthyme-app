@@ -1,6 +1,7 @@
 import streamlit as st
 import html
 import re
+import datetime
 from datetime import date, time
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, format_local_ts, render_back_to_top, compact_topbar
@@ -78,6 +79,106 @@ def parse_date_safe_v97_10(value):
         return datetime.date.fromisoformat(str(value))
     except Exception:
         return None
+
+
+# --------------------------------------------------------------------
+# v97.12: Daily Log timing helper repair
+# --------------------------------------------------------------------
+STANDARD_MEAL_WINDOWS = {
+    "breakfast": ("6 AM to 11 AM", 6 * 60, 11 * 60 + 59),
+    "lunch": ("12 PM to 3 PM", 12 * 60, 15 * 60 + 59),
+    "evening_snacks": ("4 PM to 6 PM", 16 * 60, 18 * 60 + 59),
+    "dinner": ("7 PM to 10 PM", 19 * 60, 22 * 60 + 59),
+    "bedtime": ("11 PM to 12 AM", 23 * 60, 24 * 60 + 59),
+}
+
+def split_12h_time_parts(time_text):
+    raw = str(time_text or "").strip().upper()
+    match = re.match(r"^\s*(\d{1,2})\s*[:.]\s*(\d{2})\s*(AM|PM)\s*$", raw)
+    if not match:
+        return "HH", "MM", "AM/PM"
+    hour = int(match.group(1))
+    minute = int(match.group(2))
+    period = match.group(3)
+    if hour < 1 or hour > 12 or minute < 0 or minute > 59:
+        return "HH", "MM", "AM/PM"
+    return f"{hour:02d}", f"{minute:02d}", period
+
+def parse_12h_time_to_minutes(time_text):
+    hour, minute, period = split_12h_time_parts(time_text)
+    if hour == "HH" or minute == "MM" or period == "AM/PM":
+        return None
+    h = int(hour)
+    m = int(minute)
+    if period == "AM":
+        h24 = 0 if h == 12 else h
+    else:
+        h24 = 12 if h == 12 else h + 12
+    return h24 * 60 + m
+
+def meal_window_key_for_section(section_key, section_label=""):
+    key = str(section_key or "").lower()
+    label = str(section_label or "").lower()
+    if key.startswith("snacking_") or "snacking" in label:
+        return "snacking"
+    if key in STANDARD_MEAL_WINDOWS:
+        return key
+    if "breakfast" in label:
+        return "breakfast"
+    if "lunch" in label:
+        return "lunch"
+    if "snack" in label:
+        return "evening_snacks"
+    if "dinner" in label:
+        return "dinner"
+    if "bed" in label:
+        return "bedtime"
+    return "snacking"
+
+def meal_time_selector_options_v97_2(section_key):
+    window_key = meal_window_key_for_section(section_key)
+    if window_key == "breakfast":
+        return ["HH"] + [f"{h:02d}" for h in range(6, 12)], ["AM/PM", "AM"]
+    if window_key == "lunch":
+        return ["HH", "12", "01", "02", "03"], ["AM/PM", "PM"]
+    if window_key == "evening_snacks":
+        return ["HH", "04", "05", "06"], ["AM/PM", "PM"]
+    if window_key == "dinner":
+        return ["HH", "07", "08", "09", "10"], ["AM/PM", "PM"]
+    if window_key == "bedtime":
+        return ["HH", "11", "12"], ["AM/PM", "PM", "AM"]
+    return ["HH"] + [f"{h:02d}" for h in range(1, 13)], ["AM/PM", "AM", "PM"]
+
+def meal_time_guidance(section_key, section_label=""):
+    window_key = meal_window_key_for_section(section_key, section_label)
+    if window_key == "snacking":
+        return "Snacking time should be outside Breakfast, Lunch, Evening Snacks, Dinner and Bedtime windows."
+    label, _start, _end = STANDARD_MEAL_WINDOWS.get(window_key, ("standard meal window", 0, 24 * 60))
+    return f"Allowed timing: {label}."
+
+def validate_meal_time_window(section_key, time_text):
+    window_key = meal_window_key_for_section(section_key)
+    minutes = parse_12h_time_to_minutes(time_text)
+    if minutes is None:
+        return True
+    if window_key == "snacking":
+        for _label, start, end in STANDARD_MEAL_WINDOWS.values():
+            if start <= minutes <= end:
+                return False
+        return True
+    _label, start, end = STANDARD_MEAL_WINDOWS.get(window_key, ("", 0, 24 * 60))
+    return start <= minutes <= end
+
+def validate_meal_time(section_key, section_label, time_text):
+    if not time_text:
+        return True, ""
+    if validate_meal_time_window(section_key, time_text):
+        return True, ""
+    window_key = meal_window_key_for_section(section_key, section_label)
+    if window_key == "snacking":
+        return False, "Snacking time must be outside the standard meal windows."
+    label, _start, _end = STANDARD_MEAL_WINDOWS.get(window_key, ("the allowed meal window", 0, 0))
+    return False, f"{section_label} time must be between {label}."
 
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
@@ -656,6 +757,44 @@ div[data-testid="stTextInput"] input{min-height:2.28rem!important;height:2.28rem
 """, unsafe_allow_html=True)
 
 user_id = st.session_state["user_id"]
+
+st.markdown("""
+<style>
+/* v97.12 hard reduction of header-to-date whitespace */
+.hero-shell.hm-compact-page-section,
+.hero-shell{
+  margin-bottom:.10rem!important;
+}
+.hm-v9710-date-wrap,
+.hm-v978-date-wrap{
+  margin-top:-3.15rem!important;
+  margin-bottom:.38rem!important;
+  padding-top:0!important;
+}
+.hm-v9710-date-left,
+.hm-v978-date-left{
+  min-height:2.0rem!important;
+  align-items:center!important;
+}
+.hm-v9710-date-label,
+.hm-v978-date-label{
+  font-size:1.14rem!important;
+  line-height:1.05!important;
+}
+.hm-v9710-date-help,
+.hm-v978-date-help{
+  font-size:.82rem!important;
+  line-height:1.1!important;
+}
+@media (max-width:768px){
+  .hm-v9710-date-wrap,
+  .hm-v978-date-wrap{
+    margin-top:-2.0rem!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
+
 compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
