@@ -72,6 +72,13 @@ def parse_date_safe_v97_9(value):
     except Exception:
         return None
 
+
+def parse_date_safe_v97_10(value):
+    try:
+        return datetime.date.fromisoformat(str(value))
+    except Exception:
+        return None
+
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
@@ -567,898 +574,67 @@ div[data-testid="stTextInput"] input{
     unsafe_allow_html=True,
 )
 
-user_id = st.session_state["user_id"]
-compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
-render_system_message()
 
+# v97.10 consolidated Daily Log CSS placed before header to avoid top-gap
 st.markdown("""
 <style>
-/* v97.5 Daily Log compact alignment correction */
-
-/* Keep the softer dropdown look that worked */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  border-radius:12px!important;
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
+/* v97.10 Daily Log header-gap and recent-filter hard fix */
+.block-container{padding-top:.55rem!important;}
+.hero-shell.hm-compact-page-section,
+.hero-shell{
+  margin-bottom:.45rem!important;
 }
-div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  color:#064E3B!important;
-  font-weight:760!important;
-  font-size:.88rem!important;
+.hm-v9710-date-wrap{
+  margin:0 0 .45rem 0!important;
+  padding:0!important;
 }
-div[data-testid="stSelectbox"] svg{
-  color:#0F766E!important;
-  fill:#0F766E!important;
-}
-
-/* Actual Streamlit-column date row styling */
-.hm-v975-date-band{
-  border:1.4px solid #D9B458;
-  border-left:6px solid #0F766E;
-  border-radius:16px;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF8EA 100%);
-  padding:.35rem .55rem;
-  margin:.35rem 0 .85rem 0;
-  box-shadow:0 8px 20px rgba(15,23,42,.045);
-}
-.hm-v975-date-label{
-  color:#064E3B;
-  font-weight:950;
-  font-size:1rem;
-  line-height:2.35rem;
-  padding-left:.35rem;
-}
-.hm-v975-date-band div[data-testid="stDateInput"]{
-  margin-bottom:0!important;
-}
-.hm-v975-date-band div[data-testid="stDateInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-  border:1.15px solid #DCC690!important;
-  background:#FFFFFF!important;
-  color:#064E3B!important;
-  font-weight:850!important;
-}
-
-/* Other Fluids compact 2-row structure */
-.hm-v975-section-band{
-  border:1.15px solid #E2C98F;
-  border-radius:16px;
-  background:#FFFDF8;
-  padding:.72rem .82rem .78rem .82rem;
-  margin:.65rem 0 .72rem 0;
-  box-shadow:0 5px 14px rgba(15,23,42,.03);
-}
-.hm-v975-fluid-title{
-  color:#064E3B;
-  font-weight:950;
-  font-size:.98rem;
-  margin:.05rem 0 .35rem 0;
-}
-.hm-v975-field-label{
-  color:#334155;
-  font-size:.82rem;
-  font-weight:750;
-  line-height:1.05;
-  margin:0 0 .25rem 0;
-  min-height:1rem;
-}
-.hm-v975-empty-label{
-  color:transparent;
-  font-size:.82rem;
-  line-height:1.05;
-  margin:0 0 .25rem 0;
-  min-height:1rem;
-}
-.hm-v975-fluid-notes div[data-testid="stTextInput"] input,
-div[data-testid="stTextInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-}
-
-/* Section borders for structure without adding thick page breaks */
-.hm-other-fluids-box{
-  border:1.15px solid #E2C98F!important;
-  border-radius:16px!important;
-  background:#FFFDF8!important;
-  padding:.72rem .82rem .78rem .82rem!important;
-  margin:.65rem 0 .72rem 0!important;
-  box-shadow:0 5px 14px rgba(15,23,42,.03)!important;
-}
-
-@media (max-width:768px){
-  .hm-v975-date-label{
-    line-height:1.35rem!important;
-    padding:.1rem 0 .25rem .1rem!important;
-  }
-  .hm-v975-date-band{
-    padding:.55rem .62rem!important;
-    border-radius:15px!important;
-  }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-  div[data-testid="stTextInput"] input,
-  .hm-v975-date-band div[data-testid="stDateInput"] input{
-    min-height:2.18rem!important;
-    height:2.18rem!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-/* v97.4 Daily Log Alignment / Date Row / Border Polish */
-
-/* Elegant same-row date selector */
-.hm-daily-date-shell{
-  display:grid!important;
-  grid-template-columns:minmax(210px, 1fr) minmax(260px, 420px)!important;
-  align-items:center!important;
-  gap:1rem!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF8EA 100%)!important;
-  border:1.5px solid #D9B458!important;
-  border-left:6px solid #0F766E!important;
-  border-radius:16px!important;
-  padding:.78rem .95rem!important;
-  margin:.45rem 0 .9rem 0!important;
-  box-shadow:0 8px 20px rgba(15,23,42,.055)!important;
-}
-.hm-daily-date-title{
-  color:#064E3B!important;
-  font-weight:950!important;
-  font-size:1rem!important;
-  letter-spacing:.01em!important;
-  margin:0!important;
-}
-.hm-daily-date-shell div[data-testid="stDateInput"]{
-  margin-bottom:0!important;
-}
-.hm-daily-date-shell div[data-testid="stDateInput"] input{
-  background:#FFFFFF!important;
-  border:1.25px solid #E2C98F!important;
-  border-radius:13px!important;
-  min-height:2.34rem!important;
-  height:2.34rem!important;
-  color:#064E3B!important;
-  font-weight:850!important;
-}
-
-/* Elegant bordered structure for Daily Log major sections */
-.hm-v97-bordered-section,
-.hm-other-fluids-box,
-.hm-daily-date-shell,
-.hm-recent-filter-box,
-.hm-rsd-mobile-shell{
-  border-color:#E2C98F!important;
-}
-.hm-other-fluids-box{
-  border:1.2px solid #E2C98F!important;
-  border-radius:16px!important;
-  background:#FFFDF8!important;
-  padding:.82rem .9rem .9rem .9rem!important;
-  margin:.7rem 0 .72rem 0!important;
-  box-shadow:0 6px 16px rgba(15,23,42,.035)!important;
-}
-.hm-other-fluid-entry-title{
-  color:#064E3B!important;
-  font-weight:950!important;
-  font-size:.98rem!important;
-  margin:.12rem 0 .42rem 0!important;
-  padding-bottom:.32rem!important;
-  border-bottom:1px solid #EFE2C7!important;
-}
-
-/* Other Fluids row alignment */
-.hm-other-fluid-entry-grid{
-  display:grid;
-  grid-template-columns:minmax(180px, 1.28fr) minmax(82px,.45fr) minmax(82px,.45fr) minmax(120px,.7fr) minmax(170px,.95fr);
-  gap:.78rem;
-  align-items:end;
-  margin-bottom:.58rem;
-}
-.hm-other-fluid-field label,
-.hm-other-fluid-time-label,
-.hm-other-fluid-qty-label{
-  display:block;
-  color:#334155!important;
-  font-size:.84rem!important;
-  font-weight:700!important;
-  line-height:1.1!important;
-  margin:0 0 .34rem 0!important;
-  min-height:1.05rem!important;
-}
-.hm-other-fluid-field div[data-testid="stSelectbox"],
-.hm-other-fluid-field div[data-testid="stTextInput"]{
-  margin-bottom:0!important;
-}
-.hm-other-fluid-field div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-.hm-other-fluid-field div[data-testid="stTextInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
-}
-.hm-other-fluid-field div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  font-size:.86rem!important;
-  font-weight:780!important;
-}
-.hm-other-fluid-notes{
-  margin-top:.12rem!important;
-}
-.hm-other-fluid-notes div[data-testid="stTextInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-  background:#F4F7FB!important;
-  border:1px solid #E3E9F2!important;
-}
-
-/* Softer compact dropdowns globally on this page */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  border-radius:12px!important;
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  color:#064E3B!important;
-  font-weight:760!important;
-  font-size:.88rem!important;
-}
-div[data-testid="stSelectbox"] svg{
-  color:#0F766E!important;
-  fill:#0F766E!important;
-}
-
-/* Thin section separation */
-
-/* Mobile responsiveness */
-@media (max-width:768px){
-  .hm-daily-date-shell{
-    grid-template-columns:1fr!important;
-    gap:.5rem!important;
-    padding:.68rem .72rem .75rem .72rem!important;
-    margin:.35rem 0 .75rem 0!important;
-    border-radius:15px!important;
-  }
-  .hm-daily-date-title{
-    font-size:.9rem!important;
-  }
-  .hm-other-fluid-entry-grid{
-    grid-template-columns:1fr!important;
-    gap:.42rem!important;
-  }
-  .hm-other-fluid-field label,
-  .hm-other-fluid-time-label,
-  .hm-other-fluid-qty-label{
-    margin-bottom:.2rem!important;
-    min-height:auto!important;
-  }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-  .hm-other-fluid-field div[data-testid="stTextInput"] input{
-    min-height:2.18rem!important;
-    height:2.18rem!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-/* v97.3 Daily Log UI polish */
-.hm-daily-date-shell{
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF8EA 100%)!important;
-  border:1.5px solid #D9B458!important;
-  border-left:6px solid #0F766E!important;
-  border-radius:16px!important;
-  padding:.78rem .95rem .85rem .95rem!important;
-  margin:.45rem 0 .9rem 0!important;
-  box-shadow:0 8px 20px rgba(15,23,42,.055)!important;
-}
-.hm-daily-date-title{
-  color:#064E3B!important;
-  font-weight:950!important;
-  font-size:.96rem!important;
-  letter-spacing:.01em!important;
-  margin-bottom:.38rem!important;
-}
-.hm-daily-date-shell div[data-testid="stDateInput"]{
-  margin-bottom:0!important;
-}
-.hm-daily-date-shell div[data-testid="stDateInput"] input{
-  background:#FFFFFF!important;
-  border:1.25px solid #E2C98F!important;
-  border-radius:13px!important;
-  min-height:2.4rem!important;
-  height:2.4rem!important;
-  color:#064E3B!important;
-  font-weight:850!important;
-}
-
-/* Softer, more compact dropdowns on Food Journal page */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  border-radius:12px!important;
-  min-height:2.25rem!important;
-  height:2.25rem!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.028)!important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  color:#064E3B!important;
-  font-weight:760!important;
-  font-size:.88rem!important;
-}
-div[data-testid="stSelectbox"] svg{
-  color:#0F766E!important;
-  fill:#0F766E!important;
-}
-.hm-recent-filter-box{
-  border:1px solid #E7D8BE;
-  background:#FFFDF8;
-  border-radius:14px;
-  padding:.65rem .75rem .25rem .75rem;
-  margin:.4rem 0 .65rem 0;
-}
-.hm-recent-filter-title{
-  color:#064E3B;
-  font-weight:900;
-  font-size:.9rem;
-  margin-bottom:.35rem;
-}
-@media (max-width:768px){
-  .hm-daily-date-shell{
-    padding:.68rem .72rem .75rem .72rem!important;
-    margin:.35rem 0 .75rem 0!important;
-    border-radius:15px!important;
-  }
-  .hm-daily-date-title{
-    font-size:.88rem!important;
-  }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-    min-height:2.18rem!important;
-    height:2.18rem!important;
-  }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-    font-size:.84rem!important;
-  }
-  .hm-recent-filter-box{
-    padding:.58rem .62rem .18rem .62rem!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-/* v97 Other Fluids functional styling */
-
-/* v97.2 Other Fluids positioning and thin break */
-.hm-other-fluids-box{
-  border:0!important;
-  background:transparent!important;
-  padding:.15rem 0 .05rem 0!important;
-  margin:.25rem 0 .25rem 0!important;
-}
-.hm-other-fluid-entry-title{
-  margin:.18rem 0 .08rem 0!important;
-}
-.hm-other-fluids-box div[data-testid="stTextInput"],
-.hm-other-fluids-box div[data-testid="stSelectbox"]{
-  margin-bottom:.22rem!important;
-}
-
-
-.hm-other-fluid-entry-title{color:#064E3B;font-weight:900;margin:.32rem 0 .18rem 0;}
-.hm-other-fluid-inline-time-label{color:#064E3B;font-size:.78rem;font-weight:850;margin:0 0 .22rem 0;}
-/* v97.1 Other Fluids compact timing */
-
-.hm-other-fluids-box{
-  border:1px solid #E7D8BE;
-  border-radius:14px;
-  background:#FFFDF8;
-  padding:.75rem .85rem;
-  margin:.7rem 0 .75rem 0;
-}
-.hm-other-fluids-title{
-  font-weight:900;
-  color:#064E3B;
-  font-size:.98rem;
-  margin-bottom:.18rem;
-}
-.hm-other-fluids-note{
-  color:#64748B;
-  font-size:.8rem;
-  margin-bottom:.45rem;
-}
-</style>
-""", unsafe_allow_html=True)
-
-def get_device_mode_for_spike():
-    """
-    v91.1 mobile detection guard.
-
-    Priority:
-    1. Explicit override: ?device=mobile or ?device=desktop
-    2. Best-effort mobile browser/user-agent detection through Streamlit context, when available
-    3. Desktop fallback
-    """
-    try:
-        qp = st.query_params
-        raw = qp.get("device", "")
-        if isinstance(raw, list):
-            raw = raw[0] if raw else ""
-        raw = str(raw).strip().lower()
-        if raw == "mobile":
-            return "mobile"
-        if raw == "desktop":
-            return "desktop"
-    except Exception:
-        pass
-
-    try:
-        headers = getattr(getattr(st, "context", None), "headers", {}) or {}
-        try:
-            ua = headers.get("user-agent", "") or headers.get("User-Agent", "")
-        except Exception:
-            ua = ""
-        ua_l = str(ua).lower()
-        mobile_tokens = ["mobile", "android", "iphone", "ipad", "ipod", "windows phone", "blackberry", "opera mini", "iemobile"]
-        if any(token in ua_l for token in mobile_tokens):
-            return "mobile"
-    except Exception:
-        pass
-
-    return "desktop"
-
-def to_time_input_value(value):
-    raw = (value or "").strip().upper()
-    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
-    if not m:
-        return None
-    h = int(m.group(1))
-    minute = int(m.group(2))
-    period = m.group(3)
-    if period == "AM":
-        hour24 = 0 if h == 12 else h
-    else:
-        hour24 = 12 if h == 12 else h + 12
-    return time(hour24, minute)
-
-def from_time_input_value(value):
-    if value is None:
-        return ""
-    hour24 = value.hour
-    minute = value.minute
-    period = "AM" if hour24 < 12 else "PM"
-    h12 = hour24 % 12
-    if h12 == 0:
-        h12 = 12
-    return f"{h12:02d}:{minute:02d} {period}"
-
-def render_v90a_chip_selector(label, options, current_value, key_prefix, columns=4):
-    st.markdown(f"<div class='hm-v90a-chip-label'>{label}</div>", unsafe_allow_html=True)
-    selected = st.session_state.get(key_prefix, current_value)
-    if selected not in options:
-        selected = current_value if current_value in options else options[0]
-    st.session_state[key_prefix] = selected
-
-    for start in range(0, len(options), columns):
-        cols = st.columns(columns)
-        for col, option in zip(cols, options[start:start + columns]):
-            button_label = str(option)
-            safe_label = button_label.replace(" ", "_").replace("+", "plus").replace(".", "_")
-            with col:
-                if st.button(button_label, key=f"{key_prefix}_{safe_label}", use_container_width=True):
-                    st.session_state[key_prefix] = option
-                    st.rerun()
-    return st.session_state.get(key_prefix, selected)
-
-device_mode_v90a = get_device_mode_for_spike()
-is_mobile_mode_v90a = (device_mode_v90a == "mobile")
-rendered_controls_v90a = "stable Streamlit mobile controls" if is_mobile_mode_v90a else "desktop controls"
-# v97.3: mobile input diagnostic UI removed.
-
-
-st.markdown("""
-<style>
-.hm-v88-balanced-empty{min-height:.1rem!important;}
-.hm-snack-helper-tight{margin-top:.05rem!important;font-size:.78rem!important;line-height:1.15!important;}
-.hm-rsd-mobile-shell{margin-top:.15rem!important;}
-.hm-rsd-mobile-card{border-top:1.15px solid #E5D2A9;padding:.52rem 0 .48rem 0;}
-.hm-rsd-mobile-label{color:#36506A;font-size:.78rem;font-weight:850;line-height:1.15;padding:.10rem 0;}
-.hm-rsd-mobile-value{color:#102A43;font-size:.84rem;line-height:1.25;padding:.10rem 0;}
-.hm-rsd-mobile-card [data-testid="column"]{display:flex!important;align-items:flex-start!important;}
-.hm-rsd-mobile-card .stButton > button{min-height:1.75rem!important;padding:.12rem .55rem!important;font-size:.74rem!important;}
-@media (max-width:768px){
-  .hm-v88-balanced-empty{display:none!important;}
-  .hm-snack-helper-tight{margin-top:-.05rem!important;}
-  .hm-rsd-mobile-label{font-size:.76rem!important;}
-  .hm-rsd-mobile-value{font-size:.82rem!important;}
-}
-</style>
-""", unsafe_allow_html=True)
-
-auto_archive_expired_nutritionist_messages(user_id)
-
-def meal_has_data(meal):
-    return any((meal or {}).get(x) for x in ["time", "food", "portion_size", "mood_energy"])
-
-
-def validate_meal_time_window(section_key, time_text):
-    minutes = parse_12h_time_to_minutes(time_text)
-    if minutes is None:
-        return False
-
-    # Valid windows:
-    # Breakfast: 6 AM to 11 AM
-    # Lunch: 12 PM to 3 PM
-    # Evening Snacks: 4 PM to 6 PM
-    # Dinner: 7 PM to 10 PM
-    # Bedtime: 11 PM to 12 AM
-    # Snacking: outside standard meal windows; boundary times accepted.
-    windows = {
-        "breakfast": (6 * 60, 11 * 60),
-        "lunch": (12 * 60, 15 * 60),
-        "evening_snacks": (16 * 60, 18 * 60),
-        "dinner": (19 * 60, 22 * 60),
-        "bedtime": (23 * 60, 24 * 60),
-    }
-
-    if section_key.startswith("snacking_"):
-        standard_windows = list(windows.values())
-        return not any(start <= minutes <= end for start, end in standard_windows)
-
-    if section_key in windows:
-        start, end = windows[section_key]
-        return start <= minutes <= end
-
-    return True
-
-
-def current_widget_payload(section_key, section_label):
-    hour = st.session_state.get(f"{section_key}_time_h", "HH")
-    minute = st.session_state.get(f"{section_key}_time_m", "MM")
-    period = st.session_state.get(f"{section_key}_time_p", "AM/PM")
-    if hour == "HH" and minute == "MM" and period == "AM/PM":
-        time_value = ""
-    elif hour != "HH" and minute != "MM" and period in ["AM", "PM"]:
-        time_value = f"{hour}:{minute} {period}"
-    else:
-        time_value = "__PARTIAL__"
-    return {
-        "label": section_label,
-        "time": time_value,
-        "food": st.session_state.get(f"{section_key}_food", "").strip(),
-        "portion_size": st.session_state.get(f"{section_key}_portion", "").strip(),
-        "mood_energy": st.session_state.get(f"{section_key}_mood", "").strip(),
-    }
-
-def saved_payload_for(existing_meals, section_key, section_label):
-    prior = existing_meals.get(section_key, {}) if existing_meals else {}
-    return {
-        "label": prior.get("label", section_label),
-        "time": prior.get("time", ""),
-        "food": prior.get("food", ""),
-        "portion_size": prior.get("portion_size", ""),
-        "mood_energy": prior.get("mood_energy", ""),
-    }
-
-def is_dirty(existing_meals, section_key, section_label):
-    if f"{section_key}_food" not in st.session_state:
-        return False
-    cur = current_widget_payload(section_key, section_label)
-    saved = saved_payload_for(existing_meals, section_key, section_label)
-    return any(cur.get(k, "") != saved.get(k, "") for k in ["time", "food", "portion_size", "mood_energy"])
-
-
-
-def _clamp_number(value, minimum, maximum):
-    try:
-        numeric = float(value)
-    except Exception:
-        numeric = minimum
-    return max(minimum, min(maximum, numeric))
-
-def render_v91_stepper(label, current_value, key_prefix, minimum, maximum, step, suffix="", as_int=False):
-    """
-    v91.3 stability fix.
-
-    Custom Streamlit column-based steppers stack vertically on mobile.
-    Use Streamlit number_input for stable mobile behavior. This preserves
-    the same stored values and avoids the broken vertical - / value / + layout.
-    """
-    st.markdown(f"<div class='hm-v90a-chip-label hm-v91-stepper-label'>{label}</div>", unsafe_allow_html=True)
-
-    if as_int:
-        value = st.number_input(
-            label,
-            min_value=int(minimum),
-            max_value=int(maximum),
-            value=int(current_value) if isinstance(current_value, int) else int(minimum),
-            step=int(step),
-            key=f"{key_prefix}_number_input",
-            label_visibility="collapsed",
-        )
-        return int(value)
-
-    try:
-        starting_value = float(current_value)
-    except Exception:
-        starting_value = float(minimum)
-
-    value = st.number_input(
-        label,
-        min_value=float(minimum),
-        max_value=float(maximum),
-        value=float(starting_value),
-        step=float(step),
-        key=f"{key_prefix}_number_input",
-        label_visibility="collapsed",
-        format="%.1f",
-    )
-    return round(float(value), 1)
-
-def water_stepper_to_litres(value):
-    value = round(float(value), 1)
-    if value == 1:
-        return "1 Litre"
-    if value == int(value):
-        return f"{int(value)} Litres"
-    return f"{value} Litres"
-
-
-
-
-
-
-def meal_time_selector_options_v97_2(section_key):
-    """Limit meal timing controls to the approved meal window.
-
-    Validation still remains active. These options make the dropdown itself
-    cleaner and prevent obvious wrong AM/PM choices such as Breakfast PM.
-    """
-    if section_key == "breakfast":
-        return (["HH"] + [f"{i:02d}" for i in range(6, 12)], ["AM/PM", "AM"])
-    if section_key == "lunch":
-        return (["HH", "12", "01", "02", "03"], ["AM/PM", "PM"])
-    if section_key == "evening_snacks":
-        return (["HH", "04", "05", "06"], ["AM/PM", "PM"])
-    if section_key == "dinner":
-        return (["HH", "07", "08", "09", "10"], ["AM/PM", "PM"])
-    if section_key == "bedtime":
-        return (["HH", "11", "12"], ["AM/PM", "PM", "AM"])
-    # Snacking and dynamic sections remain flexible but are still validated.
-    return (["HH"] + [f"{i:02d}" for i in range(1, 13)], ["AM/PM", "AM", "PM"])
-
-def split_12h_time_parts(value):
-    raw = (value or "").strip().upper()
-    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
-    if not m:
-        return ("HH", "MM", "AM/PM")
-    return (f"{int(m.group(1)):02d}", m.group(2), m.group(3))
-
-def parse_12h_time_to_minutes(value):
-    raw = (value or "").strip().upper()
-    m = re.match(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$", raw)
-    if not m:
-        return None
-    hour = int(m.group(1))
-    minute = int(m.group(2))
-    suffix = m.group(3)
-    if suffix == "AM":
-        hour = 0 if hour == 12 else hour
-    else:
-        hour = 12 if hour == 12 else hour + 12
-    return hour * 60 + minute
-
-def in_window(minutes, start, end):
-    if minutes is None:
-        return False
-    if start <= end:
-        return start <= minutes <= end
-    return minutes >= start or minutes <= end
-
-STANDARD_MEAL_WINDOWS = {
-    "breakfast": ("6:00 AM to 11:00 AM", 6 * 60, 11 * 60),
-    "lunch": ("12:00 PM to 3:00 PM", 12 * 60, 15 * 60),
-    "evening_snacks": ("4:00 PM to 6:00 PM", 16 * 60, 18 * 60),
-    "dinner": ("7:00 PM to 10:00 PM", 19 * 60, 22 * 60),
-    "bedtime": ("11:00 PM to 12:00 AM", 23 * 60, 0),
-}
-
-def meal_window_key(section_key, section_label):
-    key = str(section_key or "").lower()
-    label = str(section_label or "").lower()
-    if key.startswith("snacking_") or "snacking" in label:
-        return "snacking"
-    if "breakfast" in key or "breakfast" in label:
-        return "breakfast"
-    if "lunch" in key or "lunch" in label:
-        return "lunch"
-    if "evening" in key and "snack" in key:
-        return "evening_snacks"
-    if "evening" in label and "snack" in label:
-        return "evening_snacks"
-    if "dinner" in key or "dinner" in label:
-        return "dinner"
-    if "bedtime" in key or "bedtime" in label:
-        return "bedtime"
-    return "snacking"
-
-def meal_time_guidance(section_key, section_label):
-    window_key = meal_window_key(section_key, section_label)
-    if window_key == "snacking":
-        return "Enter time outside standard meal windows, e.g., 11:30 AM"
-    return f"Enter time between {STANDARD_MEAL_WINDOWS[window_key][0]}"
-
-def validate_meal_time(section_key, section_label, time_value):
-    raw = (time_value or "").strip()
-    if not raw:
-        return True, ""
-    minutes = parse_12h_time_to_minutes(raw)
-    if minutes is None:
-        return False, "Please complete meal timing using Hour, Minute, and AM/PM, for example 08:30 AM."
-    window_key = meal_window_key(section_key, section_label)
-    if window_key == "snacking":
-        inside_standard = any(in_window(minutes, start, end) for _label, start, end in STANDARD_MEAL_WINDOWS.values())
-        if inside_standard:
-            return False, "Snacking time must be outside the standard meal windows."
-        return True, ""
-    label, start, end = STANDARD_MEAL_WINDOWS[window_key]
-    if not in_window(minutes, start, end):
-        return False, f"{section_label} time must be between {label}."
-    return True, ""
-
-
-
-
-st.markdown("""
-<style>
-/* v97.6 Daily Log bordered compact fluid correction */
-
-/* Keep subtle dropdown look, but make controls consistent */
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-  background:#FFFDF8!important;
-  border:1.15px solid #DCC690!important;
-  border-radius:12px!important;
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] div{
-  color:#064E3B!important;
-  font-weight:760!important;
-  font-size:.88rem!important;
-}
-div[data-testid="stSelectbox"] svg{
-  color:#0F766E!important;
-  fill:#0F766E!important;
-}
-div[data-testid="stTextInput"] input,
-div[data-testid="stDateInput"] input{
-  min-height:2.28rem!important;
-  height:2.28rem!important;
-  border-radius:12px!important;
-}
-
-/* Streamlit border container polish: elegant, visible, not harsh */
-div[data-testid="stVerticalBlockBorderWrapper"]{
-  border-color:#E2C98F!important;
-  border-radius:16px!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFFDF5 100%)!important;
-  box-shadow:0 6px 16px rgba(15,23,42,.026)!important;
-}
-
-/* Food Journal Date row */
-.hm-v978-date-wrap{
-  margin:.10rem 0 .45rem 0!important;
-  padding:.22rem 0 .10rem 0!important;
-}
-.hm-v978-date-left{
+.hm-v9710-date-left{
   display:flex;
   align-items:center;
   gap:.55rem;
-  min-height:2.35rem;
+  min-height:2.1rem;
   flex-wrap:wrap;
 }
-.hm-v978-date-label{
+.hm-v9710-date-label{
   color:#064E3B;
   font-weight:950;
-  font-size:1.14rem;
-  line-height:1.1;
-  padding-left:.05rem;
+  font-size:1.12rem;
+  line-height:1.05;
 }
-.hm-v978-date-help{
+.hm-v9710-date-help{
   color:#64748B;
-  font-size:.84rem;
-  line-height:1.2;
-}
-
-/* Other Fluids compact layout */
-.hm-v976-fluid-title{
-  color:#064E3B;
-  font-weight:950;
-  font-size:.98rem;
-  margin:.18rem 0 .42rem 0;
-  padding-top:.12rem;
-}
-.hm-v976-field-label{
-  color:#334155;
   font-size:.82rem;
-  font-weight:780;
-  line-height:1.05;
-  margin:0 0 .26rem 0;
+  line-height:1.12;
 }
-.hm-v976-empty-label{
-  color:transparent;
-  font-size:.82rem;
-  line-height:1.05;
-  margin:0 0 .26rem 0;
-}
-.hm-v976-row2-spacer{
-  height:.08rem;
-}
-
-/* Reduce unwanted vertical looseness around Other Fluids widgets */
-@media (max-width:768px){
-  .hm-v978-date-left{
-    align-items:flex-start!important;
-    gap:.3rem!important;
-  }
-  .hm-v978-date-label{
-    font-size:1.02rem!important;
-    padding-bottom:0!important;
-  }
-  .hm-v978-date-help{
-    font-size:.78rem!important;
-  }
-  div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-  div[data-testid="stTextInput"] input,
-  div[data-testid="stDateInput"] input{
-    min-height:2.18rem!important;
-    height:2.18rem!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v97.9 Daily Log date spacing + recent filter fix */
-.block-container{padding-top:.55rem!important;}
-.hero-shell{margin-bottom:.55rem!important;}
-.hm-v978-date-wrap{
-  margin:.02rem 0 .48rem 0!important;
-  padding:.02rem 0 .06rem 0!important;
-}
-.hm-v978-date-left{
-  min-height:2.08rem!important;
-  align-items:center!important;
-}
-.hm-v978-date-label{
-  font-size:1.12rem!important;
-  line-height:1.05!important;
-}
-.hm-v978-date-help{
-  font-size:.82rem!important;
-  line-height:1.12!important;
-}
-.hm-v978-date-wrap div[data-testid="stDateInput"] input{
+.hm-v9710-date-wrap div[data-testid="stDateInput"] input{
   min-height:2.12rem!important;
   height:2.12rem!important;
+  border-radius:12px!important;
+  border:1.15px solid #DCC690!important;
+  background:#F4F7FB!important;
 }
-.hm-v979-recent-filter{
+/* Keep approved subtle dropdown style */
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
+  background:#FFFDF8!important;
+  border:1.15px solid #DCC690!important;
+  border-radius:12px!important;
+  min-height:2.28rem!important;
+  height:2.28rem!important;
+  box-shadow:0 2px 8px rgba(15,23,42,.025)!important;
+}
+div[data-testid="stSelectbox"] [data-baseweb="select"] div{
+  color:#064E3B!important;
+  font-weight:760!important;
+  font-size:.88rem!important;
+}
+div[data-testid="stSelectbox"] svg{color:#0F766E!important;fill:#0F766E!important;}
+div[data-testid="stTextInput"] input{min-height:2.28rem!important;height:2.28rem!important;border-radius:12px!important;}
+/* Other fluids spacing retained */
+.hm-v977-fluid-entry{padding:.48rem 0 .58rem 0;margin:.18rem 0 .42rem 0;}
+.hm-v977-fluid-title{color:#064E3B;font-weight:950;font-size:.98rem;margin:.22rem 0 .48rem 0;}
+.hm-v977-field-label{color:#334155;font-size:.82rem;font-weight:780;line-height:1.05;margin:0 0 .28rem 0;}
+.hm-v977-row2{margin-top:.34rem;}
+.hm-v979-recent-filter,.hm-v9710-recent-filter{
   border:1px solid #E2C98F;
   border-radius:14px;
   background:#FFFDF8;
@@ -1466,25 +642,28 @@ st.markdown("""
   margin:.35rem 0 .72rem 0;
   box-shadow:0 4px 12px rgba(15,23,42,.025);
 }
-.hm-v979-recent-filter-title{
-  color:#064E3B;
-  font-weight:900;
-  font-size:.9rem;
-  margin-bottom:.32rem;
-}
+.hm-v979-recent-filter-title,.hm-v9710-recent-filter-title{color:#064E3B;font-weight:900;font-size:.9rem;margin-bottom:.32rem;}
 @media (max-width:768px){
-  .hero-shell{margin-bottom:.42rem!important;}
-  .hm-v978-date-wrap{margin:.01rem 0 .42rem 0!important;}
-  .hm-v978-date-left{align-items:flex-start!important;min-height:auto!important;}
+  .hero-shell{margin-bottom:.35rem!important;}
+  .hm-v9710-date-left{align-items:flex-start!important;min-height:auto!important;gap:.28rem!important;}
+  .hm-v9710-date-label{font-size:1.02rem!important;}
+  .hm-v9710-date-help{font-size:.78rem!important;}
+  div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+  div[data-testid="stTextInput"] input,
+  .hm-v9710-date-wrap div[data-testid="stDateInput"] input{min-height:2.18rem!important;height:2.18rem!important;}
 }
 </style>
 """, unsafe_allow_html=True)
 
+user_id = st.session_state["user_id"]
+compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
+render_system_message()
+
 # Fixed Daily Log meal structure.
-st.markdown("<div class='hm-v978-date-wrap'>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v9710-date-wrap'>", unsafe_allow_html=True)
 date_label_col, date_picker_col = st.columns([1.35, 1.65])
 with date_label_col:
-    st.markdown("<div class='hm-v978-date-left'><div class='hm-v978-date-label'>Food Journal Date</div><div class='hm-v978-date-help'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v9710-date-left'><div class='hm-v9710-date-label'>Food Journal Date</div><div class='hm-v9710-date-help'>Select the date for this food journal entry.</div></div>", unsafe_allow_html=True)
 with date_picker_col:
     log_date = st.date_input("Food Journal Date", value=date.today(), label_visibility="collapsed")
 st.markdown("</div>", unsafe_allow_html=True)
@@ -2065,48 +1244,35 @@ st.markdown(
     unsafe_allow_html=True,
 )
 days = get_daily_food_journal_days(user_id)
+
+# v97.10 visible From / To filter for Recent Saved Days
+recent_saved_dates_v97_10 = sorted([d for d in [parse_date_safe_v97_10(x.get("date")) for x in days] if d], reverse=True)
+if recent_saved_dates_v97_10:
+    st.markdown("<div class='hm-v9710-recent-filter'><div class='hm-v9710-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+    rf1, rf2 = st.columns(2)
+    with rf1:
+        recent_from_v97_10 = st.date_input("From date", value=min(recent_saved_dates_v97_10), key="v97_10_recent_filter_from")
+    with rf2:
+        recent_to_v97_10 = st.date_input("To date", value=max(recent_saved_dates_v97_10), key="v97_10_recent_filter_to")
+    st.markdown("</div>", unsafe_allow_html=True)
+    days = [
+        x for x in days
+        if parse_date_safe_v97_10(x.get("date")) and recent_from_v97_10 <= parse_date_safe_v97_10(x.get("date")) <= recent_to_v97_10
+    ]
+else:
+    # Keep the controls visible even if no saved rows exist yet.
+    st.markdown("<div class='hm-v9710-recent-filter'><div class='hm-v9710-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+    rf1, rf2 = st.columns(2)
+    with rf1:
+        st.date_input("From date", value=date.today(), key="v97_10_recent_filter_from_empty")
+    with rf2:
+        st.date_input("To date", value=date.today(), key="v97_10_recent_filter_to_empty")
+    st.markdown("</div>", unsafe_allow_html=True)
+
 if not days:
     st.info("No food journal days saved yet.")
 else:
 
-    # v97.3 Recent Saved Days date filter
-    available_saved_dates_v97_3 = sorted([d for d in [parse_date_safe_v97_3(x.get("date")) for x in days] if d], reverse=True)
-    if available_saved_dates_v97_3:
-        st.markdown("<div class='hm-recent-filter-box'><div class='hm-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
-        rf1, rf2 = st.columns(2)
-        with rf1:
-            recent_from_v97_3 = st.date_input(
-                "From date",
-                value=min(available_saved_dates_v97_3),
-                key="v97_3_recent_filter_from",
-            )
-        with rf2:
-            recent_to_v97_3 = st.date_input(
-                "To date",
-                value=max(available_saved_dates_v97_3),
-                key="v97_3_recent_filter_to",
-            )
-        st.markdown("</div>", unsafe_allow_html=True)
-        days = [
-            x for x in days
-            if parse_date_safe_v97_3(x.get("date")) and recent_from_v97_3 <= parse_date_safe_v97_3(x.get("date")) <= recent_to_v97_3
-        ]
-
-
-    # v97.9 From / To filter for Recent Saved Days
-    available_saved_dates_v97_9 = sorted([d for d in [parse_date_safe_v97_9(x.get("date")) for x in days] if d], reverse=True)
-    if available_saved_dates_v97_9:
-        st.markdown("<div class='hm-v979-recent-filter'><div class='hm-v979-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
-        rf1, rf2 = st.columns(2)
-        with rf1:
-            recent_from_v97_9 = st.date_input("From date", value=min(available_saved_dates_v97_9), key="v97_9_recent_filter_from")
-        with rf2:
-            recent_to_v97_9 = st.date_input("To date", value=max(available_saved_dates_v97_9), key="v97_9_recent_filter_to")
-        st.markdown("</div>", unsafe_allow_html=True)
-        days = [
-            x for x in days
-            if parse_date_safe_v97_9(x.get("date")) and recent_from_v97_9 <= parse_date_safe_v97_9(x.get("date")) <= recent_to_v97_9
-        ]
 
     st.markdown("<div class='hm-rsd-mobile-shell'>", unsafe_allow_html=True)
 

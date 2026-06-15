@@ -1,3 +1,3 @@
-HealthyMe v97.8
+HealthyMe v97.10
 
-Focus: Daily Log UI/behavior patch only.
+Daily Log corrective build: header gap and Recent Saved Days filter.
