@@ -75,3 +75,11 @@
 - Updated Daily Log filter to read _journal_date_key along with date/log_date/journal_date/food_journal_date.
 - Kept visible Showing X of Y saved days count with dated-row visibility.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.20 - Daily Log Filter Source-of-Truth Fix
+
+- Made daily_food_journals saved-day key the source of truth for date filtering and display.
+- Overwrites stale inner row date with saved-day key in get_daily_food_journal_days for keyed journal rows.
+- Recent Saved Days filter now prioritizes _journal_date_key before date/log_date/journal_date/food_journal_date.
+- Cards display the same date source used by the filter.
+- No changes to meal timing, snacking, other fluids, or save logic.

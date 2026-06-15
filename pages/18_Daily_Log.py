@@ -117,26 +117,42 @@ def parse_date_safe_v97_18(value):
     except Exception:
         return None
 
-def get_saved_day_date_v97_18(day):
+def get_saved_day_filter_date_v97_20(day):
     """Return first parseable saved-date from known row fields."""
     if not isinstance(day, dict):
         return None
-    for field in ("date", "_journal_date_key", "log_date", "journal_date", "food_journal_date"):
+    for field in ("_journal_date_key", "date", "log_date", "journal_date", "food_journal_date"):
         parsed = parse_date_safe_v97_18(day.get(field))
         if parsed:
             return parsed
     return None
 
-def get_saved_day_date_text_v97_18(day):
+def get_saved_day_display_date_v97_20(day):
     """Return display text for saved-day date from known row fields."""
     if not isinstance(day, dict):
         return ""
-    for field in ("date", "_journal_date_key", "log_date", "journal_date", "food_journal_date"):
+    for field in ("_journal_date_key", "date", "log_date", "journal_date", "food_journal_date"):
         value = day.get(field)
         if value:
             return str(value)
-    parsed = get_saved_day_date_v97_18(day)
+    parsed = get_saved_day_filter_date_v97_20(day)
     return str(parsed) if parsed else ""
+
+
+def get_saved_day_filter_date_v97_20(day):
+    """Use the saved-day key as source of truth for filtering."""
+    if not isinstance(day, dict):
+        return None
+    for field in ("_journal_date_key", "date", "log_date", "journal_date", "food_journal_date"):
+        parsed = parse_date_safe_v97_18(day.get(field))
+        if parsed:
+            return parsed
+    return None
+
+def get_saved_day_display_date_v97_20(day):
+    """Use the same source as the filter for displayed saved-day date."""
+    parsed = get_saved_day_filter_date_v97_20(day)
+    return str(parsed) if parsed else get_saved_day_display_date_v97_20(day)
 
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
@@ -2183,9 +2199,9 @@ st.markdown(
 
 all_days = get_daily_food_journal_days(user_id) or []
 
-# v97.18 Measurable From / To filter for Recent Saved Days
+# v97.20 Source-of-truth From / To filter for Recent Saved Days
 all_parseable_dates_v97_18 = sorted(
-    [d for d in [get_saved_day_date_v97_18(day) for day in all_days] if d],
+    [d for d in [get_saved_day_filter_date_v97_20(day) for day in all_days] if d],
     reverse=True,
 )
 
@@ -2206,8 +2222,8 @@ if all_parseable_dates_v97_18:
         )
     filtered_days = [
         day for day in all_days
-        if get_saved_day_date_v97_18(day)
-        and recent_from_v97_18 <= get_saved_day_date_v97_18(day) <= recent_to_v97_18
+        if get_saved_day_filter_date_v97_20(day)
+        and recent_from_v97_18 <= get_saved_day_filter_date_v97_20(day) <= recent_to_v97_18
     ]
 else:
     rf1, rf2 = st.columns(2)
@@ -2219,7 +2235,7 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(
-    f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_18)}</div>",
+    f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_18)} · source key</div>",
     unsafe_allow_html=True,
 )
 
@@ -2231,7 +2247,7 @@ else:
     st.markdown("<div class='hm-rsd-mobile-shell'>", unsafe_allow_html=True)
 
     for day in filtered_days:
-        day_date = get_saved_day_date_text_v97_18(day)
+        day_date = get_saved_day_display_date_v97_20(day)
         meal_summary = []
         for _k, meal in (day.get("meals", {}) or {}).items():
             if meal.get("food"):

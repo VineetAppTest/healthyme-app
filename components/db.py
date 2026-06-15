@@ -1464,19 +1464,22 @@ def get_daily_food_journal_days(user_id):
     store = db.get("daily_food_journals", {}).get(user_id, {}) or {}
     merged = {}
 
-    # v97.19: always preserve the saved-day key as a usable date on the returned row.
+    # v97.20: saved-day key is the source of truth for keyed daily_food_journals.
+    # Older rows can carry a stale inner "date"; do not trust that for filtering/display.
     for k, v in store.items():
         row = dict(v or {})
-        row.setdefault("date", str(k))
-        row.setdefault("_journal_date_key", str(k))
+        row["date"] = str(k)
+        row["_journal_date_key"] = str(k)
+        row["_filter_date_source"] = "daily_food_journals_key"
         merged[str(k)] = row
 
     # Include old day records in daily_logs.
     for x in db.get("daily_logs", {}).get(user_id, []) or []:
         if x.get("log_type") == "daily_food_journal_day" and x.get("date") and str(x.get("date")) not in merged:
             row = dict(x or {})
-            row.setdefault("date", str(x.get("date")))
-            row.setdefault("_journal_date_key", str(x.get("date")))
+            row["date"] = str(x.get("date"))
+            row["_journal_date_key"] = str(x.get("date"))
+            row["_filter_date_source"] = "daily_logs_date"
             merged[str(x.get("date"))] = row
 
     # Include old row-based food_journal records grouped by date.
@@ -1484,12 +1487,13 @@ def get_daily_food_journal_days(user_id):
     for d, day in legacy.items():
         if d not in merged:
             row = dict(day or {})
-            row.setdefault("date", str(d))
-            row.setdefault("_journal_date_key", str(d))
+            row["date"] = str(d)
+            row["_journal_date_key"] = str(d)
+            row["_filter_date_source"] = "legacy_grouped_date"
             merged[d] = row
 
     rows = list(merged.values())
-    rows.sort(key=lambda r: (str(r.get("date", "")), str(r.get("timestamp", ""))), reverse=True)
+    rows.sort(key=lambda r: (str(r.get("_journal_date_key", r.get("date", ""))), str(r.get("timestamp", ""))), reverse=True)
     return rows
 
 
