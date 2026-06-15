@@ -65,6 +65,13 @@ def parse_date_safe_v97_3(value):
     except Exception:
         return None
 
+
+def parse_date_safe_v97_9(value):
+    try:
+        return datetime.date.fromisoformat(str(value))
+    except Exception:
+        return None
+
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
@@ -1425,6 +1432,54 @@ div[data-testid="stVerticalBlockBorderWrapper"]{
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v97.9 Daily Log date spacing + recent filter fix */
+.block-container{padding-top:.55rem!important;}
+.hero-shell{margin-bottom:.55rem!important;}
+.hm-v978-date-wrap{
+  margin:.02rem 0 .48rem 0!important;
+  padding:.02rem 0 .06rem 0!important;
+}
+.hm-v978-date-left{
+  min-height:2.08rem!important;
+  align-items:center!important;
+}
+.hm-v978-date-label{
+  font-size:1.12rem!important;
+  line-height:1.05!important;
+}
+.hm-v978-date-help{
+  font-size:.82rem!important;
+  line-height:1.12!important;
+}
+.hm-v978-date-wrap div[data-testid="stDateInput"] input{
+  min-height:2.12rem!important;
+  height:2.12rem!important;
+}
+.hm-v979-recent-filter{
+  border:1px solid #E2C98F;
+  border-radius:14px;
+  background:#FFFDF8;
+  padding:.58rem .7rem .18rem .7rem;
+  margin:.35rem 0 .72rem 0;
+  box-shadow:0 4px 12px rgba(15,23,42,.025);
+}
+.hm-v979-recent-filter-title{
+  color:#064E3B;
+  font-weight:900;
+  font-size:.9rem;
+  margin-bottom:.32rem;
+}
+@media (max-width:768px){
+  .hero-shell{margin-bottom:.42rem!important;}
+  .hm-v978-date-wrap{margin:.01rem 0 .42rem 0!important;}
+  .hm-v978-date-left{align-items:flex-start!important;min-height:auto!important;}
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Fixed Daily Log meal structure.
 st.markdown("<div class='hm-v978-date-wrap'>", unsafe_allow_html=True)
 date_label_col, date_picker_col = st.columns([1.35, 1.65])
@@ -2035,6 +2090,22 @@ else:
         days = [
             x for x in days
             if parse_date_safe_v97_3(x.get("date")) and recent_from_v97_3 <= parse_date_safe_v97_3(x.get("date")) <= recent_to_v97_3
+        ]
+
+
+    # v97.9 From / To filter for Recent Saved Days
+    available_saved_dates_v97_9 = sorted([d for d in [parse_date_safe_v97_9(x.get("date")) for x in days] if d], reverse=True)
+    if available_saved_dates_v97_9:
+        st.markdown("<div class='hm-v979-recent-filter'><div class='hm-v979-recent-filter-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+        rf1, rf2 = st.columns(2)
+        with rf1:
+            recent_from_v97_9 = st.date_input("From date", value=min(available_saved_dates_v97_9), key="v97_9_recent_filter_from")
+        with rf2:
+            recent_to_v97_9 = st.date_input("To date", value=max(available_saved_dates_v97_9), key="v97_9_recent_filter_to")
+        st.markdown("</div>", unsafe_allow_html=True)
+        days = [
+            x for x in days
+            if parse_date_safe_v97_9(x.get("date")) and recent_from_v97_9 <= parse_date_safe_v97_9(x.get("date")) <= recent_to_v97_9
         ]
 
     st.markdown("<div class='hm-rsd-mobile-shell'>", unsafe_allow_html=True)
