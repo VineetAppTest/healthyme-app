@@ -92,30 +92,53 @@ def parse_date_safe_v97_17(value):
 
 
 def parse_date_safe_v97_18(value):
-    """Parse saved journal dates across old/new storage formats."""
+    """Parse saved journal dates safely across app import styles and old/new formats."""
     try:
-        if isinstance(value, datetime.datetime):
-            return value.date()
-        if isinstance(value, datetime.date):
-            return value
+        if value is None:
+            return None
+
+        # This app commonly imports `date` and `datetime` directly.
+        try:
+            if isinstance(value, datetime):
+                return value.date()
+        except Exception:
+            pass
+
+        try:
+            if isinstance(value, date):
+                return value
+        except Exception:
+            pass
+
         raw = str(value or "").strip()
         if not raw:
             return None
+
+        # Strip attached time if present.
         raw = raw.split("T")[0].split(" ")[0].strip()
-        candidates = [raw, raw.replace("/", "-")]
+        raw = raw.replace("\\", "/")
+
+        candidates = [
+            raw,
+            raw.replace("/", "-"),
+        ]
+
         for candidate in candidates:
             try:
-                return datetime.date.fromisoformat(candidate)
+                return date.fromisoformat(candidate)
             except Exception:
                 pass
-        for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%d-%b-%Y", "%d %b %Y", "%d-%B-%Y", "%d %B %Y"):
+
+        for fmt in ("%Y/%m/%d", "%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d-%b-%Y", "%d %b %Y", "%d-%B-%Y", "%d %B %Y"):
             try:
-                return datetime.datetime.strptime(raw, fmt).date()
+                return datetime.strptime(raw, fmt).date()
             except Exception:
                 pass
+
         return None
     except Exception:
         return None
+
 
 def get_saved_day_filter_date_v97_20(day):
     """Return first parseable saved-date from known row fields."""
@@ -2243,7 +2266,7 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(
-    f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_18)} · source key</div>",
+    f"<div class='hm-v9718-filter-count'>Showing {len(filtered_days)} of {len(all_days)} saved days · dated rows {len(all_parseable_dates_v97_18)} · source key · parser fixed</div>",
     unsafe_allow_html=True,
 )
 

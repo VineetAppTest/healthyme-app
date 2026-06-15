@@ -90,3 +90,11 @@
 - Replaced recursive fallback with safe field fallback.
 - Retained v97.20 source-of-truth date filtering.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v97.22 - Daily Log Date Parser Filter Hotfix
+
+- Fixed Recent Saved Days date parser so dated rows should no longer remain zero.
+- Parser now works with direct date/datetime imports used in the app.
+- Parser supports YYYY/MM/DD, YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, and datetime strings.
+- Retained source-of-truth filtering using _journal_date_key.
+- No changes to meal timing, snacking, other fluids, or save logic.
