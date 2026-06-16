@@ -1744,6 +1744,23 @@ div[data-testid="stButton"] > button{
 """, unsafe_allow_html=True)
 
 
+
+st.markdown("""
+<style>
+/* v100.9 Other Fluids button alignment */
+div[data-testid="stButton"] > button[kind="secondary"],
+div[data-testid="stButton"] > button{
+  min-height:2.72rem!important;
+  height:2.72rem!important;
+  padding:.56rem .82rem!important;
+  border-radius:14px!important;
+  white-space:normal!important;
+  line-height:1.24!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
@@ -2375,24 +2392,20 @@ with st.container(border=True):
             )
     with top_right:
         existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
-        other_fluid_count_key = f"other_fluid_count_{log_date}"
-        # v100.7: default to 0 active entries; never set time widget keys directly.
+        other_fluid_count_key = f"other_fluid_count_v1009_{log_date}"
         if other_fluid_count_key not in st.session_state:
             st.session_state[other_fluid_count_key] = 0
 
         st.markdown("<div class='hm-field-label'>Other Fluids consumed outside standard meal window</div>", unsafe_allow_html=True)
-        add_other_col, other_count_col = st.columns([1, 2])
-        with add_other_col:
-            if st.button("+ Other Fluids", use_container_width=True, key=f"add_other_fluids_{log_date}"):
-                st.session_state[other_fluid_count_key] = min(int(st.session_state.get(other_fluid_count_key, 0) or 0) + 1, 5)
-                st.rerun()
-        with other_count_col:
-            current_other_count_v1007 = int(st.session_state.get(other_fluid_count_key, 0) or 0)
-            if current_other_count_v1007:
-                st.caption(f"{current_other_count_v1007} other fluid entry/entries active")
-            else:
-                st.caption("Tap + Other Fluids to add an entry")
-        other_fluid_count = int(st.session_state.get(other_fluid_count_key, 0) or 0)
+        if st.button("+ Other Fluids", use_container_width=True, key=f"add_other_fluids_v1009_{log_date}"):
+            st.session_state[other_fluid_count_key] = min(int(st.session_state.get(other_fluid_count_key, 0) or 0) + 1, 5)
+            st.rerun()
+        current_other_count_v1009 = int(st.session_state.get(other_fluid_count_key, 0) or 0)
+        if current_other_count_v1009:
+            st.caption(f"{current_other_count_v1009} other fluid entry/entries active")
+        else:
+            st.caption("Tap + Other Fluids to add an entry")
+        other_fluid_count = current_other_count_v1009
 
 
 
@@ -2456,14 +2469,10 @@ with st.container(border=True):
     for i in range(other_fluid_count):
         prior_fluid = existing_other_fluids[i] if i < len(existing_other_fluids) else {}
         pre_h, pre_m, pre_p = split_12h_time_parts(prior_fluid.get("time", ""))
-        st.session_state.setdefault(f"other_fluid_h_{log_date}_{i}", pre_h)
-        st.session_state.setdefault(f"other_fluid_m_{log_date}_{i}", pre_m)
-        st.session_state.setdefault(f"other_fluid_p_{log_date}_{i}", pre_p)
 
         st.markdown("<div class='hm-v977-fluid-entry'>", unsafe_allow_html=True)
         st.markdown(f"<div class='hm-v977-fluid-title'>Other Fluid {i+1}</div>", unsafe_allow_html=True)
 
-        # Row 1: Fluid type reduced materially; Fluid Timing remains beside it.
         fluid_type_col, timing_col, empty_col = st.columns([0.72, 1.62, 0.50], gap="medium")
 
         with fluid_type_col:
@@ -2473,7 +2482,7 @@ with st.container(border=True):
                 "Fluid type",
                 fluid_type_options,
                 index=fluid_type_options.index(existing_type) if existing_type in fluid_type_options else 0,
-                key=f"other_fluid_type_{log_date}_{i}",
+                key=f"other_fluid_type_v1009_{log_date}_{i}",
                 label_visibility="collapsed",
             )
 
@@ -2482,36 +2491,32 @@ with st.container(border=True):
             h_col, m_col, p_col = st.columns([0.55, 0.55, 0.90], gap="small")
             with h_col:
                 hour_options = ["HH"] + [f"{n:02d}" for n in range(1, 13)]
-                current_h = st.session_state.get(f"other_fluid_h_{log_date}_{i}", pre_h)
-                st.selectbox(
+                hour_value = st.selectbox(
                     "HH",
                     hour_options,
-                    index=hour_options.index(current_h) if current_h in hour_options else 0,
-                    key=f"other_fluid_h_{log_date}_{i}",
+                    index=hour_options.index(pre_h) if pre_h in hour_options else 0,
+                    key=f"other_fluid_h_v1009_{log_date}_{i}",
                     label_visibility="collapsed",
                 )
             with m_col:
                 minute_options = ["MM"] + [f"{n:02d}" for n in range(0, 60)]
-                current_m = st.session_state.get(f"other_fluid_m_{log_date}_{i}", pre_m)
-                st.selectbox(
+                minute_value = st.selectbox(
                     "MM",
                     minute_options,
-                    index=minute_options.index(current_m) if current_m in minute_options else 0,
-                    key=f"other_fluid_m_{log_date}_{i}",
+                    index=minute_options.index(pre_m) if pre_m in minute_options else 0,
+                    key=f"other_fluid_m_v1009_{log_date}_{i}",
                     label_visibility="collapsed",
                 )
             with p_col:
                 ampm_options = ["AM/PM", "AM", "PM"]
-                current_p = st.session_state.get(f"other_fluid_p_{log_date}_{i}", pre_p)
-                st.selectbox(
+                period_value = st.selectbox(
                     "AM/PM",
                     ampm_options,
-                    index=ampm_options.index(current_p) if current_p in ampm_options else 0,
-                    key=f"other_fluid_p_{log_date}_{i}",
+                    index=ampm_options.index(pre_p) if pre_p in ampm_options else 0,
+                    key=f"other_fluid_p_v1009_{log_date}_{i}",
                     label_visibility="collapsed",
                 )
 
-        # Row 2: Quantity and Notes together.
         st.markdown("<div class='hm-v977-row2'></div>", unsafe_allow_html=True)
         qty_col, notes_col = st.columns([0.72, 2.12], gap="medium")
         with qty_col:
@@ -2520,7 +2525,7 @@ with st.container(border=True):
                 "Quantity",
                 value=prior_fluid.get("quantity", ""),
                 placeholder="Example: 200 ml",
-                key=f"other_fluid_qty_{log_date}_{i}",
+                key=f"other_fluid_qty_v1009_{log_date}_{i}",
                 label_visibility="collapsed",
             )
         with notes_col:
@@ -2529,16 +2534,13 @@ with st.container(border=True):
                 "Notes",
                 value=prior_fluid.get("notes", ""),
                 placeholder="Example: unsweetened / with sugar / packaged",
-                key=f"other_fluid_notes_{log_date}_{i}",
+                key=f"other_fluid_notes_v1009_{log_date}_{i}",
                 label_visibility="collapsed",
             )
 
         st.markdown("</div>", unsafe_allow_html=True)
 
         type_value = "" if fluid_type == "Select" else fluid_type
-        hour_value = st.session_state.get(f"other_fluid_h_{log_date}_{i}", "HH")
-        minute_value = st.session_state.get(f"other_fluid_m_{log_date}_{i}", "MM")
-        period_value = st.session_state.get(f"other_fluid_p_{log_date}_{i}", "AM/PM")
         fluid_time = f"{hour_value}:{minute_value} {period_value}" if hour_value != "HH" and minute_value != "MM" and period_value in ["AM", "PM"] else ""
         if type_value or fluid_time.strip() or fluid_qty.strip() or fluid_notes.strip():
             other_fluids.append({

@@ -20,13 +20,19 @@ from components.db import get_workflow, get_resource_assignments, save_resource_
 
 
 st.set_page_config(page_title="Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
+require_member(); utility_logout_bar()
 
 
 
 
 
-topbar("Exercise Repository", "", "Member content")
+st.markdown("""
+<div class="hm-v1009-content-hero">
+  <div class="hm-v1009-brand">HEALTHYME</div>
+  <div class="hm-v1009-pill">Member content</div>
+  <div class="hm-v1009-title">Exercise Repository</div>
+</div>
+""", unsafe_allow_html=True)
 
 DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
 
@@ -814,6 +820,180 @@ div[data-testid="stExpander"] summary p{
   color:#64748B!important;
   font-size:.80rem!important;
   font-weight:740!important;
+  margin:.08rem 0 .48rem 0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# v100.9: Deferred compact hero + premium detail CSS for Exercise Repository.
+inject_global_styles()
+apply_luxe_theme()
+render_back_to_top()
+
+st.markdown("""
+<style>
+/* v100.9 compact hero and structural polish */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.12rem!important;
+}
+div[data-testid="stElementContainer"]:has(style),
+div[data-testid="stElementContainer"]:has(script),
+.element-container:has(style),
+.element-container:has(script),
+div[data-testid="stMarkdownContainer"]:has(style),
+div[data-testid="stMarkdownContainer"]:has(script){
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+.hm-v1009-content-hero{
+  border:1.2px solid #E3C98E;
+  border-radius:18px;
+  background:#FFFDF8;
+  box-shadow:0 10px 24px rgba(15,23,42,.045);
+  padding:.72rem 1.00rem .78rem 1.00rem;
+  margin:.04rem 0 .30rem 0;
+}
+.hm-v1009-brand{
+  color:#064E3B;
+  font-size:.84rem;
+  font-weight:950;
+  letter-spacing:.045em;
+  margin-bottom:.24rem;
+}
+.hm-v1009-pill{
+  display:inline-flex;
+  padding:.18rem .54rem;
+  border-radius:999px;
+  background:#F6E8BE;
+  color:#6B4E12;
+  font-size:.72rem;
+  font-weight:850;
+  margin-bottom:.34rem;
+}
+.hm-v1009-title{
+  color:#003C36;
+  font-size:1.38rem;
+  font-weight:950;
+  line-height:1.08;
+}
+div[data-testid="stTabs"],
+div[data-testid="stTabs"] *{
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+div[data-testid="stTabs"] [data-baseweb="tab-border"],
+div[data-testid="stTabs"] hr,
+div[data-testid="stTabs"] button[role="tab"]::before,
+div[data-testid="stTabs"] button[role="tab"]::after{
+  display:none!important;
+  height:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.52rem!important;
+  border-radius:999px!important;
+  border:1.25px solid #D9C28F!important;
+  background:#FFFDF8!important;
+  color:#064E3B!important;
+  font-weight:860!important;
+  white-space:normal!important;
+  line-height:1.25!important;
+}
+.hm-v1008-section-shell,
+.hm-v1009-section-shell{
+  border:1px solid #E3C98E!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)!important;
+  border-radius:18px!important;
+  padding:.90rem 1.04rem!important;
+  margin:.28rem 0 .52rem 0!important;
+  box-shadow:0 8px 20px rgba(15,23,42,.045)!important;
+}
+.hm-v1008-section-title,
+.hm-v1009-section-title{
+  color:#064E3B!important;
+  font-weight:950!important;
+  font-size:.98rem!important;
+  margin:0 0 .44rem 0!important;
+}
+.hm-v1008-row,
+.hm-v1009-row{
+  display:flex!important;
+  gap:.78rem!important;
+  align-items:flex-start!important;
+  padding:.60rem 0!important;
+  border-bottom:1px solid #F0E4CC!important;
+  color:#064E3B!important;
+  font-size:1.02rem!important;
+  line-height:1.40!important;
+}
+.hm-v1008-row:last-child,
+.hm-v1009-row:last-child{border-bottom:0!important;}
+.hm-v1008-check,
+.hm-v1009-check{
+  width:1.38rem!important;
+  height:1.38rem!important;
+  min-width:1.38rem!important;
+  border-radius:999px!important;
+  background:#ECFDF5!important;
+  border:1.5px solid #6D9C6C!important;
+  color:#065F46!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:.76rem!important;
+  font-weight:950!important;
+  margin-top:.03rem!important;
+}
+.hm-v1008-num,
+.hm-v1009-num{
+  width:1.48rem!important;
+  height:1.48rem!important;
+  min-width:1.48rem!important;
+  border-radius:999px!important;
+  background:#FFF7E6!important;
+  border:1.5px solid #D9C28F!important;
+  color:#7A5A16!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:.78rem!important;
+  font-weight:950!important;
+  margin-top:.02rem!important;
+}
+div[data-testid="stExpander"] details{
+  border:1.45px solid #D9C28F!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)!important;
+  box-shadow:0 10px 24px rgba(15,23,42,.055)!important;
+  overflow:hidden!important;
+}
+div[data-testid="stExpander"] summary{
+  min-height:2.82rem!important;
+  padding:.66rem .96rem!important;
+  background:#FFFDF8!important;
+}
+div[data-testid="stExpander"] summary p{
+  color:#064E3B!important;
+  font-size:.98rem!important;
+  font-weight:940!important;
+  white-space:nowrap!important;
+}
+.hm-v1008-feedback-note,
+.hm-v1009-feedback-note{
+  color:#64748B!important;
+  font-size:.81rem!important;
+  font-weight:750!important;
   margin:.08rem 0 .48rem 0!important;
 }
 </style>

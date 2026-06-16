@@ -334,3 +334,15 @@
 - Recipe and Exercise premium bullets/numbering and feedback expander styling upgraded further.
 - Member Home divider spacing above/below task area equalized more aggressively.
 - No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.
+
+## v100.9 - Stabilized UI State Hotfix
+
+- Fixed Other Fluids session-state warning by moving to v1009 widget keys and removing session_state defaults for time widgets.
+- Other Fluids still defaults to 0 open entries.
+- Other Fluids button now uses full available width and taller dropdown-aligned height.
+- Recipe and Exercise early helper/style injections removed before hero; only require_member and utility row render before compact hero.
+- Recipe and Exercise topbar replaced with compact controlled hero to reduce spacing structurally.
+- Recipe and Exercise detail sections remain button-driven, so tab dividers are structurally removed.
+- Recipe and Exercise premium bullets/numbering and feedback expander styling strengthened.
+- Member Home divider spacing equalized again.
+- No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.
