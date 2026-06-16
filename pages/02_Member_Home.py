@@ -126,6 +126,30 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+
+st.markdown("""
+<style>
+/* v100.6 Member Home spacing/button polish */
+hr{
+  margin-top:.42rem!important;
+  margin-bottom:.42rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.18rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.34rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.52rem!important;
+  white-space:normal!important;
+  line-height:1.25!important;
+  padding:.50rem .72rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 render_system_message()

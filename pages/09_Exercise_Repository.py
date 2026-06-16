@@ -121,6 +121,113 @@ div[data-testid="stExpander"] summary p{
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v100.6 Exercise UI functional polish */
+.hero-shell{
+  margin-top:.06rem!important;
+  margin-bottom:.38rem!important;
+  padding-top:1.05rem!important;
+  padding-bottom:1.05rem!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab-list"],
+div[data-testid="stTabs"] div[role="tablist"],
+div[data-testid="stTabs"] [role="tablist"]{
+  border-bottom:0!important;
+  box-shadow:none!important;
+  gap:.55rem!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+div[data-testid="stTabs"] [data-baseweb="tab-border"],
+div[data-testid="stTabs"] hr,
+div[data-testid="stTabs"] [aria-selected="true"]::after,
+div[data-testid="stTabs"] button[role="tab"]::after{
+  display:none!important;
+  height:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+div[data-testid="stTabs"] button[role="tab"]{
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+.hm-v1006-list-card{
+  border:1px solid #E7D6B2;
+  background:#FFFDF8;
+  border-radius:16px;
+  padding:.72rem .86rem;
+  margin:.38rem 0 .72rem 0;
+}
+.hm-v1006-row{
+  display:flex;
+  gap:.70rem;
+  align-items:flex-start;
+  padding:.56rem 0;
+  border-bottom:1px solid #F0E4CC;
+  color:#064E3B;
+  font-size:1.00rem;
+  line-height:1.38;
+}
+.hm-v1006-row:last-child{border-bottom:0;}
+.hm-v1006-check{
+  width:1.24rem;
+  height:1.24rem;
+  min-width:1.24rem;
+  border-radius:999px;
+  background:#ECFDF5;
+  border:1.5px solid #6D9C6C;
+  color:#065F46;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.72rem;
+  font-weight:950;
+  margin-top:.08rem;
+}
+.hm-v1006-num{
+  width:1.36rem;
+  height:1.36rem;
+  min-width:1.36rem;
+  border-radius:999px;
+  background:#FFF7E6;
+  border:1.5px solid #D9C28F;
+  color:#7A5A16;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.74rem;
+  font-weight:950;
+  margin-top:.05rem;
+}
+div[data-testid="stExpander"] details{
+  border:1.25px solid #D9C28F!important;
+  border-radius:16px!important;
+  background:#FFFDF8!important;
+  box-shadow:0 8px 20px rgba(15,23,42,.045)!important;
+  overflow:hidden!important;
+}
+div[data-testid="stExpander"] summary{
+  min-height:2.55rem!important;
+  padding:.54rem .82rem!important;
+  background:#FFFDF8!important;
+}
+div[data-testid="stExpander"] summary p{
+  color:#064E3B!important;
+  font-size:.92rem!important;
+  font-weight:920!important;
+  white-space:nowrap!important;
+}
+.hm-v1006-feedback-note{
+  color:#64748B;
+  font-size:.78rem;
+  font-weight:720;
+  margin:.05rem 0 .45rem 0;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 topbar("Exercise Repository", "", "Member content")
 
 DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
@@ -674,52 +781,52 @@ def render_detail(row, idx):
 
     tab1, tab2, tab3 = st.tabs(["OVERVIEW", "INSTRUCTIONS", "BENEFITS"])
     with tab1:
-        st.markdown("<div class='hm-detail-section-card'>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v1006-list-card'>", unsafe_allow_html=True)
         overview_items = split_lines(row.get("description", ""))
         if not overview_items:
             st.info("No overview added yet.")
         for item in overview_items:
             st.markdown(
-                f"<div class='hm-v1003-bullet-row'><span class='hm-v1003-dot'>•</span><div>{esc(item)}</div></div>",
+                f"<div class='hm-v1006-row'><span class='hm-v1006-check'>•</span><div>{esc(item)}</div></div>",
                 unsafe_allow_html=True,
             )
         st.markdown("</div>", unsafe_allow_html=True)
     with tab2:
-        st.markdown("<div class='hm-detail-section-card'>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v1006-list-card'>", unsafe_allow_html=True)
         instructions = split_lines(row.get("instructions", ""))
         if not instructions:
             st.info("No instructions added yet.")
         for n, item in enumerate(instructions, start=1):
             st.markdown(
-                f"<div class='hm-v1003-bullet-row'><span class='hm-v1003-num'>{n}</span><div>{esc(item)}</div></div>",
+                f"<div class='hm-v1006-row'><span class='hm-v1006-num'>{n}</span><div>{esc(item)}</div></div>",
                 unsafe_allow_html=True,
             )
         st.markdown("</div>", unsafe_allow_html=True)
     with tab3:
-        st.markdown("<div class='hm-detail-section-card'>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v1006-list-card'>", unsafe_allow_html=True)
         benefits = split_lines(row.get("benefits", ""))
         if not benefits:
             st.info("No benefits added yet.")
         for item in benefits:
             st.markdown(
-                f"<div class='hm-v1003-bullet-row'><span class='hm-v1003-dot'>✓</span><div>{esc(item)}</div></div>",
+                f"<div class='hm-v1006-row'><span class='hm-v1006-check'>✓</span><div>{esc(item)}</div></div>",
                 unsafe_allow_html=True,
             )
         st.markdown("</div>", unsafe_allow_html=True)
 
     existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "exercises", str(idx))
+    exercise_reset_token_v1006 = st.session_state.get(f"exercise_feedback_reset_{idx}", 0)
+    if st.session_state.pop(f"exercise_feedback_submitted_{idx}", False):
+        st.balloons()
+        st.success("Exercise feedback submitted for admin review. The feedback form has been cleared.")
     with st.expander("Exercise feedback", expanded=False):
-        st.markdown("<div class='hm-v1002-feedback-note'>Mark completion and share feedback for admin review.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v1006-feedback-note'>Mark completion and share feedback for admin review.</div>", unsafe_allow_html=True)
         status_options_v100 = ["Not started", "Completed", "Partially completed", "Need help / not suitable"]
-        current_status_v100 = existing_feedback_v100.get("status", "Not started")
-        status_index_v100 = status_options_v100.index(current_status_v100) if current_status_v100 in status_options_v100 else 0
-        exercise_status_v100 = st.selectbox("Exercise status", status_options_v100, index=status_index_v100, key=f"exercise_feedback_status_{idx}")
+        exercise_status_v100 = st.selectbox("Exercise status", status_options_v100, index=0, key=f"exercise_feedback_status_{idx}_{exercise_reset_token_v1006}")
         rating_options_v100 = ["", "1", "2", "3", "4", "5"]
-        current_rating_v100 = str(existing_feedback_v100.get("rating", ""))
-        rating_index_v100 = rating_options_v100.index(current_rating_v100) if current_rating_v100 in rating_options_v100 else 0
-        exercise_rating_v100 = st.selectbox("Rating", rating_options_v100, index=rating_index_v100, key=f"exercise_feedback_rating_{idx}")
-        exercise_notes_v100 = st.text_area("Member feedback", value=str(existing_feedback_v100.get("notes", "")), key=f"exercise_feedback_notes_{idx}")
-        if st.button("Submit feedback on exercise 🌿", type="primary", use_container_width=True, key=f"exercise_feedback_submit_{idx}"):
+        exercise_rating_v100 = st.selectbox("Rating", rating_options_v100, index=0, key=f"exercise_feedback_rating_{idx}_{exercise_reset_token_v1006}")
+        exercise_notes_v100 = st.text_area("Member feedback", value="", key=f"exercise_feedback_notes_{idx}_{exercise_reset_token_v1006}")
+        if st.button("Submit feedback on exercise 🌿", type="primary", use_container_width=True, key=f"exercise_feedback_submit_{idx}_{exercise_reset_token_v1006}"):
             save_resource_feedback(
                 st.session_state["user_id"],
                 "exercises",
@@ -729,8 +836,9 @@ def render_detail(row, idx):
                 rating=exercise_rating_v100,
                 notes=exercise_notes_v100,
             )
-            st.balloons()
-            st.success("Exercise feedback submitted for admin review.")
+            st.session_state[f"exercise_feedback_reset_{idx}"] = exercise_reset_token_v1006 + 1
+            st.session_state[f"exercise_feedback_submitted_{idx}"] = True
+            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 

@@ -7502,8 +7502,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v100.5"
-APP_BUILD_LABEL = "Recipe Exercise Direct Topbar Import Hotfix"
+APP_BUILD_VERSION = "v100.6"
+APP_BUILD_LABEL = "Client UI Functional Polish"
 
 
 def admin_version_line_v98_1():

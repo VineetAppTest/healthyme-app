@@ -2365,19 +2365,23 @@ with st.container(border=True):
     with top_right:
         existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
         default_other_count = min(max(len(existing_other_fluids), 0), 5)
-        other_count_options = ["Select", 1, 2, 3, 4, 5]
         other_fluid_count_key = f"other_fluid_count_{log_date}"
-        default_other_selection = default_other_count if default_other_count > 0 else "Select"
-        if other_fluid_count_key not in st.session_state or st.session_state.get(other_fluid_count_key) in [0, "0", None, ""]:
-            st.session_state[other_fluid_count_key] = default_other_selection
-        st.selectbox(
-            "Other Fluids consumed outside standard meal window",
-            other_count_options,
-            index=other_count_options.index(st.session_state.get(other_fluid_count_key, default_other_selection)) if st.session_state.get(other_fluid_count_key, default_other_selection) in other_count_options else 0,
-            key=other_fluid_count_key,
-        )
-        other_fluid_selection_v1003 = st.session_state.get(other_fluid_count_key, "Select")
-        other_fluid_count = 0 if other_fluid_selection_v1003 == "Select" else int(other_fluid_selection_v1003 or 0)
+        if other_fluid_count_key not in st.session_state:
+            st.session_state[other_fluid_count_key] = default_other_count
+
+        st.markdown("<div class='hm-field-label'>Other Fluids consumed outside standard meal window</div>", unsafe_allow_html=True)
+        add_other_col, other_count_col = st.columns([1, 2])
+        with add_other_col:
+            if st.button("+ Other Fluids", use_container_width=True, key=f"add_other_fluids_{log_date}"):
+                st.session_state[other_fluid_count_key] = min(int(st.session_state.get(other_fluid_count_key, 0) or 0) + 1, 5)
+                st.rerun()
+        with other_count_col:
+            current_other_count_v1006 = int(st.session_state.get(other_fluid_count_key, 0) or 0)
+            if current_other_count_v1006:
+                st.caption(f"{current_other_count_v1006} other fluid entry/entries active")
+            else:
+                st.caption("Tap + Other Fluids to add an entry")
+        other_fluid_count = int(st.session_state.get(other_fluid_count_key, 0) or 0)
 
 
 

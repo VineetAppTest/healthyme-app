@@ -301,3 +301,15 @@
 - Retained v100.3/v100.4 Recipe and Exercise UI corrections.
 - Retained Submit Status v100.1 hotfix.
 - No changes to Daily Log, save logic, database schema, scoring/report logic, or feedback persistence logic.
+
+## v100.6 - Client UI Functional Polish
+
+- Recipe and Exercise pages now use stronger tab-divider removal CSS.
+- Recipe and Exercise detail sections now use cleaner styled bullets/numbered rows.
+- Recipe and Exercise feedback expanders have cleaner styling and no double border.
+- Recipe and Exercise feedback forms clear safely after submission using reset-token keys and show balloons/success.
+- Recipe and Exercise hero spacing reduced using prior spacing lessons.
+- Member Home divider gap around task actions reduced by about 60%.
+- Member Home content buttons increased in height and text-wrap stability improved.
+- Daily Log Other Fluids dropdown replaced with button-driven + Other Fluids flow using existing detail fields.
+- No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.
