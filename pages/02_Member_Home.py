@@ -7,70 +7,8 @@ from components.flash import render_system_message, set_system_message
 
 st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 
-st.markdown("""
-<style>
-/* v98.3 Member Home invisible spacing collapse */
-/* Collapse Streamlit containers that only carry style/script/empty helper content. */
-div[data-testid="stElementContainer"]:has(style),
-div[data-testid="stElementContainer"]:has(script),
-.element-container:has(style),
-.element-container:has(script),
-div[data-testid="stMarkdownContainer"]:has(style),
-div[data-testid="stMarkdownContainer"]:has(script){
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:visible!important;
-}
 
-/* Remove the real top gap above the signed-in/logout utility row. */
-section.main > div.block-container,
-.main .block-container,
-div[data-testid="stAppViewContainer"] section.main > div.block-container{
-  padding-top:.18rem!important;
-}
-
-/* Reduce the gap between utility row and Member Home hero card. */
-.utility-bar{
-  margin-top:0!important;
-  margin-bottom:.02rem!important;
-  padding:.28rem .58rem!important;
-}
-.hero-shell{
-  margin-top:.02rem!important;
-}
-div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
-  margin-top:.02rem!important;
-  padding-top:.02rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-top:-.35rem!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); inject_keepalive_guard_v96_11(); render_back_to_top()
-
-st.markdown("""
-<style>
-/* --- v94.4 Body-Mind button normalization --- */
-.hm-bodymind-btn-anchor + div [data-testid="stButton"] > button,
-.hm-bodymind-btn-anchor + div .stButton > button{
-  background:#FFFFFF!important;
-  color:#064E3B!important;
-  border:1.5px solid #CDBB8F!important;
-  border-radius:14px!important;
-  box-shadow:0 4px 12px rgba(25,36,31,.06)!important;
-}
-.hm-bodymind-btn-anchor + div [data-testid="stButton"] > button *,
-.hm-bodymind-btn-anchor + div .stButton > button *{
-  color:#064E3B!important;
-}
-</style>
-""", unsafe_allow_html=True)
+require_member()
 
 
 
@@ -128,6 +66,7 @@ requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
 is_task_instance = current_instance.get("instance_type") in ["Task Request", "Reassessment"] and not current_instance.get("submitted_for_review")
 is_reassessment = is_task_instance
 
+utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 render_system_message()
 auto_archive_expired_nutritionist_messages(user_id)
@@ -278,3 +217,79 @@ with right:
 
 # v96.3: Progress/status summary block removed from Member Home because it duplicated member-facing task/action information.
 # v96.3: Body-Mind Connection removed from Personalized Content; it appears under Your next steps only when requested.
+
+st.markdown("""
+<style>
+/* --- v94.4 Body-Mind button normalization --- */
+.hm-bodymind-btn-anchor + div [data-testid="stButton"] > button,
+.hm-bodymind-btn-anchor + div .stButton > button{
+  background:#FFFFFF!important;
+  color:#064E3B!important;
+  border:1.5px solid #CDBB8F!important;
+  border-radius:14px!important;
+  box-shadow:0 4px 12px rgba(25,36,31,.06)!important;
+}
+.hm-bodymind-btn-anchor + div [data-testid="stButton"] > button *,
+.hm-bodymind-btn-anchor + div .stButton > button *{
+  color:#064E3B!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+# v98.4: Deferred style-only injections to avoid top/hero spacing gaps.
+inject_global_styles()
+apply_luxe_theme()
+inject_keepalive_guard_v96_11()
+render_back_to_top()
+
+st.markdown("""
+<style>
+/* v98.4 Member Home utility style defer fix */
+/* Broad top-padding reset for current and newer Streamlit containers. */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewContainer"] section.main > div.block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.18rem!important;
+}
+
+/* Utility row and hero spacing. */
+.utility-bar{
+  margin-top:0!important;
+  margin-bottom:.04rem!important;
+  padding:.30rem .58rem!important;
+}
+.hero-shell{
+  margin-top:.08rem!important;
+}
+div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
+  margin-top:.08rem!important;
+  padding-top:.08rem!important;
+}
+
+/* Collapse any remaining hidden/style-only markdown containers if browser supports :has. */
+div[data-testid="stElementContainer"]:has(style),
+div[data-testid="stElementContainer"]:has(script),
+.element-container:has(style),
+.element-container:has(script),
+div[data-testid="stMarkdownContainer"]:has(style),
+div[data-testid="stMarkdownContainer"]:has(script){
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+
+/* Keep task buttons tight. */
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-top:-.35rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+

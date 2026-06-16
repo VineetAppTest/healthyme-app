@@ -4876,60 +4876,7 @@ def utility_logout_bar():
         return
 
 
-    st.markdown("""
-    <style>
-    /* v98.1 utility logout spacing */
-    .utility-bar{
-      margin-bottom:.18rem!important;
-      padding:.38rem .65rem!important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
-
-    st.markdown("""
-    <style>
-    /* v98.2 utility/member top spacing override */
-    .utility-bar{
-      margin-bottom:.12rem!important;
-      padding:.30rem .58rem!important;
-    }
-    section.main > div.block-container,
-    .main .block-container{
-      padding-top:.55rem!important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-
-    st.markdown("""
-    <style>
-    /* v98.3 utility invisible spacing collapse */
-    div[data-testid="stElementContainer"]:has(style),
-    div[data-testid="stElementContainer"]:has(script),
-    .element-container:has(style),
-    .element-container:has(script),
-    div[data-testid="stMarkdownContainer"]:has(style),
-    div[data-testid="stMarkdownContainer"]:has(script){
-      height:0!important;
-      min-height:0!important;
-      max-height:0!important;
-      margin:0!important;
-      padding:0!important;
-      overflow:visible!important;
-    }
-    section.main > div.block-container,
-    .main .block-container,
-    div[data-testid="stAppViewContainer"] section.main > div.block-container{
-      padding-top:.18rem!important;
-    }
-    .utility-bar{
-      margin-top:0!important;
-      margin-bottom:.02rem!important;
-      padding:.28rem .58rem!important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
     left, right = st.columns([5, 1])
     with left:
@@ -7555,8 +7502,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v98.1"
-APP_BUILD_LABEL = "Daily Log Admin Report Polish"
+APP_BUILD_VERSION = "v98.5"
+APP_BUILD_LABEL = "Admin Dashboard Top Spacing + Version Placement"
 
 
 def admin_version_line_v98_1():

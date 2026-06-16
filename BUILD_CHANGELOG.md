@@ -214,3 +214,20 @@
 - Reduced utility bar bottom margin and hero card top margin.
 - Kept task action button spacing polish from v98.1/v98.2.
 - No changes to Daily Log, saved-days filter, admin/report, meal timing, snacking, other fluids, or save logic.
+
+## v98.4 - Member Home Utility Style Defer Fix
+
+- Removed hidden CSS/style injections from inside utility_logout_bar before the signed-in/logout row.
+- Deferred Member Home style-only injections to the bottom of the page to prevent invisible spacing before utility row and hero card.
+- Rendered utility logout row directly before Member Home hero card.
+- Added broader Streamlit container padding resets including stAppViewBlockContainer and stMainBlockContainer.
+- No changes to Daily Log, saved-days filter, admin/report, meal timing, snacking, other fluids, or save logic.
+
+## v98.5 - Admin Dashboard Top Spacing + Version Placement
+
+- Fixed Admin Dashboard top spacing by removing early style/helper injections before visible content.
+- Deferred Admin Dashboard style-only injections to the bottom of the page.
+- Removed loose standalone admin version chip.
+- Added compact HEALTHYME header with v98.5 version directly under it on Admin Dashboard.
+- Updated app build version to v98.5.
+- No changes to Member Home logic, Daily Log, saved-days filter, meal timing, snacking, other fluids, or save logic.
