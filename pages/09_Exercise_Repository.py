@@ -1,3 +1,4 @@
+# v100.5 direct topbar import hotfix
 
 import html
 import pathlib
@@ -13,6 +14,7 @@ from components.ui_common import (
     render_page_nav,
     compact_topbar,
 )
+from components.ui_common import topbar
 from components.storage_assets import resolve_content_image_url
 from components.db import get_workflow, get_resource_assignments, save_resource_feedback, get_resource_feedback
 

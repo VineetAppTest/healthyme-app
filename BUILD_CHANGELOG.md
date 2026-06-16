@@ -287,3 +287,17 @@
 - Daily Log Other Fluids count now defaults to Select.
 - Admin Recipe Manager and Admin Exercise Manager now include dedicated Member Feedback tabs.
 - Removed standalone dashboard version note; version remains adjacent to HealthyMe through topbar only.
+
+## v100.4 - Recipe / Exercise Topbar Import Hotfix
+
+- Fixed Recipe Repository NameError by adding missing `topbar` import.
+- Added same topbar import guard to Exercise Repository.
+- Retained v100.3 UI corrections for Recipe, Exercise, task progress, Other Fluids Select default, and Admin feedback tabs.
+- No changes to Daily Log, save logic, database schema, scoring/report logic, or feedback persistence logic.
+
+## v100.5 - Recipe / Exercise Direct Topbar Import Hotfix
+
+- Hard-fixed Recipe and Exercise Repository `topbar` NameError by adding direct `topbar` import after the `ui_common` import block.
+- Retained v100.3/v100.4 Recipe and Exercise UI corrections.
+- Retained Submit Status v100.1 hotfix.
+- No changes to Daily Log, save logic, database schema, scoring/report logic, or feedback persistence logic.
