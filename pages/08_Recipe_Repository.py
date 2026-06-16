@@ -19,7 +19,107 @@ from components.db import get_workflow, get_resource_assignments, save_resource_
 
 st.set_page_config(page_title="Recipes", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
-compact_topbar("Recipe Repository", "", "Member content")
+st.markdown("""
+<style>
+/* v100.2 Recipe feedback layout hotfix */
+.hm-v1002-feedback-title{
+  color:#064E3B;
+  font-size:.92rem;
+  font-weight:920;
+  margin:.05rem 0 .35rem 0;
+}
+.hm-v1002-feedback-note{
+  color:#64748B;
+  font-size:.78rem;
+  font-weight:720;
+  margin:-.10rem 0 .45rem 0;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
+<style>
+/* v100.3 Recipe details UI corrections */
+div[data-testid="stTabs"] [data-baseweb="tab-list"],
+div[data-testid="stTabs"] div[role="tablist"]{
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+div[data-testid="stTabs"] [data-baseweb="tab-border"],
+div[data-testid="stTabs"] hr{
+  display:none!important;
+  height:0!important;
+  border:0!important;
+}
+div[data-testid="stTabs"] button[role="tab"]{
+  border-bottom:0!important;
+}
+.hm-v1003-bullet-row{
+  display:flex;
+  gap:.68rem;
+  align-items:flex-start;
+  padding:.58rem 0;
+  border-bottom:1px solid #F1E6CF;
+  color:#064E3B;
+  font-size:1.01rem;
+  line-height:1.35;
+}
+.hm-v1003-bullet-row:last-child{border-bottom:0;}
+.hm-v1003-dot{
+  width:1.18rem;
+  height:1.18rem;
+  min-width:1.18rem;
+  border-radius:999px;
+  background:#ECFDF5;
+  border:1.5px solid #6D9C6C;
+  color:#065F46;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.72rem;
+  font-weight:950;
+  margin-top:.08rem;
+}
+.hm-v1003-num{
+  width:1.34rem;
+  height:1.34rem;
+  min-width:1.34rem;
+  border-radius:999px;
+  background:#FFF7E6;
+  border:1.5px solid #D9C28F;
+  color:#7A5A16;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.74rem;
+  font-weight:950;
+  margin-top:.05rem;
+}
+div[data-testid="stExpander"] details{
+  border:1.3px solid #DCC690!important;
+  border-radius:16px!important;
+  background:#FFFDF8!important;
+  box-shadow:0 6px 16px rgba(15,23,42,.04)!important;
+  overflow:hidden!important;
+}
+div[data-testid="stExpander"] summary{
+  min-height:2.7rem!important;
+  padding:.62rem .82rem!important;
+  background:#FFFDF8!important;
+}
+div[data-testid="stExpander"] summary p{
+  color:#064E3B!important;
+  font-size:.92rem!important;
+  font-weight:920!important;
+  white-space:nowrap!important;
+  overflow-wrap:normal!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+topbar("Recipe Repository", "", "Member content")
 
 DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "recipes.csv"
 
@@ -584,14 +684,17 @@ def render_detail(row, idx):
 </div>
 """, unsafe_allow_html=True)
 
-    tab1, tab2, tab3 = st.tabs(["INGREDIENTS", "INSTRUCTIONS", "NUTRITION"])
+    tab1, tab2 = st.tabs(["INGREDIENTS", "INSTRUCTIONS"])
     with tab1:
         st.markdown("<div class='hm-detail-section-card'>", unsafe_allow_html=True)
         ingredients = split_lines(row.get("ingredients", ""))
         if not ingredients:
             st.info("No ingredients added yet.")
         for item in ingredients:
-            st.markdown(f"<div class='hm-check-row'><div class='hm-check-box'></div><div>{esc(item)}</div></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='hm-v1003-bullet-row'><span class='hm-v1003-dot'>✓</span><div>{esc(item)}</div></div>",
+                unsafe_allow_html=True,
+            )
         st.markdown("</div>", unsafe_allow_html=True)
     with tab2:
         st.markdown("<div class='hm-detail-section-card'>", unsafe_allow_html=True)
@@ -599,23 +702,15 @@ def render_detail(row, idx):
         if not steps:
             st.info("No instructions added yet.")
         for n, item in enumerate(steps, start=1):
-            st.markdown(f"<div class='hm-check-row'><b>{n}.</b><div>{esc(item)}</div></div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-    with tab3:
-        nutrition = str(row.get("nutrition", "") or "").strip()
-        st.markdown("<div class='hm-detail-section-card'>", unsafe_allow_html=True)
-        st.markdown(f"**Protein:** {esc(protein)}  \n**Fat:** {esc(fat)}  \n**Carbohydrates:** {esc(carbohydrates)}")
-        if additional_nutrition:
-            st.markdown("**Additional nutrition metrics:**")
-            st.write(additional_nutrition)
-        elif nutrition:
-            st.write(nutrition)
-        else:
-            st.write("No nutrition details added yet.")
+            st.markdown(
+                f"<div class='hm-v1003-bullet-row'><span class='hm-v1003-num'>{n}</span><div>{esc(item)}</div></div>",
+                unsafe_allow_html=True,
+            )
         st.markdown("</div>", unsafe_allow_html=True)
 
     existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "recipes", str(idx))
-    with st.expander("Recipe feedback / completion", expanded=not bool(existing_feedback_v100)):
+    with st.expander("Recipe feedback", expanded=False):
+        st.markdown("<div class='hm-v1002-feedback-note'>Mark completion and share feedback for admin review.</div>", unsafe_allow_html=True)
         status_options_v100 = ["Not started", "Tried", "Liked", "Need help / not suitable"]
         current_status_v100 = existing_feedback_v100.get("status", "Not started")
         status_index_v100 = status_options_v100.index(current_status_v100) if current_status_v100 in status_options_v100 else 0
@@ -635,8 +730,8 @@ def render_detail(row, idx):
                 rating=recipe_rating_v100,
                 notes=recipe_notes_v100,
             )
+            st.balloons()
             st.success("Recipe feedback submitted for admin review.")
-            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 

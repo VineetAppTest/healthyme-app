@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v100_1_SubmitStatus_NameError_Hotfix",
-  "version": "v100.1",
-  "updated_on": "2026-06-16T14:54:45.660793+00:00",
+  "build_name": "HealthyMe_v100_3_Client_Feature_UI_Corrections",
+  "version": "v100.3",
+  "updated_on": "2026-06-16T18:22:26.502204+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,10 +18,15 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Fixed Submit Status NameError caused by stale inst.get reference before inst was defined.",
-    "Body-Mind status now uses workflow/current instance-safe variable body_mind_done_v100.",
-    "Admin Review stat now uses review_label_v100.",
-    "No changes to Daily Log, recipe/exercise feedback, saved-days filter, meal timing, snacking, other fluids, or save logic."
+    "Recipe detail tabs now show Ingredients and Instructions only; Nutrition hidden for now.",
+    "Recipe and Exercise tab divider/active underline hidden.",
+    "Recipe and Exercise detail rows use cleaner bullet/number styling.",
+    "Recipe and Exercise feedback sections use styled expander controls without double-border container.",
+    "Recipe and Exercise feedback submission now triggers balloons and success message.",
+    "Member Home task progress now counts visible tasks, including Body-Mind, so 3 visible tasks shows 0 of 3.",
+    "Daily Log Other Fluids count now defaults to Select.",
+    "Admin Recipe Manager and Admin Exercise Manager now include dedicated Member Feedback tabs.",
+    "Removed standalone dashboard version note; version remains adjacent to HealthyMe through topbar only."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -318,7 +323,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v100_0_Client_Feature_Completion_Build.zip",
+  "base_build": "HealthyMe_v100_2_RecipeExercise_Feedback_Layout_Hotfix.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",

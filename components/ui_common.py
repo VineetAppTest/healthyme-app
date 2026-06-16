@@ -7502,8 +7502,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v100.1"
-APP_BUILD_LABEL = "Submit Status NameError Hotfix"
+APP_BUILD_VERSION = "v100.3"
+APP_BUILD_LABEL = "Client Feature UI Corrections"
 
 
 def admin_version_line_v98_1():

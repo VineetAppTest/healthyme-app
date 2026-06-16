@@ -13,11 +13,6 @@ topbar(
     "Admin workflow",
 )
 
-st.markdown(
-    "<div style='color:#64748B;font-size:.82rem;font-weight:760;margin:.1rem 0 .55rem 0;'>v100.0 Client Feature Completion Build: allocation clarity, member progress visibility, admin status visibility.</div>",
-    unsafe_allow_html=True,
-)
-
 st.markdown("<div class='hm-admin-title'>Main Workflows</div>", unsafe_allow_html=True)
 
 left, right = st.columns(2, gap="large")

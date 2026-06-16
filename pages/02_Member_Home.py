@@ -195,8 +195,9 @@ with left:
             unsafe_allow_html=True,
         )
 
-        progress_v99 = task_progress_summary_v99(current_instance)
-        progress_width_v99 = max(0, min(100, progress_v99.get("percent", 0)))
+        progress_total_v1003 = len(visible_tasks)
+        progress_done_v1003 = sum(1 for p in visible_tasks if task_status_done_v96_2(current_instance, wf, p))
+        progress_width_v99 = int(round((progress_done_v1003 / progress_total_v1003) * 100)) if progress_total_v1003 else 100
         task_chips_v99 = []
         for p in visible_tasks:
             done_v99 = task_status_done_v96_2(current_instance, wf, p)
@@ -208,7 +209,7 @@ with left:
         st.markdown(
             f"""
             <div class='hm-v990-task-progress'>
-              <div class='hm-v990-progress-title'>Task progress: {progress_v99.get('done', 0)} of {progress_v99.get('total', 0)} completed</div>
+              <div class='hm-v990-progress-title'>Task progress: {progress_done_v1003} of {progress_total_v1003} completed</div>
               <div class='hm-v990-progress-line'><div class='hm-v990-progress-fill' style='width:{progress_width_v99}%;'></div></div>
               <div>{''.join(task_chips_v99)}</div>
               <div class='hm-v990-submit-note'>Use Submit / Status after completing all requested tasks to send this to admin for review.</div>

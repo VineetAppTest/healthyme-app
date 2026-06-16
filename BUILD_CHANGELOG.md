@@ -269,3 +269,21 @@
 - Body-Mind status now uses workflow/current instance-safe variable `body_mind_done_v100`.
 - Admin Review stat now uses `review_label_v100`.
 - No changes to Daily Log, recipe/exercise feedback, saved-days filter, meal timing, snacking, other fluids, or save logic.
+
+## v100.2 - Recipe / Exercise Feedback Layout Hotfix
+
+- Fixed Recipe feedback section label wrapping by replacing long expander label with stable bordered container.
+- Applied same feedback layout correction to Exercise feedback for consistency.
+- No changes to feedback save logic, Submit Status logic, Daily Log, saved-days filter, meal timing, snacking, other fluids, or database schema.
+
+## v100.3 - Client Feature UI Corrections
+
+- Recipe detail tabs now show Ingredients and Instructions only; Nutrition hidden for now.
+- Recipe and Exercise tab divider/active underline hidden.
+- Recipe and Exercise detail rows use cleaner bullet/number styling.
+- Recipe and Exercise feedback sections use styled expander controls without double-border container.
+- Recipe and Exercise feedback submission now triggers balloons and success message.
+- Member Home task progress now counts visible tasks, including Body-Mind, so 3 visible tasks shows 0 of 3.
+- Daily Log Other Fluids count now defaults to Select.
+- Admin Recipe Manager and Admin Exercise Manager now include dedicated Member Feedback tabs.
+- Removed standalone dashboard version note; version remains adjacent to HealthyMe through topbar only.

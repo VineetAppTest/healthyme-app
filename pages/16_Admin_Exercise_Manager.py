@@ -138,7 +138,7 @@ def exercise_form(prefix, row=None):
 render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 topbar("Manage & Allocate Exercises", "Manage image, title, timing, exercise details and member allocation.", "Admin content manager")
 
-tabs = st.tabs(["Allocate to Member", "Current Repository", "Add Exercise", "Import CSV", "Edit / Delete"])
+tabs = st.tabs(["Allocate to Member", "Current Repository", "Add Exercise", "Import CSV", "Edit / Delete", "Member Feedback"])
 
 with tabs[0]:
     st.subheader("Allocate Exercises to Member")
@@ -260,6 +260,25 @@ with tabs[4]:
                 save(df)
                 st.success("Exercise deleted.")
                 st.rerun()
+
+
+with tabs[5]:
+    st.subheader("Member Exercise Feedback")
+    members = list_members()
+    if not members:
+        st.info("No members available.")
+    else:
+        member_options = {f"{m['name']} — {m['email']}": m["id"] for m in members}
+        label = st.selectbox("Select member for exercise feedback", list(member_options.keys()), key="exercise_feedback_member_v1003")
+        member_id = member_options[label]
+        feedback_rows_v1003 = list_resource_feedback(member_id=member_id, resource_type="exercises")
+        if feedback_rows_v1003:
+            feedback_df_v1003 = pd.DataFrame(feedback_rows_v1003)
+            show_cols_v1003 = [c for c in ["title", "status", "rating", "notes", "updated_at"] if c in feedback_df_v1003.columns]
+            st.dataframe(feedback_df_v1003[show_cols_v1003], use_container_width=True, hide_index=True)
+        else:
+            st.caption("No exercise feedback submitted by this member yet.")
+
 
 render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
 
