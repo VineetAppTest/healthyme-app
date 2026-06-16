@@ -4886,6 +4886,21 @@ def utility_logout_bar():
     </style>
     """, unsafe_allow_html=True)
 
+
+    st.markdown("""
+    <style>
+    /* v98.2 utility/member top spacing override */
+    .utility-bar{
+      margin-bottom:.12rem!important;
+      padding:.30rem .58rem!important;
+    }
+    section.main > div.block-container,
+    .main .block-container{
+      padding-top:.55rem!important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     left, right = st.columns([5, 1])
     with left:
         st.markdown(

@@ -199,3 +199,10 @@
 - Reduced Member Home task-button spacing and signed-in/header spacing.
 - Added admin-only version marker under HealthyMe brand/top header where topbar is used, plus visible admin dashboard build chip.
 - No changes to Daily Log save/filter logic, meal timing, snacking, or other fluids capture logic.
+
+## v98.2 - Member Home Top Spacing Reduction
+
+- Reduced top empty space above signed-in/logout row by approximately 60%.
+- Reduced empty space between signed-in/logout row and Member Home hero card by approximately 60%.
+- Kept task action button spacing polish from v98.1.
+- No changes to Daily Log, saved-days filter, admin/report, meal timing, snacking, other fluids, or save logic.

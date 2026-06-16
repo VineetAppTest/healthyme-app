@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v98_1_DailyLog_MemberAdmin_Polish",
-  "version": "v98.1",
-  "updated_on": "2026-06-16T06:33:46.042499+00:00",
+  "build_name": "HealthyMe_v98_2_MemberHome_TopSpacing_Reduction",
+  "version": "v98.2",
+  "updated_on": "2026-06-16T07:40:31.441225+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,13 +18,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Matched Filter Recent Saved Days heading font with field-label styling.",
-    "Updated Recent Saved Days Other Fluids summary to Other Liquid total-intake/timing format.",
-    "Placed Show/Hide sample journal format and Back to Home buttons side-by-side.",
-    "Changed Recent Saved Days label Notes to Member's Notes and added padding above View History.",
-    "Reduced Member Home task-button and signed-in header spacing.",
-    "Added admin-only version marker under HealthyMe brand/top header where topbar is used and visible admin dashboard build chip.",
-    "No changes to Daily Log save/filter logic, meal timing, snacking, or other fluids capture logic."
+    "Reduced top empty space above signed-in/logout row by approximately 60%.",
+    "Reduced empty space between signed-in/logout row and Member Home hero card by approximately 60%.",
+    "Kept task action button spacing polish from v98.1.",
+    "No changes to Daily Log, saved-days filter, admin/report, meal timing, snacking, other fluids, or save logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -321,7 +318,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v98_0_DailyLog_Closure_AdminReport_Validation.zip",
+  "base_build": "HealthyMe_v98_1_DailyLog_MemberAdmin_Polish.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "closure_validation_candidate",

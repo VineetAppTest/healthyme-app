@@ -27,21 +27,34 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+
+
+
 st.markdown("""
 <style>
-/* v98.1 Member Home spacing polish */
+/* v98.2 Member Home top spacing reduction */
+/* Reduce first empty space from the top by about 60%. */
+section.main > div.block-container,
+.main .block-container{
+  padding-top:.55rem!important;
+}
+
+/* Reduce second empty space between signed-in/logout bar and hero card by about 60%. */
+.utility-bar{
+  margin-bottom:.12rem!important;
+}
+.hero-shell{
+  margin-top:.14rem!important;
+}
+div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
+  margin-top:.14rem!important;
+  padding-top:.14rem!important;
+}
 .hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
   margin-top:-.35rem!important;
 }
-div[data-testid="stMarkdownContainer"] hr{
-  margin:.58rem 0!important;
-}
-.hero-shell{
-  margin-top:.38rem!important;
-}
 </style>
 """, unsafe_allow_html=True)
-
 
 
 user_id = st.session_state["user_id"]
