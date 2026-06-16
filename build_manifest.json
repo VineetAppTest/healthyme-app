@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v100_7_Client_UI_Final_Polish_Hotfix",
-  "version": "v100.7",
-  "updated_on": "2026-06-16T19:56:00.473204+00:00",
+  "build_name": "HealthyMe_v100_8_DailyLog_CompactToken_RecipeExercise_StructuralPolish",
+  "version": "v100.8",
+  "updated_on": "2026-06-16T20:09:43.712045+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,13 +18,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Other Fluids now defaults to 0 open entries and does not set time widget keys via Session State API.",
-    "Other Fluids button height aligned closer to adjacent dropdown height.",
-    "Member Home divider spacing equalized above and below.",
-    "Personalized Content buttons increased further so Daily Log text is fully visible.",
-    "Recipe and Exercise hero spacing tightened with invisible style-container collapse.",
-    "Recipe and Exercise tab divider removal strengthened.",
-    "Recipe and Exercise bullets/numbering and feedback expander styling upgraded.",
+    "Removed stray compact_ token from Daily Log and all Python files.",
+    "Recipe and Exercise pages now use button-driven detail sections instead of Streamlit tabs, removing tab divider/underline structurally.",
+    "Recipe and Exercise styling is deferred to bottom to avoid invisible top-spacing containers before hero.",
+    "Recipe and Exercise hero spacing tightened with structural/invisible container learning.",
+    "Recipe and Exercise premium bullets/numbering and feedback expander styling upgraded further.",
+    "Member Home divider spacing above/below task area equalized more aggressively.",
     "No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite."
   ],
   "required_setup": [
@@ -322,7 +321,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v100_6_Client_UI_Functional_Polish.zip",
+  "base_build": "HealthyMe_v100_7_Client_UI_Final_Polish_Hotfix.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",

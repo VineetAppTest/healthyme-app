@@ -324,3 +324,13 @@
 - Recipe and Exercise tab divider removal strengthened.
 - Recipe and Exercise bullets/numbering and feedback expander styling upgraded.
 - No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.
+
+## v100.8 - DailyLog Compact Token + Recipe/Exercise Structural Polish
+
+- Removed stray `compact_` token from Daily Log and all Python files.
+- Recipe and Exercise pages now use button-driven detail sections instead of Streamlit tabs, removing tab divider/underline structurally.
+- Recipe and Exercise styling is deferred to bottom to avoid invisible top-spacing containers before hero.
+- Recipe and Exercise hero spacing tightened with structural/invisible container learning.
+- Recipe and Exercise premium bullets/numbering and feedback expander styling upgraded further.
+- Member Home divider spacing above/below task area equalized more aggressively.
+- No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.

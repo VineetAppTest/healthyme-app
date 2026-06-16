@@ -190,6 +190,45 @@ div[data-testid="stButton"] > button p{
 """, unsafe_allow_html=True)
 
 
+
+st.markdown("""
+<style>
+/* v100.8 Member Home equal divider spacing hard fix */
+hr{
+  margin-top:.30rem!important;
+  margin-bottom:.30rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.10rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.30rem!important;
+}
+.hm-v990-task-progress + div,
+.hm-v990-task-progress + div hr{
+  margin-top:.30rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.86rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  padding:.64rem .82rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 render_system_message()

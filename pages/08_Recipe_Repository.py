@@ -21,358 +21,9 @@ from components.db import get_workflow, get_resource_assignments, save_resource_
 
 st.set_page_config(page_title="Recipes", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
-st.markdown("""
-<style>
-/* v100.2 Recipe feedback layout hotfix */
-.hm-v1002-feedback-title{
-  color:#064E3B;
-  font-size:.92rem;
-  font-weight:920;
-  margin:.05rem 0 .35rem 0;
-}
-.hm-v1002-feedback-note{
-  color:#64748B;
-  font-size:.78rem;
-  font-weight:720;
-  margin:-.10rem 0 .45rem 0;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.3 Recipe details UI corrections */
-div[data-testid="stTabs"] [data-baseweb="tab-list"],
-div[data-testid="stTabs"] div[role="tablist"]{
-  border-bottom:0!important;
-  box-shadow:none!important;
-}
-div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
-div[data-testid="stTabs"] [data-baseweb="tab-border"],
-div[data-testid="stTabs"] hr{
-  display:none!important;
-  height:0!important;
-  border:0!important;
-}
-div[data-testid="stTabs"] button[role="tab"]{
-  border-bottom:0!important;
-}
-.hm-v1003-bullet-row{
-  display:flex;
-  gap:.68rem;
-  align-items:flex-start;
-  padding:.58rem 0;
-  border-bottom:1px solid #F1E6CF;
-  color:#064E3B;
-  font-size:1.01rem;
-  line-height:1.35;
-}
-.hm-v1003-bullet-row:last-child{border-bottom:0;}
-.hm-v1003-dot{
-  width:1.18rem;
-  height:1.18rem;
-  min-width:1.18rem;
-  border-radius:999px;
-  background:#ECFDF5;
-  border:1.5px solid #6D9C6C;
-  color:#065F46;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:.72rem;
-  font-weight:950;
-  margin-top:.08rem;
-}
-.hm-v1003-num{
-  width:1.34rem;
-  height:1.34rem;
-  min-width:1.34rem;
-  border-radius:999px;
-  background:#FFF7E6;
-  border:1.5px solid #D9C28F;
-  color:#7A5A16;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:.74rem;
-  font-weight:950;
-  margin-top:.05rem;
-}
-div[data-testid="stExpander"] details{
-  border:1.3px solid #DCC690!important;
-  border-radius:16px!important;
-  background:#FFFDF8!important;
-  box-shadow:0 6px 16px rgba(15,23,42,.04)!important;
-  overflow:hidden!important;
-}
-div[data-testid="stExpander"] summary{
-  min-height:2.7rem!important;
-  padding:.62rem .82rem!important;
-  background:#FFFDF8!important;
-}
-div[data-testid="stExpander"] summary p{
-  color:#064E3B!important;
-  font-size:.92rem!important;
-  font-weight:920!important;
-  white-space:nowrap!important;
-  overflow-wrap:normal!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.6 Recipe UI functional polish */
-.hero-shell{
-  margin-top:.06rem!important;
-  margin-bottom:.38rem!important;
-  padding-top:1.05rem!important;
-  padding-bottom:1.05rem!important;
-}
-div[data-testid="stTabs"] [data-baseweb="tab-list"],
-div[data-testid="stTabs"] div[role="tablist"],
-div[data-testid="stTabs"] [role="tablist"]{
-  border-bottom:0!important;
-  box-shadow:none!important;
-  gap:.55rem!important;
-}
-div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
-div[data-testid="stTabs"] [data-baseweb="tab-border"],
-div[data-testid="stTabs"] hr,
-div[data-testid="stTabs"] [aria-selected="true"]::after,
-div[data-testid="stTabs"] button[role="tab"]::after{
-  display:none!important;
-  height:0!important;
-  border:0!important;
-  background:transparent!important;
-}
-div[data-testid="stTabs"] button[role="tab"]{
-  border-bottom:0!important;
-  box-shadow:none!important;
-}
-.hm-v1006-list-card{
-  border:1px solid #E7D6B2;
-  background:#FFFDF8;
-  border-radius:16px;
-  padding:.72rem .86rem;
-  margin:.38rem 0 .72rem 0;
-}
-.hm-v1006-row{
-  display:flex;
-  gap:.70rem;
-  align-items:flex-start;
-  padding:.56rem 0;
-  border-bottom:1px solid #F0E4CC;
-  color:#064E3B;
-  font-size:1.00rem;
-  line-height:1.38;
-}
-.hm-v1006-row:last-child{border-bottom:0;}
-.hm-v1006-check{
-  width:1.24rem;
-  height:1.24rem;
-  min-width:1.24rem;
-  border-radius:999px;
-  background:#ECFDF5;
-  border:1.5px solid #6D9C6C;
-  color:#065F46;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:.72rem;
-  font-weight:950;
-  margin-top:.08rem;
-}
-.hm-v1006-num{
-  width:1.36rem;
-  height:1.36rem;
-  min-width:1.36rem;
-  border-radius:999px;
-  background:#FFF7E6;
-  border:1.5px solid #D9C28F;
-  color:#7A5A16;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:.74rem;
-  font-weight:950;
-  margin-top:.05rem;
-}
-div[data-testid="stExpander"] details{
-  border:1.25px solid #D9C28F!important;
-  border-radius:16px!important;
-  background:#FFFDF8!important;
-  box-shadow:0 8px 20px rgba(15,23,42,.045)!important;
-  overflow:hidden!important;
-}
-div[data-testid="stExpander"] summary{
-  min-height:2.55rem!important;
-  padding:.54rem .82rem!important;
-  background:#FFFDF8!important;
-}
-div[data-testid="stExpander"] summary p{
-  color:#064E3B!important;
-  font-size:.92rem!important;
-  font-weight:920!important;
-  white-space:nowrap!important;
-}
-.hm-v1006-feedback-note{
-  color:#64748B;
-  font-size:.78rem;
-  font-weight:720;
-  margin:.05rem 0 .45rem 0;
-}
-</style>
-""", unsafe_allow_html=True)
 
 
 
-st.markdown("""
-<style>
-/* v100.7 Recipe hero/tabs/bullets/feedback hard polish */
-/* Collapse style-only/invisible containers that can create top spacing. */
-div[data-testid="stElementContainer"]:has(style),
-div[data-testid="stElementContainer"]:has(script),
-.element-container:has(style),
-.element-container:has(script),
-div[data-testid="stMarkdownContainer"]:has(style),
-div[data-testid="stMarkdownContainer"]:has(script){
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:visible!important;
-}
-/* Hero spacing: tighter above and below. */
-section.main > div.block-container,
-.main .block-container,
-[data-testid="stAppViewBlockContainer"],
-.stMainBlockContainer,
-.block-container{
-  padding-top:.18rem!important;
-}
-.hero-shell,
-.hm-hero,
-[class*="hero"]{
-  margin-top:.02rem!important;
-  margin-bottom:.24rem!important;
-  padding-top:.82rem!important;
-  padding-bottom:.82rem!important;
-}
-/* Strong tab divider and underline removal. */
-div[data-testid="stTabs"]{
-  border:0!important;
-}
-div[data-testid="stTabs"] > div,
-div[data-testid="stTabs"] [data-baseweb="tab-list"],
-div[data-testid="stTabs"] div[role="tablist"],
-div[data-testid="stTabs"] [role="tablist"]{
-  border-bottom:0!important;
-  box-shadow:none!important;
-}
-div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
-div[data-testid="stTabs"] [data-baseweb="tab-border"],
-div[data-testid="stTabs"] hr,
-div[data-testid="stTabs"] button[role="tab"]::before,
-div[data-testid="stTabs"] button[role="tab"]::after,
-div[data-testid="stTabs"] [aria-selected="true"]::before,
-div[data-testid="stTabs"] [aria-selected="true"]::after{
-  display:none!important;
-  height:0!important;
-  border:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-}
-div[data-testid="stTabs"] button[role="tab"]{
-  border-bottom:0!important;
-  box-shadow:none!important;
-}
-/* Premium list styling. */
-.hm-v1006-list-card,
-.hm-v1007-list-card{
-  border:1px solid #E3C98E!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)!important;
-  border-radius:18px!important;
-  padding:.78rem .95rem!important;
-  margin:.30rem 0 .58rem 0!important;
-  box-shadow:0 8px 20px rgba(15,23,42,.045)!important;
-}
-.hm-v1006-row,
-.hm-v1007-row{
-  display:flex!important;
-  gap:.74rem!important;
-  align-items:flex-start!important;
-  padding:.58rem 0!important;
-  border-bottom:1px solid #F0E4CC!important;
-  color:#064E3B!important;
-  font-size:1.01rem!important;
-  line-height:1.38!important;
-}
-.hm-v1006-row:last-child,
-.hm-v1007-row:last-child{border-bottom:0!important;}
-.hm-v1006-check,
-.hm-v1007-check{
-  width:1.32rem!important;
-  height:1.32rem!important;
-  min-width:1.32rem!important;
-  border-radius:999px!important;
-  background:#ECFDF5!important;
-  border:1.5px solid #6D9C6C!important;
-  color:#065F46!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-size:.75rem!important;
-  font-weight:950!important;
-  margin-top:.05rem!important;
-}
-.hm-v1006-num,
-.hm-v1007-num{
-  width:1.42rem!important;
-  height:1.42rem!important;
-  min-width:1.42rem!important;
-  border-radius:999px!important;
-  background:#FFF7E6!important;
-  border:1.5px solid #D9C28F!important;
-  color:#7A5A16!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-size:.76rem!important;
-  font-weight:950!important;
-  margin-top:.04rem!important;
-}
-/* Premium expander styling. */
-div[data-testid="stExpander"] details{
-  border:1.4px solid #D9C28F!important;
-  border-radius:18px!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)!important;
-  box-shadow:0 9px 22px rgba(15,23,42,.05)!important;
-  overflow:hidden!important;
-}
-div[data-testid="stExpander"] summary{
-  min-height:2.78rem!important;
-  padding:.64rem .92rem!important;
-  background:#FFFDF8!important;
-}
-div[data-testid="stExpander"] summary p{
-  color:#064E3B!important;
-  font-size:.96rem!important;
-  font-weight:940!important;
-  white-space:nowrap!important;
-}
-.hm-v1006-feedback-note,
-.hm-v1007-feedback-note{
-  color:#64748B!important;
-  font-size:.80rem!important;
-  font-weight:740!important;
-  margin:.08rem 0 .48rem 0!important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 
 topbar("Recipe Repository", "", "Member content")
@@ -940,29 +591,40 @@ def render_detail(row, idx):
 </div>
 """, unsafe_allow_html=True)
 
-    tab1, tab2 = st.tabs(["INGREDIENTS", "INSTRUCTIONS"])
-    with tab1:
-        st.markdown("<div class='hm-v1006-list-card'>", unsafe_allow_html=True)
+    section_key_v1008 = f"recipe_detail_section_{idx}"
+    if section_key_v1008 not in st.session_state:
+        st.session_state[section_key_v1008] = "ingredients"
+    sec_col1, sec_col2 = st.columns(2)
+    with sec_col1:
+        if st.button("Ingredients", use_container_width=True, key=f"recipe_tab_ingredients_{idx}"):
+            st.session_state[section_key_v1008] = "ingredients"
+    with sec_col2:
+        if st.button("Instructions", use_container_width=True, key=f"recipe_tab_instructions_{idx}"):
+            st.session_state[section_key_v1008] = "instructions"
+
+    active_recipe_section_v1008 = st.session_state.get(section_key_v1008, "ingredients")
+    st.markdown("<div class='hm-v1008-section-shell'>", unsafe_allow_html=True)
+    if active_recipe_section_v1008 == "ingredients":
+        st.markdown("<div class='hm-v1008-section-title'>Ingredients</div>", unsafe_allow_html=True)
         ingredients = split_lines(row.get("ingredients", ""))
         if not ingredients:
             st.info("No ingredients added yet.")
         for item in ingredients:
             st.markdown(
-                f"<div class='hm-v1006-row'><span class='hm-v1006-check'>✓</span><div>{esc(item)}</div></div>",
+                f"<div class='hm-v1008-row'><span class='hm-v1008-check'>✓</span><div>{esc(item)}</div></div>",
                 unsafe_allow_html=True,
             )
-        st.markdown("</div>", unsafe_allow_html=True)
-    with tab2:
-        st.markdown("<div class='hm-v1006-list-card'>", unsafe_allow_html=True)
+    else:
+        st.markdown("<div class='hm-v1008-section-title'>Instructions</div>", unsafe_allow_html=True)
         steps = split_lines(row.get("steps", ""))
         if not steps:
             st.info("No instructions added yet.")
         for n, item in enumerate(steps, start=1):
             st.markdown(
-                f"<div class='hm-v1006-row'><span class='hm-v1006-num'>{n}</span><div>{esc(item)}</div></div>",
+                f"<div class='hm-v1008-row'><span class='hm-v1008-num'>{n}</span><div>{esc(item)}</div></div>",
                 unsafe_allow_html=True,
             )
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "recipes", str(idx))
     recipe_reset_token_v1006 = st.session_state.get(f"recipe_feedback_reset_{idx}", 0)
@@ -970,7 +632,7 @@ def render_detail(row, idx):
         st.balloons()
         st.success("Recipe feedback submitted for admin review. The feedback form has been cleared.")
     with st.expander("Recipe feedback", expanded=False):
-        st.markdown("<div class='hm-v1006-feedback-note'>Mark completion and share feedback for admin review.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-v1008-feedback-note'>Mark completion and share feedback for admin review.</div>", unsafe_allow_html=True)
         status_options_v100 = ["Not started", "Tried", "Liked", "Need help / not suitable"]
         recipe_status_v100 = st.selectbox("Recipe status", status_options_v100, index=0, key=f"recipe_feedback_status_{idx}_{recipe_reset_token_v1006}")
         rating_options_v100 = ["", "1", "2", "3", "4", "5"]
@@ -1027,3 +689,136 @@ else:
     render_page_nav("Recipes", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
 
 # v96_recipe_macro_display: Recipe cards/details should display Protein, Fat and Carbohydrates below Calories when available.
+
+
+# v100.8: Deferred Recipe CSS after visible content to avoid invisible top spacing.
+st.markdown("""
+<style>
+/* v100.8 Recipe structural polish */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.16rem!important;
+}
+.hero-shell,
+.hm-hero,
+[class*="hero"]{
+  margin-top:.02rem!important;
+  margin-bottom:.20rem!important;
+  padding-top:.72rem!important;
+  padding-bottom:.72rem!important;
+}
+
+/* Hide any residual tab divider if a cached Streamlit tab structure exists */
+div[data-testid="stTabs"], div[data-testid="stTabs"] *{
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+div[data-testid="stTabs"] [data-baseweb="tab-border"],
+div[data-testid="stTabs"] hr,
+div[data-testid="stTabs"] button[role="tab"]::before,
+div[data-testid="stTabs"] button[role="tab"]::after{
+  display:none!important;
+  height:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+
+/* Button-driven pseudo tabs */
+div[data-testid="stButton"] > button{
+  min-height:2.45rem!important;
+  border-radius:999px!important;
+  border:1.25px solid #D9C28F!important;
+  background:#FFFDF8!important;
+  color:#064E3B!important;
+  font-weight:850!important;
+}
+
+/* Premium detail card */
+.hm-v1008-section-shell{
+  border:1px solid #E3C98E;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);
+  border-radius:18px;
+  padding:.88rem 1.02rem;
+  margin:.34rem 0 .58rem 0;
+  box-shadow:0 8px 20px rgba(15,23,42,.045);
+}
+.hm-v1008-section-title{
+  color:#064E3B;
+  font-weight:950;
+  font-size:.96rem;
+  margin:0 0 .42rem 0;
+}
+.hm-v1008-row{
+  display:flex;
+  gap:.76rem;
+  align-items:flex-start;
+  padding:.58rem 0;
+  border-bottom:1px solid #F0E4CC;
+  color:#064E3B;
+  font-size:1.01rem;
+  line-height:1.38;
+}
+.hm-v1008-row:last-child{border-bottom:0;}
+.hm-v1008-check{
+  width:1.34rem;
+  height:1.34rem;
+  min-width:1.34rem;
+  border-radius:999px;
+  background:#ECFDF5;
+  border:1.5px solid #6D9C6C;
+  color:#065F46;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.75rem;
+  font-weight:950;
+  margin-top:.04rem;
+}
+.hm-v1008-num{
+  width:1.44rem;
+  height:1.44rem;
+  min-width:1.44rem;
+  border-radius:999px;
+  background:#FFF7E6;
+  border:1.5px solid #D9C28F;
+  color:#7A5A16;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.76rem;
+  font-weight:950;
+  margin-top:.03rem;
+}
+
+/* Premium feedback expander */
+div[data-testid="stExpander"] details{
+  border:1.4px solid #D9C28F!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)!important;
+  box-shadow:0 9px 22px rgba(15,23,42,.05)!important;
+  overflow:hidden!important;
+}
+div[data-testid="stExpander"] summary{
+  min-height:2.78rem!important;
+  padding:.64rem .92rem!important;
+  background:#FFFDF8!important;
+}
+div[data-testid="stExpander"] summary p{
+  color:#064E3B!important;
+  font-size:.96rem!important;
+  font-weight:940!important;
+  white-space:nowrap!important;
+}
+.hm-v1008-feedback-note{
+  color:#64748B!important;
+  font-size:.80rem!important;
+  font-weight:740!important;
+  margin:.08rem 0 .48rem 0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+

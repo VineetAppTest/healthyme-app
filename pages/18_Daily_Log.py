@@ -1733,7 +1733,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-compact_
 st.markdown("""
 <style>
 /* v100.7 Other Fluids button height alignment */
