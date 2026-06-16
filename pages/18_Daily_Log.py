@@ -42,21 +42,58 @@ def normalise_other_fluids_v97(items):
             })
     return cleaned
 
+def _hm_v981_qty_text(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    cleaned = raw.replace("ML", "ml").replace("Ml", "ml").strip()
+    cleaned = re.sub(r"\s*ml\s*$", "", cleaned, flags=re.I).strip()
+    return cleaned
+
+def _hm_v981_qty_display(value):
+    cleaned = _hm_v981_qty_text(value)
+    return f"{cleaned} ml" if cleaned else ""
+
 def other_fluids_summary_v97(items):
+    """v98.1 display format for Recent Saved Days and Admin report.
+
+    Format:
+    Other Liquid 1: Total Intake - X + Y ml | 12:30 PM - X ml; 3:30 PM - Y ml
+    """
+    fluids = normalise_other_fluids_v97(items)
+    if not fluids:
+        return "—"
+
+    grouped = []
+    for item in fluids:
+        fluid_type = item.get("type") or "Other Liquid"
+        match = next((g for g in grouped if g["type"] == fluid_type), None)
+        if not match:
+            match = {"type": fluid_type, "items": []}
+            grouped.append(match)
+        match["items"].append(item)
+
     rows = []
-    for idx, item in enumerate(normalise_other_fluids_v97(items), start=1):
-        bits = []
-        if item.get("time"):
-            bits.append(item.get("time"))
-        if item.get("type"):
-            bits.append(item.get("type"))
-        if item.get("quantity"):
-            bits.append(item.get("quantity"))
-        if item.get("notes"):
-            bits.append(item.get("notes"))
-        if bits:
-            rows.append(f"{idx}. " + " · ".join(bits))
-    return " | ".join(rows) if rows else "—"
+    for idx, group in enumerate(grouped, start=1):
+        qty_parts = [_hm_v981_qty_text(x.get("quantity")) for x in group["items"] if _hm_v981_qty_text(x.get("quantity"))]
+        total_text = " + ".join(qty_parts) + (" ml" if qty_parts else "—")
+
+        timing_parts = []
+        for item in group["items"]:
+            time_text = str(item.get("time") or "").strip()
+            qty_text = _hm_v981_qty_display(item.get("quantity"))
+            if time_text and qty_text:
+                timing_parts.append(f"{time_text} - {qty_text}")
+            elif time_text:
+                timing_parts.append(time_text)
+            elif qty_text:
+                timing_parts.append(qty_text)
+
+        timing_text = "; ".join(timing_parts) if timing_parts else "—"
+        rows.append(f"Other Liquid {idx}: Total Intake - {total_text} | {timing_text}")
+
+    return "<br>".join(rows) if rows else "—"
+
 
 
 def parse_date_safe_v97_3(value):
@@ -1664,6 +1701,38 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v98.1 Daily Log polish */
+.hm-v981-filter-label{
+  color:#334155!important;
+  font-size:.82rem!important;
+  font-weight:780!important;
+  line-height:1.05!important;
+  margin:0 0 .28rem 0!important;
+  padding:0!important;
+}
+.hm-v981-action-pad{
+  height:.42rem!important;
+  min-height:.42rem!important;
+  line-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-rsd-mobile-value br{
+  display:block;
+  margin:.12rem 0;
+}
+.hm-v981-bottom-nav-gap{
+  height:.2rem!important;
+  min-height:.2rem!important;
+  margin:0!important;
+  padding:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
@@ -2584,7 +2653,7 @@ with st.container(border=True):
     if "daily_log_saved_days_filter_active_v97_23" not in st.session_state:
         st.session_state["daily_log_saved_days_filter_active_v97_23"] = False
 
-    st.markdown("<div class='hm-v9729-subsection-title'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v981-filter-label'>Filter Recent Saved Days</div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-v9718-filter'>", unsafe_allow_html=True)
 
     if all_parseable_dates_v97_23:
@@ -2694,7 +2763,7 @@ with st.container(border=True):
                     ("Meal type and food", meal_display_text),
                     ("Water", day.get('water_litres') or '—'),
                     ("Other Fluids", other_fluids_summary_v97(day.get("other_fluids", []))),
-                    ("Notes", day.get('notes') or '—'),
+                    ("Member\'s Notes", day.get('notes') or '—'),
                     ("Nutritionist Note", latest_note_text),
                 ]
                 for label, value in rows:
@@ -2702,6 +2771,7 @@ with st.container(border=True):
                     lc.markdown(f"<div class='hm-rsd-mobile-label'>{label}</div>", unsafe_allow_html=True)
                     vc.markdown(f"<div class='hm-rsd-mobile-value'>{value}</div>", unsafe_allow_html=True)
 
+                st.markdown("<div class='hm-v981-action-pad'></div>", unsafe_allow_html=True)
                 action_lc, action_vc = st.columns([1.0, 2.2])
                 action_lc.markdown("<div class='hm-rsd-mobile-label'>Action</div>", unsafe_allow_html=True)
                 selected_date = st.session_state.get("selected_daily_note_history_date")
@@ -2745,10 +2815,15 @@ SAMPLE_ROWS = [
 
 if "show_daily_reference_sample" not in st.session_state:
     st.session_state["show_daily_reference_sample"] = False
-if st.button("Show / Hide sample journal format", use_container_width=True):
-    st.session_state["show_daily_reference_sample"] = not st.session_state["show_daily_reference_sample"]
-if st.session_state["show_daily_reference_sample"]:
-    st.dataframe(SAMPLE_ROWS, use_container_width=True, hide_index=True)
 
-if st.button("Back to Home", use_container_width=True):
-    st.switch_page("pages/02_Member_Home.py")
+sample_btn_col, home_btn_col = st.columns(2)
+with sample_btn_col:
+    if st.button("Show / Hide sample journal format", use_container_width=True):
+        st.session_state["show_daily_reference_sample"] = not st.session_state["show_daily_reference_sample"]
+with home_btn_col:
+    if st.button("Back to Home", use_container_width=True):
+        st.switch_page("pages/02_Member_Home.py")
+
+if st.session_state["show_daily_reference_sample"]:
+    st.markdown("<div class='hm-v981-bottom-nav-gap'></div>", unsafe_allow_html=True)
+    st.dataframe(SAMPLE_ROWS, use_container_width=True, hide_index=True)

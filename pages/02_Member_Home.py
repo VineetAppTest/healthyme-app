@@ -27,6 +27,23 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+st.markdown("""
+<style>
+/* v98.1 Member Home spacing polish */
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-top:-.35rem!important;
+}
+div[data-testid="stMarkdownContainer"] hr{
+  margin:.58rem 0!important;
+}
+.hero-shell{
+  margin-top:.38rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
 # v32 hard sync:
@@ -149,6 +166,7 @@ with left:
         if not visible_tasks:
             st.warning("No active task is selected for this request.")
         else:
+            st.markdown("<div class='hm-v981-task-actions-anchor'></div>", unsafe_allow_html=True)
             task_cols = st.columns(max(1, min(3, len(visible_tasks))))
             col_index = 0
 

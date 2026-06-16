@@ -9,6 +9,25 @@ require_admin()
 utility_logout_bar(); inject_keepalive_guard_v96_11()
 render_back_to_top()
 
+
+st.markdown("""
+<div style="
+    display:inline-flex;
+    align-items:center;
+    padding:.25rem .65rem;
+    margin:.08rem 0 .35rem 0;
+    border:1px solid #E5D2A9;
+    border-radius:999px;
+    background:#FFFDF8;
+    color:#7A5A16;
+    font-size:.74rem;
+    font-weight:850;
+">
+v98.1 · Daily Log Admin Report Polish
+</div>
+<!-- v98.1 Admin build marker -->
+""", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 /* v96.9 Admin Dashboard uniform scheduling-style subpoint boxes */

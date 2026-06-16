@@ -187,3 +187,15 @@
   - Admin Daily Log report visibility
   - Export/report coverage
   - Mobile/laptop layout check
+
+## v98.1 - Daily Log + Member/Admin Polish
+
+- Matched Filter Recent Saved Days heading font with field-label styling.
+- Updated Recent Saved Days Other Fluids summary to:
+  - Other Liquid 1: Total Intake - X + Y ml | 12:30 PM - X ml; 3:30 PM - Y ml
+- Placed Show / Hide sample journal format and Back to Home buttons side-by-side.
+- Changed Recent Saved Days label Notes to Member's Notes.
+- Added padding above View History.
+- Reduced Member Home task-button spacing and signed-in/header spacing.
+- Added admin-only version marker under HealthyMe brand/top header where topbar is used, plus visible admin dashboard build chip.
+- No changes to Daily Log save/filter logic, meal timing, snacking, or other fluids capture logic.

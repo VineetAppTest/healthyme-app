@@ -4875,6 +4875,17 @@ def utility_logout_bar():
     if not st.session_state.get("logged_in"):
         return
 
+
+    st.markdown("""
+    <style>
+    /* v98.1 utility logout spacing */
+    .utility-bar{
+      margin-bottom:.18rem!important;
+      padding:.38rem .65rem!important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     left, right = st.columns([5, 1])
     with left:
         st.markdown(
@@ -7499,8 +7510,30 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v87"
-APP_BUILD_LABEL = "Body-Mind Loader Regression Guard"
+APP_BUILD_VERSION = "v98.1"
+APP_BUILD_LABEL = "Daily Log Admin Report Polish"
+
+
+def admin_version_line_v98_1():
+    """Admin-only version line displayed under HealthyMe brand/top header."""
+    try:
+        if st.session_state.get("user_role") == "admin":
+            return (
+                "<div style='"
+                "color:#7A5A16;"
+                "font-size:.74rem;"
+                "font-weight:850;"
+                "letter-spacing:.02em;"
+                "margin-top:.12rem;"
+                "line-height:1.05;"
+                "'>"
+                f"HealthyMe {APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
+                "</div>"
+            )
+    except Exception:
+        pass
+    return ""
+
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7508,6 +7541,7 @@ def topbar(title, subtitle="", kicker="HealthyMe premium"):
         <div class='hero-shell'>
           <div class='hm-v77-brand-row'>
             <span class='hm-v77-brand'>HealthyMe</span>
+            {admin_version_line_v98_1()}
           </div>
           <div class='hero-kicker'>{kicker}</div>
           <div class='hero-title'>{title}</div>
@@ -7524,6 +7558,7 @@ def compact_topbar(title, subtitle="", kicker="HealthyMe"):
         <div class='hero-shell hm-compact-page-section'>
           <div class='hm-v77-brand-row'>
             <span class='hm-v77-brand'>HealthyMe</span>
+            {admin_version_line_v98_1()}
           </div>
           <div class='hero-kicker'>{kicker}</div>
           <div class='hero-title'>{title}</div>

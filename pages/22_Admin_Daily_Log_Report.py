@@ -160,21 +160,58 @@ def normalise_other_fluids_v97(items):
             })
     return cleaned
 
+def _hm_v981_qty_text(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    cleaned = raw.replace("ML", "ml").replace("Ml", "ml").strip()
+    cleaned = re.sub(r"\s*ml\s*$", "", cleaned, flags=re.I).strip()
+    return cleaned
+
+def _hm_v981_qty_display(value):
+    cleaned = _hm_v981_qty_text(value)
+    return f"{cleaned} ml" if cleaned else ""
+
 def other_fluids_summary_v97(items):
+    """v98.1 display format for Recent Saved Days and Admin report.
+
+    Format:
+    Other Liquid 1: Total Intake - X + Y ml | 12:30 PM - X ml; 3:30 PM - Y ml
+    """
+    fluids = normalise_other_fluids_v97(items)
+    if not fluids:
+        return "—"
+
+    grouped = []
+    for item in fluids:
+        fluid_type = item.get("type") or "Other Liquid"
+        match = next((g for g in grouped if g["type"] == fluid_type), None)
+        if not match:
+            match = {"type": fluid_type, "items": []}
+            grouped.append(match)
+        match["items"].append(item)
+
     rows = []
-    for idx, item in enumerate(normalise_other_fluids_v97(items), start=1):
-        bits = []
-        if item.get("time"):
-            bits.append(item.get("time"))
-        if item.get("type"):
-            bits.append(item.get("type"))
-        if item.get("quantity"):
-            bits.append(item.get("quantity"))
-        if item.get("notes"):
-            bits.append(item.get("notes"))
-        if bits:
-            rows.append(f"{idx}. " + " · ".join(bits))
-    return " | ".join(rows) if rows else "—"
+    for idx, group in enumerate(grouped, start=1):
+        qty_parts = [_hm_v981_qty_text(x.get("quantity")) for x in group["items"] if _hm_v981_qty_text(x.get("quantity"))]
+        total_text = " + ".join(qty_parts) + (" ml" if qty_parts else "—")
+
+        timing_parts = []
+        for item in group["items"]:
+            time_text = str(item.get("time") or "").strip()
+            qty_text = _hm_v981_qty_display(item.get("quantity"))
+            if time_text and qty_text:
+                timing_parts.append(f"{time_text} - {qty_text}")
+            elif time_text:
+                timing_parts.append(time_text)
+            elif qty_text:
+                timing_parts.append(qty_text)
+
+        timing_text = "; ".join(timing_parts) if timing_parts else "—"
+        rows.append(f"Other Liquid {idx}: Total Intake - {total_text} | {timing_text}")
+
+    return "<br>".join(rows) if rows else "—"
+
 
 MEAL_KEYS = [(r["key"], r["label"]) for r in get_meal_type_repository()]
 
