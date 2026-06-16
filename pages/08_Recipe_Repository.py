@@ -14,7 +14,7 @@ from components.ui_common import (
     compact_topbar,
 )
 from components.storage_assets import resolve_content_image_url
-from components.db import get_workflow, get_resource_assignments
+from components.db import get_workflow, get_resource_assignments, save_resource_feedback, get_resource_feedback
 
 
 st.set_page_config(page_title="Recipes", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -614,8 +614,31 @@ def render_detail(row, idx):
             st.write("No nutrition details added yet.")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    st.button("Submit feedback on recipe 🌿", type="primary", use_container_width=True)
+    existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "recipes", str(idx))
+    with st.expander("Recipe feedback / completion", expanded=not bool(existing_feedback_v100)):
+        status_options_v100 = ["Not started", "Tried", "Liked", "Need help / not suitable"]
+        current_status_v100 = existing_feedback_v100.get("status", "Not started")
+        status_index_v100 = status_options_v100.index(current_status_v100) if current_status_v100 in status_options_v100 else 0
+        recipe_status_v100 = st.selectbox("Recipe status", status_options_v100, index=status_index_v100, key=f"recipe_feedback_status_{idx}")
+        rating_options_v100 = ["", "1", "2", "3", "4", "5"]
+        current_rating_v100 = str(existing_feedback_v100.get("rating", ""))
+        rating_index_v100 = rating_options_v100.index(current_rating_v100) if current_rating_v100 in rating_options_v100 else 0
+        recipe_rating_v100 = st.selectbox("Rating", rating_options_v100, index=rating_index_v100, key=f"recipe_feedback_rating_{idx}")
+        recipe_notes_v100 = st.text_area("Member feedback", value=str(existing_feedback_v100.get("notes", "")), key=f"recipe_feedback_notes_{idx}")
+        if st.button("Submit feedback on recipe 🌿", type="primary", use_container_width=True, key=f"recipe_feedback_submit_{idx}"):
+            save_resource_feedback(
+                st.session_state["user_id"],
+                "recipes",
+                str(idx),
+                title=title,
+                status=recipe_status_v100,
+                rating=recipe_rating_v100,
+                notes=recipe_notes_v100,
+            )
+            st.success("Recipe feedback submitted for admin review.")
+            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 inject_recipe_css()

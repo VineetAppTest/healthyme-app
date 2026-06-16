@@ -6,7 +6,7 @@ import streamlit as st
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, utility_logout_bar, render_back_to_top, render_page_nav
 from components.storage_assets import upload_content_image, PUBLIC_BUCKET, PRIVATE_BUCKET
-from components.db import list_members, get_resource_assignments, save_resource_assignments
+from components.db import list_members, get_resource_assignments, save_resource_assignments, list_resource_feedback
 
 st.set_page_config(page_title="Manage & Allocate Recipes", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
@@ -213,6 +213,13 @@ with tabs[4]:
             save_resource_assignments(member_id, "recipes", selected)
             st.session_state[state_key] = set(selected)
             st.success("Recipe allocation saved. Member notification/email has been queued.")
+
+        feedback_rows_v100 = list_resource_feedback(member_id=member_id, resource_type="recipes")
+        st.markdown("#### Member recipe feedback")
+        if feedback_rows_v100:
+            st.dataframe(pd.DataFrame(feedback_rows_v100)[["title", "status", "rating", "notes", "updated_at"]], use_container_width=True, hide_index=True)
+        else:
+            st.caption("No recipe feedback submitted by this member yet.")
 
 with tabs[0]:
     st.subheader("Current Recipe Repository")

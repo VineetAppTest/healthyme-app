@@ -14,7 +14,7 @@ from components.ui_common import (
     compact_topbar,
 )
 from components.storage_assets import resolve_content_image_url
-from components.db import get_workflow, get_resource_assignments
+from components.db import get_workflow, get_resource_assignments, save_resource_feedback, get_resource_feedback
 
 
 st.set_page_config(page_title="Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -592,8 +592,31 @@ def render_detail(row, idx):
             st.markdown(f"<div class='hm-check-row'><div class='hm-check-box'></div><div>{esc(item)}</div></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    st.button("Submit feedback on exercise 🌿", type="primary", use_container_width=True)
+    existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "exercises", str(idx))
+    with st.expander("Exercise feedback / completion", expanded=not bool(existing_feedback_v100)):
+        status_options_v100 = ["Not started", "Completed", "Partially completed", "Need help / not suitable"]
+        current_status_v100 = existing_feedback_v100.get("status", "Not started")
+        status_index_v100 = status_options_v100.index(current_status_v100) if current_status_v100 in status_options_v100 else 0
+        exercise_status_v100 = st.selectbox("Exercise status", status_options_v100, index=status_index_v100, key=f"exercise_feedback_status_{idx}")
+        rating_options_v100 = ["", "1", "2", "3", "4", "5"]
+        current_rating_v100 = str(existing_feedback_v100.get("rating", ""))
+        rating_index_v100 = rating_options_v100.index(current_rating_v100) if current_rating_v100 in rating_options_v100 else 0
+        exercise_rating_v100 = st.selectbox("Rating", rating_options_v100, index=rating_index_v100, key=f"exercise_feedback_rating_{idx}")
+        exercise_notes_v100 = st.text_area("Member feedback", value=str(existing_feedback_v100.get("notes", "")), key=f"exercise_feedback_notes_{idx}")
+        if st.button("Submit feedback on exercise 🌿", type="primary", use_container_width=True, key=f"exercise_feedback_submit_{idx}"):
+            save_resource_feedback(
+                st.session_state["user_id"],
+                "exercises",
+                str(idx),
+                title=title,
+                status=exercise_status_v100,
+                rating=exercise_rating_v100,
+                notes=exercise_notes_v100,
+            )
+            st.success("Exercise feedback submitted for admin review.")
+            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 inject_exercise_css()

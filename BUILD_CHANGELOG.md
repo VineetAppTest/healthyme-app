@@ -251,3 +251,21 @@
 - Admin Dashboard now shows v99.0 baseline note.
 - Added V99 admin/member task baseline UAT checklist.
 - No changes to Daily Log, saved-days filter, meal timing, snacking, other fluids, or save logic.
+
+## v100.0 - Client Feature Completion Build
+
+- Added Submit Status review-ready action and fixed Body-Mind status runtime bug.
+- Added member Recipe feedback/completion capture.
+- Added member Exercise feedback/completion capture.
+- Added Admin Recipe Manager visibility of member recipe feedback.
+- Added Admin Exercise Manager visibility of member exercise feedback.
+- Improved Admin Review Queue with progress/context cards.
+- Added v100 client feature completion UAT checklist.
+- No Daily Log redesign, no scoring/report rewrite, no database schema migration.
+
+## v100.1 - Submit Status NameError Hotfix
+
+- Fixed Submit Status NameError caused by stale `inst.get(...)` reference before `inst` was defined.
+- Body-Mind status now uses workflow/current instance-safe variable `body_mind_done_v100`.
+- Admin Review stat now uses `review_label_v100`.
+- No changes to Daily Log, recipe/exercise feedback, saved-days filter, meal timing, snacking, other fluids, or save logic.

@@ -1,3 +1,24 @@
+# HealthyMe v100.0 - Client Feature Completion Build
+
+Base: v99.0
+
+## Purpose
+Complete remaining client-facing features before end-to-end testing.
+
+## Included
+- Submit Status review-ready action
+- Recipe feedback/completion by member
+- Exercise feedback/completion by member
+- Admin visibility of recipe/exercise feedback
+- Admin Review Queue progress/context cards
+- v100 UAT checklist
+
+## Not changed
+- Daily Log redesign
+- Scoring/report logic
+- Database schema migration
+
+
 # HealthyMe v99.0 - Admin Workflow + Member Task Experience Baseline
 
 Base: v98.6

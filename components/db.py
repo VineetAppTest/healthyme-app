@@ -2151,3 +2151,75 @@ def save_daily_food_journal_day_details(
     db["daily_logs"][user_id] = legacy[-120:]
     save_db(db)
     return day
+
+
+# --------------------------------------------------------------------
+# v100.0: Recipe / Exercise member feedback helpers
+# --------------------------------------------------------------------
+
+def _ensure_resource_feedback_store(db):
+    db.setdefault("resource_feedback", {})
+    db["resource_feedback"].setdefault("recipes", {})
+    db["resource_feedback"].setdefault("exercises", {})
+    db.setdefault("resource_feedback_log", [])
+    return db
+
+def save_resource_feedback(member_id, resource_type, item_id, title="", status="", rating="", notes="", actor="member"):
+    db = _ensure_resource_feedback_store(load_db())
+    resource_type = "recipes" if resource_type == "recipes" else "exercises"
+    member_id = str(member_id or "").strip()
+    item_id = str(item_id or "").strip()
+    if not member_id or not item_id:
+        return False
+    record = {
+        "member_id": member_id,
+        "resource_type": resource_type,
+        "item_id": item_id,
+        "title": str(title or "").strip(),
+        "status": str(status or "").strip(),
+        "rating": str(rating or "").strip(),
+        "notes": str(notes or "").strip(),
+        "updated_at": _now_iso(),
+        "actor": actor or "member",
+    }
+    db["resource_feedback"].setdefault(resource_type, {}).setdefault(member_id, {})[item_id] = record
+    db.setdefault("resource_feedback_log", []).append(record.copy())
+    db.setdefault("notifications", []).append({
+        "ts": record["updated_at"],
+        "kind": f"{resource_type}_feedback_submitted",
+        "user_id": member_id,
+        "message": f"{record.get('title') or resource_type.title()} feedback submitted.",
+        "status": "queued",
+    })
+    save_db(db)
+    return True
+
+def get_resource_feedback(member_id, resource_type, item_id):
+    db = _ensure_resource_feedback_store(load_db())
+    resource_type = "recipes" if resource_type == "recipes" else "exercises"
+    return db.get("resource_feedback", {}).get(resource_type, {}).get(str(member_id), {}).get(str(item_id), {})
+
+def list_resource_feedback(member_id=None, resource_type=None):
+    db = _ensure_resource_feedback_store(load_db())
+    rows = []
+    types = ["recipes", "exercises"] if resource_type not in ["recipes", "exercises"] else [resource_type]
+    for rt in types:
+        by_member = db.get("resource_feedback", {}).get(rt, {})
+        for mid, items in by_member.items():
+            if member_id and str(mid) != str(member_id):
+                continue
+            for _item_id, rec in items.items():
+                row = dict(rec)
+                row.setdefault("resource_type", rt)
+                row.setdefault("member_id", mid)
+                rows.append(row)
+    rows.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+    return rows
+
+def resource_feedback_counts(member_id, resource_type):
+    rows = list_resource_feedback(member_id=member_id, resource_type=resource_type)
+    total = len(rows)
+    completed = sum(1 for r in rows if str(r.get("status", "")).lower() in ["tried", "completed", "done", "followed", "liked"])
+    return {"total": total, "completed": completed, "rows": rows}
+
+

@@ -14,7 +14,7 @@ topbar(
 )
 
 st.markdown(
-    "<div style='color:#64748B;font-size:.82rem;font-weight:760;margin:.1rem 0 .55rem 0;'>v99.0 Admin Workflow + Member Task Baseline: allocation clarity, member progress visibility, admin status visibility.</div>",
+    "<div style='color:#64748B;font-size:.82rem;font-weight:760;margin:.1rem 0 .55rem 0;'>v100.0 Client Feature Completion Build: allocation clarity, member progress visibility, admin status visibility.</div>",
     unsafe_allow_html=True,
 )
 
