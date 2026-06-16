@@ -1733,7 +1733,19 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-compact_topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
+compact_
+st.markdown("""
+<style>
+/* v100.7 Other Fluids button height alignment */
+div[data-testid="stButton"] > button[kind="secondary"],
+div[data-testid="stButton"] > button{
+  min-height:2.52rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
 def get_device_mode_for_spike():
@@ -2364,10 +2376,10 @@ with st.container(border=True):
             )
     with top_right:
         existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
-        default_other_count = min(max(len(existing_other_fluids), 0), 5)
         other_fluid_count_key = f"other_fluid_count_{log_date}"
+        # v100.7: default to 0 active entries; never set time widget keys directly.
         if other_fluid_count_key not in st.session_state:
-            st.session_state[other_fluid_count_key] = default_other_count
+            st.session_state[other_fluid_count_key] = 0
 
         st.markdown("<div class='hm-field-label'>Other Fluids consumed outside standard meal window</div>", unsafe_allow_html=True)
         add_other_col, other_count_col = st.columns([1, 2])
@@ -2376,9 +2388,9 @@ with st.container(border=True):
                 st.session_state[other_fluid_count_key] = min(int(st.session_state.get(other_fluid_count_key, 0) or 0) + 1, 5)
                 st.rerun()
         with other_count_col:
-            current_other_count_v1006 = int(st.session_state.get(other_fluid_count_key, 0) or 0)
-            if current_other_count_v1006:
-                st.caption(f"{current_other_count_v1006} other fluid entry/entries active")
+            current_other_count_v1007 = int(st.session_state.get(other_fluid_count_key, 0) or 0)
+            if current_other_count_v1007:
+                st.caption(f"{current_other_count_v1007} other fluid entry/entries active")
             else:
                 st.caption("Tap + Other Fluids to add an entry")
         other_fluid_count = int(st.session_state.get(other_fluid_count_key, 0) or 0)

@@ -228,6 +228,153 @@ div[data-testid="stExpander"] summary p{
 """, unsafe_allow_html=True)
 
 
+
+st.markdown("""
+<style>
+/* v100.7 Exercise hero/tabs/bullets/feedback hard polish */
+/* Collapse style-only/invisible containers that can create top spacing. */
+div[data-testid="stElementContainer"]:has(style),
+div[data-testid="stElementContainer"]:has(script),
+.element-container:has(style),
+.element-container:has(script),
+div[data-testid="stMarkdownContainer"]:has(style),
+div[data-testid="stMarkdownContainer"]:has(script){
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+/* Hero spacing: tighter above and below. */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.18rem!important;
+}
+.hero-shell,
+.hm-hero,
+[class*="hero"]{
+  margin-top:.02rem!important;
+  margin-bottom:.24rem!important;
+  padding-top:.82rem!important;
+  padding-bottom:.82rem!important;
+}
+/* Strong tab divider and underline removal. */
+div[data-testid="stTabs"]{
+  border:0!important;
+}
+div[data-testid="stTabs"] > div,
+div[data-testid="stTabs"] [data-baseweb="tab-list"],
+div[data-testid="stTabs"] div[role="tablist"],
+div[data-testid="stTabs"] [role="tablist"]{
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+div[data-testid="stTabs"] [data-baseweb="tab-border"],
+div[data-testid="stTabs"] hr,
+div[data-testid="stTabs"] button[role="tab"]::before,
+div[data-testid="stTabs"] button[role="tab"]::after,
+div[data-testid="stTabs"] [aria-selected="true"]::before,
+div[data-testid="stTabs"] [aria-selected="true"]::after{
+  display:none!important;
+  height:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+div[data-testid="stTabs"] button[role="tab"]{
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+/* Premium list styling. */
+.hm-v1006-list-card,
+.hm-v1007-list-card{
+  border:1px solid #E3C98E!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)!important;
+  border-radius:18px!important;
+  padding:.78rem .95rem!important;
+  margin:.30rem 0 .58rem 0!important;
+  box-shadow:0 8px 20px rgba(15,23,42,.045)!important;
+}
+.hm-v1006-row,
+.hm-v1007-row{
+  display:flex!important;
+  gap:.74rem!important;
+  align-items:flex-start!important;
+  padding:.58rem 0!important;
+  border-bottom:1px solid #F0E4CC!important;
+  color:#064E3B!important;
+  font-size:1.01rem!important;
+  line-height:1.38!important;
+}
+.hm-v1006-row:last-child,
+.hm-v1007-row:last-child{border-bottom:0!important;}
+.hm-v1006-check,
+.hm-v1007-check{
+  width:1.32rem!important;
+  height:1.32rem!important;
+  min-width:1.32rem!important;
+  border-radius:999px!important;
+  background:#ECFDF5!important;
+  border:1.5px solid #6D9C6C!important;
+  color:#065F46!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:.75rem!important;
+  font-weight:950!important;
+  margin-top:.05rem!important;
+}
+.hm-v1006-num,
+.hm-v1007-num{
+  width:1.42rem!important;
+  height:1.42rem!important;
+  min-width:1.42rem!important;
+  border-radius:999px!important;
+  background:#FFF7E6!important;
+  border:1.5px solid #D9C28F!important;
+  color:#7A5A16!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:.76rem!important;
+  font-weight:950!important;
+  margin-top:.04rem!important;
+}
+/* Premium expander styling. */
+div[data-testid="stExpander"] details{
+  border:1.4px solid #D9C28F!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)!important;
+  box-shadow:0 9px 22px rgba(15,23,42,.05)!important;
+  overflow:hidden!important;
+}
+div[data-testid="stExpander"] summary{
+  min-height:2.78rem!important;
+  padding:.64rem .92rem!important;
+  background:#FFFDF8!important;
+}
+div[data-testid="stExpander"] summary p{
+  color:#064E3B!important;
+  font-size:.96rem!important;
+  font-weight:940!important;
+  white-space:nowrap!important;
+}
+.hm-v1006-feedback-note,
+.hm-v1007-feedback-note{
+  color:#64748B!important;
+  font-size:.80rem!important;
+  font-weight:740!important;
+  margin:.08rem 0 .48rem 0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 topbar("Exercise Repository", "", "Member content")
 
 DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"

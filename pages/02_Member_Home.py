@@ -150,6 +150,46 @@ div[data-testid="stButton"] > button{
 """, unsafe_allow_html=True)
 
 
+
+st.markdown("""
+<style>
+/* v100.7 Member Home divider/button final polish */
+/* Make spacing above and below divider visually equal */
+hr{
+  margin-top:.34rem!important;
+  margin-bottom:.34rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.10rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.28rem!important;
+}
+.hm-v990-task-progress + div{
+  margin-top:.28rem!important;
+}
+/* Personalized Content buttons: taller and stable for full text visibility */
+div[data-testid="stButton"] > button{
+  min-height:2.82rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.32!important;
+  padding:.62rem .80rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.32!important;
+  margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 render_system_message()

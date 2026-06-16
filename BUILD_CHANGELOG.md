@@ -313,3 +313,14 @@
 - Member Home content buttons increased in height and text-wrap stability improved.
 - Daily Log Other Fluids dropdown replaced with button-driven + Other Fluids flow using existing detail fields.
 - No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.
+
+## v100.7 - Client UI Final Polish Hotfix
+
+- Other Fluids now defaults to 0 open entries and avoids setting time widget keys via Session State API.
+- Other Fluids button height aligned closer to adjacent dropdown height.
+- Member Home divider spacing equalized above and below.
+- Personalized Content buttons increased further so Daily Log text is fully visible.
+- Recipe and Exercise hero spacing tightened with invisible style-container collapse.
+- Recipe and Exercise tab divider removal strengthened.
+- Recipe and Exercise bullets/numbering and feedback expander styling upgraded.
+- No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.
