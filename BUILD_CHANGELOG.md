@@ -168,3 +168,22 @@
 - Apply Date Filter reruns after activation for consistent display.
 - Retained v97.33 visible-card-date filtering and v97.32 Food Journal Date alignment.
 - No changes to meal timing, snacking, other fluids, or save logic.
+
+## v98.0 - Daily Log Closure + Admin/Report Validation
+
+- Built from v97.36 GTG baseline.
+- No Daily Log logic changes.
+- No layout redesign.
+- No filter redesign.
+- Freezes Daily Log for structured UAT closure.
+- Adds validation checklist for:
+  - Member Daily Log save/revisit
+  - Save Day Details Only
+  - Save Full-Day Journal
+  - Snacking
+  - Other Fluids / Fluid Timing
+  - Recent Saved Days Apply Date Filter
+  - Recent Saved Days Clear Filter / Show All
+  - Admin Daily Log report visibility
+  - Export/report coverage
+  - Mobile/laptop layout check
