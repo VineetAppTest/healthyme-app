@@ -4901,6 +4901,36 @@ def utility_logout_bar():
     </style>
     """, unsafe_allow_html=True)
 
+
+    st.markdown("""
+    <style>
+    /* v98.3 utility invisible spacing collapse */
+    div[data-testid="stElementContainer"]:has(style),
+    div[data-testid="stElementContainer"]:has(script),
+    .element-container:has(style),
+    .element-container:has(script),
+    div[data-testid="stMarkdownContainer"]:has(style),
+    div[data-testid="stMarkdownContainer"]:has(script){
+      height:0!important;
+      min-height:0!important;
+      max-height:0!important;
+      margin:0!important;
+      padding:0!important;
+      overflow:visible!important;
+    }
+    section.main > div.block-container,
+    .main .block-container,
+    div[data-testid="stAppViewContainer"] section.main > div.block-container{
+      padding-top:.18rem!important;
+    }
+    .utility-bar{
+      margin-top:0!important;
+      margin-bottom:.02rem!important;
+      padding:.28rem .58rem!important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     left, right = st.columns([5, 1])
     with left:
         st.markdown(

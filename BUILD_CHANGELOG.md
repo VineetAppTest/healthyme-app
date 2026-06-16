@@ -206,3 +206,11 @@
 - Reduced empty space between signed-in/logout row and Member Home hero card by approximately 60%.
 - Kept task action button spacing polish from v98.1.
 - No changes to Daily Log, saved-days filter, admin/report, meal timing, snacking, other fluids, or save logic.
+
+## v98.3 - Member Home Invisible Spacing Collapse
+
+- Collapsed invisible/style-only Streamlit containers suspected to be creating empty vertical space on Member Home.
+- Reduced actual top block-container padding above signed-in/logout row.
+- Reduced utility bar bottom margin and hero card top margin.
+- Kept task action button spacing polish from v98.1/v98.2.
+- No changes to Daily Log, saved-days filter, admin/report, meal timing, snacking, other fluids, or save logic.

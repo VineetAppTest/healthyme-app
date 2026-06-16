@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v98_2_MemberHome_TopSpacing_Reduction",
-  "version": "v98.2",
-  "updated_on": "2026-06-16T07:40:31.441225+00:00",
+  "build_name": "HealthyMe_v98_3_MemberHome_InvisibleSpacing_Collapse",
+  "version": "v98.3",
+  "updated_on": "2026-06-16T08:20:34.535089+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,9 +18,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Reduced top empty space above signed-in/logout row by approximately 60%.",
-    "Reduced empty space between signed-in/logout row and Member Home hero card by approximately 60%.",
-    "Kept task action button spacing polish from v98.1.",
+    "Collapsed invisible/style-only Streamlit containers suspected to be creating empty vertical space on Member Home.",
+    "Reduced actual top block-container padding above signed-in/logout row.",
+    "Reduced utility bar bottom margin and hero card top margin.",
+    "Kept task action button spacing polish from v98.1/v98.2.",
     "No changes to Daily Log, saved-days filter, admin/report, meal timing, snacking, other fluids, or save logic."
   ],
   "required_setup": [
@@ -318,7 +319,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v98_1_DailyLog_MemberAdmin_Polish.zip",
+  "base_build": "HealthyMe_v98_2_MemberHome_TopSpacing_Reduction.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "closure_validation_candidate",

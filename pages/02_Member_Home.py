@@ -6,6 +6,52 @@ from components.assessment_instances import get_current_assessment_instance
 from components.flash import render_system_message, set_system_message
 
 st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+
+st.markdown("""
+<style>
+/* v98.3 Member Home invisible spacing collapse */
+/* Collapse Streamlit containers that only carry style/script/empty helper content. */
+div[data-testid="stElementContainer"]:has(style),
+div[data-testid="stElementContainer"]:has(script),
+.element-container:has(style),
+.element-container:has(script),
+div[data-testid="stMarkdownContainer"]:has(style),
+div[data-testid="stMarkdownContainer"]:has(script){
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+
+/* Remove the real top gap above the signed-in/logout utility row. */
+section.main > div.block-container,
+.main .block-container,
+div[data-testid="stAppViewContainer"] section.main > div.block-container{
+  padding-top:.18rem!important;
+}
+
+/* Reduce the gap between utility row and Member Home hero card. */
+.utility-bar{
+  margin-top:0!important;
+  margin-bottom:.02rem!important;
+  padding:.28rem .58rem!important;
+}
+.hero-shell{
+  margin-top:.02rem!important;
+}
+div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
+  margin-top:.02rem!important;
+  padding-top:.02rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-top:-.35rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); inject_keepalive_guard_v96_11(); render_back_to_top()
 
 st.markdown("""
@@ -29,32 +75,6 @@ st.markdown("""
 
 
 
-
-st.markdown("""
-<style>
-/* v98.2 Member Home top spacing reduction */
-/* Reduce first empty space from the top by about 60%. */
-section.main > div.block-container,
-.main .block-container{
-  padding-top:.55rem!important;
-}
-
-/* Reduce second empty space between signed-in/logout bar and hero card by about 60%. */
-.utility-bar{
-  margin-bottom:.12rem!important;
-}
-.hero-shell{
-  margin-top:.14rem!important;
-}
-div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
-  margin-top:.14rem!important;
-  padding-top:.14rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-top:-.35rem!important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 
 user_id = st.session_state["user_id"]
