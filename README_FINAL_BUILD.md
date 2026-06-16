@@ -1,3 +1,20 @@
+# HealthyMe v99.0 - Admin Workflow + Member Task Experience Baseline
+
+Base: v98.6
+
+## Purpose
+Baseline validation build for Admin task allocation and Member task completion experience.
+
+## Scope
+- Admin allocation clarity
+- Member task progress visibility
+- Admin status visibility after member completion
+- UAT checklist for task flow closure
+
+## Important
+No database schema change. No Daily Log logic change. No assessment/report logic rewrite.
+
+
 # HealthyMe v98.0 - Daily Log Closure + Admin/Report Validation
 
 This build is based on v97.36 GTG.

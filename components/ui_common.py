@@ -7502,8 +7502,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v98.6"
-APP_BUILD_LABEL = "Admin Dashboard Hero Banner"
+APP_BUILD_VERSION = "v99.0"
+APP_BUILD_LABEL = "Admin Workflow + Member Task Baseline"
 
 
 def admin_version_line_v98_1():

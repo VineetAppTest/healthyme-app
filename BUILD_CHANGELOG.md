@@ -240,3 +240,14 @@
 - Updated app build version to v98.6.
 - Retained Admin Dashboard top spacing/style-defer fixes from v98.5.
 - No changes to Daily Log, Member Home logic, saved-days filter, meal timing, snacking, other fluids, or save logic.
+
+## v99.0 - Admin Workflow + Member Task Experience Baseline
+
+- Added Admin + Member task progress visibility without changing database schema.
+- Member Home now shows task progress count and per-task Done/Pending chips.
+- Member Submit/Status button label made more explicit.
+- Admin Task Request Manager now shows open task baseline status, due date, progress chips and next action.
+- Admin instance history now shows progress and next action per instance.
+- Admin Dashboard now shows v99.0 baseline note.
+- Added V99 admin/member task baseline UAT checklist.
+- No changes to Daily Log, saved-days filter, meal timing, snacking, other fluids, or save logic.

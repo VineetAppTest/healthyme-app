@@ -285,3 +285,34 @@ def task_completion_status_v96(instance):
         "nsp2": bool(instance.get("nsp2_completed")) if "nsp2" in requested else True,
         "body_mind": bool(instance.get("body_mind_completed")) if "body_mind" in requested else True,
     }
+
+
+# v99.0: Baseline task progress helpers for Admin + Member task experience.
+def task_progress_summary_v99(instance):
+    requested = instance.get("requested_pages", []) or []
+    status_map = task_completion_status_v96(instance)
+    requested_clean = [p for p in requested if p in ["nsp1", "nsp2", "body_mind"]]
+    total = len(requested_clean)
+    done = sum(1 for p in requested_clean if status_map.get(p))
+    pending = max(total - done, 0)
+    percent = int(round((done / total) * 100)) if total else 100
+    return {
+        "requested": requested_clean,
+        "done": done,
+        "pending": pending,
+        "total": total,
+        "percent": percent,
+        "is_complete": total == done,
+        "status_map": status_map,
+    }
+
+def task_progress_text_v99(instance):
+    summary = task_progress_summary_v99(instance)
+    if not summary["requested"]:
+        return "No task selected"
+    task_bits = []
+    for page in summary["requested"]:
+        mark = "Done" if summary["status_map"].get(page) else "Pending"
+        task_bits.append(f"{task_label_v96(page)}: {mark}")
+    return f"{summary['done']} of {summary['total']} completed · " + " | ".join(task_bits)
+

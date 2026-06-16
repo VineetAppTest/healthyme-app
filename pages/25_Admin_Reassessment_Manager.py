@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_back_to_top, inject_keepalive_guard_v96_11
 from components.db import list_members, get_workflow, load_db, get_admin_assessment, manually_unlock_body_mind_after_finalization, clear_body_mind_activation, sync_member_finalization_state, has_explicit_body_mind_access
-from components.assessment_instances import get_assessment_instances, create_reassessment_request
+from components.assessment_instances import get_assessment_instances, create_reassessment_request, task_progress_summary_v99, task_progress_text_v99
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Task Request Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -59,6 +59,58 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v99.0 Admin task baseline clarity */
+.hm-v990-admin-task-status{
+  border:1px solid #E5D2A9;
+  background:#FFFDF8;
+  border-radius:14px;
+  padding:.68rem .78rem;
+  margin:.42rem 0 .64rem 0;
+}
+.hm-v990-admin-task-title{
+  color:#064E3B;
+  font-weight:920;
+  font-size:.92rem;
+  margin:0 0 .28rem 0;
+}
+.hm-v990-admin-task-line{
+  color:#334155;
+  font-size:.82rem;
+  font-weight:720;
+  margin:.12rem 0;
+}
+.hm-v990-pill{
+  display:inline-flex;
+  margin:.10rem .20rem .10rem 0;
+  padding:.18rem .42rem;
+  border-radius:999px;
+  border:1px solid #D9C28F;
+  background:#FAF8F1;
+  color:#064E3B;
+  font-size:.72rem;
+  font-weight:850;
+}
+.hm-v990-pill.pending{
+  color:#7A5A16;
+  background:#FFF7E6;
+}
+.hm-v990-pill.done{
+  color:#065F46;
+  background:#ECFDF5;
+}
+.hm-v990-admin-next-action{
+  color:#64748B;
+  font-size:.78rem;
+  font-weight:760;
+  margin-top:.28rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 topbar("Task Request Manager", "Allocate NSP Page 1, NSP Page 2 and/or Body-Mind Connection as member tasks.", "Admin task request")
 render_system_message()
 
@@ -68,6 +120,28 @@ def task_title(task_key):
         "nsp2": "NSP Page 2",
         "body_mind": "Body-Mind Connection",
     }.get(str(task_key), str(task_key))
+
+
+def task_progress_html_v99(inst):
+    summary = task_progress_summary_v99(inst)
+    chips = []
+    for p in summary.get("requested", []):
+        done = summary.get("status_map", {}).get(p)
+        cls = "done" if done else "pending"
+        label = "Done" if done else "Pending"
+        chips.append(f"<span class='hm-v990-pill {cls}'>{task_title(p)} · {label}</span>")
+    if not chips:
+        chips.append("<span class='hm-v990-pill pending'>No task selected</span>")
+    return "".join(chips)
+
+def admin_next_action_v99(inst):
+    if inst.get("submitted_for_review"):
+        return "Next action: Admin review required."
+    summary = task_progress_summary_v99(inst)
+    if summary.get("is_complete"):
+        return "Next action: Waiting for member to submit for admin review."
+    return "Next action: Waiting for member to complete pending task(s)."
+
 
 def is_instance_open(inst):
     return (not inst.get("submitted_for_review")) and inst.get("status") in ["pending", "in_progress"]
@@ -117,6 +191,22 @@ stat_grid([
     {"label": "Open Request", "value": "Yes" if open_task_requests else "No", "note": "Pending"},
     {"label": "Next Instance", "value": max([i.get("instance_number", 0) for i in instances] + [0]) + 1, "note": "If created"},
 ])
+
+if open_task_requests:
+    active_req_v99 = sorted(open_task_requests, key=lambda x: x.get("instance_number", 0), reverse=True)[0]
+    progress_v99 = task_progress_summary_v99(active_req_v99)
+    st.markdown(
+        f"""
+        <div class='hm-v990-admin-task-status'>
+          <div class='hm-v990-admin-task-title'>Open Task Request Baseline</div>
+          <div class='hm-v990-admin-task-line'>Instance {active_req_v99.get('instance_number')} · {progress_v99.get('done', 0)} of {progress_v99.get('total', 0)} completed · Status: {str(active_req_v99.get('status', '-')).replace('_', ' ').title()}</div>
+          <div class='hm-v990-admin-task-line'>Due date: {active_req_v99.get('due_date') or 'Not set'} · Allocation date: {active_req_v99.get('created_date') or '-'}</div>
+          <div>{task_progress_html_v99(active_req_v99)}</div>
+          <div class='hm-v990-admin-next-action'>{admin_next_action_v99(active_req_v99)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 left, right = st.columns([1, 1], gap="large")
 
@@ -183,13 +273,19 @@ with right:
     else:
         for inst in instances_sorted:
             tasks = ", ".join(task_title(p) for p in inst.get("requested_pages", [])) or "-"
+            progress_v99 = task_progress_summary_v99(inst)
             st.markdown(
                 f"""
-                **Instance {inst.get('instance_number')} — {inst.get('instance_type')}**  
-                Tasks: {tasks}  
-                Task allocation date: `{inst.get('created_date') or '-'}`  
-                Status: `{inst.get('status')}` | Submitted: `{inst.get('submitted_date') or '-'}`
-                """
+                <div class='hm-v990-admin-task-status'>
+                  <div class='hm-v990-admin-task-title'>Instance {inst.get('instance_number')} — {inst.get('instance_type')}</div>
+                  <div class='hm-v990-admin-task-line'>Tasks: {tasks}</div>
+                  <div class='hm-v990-admin-task-line'>Task allocation date: {inst.get('created_date') or '-'} · Due date: {inst.get('due_date') or '-'}</div>
+                  <div class='hm-v990-admin-task-line'>Progress: {progress_v99.get('done', 0)} of {progress_v99.get('total', 0)} completed · Status: {str(inst.get('status', '-')).replace('_', ' ').title()} · Submitted: {inst.get('submitted_date') or '-'}</div>
+                  <div>{task_progress_html_v99(inst)}</div>
+                  <div class='hm-v990-admin-next-action'>{admin_next_action_v99(inst)}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
     card_end()
 

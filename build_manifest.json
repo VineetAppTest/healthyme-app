@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v98_6_AdminDashboard_HeroBanner",
-  "version": "v98.6",
-  "updated_on": "2026-06-16T09:25:03.574358+00:00",
+  "build_name": "HealthyMe_v99_0_AdminWorkflow_MemberTask_Baseline",
+  "version": "v99.0",
+  "updated_on": "2026-06-16T10:17:06.420952+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,12 +18,14 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added proper HealthyMe hero banner to Admin Dashboard using the same topbar style as admin workflow pages.",
-    "Removed loose compact admin version/header block from Admin Dashboard.",
-    "Version now appears under the HealthyMe brand inside the hero banner for admin sessions.",
-    "Updated app build version to v98.6.",
-    "Retained Admin Dashboard top spacing/style-defer fixes from v98.5.",
-    "No changes to Daily Log, Member Home logic, saved-days filter, meal timing, snacking, other fluids, or save logic."
+    "Added Admin + Member task progress visibility without changing database schema.",
+    "Member Home now shows task progress count and per-task Done/Pending chips.",
+    "Member Submit/Status button label made more explicit.",
+    "Admin Task Request Manager now shows open task baseline status, due date, progress chips and next action.",
+    "Admin instance history now shows progress and next action per instance.",
+    "Admin Dashboard now shows v99.0 baseline note.",
+    "Added V99 admin/member task baseline UAT checklist.",
+    "No changes to Daily Log, saved-days filter, meal timing, snacking, other fluids, or save logic."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -320,9 +322,9 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v98_5_AdminDashboard_TopSpacing_VersionPlacement.zip",
+  "base_build": "HealthyMe_v98_6_AdminDashboard_HeroBanner.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
-  "sprint_type": "closure_validation_candidate",
+  "sprint_type": "baseline_validation_candidate",
   "logic_change": "none"
 }

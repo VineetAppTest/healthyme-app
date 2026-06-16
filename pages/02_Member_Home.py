@@ -2,7 +2,7 @@ import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_keepalive_guard_v96_11, inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, format_local_ts, render_back_to_top
 from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read, mark_member_message_read, auto_archive_expired_nutritionist_messages
-from components.assessment_instances import get_current_assessment_instance
+from components.assessment_instances import get_current_assessment_instance, task_progress_summary_v99, task_progress_text_v99
 from components.flash import render_system_message, set_system_message
 
 st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -65,6 +65,66 @@ workflow_finalized = bool(wf.get("admin_completed")) or bool(wf.get("final_repor
 requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
 is_task_instance = current_instance.get("instance_type") in ["Task Request", "Reassessment"] and not current_instance.get("submitted_for_review")
 is_reassessment = is_task_instance
+
+
+st.markdown("""
+<style>
+/* v99.0 Member task baseline clarity */
+.hm-v990-task-progress{
+  border:1px solid #E5D2A9;
+  background:#FFFDF8;
+  border-radius:14px;
+  padding:.62rem .72rem;
+  margin:.52rem 0 .62rem 0;
+}
+.hm-v990-progress-title{
+  color:#064E3B;
+  font-size:.88rem;
+  font-weight:920;
+  margin:0 0 .38rem 0;
+}
+.hm-v990-progress-line{
+  height:8px;
+  border-radius:999px;
+  background:#EFE7D6;
+  overflow:hidden;
+  margin:.28rem 0 .42rem 0;
+}
+.hm-v990-progress-fill{
+  height:8px;
+  border-radius:999px;
+  background:#0F766E;
+}
+.hm-v990-task-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:.25rem;
+  margin:.12rem .22rem .12rem 0;
+  padding:.22rem .48rem;
+  border-radius:999px;
+  border:1px solid #D9C28F;
+  color:#064E3B;
+  background:#FAF8F1;
+  font-size:.74rem;
+  font-weight:850;
+}
+.hm-v990-task-chip.pending{
+  color:#7A5A16;
+  background:#FFF7E6;
+}
+.hm-v990-task-chip.done{
+  color:#065F46;
+  background:#ECFDF5;
+}
+.hm-v990-submit-note{
+  color:#64748B;
+  font-size:.80rem;
+  font-weight:720;
+  margin:.36rem 0 .58rem 0;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
@@ -135,6 +195,28 @@ with left:
             unsafe_allow_html=True,
         )
 
+        progress_v99 = task_progress_summary_v99(current_instance)
+        progress_width_v99 = max(0, min(100, progress_v99.get("percent", 0)))
+        task_chips_v99 = []
+        for p in visible_tasks:
+            done_v99 = task_status_done_v96_2(current_instance, wf, p)
+            chip_class_v99 = "done" if done_v99 else "pending"
+            chip_label_v99 = "Done" if done_v99 else "Pending"
+            task_chips_v99.append(
+                f"<span class='hm-v990-task-chip {chip_class_v99}'>{task_title_v96_2(p)} · {chip_label_v99}</span>"
+            )
+        st.markdown(
+            f"""
+            <div class='hm-v990-task-progress'>
+              <div class='hm-v990-progress-title'>Task progress: {progress_v99.get('done', 0)} of {progress_v99.get('total', 0)} completed</div>
+              <div class='hm-v990-progress-line'><div class='hm-v990-progress-fill' style='width:{progress_width_v99}%;'></div></div>
+              <div>{''.join(task_chips_v99)}</div>
+              <div class='hm-v990-submit-note'>Use Submit / Status after completing all requested tasks to send this to admin for review.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         if not visible_tasks:
             st.warning("No active task is selected for this request.")
         else:
@@ -185,7 +267,7 @@ with left:
                 st.switch_page("pages/19_Body_Mind_Connection.py")
 
     st.divider()
-    if st.button("Submit / Status", use_container_width=True):
+    if st.button("Submit / Status — Send completed tasks for admin review", use_container_width=True):
         st.switch_page("pages/06_Submit_Status.py")
 
     card_end()
