@@ -1,18 +1,17 @@
 import streamlit as st
 from components.guards import require_admin
-from components.ui_common import inject_keepalive_guard_v96_11, inject_global_styles, apply_luxe_theme, utility_logout_bar, render_back_to_top
+from components.ui_common import inject_keepalive_guard_v96_11, inject_global_styles, apply_luxe_theme, utility_logout_bar, render_back_to_top, topbar
 
 st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 require_admin()
 utility_logout_bar()
 
 
-st.markdown("""
-<div class="hm-v985-admin-brand">
-  <div class="hm-v985-brand-name">HEALTHYME</div>
-  <div class="hm-v985-version">v98.5 · Admin Dashboard Top Spacing + Version Placement</div>
-</div>
-""", unsafe_allow_html=True)
+topbar(
+    "Admin Dashboard",
+    "Access review workflows, content allocation, communication, reports and system tools.",
+    "Admin workflow",
+)
 
 st.markdown("<div class='hm-admin-title'>Main Workflows</div>", unsafe_allow_html=True)
 
@@ -67,7 +66,7 @@ with right:
     nav_cell("Demo", "pages/29_Admin_Demo_Mode.py", "dash_demo_v96_9")
     end_section()
 
-# v98.5: Deferred style-only injections after visible Admin Dashboard content.
+# v98.6: Deferred style-only injections after visible Admin Dashboard content.
 inject_global_styles()
 apply_luxe_theme()
 inject_keepalive_guard_v96_11()
@@ -75,7 +74,7 @@ render_back_to_top()
 
 st.markdown("""
 <style>
-/* v98.5 Admin Dashboard top spacing + version placement */
+/* v98.6 Admin Dashboard top spacing + hero banner placement */
 section.main > div.block-container,
 .main .block-container,
 [data-testid="stAppViewContainer"] section.main > div.block-container,
@@ -129,6 +128,16 @@ div[data-testid="stMarkdownContainer"]:has(script){
   padding:0!important;
   overflow:visible!important;
 }
+
+/* v98.6 Admin Dashboard hero banner polish */
+.hero-shell{
+  margin-top:.10rem!important;
+  margin-bottom:.78rem!important;
+}
+.hm-admin-title{
+  margin:.10rem 0 .45rem 0!important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 

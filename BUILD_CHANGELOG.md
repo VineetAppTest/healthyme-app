@@ -231,3 +231,12 @@
 - Added compact HEALTHYME header with v98.5 version directly under it on Admin Dashboard.
 - Updated app build version to v98.5.
 - No changes to Member Home logic, Daily Log, saved-days filter, meal timing, snacking, other fluids, or save logic.
+
+## v98.6 - Admin Dashboard Hero Banner
+
+- Added proper HealthyMe hero banner to Admin Dashboard using the same topbar style as admin workflow pages.
+- Removed loose compact admin version/header block from Admin Dashboard.
+- Version now appears under the HealthyMe brand inside the hero banner for admin sessions.
+- Updated app build version to v98.6.
+- Retained Admin Dashboard top spacing/style-defer fixes from v98.5.
+- No changes to Daily Log, Member Home logic, saved-days filter, meal timing, snacking, other fluids, or save logic.
