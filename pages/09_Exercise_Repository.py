@@ -26,13 +26,7 @@ require_member(); utility_logout_bar()
 
 
 
-st.markdown("""
-<div class="hm-v1009-content-hero">
-  <div class="hm-v1009-brand">HEALTHYME</div>
-  <div class="hm-v1009-pill">Member content</div>
-  <div class="hm-v1009-title">Exercise Repository</div>
-</div>
-""", unsafe_allow_html=True)
+topbar("Exercise Repository", "", "Member content")
 
 DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
 
@@ -599,32 +593,31 @@ def render_detail(row, idx):
 
     active_exercise_section_v1008 = st.session_state.get(section_key_v1008, "overview")
     if active_exercise_section_v1008 == "overview":
-        section_title_v1012 = "Overview"
-        section_items_v1012 = split_lines(row.get("description", ""))
-        section_kind_v1012 = "tick"
+        section_title_v1013 = "Overview"
+        section_items_v1013 = split_lines(row.get("description", ""))
     elif active_exercise_section_v1008 == "instructions":
-        section_title_v1012 = "Instructions"
-        section_items_v1012 = split_lines(row.get("instructions", ""))
-        section_kind_v1012 = "number"
+        section_title_v1013 = "Instructions"
+        section_items_v1013 = split_lines(row.get("instructions", ""))
     else:
-        section_title_v1012 = "Benefits"
-        section_items_v1012 = split_lines(row.get("benefits", ""))
-        section_kind_v1012 = "tick"
+        section_title_v1013 = "Benefits"
+        section_items_v1013 = split_lines(row.get("benefits", ""))
 
-    st.markdown("<div class='hm-v1012-card-anchor'></div>", unsafe_allow_html=True)
-    with st.container(border=True):
-        st.markdown(f"<div class='hm-v1012-section-title'>{section_title_v1012}</div>", unsafe_allow_html=True)
-        if not section_items_v1012:
-            st.markdown("<div class='hm-v1012-empty'>No details added yet.</div>", unsafe_allow_html=True)
-        for n, item in enumerate(section_items_v1012, start=1):
-            if section_kind_v1012 == "number":
-                icon_v1012 = f"<span class='hm-v1012-num'>{n}</span>"
-            else:
-                icon_v1012 = "<span class='hm-v1012-check'>✓</span>"
-            st.markdown(
-                f"<div class='hm-v1012-row'>{icon_v1012}<div>{esc(item)}</div></div>",
-                unsafe_allow_html=True,
-            )
+    if section_items_v1013:
+        rows_v1013 = "".join([
+            f"<div class='hm-v1013-premium-row'><span class='hm-v1013-check'>✓</span><div>{esc(item)}</div></div>"
+            for item in section_items_v1013
+        ])
+    else:
+        rows_v1013 = "<div class='hm-v1013-empty'>No details added yet.</div>"
+    st.markdown(
+        f"""
+        <div class='hm-v1013-premium-card'>
+          <div class='hm-v1013-section-title'>{section_title_v1013}</div>
+          {rows_v1013}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "exercises", str(idx))
     exercise_reset_token_v1006 = st.session_state.get(f"exercise_feedback_reset_{idx}", 0)
@@ -826,334 +819,14 @@ inject_global_styles()
 apply_luxe_theme()
 render_back_to_top()
 
-st.markdown("""
-<style>
-/* v100.9 compact hero and structural polish */
-section.main > div.block-container,
-.main .block-container,
-[data-testid="stAppViewBlockContainer"],
-.stMainBlockContainer,
-.block-container{
-  padding-top:.12rem!important;
-}
-div[data-testid="stElementContainer"]:has(style),
-div[data-testid="stElementContainer"]:has(script),
-.element-container:has(style),
-.element-container:has(script),
-div[data-testid="stMarkdownContainer"]:has(style),
-div[data-testid="stMarkdownContainer"]:has(script){
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:visible!important;
-}
-.hm-v1009-content-hero{
-  border:1.2px solid #E3C98E;
-  border-radius:18px;
-  background:#FFFDF8;
-  box-shadow:0 10px 24px rgba(15,23,42,.045);
-  padding:.72rem 1.00rem .78rem 1.00rem;
-  margin:.04rem 0 .30rem 0;
-}
-.hm-v1009-brand{
-  color:#064E3B;
-  font-size:.84rem;
-  font-weight:950;
-  letter-spacing:.045em;
-  margin-bottom:.24rem;
-}
-.hm-v1009-pill{
-  display:inline-flex;
-  padding:.18rem .54rem;
-  border-radius:999px;
-  background:#F6E8BE;
-  color:#6B4E12;
-  font-size:.72rem;
-  font-weight:850;
-  margin-bottom:.34rem;
-}
-.hm-v1009-title{
-  color:#003C36;
-  font-size:1.38rem;
-  font-weight:950;
-  line-height:1.08;
-}
-div[data-testid="stTabs"],
-div[data-testid="stTabs"] *{
-  border-bottom:0!important;
-  box-shadow:none!important;
-}
-div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
-div[data-testid="stTabs"] [data-baseweb="tab-border"],
-div[data-testid="stTabs"] hr,
-div[data-testid="stTabs"] button[role="tab"]::before,
-div[data-testid="stTabs"] button[role="tab"]::after{
-  display:none!important;
-  height:0!important;
-  border:0!important;
-  background:transparent!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.52rem!important;
-  border-radius:999px!important;
-  border:1.25px solid #D9C28F!important;
-  background:#FFFDF8!important;
-  color:#064E3B!important;
-  font-weight:860!important;
-  white-space:normal!important;
-  line-height:1.25!important;
-}
-.hm-v1008-section-shell,
-.hm-v1009-section-shell{
-  border:1px solid #E3C98E!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)!important;
-  border-radius:18px!important;
-  padding:.90rem 1.04rem!important;
-  margin:.28rem 0 .52rem 0!important;
-  box-shadow:0 8px 20px rgba(15,23,42,.045)!important;
-}
-.hm-v1008-section-title,
-.hm-v1009-section-title{
-  color:#064E3B!important;
-  font-weight:950!important;
-  font-size:.98rem!important;
-  margin:0 0 .44rem 0!important;
-}
-.hm-v1008-row,
-.hm-v1009-row{
-  display:flex!important;
-  gap:.78rem!important;
-  align-items:flex-start!important;
-  padding:.60rem 0!important;
-  border-bottom:1px solid #F0E4CC!important;
-  color:#064E3B!important;
-  font-size:1.02rem!important;
-  line-height:1.40!important;
-}
-.hm-v1008-row:last-child,
-.hm-v1009-row:last-child{border-bottom:0!important;}
-.hm-v1008-check,
-.hm-v1009-check{
-  width:1.38rem!important;
-  height:1.38rem!important;
-  min-width:1.38rem!important;
-  border-radius:999px!important;
-  background:#ECFDF5!important;
-  border:1.5px solid #6D9C6C!important;
-  color:#065F46!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-size:.76rem!important;
-  font-weight:950!important;
-  margin-top:.03rem!important;
-}
-.hm-v1008-num,
-.hm-v1009-num{
-  width:1.48rem!important;
-  height:1.48rem!important;
-  min-width:1.48rem!important;
-  border-radius:999px!important;
-  background:#FFF7E6!important;
-  border:1.5px solid #D9C28F!important;
-  color:#7A5A16!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-size:.78rem!important;
-  font-weight:950!important;
-  margin-top:.02rem!important;
-}
-div[data-testid="stExpander"] details{
-  border:1.45px solid #D9C28F!important;
-  border-radius:18px!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)!important;
-  box-shadow:0 10px 24px rgba(15,23,42,.055)!important;
-  overflow:hidden!important;
-}
-div[data-testid="stExpander"] summary{
-  min-height:2.82rem!important;
-  padding:.66rem .96rem!important;
-  background:#FFFDF8!important;
-}
-div[data-testid="stExpander"] summary p{
-  color:#064E3B!important;
-  font-size:.98rem!important;
-  font-weight:940!important;
-  white-space:nowrap!important;
-}
-.hm-v1008-feedback-note,
-.hm-v1009-feedback-note{
-  color:#64748B!important;
-  font-size:.81rem!important;
-  font-weight:750!important;
-  margin:.08rem 0 .48rem 0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
 
 st.markdown("""
 <style>
-/* v100.10 premium content detail final layer */
-.hm-v1008-section-shell{
-  border:1.35px solid #D9C28F!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
-  border-radius:20px!important;
-  padding:1.00rem 1.10rem!important;
-  box-shadow:0 12px 28px rgba(15,23,42,.06)!important;
-}
-.hm-v1008-section-title{
-  font-size:1.02rem!important;
-  font-weight:980!important;
-  color:#003C36!important;
-}
-.hm-v1008-row{
-  font-size:1.03rem!important;
-  padding:.66rem 0!important;
-}
-.hm-v1008-check,
-.hm-v1008-num{
-  transform:scale(1.05);
-}
-div[data-testid="stExpander"] details{
-  border:1.45px solid #D9C28F!important;
-  border-radius:20px!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
-  box-shadow:0 12px 28px rgba(15,23,42,.06)!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.11 Exercise final hero/search/detail/feedback polish */
-.hm-v1009-content-hero{
-  padding:.54rem .92rem .58rem .92rem!important;
-  margin:.02rem 0 .20rem 0!important;
-}
-.hm-v1009-brand{
-  margin-bottom:.16rem!important;
-}
-.hm-v1009-pill{
-  margin-bottom:.24rem!important;
-  padding:.16rem .50rem!important;
-}
-.hm-v1009-title{
-  font-size:1.30rem!important;
-}
-.hm-content-toolbar-anchor{
-  height:0!important;
-  min-height:0!important;
-  margin:0!important;
-  padding:0!important;
-}
-div[data-testid="stTextInput"] input{
-  min-height:2.18rem!important;
-  height:2.18rem!important;
-  border-radius:12px!important;
-}
-.hm-v1011-section-shell{
-  border:1.35px solid #D9C28F;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%);
-  border-radius:20px;
-  padding:1.00rem 1.12rem;
-  margin:.34rem 0 .72rem 0;
-  box-shadow:0 12px 28px rgba(15,23,42,.06);
-}
-.hm-v1011-section-title{
-  color:#003C36;
-  font-size:1.04rem;
-  font-weight:980;
-  margin:0 0 .46rem 0;
-}
-.hm-v1011-row{
-  display:flex;
-  gap:.80rem;
-  align-items:flex-start;
-  padding:.68rem 0;
-  border-bottom:1px solid #F0E4CC;
-  color:#064E3B;
-  font-size:1.04rem;
-  line-height:1.42;
-}
-.hm-v1011-row:last-child{
-  border-bottom:0;
-}
-.hm-v1011-check{
-  width:1.42rem;
-  height:1.42rem;
-  min-width:1.42rem;
-  border-radius:999px;
-  background:#ECFDF5;
-  border:1.5px solid #6D9C6C;
-  color:#065F46;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:.78rem;
-  font-weight:950;
-  margin-top:.02rem;
-}
-.hm-v1011-num{
-  width:1.52rem;
-  height:1.52rem;
-  min-width:1.52rem;
-  border-radius:999px;
-  background:#FFF7E6;
-  border:1.5px solid #D9C28F;
-  color:#7A5A16;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:.80rem;
-  font-weight:950;
-  margin-top:.01rem;
-}
-.hm-v1011-empty{
-  color:#64748B;
-  font-size:.90rem;
-  font-weight:720;
-  padding:.35rem 0;
-}
-div[data-testid="stExpander"] details{
-  border:1.45px solid #D9C28F!important;
-  border-radius:20px!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
-  box-shadow:0 12px 28px rgba(15,23,42,.06)!important;
-}
-div[data-testid="stExpander"] summary{
-  min-height:2.86rem!important;
-  padding:.68rem .98rem!important;
-}
-div[data-testid="stExpander"] summary p{
-  color:#064E3B!important;
-  font-size:.98rem!important;
-  font-weight:950!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.12 Recipe/Exercise final premium detail and feedback */
-.hm-v1009-content-hero{
-  padding:.42rem .82rem .46rem .82rem!important;
-  margin:.00rem 0 .14rem 0!important;
-}
-.hm-v1009-brand{
-  margin-bottom:.12rem!important;
-}
-.hm-v1009-pill{
-  margin-bottom:.18rem!important;
-  padding:.14rem .46rem!important;
-}
-.hm-v1009-title{
-  font-size:1.24rem!important;
+/* v100.13 standard hero + premium detail closure */
+.hero-shell{
+  margin-bottom:.14rem!important;
+  padding-top:1.05rem!important;
+  padding-bottom:1.02rem!important;
 }
 .hm-content-toolbar-anchor{
   height:0!important;
@@ -1162,89 +835,74 @@ st.markdown("""
   padding:0!important;
 }
 .hm-content-toolbar-anchor + div{
-  margin-top:.05rem!important;
+  margin-top:.02rem!important;
 }
 div[data-testid="stTextInput"] input{
-  min-height:2.02rem!important;
-  height:2.02rem!important;
+  min-height:2.08rem!important;
+  height:2.08rem!important;
   border-radius:12px!important;
 }
-.hm-v1012-card-anchor + div[data-testid="stVerticalBlockBorderWrapper"],
-.hm-v1012-card-anchor + div [data-testid="stVerticalBlockBorderWrapper"]{
-  border:1.35px solid #D9C28F!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
-  border-radius:20px!important;
-  padding:.92rem 1.04rem!important;
-  margin:.28rem 0 .68rem 0!important;
-  box-shadow:0 12px 28px rgba(15,23,42,.06)!important;
+.hm-v1013-premium-card{
+  border:1.45px solid #D9C28F;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%);
+  border-radius:20px;
+  padding:1.02rem 1.14rem;
+  margin:.34rem 0 .70rem 0;
+  box-shadow:0 12px 28px rgba(15,23,42,.065);
 }
-.hm-v1012-section-title{
-  color:#003C36!important;
-  font-size:1.04rem!important;
-  font-weight:980!important;
-  margin:0 0 .46rem 0!important;
+.hm-v1013-section-title{
+  color:#003C36;
+  font-size:1.04rem;
+  font-weight:980;
+  margin:0 0 .46rem 0;
 }
-.hm-v1012-row{
-  display:flex!important;
-  gap:.80rem!important;
-  align-items:flex-start!important;
-  padding:.66rem 0!important;
-  border-bottom:1px solid #F0E4CC!important;
-  color:#064E3B!important;
-  font-size:1.04rem!important;
-  line-height:1.42!important;
+.hm-v1013-premium-row{
+  display:flex;
+  gap:.82rem;
+  align-items:flex-start;
+  padding:.68rem 0;
+  border-bottom:1px solid #F0E4CC;
+  color:#064E3B;
+  font-size:1.04rem;
+  line-height:1.42;
 }
-.hm-v1012-row:last-child{
-  border-bottom:0!important;
+.hm-v1013-premium-row:last-child{
+  border-bottom:0;
 }
-.hm-v1012-check{
-  width:1.42rem!important;
-  height:1.42rem!important;
-  min-width:1.42rem!important;
-  border-radius:999px!important;
-  background:#ECFDF5!important;
-  border:1.5px solid #6D9C6C!important;
-  color:#065F46!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-size:.78rem!important;
-  font-weight:950!important;
+.hm-v1013-check{
+  width:1.46rem;
+  height:1.46rem;
+  min-width:1.46rem;
+  border-radius:999px;
+  background:#ECFDF5;
+  border:1.5px solid #6D9C6C;
+  color:#065F46;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.80rem;
+  font-weight:950;
 }
-.hm-v1012-num{
-  width:1.52rem!important;
-  height:1.52rem!important;
-  min-width:1.52rem!important;
-  border-radius:999px!important;
-  background:#FFF7E6!important;
-  border:1.5px solid #D9C28F!important;
-  color:#7A5A16!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-size:.80rem!important;
-  font-weight:950!important;
-}
-.hm-v1012-empty{
-  color:#64748B!important;
-  font-size:.90rem!important;
-  font-weight:720!important;
-  padding:.35rem 0!important;
+.hm-v1013-empty{
+  color:#64748B;
+  font-size:.90rem;
+  font-weight:720;
+  padding:.35rem 0;
 }
 div[data-testid="stExpander"] details{
-  border:1.55px solid #D9C28F!important;
+  border:1.6px solid #D9C28F!important;
   border-radius:20px!important;
   background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
-  box-shadow:0 12px 28px rgba(15,23,42,.065)!important;
+  box-shadow:0 12px 30px rgba(15,23,42,.07)!important;
 }
 div[data-testid="stExpander"] summary{
-  min-height:2.96rem!important;
-  padding:.72rem 1.02rem!important;
+  min-height:3.02rem!important;
+  padding:.74rem 1.04rem!important;
 }
 div[data-testid="stExpander"] summary p{
   color:#064E3B!important;
   font-size:1.00rem!important;
-  font-weight:960!important;
+  font-weight:970!important;
 }
 </style>
 """, unsafe_allow_html=True)

@@ -381,3 +381,15 @@
 - Recipe and Exercise feedback expander styling strengthened.
 - Retained Other Fluids v10010 state-safe flow and Admin Recipe/Exercise tab order.
 - No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.
+
+## v100.13 - Global Hero + Content Closure
+
+- Admin version marker is now adjacent to HealthyMe only for Admin sessions.
+- Member login/member pages do not show version adjacent to HealthyMe.
+- Member Home CSS moved to bottom to remove post-hero spacing caused by invisible style blocks.
+- Member Home task divider spacing equalized.
+- Daily Log now has a small intentional gap between Hero and Food Journal Date border.
+- Recipe and Exercise restored to standard Hero banner.
+- Recipe and Exercise hero-to-search spacing reduced.
+- Recipe and Exercise details rebuilt as single premium HTML cards using tick bullets across all sections.
+- Recipe and Exercise feedback expander styling strengthened.

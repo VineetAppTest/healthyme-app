@@ -2908,6 +2908,36 @@ button[kind="primary"]{
   }
 }
 
+
+/* v100.13 global hero/order/version alignment */
+.hm-admin-version-inline{
+  display:inline-flex;
+  align-items:center;
+  margin-left:.45rem;
+  padding:.16rem .46rem;
+  border-radius:999px;
+  background:#F6E8BE;
+  color:#7A5A16;
+  font-size:.70rem;
+  font-weight:850;
+  letter-spacing:.01em;
+  vertical-align:middle;
+}
+.hero-shell{
+  margin-top:.18rem!important;
+  margin-bottom:.36rem!important;
+}
+.utility-bar{
+  margin-bottom:.34rem!important;
+}
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.18rem!important;
+}
+
 </style>
 """
 
@@ -7502,25 +7532,18 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v100.12"
-APP_BUILD_LABEL = "Client Closure Polish"
+APP_BUILD_VERSION = "v100.13"
+APP_BUILD_LABEL = "Global Hero Content Closure"
 
 
 def admin_version_line_v98_1():
-    """Admin-only version line displayed under HealthyMe brand/top header."""
+    """Admin-only version marker shown adjacent to HealthyMe brand."""
     try:
         if st.session_state.get("user_role") == "admin":
             return (
-                "<div style='"
-                "color:#7A5A16;"
-                "font-size:.74rem;"
-                "font-weight:850;"
-                "letter-spacing:.02em;"
-                "margin-top:.12rem;"
-                "line-height:1.05;"
-                "'>"
-                f"HealthyMe {APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
-                "</div>"
+                "<span class='hm-admin-version-inline'>"
+                f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
+                "</span>"
             )
     except Exception:
         pass

@@ -1876,7 +1876,22 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-v9732-date-stack) > div{
 """, unsafe_allow_html=True)
 
 
+
+st.markdown("""
+<style>
+/* v100.13 Daily Log hero-to-date micro gap */
+.hm-v1013-daily-hero-gap{
+  height:.22rem;
+  min-height:.22rem;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-v9732-date-stack){
+  margin-top:.04rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
+st.markdown("<div class='hm-v1013-daily-hero-gap'></div>", unsafe_allow_html=True)
 render_system_message()
 
 def get_device_mode_for_spike():

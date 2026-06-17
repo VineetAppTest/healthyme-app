@@ -82,321 +82,12 @@ utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 
 
-st.markdown("""
-<style>
-/* v100.12 Member Home hero and divider closure */
-.hero-shell{
-  margin-bottom:.10rem!important;
-  padding-bottom:.90rem!important;
-}
-div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
-  margin-bottom:.10rem!important;
-  padding-bottom:.10rem!important;
-}
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.42rem!important;
-  margin-bottom:.42rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.18rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.36rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.92rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  padding:.66rem .84rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-/* v99.0 Member task baseline clarity */
-.hm-v990-task-progress{
-  border:1px solid #E5D2A9;
-  background:#FFFDF8;
-  border-radius:14px;
-  padding:.62rem .72rem;
-  margin:.52rem 0 .62rem 0;
-}
-.hm-v990-progress-title{
-  color:#064E3B;
-  font-size:.88rem;
-  font-weight:920;
-  margin:0 0 .38rem 0;
-}
-.hm-v990-progress-line{
-  height:8px;
-  border-radius:999px;
-  background:#EFE7D6;
-  overflow:hidden;
-  margin:.28rem 0 .42rem 0;
-}
-.hm-v990-progress-fill{
-  height:8px;
-  border-radius:999px;
-  background:#0F766E;
-}
-.hm-v990-task-chip{
-  display:inline-flex;
-  align-items:center;
-  gap:.25rem;
-  margin:.12rem .22rem .12rem 0;
-  padding:.22rem .48rem;
-  border-radius:999px;
-  border:1px solid #D9C28F;
-  color:#064E3B;
-  background:#FAF8F1;
-  font-size:.74rem;
-  font-weight:850;
-}
-.hm-v990-task-chip.pending{
-  color:#7A5A16;
-  background:#FFF7E6;
-}
-.hm-v990-task-chip.done{
-  color:#065F46;
-  background:#ECFDF5;
-}
-.hm-v990-submit-note{
-  color:#64748B;
-  font-size:.80rem;
-  font-weight:720;
-  margin:.36rem 0 .58rem 0;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.6 Member Home spacing/button polish */
-hr{
-  margin-top:.42rem!important;
-  margin-bottom:.42rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.18rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.34rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.52rem!important;
-  white-space:normal!important;
-  line-height:1.25!important;
-  padding:.50rem .72rem!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.7 Member Home divider/button final polish */
-/* Make spacing above and below divider visually equal */
-hr{
-  margin-top:.34rem!important;
-  margin-bottom:.34rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.10rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.28rem!important;
-}
-.hm-v990-task-progress + div{
-  margin-top:.28rem!important;
-}
-/* Personalized Content buttons: taller and stable for full text visibility */
-div[data-testid="stButton"] > button{
-  min-height:2.82rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.32!important;
-  padding:.62rem .80rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.32!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.8 Member Home equal divider spacing hard fix */
-hr{
-  margin-top:.30rem!important;
-  margin-bottom:.30rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.10rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.30rem!important;
-}
-.hm-v990-task-progress + div,
-.hm-v990-task-progress + div hr{
-  margin-top:.30rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.86rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  padding:.64rem .82rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.9 Member Home equal divider spacing final */
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.26rem!important;
-  margin-bottom:.26rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.08rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.26rem!important;
-}
-.hm-v990-task-progress + div{
-  margin-top:.26rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.92rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  padding:.66rem .84rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.10 Member Home submit divider spacing */
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.32rem!important;
-  margin-bottom:.72rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.22rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.46rem!important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 
 
-st.markdown("""
-<style>
-/* v100.11 Member Home top-row collapse and divider balance */
-section.main > div.block-container,
-.main .block-container,
-[data-testid="stAppViewBlockContainer"],
-.stMainBlockContainer,
-.block-container{
-  padding-top:.04rem!important;
-  margin-top:0!important;
-}
-div[data-testid="stElementContainer"]:has(style),
-div[data-testid="stElementContainer"]:has(script),
-.element-container:has(style),
-.element-container:has(script),
-div[data-testid="stMarkdownContainer"]:has(style),
-div[data-testid="stMarkdownContainer"]:has(script){
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:visible!important;
-}
-.utility-bar{
-  margin-top:0!important;
-}
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.46rem!important;
-  margin-bottom:.46rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.24rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.40rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.92rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  padding:.66rem .84rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
+
+
+
 
 render_system_message()
 auto_archive_expired_nutritionist_messages(user_id)
@@ -642,6 +333,377 @@ div[data-testid="stMarkdownContainer"]:has(script){
 /* Keep task buttons tight. */
 .hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
   margin-top:-.35rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# v100.13 deferred Member Home CSS to avoid post-hero gap
+
+
+st.markdown("""
+<style>
+/* v100.12 Member Home hero and divider closure */
+.hero-shell{
+  margin-bottom:.10rem!important;
+  padding-bottom:.90rem!important;
+}
+div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
+  margin-bottom:.10rem!important;
+  padding-bottom:.10rem!important;
+}
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.42rem!important;
+  margin-bottom:.42rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.18rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.36rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.92rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  padding:.66rem .84rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
+<style>
+/* v99.0 Member task baseline clarity */
+.hm-v990-task-progress{
+  border:1px solid #E5D2A9;
+  background:#FFFDF8;
+  border-radius:14px;
+  padding:.62rem .72rem;
+  margin:.52rem 0 .62rem 0;
+}
+.hm-v990-progress-title{
+  color:#064E3B;
+  font-size:.88rem;
+  font-weight:920;
+  margin:0 0 .38rem 0;
+}
+.hm-v990-progress-line{
+  height:8px;
+  border-radius:999px;
+  background:#EFE7D6;
+  overflow:hidden;
+  margin:.28rem 0 .42rem 0;
+}
+.hm-v990-progress-fill{
+  height:8px;
+  border-radius:999px;
+  background:#0F766E;
+}
+.hm-v990-task-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:.25rem;
+  margin:.12rem .22rem .12rem 0;
+  padding:.22rem .48rem;
+  border-radius:999px;
+  border:1px solid #D9C28F;
+  color:#064E3B;
+  background:#FAF8F1;
+  font-size:.74rem;
+  font-weight:850;
+}
+.hm-v990-task-chip.pending{
+  color:#7A5A16;
+  background:#FFF7E6;
+}
+.hm-v990-task-chip.done{
+  color:#065F46;
+  background:#ECFDF5;
+}
+.hm-v990-submit-note{
+  color:#64748B;
+  font-size:.80rem;
+  font-weight:720;
+  margin:.36rem 0 .58rem 0;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<style>
+/* v100.6 Member Home spacing/button polish */
+hr{
+  margin-top:.42rem!important;
+  margin-bottom:.42rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.18rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.34rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.52rem!important;
+  white-space:normal!important;
+  line-height:1.25!important;
+  padding:.50rem .72rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<style>
+/* v100.7 Member Home divider/button final polish */
+/* Make spacing above and below divider visually equal */
+hr{
+  margin-top:.34rem!important;
+  margin-bottom:.34rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.10rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.28rem!important;
+}
+.hm-v990-task-progress + div{
+  margin-top:.28rem!important;
+}
+/* Personalized Content buttons: taller and stable for full text visibility */
+div[data-testid="stButton"] > button{
+  min-height:2.82rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.32!important;
+  padding:.62rem .80rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.32!important;
+  margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<style>
+/* v100.8 Member Home equal divider spacing hard fix */
+hr{
+  margin-top:.30rem!important;
+  margin-bottom:.30rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.10rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.30rem!important;
+}
+.hm-v990-task-progress + div,
+.hm-v990-task-progress + div hr{
+  margin-top:.30rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.86rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  padding:.64rem .82rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<style>
+/* v100.9 Member Home equal divider spacing final */
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.26rem!important;
+  margin-bottom:.26rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.08rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.26rem!important;
+}
+.hm-v990-task-progress + div{
+  margin-top:.26rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.92rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  padding:.66rem .84rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+st.markdown("""
+<style>
+/* v100.10 Member Home submit divider spacing */
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.32rem!important;
+  margin-bottom:.72rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.22rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.46rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+
+st.markdown("""
+<style>
+/* v100.11 Member Home top-row collapse and divider balance */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.04rem!important;
+  margin-top:0!important;
+}
+div[data-testid="stElementContainer"]:has(style),
+div[data-testid="stElementContainer"]:has(script),
+.element-container:has(style),
+.element-container:has(script),
+div[data-testid="stMarkdownContainer"]:has(style),
+div[data-testid="stMarkdownContainer"]:has(script){
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+.utility-bar{
+  margin-top:0!important;
+}
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.46rem!important;
+  margin-bottom:.46rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.24rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.40rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.92rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  padding:.66rem .84rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
+<style>
+/* v100.13 Member Home post-hero and divider closure */
+.hero-shell{
+  margin-bottom:.06rem!important;
+  padding-bottom:.82rem!important;
+}
+div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
+  margin-bottom:.04rem!important;
+  padding-bottom:.04rem!important;
+}
+.hm-v990-task-progress{
+  margin-top:.36rem!important;
+  margin-bottom:.40rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-top:.38rem!important;
+  margin-bottom:.38rem!important;
+}
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.46rem!important;
+  margin-bottom:.46rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.92rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  padding:.66rem .84rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  margin:0!important;
 }
 </style>
 """, unsafe_allow_html=True)
