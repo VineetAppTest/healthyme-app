@@ -479,3 +479,13 @@
 - Reports continue to calculate dynamically from current mapping.
 - Added `V101_4_NSP_RECALCULATION_UAT_CHECKLIST.md`.
 - No Daily Log, Recipe, Exercise, Scheduling/Reschedule, report layout, save, filter, or database schema rewrite.
+
+## v101.5 - Global Header, Version & Button Polish
+
+- Removed stale app-facing version labels such as `v95.14` from Python pages.
+- Standardized admin version display to `v101.5 · Global Header Version Button Polish` adjacent to HealthyMe only.
+- Kept member pages/login free from visible version markers.
+- Applied global signed-in/logout row spacing and hero banner spacing.
+- Applied global HealthyMe button normalization to prevent black/default buttons.
+- Added global form-control rounding/spacing polish.
+- No scoring, recalculation, scheduling/reschedule, daily log, reports, save, filter, or database schema changes.

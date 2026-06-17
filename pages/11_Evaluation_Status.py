@@ -9,7 +9,7 @@ inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(
 
 st.markdown("""
 <style>
-/* --- v95.14 Eval Status nav spacing cleanup --- */
+/* --- Eval Status nav spacing cleanup --- */
 
 /* Tighten only this page without touching other admin pages */
 .block-container{
@@ -212,7 +212,7 @@ st.markdown(
     <div class='hero-shell'>
       <div class='hm-v77-brand-row'>
         <span class='hm-v77-brand'>HealthyMe</span>
-        <span class='hm-v95-14-inline-version'>v95.14 · Eval Status Nav Spacing Fix</span>
+        <span class='hm-v95-14-inline-version'> </span>
       </div>
       <div class='hero-kicker'>Review workflow</div>
       <div class='hero-title'>Evaluation Status of All Members</div>

@@ -2974,6 +2974,89 @@ div[data-testid="stButton"] > button{
   margin-bottom:.72rem!important;
 }
 
+
+/* v101.5 global header, hero, version and button polish */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.72rem!important;
+}
+
+.utility-bar{
+  min-height:2.84rem!important;
+  height:2.84rem!important;
+  padding:.42rem .72rem!important;
+  margin-top:0!important;
+  margin-bottom:.72rem!important;
+  display:flex!important;
+  align-items:center!important;
+  box-sizing:border-box!important;
+}
+
+.hero-shell{
+  margin-top:0!important;
+  margin-bottom:.72rem!important;
+}
+
+.hm-admin-version-inline{
+  display:inline-flex!important;
+  align-items:center!important;
+  margin-left:.72rem!important;
+  padding:.14rem .44rem!important;
+  border-radius:999px!important;
+  border:1px solid #E3C98E!important;
+  background:#FFF7E6!important;
+  color:#475569!important;
+  font-size:.72rem!important;
+  font-weight:850!important;
+  letter-spacing:.01em!important;
+  vertical-align:middle!important;
+}
+
+/* App-wide button normalization: remove black/default buttons */
+div[data-testid="stButton"] > button,
+button[kind="secondary"],
+button[kind="primary"],
+.stButton > button{
+  min-height:2.72rem!important;
+  border-radius:14px!important;
+  border:1.25px solid #D9C28F!important;
+  background:#FFFDF8!important;
+  color:#064E3B!important;
+  font-weight:850!important;
+  box-shadow:none!important;
+}
+
+div[data-testid="stButton"] > button:hover,
+button[kind="secondary"]:hover,
+button[kind="primary"]:hover,
+.stButton > button:hover{
+  border-color:#B89345!important;
+  background:#FFF7E6!important;
+  color:#003C36!important;
+  box-shadow:0 6px 16px rgba(15,23,42,.06)!important;
+}
+
+div[data-testid="stButton"] > button:focus,
+button[kind="secondary"]:focus,
+button[kind="primary"]:focus,
+.stButton > button:focus{
+  outline:2px solid rgba(217,194,143,.42)!important;
+  outline-offset:2px!important;
+}
+
+/* Form controls use the HealthyMe rounded system */
+div[data-testid="stTextInput"] input,
+div[data-testid="stNumberInput"] input,
+div[data-testid="stTextArea"] textarea,
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+div[data-testid="stDateInput"] input,
+div[data-testid="stTimeInput"] input{
+  border-radius:12px!important;
+}
+
 </style>
 """
 
@@ -7568,22 +7651,20 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v101.4"
-APP_BUILD_LABEL = "Existing Member NSP Recalculation"
+APP_BUILD_VERSION = "v101.5"
+APP_BUILD_LABEL = "Global Header Version Button Polish"
 
 
 def admin_version_line_v98_1():
-    """Admin-only version marker shown adjacent to HealthyMe brand."""
-    try:
-        if st.session_state.get("user_role") == "admin":
-            return (
-                "<span class='hm-admin-version-inline'>"
-                f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
-                "</span>"
-            )
-    except Exception:
-        pass
-    return ""
+    """Admin-only inline build label beside HealthyMe brand.
+
+    v101.5 rule:
+    - Admin pages: show latest version adjacent to HealthyMe only.
+    - Member pages/login: no visible version marker.
+    """
+    if st.session_state.get("user_role") != "admin":
+        return ""
+    return f"<span class='hm-admin-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
 
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
