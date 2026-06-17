@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v101_2_Member_Reschedule_Request_Build",
-  "version": "v101.2",
-  "updated_on": "2026-06-17T13:16:31.132231+00:00",
+  "build_name": "HealthyMe_v101_3_NSP_Scoring_Excel_Mapping_Alignment",
+  "version": "v101.3",
+  "updated_on": "2026-06-17T15:58:29.070188+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,16 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added member Request Reschedule flow on My Schedule page.",
-    "Member can propose new date, start time, end time and reason.",
-    "Added 24-hour rule warning and confirmation requirement for within-24-hour reschedule requests.",
-    "Added admin Reschedule Requests panel on Admin Scheduling page.",
-    "Admin can approve or reject member reschedule requests.",
-    "Approval marks original schedule rescheduled and creates a new schedule.",
-    "Within-24-hour approval flags original session as counted/consumed.",
-    "Approval/rejection queues member message and email notification record.",
-    "Added v101.2 Reschedule Request UAT checklist.",
-    "No Daily Log, Recipe, Exercise, scoring, report, filter, save, or database schema rewrite."
+    "Replaced config/systems_rating_map.json with Excel-derived mapping from non-grey cells.",
+    "Page 1 source range: E6:N45 using C6:C45 values.",
+    "Page 2 source range: E7:N33 using C7:C33 values.",
+    "Retained answer scoring: 1/2/3 as numeric values and NA/blank/Select as 0.",
+    "Validated uploaded Excel sample totals: Digestive 31, Intestinal 34, Immune/Lymphatic 23, Nervous 25, Circulatory/Cardiovascular 28, Respiratory 9, Glandular/Endocrine 43, Reproductive 21, Urinary 13, Musculoskeletal 11.",
+    "Added V101_3_NSP_SCORING_ALIGNMENT_NOTES.md.",
+    "No Daily Log, Recipe, Exercise, Scheduling, Reschedule, report layout, save, or database schema changes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -324,10 +321,11 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v101_1_Scheduling_UI_Structure_Fix.zip",
+  "base_build": "HealthyMe_v101_2_Member_Reschedule_Request_Build.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",
   "logic_change": "none",
-  "profile_page_patched": "pages/07_My_Profile.py"
+  "profile_page_patched": "pages/07_My_Profile.py",
+  "scoring_source_workbook": "NSPform&Subform_xl-1 (1).xlsx"
 }

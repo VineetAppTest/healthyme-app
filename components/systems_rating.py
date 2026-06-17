@@ -33,8 +33,10 @@ def load_systems_rating_map():
 def calculate_systems_rating(nsp1_answers, nsp2_answers):
     """Calculate systems rating table from NSP Page 1 + NSP Page 2 answers.
 
-    The mapping is kept in config/systems_rating_map.json so it can be updated
-    later if the client provides the exact original Excel formula mapping.
+    v101.3 source of truth:
+    - NSP Excel non-grey cells in Pg1 E6:N45 and Pg2 E7:N33 define question-to-system mapping.
+    - Answer values 1/2/3 are summed into every mapped system.
+    - NA/blank/Select are treated as 0.
     """
     answers = {}
     answers.update(nsp1_answers or {})

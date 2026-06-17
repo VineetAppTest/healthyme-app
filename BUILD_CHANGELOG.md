@@ -446,3 +446,23 @@
 - Approval/rejection queues member message and email notification record.
 - Added v101.2 Reschedule Request UAT checklist.
 - No Daily Log, Recipe, Exercise, scoring, report, filter, save, or database schema rewrite.
+
+## v101.3 - NSP Scoring Excel Mapping Alignment
+
+- Replaced `config/systems_rating_map.json` with Excel-derived mapping from non-grey cells.
+- Page 1 source range: `E6:N45`, using answer values from `C6:C45`.
+- Page 2 source range: `E7:N33`, using answer values from `C7:C33`.
+- Retained answer scoring: `1/2/3` as numeric values and `NA/blank/Select` as `0`.
+- Validated uploaded Excel sample totals:
+  - Digestive: 31
+  - Intestinal: 34
+  - Immune/Lymphatic: 23
+  - Nervous: 25
+  - Circulatory/Cardiovascular: 28
+  - Respiratory: 9
+  - Glandular/Endocrine: 43
+  - Reproductive: 21
+  - Urinary: 13
+  - Musculoskeletal: 11
+- Added `V101_3_NSP_SCORING_ALIGNMENT_NOTES.md`.
+- No Daily Log, Recipe, Exercise, Scheduling, Reschedule, report layout, save, or database schema changes.
