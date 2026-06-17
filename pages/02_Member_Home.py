@@ -80,6 +80,50 @@ is_reassessment = is_task_instance
 
 utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
+
+
+st.markdown("""
+<style>
+/* v100.12 Member Home hero and divider closure */
+.hero-shell{
+  margin-bottom:.10rem!important;
+  padding-bottom:.90rem!important;
+}
+div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
+  margin-bottom:.10rem!important;
+  padding-bottom:.10rem!important;
+}
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.42rem!important;
+  margin-bottom:.42rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.18rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.36rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.92rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  padding:.66rem .84rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 /* v99.0 Member task baseline clarity */

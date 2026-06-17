@@ -172,11 +172,48 @@ def _hm_v981_qty_display(value):
     cleaned = _hm_v981_qty_text(value)
     return f"{cleaned} ml" if cleaned else ""
 
-def other_fluids_summary_v97(items):
-    """v98.1 display format for Recent Saved Days and Admin report.
+def _hm_v1012_qty_number(value):
+    cleaned = _hm_v981_qty_text(value)
+    if not cleaned:
+        return None
+    match = re.search(r"-?\d+(?:\.\d+)?", cleaned)
+    if not match:
+        return None
+    try:
+        return float(match.group(0))
+    except Exception:
+        return None
 
-    Format:
-    Other Liquid 1: Total Intake - X + Y ml | 12:30 PM - X ml; 3:30 PM - Y ml
+def _hm_v1012_qty_total_text(items):
+    qty_texts = []
+    qty_numbers = []
+    all_numeric = True
+    for item in items:
+        cleaned = _hm_v981_qty_text(item.get("quantity"))
+        if not cleaned:
+            continue
+        qty_texts.append(cleaned)
+        number = _hm_v1012_qty_number(cleaned)
+        if number is None:
+            all_numeric = False
+        else:
+            qty_numbers.append(number)
+
+    if qty_texts and all_numeric and len(qty_numbers) == len(qty_texts):
+        total = sum(qty_numbers)
+        if abs(total - int(total)) < 0.00001:
+            return f"{int(total)} ml"
+        return f"{total:.1f}".rstrip("0").rstrip(".") + " ml"
+
+    if qty_texts:
+        return " + ".join(qty_texts) + " ml"
+    return "—"
+
+def other_fluids_summary_v97(items):
+    """v100.12 display format for Recent Saved Days and Admin report.
+
+    Total Intake is summed per grouped fluid type.
+    Example: 100 ml + 100 ml becomes Total Intake - 200 ml.
     """
     fluids = normalise_other_fluids_v97(items)
     if not fluids:
@@ -193,8 +230,7 @@ def other_fluids_summary_v97(items):
 
     rows = []
     for idx, group in enumerate(grouped, start=1):
-        qty_parts = [_hm_v981_qty_text(x.get("quantity")) for x in group["items"] if _hm_v981_qty_text(x.get("quantity"))]
-        total_text = " + ".join(qty_parts) + (" ml" if qty_parts else "—")
+        total_text = _hm_v1012_qty_total_text(group["items"])
 
         timing_parts = []
         for item in group["items"]:

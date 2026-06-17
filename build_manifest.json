@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v100_11_Layout_Structure_Finalization",
-  "version": "v100.11",
-  "updated_on": "2026-06-17T06:54:25.475076+00:00",
+  "build_name": "HealthyMe_v100_12_Client_Closure_Polish",
+  "version": "v100.12",
+  "updated_on": "2026-06-17T07:26:36.748223+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,14 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Moved Member Home style injections away from the signed-in/logout row and collapsed top padding.",
-    "Equalized Member Home divider spacing above and below task area.",
-    "Reduced Food Journal Date border top/bottom spacing by around 20%.",
-    "Reduced Recipe/Exercise compact hero and search bar height.",
-    "Rebuilt Recipe detail sections as single premium HTML cards so bullets/numbering render inside the card.",
-    "Rebuilt Exercise detail sections as single premium HTML cards so bullets/numbering render inside the card.",
-    "Strengthened Recipe/Exercise feedback expander styling.",
-    "Retained Admin Recipe/Exercise tab order and Other Fluids v10010 state-safe flow.",
+    "Member Home post-hero gap reduced and task divider spacing equalized.",
+    "Food Journal Date border padding tightened further.",
+    "Other Fluids summary now sums grouped fluid quantities for Total Intake.",
+    "Recipe and Exercise hero-to-search spacing reduced.",
+    "Recipe and Exercise detail sections rebuilt using native bordered containers with premium tick/number rows.",
+    "Recipe and Exercise feedback expander styling strengthened.",
+    "Retained Other Fluids v10010 state-safe flow and Admin Recipe/Exercise tab order.",
     "No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite."
   ],
   "required_setup": [
@@ -323,7 +322,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v100_10_UI_State_AdminTabs_Hotfix.zip",
+  "base_build": "HealthyMe_v100_11_Layout_Structure_Finalization.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",

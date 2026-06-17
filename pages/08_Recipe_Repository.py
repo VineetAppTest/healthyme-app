@@ -610,36 +610,28 @@ def render_detail(row, idx):
 
     active_recipe_section_v1008 = st.session_state.get(section_key_v1008, "ingredients")
     if active_recipe_section_v1008 == "ingredients":
-        section_title_v1011 = "Ingredients"
-        ingredients = split_lines(row.get("ingredients", ""))
-        if ingredients:
-            rows_v1011 = [
-                f"<div class='hm-v1011-row'><span class='hm-v1011-check'>✓</span><div>{esc(item)}</div></div>"
-                for item in ingredients
-            ]
-            body_v1011 = "".join(rows_v1011)
-        else:
-            body_v1011 = "<div class='hm-v1011-empty'>No ingredients added yet.</div>"
+        section_title_v1012 = "Ingredients"
+        section_items_v1012 = split_lines(row.get("ingredients", ""))
+        section_kind_v1012 = "tick"
     else:
-        section_title_v1011 = "Instructions"
-        steps = split_lines(row.get("steps", ""))
-        if steps:
-            rows_v1011 = [
-                f"<div class='hm-v1011-row'><span class='hm-v1011-num'>{n}</span><div>{esc(item)}</div></div>"
-                for n, item in enumerate(steps, start=1)
-            ]
-            body_v1011 = "".join(rows_v1011)
-        else:
-            body_v1011 = "<div class='hm-v1011-empty'>No instructions added yet.</div>"
-    st.markdown(
-        f"""
-        <div class='hm-v1011-section-shell'>
-          <div class='hm-v1011-section-title'>{section_title_v1011}</div>
-          {body_v1011}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        section_title_v1012 = "Instructions"
+        section_items_v1012 = split_lines(row.get("steps", ""))
+        section_kind_v1012 = "number"
+
+    st.markdown("<div class='hm-v1012-card-anchor'></div>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown(f"<div class='hm-v1012-section-title'>{section_title_v1012}</div>", unsafe_allow_html=True)
+        if not section_items_v1012:
+            st.markdown("<div class='hm-v1012-empty'>No details added yet.</div>", unsafe_allow_html=True)
+        for n, item in enumerate(section_items_v1012, start=1):
+            if section_kind_v1012 == "number":
+                icon_v1012 = f"<span class='hm-v1012-num'>{n}</span>"
+            else:
+                icon_v1012 = "<span class='hm-v1012-check'>✓</span>"
+            st.markdown(
+                f"<div class='hm-v1012-row'>{icon_v1012}<div>{esc(item)}</div></div>",
+                unsafe_allow_html=True,
+            )
 
     existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "recipes", str(idx))
     recipe_reset_token_v1006 = st.session_state.get(f"recipe_feedback_reset_{idx}", 0)
@@ -1154,4 +1146,115 @@ div[data-testid="stExpander"] summary p{
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v100.12 Recipe/Exercise final premium detail and feedback */
+.hm-v1009-content-hero{
+  padding:.42rem .82rem .46rem .82rem!important;
+  margin:.00rem 0 .14rem 0!important;
+}
+.hm-v1009-brand{
+  margin-bottom:.12rem!important;
+}
+.hm-v1009-pill{
+  margin-bottom:.18rem!important;
+  padding:.14rem .46rem!important;
+}
+.hm-v1009-title{
+  font-size:1.24rem!important;
+}
+.hm-content-toolbar-anchor{
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-content-toolbar-anchor + div{
+  margin-top:.05rem!important;
+}
+div[data-testid="stTextInput"] input{
+  min-height:2.02rem!important;
+  height:2.02rem!important;
+  border-radius:12px!important;
+}
+.hm-v1012-card-anchor + div[data-testid="stVerticalBlockBorderWrapper"],
+.hm-v1012-card-anchor + div [data-testid="stVerticalBlockBorderWrapper"]{
+  border:1.35px solid #D9C28F!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
+  border-radius:20px!important;
+  padding:.92rem 1.04rem!important;
+  margin:.28rem 0 .68rem 0!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.06)!important;
+}
+.hm-v1012-section-title{
+  color:#003C36!important;
+  font-size:1.04rem!important;
+  font-weight:980!important;
+  margin:0 0 .46rem 0!important;
+}
+.hm-v1012-row{
+  display:flex!important;
+  gap:.80rem!important;
+  align-items:flex-start!important;
+  padding:.66rem 0!important;
+  border-bottom:1px solid #F0E4CC!important;
+  color:#064E3B!important;
+  font-size:1.04rem!important;
+  line-height:1.42!important;
+}
+.hm-v1012-row:last-child{
+  border-bottom:0!important;
+}
+.hm-v1012-check{
+  width:1.42rem!important;
+  height:1.42rem!important;
+  min-width:1.42rem!important;
+  border-radius:999px!important;
+  background:#ECFDF5!important;
+  border:1.5px solid #6D9C6C!important;
+  color:#065F46!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:.78rem!important;
+  font-weight:950!important;
+}
+.hm-v1012-num{
+  width:1.52rem!important;
+  height:1.52rem!important;
+  min-width:1.52rem!important;
+  border-radius:999px!important;
+  background:#FFF7E6!important;
+  border:1.5px solid #D9C28F!important;
+  color:#7A5A16!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:.80rem!important;
+  font-weight:950!important;
+}
+.hm-v1012-empty{
+  color:#64748B!important;
+  font-size:.90rem!important;
+  font-weight:720!important;
+  padding:.35rem 0!important;
+}
+div[data-testid="stExpander"] details{
+  border:1.55px solid #D9C28F!important;
+  border-radius:20px!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.065)!important;
+}
+div[data-testid="stExpander"] summary{
+  min-height:2.96rem!important;
+  padding:.72rem 1.02rem!important;
+}
+div[data-testid="stExpander"] summary p{
+  color:#064E3B!important;
+  font-size:1.00rem!important;
+  font-weight:960!important;
+}
+</style>
+""", unsafe_allow_html=True)
 
