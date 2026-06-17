@@ -8,8 +8,6 @@ from components.ui_common import (
     utility_logout_bar,
     render_back_to_top,
     topbar,
-    card_start,
-    card_end,
     render_page_nav,
 )
 from components.db import (
@@ -18,20 +16,22 @@ from components.db import (
     list_member_schedules,
     update_member_schedule_status,
     schedule_status_label_v101,
+    list_reschedule_requests,
+    decide_reschedule_request,
+    reschedule_policy_text_v1012,
 )
 
 st.set_page_config(page_title="Admin Scheduling", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 
-# v101.1: Standard HealthyMe page stack.
 inject_global_styles()
 apply_luxe_theme()
 require_admin()
 utility_logout_bar()
-topbar("Scheduling", "Create and manage member appointments, follow-ups and review sessions.", "Admin workflow")
+topbar("Scheduling", "Create, manage and approve member appointments, follow-ups and reschedule requests.", "Admin workflow")
 
 st.markdown("""
 <style>
-/* v101.1 Admin Scheduling structured UI */
+/* v101.2 Admin Scheduling + Reschedule Review UI */
 section.main > div.block-container,
 .main .block-container,
 [data-testid="stAppViewBlockContainer"],
@@ -40,7 +40,6 @@ section.main > div.block-container,
   max-width:1180px!important;
   padding-top:.72rem!important;
 }
-
 .hm-v1011-context-shell{
   border:1px solid #E3C98E;
   background:#FFFDF8;
@@ -76,7 +75,8 @@ section.main > div.block-container,
   font-weight:700;
   margin:0 0 .90rem 0;
 }
-.hm-v1011-schedule-card{
+.hm-v1011-schedule-card,
+.hm-v1012-request-card{
   border:1px solid #E3C98E;
   background:#FFFDF8;
   border-radius:16px;
@@ -106,6 +106,16 @@ section.main > div.block-container,
   font-size:.70rem;
   font-weight:850;
   margin-left:.25rem;
+}
+.hm-v1012-request-warning{
+  border:1px solid #E3C98E;
+  background:#FFF7E6;
+  border-radius:14px;
+  padding:.66rem .78rem;
+  color:#7A5A16;
+  font-size:.82rem;
+  font-weight:780;
+  margin:.45rem 0;
 }
 div[data-testid="stButton"] > button{
   min-height:2.72rem!important;
@@ -201,7 +211,7 @@ with left:
 with right:
     st.markdown("<div class='hm-v1011-section-card'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-v1011-section-title'>Schedule status</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-v1011-section-sub'>Track upcoming, acknowledged, completed and cancelled schedules.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v1011-section-sub'>Track upcoming, acknowledged, completed, cancelled and rescheduled sessions.</div>", unsafe_allow_html=True)
 
     rows = list_member_schedules(member_id=member_id, include_cancelled=True, limit=20)
     if not rows:
@@ -212,11 +222,12 @@ with right:
             time_text = row.get("start_time", "")
             if row.get("end_time"):
                 time_text += f" - {row.get('end_time')}"
+            counted_note = " · Prior session counted" if row.get("session_counted") else ""
             st.markdown(
                 f"""
                 <div class='hm-v1011-schedule-card'>
                   <div class='hm-v1011-schedule-title'>{row.get('title','Scheduled session')}<span class='hm-v1011-pill'>{schedule_status_label_v101(status)}</span></div>
-                  <div class='hm-v1011-schedule-line'>{row.get('schedule_date','')} · {time_text}</div>
+                  <div class='hm-v1011-schedule-line'>{row.get('schedule_date','')} · {time_text}{counted_note}</div>
                   <div class='hm-v1011-schedule-line'>Mode: {row.get('mode','-')} · Link/location: {row.get('location_or_link') or '-'}</div>
                   <div class='hm-v1011-schedule-line'>Notes: {row.get('notes') or '-'}</div>
                 </div>
@@ -237,7 +248,69 @@ with right:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+st.markdown("<div class='hm-v1011-section-card'>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v1011-section-title'>Reschedule requests</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v1011-section-sub'>Approve or reject member-requested schedule changes. The 24-hour rule is shown for each request.</div>", unsafe_allow_html=True)
+
+requests_v1012 = list_reschedule_requests(member_id=member_id, status=None, limit=30)
+if not requests_v1012:
+    st.info("No reschedule requests for this member.")
+else:
+    for req_v1012 in requests_v1012:
+        status_v1012 = req_v1012.get("status", "pending")
+        st.markdown(
+            f"""
+            <div class='hm-v1012-request-card'>
+              <div class='hm-v1011-schedule-title'>{req_v1012.get('current_title','Scheduled session')}<span class='hm-v1011-pill'>{status_v1012.title()}</span></div>
+              <div class='hm-v1011-schedule-line'>Current: {req_v1012.get('current_date','')} · {req_v1012.get('current_start_time','')}</div>
+              <div class='hm-v1011-schedule-line'>Requested: {req_v1012.get('requested_date','')} · {req_v1012.get('requested_start_time','')} - {req_v1012.get('requested_end_time','')}</div>
+              <div class='hm-v1011-schedule-line'>Reason: {req_v1012.get('reason') or '-'}</div>
+            </div>
+            <div class='hm-v1012-request-warning'>{reschedule_policy_text_v1012(bool(req_v1012.get('within_24_hours')))}</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        admin_note_v1012 = st.text_input(
+            "Admin note",
+            key=f"reschedule_admin_note_{req_v1012.get('id')}",
+            placeholder="Optional note to member",
+            disabled=status_v1012 != "pending",
+        )
+        approve_col_v1012, reject_col_v1012 = st.columns(2, gap="medium")
+        with approve_col_v1012:
+            if st.button(
+                "Approve Reschedule",
+                key=f"approve_reschedule_{req_v1012.get('id')}",
+                use_container_width=True,
+                disabled=status_v1012 != "pending",
+            ):
+                decide_reschedule_request(
+                    req_v1012.get("id"),
+                    "approved",
+                    admin_note=admin_note_v1012,
+                    actor_id=st.session_state.get("user_id", "admin"),
+                )
+                st.success("Reschedule approved and member notified.")
+                st.rerun()
+        with reject_col_v1012:
+            if st.button(
+                "Reject Request",
+                key=f"reject_reschedule_{req_v1012.get('id')}",
+                use_container_width=True,
+                disabled=status_v1012 != "pending",
+            ):
+                decide_reschedule_request(
+                    req_v1012.get("id"),
+                    "rejected",
+                    admin_note=admin_note_v1012,
+                    actor_id=st.session_state.get("user_id", "admin"),
+                )
+                st.warning("Reschedule request rejected and member notified.")
+                st.rerun()
+
+st.markdown("</div>", unsafe_allow_html=True)
+
 render_page_nav("Scheduling", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
 render_back_to_top()
 
-# v101.1: Scheduling page structured using HealthyMe global layout.
+# v101.2: Scheduling page includes admin reschedule review.

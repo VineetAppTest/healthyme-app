@@ -2397,3 +2397,260 @@ def schedule_status_label_v101(status):
     }
     return mapping.get(status, str(status or "Scheduled").replace("_", " ").title())
 
+
+# --------------------------------------------------------------------
+# v101.2: Member reschedule request helpers
+# --------------------------------------------------------------------
+
+def _hm_v1012_parse_schedule_dt(schedule):
+    import datetime as _dt
+    date_text = str(schedule.get("schedule_date", "") or "").strip()
+    time_text = str(schedule.get("start_time", "") or "").strip()
+    if not date_text or not time_text:
+        return None
+    for fmt in ("%Y-%m-%d %I:%M %p", "%Y/%m/%d %I:%M %p", "%Y-%m-%d %H:%M", "%Y/%m/%d %H:%M"):
+        try:
+            return _dt.datetime.strptime(f"{date_text} {time_text}", fmt)
+        except Exception:
+            pass
+    return None
+
+def _hm_v1012_is_within_24_hours(schedule):
+    import datetime as _dt
+    scheduled_dt = _hm_v1012_parse_schedule_dt(schedule)
+    if not scheduled_dt:
+        return False
+    now = _dt.datetime.now()
+    delta = scheduled_dt - now
+    return _dt.timedelta(0) <= delta <= _dt.timedelta(hours=24)
+
+def request_member_schedule_reschedule(
+    schedule_id,
+    member_id,
+    requested_date,
+    requested_start_time,
+    requested_end_time="",
+    reason="",
+):
+    """Member requests a reschedule. Admin approval is required.
+
+    24-hour rule:
+    - >24 hours before meeting: prior session not consumed.
+    - within 24 hours: prior session may be counted/consumed and rescheduled session counts separately.
+    """
+    import uuid as _uuid
+    db = _ensure_schedule_store(load_db())
+    db.setdefault("reschedule_requests", [])
+    now = _now_iso()
+    schedule = None
+    for row in db.get("schedules", []):
+        if row.get("id") == schedule_id and row.get("member_id") == member_id:
+            schedule = row
+            break
+    if not schedule:
+        return None
+
+    # Do not create another pending request for the same schedule.
+    for existing in db.get("reschedule_requests", []):
+        if existing.get("schedule_id") == schedule_id and existing.get("status") == "pending":
+            return dict(existing)
+
+    within_24 = _hm_v1012_is_within_24_hours(schedule)
+    request_id = str(_uuid.uuid4())[:8]
+    request_row = {
+        "id": request_id,
+        "schedule_id": schedule_id,
+        "member_id": member_id,
+        "member_name": schedule.get("member_name", ""),
+        "member_email": schedule.get("member_email", ""),
+        "current_title": schedule.get("title", ""),
+        "current_date": schedule.get("schedule_date", ""),
+        "current_start_time": schedule.get("start_time", ""),
+        "current_end_time": schedule.get("end_time", ""),
+        "requested_date": str(requested_date or "").strip(),
+        "requested_start_time": str(requested_start_time or "").strip(),
+        "requested_end_time": str(requested_end_time or "").strip(),
+        "reason": str(reason or "").strip(),
+        "within_24_hours": bool(within_24),
+        "prior_session_counted_if_approved": bool(within_24),
+        "status": "pending",
+        "created_at": now,
+        "updated_at": now,
+    }
+    db["reschedule_requests"].append(request_row)
+
+    schedule["reschedule_request_status"] = "pending"
+    schedule["latest_reschedule_request_id"] = request_id
+    schedule["updated_at"] = now
+    schedule["updated_by"] = member_id
+
+    admin_message = (
+        f"Reschedule requested for {schedule.get('title','Scheduled session')} "
+        f"from {schedule.get('schedule_date','')} {schedule.get('start_time','')} "
+        f"to {request_row['requested_date']} {request_row['requested_start_time']}."
+    )
+    if within_24:
+        admin_message += " This request is within 24 hours; prior session may be counted as consumed."
+
+    db.setdefault("notifications", []).append({
+        "ts": now,
+        "kind": "reschedule_requested",
+        "user_id": "admin",
+        "member_id": member_id,
+        "message": admin_message,
+        "status": "queued",
+        "email_required": False,
+        "schedule_id": schedule_id,
+        "reschedule_request_id": request_id,
+    })
+    save_db(db)
+    return request_row
+
+def list_reschedule_requests(member_id=None, status=None, limit=100):
+    db = _ensure_schedule_store(load_db())
+    db.setdefault("reschedule_requests", [])
+    rows = []
+    for row in db.get("reschedule_requests", []):
+        if member_id and row.get("member_id") != member_id:
+            continue
+        if status and row.get("status") != status:
+            continue
+        rows.append(dict(row))
+    rows.sort(key=lambda r: str(r.get("created_at", "")), reverse=True)
+    return rows[:limit] if limit else rows
+
+def get_reschedule_request(request_id):
+    db = _ensure_schedule_store(load_db())
+    for row in db.get("reschedule_requests", []):
+        if row.get("id") == request_id:
+            return dict(row)
+    return None
+
+def decide_reschedule_request(request_id, decision, admin_note="", actor_id="admin"):
+    """Approve or reject a member reschedule request.
+
+    Approval:
+    - marks request approved
+    - marks original schedule rescheduled
+    - creates a new schedule row with requested date/time
+    - if within 24 hours, original schedule is marked counted/consumed
+    - queues member notification
+    """
+    import uuid as _uuid
+    db = _ensure_schedule_store(load_db())
+    db.setdefault("reschedule_requests", [])
+    now = _now_iso()
+    decision = "approved" if decision == "approved" else "rejected"
+    req = None
+    for row in db.get("reschedule_requests", []):
+        if row.get("id") == request_id:
+            req = row
+            break
+    if not req:
+        return None
+
+    schedule = None
+    for row in db.get("schedules", []):
+        if row.get("id") == req.get("schedule_id"):
+            schedule = row
+            break
+
+    req["status"] = decision
+    req["admin_note"] = str(admin_note or "").strip()
+    req["updated_at"] = now
+    req["decided_at"] = now
+    req["decided_by"] = actor_id or "admin"
+
+    new_schedule = None
+    if decision == "approved" and schedule:
+        schedule["status"] = "rescheduled"
+        schedule["reschedule_request_status"] = "approved"
+        schedule["rescheduled_at"] = now
+        schedule["updated_at"] = now
+        schedule["updated_by"] = actor_id or "admin"
+        schedule["session_counted"] = bool(req.get("within_24_hours"))
+
+        title = schedule.get("title", "Scheduled session")
+        new_id = str(_uuid.uuid4())[:8]
+        new_schedule = dict(schedule)
+        new_schedule.update({
+            "id": new_id,
+            "schedule_date": req.get("requested_date", ""),
+            "start_time": req.get("requested_start_time", ""),
+            "end_time": req.get("requested_end_time", ""),
+            "status": "scheduled",
+            "created_at": now,
+            "created_by": actor_id or "admin",
+            "updated_at": now,
+            "updated_by": actor_id or "admin",
+            "acknowledged_at": "",
+            "completed_at": "",
+            "cancelled_at": "",
+            "rescheduled_from_schedule_id": schedule.get("id"),
+            "reschedule_request_id": request_id,
+            "reschedule_request_status": "",
+            "latest_reschedule_request_id": "",
+            "session_counted": False,
+        })
+        db["schedules"].append(new_schedule)
+        req["new_schedule_id"] = new_id
+
+        member_message = (
+            f"Your reschedule request for {title} has been approved. "
+            f"New schedule: {new_schedule.get('schedule_date','')} at {new_schedule.get('start_time','')}."
+        )
+        if req.get("within_24_hours"):
+            member_message += " Note: This request was within 24 hours; the previous session may be counted as consumed."
+    else:
+        if schedule:
+            schedule["reschedule_request_status"] = "rejected"
+            schedule["updated_at"] = now
+            schedule["updated_by"] = actor_id or "admin"
+        member_message = (
+            f"Your reschedule request for {req.get('current_title','scheduled session')} was not approved."
+        )
+        if admin_note:
+            member_message += f" Note: {admin_note}"
+
+    db.setdefault("messages", []).append({
+        "id": str(_uuid.uuid4())[:8],
+        "ts": now,
+        "member_id": req.get("member_id"),
+        "sender_role": "admin",
+        "actor_id": actor_id or "admin",
+        "subject": "Reschedule request update",
+        "message": member_message,
+        "status": "queued",
+        "email_required": True,
+        "source": "reschedule",
+        "schedule_id": req.get("schedule_id"),
+        "reschedule_request_id": request_id,
+    })
+    db.setdefault("notifications", []).append({
+        "ts": now,
+        "kind": f"reschedule_{decision}",
+        "user_id": req.get("member_id"),
+        "member_id": req.get("member_id"),
+        "message": member_message,
+        "status": "queued",
+        "email_required": True,
+        "email_to": req.get("member_email", ""),
+        "created_by": actor_id or "admin",
+        "schedule_id": req.get("schedule_id"),
+        "reschedule_request_id": request_id,
+    })
+
+    save_db(db)
+    return {"request": dict(req), "new_schedule": dict(new_schedule) if new_schedule else None}
+
+def reschedule_policy_text_v1012(within_24):
+    if within_24:
+        return (
+            "This request is within 24 hours of the scheduled session. "
+            "If approved, the current session may still be counted as consumed and the rescheduled session may count separately."
+        )
+    return (
+        "This request is outside the 24-hour window. "
+        "If approved, the prior session will not be counted as consumed."
+    )
+

@@ -433,3 +433,16 @@
 - Rebuilt Member Schedule page with the same HealthyMe structured styling.
 - No scheduling logic/database changes.
 - No Daily Log, Recipe, Exercise, report, filter, save, or database schema changes.
+
+## v101.2 - Member Reschedule Request Build
+
+- Added member Request Reschedule flow on My Schedule page.
+- Member can propose new date, start time, end time and reason.
+- Added 24-hour rule warning and confirmation requirement for within-24-hour reschedule requests.
+- Added admin Reschedule Requests panel on Admin Scheduling page.
+- Admin can approve or reject member reschedule requests.
+- Approval marks original schedule rescheduled and creates a new schedule.
+- Within-24-hour approval flags original session as counted/consumed.
+- Approval/rejection queues member message and email notification record.
+- Added v101.2 Reschedule Request UAT checklist.
+- No Daily Log, Recipe, Exercise, scoring, report, filter, save, or database schema rewrite.

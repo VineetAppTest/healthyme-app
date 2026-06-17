@@ -7568,8 +7568,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v101.1"
-APP_BUILD_LABEL = "Scheduling UI Structure Fix"
+APP_BUILD_VERSION = "v101.2"
+APP_BUILD_LABEL = "Member Reschedule Request Build"
 
 
 def admin_version_line_v98_1():
