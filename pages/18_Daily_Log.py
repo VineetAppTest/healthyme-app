@@ -1761,6 +1761,31 @@ div[data-testid="stButton"] > button{
 """, unsafe_allow_html=True)
 
 
+
+st.markdown("""
+<style>
+/* v100.10 Other Fluids button/dropdown alignment */
+div[data-testid="stButton"] > button,
+div[data-testid="stButton"] > button[kind="secondary"]{
+  min-height:2.64rem!important;
+  height:2.64rem!important;
+  padding:.58rem .82rem!important;
+  border-radius:13px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1.20!important;
+}
+div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
+  min-height:2.64rem!important;
+  height:2.64rem!important;
+  display:flex!important;
+  align-items:center!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 
@@ -2392,20 +2417,21 @@ with st.container(border=True):
             )
     with top_right:
         existing_other_fluids = normalise_other_fluids_v97(existing.get("other_fluids", []) or [])
-        other_fluid_count_key = f"other_fluid_count_v1009_{log_date}"
+        other_fluid_count_key = f"other_fluid_count_v10010_{log_date}"
+        # v100.10: default to 0 open entries. Button-created rows start blank.
         if other_fluid_count_key not in st.session_state:
             st.session_state[other_fluid_count_key] = 0
 
         st.markdown("<div class='hm-field-label'>Other Fluids consumed outside standard meal window</div>", unsafe_allow_html=True)
-        if st.button("+ Other Fluids", use_container_width=True, key=f"add_other_fluids_v1009_{log_date}"):
+        if st.button("+ Other Fluids", use_container_width=True, key=f"add_other_fluids_v10010_{log_date}"):
             st.session_state[other_fluid_count_key] = min(int(st.session_state.get(other_fluid_count_key, 0) or 0) + 1, 5)
             st.rerun()
-        current_other_count_v1009 = int(st.session_state.get(other_fluid_count_key, 0) or 0)
-        if current_other_count_v1009:
-            st.caption(f"{current_other_count_v1009} other fluid entry/entries active")
+        current_other_count_v10010 = int(st.session_state.get(other_fluid_count_key, 0) or 0)
+        if current_other_count_v10010:
+            st.caption(f"{current_other_count_v10010} other fluid entry/entries active")
         else:
             st.caption("Tap + Other Fluids to add an entry")
-        other_fluid_count = current_other_count_v1009
+        other_fluid_count = current_other_count_v10010
 
 
 
@@ -2467,8 +2493,10 @@ with st.container(border=True):
     fluid_type_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
 
     for i in range(other_fluid_count):
-        prior_fluid = existing_other_fluids[i] if i < len(existing_other_fluids) else {}
-        pre_h, pre_m, pre_p = split_12h_time_parts(prior_fluid.get("time", ""))
+        # v100.10: Button-created Other Fluid rows intentionally open blank.
+        # Prior saved entries remain visible in Recent Saved Days/Admin report, not prefilled into new input rows.
+        prior_fluid = {}
+        pre_h, pre_m, pre_p = "HH", "MM", "AM/PM"
 
         st.markdown("<div class='hm-v977-fluid-entry'>", unsafe_allow_html=True)
         st.markdown(f"<div class='hm-v977-fluid-title'>Other Fluid {i+1}</div>", unsafe_allow_html=True)
@@ -2477,12 +2505,11 @@ with st.container(border=True):
 
         with fluid_type_col:
             st.markdown("<div class='hm-v977-field-label'>Fluid type</div>", unsafe_allow_html=True)
-            existing_type = prior_fluid.get("type", "Select") or "Select"
             fluid_type = st.selectbox(
                 "Fluid type",
                 fluid_type_options,
-                index=fluid_type_options.index(existing_type) if existing_type in fluid_type_options else 0,
-                key=f"other_fluid_type_v1009_{log_date}_{i}",
+                index=0,
+                key=f"other_fluid_type_v10010_{log_date}_{i}",
                 label_visibility="collapsed",
             )
 
@@ -2494,8 +2521,8 @@ with st.container(border=True):
                 hour_value = st.selectbox(
                     "HH",
                     hour_options,
-                    index=hour_options.index(pre_h) if pre_h in hour_options else 0,
-                    key=f"other_fluid_h_v1009_{log_date}_{i}",
+                    index=0,
+                    key=f"other_fluid_h_v10010_{log_date}_{i}",
                     label_visibility="collapsed",
                 )
             with m_col:
@@ -2503,8 +2530,8 @@ with st.container(border=True):
                 minute_value = st.selectbox(
                     "MM",
                     minute_options,
-                    index=minute_options.index(pre_m) if pre_m in minute_options else 0,
-                    key=f"other_fluid_m_v1009_{log_date}_{i}",
+                    index=0,
+                    key=f"other_fluid_m_v10010_{log_date}_{i}",
                     label_visibility="collapsed",
                 )
             with p_col:
@@ -2512,8 +2539,8 @@ with st.container(border=True):
                 period_value = st.selectbox(
                     "AM/PM",
                     ampm_options,
-                    index=ampm_options.index(pre_p) if pre_p in ampm_options else 0,
-                    key=f"other_fluid_p_v1009_{log_date}_{i}",
+                    index=0,
+                    key=f"other_fluid_p_v10010_{log_date}_{i}",
                     label_visibility="collapsed",
                 )
 
@@ -2523,18 +2550,18 @@ with st.container(border=True):
             st.markdown("<div class='hm-v977-field-label'>Quantity</div>", unsafe_allow_html=True)
             fluid_qty = st.text_input(
                 "Quantity",
-                value=prior_fluid.get("quantity", ""),
+                value="",
                 placeholder="Example: 200 ml",
-                key=f"other_fluid_qty_v1009_{log_date}_{i}",
+                key=f"other_fluid_qty_v10010_{log_date}_{i}",
                 label_visibility="collapsed",
             )
         with notes_col:
             st.markdown("<div class='hm-v977-field-label'>Notes</div>", unsafe_allow_html=True)
             fluid_notes = st.text_input(
                 "Notes",
-                value=prior_fluid.get("notes", ""),
+                value="",
                 placeholder="Example: unsweetened / with sugar / packaged",
-                key=f"other_fluid_notes_v1009_{log_date}_{i}",
+                key=f"other_fluid_notes_v10010_{log_date}_{i}",
                 label_visibility="collapsed",
             )
 

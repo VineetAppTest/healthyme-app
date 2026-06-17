@@ -163,9 +163,9 @@ def recipe_form(prefix, row=None):
 render_page_nav("Recipes", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 topbar("Manage & Allocate Recipes", "Manage image, title, timing, calories, macros, recipe details and member allocation.", "Admin content manager")
 
-tabs = st.tabs(["Current Repository", "Add Recipe", "Import CSV", "Edit / Delete", "Allocate to Member", "Member Feedback"])
+tabs = st.tabs(["Current Repository", "Add Recipe", "Import CSV", "Edit / Delete", "Member Feedback", "Allocate to Member"])
 
-with tabs[4]:
+with tabs[5]:
     st.subheader("Allocate Recipes to Member")
     members = list_members()
     df = load()
@@ -213,13 +213,6 @@ with tabs[4]:
             save_resource_assignments(member_id, "recipes", selected)
             st.session_state[state_key] = set(selected)
             st.success("Recipe allocation saved. Member notification/email has been queued.")
-
-        feedback_rows_v100 = list_resource_feedback(member_id=member_id, resource_type="recipes")
-        st.markdown("#### Member recipe feedback")
-        if feedback_rows_v100:
-            st.dataframe(pd.DataFrame(feedback_rows_v100)[["title", "status", "rating", "notes", "updated_at"]], use_container_width=True, hide_index=True)
-        else:
-            st.caption("No recipe feedback submitted by this member yet.")
 
 with tabs[0]:
     st.subheader("Current Recipe Repository")
@@ -287,7 +280,7 @@ with tabs[3]:
                 st.rerun()
 
 
-with tabs[5]:
+with tabs[4]:
     st.subheader("Member Recipe Feedback")
     members = list_members()
     if not members:

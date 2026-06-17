@@ -346,3 +346,15 @@
 - Recipe and Exercise premium bullets/numbering and feedback expander styling strengthened.
 - Member Home divider spacing equalized again.
 - No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.
+
+## v100.10 - UI State + Admin Tabs Hotfix
+
+- Other Fluids moved to v10010 keys, defaults to 0, and opens blank rows only.
+- Removed Session State/default conflict for Other Fluids time widgets.
+- Other Fluids button/dropdown height alignment strengthened.
+- Recipe Manager tabs reordered with Allocate to Member last.
+- Exercise Manager tabs reordered with Allocate to Member last.
+- Removed member feedback blocks from Allocate to Member tabs.
+- Member Home divider to Submit/Status spacing increased.
+- Recipe/Exercise premium detail and feedback styling strengthened further.
+- No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.

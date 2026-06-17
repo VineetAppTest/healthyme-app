@@ -138,9 +138,9 @@ def exercise_form(prefix, row=None):
 render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 topbar("Manage & Allocate Exercises", "Manage image, title, timing, exercise details and member allocation.", "Admin content manager")
 
-tabs = st.tabs(["Allocate to Member", "Current Repository", "Add Exercise", "Import CSV", "Edit / Delete", "Member Feedback"])
+tabs = st.tabs(["Current Repository", "Add Exercise", "Import CSV", "Edit / Delete", "Member Feedback", "Allocate to Member"])
 
-with tabs[0]:
+with tabs[5]:
     st.subheader("Allocate Exercises to Member")
     members = list_members()
     df = load()
@@ -189,18 +189,11 @@ with tabs[0]:
             st.session_state[state_key] = set(selected)
             st.success("Exercise allocation saved. Member notification/email has been queued.")
 
-        feedback_rows_v100 = list_resource_feedback(member_id=member_id, resource_type="exercises")
-        st.markdown("#### Member exercise feedback")
-        if feedback_rows_v100:
-            st.dataframe(pd.DataFrame(feedback_rows_v100)[["title", "status", "rating", "notes", "updated_at"]], use_container_width=True, hide_index=True)
-        else:
-            st.caption("No exercise feedback submitted by this member yet.")
-
-with tabs[1]:
+with tabs[0]:
     st.subheader("Current Exercise Repository")
     st.dataframe(load(), use_container_width=True, hide_index=False)
 
-with tabs[2]:
+with tabs[1]:
     st.subheader("Add New Exercise")
     values = exercise_form("new_exercise_v93")
     if st.button("Save Exercise", type="primary", use_container_width=True):
@@ -213,7 +206,7 @@ with tabs[2]:
             st.success("Exercise saved.")
             st.rerun()
 
-with tabs[3]:
+with tabs[2]:
     st.subheader("Import Exercise CSV")
     st.caption("CSV can include exercise details and image reference fields. For local images, fill image_file_name_to_upload in the CSV and upload matching image files below.")
     csv_file = st.file_uploader("Choose exercise CSV file", type=["csv"], key="exercise_csv_upload_v96_12")
@@ -234,7 +227,7 @@ with tabs[3]:
             st.success(f"CSV imported. {upload_count} image(s) uploaded and linked.")
             st.rerun()
 
-with tabs[4]:
+with tabs[3]:
     st.subheader("Edit or Delete Exercise")
     df = load()
     if df.empty:
@@ -262,7 +255,7 @@ with tabs[4]:
                 st.rerun()
 
 
-with tabs[5]:
+with tabs[4]:
     st.subheader("Member Exercise Feedback")
     members = list_members()
     if not members:

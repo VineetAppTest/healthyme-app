@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v100_9_Stabilized_UI_State_Hotfix",
-  "version": "v100.9",
-  "updated_on": "2026-06-16T20:43:35.834891+00:00",
+  "build_name": "HealthyMe_v100_10_UI_State_AdminTabs_Hotfix",
+  "version": "v100.10",
+  "updated_on": "2026-06-16T21:25:12.494397+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,14 +18,14 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Fixed Other Fluids session-state warning by moving to v1009 widget keys and removing session_state defaults for time widgets.",
-    "Other Fluids still defaults to 0 open entries.",
-    "Other Fluids button now uses full available width and taller dropdown-aligned height.",
-    "Recipe and Exercise early helper/style injections removed before hero; only require_member and utility row render before compact hero.",
-    "Recipe and Exercise topbar replaced with compact controlled hero to reduce spacing structurally.",
-    "Recipe and Exercise detail sections remain button-driven, so tab dividers are structurally removed.",
-    "Recipe and Exercise premium bullets/numbering and feedback expander styling strengthened.",
-    "Member Home divider spacing equalized again.",
+    "Other Fluids moved to v10010 keys, defaults to 0, and opens blank rows only.",
+    "Removed Session State/default conflict for Other Fluids time widgets.",
+    "Other Fluids button/dropdown height alignment strengthened.",
+    "Recipe Manager tabs reordered with Allocate to Member last.",
+    "Exercise Manager tabs reordered with Allocate to Member last.",
+    "Removed member feedback blocks from Allocate to Member tabs.",
+    "Member Home divider to Submit/Status spacing increased.",
+    "Recipe/Exercise premium detail and feedback styling strengthened further.",
     "No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite."
   ],
   "required_setup": [
@@ -323,7 +323,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v100_8_DailyLog_CompactToken_RecipeExercise_StructuralPolish.zip",
+  "base_build": "HealthyMe_v100_9_Stabilized_UI_State_Hotfix.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",

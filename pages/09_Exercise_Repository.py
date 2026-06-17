@@ -999,3 +999,36 @@ div[data-testid="stExpander"] summary p{
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+/* v100.10 premium content detail final layer */
+.hm-v1008-section-shell{
+  border:1.35px solid #D9C28F!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
+  border-radius:20px!important;
+  padding:1.00rem 1.10rem!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.06)!important;
+}
+.hm-v1008-section-title{
+  font-size:1.02rem!important;
+  font-weight:980!important;
+  color:#003C36!important;
+}
+.hm-v1008-row{
+  font-size:1.03rem!important;
+  padding:.66rem 0!important;
+}
+.hm-v1008-check,
+.hm-v1008-num{
+  transform:scale(1.05);
+}
+div[data-testid="stExpander"] details{
+  border:1.45px solid #D9C28F!important;
+  border-radius:20px!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.06)!important;
+}
+</style>
+""", unsafe_allow_html=True)
+

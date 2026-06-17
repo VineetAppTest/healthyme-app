@@ -268,6 +268,25 @@ div[data-testid="stButton"] > button p{
 """, unsafe_allow_html=True)
 
 
+
+st.markdown("""
+<style>
+/* v100.10 Member Home submit divider spacing */
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.32rem!important;
+  margin-bottom:.72rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.22rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.46rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 render_system_message()
