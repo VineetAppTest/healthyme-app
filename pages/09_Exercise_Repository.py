@@ -598,38 +598,48 @@ def render_detail(row, idx):
             st.session_state[section_key_v1008] = "benefits"
 
     active_exercise_section_v1008 = st.session_state.get(section_key_v1008, "overview")
-    st.markdown("<div class='hm-v1008-section-shell'>", unsafe_allow_html=True)
     if active_exercise_section_v1008 == "overview":
-        st.markdown("<div class='hm-v1008-section-title'>Overview</div>", unsafe_allow_html=True)
+        section_title_v1011 = "Overview"
         overview_items = split_lines(row.get("description", ""))
-        if not overview_items:
-            st.info("No overview added yet.")
-        for item in overview_items:
-            st.markdown(
-                f"<div class='hm-v1008-row'><span class='hm-v1008-check'>•</span><div>{esc(item)}</div></div>",
-                unsafe_allow_html=True,
-            )
+        if overview_items:
+            rows_v1011 = [
+                f"<div class='hm-v1011-row'><span class='hm-v1011-check'>•</span><div>{esc(item)}</div></div>"
+                for item in overview_items
+            ]
+            body_v1011 = "".join(rows_v1011)
+        else:
+            body_v1011 = "<div class='hm-v1011-empty'>No overview added yet.</div>"
     elif active_exercise_section_v1008 == "instructions":
-        st.markdown("<div class='hm-v1008-section-title'>Instructions</div>", unsafe_allow_html=True)
+        section_title_v1011 = "Instructions"
         instructions = split_lines(row.get("instructions", ""))
-        if not instructions:
-            st.info("No instructions added yet.")
-        for n, item in enumerate(instructions, start=1):
-            st.markdown(
-                f"<div class='hm-v1008-row'><span class='hm-v1008-num'>{n}</span><div>{esc(item)}</div></div>",
-                unsafe_allow_html=True,
-            )
+        if instructions:
+            rows_v1011 = [
+                f"<div class='hm-v1011-row'><span class='hm-v1011-num'>{n}</span><div>{esc(item)}</div></div>"
+                for n, item in enumerate(instructions, start=1)
+            ]
+            body_v1011 = "".join(rows_v1011)
+        else:
+            body_v1011 = "<div class='hm-v1011-empty'>No instructions added yet.</div>"
     else:
-        st.markdown("<div class='hm-v1008-section-title'>Benefits</div>", unsafe_allow_html=True)
+        section_title_v1011 = "Benefits"
         benefits = split_lines(row.get("benefits", ""))
-        if not benefits:
-            st.info("No benefits added yet.")
-        for item in benefits:
-            st.markdown(
-                f"<div class='hm-v1008-row'><span class='hm-v1008-check'>✓</span><div>{esc(item)}</div></div>",
-                unsafe_allow_html=True,
-            )
-    st.markdown("</div>", unsafe_allow_html=True)
+        if benefits:
+            rows_v1011 = [
+                f"<div class='hm-v1011-row'><span class='hm-v1011-check'>✓</span><div>{esc(item)}</div></div>"
+                for item in benefits
+            ]
+            body_v1011 = "".join(rows_v1011)
+        else:
+            body_v1011 = "<div class='hm-v1011-empty'>No benefits added yet.</div>"
+    st.markdown(
+        f"""
+        <div class='hm-v1011-section-shell'>
+          <div class='hm-v1011-section-title'>{section_title_v1011}</div>
+          {body_v1011}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "exercises", str(idx))
     exercise_reset_token_v1006 = st.session_state.get(f"exercise_feedback_reset_{idx}", 0)
@@ -1031,4 +1041,115 @@ div[data-testid="stExpander"] details{
 }
 </style>
 """, unsafe_allow_html=True)
+
+
+st.markdown("""
+<style>
+/* v100.11 Exercise final hero/search/detail/feedback polish */
+.hm-v1009-content-hero{
+  padding:.54rem .92rem .58rem .92rem!important;
+  margin:.02rem 0 .20rem 0!important;
+}
+.hm-v1009-brand{
+  margin-bottom:.16rem!important;
+}
+.hm-v1009-pill{
+  margin-bottom:.24rem!important;
+  padding:.16rem .50rem!important;
+}
+.hm-v1009-title{
+  font-size:1.30rem!important;
+}
+.hm-content-toolbar-anchor{
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+div[data-testid="stTextInput"] input{
+  min-height:2.18rem!important;
+  height:2.18rem!important;
+  border-radius:12px!important;
+}
+.hm-v1011-section-shell{
+  border:1.35px solid #D9C28F;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%);
+  border-radius:20px;
+  padding:1.00rem 1.12rem;
+  margin:.34rem 0 .72rem 0;
+  box-shadow:0 12px 28px rgba(15,23,42,.06);
+}
+.hm-v1011-section-title{
+  color:#003C36;
+  font-size:1.04rem;
+  font-weight:980;
+  margin:0 0 .46rem 0;
+}
+.hm-v1011-row{
+  display:flex;
+  gap:.80rem;
+  align-items:flex-start;
+  padding:.68rem 0;
+  border-bottom:1px solid #F0E4CC;
+  color:#064E3B;
+  font-size:1.04rem;
+  line-height:1.42;
+}
+.hm-v1011-row:last-child{
+  border-bottom:0;
+}
+.hm-v1011-check{
+  width:1.42rem;
+  height:1.42rem;
+  min-width:1.42rem;
+  border-radius:999px;
+  background:#ECFDF5;
+  border:1.5px solid #6D9C6C;
+  color:#065F46;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.78rem;
+  font-weight:950;
+  margin-top:.02rem;
+}
+.hm-v1011-num{
+  width:1.52rem;
+  height:1.52rem;
+  min-width:1.52rem;
+  border-radius:999px;
+  background:#FFF7E6;
+  border:1.5px solid #D9C28F;
+  color:#7A5A16;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.80rem;
+  font-weight:950;
+  margin-top:.01rem;
+}
+.hm-v1011-empty{
+  color:#64748B;
+  font-size:.90rem;
+  font-weight:720;
+  padding:.35rem 0;
+}
+div[data-testid="stExpander"] details{
+  border:1.45px solid #D9C28F!important;
+  border-radius:20px!important;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E6 100%)!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.06)!important;
+}
+div[data-testid="stExpander"] summary{
+  min-height:2.86rem!important;
+  padding:.68rem .98rem!important;
+}
+div[data-testid="stExpander"] summary p{
+  color:#064E3B!important;
+  font-size:.98rem!important;
+  font-weight:950!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 

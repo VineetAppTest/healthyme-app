@@ -358,3 +358,15 @@
 - Member Home divider to Submit/Status spacing increased.
 - Recipe/Exercise premium detail and feedback styling strengthened further.
 - No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.
+
+## v100.11 - Layout Structure Finalization
+
+- Moved Member Home style injections away from the signed-in/logout row and collapsed top padding.
+- Equalized Member Home divider spacing above and below task area.
+- Reduced Food Journal Date border top/bottom spacing by around 20%.
+- Reduced Recipe/Exercise compact hero and search bar height.
+- Rebuilt Recipe detail sections as single premium HTML cards so bullets/numbering render inside the card.
+- Rebuilt Exercise detail sections as single premium HTML cards so bullets/numbering render inside the card.
+- Strengthened Recipe/Exercise feedback expander styling.
+- Retained Admin Recipe/Exercise tab order and Other Fluids v10010 state-safe flow.
+- No database schema change, no scoring/report rewrite, no Daily Log save logic rewrite.

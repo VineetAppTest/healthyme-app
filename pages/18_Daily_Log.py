@@ -1786,6 +1786,33 @@ div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
 """, unsafe_allow_html=True)
 
 
+
+st.markdown("""
+<style>
+/* v100.11 Food Journal Date compact border */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-v9732-date-stack){
+  padding-top:.72rem!important;
+  padding-bottom:.72rem!important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-v9732-date-stack) > div{
+  padding-top:.72rem!important;
+  padding-bottom:.72rem!important;
+}
+.hm-v9732-date-left-spacer{
+  height:.72rem!important;
+  min-height:.72rem!important;
+}
+.hm-v9732-date-stack{
+  gap:.05rem!important;
+}
+.hm-v9732-date-input div[data-testid="stDateInput"] input{
+  min-height:2.24rem!important;
+  height:2.24rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 topbar("Daily Food Journal", "Save meals progressively through the day, or complete the full day together.", "Member tracker")
 render_system_message()
 

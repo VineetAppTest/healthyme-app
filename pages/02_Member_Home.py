@@ -67,6 +67,19 @@ is_task_instance = current_instance.get("instance_type") in ["Task Request", "Re
 is_reassessment = is_task_instance
 
 
+
+
+
+
+
+
+
+
+
+
+
+utility_logout_bar()
+topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 st.markdown("""
 <style>
 /* v99.0 Member task baseline clarity */
@@ -126,7 +139,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-
 st.markdown("""
 <style>
 /* v100.6 Member Home spacing/button polish */
@@ -148,7 +160,6 @@ div[data-testid="stButton"] > button{
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 
 st.markdown("""
@@ -190,7 +201,6 @@ div[data-testid="stButton"] > button p{
 """, unsafe_allow_html=True)
 
 
-
 st.markdown("""
 <style>
 /* v100.8 Member Home equal divider spacing hard fix */
@@ -227,7 +237,6 @@ div[data-testid="stButton"] > button p{
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 
 st.markdown("""
@@ -268,7 +277,6 @@ div[data-testid="stButton"] > button p{
 """, unsafe_allow_html=True)
 
 
-
 st.markdown("""
 <style>
 /* v100.10 Member Home submit divider spacing */
@@ -287,8 +295,65 @@ div[data-testid="stMarkdownContainer"] hr{
 """, unsafe_allow_html=True)
 
 
-utility_logout_bar()
-topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
+
+st.markdown("""
+<style>
+/* v100.11 Member Home top-row collapse and divider balance */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.04rem!important;
+  margin-top:0!important;
+}
+div[data-testid="stElementContainer"]:has(style),
+div[data-testid="stElementContainer"]:has(script),
+.element-container:has(style),
+.element-container:has(script),
+div[data-testid="stMarkdownContainer"]:has(style),
+div[data-testid="stMarkdownContainer"]:has(script){
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+.utility-bar{
+  margin-top:0!important;
+}
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.46rem!important;
+  margin-bottom:.46rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-bottom:.24rem!important;
+}
+.hm-v990-task-progress{
+  margin-bottom:.40rem!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.92rem!important;
+  height:auto!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  padding:.66rem .84rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+div[data-testid="stButton"] > button p{
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.34!important;
+  margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 render_system_message()
 auto_archive_expired_nutritionist_messages(user_id)
 
