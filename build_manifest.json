@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v100_15_Profile_Button_MemberDivider_Hotfix",
-  "version": "v100.15",
-  "updated_on": "2026-06-17T09:04:07.031288+00:00",
+  "build_name": "HealthyMe_v100_16_Shweta_Backend_Import",
+  "version": "v100.16",
+  "updated_on": "2026-06-17T09:44:27.550033+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,10 +18,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "My Profile Save and Back to Home actions aligned on the same row, with Back to Home on the right.",
-    "Member Home task-area divider spacing equalized above and below.",
-    "Retained global signed-in/logout row spacing and hero spacing from v100.14.",
-    "No Daily Log, Recipe, Exercise, report, filter, save, or database logic changes."
+    "Added idempotent one-time backend import for Shweta Mishra offline LAF PDF + NSP Excel.",
+    "Creates active member authorization record for shwemish@gmail.com.",
+    "Populates LAF, NSP Page 1, NSP Page 2, and admin subforms: Digestive, Intestinal, Immune, Glandular, Musculoskeletal.",
+    "Marks initial assessment as submitted/review_required without finalizing the admin report.",
+    "Includes admin-only Streamlit import page and command-line fallback script."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -174,7 +175,10 @@
     "components/config_loader.py",
     "components/db_daily_log.py",
     "components/db_messages.py",
-    "components/db_workflow.py"
+    "components/db_workflow.py",
+    "scripts/import_shweta_mishra_backend.py",
+    "pages/32_Admin_One_Time_Import_Shweta.py",
+    "README_IMPORT_SHWETA_MISHRA.md"
   ],
   "duplicate_helper_count_after_v61": {
     "topbar": 37,
@@ -318,10 +322,28 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v100_14_GlobalHeader_RowSpacing_Hotfix.zip",
+  "base_build": "HealthyMe_v100_15_Profile_Button_MemberDivider_Hotfix.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",
   "logic_change": "none",
-  "profile_page_patched": "pages/07_My_Profile.py"
+  "profile_page_patched": "pages/07_My_Profile.py",
+  "import_scope": {
+    "member": "Shweta Mishra",
+    "email": "shwemish@gmail.com",
+    "nsp_assessment_date": "2026-04-19",
+    "laf_signed_date": "2026-04-12",
+    "forms": [
+      "LAF",
+      "NSP Page 1",
+      "NSP Page 2",
+      "Digestive",
+      "Intestinal",
+      "Immune",
+      "Glandular",
+      "Musculoskeletal"
+    ],
+    "status_after_import": "submitted_for_review / review_required",
+    "final_report_ready": false
+  }
 }
