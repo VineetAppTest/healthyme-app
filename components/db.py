@@ -2223,3 +2223,177 @@ def resource_feedback_counts(member_id, resource_type):
     return {"total": total, "completed": completed, "rows": rows}
 
 
+# --------------------------------------------------------------------
+# v101.0: Scheduling helpers
+# --------------------------------------------------------------------
+
+def _ensure_schedule_store(db):
+    db.setdefault("schedules", [])
+    db.setdefault("messages", [])
+    db.setdefault("notifications", [])
+    return db
+
+def _schedule_member_lookup_v101(db, member_id):
+    for u in db.get("users", []):
+        if u.get("id") == member_id:
+            return u
+    return {}
+
+def create_member_schedule(
+    member_id,
+    title,
+    schedule_type,
+    schedule_date,
+    start_time,
+    end_time="",
+    mode="",
+    location_or_link="",
+    notes="",
+    actor_id="admin",
+):
+    """Create a member schedule item and queue member app/email notification.
+
+    Stored in db['schedules']; no schema migration required.
+    """
+    db = _ensure_schedule_store(load_db())
+    member = _schedule_member_lookup_v101(db, member_id)
+    schedule_id = str(uuid.uuid4())[:8]
+    created_at = _now_iso()
+    title = str(title or "").strip() or str(schedule_type or "Scheduled session").strip() or "Scheduled session"
+    schedule = {
+        "id": schedule_id,
+        "member_id": member_id,
+        "member_name": member.get("name", ""),
+        "member_email": member.get("email", ""),
+        "title": title,
+        "schedule_type": str(schedule_type or "").strip(),
+        "schedule_date": str(schedule_date or "").strip(),
+        "start_time": str(start_time or "").strip(),
+        "end_time": str(end_time or "").strip(),
+        "mode": str(mode or "").strip(),
+        "location_or_link": str(location_or_link or "").strip(),
+        "notes": str(notes or "").strip(),
+        "status": "scheduled",
+        "created_at": created_at,
+        "created_by": actor_id or "admin",
+        "acknowledged_at": "",
+        "completed_at": "",
+        "cancelled_at": "",
+    }
+    db["schedules"].append(schedule)
+
+    time_window = schedule["start_time"]
+    if schedule["end_time"]:
+        time_window = f"{schedule['start_time']} - {schedule['end_time']}"
+    subject = f"Schedule: {title}"
+    message = (
+        f"{title} is scheduled for {schedule['schedule_date']} at {time_window}."
+        f" Mode: {schedule['mode'] or 'Not specified'}."
+    )
+    if schedule["location_or_link"]:
+        message += f" Link/location: {schedule['location_or_link']}."
+    if schedule["notes"]:
+        message += f" Note: {schedule['notes']}"
+
+    msg = {
+        "id": str(uuid.uuid4())[:8],
+        "ts": created_at,
+        "member_id": member_id,
+        "sender_role": "admin",
+        "actor_id": actor_id or "admin",
+        "subject": subject,
+        "message": message,
+        "status": "queued",
+        "email_required": True,
+        "source": "schedule",
+        "schedule_id": schedule_id,
+    }
+    db["messages"].append(msg)
+    db["notifications"].append({
+        "ts": created_at,
+        "kind": "schedule_created",
+        "user_id": member_id,
+        "message": f"{subject}: {message[:160]}",
+        "status": "queued",
+        "email_required": True,
+        "email_to": member.get("email", ""),
+        "created_by": actor_id or "admin",
+        "schedule_id": schedule_id,
+    })
+    save_db(db)
+    return schedule
+
+def list_member_schedules(member_id=None, include_cancelled=False, limit=50):
+    db = _ensure_schedule_store(load_db())
+    rows = []
+    for row in db.get("schedules", []):
+        if member_id and row.get("member_id") != member_id:
+            continue
+        if not include_cancelled and row.get("status") == "cancelled":
+            continue
+        rows.append(dict(row))
+
+    def _sort_key(r):
+        return (str(r.get("schedule_date", "")), str(r.get("start_time", "")), str(r.get("created_at", "")))
+
+    rows.sort(key=_sort_key)
+    if limit:
+        return rows[:limit]
+    return rows
+
+def list_upcoming_member_schedules(member_id, limit=3):
+    rows = [
+        r for r in list_member_schedules(member_id=member_id, include_cancelled=False, limit=0)
+        if r.get("status") in ["scheduled", "acknowledged"]
+    ]
+    return rows[:limit]
+
+def update_member_schedule_status(schedule_id, status, actor_id="admin"):
+    db = _ensure_schedule_store(load_db())
+    allowed = {"scheduled", "acknowledged", "completed", "cancelled"}
+    status = status if status in allowed else "scheduled"
+    now = _now_iso()
+    updated = None
+    for row in db.get("schedules", []):
+        if row.get("id") == schedule_id:
+            row["status"] = status
+            row["updated_at"] = now
+            row["updated_by"] = actor_id or "admin"
+            if status == "completed":
+                row["completed_at"] = now
+            if status == "cancelled":
+                row["cancelled_at"] = now
+            if status == "acknowledged":
+                row["acknowledged_at"] = now
+            updated = dict(row)
+            break
+    if updated:
+        save_db(db)
+    return updated
+
+def acknowledge_member_schedule(schedule_id, member_id):
+    db = _ensure_schedule_store(load_db())
+    now = _now_iso()
+    updated = None
+    for row in db.get("schedules", []):
+        if row.get("id") == schedule_id and row.get("member_id") == member_id:
+            if row.get("status") == "scheduled":
+                row["status"] = "acknowledged"
+                row["acknowledged_at"] = now
+                row["updated_at"] = now
+                row["updated_by"] = member_id
+            updated = dict(row)
+            break
+    if updated:
+        save_db(db)
+    return updated
+
+def schedule_status_label_v101(status):
+    mapping = {
+        "scheduled": "Scheduled",
+        "acknowledged": "Acknowledged",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+    }
+    return mapping.get(status, str(status or "Scheduled").replace("_", " ").title())
+

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v100_16_Shweta_Backend_Import",
-  "version": "v100.16",
-  "updated_on": "2026-06-17T09:44:27.550033+00:00",
+  "build_name": "HealthyMe_v101_0_Scheduling_Completion_Build",
+  "version": "v101.0",
+  "updated_on": "2026-06-17T10:56:30.528793+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,11 +18,15 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added idempotent one-time backend import for Shweta Mishra offline LAF PDF + NSP Excel.",
-    "Creates active member authorization record for shwemish@gmail.com.",
-    "Populates LAF, NSP Page 1, NSP Page 2, and admin subforms: Digestive, Intestinal, Immune, Glandular, Musculoskeletal.",
-    "Marks initial assessment as submitted/review_required without finalizing the admin report.",
-    "Includes admin-only Streamlit import page and command-line fallback script."
+    "Completed pending Scheduling section under Admin Dashboard.",
+    "Added Admin Scheduling page for member appointment/follow-up creation.",
+    "Schedule creation queues member in-app message and email notification record.",
+    "Added Member My Schedule page.",
+    "Member Home now shows upcoming schedules and a My Schedule button.",
+    "Admin can mark schedule completed or cancelled.",
+    "Member can acknowledge scheduled item.",
+    "Added v101 Scheduling Completion UAT checklist.",
+    "No Daily Log, Recipe, Exercise, report, filter, save, or database schema rewrite."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -175,10 +179,7 @@
     "components/config_loader.py",
     "components/db_daily_log.py",
     "components/db_messages.py",
-    "components/db_workflow.py",
-    "scripts/import_shweta_mishra_backend.py",
-    "pages/32_Admin_One_Time_Import_Shweta.py",
-    "README_IMPORT_SHWETA_MISHRA.md"
+    "components/db_workflow.py"
   ],
   "duplicate_helper_count_after_v61": {
     "topbar": 37,
@@ -327,23 +328,5 @@
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",
   "logic_change": "none",
-  "profile_page_patched": "pages/07_My_Profile.py",
-  "import_scope": {
-    "member": "Shweta Mishra",
-    "email": "shwemish@gmail.com",
-    "nsp_assessment_date": "2026-04-19",
-    "laf_signed_date": "2026-04-12",
-    "forms": [
-      "LAF",
-      "NSP Page 1",
-      "NSP Page 2",
-      "Digestive",
-      "Intestinal",
-      "Immune",
-      "Glandular",
-      "Musculoskeletal"
-    ],
-    "status_after_import": "submitted_for_review / review_required",
-    "final_report_ready": false
-  }
+  "profile_page_patched": "pages/07_My_Profile.py"
 }

@@ -9,7 +9,7 @@ utility_logout_bar()
 
 topbar(
     "Admin Dashboard",
-    "Access review workflows, content allocation, communication, reports and system tools.",
+    "Access review workflows, content allocation, communication, scheduling, reports and system tools.",
     "Admin workflow",
 )
 
@@ -51,7 +51,7 @@ with left:
 with right:
     start_section("Communication & Scheduling")
     nav_cell("Messages", "pages/31_Admin_Member_Communication.py", "dash_messages_v96_9")
-    placeholder_cell("Scheduling")
+    nav_cell("Scheduling", "pages/32_Admin_Scheduling.py", "dash_scheduling_v101_0")
 
     end_section()
 

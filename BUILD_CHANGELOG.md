@@ -411,3 +411,15 @@
 - Retained global signed-in/logout row spacing and hero spacing from v100.14.
 - No Daily Log, Recipe, Exercise, report, filter, save, or database logic changes.
 - Profile page patched: `pages/07_My_Profile.py`
+
+## v101.0 - Scheduling Completion Build
+
+- Completed pending Scheduling section under Admin Dashboard.
+- Added Admin Scheduling page for member appointment/follow-up creation.
+- Schedule creation queues member in-app message and email notification record.
+- Added Member My Schedule page.
+- Member Home now shows upcoming schedules and a My Schedule button.
+- Admin can mark schedule completed or cancelled.
+- Member can acknowledge scheduled item.
+- Added v101 Scheduling Completion UAT checklist.
+- No Daily Log, Recipe, Exercise, report, filter, save, or database schema rewrite.

@@ -1,7 +1,7 @@
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_keepalive_guard_v96_11, inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, format_local_ts, render_back_to_top
-from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read, mark_member_message_read, auto_archive_expired_nutritionist_messages
+from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read, mark_member_message_read, auto_archive_expired_nutritionist_messages, list_upcoming_member_schedules, schedule_status_label_v101
 from components.assessment_instances import get_current_assessment_instance, task_progress_summary_v99, task_progress_text_v99
 from components.flash import render_system_message, set_system_message
 
@@ -121,6 +121,27 @@ if messages:
                 set_system_message("Message could not be archived. Please refresh and try again.", "error")
             st.rerun()
 
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+upcoming_schedules_v101 = list_upcoming_member_schedules(user_id, limit=2)
+if upcoming_schedules_v101:
+    st.markdown("<div class='hm-nutritionist-message-shell'>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-nutritionist-message-title'>Upcoming Schedule</div>", unsafe_allow_html=True)
+    for schedule_v101 in upcoming_schedules_v101:
+        time_text_v101 = schedule_v101.get("start_time", "")
+        if schedule_v101.get("end_time"):
+            time_text_v101 += f" - {schedule_v101.get('end_time')}"
+        st.markdown(
+            f"""
+            <div class='hm-v101-schedule-card'>
+              <div class='hm-v101-schedule-title'>{schedule_v101.get('title','Scheduled session')}<span class='hm-v101-schedule-pill'>{schedule_status_label_v101(schedule_v101.get('status','scheduled'))}</span></div>
+              <div class='hm-v101-schedule-line'>{schedule_v101.get('schedule_date','')} · {time_text_v101}</div>
+              <div class='hm-v101-schedule-line'>Mode: {schedule_v101.get('mode','-')} · Link/location: {schedule_v101.get('location_or_link') or '-'}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     st.markdown("</div>", unsafe_allow_html=True)
 
 stat_grid([
@@ -245,6 +266,9 @@ with right:
 
     if st.button("Daily Log", use_container_width=True):
         st.switch_page("pages/18_Daily_Log.py")
+
+    if st.button("My Schedule", use_container_width=True):
+        st.switch_page("pages/33_My_Schedule.py")
 
     if not admin_completed:
         st.markdown(
@@ -785,6 +809,45 @@ div[data-testid="stMarkdownContainer"] hr{
 }
 .hm-v990-task-progress + div{
   margin-top:.44rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# v101.0 deferred Member Home schedule CSS
+
+st.markdown("""
+<style>
+/* v101.0 Member Home schedule card */
+.hm-v101-schedule-card{
+  border:1px solid #E3C98E;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);
+  border-radius:18px;
+  padding:.80rem .95rem;
+  margin:.48rem 0 .72rem 0;
+  box-shadow:0 8px 20px rgba(15,23,42,.045);
+}
+.hm-v101-schedule-title{
+  color:#064E3B;
+  font-size:.96rem;
+  font-weight:950;
+  margin-bottom:.18rem;
+}
+.hm-v101-schedule-line{
+  color:#334155;
+  font-size:.82rem;
+  font-weight:720;
+  margin:.08rem 0;
+}
+.hm-v101-schedule-pill{
+  display:inline-flex;
+  padding:.16rem .44rem;
+  border-radius:999px;
+  border:1px solid #D9C28F;
+  background:#FFF7E6;
+  color:#7A5A16;
+  font-size:.70rem;
+  font-weight:850;
+  margin-left:.22rem;
 }
 </style>
 """, unsafe_allow_html=True)
