@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v101_3_NSP_Scoring_Excel_Mapping_Alignment",
-  "version": "v101.3",
-  "updated_on": "2026-06-17T15:58:29.070188+00:00",
+  "build_name": "HealthyMe_v101_4_Existing_Member_NSP_Recalculation",
+  "version": "v101.4",
+  "updated_on": "2026-06-17T16:39:53.387901+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,13 +18,16 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Replaced config/systems_rating_map.json with Excel-derived mapping from non-grey cells.",
-    "Page 1 source range: E6:N45 using C6:C45 values.",
-    "Page 2 source range: E7:N33 using C7:C33 values.",
-    "Retained answer scoring: 1/2/3 as numeric values and NA/blank/Select as 0.",
-    "Validated uploaded Excel sample totals: Digestive 31, Intestinal 34, Immune/Lymphatic 23, Nervous 25, Circulatory/Cardiovascular 28, Respiratory 9, Glandular/Endocrine 43, Reproductive 21, Urinary 13, Musculoskeletal 11.",
-    "Added V101_3_NSP_SCORING_ALIGNMENT_NOTES.md.",
-    "No Daily Log, Recipe, Exercise, Scheduling, Reschedule, report layout, save, or database schema changes."
+    "Added Admin NSP Score Recalculation page.",
+    "Admin can recalculate all existing members or selected member.",
+    "Recalculation uses v101.3 Excel-derived NSP system mapping.",
+    "Raw NSP answers are not changed.",
+    "Stores recalculated member-level and instance-level NSP system-score snapshots.",
+    "Stores recalculation audit entries.",
+    "Future NSP Page 2/Consent submit path now refreshes NSP system-score snapshot.",
+    "Reports continue to calculate dynamically from current mapping.",
+    "Added V101_4_NSP_RECALCULATION_UAT_CHECKLIST.md.",
+    "No Daily Log, Recipe, Exercise, Scheduling/Reschedule, report layout, save, filter, or database schema rewrite."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -321,7 +324,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v101_2_Member_Reschedule_Request_Build.zip",
+  "base_build": "HealthyMe_v101_3_NSP_Scoring_Excel_Mapping_Alignment.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",

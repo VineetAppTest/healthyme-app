@@ -2654,3 +2654,173 @@ def reschedule_policy_text_v1012(within_24):
         "If approved, the prior session will not be counted as consumed."
     )
 
+
+# --------------------------------------------------------------------
+# v101.4: Existing member NSP system-score recalculation helpers
+# --------------------------------------------------------------------
+
+def _hm_v1014_answer_count(answers):
+    return sum(1 for v in (answers or {}).values() if v not in [None, "", "Select"])
+
+def _hm_v1014_top_systems(rows):
+    sorted_rows = sorted(rows or [], key=lambda r: int(r.get("Score", 0) or 0), reverse=True)
+    if not sorted_rows:
+        return []
+    selected = sorted_rows[:3]
+    if len(sorted_rows) > 3:
+        third_score = int(selected[-1].get("Score", 0) or 0)
+        for row in sorted_rows[3:]:
+            if int(row.get("Score", 0) or 0) == third_score:
+                selected.append(row)
+            else:
+                break
+    return [
+        {"system": row.get("System", ""), "score": int(row.get("Score", 0) or 0)}
+        for row in selected
+    ]
+
+def _hm_v1014_recalc_rows(nsp1, nsp2):
+    from components.systems_rating import calculate_systems_rating
+    rows = calculate_systems_rating(nsp1 or {}, nsp2 or {})
+    return [
+        {"No.": row.get("No."), "System": row.get("System"), "Score": int(row.get("Score", 0) or 0)}
+        for row in rows
+    ]
+
+def recalculate_member_nsp_system_scores(member_id, actor_id="admin"):
+    """Recalculate stored NSP system-score snapshots for one existing member.
+
+    This does not alter raw NSP answers. It stores recalculated snapshots based on
+    the current Excel-derived systems_rating_map.json.
+    """
+    db = load_db()
+    now = datetime.datetime.now().isoformat(timespec="seconds")
+    users = {u.get("id"): u for u in db.get("users", [])}
+    member = users.get(member_id, {})
+
+    db.setdefault("nsp_system_scores", {})
+    db.setdefault("nsp_system_scores_by_instance", {})
+    db.setdefault("nsp_recalculation_audit", [])
+
+    legacy_nsp1 = db.get("nsp1_responses", {}).get(member_id, {}) or {}
+    legacy_nsp2 = db.get("nsp2_responses", {}).get(member_id, {}) or {}
+    legacy_count = _hm_v1014_answer_count(legacy_nsp1) + _hm_v1014_answer_count(legacy_nsp2)
+
+    member_snapshot = None
+    if legacy_count:
+        rows = _hm_v1014_recalc_rows(legacy_nsp1, legacy_nsp2)
+        member_snapshot = {
+            "member_id": member_id,
+            "member_name": member.get("name", ""),
+            "member_email": member.get("email", ""),
+            "source": "legacy_member_responses",
+            "calculated_at": now,
+            "calculated_by": actor_id or "admin",
+            "nsp1_answer_count": _hm_v1014_answer_count(legacy_nsp1),
+            "nsp2_answer_count": _hm_v1014_answer_count(legacy_nsp2),
+            "systems": rows,
+            "top_systems": _hm_v1014_top_systems(rows),
+            "mapping_version": "v101.3_excel_non_grey_mapping",
+        }
+        db["nsp_system_scores"][member_id] = member_snapshot
+
+    instance_snapshots = []
+    for inst in db.get("assessment_instances", {}).get(member_id, []) or []:
+        instance_id = inst.get("instance_id", "")
+        inst_resp = db.get("assessment_instance_responses", {}).get(instance_id, {}) or {}
+        inst_nsp1 = inst_resp.get("nsp1", {}) or {}
+        inst_nsp2 = inst_resp.get("nsp2", {}) or {}
+        inst_count = _hm_v1014_answer_count(inst_nsp1) + _hm_v1014_answer_count(inst_nsp2)
+        if not inst_count:
+            continue
+
+        rows = _hm_v1014_recalc_rows(inst_nsp1, inst_nsp2)
+        snapshot = {
+            "member_id": member_id,
+            "member_name": member.get("name", ""),
+            "member_email": member.get("email", ""),
+            "instance_id": instance_id,
+            "instance_number": inst.get("instance_number"),
+            "instance_type": inst.get("instance_type", ""),
+            "source": "assessment_instance_responses",
+            "calculated_at": now,
+            "calculated_by": actor_id or "admin",
+            "nsp1_answer_count": _hm_v1014_answer_count(inst_nsp1),
+            "nsp2_answer_count": _hm_v1014_answer_count(inst_nsp2),
+            "systems": rows,
+            "top_systems": _hm_v1014_top_systems(rows),
+            "mapping_version": "v101.3_excel_non_grey_mapping",
+        }
+        db["nsp_system_scores_by_instance"][instance_id] = snapshot
+        inst["nsp_system_scores_calculated_at"] = now
+        inst["nsp_top_systems_snapshot"] = snapshot["top_systems"]
+        instance_snapshots.append(snapshot)
+
+        # If legacy snapshot was absent, use latest instance snapshot as member-level reference.
+        if not member_snapshot:
+            member_snapshot = dict(snapshot)
+            member_snapshot["source"] = "latest_assessment_instance_responses"
+            db["nsp_system_scores"][member_id] = member_snapshot
+
+    audit_entry = {
+        "ts": now,
+        "actor_id": actor_id or "admin",
+        "member_id": member_id,
+        "member_name": member.get("name", ""),
+        "member_email": member.get("email", ""),
+        "legacy_answer_count": legacy_count,
+        "instance_snapshots_recalculated": len(instance_snapshots),
+        "member_snapshot_created": bool(member_snapshot),
+        "top_systems": (member_snapshot or {}).get("top_systems", []),
+        "mapping_version": "v101.3_excel_non_grey_mapping",
+    }
+    db["nsp_recalculation_audit"].append(audit_entry)
+    save_db(db)
+    return audit_entry
+
+def recalculate_all_nsp_system_scores(actor_id="admin"):
+    """Recalculate stored NSP system-score snapshots for all existing members."""
+    db = load_db()
+    members = [u for u in db.get("users", []) if u.get("role") == "member"]
+    results = []
+    for member in members:
+        results.append(recalculate_member_nsp_system_scores(member.get("id"), actor_id=actor_id or "admin"))
+    return results
+
+def list_nsp_recalculation_status():
+    db = load_db()
+    scores = db.get("nsp_system_scores", {}) or {}
+    by_instance = db.get("nsp_system_scores_by_instance", {}) or {}
+    rows = []
+    for u in db.get("users", []):
+        if u.get("role") != "member":
+            continue
+        member_id = u.get("id")
+        legacy_nsp1 = db.get("nsp1_responses", {}).get(member_id, {}) or {}
+        legacy_nsp2 = db.get("nsp2_responses", {}).get(member_id, {}) or {}
+        instances = db.get("assessment_instances", {}).get(member_id, []) or []
+        inst_recalc_count = sum(1 for inst in instances if inst.get("instance_id") in by_instance)
+        snapshot = scores.get(member_id, {}) or {}
+        top_system = ""
+        if snapshot.get("top_systems"):
+            first = snapshot["top_systems"][0]
+            top_system = f"{first.get('system','')} ({first.get('score',0)})"
+        rows.append({
+            "member_id": member_id,
+            "member_name": u.get("name", ""),
+            "email": u.get("email", ""),
+            "legacy_nsp_answers": _hm_v1014_answer_count(legacy_nsp1) + _hm_v1014_answer_count(legacy_nsp2),
+            "instances": len(instances),
+            "instances_recalculated": inst_recalc_count,
+            "member_snapshot": "Yes" if snapshot else "No",
+            "last_calculated_at": snapshot.get("calculated_at", ""),
+            "top_system": top_system,
+        })
+    return rows
+
+def get_nsp_system_score_snapshot(member_id, instance_id=None):
+    db = load_db()
+    if instance_id:
+        return db.get("nsp_system_scores_by_instance", {}).get(instance_id, {})
+    return db.get("nsp_system_scores", {}).get(member_id, {})
+

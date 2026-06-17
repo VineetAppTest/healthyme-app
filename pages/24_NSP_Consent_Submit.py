@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import date
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v12, render_back_to_top
-from components.db import get_profile_with_laf_fallback
+from components.db import get_profile_with_laf_fallback, recalculate_member_nsp_system_scores
 from components.assessment_instances import get_current_assessment_instance, submit_current_assessment_instance_once
 from components.flash import set_system_message, render_system_message
 
@@ -86,6 +86,7 @@ with c2:
             set_system_message("Please enter your name/signature before submitting.", "error")
             st.rerun()
         else:
+            recalculate_member_nsp_system_scores(user_id, actor_id=user_id)
             first = submit_current_assessment_instance_once(user_id, {
                 "accepted": True,
                 "accepted_date": consent_date.isoformat(),

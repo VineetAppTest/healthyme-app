@@ -466,3 +466,16 @@
   - Musculoskeletal: 11
 - Added `V101_3_NSP_SCORING_ALIGNMENT_NOTES.md`.
 - No Daily Log, Recipe, Exercise, Scheduling, Reschedule, report layout, save, or database schema changes.
+
+## v101.4 - Existing Member NSP Recalculation
+
+- Added Admin NSP Score Recalculation page.
+- Admin can recalculate all existing members or selected member.
+- Recalculation uses v101.3 Excel-derived NSP system mapping.
+- Raw NSP answers are not changed.
+- Stores recalculated member-level and instance-level NSP system-score snapshots.
+- Stores recalculation audit entries.
+- Future NSP Page 2/Consent submit path now refreshes NSP system-score snapshot.
+- Reports continue to calculate dynamically from current mapping.
+- Added `V101_4_NSP_RECALCULATION_UAT_CHECKLIST.md`.
+- No Daily Log, Recipe, Exercise, Scheduling/Reschedule, report layout, save, filter, or database schema rewrite.

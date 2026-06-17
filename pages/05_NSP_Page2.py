@@ -1,7 +1,7 @@
 import streamlit as st, pathlib
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, render_back_to_top
-from components.db import get_form_response, save_form_response, save_nsp_score
+from components.db import get_form_response, save_form_response, save_nsp_score, recalculate_member_nsp_system_scores
 from components.assessment_instances import get_current_assessment_instance, get_instance_response, save_instance_page_response
 from components.scoring import completion, unanswered_questions, score_answers
 from components.flash import set_system_message, render_system_message
@@ -123,5 +123,6 @@ with c2:
         else:
             save_instance_page_response(user_id, "nsp2", answers)
             save_nsp_score(user_id, score_answers(answers))
+            recalculate_member_nsp_system_scores(user_id, actor_id=user_id)
             st.switch_page("pages/24_NSP_Consent_Submit.py")
 card_end()

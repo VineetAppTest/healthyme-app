@@ -63,6 +63,7 @@ with right:
 
     start_section("System Tools")
     nav_cell("Database", "pages/28_Admin_Database_Status.py", "dash_database_v96_9")
+    nav_cell("NSP Recalculate", "pages/34_Admin_NSP_Score_Recalculation.py", "dash_nsp_recalc_v101_4")
     nav_cell("Demo", "pages/29_Admin_Demo_Mode.py", "dash_demo_v96_9")
     end_section()
 
