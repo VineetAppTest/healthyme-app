@@ -423,3 +423,13 @@
 - Member can acknowledge scheduled item.
 - Added v101 Scheduling Completion UAT checklist.
 - No Daily Log, Recipe, Exercise, report, filter, save, or database schema rewrite.
+
+## v101.1 - Scheduling UI Structure Fix
+
+- Rebuilt Admin Scheduling page using standard HealthyMe layout stack.
+- Applied global styling, standard signed-in/logout row, standard Hero banner and premium cards.
+- Removed red/default Streamlit primary button behavior from Scheduling page.
+- Structured member selector, create schedule and schedule status sections.
+- Rebuilt Member Schedule page with the same HealthyMe structured styling.
+- No scheduling logic/database changes.
+- No Daily Log, Recipe, Exercise, report, filter, save, or database schema changes.

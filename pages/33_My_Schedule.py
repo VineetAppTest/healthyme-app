@@ -7,8 +7,6 @@ from components.ui_common import (
     utility_logout_bar,
     render_back_to_top,
     topbar,
-    card_start,
-    card_end,
     render_page_nav,
 )
 from components.db import (
@@ -18,18 +16,49 @@ from components.db import (
 )
 
 st.set_page_config(page_title="My Schedule", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+
+# v101.1: Standard HealthyMe page stack.
+inject_global_styles()
+apply_luxe_theme()
 require_member()
 user_id = st.session_state.get("user_id")
-
 utility_logout_bar()
 topbar("My Schedule", "View upcoming nutritionist sessions and follow-ups.", "Member content")
 
 st.markdown("""
 <style>
-/* v101.0 Member Schedule */
-.hm-member-schedule-card{
+/* v101.1 Member Schedule structured UI */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  max-width:1080px!important;
+  padding-top:.72rem!important;
+}
+.hm-member-schedule-shell{
   border:1px solid #E3C98E;
   background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);
+  border-radius:20px;
+  padding:1rem 1.08rem;
+  box-shadow:0 10px 24px rgba(15,23,42,.05);
+  margin:.40rem 0 .90rem 0;
+}
+.hm-member-schedule-heading{
+  color:#003C36;
+  font-size:1.12rem;
+  font-weight:980;
+  margin:0 0 .25rem 0;
+}
+.hm-member-schedule-sub{
+  color:#475569;
+  font-size:.86rem;
+  font-weight:700;
+  margin:0 0 .90rem 0;
+}
+.hm-member-schedule-card{
+  border:1px solid #E3C98E;
+  background:#FFFDF8;
   border-radius:18px;
   padding:.90rem 1.05rem;
   margin:.50rem 0;
@@ -58,11 +87,25 @@ st.markdown("""
   font-weight:850;
   margin-left:.25rem;
 }
+div[data-testid="stButton"] > button{
+  min-height:2.72rem!important;
+  border-radius:14px!important;
+  border:1.25px solid #D9C28F!important;
+  background:#FFFDF8!important;
+  color:#064E3B!important;
+  font-weight:850!important;
+}
+div[data-testid="stButton"] > button:hover{
+  border-color:#B89345!important;
+  background:#FFF7E6!important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-card_start()
-st.subheader("Upcoming and recent schedules")
+st.markdown("<div class='hm-member-schedule-shell'>", unsafe_allow_html=True)
+st.markdown("<div class='hm-member-schedule-heading'>Upcoming and recent schedules</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-member-schedule-sub'>Acknowledge upcoming sessions and review completed or cancelled schedules.</div>", unsafe_allow_html=True)
+
 rows = list_member_schedules(member_id=user_id, include_cancelled=True, limit=30)
 if not rows:
     st.info("No schedule has been created for you yet.")
@@ -88,9 +131,10 @@ else:
                 acknowledge_member_schedule(row.get("id"), user_id)
                 st.success("Schedule acknowledged.")
                 st.rerun()
-card_end()
+
+st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("My Schedule", back_page="pages/02_Member_Home.py", show_dashboard=False, show_evaluation=False, location="bottom")
 render_back_to_top()
 
-# v101.0: Member schedule view.
+# v101.1: Member Schedule structured using HealthyMe global layout.

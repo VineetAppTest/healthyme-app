@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v101_0_Scheduling_Completion_Build",
-  "version": "v101.0",
-  "updated_on": "2026-06-17T10:56:30.528793+00:00",
+  "build_name": "HealthyMe_v101_1_Scheduling_UI_Structure_Fix",
+  "version": "v101.1",
+  "updated_on": "2026-06-17T11:22:08.828001+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,15 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Completed pending Scheduling section under Admin Dashboard.",
-    "Added Admin Scheduling page for member appointment/follow-up creation.",
-    "Schedule creation queues member in-app message and email notification record.",
-    "Added Member My Schedule page.",
-    "Member Home now shows upcoming schedules and a My Schedule button.",
-    "Admin can mark schedule completed or cancelled.",
-    "Member can acknowledge scheduled item.",
-    "Added v101 Scheduling Completion UAT checklist.",
-    "No Daily Log, Recipe, Exercise, report, filter, save, or database schema rewrite."
+    "Rebuilt Admin Scheduling page using standard HealthyMe layout stack.",
+    "Applied global styling, standard signed-in/logout row, standard Hero banner and premium cards.",
+    "Removed red/default Streamlit primary button behavior from Scheduling page.",
+    "Structured member selector, create schedule and schedule status sections.",
+    "Rebuilt Member Schedule page with the same HealthyMe structured styling.",
+    "No scheduling logic/database changes.",
+    "No Daily Log, Recipe, Exercise, report, filter, save, or database schema changes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -323,7 +321,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v100_15_Profile_Button_MemberDivider_Hotfix.zip",
+  "base_build": "HealthyMe_v101_0_Scheduling_Completion_Build.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",
