@@ -120,28 +120,32 @@ with c2:
     data["weight_kg"] = str(st.number_input("Weight (kg)", min_value=20, max_value=250, value=int_value(p.get("weight_kg"), 60, 20, 250), step=1))
     data["occupation"] = st.text_input("Occupation", value=str(p.get("occupation", "")))
 
-if st.button("Save Profile", type="primary"):
-    errors = []
-    if not data["full_name"].strip():
-        errors.append("Full Name is mandatory.")
-    if "@" in data["full_name"]:
-        errors.append("Full Name should not contain email address.")
-    if not re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", data["email_id"].strip()):
-        errors.append("Email ID should be valid.")
-    ok, mobile_error = validate_mobile(data["mobile_number"], data["country"])
-    if not ok:
-        errors.append(mobile_error)
+# v100.15 profile action row: Save left, Back to Home right
+save_col_v10015, back_col_v10015 = st.columns([1, 1], gap="medium")
+with save_col_v10015:
+    if st.button("Save Profile", type="primary", use_container_width=True):
+        errors = []
+        if not data["full_name"].strip():
+            errors.append("Full Name is mandatory.")
+        if "@" in data["full_name"]:
+            errors.append("Full Name should not contain email address.")
+        if not re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", data["email_id"].strip()):
+            errors.append("Email ID should be valid.")
+        ok, mobile_error = validate_mobile(data["mobile_number"], data["country"])
+        if not ok:
+            errors.append(mobile_error)
 
-    if errors:
-        for err in errors:
-            st.error(err)
-    else:
-        # Backward-compatible aliases
-        data["phone"] = data["mobile_number"]
-        data["city"] = data["country"]
-        update_profile(user_id, data)
-        st.success("Profile saved.")
+        if errors:
+            for err in errors:
+                st.error(err)
+        else:
+            # Backward-compatible aliases
+            data["phone"] = data["mobile_number"]
+            data["city"] = data["country"]
+            update_profile(user_id, data)
+            st.success("Profile saved.")
 
-if st.button("Back to Home"):
-    st.switch_page("pages/02_Member_Home.py")
+with back_col_v10015:
+    if st.button("Back to Home", use_container_width=True):
+        st.switch_page("pages/02_Member_Home.py")
 card_end()

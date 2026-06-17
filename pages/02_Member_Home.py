@@ -765,3 +765,27 @@ div[data-testid="stMarkdownContainer"] hr{
 </style>
 """, unsafe_allow_html=True)
 
+# v100.15 deferred exact divider balance CSS
+
+st.markdown("""
+<style>
+/* v100.15 Member Home exact divider balance */
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-top:.44rem!important;
+  margin-bottom:.44rem!important;
+}
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.44rem!important;
+  margin-bottom:.44rem!important;
+}
+.hm-v990-task-progress{
+  margin-top:.44rem!important;
+  margin-bottom:.44rem!important;
+}
+.hm-v990-task-progress + div{
+  margin-top:.44rem!important;
+}
+</style>
+""", unsafe_allow_html=True)
+

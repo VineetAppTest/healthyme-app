@@ -7568,8 +7568,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v100.14"
-APP_BUILD_LABEL = "Global Header Row Spacing Hotfix"
+APP_BUILD_VERSION = "v100.15"
+APP_BUILD_LABEL = "Profile Button + Member Divider Hotfix"
 
 
 def admin_version_line_v98_1():

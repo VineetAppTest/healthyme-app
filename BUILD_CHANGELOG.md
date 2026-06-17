@@ -403,3 +403,11 @@
 - Kept Admin version adjacent to HealthyMe only for Admin sessions.
 - No version shown adjacent to HealthyMe for Member sessions/login.
 - No Daily Log, Recipe, Exercise, save, filter, report, or database logic changes.
+
+## v100.15 - Profile Button + Member Divider Hotfix
+
+- My Profile Save and Back to Home actions aligned on the same row, with Back to Home on the right.
+- Member Home task-area divider spacing equalized above and below.
+- Retained global signed-in/logout row spacing and hero spacing from v100.14.
+- No Daily Log, Recipe, Exercise, report, filter, save, or database logic changes.
+- Profile page patched: `pages/07_My_Profile.py`
