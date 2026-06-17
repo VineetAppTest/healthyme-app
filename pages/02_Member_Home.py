@@ -298,7 +298,7 @@ section.main > div.block-container,
 [data-testid="stAppViewBlockContainer"],
 .stMainBlockContainer,
 .block-container{
-  padding-top:.18rem!important;
+  padding-top:.72rem!important;
 }
 
 /* Utility row and hero spacing. */
@@ -613,7 +613,7 @@ section.main > div.block-container,
 [data-testid="stAppViewBlockContainer"],
 .stMainBlockContainer,
 .block-container{
-  padding-top:.04rem!important;
+  padding-top:.72rem!important;
   margin-top:0!important;
 }
 div[data-testid="stElementContainer"]:has(style),
@@ -704,6 +704,63 @@ div[data-testid="stButton"] > button p{
   overflow:visible!important;
   line-height:1.34!important;
   margin:0!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# v100.14 deferred Member Home signed-row and hero spacing CSS
+
+st.markdown("""
+<style>
+/* v100.14 Member Home signed-row size and hero spacing fix */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.72rem!important;
+}
+.utility-bar{
+  min-height:2.84rem!important;
+  height:2.84rem!important;
+  padding:.42rem .72rem!important;
+  margin-top:0!important;
+  margin-bottom:.72rem!important;
+  display:flex!important;
+  align-items:center!important;
+  box-sizing:border-box!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.84rem!important;
+  height:2.84rem!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:.42rem .72rem!important;
+  box-sizing:border-box!important;
+}
+.hero-shell{
+  margin-top:0!important;
+  margin-bottom:.72rem!important;
+}
+div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
+  margin-top:0!important;
+  margin-bottom:.72rem!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+}
+.hm-v990-task-progress{
+  margin-top:.36rem!important;
+  margin-bottom:.40rem!important;
+}
+.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
+  margin-top:.38rem!important;
+  margin-bottom:.38rem!important;
+}
+hr,
+div[data-testid="stMarkdownContainer"] hr{
+  margin-top:.46rem!important;
+  margin-bottom:.46rem!important;
 }
 </style>
 """, unsafe_allow_html=True)

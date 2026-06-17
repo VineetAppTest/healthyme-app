@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v100_13_GlobalHero_ContentClosure",
-  "version": "v100.13",
-  "updated_on": "2026-06-17T08:02:13.814464+00:00",
+  "build_name": "HealthyMe_v100_14_GlobalHeader_RowSpacing_Hotfix",
+  "version": "v100.14",
+  "updated_on": "2026-06-17T08:36:41.648321+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,15 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Admin version marker is now adjacent to HealthyMe only for Admin sessions.",
-    "Member login/member pages do not show version adjacent to HealthyMe.",
-    "Member Home CSS moved to bottom to remove post-hero spacing caused by invisible style blocks.",
-    "Member Home task divider spacing equalized.",
-    "Daily Log now has a small intentional gap between Hero and Food Journal Date border.",
-    "Recipe and Exercise restored to standard Hero banner.",
-    "Recipe and Exercise hero-to-search spacing reduced.",
-    "Recipe and Exercise details rebuilt as single premium HTML cards using tick bullets across all sections.",
-    "Recipe and Exercise feedback expander styling strengthened."
+    "Standardized top spacing before Signed in / Logout row across pages.",
+    "Standardized spacing between Signed in / Logout row and Hero banner.",
+    "Standardized spacing after standard Hero banner.",
+    "Aligned Signed in and Logout row heights on Member Home.",
+    "Kept Admin version adjacent to HealthyMe only for Admin sessions.",
+    "No version shown adjacent to HealthyMe for Member sessions/login.",
+    "No Daily Log, Recipe, Exercise, save, filter, report, or database logic changes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -323,7 +321,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v100_12_Client_Closure_Polish.zip",
+  "base_build": "HealthyMe_v100_13_GlobalHero_ContentClosure.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",

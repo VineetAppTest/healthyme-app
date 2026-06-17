@@ -393,3 +393,13 @@
 - Recipe and Exercise hero-to-search spacing reduced.
 - Recipe and Exercise details rebuilt as single premium HTML cards using tick bullets across all sections.
 - Recipe and Exercise feedback expander styling strengthened.
+
+## v100.14 - Global Header Row Spacing Hotfix
+
+- Standardized top spacing before Signed in / Logout row across pages.
+- Standardized spacing between Signed in / Logout row and Hero banner.
+- Standardized spacing after standard Hero banner.
+- Aligned Signed in and Logout row heights on Member Home.
+- Kept Admin version adjacent to HealthyMe only for Admin sessions.
+- No version shown adjacent to HealthyMe for Member sessions/login.
+- No Daily Log, Recipe, Exercise, save, filter, report, or database logic changes.

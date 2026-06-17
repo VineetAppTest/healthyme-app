@@ -2938,6 +2938,42 @@ section.main > div.block-container,
   padding-top:.18rem!important;
 }
 
+
+/* v100.14 global signed-row and hero spacing standardization */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container{
+  padding-top:.72rem!important;
+}
+.utility-bar{
+  min-height:2.84rem!important;
+  height:2.84rem!important;
+  padding:.42rem .72rem!important;
+  margin-top:0!important;
+  margin-bottom:.72rem!important;
+  display:flex!important;
+  align-items:center!important;
+  box-sizing:border-box!important;
+}
+.utility-bar *{
+  line-height:1.18!important;
+}
+.utility-bar .role-pill,
+.utility-bar span,
+.utility-bar b{
+  display:inline-flex!important;
+  align-items:center!important;
+}
+div[data-testid="stButton"] > button{
+  min-height:2.84rem!important;
+}
+.hero-shell{
+  margin-top:0!important;
+  margin-bottom:.72rem!important;
+}
+
 </style>
 """
 
@@ -7532,8 +7568,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v100.13"
-APP_BUILD_LABEL = "Global Hero Content Closure"
+APP_BUILD_VERSION = "v100.14"
+APP_BUILD_LABEL = "Global Header Row Spacing Hotfix"
 
 
 def admin_version_line_v98_1():
