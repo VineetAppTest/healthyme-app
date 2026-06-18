@@ -14,7 +14,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.db import load_db, save_db_direct, update_member_response_with_audit, list_members
 
 st.set_page_config(page_title="Response Editor", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
 
@@ -245,3 +245,7 @@ card_end()
 if st.button("Back to Dashboard"):
     st.switch_page("pages/10_Admin_Dashboard.py")
 # v96: call v96_response_editor_success() after response edits are saved.
+
+# v101.8: standard bottom navigation
+render_page_nav("Response Editor", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

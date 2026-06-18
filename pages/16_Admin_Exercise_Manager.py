@@ -9,7 +9,7 @@ from components.storage_assets import upload_content_image, PUBLIC_BUCKET, PRIVA
 from components.db import list_members, get_resource_assignments, save_resource_assignments, list_resource_feedback
 
 st.set_page_config(page_title="Manage & Allocate Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
 EXERCISE_COLUMNS = ['title', 'description', 'category', 'difficulty', 'goal_tags', 'condition_tags', 'duration_or_reps', 'hidden_calories_v96', 'equipment', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'instructions', 'benefits', 'status']
@@ -138,7 +138,6 @@ def exercise_form(prefix, row=None):
 # v101.6: top page navigation removed; bottom nav remains standard
 
 
-# render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 topbar("Manage & Allocate Exercises", "Manage image, title, timing, exercise details and member allocation.", "Admin content manager")
 
 tabs = st.tabs(["Current Repository", "Add Exercise", "Import CSV", "Edit / Delete", "Member Feedback", "Allocate to Member"])
@@ -281,3 +280,7 @@ render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evalu
 # v96: Allocation success message required: st.success("Exercise allocated successfully.") after allocation save.
 
 # v96_back_route_note: Edit Back button should return to Manage & Allocate Exercise page.
+
+# v101.8: standard bottom navigation
+render_page_nav("Manage & Allocate Exercise", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v101_7_AdminDashboard_ComparativeNav_Polish",
-  "version": "v101.7",
-  "updated_on": "2026-06-18T07:48:33.345815+00:00",
+  "build_name": "HealthyMe_v101_8_Admin_Nav_Header_EvalStatus_ActionFix",
+  "version": "v101.8",
+  "updated_on": "2026-06-18T09:22:47.821481+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,13 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Admin Dashboard placement restructured: Column 1 Review & Assessment, Member & Access, Content & Allocation.",
-    "Admin Dashboard placement restructured: Column 2 Reports & Logs, Communication & Scheduling.",
-    "Added placeholder Recommendations to Members under Reports & Logs.",
-    "Demo button hidden under System Tools.",
-    "System Tools retained with Database and NSP Recalculate only.",
-    "Comparative NSP Report Back/Evaluation Status/Dashboard navigation moved to bottom only.",
-    "No scoring, recalculation, scheduling/reschedule, daily log, report logic, save, filter, or database schema changes."
+    "Comparative NSP Report bottom navigation now renders before empty-state stop cases.",
+    "Comparative NSP Report bottom nav includes Back, Evaluation Status and Dashboard.",
+    "Evaluation Status info message removed.",
+    "Evaluation Status search bar replaced by status-filtered member dropdown.",
+    "Evaluation Status expand/collapse flow replaced by direct workflow buttons.",
+    "Bottom Back/Dashboard navigation standardized on listed admin pages.",
+    "No scoring, recalculation, scheduling/reschedule, daily log data logic, report calculations, save, filter, or database schema changes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -321,7 +321,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v101_6_Canonical_Header_Nav_Button_Polish.zip",
+  "base_build": "HealthyMe_v101_7_AdminDashboard_ComparativeNav_Polish.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",

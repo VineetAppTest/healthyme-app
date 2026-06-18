@@ -7,7 +7,7 @@ from components.assessment_instances import get_assessment_instances, create_rea
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Task Request Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); inject_keepalive_guard_v96_11(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); inject_keepalive_guard_v96_11()
 
 st.markdown("""
 <style>
@@ -317,3 +317,7 @@ with right:
 
 if st.button("Back to Dashboard"):
     st.switch_page("pages/10_Admin_Dashboard.py")
+
+# v101.8: standard bottom navigation
+render_page_nav("Task Request Manager", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

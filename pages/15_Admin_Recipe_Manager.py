@@ -9,7 +9,7 @@ from components.storage_assets import upload_content_image, PUBLIC_BUCKET, PRIVA
 from components.db import list_members, get_resource_assignments, save_resource_assignments, list_resource_feedback
 
 st.set_page_config(page_title="Manage & Allocate Recipes", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 st.markdown("""
 <style>
@@ -163,7 +163,6 @@ def recipe_form(prefix, row=None):
 # v101.6: top page navigation removed; bottom nav remains standard
 
 
-# render_page_nav("Recipes", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 topbar("Manage & Allocate Recipes", "Manage image, title, timing, calories, macros, recipe details and member allocation.", "Admin content manager")
 
 tabs = st.tabs(["Current Repository", "Add Recipe", "Import CSV", "Edit / Delete", "Member Feedback", "Allocate to Member"])
@@ -304,3 +303,7 @@ with tabs[4]:
 render_page_nav("Recipes", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
 
 # v96_recipe_macros: Protein, Fat, Carbohydrates, Additional nutrition metrics
+
+# v101.8: standard bottom navigation
+render_page_nav("Manage & Allocate Recipes", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

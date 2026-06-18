@@ -4,7 +4,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, compact
 from components.db import list_members, queue_member_message, get_member_messages
 
 st.set_page_config(page_title="Admin-Member Communication", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 st.markdown(
     """
@@ -84,3 +84,7 @@ with back_col:
         st.switch_page("pages/10_Admin_Dashboard.py")
 
 # v96: Add st.success("Action completed successfully.") after completed communication actions.
+
+# v101.8: standard bottom navigation
+render_page_nav("Admin-Member Communication", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

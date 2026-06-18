@@ -510,3 +510,13 @@
 - System Tools retained with Database and NSP Recalculate only.
 - Comparative NSP Report Back/Evaluation Status/Dashboard navigation moved to bottom only.
 - No scoring, recalculation, scheduling/reschedule, daily log, report logic, save, filter, or database schema changes.
+
+## v101.8 - Admin Navigation/Header Standardization + Evaluation Status Action Fix
+
+- Comparative NSP Report bottom navigation now renders before empty-state stop cases.
+- Comparative NSP Report bottom nav includes Back, Evaluation Status and Dashboard.
+- Evaluation Status info message removed.
+- Evaluation Status search bar replaced by status-filtered member dropdown.
+- Evaluation Status expand/collapse flow replaced by direct workflow buttons.
+- Bottom Back/Dashboard navigation standardized on listed admin pages.
+- No scoring, recalculation, scheduling/reschedule, daily log data logic, report calculations, save, filter, or database schema changes.

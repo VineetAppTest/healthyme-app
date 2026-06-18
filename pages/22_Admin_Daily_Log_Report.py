@@ -19,9 +19,8 @@ from components.db import (
 )
 
 st.set_page_config(page_title="Daily Food Journal Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 # v101.6: top page navigation removed; bottom nav remains standard
-# render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 st.markdown("""
 <style>
 .hm-full-day-black-row{
@@ -451,8 +450,6 @@ if st.button("Send gentle Daily Log reminder", type="secondary", use_container_w
     st.success("Reminder queued for the member and marked for email notification.")
 card_end()
 
-render_page_nav("Daily Logs", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
-
-
-
-
+# v101.8: standard bottom navigation
+render_page_nav("Daily Food Journal Report", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

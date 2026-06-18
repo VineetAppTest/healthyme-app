@@ -1,222 +1,107 @@
 import streamlit as st
 import pandas as pd
+
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, topbar, stat_grid, render_page_nav, render_back_to_top
+from components.ui_common import (
+    inject_global_styles,
+    apply_luxe_theme,
+    utility_logout_bar,
+    topbar,
+    stat_grid,
+    render_page_nav,
+    render_back_to_top,
+)
 from components.db import list_members
 
 st.set_page_config(page_title="Eval Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 
-st.markdown("""
-<style>
-/* --- Eval Status nav spacing cleanup --- */
-
-/* Tighten only this page without touching other admin pages */
-.block-container{
-  padding-top:.35rem!important;
-}
-
-/* Remove legacy empty nav shell spacing on this page */
-.hm-native-nav-shell{display:none!important;}
-
-
-/* v101.6: inline version now handled by canonical topbar */
-
-
-/* Top/bottom page nav on Evaluation Status */
-.hm-native-nav-shell{
-  margin:.18rem 0 .62rem 0!important;
-  padding:.42rem .52rem!important;
-  border-radius:16px!important;
-  box-shadow:0 5px 14px rgba(25,36,31,.04)!important;
-}
-.hm-native-nav-shell div[data-testid="stPageLink"] a{
-  min-height:42px!important;
-  height:42px!important;
-  border-radius:14px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-weight:900!important;
-}
-
-/* Hero/card spacing */
-.hero-shell{
-  margin:.4rem 0 1rem 0!important;
-  padding:1.15rem 1.25rem!important;
-}
-.hero-title{
-  line-height:1.08!important;
-}
-.hero-subtitle{
-  margin-top:.25rem!important;
-}
-
-/* Search/filter panel */
-.member-filter-panel{
-  margin:.85rem 0 .65rem 0!important;
-  padding:.95rem 1rem!important;
-  border-radius:18px!important;
-}
-
-/* Member list instruction */
-.hm-v95-13-member-row-note{
-  color:#102A43;
-  font-size:.96rem;
-  margin:.2rem 0 .72rem 0;
-}
-
-/* Member toggle rows */
-.hm-v95-13-member-list-anchor ~ div div[data-testid="stButton"] > button{
-  background:#FFFFFF!important;
-  color:#064E3B!important;
-  border:1.35px solid #CDBB8F!important;
-  border-radius:14px!important;
-  min-height:43px!important;
-  height:43px!important;
-  padding:0 1rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-weight:850!important;
-  box-shadow:0 4px 12px rgba(25,36,31,.05)!important;
-  line-height:1.05!important;
-}
-.hm-v95-13-member-list-anchor ~ div div[data-testid="stButton"] > button *{
-  color:#064E3B!important;
-  line-height:1.05!important;
-}
-
-/* Open member detail panel */
-.member-detail-panel{
-  margin:.75rem 0 1.15rem 0!important;
-  padding:1rem 1.05rem 1.1rem 1.05rem!important;
-  border-radius:18px!important;
-}
-.member-row-header{
-  margin-bottom:.65rem!important;
-}
-.eval-status-grid{
-  gap:.65rem!important;
-  margin:.55rem 0 .75rem 0!important;
-}
-.eval-status-card{
-  min-height:74px!important;
-  padding:.78rem .9rem!important;
-  border-radius:16px!important;
-}
-.eval-section-note{
-  margin:.55rem 0 .65rem 0!important;
-}
-
-/* Final action grid: locked and scoped only to the opened-member button row */
-.hm-v95-13-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
-  display:grid!important;
-  grid-template-columns:repeat(4,minmax(0,1fr))!important;
-  gap:.9rem!important;
-  align-items:stretch!important;
-  width:100%!important;
-  margin:.25rem 0 .5rem 0!important;
-}
-.hm-v95-13-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"]{
-  width:100%!important;
-  min-width:0!important;
-  max-width:none!important;
-  flex:unset!important;
-  display:block!important;
-}
-.hm-v95-13-action-grid-anchor + div [data-testid="stHorizontalBlock"] > div[data-testid="column"] > div,
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"]{
-  width:100%!important;
-  min-height:44px!important;
-  height:44px!important;
-  max-height:44px!important;
-}
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button{
-  appearance:none!important;
-  -webkit-appearance:none!important;
-  width:100%!important;
-  min-width:100%!important;
-  max-width:100%!important;
-  min-height:44px!important;
-  height:44px!important;
-  max-height:44px!important;
-  padding:0 1rem!important;
-  margin:0!important;
-  border-radius:14px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  align-self:stretch!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  line-height:1!important;
-  font-size:1rem!important;
-  font-weight:850!important;
-  box-sizing:border-box!important;
-  background:#FFFFFF!important;
-  color:#064E3B!important;
-  border:1.35px solid #CDBB8F!important;
-  box-shadow:0 4px 12px rgba(25,36,31,.055)!important;
-}
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button > div,
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button > div > p,
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button p,
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button span,
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button *{
-  margin:0!important;
-  padding:0!important;
-  line-height:1!important;
-  font-size:1rem!important;
-  font-weight:850!important;
-  color:inherit!important;
-}
-
-
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"]{
-  line-height:1!important;
-  overflow:hidden!important;
-}
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button::after,
-.hm-v95-13-action-grid-anchor + div div[data-testid="stButton"] > button::before{
-  display:none!important;
-  content:""!important;
-}
-
-@media(max-width:768px){
-  .hm-v95-13-action-grid-anchor + div [data-testid="stHorizontalBlock"]{
-    grid-template-columns:1fr 1fr!important;
-    gap:.65rem!important;
-  }
-  .hero-shell{
-    padding:1rem!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-
-rows = list_members()
-
-# v101.6: top Back/Dashboard row removed to preserve standard header order
-# render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
-
+inject_global_styles()
+apply_luxe_theme()
+require_admin()
+utility_logout_bar()
 topbar(
     "Evaluation Status of All Members",
-    "Track member progress, then open a member row below to continue admin assessment.",
+    "Track member progress, then continue admin assessment from the selected member action buttons.",
     "Review workflow",
 )
 
+st.markdown("""
+<style>
+/* v101.8 Evaluation Status action flow */
+.member-filter-panel{
+  border:1px solid #E3C98E;
+  background:#FFFDF8;
+  border-radius:18px;
+  padding:.95rem 1rem;
+  margin:.65rem 0 .85rem 0;
+  box-shadow:0 8px 20px rgba(15,23,42,.04);
+}
+.eval-section-title{
+  color:#064E3B;
+  font-size:1.02rem;
+  font-weight:950;
+  margin:.85rem 0 .36rem 0;
+}
+.eval-section-note{
+  color:#475569;
+  font-size:.88rem;
+  font-weight:700;
+  margin:0 0 .70rem 0;
+}
+.member-count-pill{
+  display:inline-flex;
+  padding:.22rem .56rem;
+  border-radius:999px;
+  background:#FFF7E6;
+  border:1px solid #E3C98E;
+  color:#7A5A16;
+  font-size:.78rem;
+  font-weight:850;
+  margin:.25rem 0 .70rem 0;
+}
+.member-detail-panel{
+  border:1px solid #E3C98E;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);
+  border-radius:20px;
+  padding:1rem 1.08rem;
+  box-shadow:0 10px 24px rgba(15,23,42,.05);
+  margin:.50rem 0 .95rem 0;
+}
+.eval-status-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.65rem;
+  margin:.55rem 0 .85rem 0;
+}
+.eval-status-card{
+  border:1px solid #E3C98E;
+  background:#FFFDF8;
+  border-radius:16px;
+  padding:.78rem .9rem;
+}
+.eval-status-label{
+  color:#64748B;
+  font-size:.74rem;
+  text-transform:uppercase;
+  font-weight:850;
+}
+.eval-status-value{
+  color:#064E3B;
+  font-size:1.02rem;
+  font-weight:950;
+  margin-top:.12rem;
+}
+@media(max-width:768px){
+  .eval-status-grid{grid-template-columns:1fr;}
+}
+</style>
+""", unsafe_allow_html=True)
 
 def pretty_status(raw):
     return (raw or "not_started").replace("_", " ").title()
 
 def state_text(done):
     return "Done" if done else "Pending"
-
-def card_class(done):
-    return "eval-ok" if done else "eval-warn"
 
 def next_action(member):
     if member.get("final_report_ready"):
@@ -227,6 +112,7 @@ def next_action(member):
         return "Wait for NSP Completion"
     return "Await Member Submission"
 
+rows = list_members()
 total = len(rows)
 submitted = sum(1 for m in rows if m.get("submitted"))
 in_progress = sum(1 for m in rows if m.get("workflow_status") == "in_progress")
@@ -239,175 +125,86 @@ stat_grid([
     {"label": "Final Ready", "value": final_ready, "note": "Reports available"},
 ])
 
-st.markdown(
-    """
-    <div class='member-filter-panel'>
-      <b>Find members faster</b><br>
-      <span style='color:var(--hm-muted);font-size:.9rem;'>Search by name/email and filter by workflow status.</span>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-f1, f2 = st.columns([2, 1])
-with f1:
-    search = st.text_input(
-        "Search members",
-        placeholder="Type member name or email",
-        label_visibility="collapsed"
-    )
-with f2:
+st.markdown("<div class='member-filter-panel'>", unsafe_allow_html=True)
+filter_col, member_col = st.columns([1, 2], gap="medium")
+with filter_col:
     status_options = ["All", "Not Started", "In Progress", "Submitted", "Admin Completed", "Finalized"]
-    status_filter = st.selectbox("Status filter", status_options, label_visibility="collapsed")
-
+    status_filter = st.selectbox("Status filter", status_options)
 filtered = rows
-
-if search.strip():
-    q = search.strip().lower()
-    filtered = [
-        m for m in filtered
-        if q in m.get("name", "").lower() or q in m.get("email", "").lower()
-    ]
-
 if status_filter != "All":
-    filtered = [
-        m for m in filtered
-        if pretty_status(m.get("workflow_status")) == status_filter
-    ]
+    filtered = [m for m in filtered if pretty_status(m.get("workflow_status")) == status_filter]
 
+with member_col:
+    member_labels = ["Select member"] + [f"{m.get('name','')} — {m.get('email','')}" for m in filtered]
+    selected_label = st.selectbox("Select member to continue admin assessment", member_labels)
+
+st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(f"<div class='member-count-pill'>{len(filtered)} member(s) shown</div>", unsafe_allow_html=True)
 
-if "open_member_id" not in st.session_state:
-    st.session_state["open_member_id"] = None
-
 if not filtered:
-    st.info("No members match the selected search/filter.")
+    st.info("No members match the selected status filter.")
 else:
-    st.markdown("<div class='eval-section-title'>Member Overview</div>", unsafe_allow_html=True)
-    st.markdown(
-        "<div class='eval-section-note'>This table is for quick status tracking only. Admin actions are available in the member rows below.</div>",
-        unsafe_allow_html=True
-    )
-
     preview = pd.DataFrame([
         {
             "Name": m["name"],
             "Email": m["email"],
-            "LAF": state_text(m["laf_completed"]),
-            "NSP1": state_text(m["nsp1_completed"]),
-            "NSP2": state_text(m["nsp2_completed"]),
-            "Status": pretty_status(m["workflow_status"]),
-            "Final": "Ready" if m["final_report_ready"] else "Pending",
+            "LAF": state_text(m.get("laf_completed")),
+            "NSP1": state_text(m.get("nsp1_completed")),
+            "NSP2": state_text(m.get("nsp2_completed")),
+            "Status": pretty_status(m.get("workflow_status")),
+            "Final": "Ready" if m.get("final_report_ready") else "Pending",
             "Next Action": next_action(m),
         }
         for m in filtered
     ])
+    st.markdown("<div class='eval-section-title'>Member Overview</div>", unsafe_allow_html=True)
     st.dataframe(preview, use_container_width=True, hide_index=True)
 
-    st.markdown(
-        """
-        <div class='eval-helper-box'>
-          <b>How to fill the 5 admin assessment pages:</b><br>
-          Open a member below and click <b>Fill Admin Page</b>. The admin assessment form contains the admin sections/questions and allows saving draft or generating the final report.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+if selected_label != "Select member":
+    selected_member = filtered[member_labels.index(selected_label) - 1]
+    st.session_state["selected_member_id"] = selected_member.get("id")
+    st.session_state["selected_member_email"] = selected_member.get("email")
+    st.session_state["selected_member_name"] = selected_member.get("name")
 
     st.markdown("<div class='eval-section-title'>Select Member to Continue Admin Assessment</div>", unsafe_allow_html=True)
+    st.markdown("<div class='eval-section-note'>Use the buttons below to open the required workflow directly. This replaces the old expand/collapse member detail flow.</div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='member-detail-panel'>", unsafe_allow_html=True)
+    st.subheader(selected_member.get("name", "Selected member"))
+    st.caption(selected_member.get("email", ""))
+
     st.markdown(
-        "<div class='eval-section-note'>Click a member name to open details. Click the same member again to close it.</div>",
-        unsafe_allow_html=True
+        f"""
+        <div class='eval-status-grid'>
+          <div class='eval-status-card'><div class='eval-status-label'>LAF</div><div class='eval-status-value'>{state_text(selected_member.get("laf_completed"))}</div></div>
+          <div class='eval-status-card'><div class='eval-status-label'>NSP Page 1</div><div class='eval-status-value'>{state_text(selected_member.get("nsp1_completed"))}</div></div>
+          <div class='eval-status-card'><div class='eval-status-label'>NSP Page 2</div><div class='eval-status-value'>{state_text(selected_member.get("nsp2_completed"))}</div></div>
+          <div class='eval-status-card'><div class='eval-status-label'>Workflow Status</div><div class='eval-status-value'>{pretty_status(selected_member.get("workflow_status"))}</div></div>
+          <div class='eval-status-card'><div class='eval-status-label'>Final Report</div><div class='eval-status-value'>{'Ready' if selected_member.get("final_report_ready") else 'Pending'}</div></div>
+          <div class='eval-status-card'><div class='eval-status-label'>Next Action</div><div class='eval-status-value'>{next_action(selected_member)}</div></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    for member in filtered:
-        is_open = st.session_state.get("open_member_id") == member["id"]
-        toggle_label = f"{'[−]' if is_open else '[+]'}  {member['name']}"
+    b1, b2, b3, b4 = st.columns(4, gap="medium")
+    with b1:
+        if st.button("Partial Report", key="eval_v1018_partial", use_container_width=True):
+            st.switch_page("pages/12_Partial_Assessment_Report.py")
+    with b2:
+        if st.button("Admin Page", key="eval_v1018_admin", use_container_width=True):
+            st.switch_page("pages/13_Admin_Assessment_Form.py")
+    with b3:
+        if st.button("Full Report", key="eval_v1018_full", use_container_width=True):
+            st.switch_page("pages/14_Final_Assessment_Report.py")
+    with b4:
+        if st.button("Daily Logs", key="eval_v1018_daily", use_container_width=True):
+            st.session_state["selected_daily_log_member_id"] = selected_member.get("id")
+            st.switch_page("pages/22_Admin_Daily_Log_Report.py")
 
-        if st.button(toggle_label, key=f"toggle_{member['id']}", use_container_width=True):
-            if is_open:
-                st.session_state["open_member_id"] = None
-            else:
-                st.session_state["open_member_id"] = member["id"]
-            st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
-        if is_open:
-            st.markdown("<div class='member-detail-panel'>", unsafe_allow_html=True)
-            st.markdown(
-                f"""
-                <div class='member-row-header'>
-                  <div>
-                    <div class='member-row-name'>{member['name']}</div>
-                    <div class='member-row-email'>{member['email']}</div>
-                  </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()
 
-            laf_cls = card_class(member["laf_completed"])
-            nsp1_cls = card_class(member["nsp1_completed"])
-            nsp2_cls = card_class(member["nsp2_completed"])
-            final_cls = "eval-gold" if member["final_report_ready"] else "eval-warn"
-            status = pretty_status(member["workflow_status"])
-
-            st.markdown(
-                f"""
-                <div class='eval-status-grid'>
-                  <div class='eval-status-card {laf_cls}'>
-                    <div class='eval-status-label'>LAF</div>
-                    <div class='eval-status-value'>{state_text(member["laf_completed"])}</div>
-                  </div>
-                  <div class='eval-status-card {nsp1_cls}'>
-                    <div class='eval-status-label'>NSP Page 1</div>
-                    <div class='eval-status-value'>{state_text(member["nsp1_completed"])}</div>
-                  </div>
-                  <div class='eval-status-card {nsp2_cls}'>
-                    <div class='eval-status-label'>NSP Page 2</div>
-                    <div class='eval-status-value'>{state_text(member["nsp2_completed"])}</div>
-                  </div>
-                  <div class='eval-status-card eval-info'>
-                    <div class='eval-status-label'>Workflow Status</div>
-                    <div class='eval-status-value'>{status}</div>
-                  </div>
-                  <div class='eval-status-card {final_cls}'>
-                    <div class='eval-status-label'>Final Report</div>
-                    <div class='eval-status-value'>{'Ready' if member["final_report_ready"] else 'Pending'}</div>
-                  </div>
-                  <div class='eval-status-card eval-info'>
-                    <div class='eval-status-label'>Next Action</div>
-                    <div class='eval-status-value'>{next_action(member)}</div>
-                  </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            st.markdown(
-                "<div class='eval-section-note hm-v95-13-member-row-note'>Use the buttons below to continue work for this selected member.</div>",
-                unsafe_allow_html=True
-            )
-
-            st.markdown("<div class='hm-v95-13-action-grid-anchor'></div>", unsafe_allow_html=True)
-            b1, b2, b3, b4 = st.columns(4)
-            with b1:
-                if st.button("Partial Report", key=f"pr_{member['id']}", type="secondary", use_container_width=True):
-                    st.session_state["selected_member_id"] = member["id"]
-                    st.switch_page("pages/12_Partial_Assessment_Report.py")
-            with b2:
-                if st.button("Admin Page", key=f"ap_{member['id']}", type="secondary", use_container_width=True):
-                    st.session_state["selected_member_id"] = member["id"]
-                    st.switch_page("pages/13_Admin_Assessment_Form.py")
-            with b3:
-                # v95.13: same signature as the other action buttons; no tooltip/help DOM.
-                if st.button("Full Report", key=f"fr_{member['id']}", type="secondary", use_container_width=True):
-                    st.session_state["selected_member_id"] = member["id"]
-                    st.switch_page("pages/14_Final_Assessment_Report.py")
-
-            with b4:
-                if st.button("Daily Logs", key=f"dl_{member['id']}", type="secondary", use_container_width=True):
-                    st.session_state["selected_member_id"] = member["id"]
-                    st.session_state["selected_daily_log_member_id"] = member["id"]
-                    st.switch_page("pages/22_Admin_Daily_Log_Report.py")
-
-render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
+# v101.8: Evaluation Status dropdown and direct action flow.

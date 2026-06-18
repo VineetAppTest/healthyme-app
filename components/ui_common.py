@@ -7651,8 +7651,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v101.7"
-APP_BUILD_LABEL = "Admin Dashboard Comparative Nav Polish"
+APP_BUILD_VERSION = "v101.8"
+APP_BUILD_LABEL = "Admin Nav Header EvalStatus Action Fix"
 
 
 def admin_version_line_v98_1():
@@ -7974,8 +7974,8 @@ def inject_keepalive_guard_v96_11():
 # --------------------------------------------------------------------
 # v101.6: Canonical Header/Nav/Button Polish Final Override
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v101.7"
-APP_BUILD_LABEL = "Admin Dashboard Comparative Nav Polish"
+APP_BUILD_VERSION = "v101.8"
+APP_BUILD_LABEL = "Admin Nav Header EvalStatus Action Fix"
 
 def _hm_v1016_is_admin_context():
     """Robust admin detection for version display.
@@ -8181,4 +8181,76 @@ def render_back_to_top():
 
 def render_build_text_v101_6(): return None
 def render_version_tag(): return None
+
+
+# --------------------------------------------------------------------
+# v101.8: Final admin header/nav override
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v101.8"
+APP_BUILD_LABEL = "Admin Nav Header EvalStatus Action Fix"
+
+def admin_version_line_v98_1():
+    role = str(st.session_state.get("user_role", "") or st.session_state.get("role", "") or "").strip().lower()
+    if "member" in role:
+        return ""
+    if "admin" in role or "nutrition" in role or st.session_state.get("is_admin") or st.session_state.get("admin_logged_in"):
+        return f"<span class='hm-admin-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
+    return ""
+
+def _hm_v1018_css():
+    st.markdown("""
+    <style>
+    section.main > div.block-container,.main .block-container,[data-testid="stAppViewBlockContainer"],.stMainBlockContainer,.block-container{padding-top:.72rem!important;}
+    .utility-bar{min-height:2.84rem!important;height:2.84rem!important;padding:.42rem .72rem!important;margin-top:0!important;margin-bottom:.72rem!important;display:flex!important;align-items:center!important;box-sizing:border-box!important;}
+    .hero-shell{margin-top:0!important;margin-bottom:.72rem!important;}
+    .hm-v1018-brand-row{display:flex!important;align-items:center!important;gap:.62rem!important;flex-wrap:wrap!important;}
+    .hm-v1018-brand{color:#064E3B!important;font-size:.82rem!important;font-weight:950!important;letter-spacing:.10em!important;text-transform:uppercase!important;}
+    .hm-admin-version-inline{display:inline-flex!important;align-items:center!important;padding:.14rem .46rem!important;border-radius:999px!important;border:1px solid #E3C98E!important;background:#FFF7E6!important;color:#475569!important;font-size:.72rem!important;font-weight:850!important;letter-spacing:.01em!important;vertical-align:middle!important;}
+    .hm-bottom-nav-shell,.hm-native-nav-shell{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;margin:1rem 0 .90rem 0!important;}
+    div[data-testid="stButton"]>button,button[kind="secondary"],button[kind="primary"],.stButton>button,div[data-testid="stPageLink"] a{min-height:2.72rem!important;border-radius:14px!important;border:1.25px solid #D9C28F!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:850!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;text-decoration:none!important;}
+    div[data-testid="stButton"]>button:hover,button[kind="secondary"]:hover,button[kind="primary"]:hover,.stButton>button:hover,div[data-testid="stPageLink"] a:hover{border-color:#B89345!important;background:#FFF7E6!important;color:#003C36!important;box-shadow:0 6px 16px rgba(15,23,42,.06)!important;}
+    div[data-testid="stTextInput"] input,div[data-testid="stNumberInput"] input,div[data-testid="stTextArea"] textarea,div[data-testid="stSelectbox"] [data-baseweb="select"]>div,div[data-testid="stDateInput"] input,div[data-testid="stTimeInput"] input{border-radius:12px!important;}
+    </style>
+    """, unsafe_allow_html=True)
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    _hm_v1018_css()
+    st.markdown(f"""
+    <div class='hero-shell'>
+      <div class='hm-v1018-brand-row'><span class='hm-v1018-brand'>HealthyMe</span>{admin_version_line_v98_1()}</div>
+      <div class='hero-kicker'>{kicker}</div>
+      <div class='hero-title'>{title}</div>
+      {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+      <div><span class='meta-pill'>Guided wellness workflow</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def compact_topbar(title, subtitle="", kicker="HealthyMe"):
+    _hm_v1018_css()
+    topbar(title, subtitle, kicker)
+
+def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_Admin_Dashboard.py', evaluation_page='pages/11_Evaluation_Status.py', *, location='top', show_dashboard=True, show_evaluation=True):
+    if location == 'top':
+        return
+    _hm_v1018_css()
+    st.markdown("<div class='hm-bottom-nav-shell hm-native-nav-shell'>", unsafe_allow_html=True)
+    items = []
+    if back_page:
+        items.append(("← Back", back_page))
+    if show_evaluation:
+        items.append(("Evaluation Status", evaluation_page))
+    if show_dashboard:
+        items.append(("Dashboard", dashboard_page))
+    if not items:
+        st.markdown("</div>", unsafe_allow_html=True)
+        return
+    cols = st.columns(len(items), gap="large")
+    for i, (label, page) in enumerate(items):
+        with cols[i]:
+            _safe_page_link(page, label)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+def render_back_to_top():
+    _hm_v1018_css()
+    st.markdown("<a id='top'></a><a class='hm-back-to-top' href='#top'>↑ Back to Top</a>", unsafe_allow_html=True)
 

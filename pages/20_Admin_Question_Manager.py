@@ -5,7 +5,7 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.config_cache import refresh_config_cache
 
 st.set_page_config(page_title="Question Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
 
@@ -237,3 +237,7 @@ with tab2:
 
 if st.button("Back to Dashboard"):
     st.switch_page("pages/10_Admin_Dashboard.py")
+
+# v101.8: standard bottom navigation
+render_page_nav("Question Manager", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

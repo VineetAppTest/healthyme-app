@@ -6,7 +6,7 @@ from components.db import create_user, load_db
 from components.auth0_management import provision_auth0_user, auth0_config_status
 
 st.set_page_config(page_title="Admin User Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 def valid_email(e):
     return re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", (e or "").strip()) is not None
@@ -98,3 +98,7 @@ st.dataframe(
 if st.button("Back to Dashboard"):
     st.switch_page("pages/10_Admin_Dashboard.py")
 card_end()
+
+# v101.8: standard bottom navigation
+render_page_nav("Create Users", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()
