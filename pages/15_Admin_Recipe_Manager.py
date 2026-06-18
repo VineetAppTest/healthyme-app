@@ -1,4 +1,4 @@
-from components.ui_common import render_page_nav, render_back_to_top, inject_recipe_exercise_v1022a_styles
+from components.ui_common import render_page_nav, render_back_to_top
 
 import pathlib
 import pandas as pd
@@ -11,8 +11,6 @@ from components.db import list_members, get_resource_assignments, save_resource_
 
 st.set_page_config(page_title="Manage & Allocate Recipes", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
-inject_recipe_exercise_v1022a_styles()
-st.markdown("""<div class='hm-v1022a-admin-note'>v102.2A restores the v93 allocation-first Recipe/Exercise manager layout while retaining latest image upload, feedback and allocation functionality.</div>""", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
@@ -168,9 +166,9 @@ def recipe_form(prefix, row=None):
 
 topbar("Manage & Allocate Recipes", "Manage image, title, timing, calories, macros, recipe details and member allocation.", "Admin content manager")
 
-tabs = st.tabs(["Allocate to Member", "Current Repository", "Add Recipe", "Import CSV", "Edit / Delete", "Member Feedback"])
+tabs = st.tabs(["Current Repository", "Add Recipe", "Import CSV", "Edit / Delete", "Member Feedback", "Allocate to Member"])
 
-with tabs[0]:
+with tabs[5]:
     st.subheader("Allocate Recipes to Member")
     members = list_members()
     df = load()
@@ -219,11 +217,11 @@ with tabs[0]:
             st.session_state[state_key] = set(selected)
             st.success("Recipe allocation saved. Member notification/email has been queued.")
 
-with tabs[1]:
+with tabs[0]:
     st.subheader("Current Recipe Repository")
     st.dataframe(load(), use_container_width=True, hide_index=False)
 
-with tabs[2]:
+with tabs[1]:
     st.subheader("Add New Recipe")
     values = recipe_form("new_recipe_v93")
     if st.button("Save Recipe", type="primary", use_container_width=True):
@@ -236,7 +234,7 @@ with tabs[2]:
             st.success("Recipe saved.")
             st.rerun()
 
-with tabs[3]:
+with tabs[2]:
     st.subheader("Import Recipe CSV")
     st.caption("CSV can include recipe details and image reference fields. For local images, fill image_file_name_to_upload in the CSV and upload matching image files below.")
     csv_file = st.file_uploader("Choose recipe CSV file", type=["csv"], key="recipe_csv_upload_v96_12")
@@ -257,7 +255,7 @@ with tabs[3]:
             st.success(f"CSV imported. {upload_count} image(s) uploaded and linked.")
             st.rerun()
 
-with tabs[4]:
+with tabs[3]:
     st.subheader("Edit or Delete Recipe")
     df = load()
     if df.empty:
@@ -285,7 +283,7 @@ with tabs[4]:
                 st.rerun()
 
 
-with tabs[5]:
+with tabs[4]:
     st.subheader("Member Recipe Feedback")
     members = list_members()
     if not members:
@@ -313,5 +311,3 @@ with tabs[5]:
 # v102.1: single canonical footer navigation only
 render_page_nav("Manage & Allocate Recipes", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
-
-# v102.2A reconciliation marker: v93 UX restored, latest functionality retained.

@@ -545,20 +545,11 @@
 - Each target page now has exactly one canonical bottom footer navigation.
 - No business logic, scoring, recalculation, scheduling/reschedule workflow, daily log data logic, report calculations, save, filter, or database schema changes.
 
-## v102.2A - Recipe/Exercise v93 UX Restoration
+## v102.2C - Recipe1 Exercise1 Runtime + Member Nav Hotfix
 
-- Restored v93-style Recipe/Exercise visual direction while retaining latest functionality.
-- Restored allocation-first admin tab order for Recipe/Exercise managers while retaining Member Feedback tab.
-- Added v102.2A Recipe/Exercise visual CSS guard.
-- Fixed Task Request Manager header spacing to align with Admin Dashboard global header.
-- Added reconciliation notes and UAT checklist.
-- No scoring/recalculation/scheduling/daily-log/report/database logic changes.
-
-## v102.2B - Recipe-1 / Exercise-1 Parallel UX + Member Nav Cleanup
-
-- Cleaned duplicate member navigation on My Schedule, Recipe Repository and Exercise Repository.
-- Added parallel Member Recipes-1 and Exercises-1 pages.
-- Added parallel Admin Manage & Allocate Recipes-1 and Exercises-1 pages.
-- Existing Recipe/Exercise pages retained as fallback.
-- Added Admin Dashboard and Member Home test entry points.
+- Fixed Recipe-1 / Exercise-1 runtime issue by placing shell after Streamlit setup.
+- Added/verified Member Recipes-1 and Member Exercises-1 pages.
+- Added/verified Admin Recipe-1 and Admin Exercise-1 pages.
+- Removed duplicate member-side footer navigation from My Schedule, Recipe Repository and Exercise Repository.
+- Old Recipe/Exercise pages remain available as fallback.
 - No database schema or business logic rewrite.

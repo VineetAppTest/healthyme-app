@@ -7,8 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from components.guards import require_member
-from components.ui_common import (    inject_recipe_exercise_v1022a_styles,
-
+from components.ui_common import (
     inject_global_styles,
     apply_luxe_theme,
     utility_logout_bar,
@@ -685,8 +684,7 @@ if is_detail_view:
     with nav_dashboard:
         pass  # v102.0 legacy direct navigation removed; use canonical footer
 else:
-    render_page_nav("Recipes", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
-
+    pass  # v102.2C internal duplicate footer removed; canonical footer below
 # v96_recipe_macro_display: Recipe cards/details should display Protein, Fat and Carbohydrates below Calories when available.
 
 
@@ -825,7 +823,6 @@ div[data-testid="stExpander"] summary p{
 # v100.9: Deferred compact hero + premium detail CSS for Recipe Repository.
 inject_global_styles()
 apply_luxe_theme()
-inject_recipe_exercise_v1022a_styles()
 
 
 st.markdown("""
@@ -915,6 +912,6 @@ div[data-testid="stExpander"] summary p{
 </style>
 """, unsafe_allow_html=True)
 
-# v102.2B: single canonical member footer
+# v102.2C: single canonical member footer
 render_page_nav("Recipes", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

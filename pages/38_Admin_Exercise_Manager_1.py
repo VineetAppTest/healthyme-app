@@ -1,13 +1,4 @@
-
-# v102.2B: parallel page shell
-st.markdown("""<style>.hm-v1022b-shell{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:20px;padding:1rem;margin:.75rem 0 1rem 0;box-shadow:0 10px 24px rgba(15,23,42,.05)}.hm-v1022b-title{color:#064E3B;font-size:1.08rem;font-weight:950;margin:0 0 .35rem 0}.hm-v1022b-note{color:#475569;font-size:.86rem;font-weight:720;margin:0}.hm-v1022b-chip{display:inline-flex;padding:.22rem .58rem;border:1px solid #E3C98E;border-radius:999px;background:#FFF7E6;color:#7A5A16;font-size:.76rem;font-weight:850;margin:.45rem .2rem 0 0}</style>
-<div class="hm-v1022b-shell">
-  <div class="hm-v1022b-title">Admin Exercise-1 parallel UX shell</div>
-  <div class="hm-v1022b-note">Admin exercise-library workspace inspired by the new mockup. Existing Exercise Manager remains available as fallback.</div>
-  <span class="hm-v1022b-chip">Parallel UX</span><span class="hm-v1022b-chip">Existing data logic retained</span><span class="hm-v1022b-chip">Test safely</span>
-</div>
-""", unsafe_allow_html=True)
-from components.ui_common import render_page_nav, render_back_to_top, inject_recipe_exercise_v1022a_styles
+from components.ui_common import render_page_nav, render_back_to_top
 
 import pathlib
 import pandas as pd
@@ -18,10 +9,23 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 from components.storage_assets import upload_content_image, PUBLIC_BUCKET, PRIVATE_BUCKET
 from components.db import list_members, get_resource_assignments, save_resource_assignments, list_resource_feedback
 
-st.set_page_config(page_title="Manage & Allocate Exercises-1", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Manage & Allocate Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+
+# v102.2C: parallel page shell placed after Streamlit setup
+st.markdown("""
+<style>
+.hm-v1022c-shell{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:20px;padding:1rem;margin:.75rem 0 1rem 0;box-shadow:0 10px 24px rgba(15,23,42,.05)}
+.hm-v1022c-title{color:#064E3B;font-size:1.08rem;font-weight:950;margin:0 0 .35rem 0}
+.hm-v1022c-note{color:#475569;font-size:.86rem;font-weight:720;margin:0}
+.hm-v1022c-chip{display:inline-flex;padding:.22rem .58rem;border:1px solid #E3C98E;border-radius:999px;background:#FFF7E6;color:#7A5A16;font-size:.76rem;font-weight:850;margin:.45rem .2rem 0 0}
+</style>
+<div class="hm-v1022c-shell">
+  <div class="hm-v1022c-title">Manage & Allocate Exercises-1</div>
+  <div class="hm-v1022c-note">Admin exercise-library workspace inspired by the new mockup. Existing Exercise Manager remains available as fallback.</div>
+  <span class="hm-v1022c-chip">Parallel UX</span><span class="hm-v1022c-chip">Existing data logic retained</span><span class="hm-v1022c-chip">Test safely</span>
+</div>
+""", unsafe_allow_html=True)
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
-inject_recipe_exercise_v1022a_styles()
-st.markdown("""<div class='hm-v1022a-admin-note'>v102.2A restores the v93 allocation-first Recipe/Exercise manager layout while retaining latest image upload, feedback and allocation functionality.</div>""", unsafe_allow_html=True)
 
 PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
 EXERCISE_COLUMNS = ['title', 'description', 'category', 'difficulty', 'goal_tags', 'condition_tags', 'duration_or_reps', 'hidden_calories_v96', 'equipment', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'instructions', 'benefits', 'status']
@@ -150,11 +154,11 @@ def exercise_form(prefix, row=None):
 # v101.6: top page navigation removed; bottom nav remains standard
 
 
-topbar("Manage & Allocate Exercises-1", "Manage image, title, timing, exercise details and member allocation.", "Admin content manager")
+topbar("Manage & Allocate Exercises", "Manage image, title, timing, exercise details and member allocation.", "Admin content manager")
 
-tabs = st.tabs(["Allocate to Member", "Current Repository", "Add Exercise", "Import CSV", "Edit / Delete", "Member Feedback"])
+tabs = st.tabs(["Current Repository", "Add Exercise", "Import CSV", "Edit / Delete", "Member Feedback", "Allocate to Member"])
 
-with tabs[0]:
+with tabs[5]:
     st.subheader("Allocate Exercises to Member")
     members = list_members()
     df = load()
@@ -203,11 +207,11 @@ with tabs[0]:
             st.session_state[state_key] = set(selected)
             st.success("Exercise allocation saved. Member notification/email has been queued.")
 
-with tabs[1]:
-    st.subheader("Current Manage & Allocate Exercises-1-1")
+with tabs[0]:
+    st.subheader("Current Exercise Repository")
     st.dataframe(load(), use_container_width=True, hide_index=False)
 
-with tabs[2]:
+with tabs[1]:
     st.subheader("Add New Exercise")
     values = exercise_form("new_exercise_v93")
     if st.button("Save Exercise", type="primary", use_container_width=True):
@@ -220,7 +224,7 @@ with tabs[2]:
             st.success("Exercise saved.")
             st.rerun()
 
-with tabs[3]:
+with tabs[2]:
     st.subheader("Import Exercise CSV")
     st.caption("CSV can include exercise details and image reference fields. For local images, fill image_file_name_to_upload in the CSV and upload matching image files below.")
     csv_file = st.file_uploader("Choose exercise CSV file", type=["csv"], key="exercise_csv_upload_v96_12")
@@ -241,7 +245,7 @@ with tabs[3]:
             st.success(f"CSV imported. {upload_count} image(s) uploaded and linked.")
             st.rerun()
 
-with tabs[4]:
+with tabs[3]:
     st.subheader("Edit or Delete Exercise")
     df = load()
     if df.empty:
@@ -269,7 +273,7 @@ with tabs[4]:
                 st.rerun()
 
 
-with tabs[5]:
+with tabs[4]:
     st.subheader("Member Exercise Feedback")
     members = list_members()
     if not members:
@@ -296,12 +300,6 @@ with tabs[5]:
 
 # v102.0: canonical global footer navigation
 
-# v102.1: single canonical footer navigation only
+# v102.2C: single canonical admin footer
 render_page_nav("Manage & Allocate Exercises-1", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
-render_back_to_top()
-
-# v102.2A reconciliation marker: v93 UX restored, latest functionality retained.
-
-# v102.2B: single canonical admin footer
-render_page_nav("Manage & Allocate Exercises-1-1", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
