@@ -1,3 +1,12 @@
+
+# v102.2B: parallel page shell
+st.markdown("""<style>.hm-v1022b-shell{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:20px;padding:1rem;margin:.75rem 0 1rem 0;box-shadow:0 10px 24px rgba(15,23,42,.05)}.hm-v1022b-title{color:#064E3B;font-size:1.08rem;font-weight:950;margin:0 0 .35rem 0}.hm-v1022b-note{color:#475569;font-size:.86rem;font-weight:720;margin:0}.hm-v1022b-chip{display:inline-flex;padding:.22rem .58rem;border:1px solid #E3C98E;border-radius:999px;background:#FFF7E6;color:#7A5A16;font-size:.76rem;font-weight:850;margin:.45rem .2rem 0 0}</style>
+<div class="hm-v1022b-shell">
+  <div class="hm-v1022b-title">Recipe-1 parallel UX shell</div>
+  <div class="hm-v1022b-note">Member meal library workspace inspired by the new mockup. Existing Recipes page remains available as fallback.</div>
+  <span class="hm-v1022b-chip">Parallel UX</span><span class="hm-v1022b-chip">Existing data logic retained</span><span class="hm-v1022b-chip">Test safely</span>
+</div>
+""", unsafe_allow_html=True)
 from components.ui_common import render_page_nav, render_back_to_top
 # v100.5 direct topbar import hotfix
 
@@ -21,35 +30,35 @@ from components.storage_assets import resolve_content_image_url
 from components.db import get_workflow, get_resource_assignments, save_resource_feedback, get_resource_feedback
 
 
-st.set_page_config(page_title="Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Recipes", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 require_member(); utility_logout_bar()
 
 
 
 
 
-topbar("Exercise Repository", "", "Member content")
+topbar("Recipes-1", "", "Member content")
 
-DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
+DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "recipes.csv"
 
-EXERCISE_COLUMNS = ['title', 'description', 'category', 'difficulty', 'goal_tags', 'condition_tags', 'duration_or_reps', 'hidden_calories_v96', 'equipment', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'instructions', 'benefits', 'status']
+RECIPE_COLUMNS = ['title', 'description', 'meal_type', 'diet_type', 'goal_tags', 'condition_tags', 'prep_time', 'calories', 'servings', 'portion_size', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'ingredients', 'steps', 'nutrition', 'status']
 
 FALLBACK_IMAGES = [
-    "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80",
-    "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=900&q=80",
-    "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=900&q=80",
-    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=80",
+    "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=900&q=80",
+    "https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=900&q=80",
+    "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80",
+    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=80",
 ]
 
 
-def load_exercises():
+def load_recipes():
     if not DATA_PATH.exists():
-        return pd.DataFrame(columns=EXERCISE_COLUMNS)
+        return pd.DataFrame(columns=RECIPE_COLUMNS)
     df = pd.read_csv(DATA_PATH)
-    for c in EXERCISE_COLUMNS:
+    for c in RECIPE_COLUMNS:
         if c not in df.columns:
             df[c] = ""
-    return df[EXERCISE_COLUMNS]
+    return df[RECIPE_COLUMNS]
 
 
 def esc(value):
@@ -77,7 +86,7 @@ def split_lines(value):
     return [raw.strip()] if raw.strip() else []
 
 
-def inject_exercise_css():
+def inject_recipe_css():
     st.markdown("""
 <style>
 .hm-module-shell{max-width:1120px;margin:0 auto;padding:.3rem 0 1.5rem 0;}
@@ -95,9 +104,11 @@ def inject_exercise_css():
 .hm-content-card-body{padding:1rem 1rem .9rem 1rem;}
 .hm-content-title{font-family:Georgia,serif;color:#064E3B;font-size:1.35rem;line-height:1.1;font-weight:900;margin:0 0 .7rem 0;}
 .hm-content-meta{display:flex;gap:.55rem;align-items:center;color:#365A45;font-weight:700;font-size:.92rem;}
+.hm-content-meta span{white-space:nowrap;}
+.hm-card-action{margin:-.2rem 0 1.1rem 0;}
 .hm-detail-hero{border-radius:22px;overflow:hidden;border:1px solid #E5D2A9;box-shadow:0 10px 26px rgba(15,23,42,.07);margin:.7rem 0 1rem 0;}
 .hm-detail-hero img{width:100%;height:340px;object-fit:cover;display:block;}
-.hm-detail-title{font-family:Georgia,serif;color:#064E3B;font-size:2.35rem;line-height:1.02;font-weight:900;margin:.8rem 0 1rem 0;}
+.hm-detail-title{font-family:Georgia,serif;color:#064E3B;font-size:2.45rem;line-height:1.02;font-weight:900;margin:.8rem 0 1rem 0;}
 .hm-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin:.7rem 0 1.15rem 0;}
 .hm-detail-pill{background:#FFFDF8;border:1px solid #E5D2A9;border-radius:18px;padding:.9rem 1rem;color:#064E3B;box-shadow:0 6px 18px rgba(15,23,42,.045);}
 .hm-detail-pill b{font-size:1.1rem;}
@@ -118,7 +129,7 @@ def inject_exercise_css():
   .hm-detail-pill{padding:.72rem .72rem;}
 }
 
-/* --- v94.2 Exercise Content UI Alignment --- */
+/* --- v94.2 Recipe Content UI Alignment --- */
 .hm-module-brand{
   text-align:left!important;
   margin:.15rem 0 .6rem 0!important;
@@ -170,7 +181,7 @@ def inject_exercise_css():
 }
 
 
-/* --- v94.3 Exercise Hard Layout Fix --- */
+/* --- v94.3 Recipe Hard Layout Fix --- */
 .hm-module-shell{
   max-width:1120px;
   margin:0 auto;
@@ -206,7 +217,7 @@ def inject_exercise_css():
 }
 
 
-/* --- v94.4 Exercise Functional Toolbar --- */
+/* --- v94.4 Recipe Functional Toolbar --- */
 .hm-module-shell{
   max-width:1120px;
   margin:0 auto;
@@ -290,7 +301,7 @@ def inject_exercise_css():
 }
 
 
-/* --- v94.5 Exercise Card Action Button Proportion Fix --- */
+/* --- v94.5 Recipe Card Action Button Proportion Fix --- */
 .hm-card-action-row{
   margin:-.35rem 0 1rem 0!important;
 }
@@ -364,7 +375,7 @@ def inject_exercise_css():
 }
 
 
-/* --- v94.6 Exercise Page-Level Button Normalization --- */
+/* --- v94.6 Recipe Page-Level Button Normalization --- */
 
 /* Normalise all module buttons first; this is intentionally page-level because
    Streamlit wraps buttons unpredictably inside column containers. */
@@ -454,89 +465,92 @@ div[data-testid="stButton"] > button *{
 def render_landing(df):
     st.markdown("<div class='hm-module-shell'>", unsafe_allow_html=True)
 
-    if "hm_exercise_filter_open" not in st.session_state:
-        st.session_state["hm_exercise_filter_open"] = False
-    if "hm_exercise_fav_only" not in st.session_state:
-        st.session_state["hm_exercise_fav_only"] = False
-    if "hm_exercise_favorites" not in st.session_state:
-        st.session_state["hm_exercise_favorites"] = set()
+    if "hm_recipe_filter_open" not in st.session_state:
+        st.session_state["hm_recipe_filter_open"] = False
+    if "hm_recipe_fav_only" not in st.session_state:
+        st.session_state["hm_recipe_fav_only"] = False
+    if "hm_recipe_favorites" not in st.session_state:
+        st.session_state["hm_recipe_favorites"] = set()
 
     st.markdown("<div class='hm-content-toolbar-anchor'></div>", unsafe_allow_html=True)
     tool_search_col, tool_filter_col, tool_fav_col = st.columns([12, 1, 1], gap="small")
     with tool_search_col:
-        search = st.text_input("Search exercises", placeholder="Search exercises...", label_visibility="collapsed", key="exercise_search_v94_4")
+        search = st.text_input("Search recipes", placeholder="Search recipes...", label_visibility="collapsed", key="recipe_search_v94_4")
     with tool_filter_col:
-        if st.button("☷", key="exercise_filter_toggle_v94_4", help="Filter exercises"):
-            st.session_state["hm_exercise_filter_open"] = not st.session_state["hm_exercise_filter_open"]
+        if st.button("☷", key="recipe_filter_toggle_v94_4", help="Filter recipes"):
+            st.session_state["hm_recipe_filter_open"] = not st.session_state["hm_recipe_filter_open"]
             st.rerun()
     with tool_fav_col:
-        fav_label = "♥" if st.session_state["hm_exercise_fav_only"] else "♡"
-        if st.button(fav_label, key="exercise_fav_only_toggle_v94_4", help="Show favourites only"):
-            st.session_state["hm_exercise_fav_only"] = not st.session_state["hm_exercise_fav_only"]
+        fav_label = "♥" if st.session_state["hm_recipe_fav_only"] else "♡"
+        if st.button(fav_label, key="recipe_fav_only_toggle_v94_4", help="Show favourites only"):
+            st.session_state["hm_recipe_fav_only"] = not st.session_state["hm_recipe_fav_only"]
             st.rerun()
 
-    category_filter = "All"
-    difficulty_filter = "All"
-    if st.session_state["hm_exercise_filter_open"]:
+    meal_filter = "All"
+    diet_filter = "All"
+    if st.session_state["hm_recipe_filter_open"]:
         st.markdown("<div class='hm-filter-panel'>", unsafe_allow_html=True)
-        st.markdown("<div class='hm-filter-note'>Filter exercises by category or difficulty.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-filter-note'>Filter recipes by meal type or diet type.</div>", unsafe_allow_html=True)
         fc1, fc2, fc3 = st.columns([1, 1, .7])
-        category_options = ["All"] + sorted([x for x in df.get("category", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
-        difficulty_options = ["All"] + sorted([x for x in df.get("difficulty", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
+        meal_options = ["All"] + sorted([x for x in df.get("meal_type", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
+        diet_options = ["All"] + sorted([x for x in df.get("diet_type", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
         with fc1:
-            category_filter = st.selectbox("Category", category_options, key="exercise_category_filter_v94_4")
+            meal_filter = st.selectbox("Meal type", meal_options, key="recipe_meal_filter_v94_4")
         with fc2:
-            difficulty_filter = st.selectbox("Difficulty", difficulty_options, key="exercise_difficulty_filter_v94_4")
+            diet_filter = st.selectbox("Diet type", diet_options, key="recipe_diet_filter_v94_4")
         with fc3:
-            if st.button("Clear filters", use_container_width=True, key="exercise_clear_filters_v94_4"):
-                st.session_state["exercise_category_filter_v94_4"] = "All"
-                st.session_state["exercise_difficulty_filter_v94_4"] = "All"
+            if st.button("Clear filters", use_container_width=True, key="recipe_clear_filters_v94_4"):
+                st.session_state["recipe_meal_filter_v94_4"] = "All"
+                st.session_state["recipe_diet_filter_v94_4"] = "All"
                 st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
     results = df.copy()
     if search.strip():
         q = search.strip().lower()
-        cols = ["title","description","category","difficulty","goal_tags","condition_tags","instructions","benefits","equipment"]
+        cols = ["title","description","meal_type","diet_type","goal_tags","condition_tags","ingredients","steps","nutrition"]
         mask = pd.Series(False, index=results.index)
         for c in cols:
             if c in results.columns:
                 mask = mask | results[c].fillna("").astype(str).str.lower().str.contains(q, regex=False)
         results = results[mask]
 
-    category_filter = st.session_state.get("exercise_category_filter_v94_4", category_filter)
-    difficulty_filter = st.session_state.get("exercise_difficulty_filter_v94_4", difficulty_filter)
-    if category_filter and category_filter != "All" and "category" in results.columns:
-        results = results[results["category"].fillna("").astype(str).eq(category_filter)]
-    if difficulty_filter and difficulty_filter != "All" and "difficulty" in results.columns:
-        results = results[results["difficulty"].fillna("").astype(str).eq(difficulty_filter)]
+    meal_filter = st.session_state.get("recipe_meal_filter_v94_4", meal_filter)
+    diet_filter = st.session_state.get("recipe_diet_filter_v94_4", diet_filter)
+    if meal_filter and meal_filter != "All" and "meal_type" in results.columns:
+        results = results[results["meal_type"].fillna("").astype(str).eq(meal_filter)]
+    if diet_filter and diet_filter != "All" and "diet_type" in results.columns:
+        results = results[results["diet_type"].fillna("").astype(str).eq(diet_filter)]
 
-    favs = set(st.session_state.get("hm_exercise_favorites", set()))
-    if st.session_state["hm_exercise_fav_only"]:
+    favs = set(st.session_state.get("hm_recipe_favorites", set()))
+    if st.session_state["hm_recipe_fav_only"]:
         results = results[results.index.astype(str).isin(favs)]
 
-    display_label = "Favourites" if st.session_state["hm_exercise_fav_only"] else ("All" if not search.strip() else esc(search.strip()))
+    display_label = "Favourites" if st.session_state["hm_recipe_fav_only"] else ("All" if not search.strip() else esc(search.strip()))
     st.markdown(f"<div class='hm-displaying'>Displaying - {display_label}</div>", unsafe_allow_html=True)
 
     if results.empty:
-        st.info("No matching exercises found.")
+        st.info("No matching recipes found.")
     else:
         for row_start in range(0, len(results), 2):
             cols = st.columns(2)
             for col_i, (idx, row) in enumerate(results.iloc[row_start:row_start+2].iterrows()):
                 with cols[col_i]:
                     img = image_for(row, idx)
-                    title = esc(row.get("title", "Untitled Exercise"))
-                    duration = esc(first_value(row, ["duration_or_reps"], ""))
-                    eid = str(idx)
-                    fav_mark = "♥" if eid in favs else "♡"
+                    title = esc(row.get("title", "Untitled Recipe"))
+                    prep = esc(first_value(row, ["prep_time"], ""))
+                    cal = esc(first_value(row, ["calories"], ""))
+                    rid = str(idx)
+                    fav_mark = "♥" if rid in favs else "♡"
                     st.markdown(f"""
 <div class='hm-content-card'>
   <img src='{esc(img)}'>
   <div class='hm-content-card-body'>
     <div class='hm-content-title'>{title}</div>
     <div class='hm-content-meta'>
-      <span>◷ {duration or "-"}</span>
+      <span>◷ {prep or "-"} mins</span>
+      <span>•</span>
+      <span>🍃 {cal or "-"} cal</span><span>•</span><span>Protein {esc(first_value(row, ["protein"], "-"))}</span><span>•</span><span>Fat {esc(first_value(row, ["fat"], "-"))}</span><span>•</span><span>Carbs {esc(first_value(row, ["carbohydrates"], "-"))}</span>
     </div>
   </div>
 </div>
@@ -544,65 +558,68 @@ def render_landing(df):
                     st.markdown("<div class='hm-card-action-row'>", unsafe_allow_html=True)
                     ac1, ac2 = st.columns([5, 1], gap="small")
                     with ac1:
-                        if st.button("View exercise", key=f"view_exercise_{idx}", type="secondary", use_container_width=True):
-                            st.session_state["hm_exercise_selected_id"] = eid
+                        if st.button("View recipe", key=f"view_recipe_{idx}", type="secondary", use_container_width=True):
+                            st.session_state["hm_recipe_selected_id"] = rid
                             st.rerun()
                     with ac2:
-                        if st.button(fav_mark, key=f"fav_exercise_{idx}", help="Add/remove favourite", type="secondary", use_container_width=True):
-                            favs = set(st.session_state.get("hm_exercise_favorites", set()))
-                            if eid in favs:
-                                favs.remove(eid)
+                        if st.button(fav_mark, key=f"fav_recipe_{idx}", help="Add/remove favourite", type="secondary", use_container_width=True):
+                            favs = set(st.session_state.get("hm_recipe_favorites", set()))
+                            if rid in favs:
+                                favs.remove(rid)
                             else:
-                                favs.add(eid)
-                            st.session_state["hm_exercise_favorites"] = favs
+                                favs.add(rid)
+                            st.session_state["hm_recipe_favorites"] = favs
                             st.rerun()
                     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 def render_detail(row, idx):
     img = image_for(row, idx)
-    title = str(row.get("title", "Untitled Exercise") or "Untitled Exercise")
+    title = str(row.get("title", "Untitled Recipe") or "Untitled Recipe")
 
     st.markdown("<div class='hm-module-shell'>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-detail-hero'><img src='{esc(img)}'></div>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-detail-title'>{esc(title)}</div>", unsafe_allow_html=True)
 
-    duration = first_value(row, ["duration_or_reps"], "-")
-    difficulty = first_value(row, ["difficulty"], "-")
-    equipment = first_value(row, ["equipment"], "-")
+    prep = first_value(row, ["prep_time"], "-")
+    calories = first_value(row, ["calories"], "-")
+    protein = first_value(row, ["protein"], "-")
+    fat = first_value(row, ["fat"], "-")
+    carbohydrates = first_value(row, ["carbohydrates"], "-")
+    additional_nutrition = str(row.get("additional_nutrition", "") or "").strip()
+    servings = first_value(row, ["servings"], "-")
+    portion = first_value(row, ["portion_size"], "-")
 
     st.markdown(f"""
 <div class='hm-detail-grid'>
-  <div class='hm-detail-pill'><b>◷ {esc(duration)}</b><span>Duration / reps</span></div>
-  <div class='hm-detail-pill'><b>📈 {esc(difficulty)}</b><span>Difficulty</span></div>
-  <div class='hm-detail-pill'><b>⚙ {esc(equipment)}</b><span>Equipment</span></div>
+  <div class='hm-detail-pill'><b>◷ {esc(prep)} Minutes</b><span>Prep time</span></div>
+  <div class='hm-detail-pill'><b>🔥 {esc(calories)} Calories</b><span>Per serving</span></div>
+  <div class='hm-detail-pill'><b>{esc(protein)}</b><span>Protein</span></div>
+  <div class='hm-detail-pill'><b>{esc(fat)}</b><span>Fat</span></div>
+  <div class='hm-detail-pill'><b>{esc(carbohydrates)}</b><span>Carbohydrates</span></div>
+  <div class='hm-detail-pill'><b>👥 {esc(servings)} Servings</b><span>Makes</span></div>
+  <div class='hm-detail-pill'><b>↗ {esc(portion)}</b><span>Portion</span></div>
 </div>
 """, unsafe_allow_html=True)
 
-    section_key_v1008 = f"exercise_detail_section_{idx}"
+    section_key_v1008 = f"recipe_detail_section_{idx}"
     if section_key_v1008 not in st.session_state:
-        st.session_state[section_key_v1008] = "overview"
-    sec_col1, sec_col2, sec_col3 = st.columns(3)
+        st.session_state[section_key_v1008] = "ingredients"
+    sec_col1, sec_col2 = st.columns(2)
     with sec_col1:
-        if st.button("Overview", use_container_width=True, key=f"exercise_tab_overview_{idx}"):
-            st.session_state[section_key_v1008] = "overview"
+        if st.button("Ingredients", use_container_width=True, key=f"recipe_tab_ingredients_{idx}"):
+            st.session_state[section_key_v1008] = "ingredients"
     with sec_col2:
-        if st.button("Instructions", use_container_width=True, key=f"exercise_tab_instructions_{idx}"):
+        if st.button("Instructions", use_container_width=True, key=f"recipe_tab_instructions_{idx}"):
             st.session_state[section_key_v1008] = "instructions"
-    with sec_col3:
-        if st.button("Benefits", use_container_width=True, key=f"exercise_tab_benefits_{idx}"):
-            st.session_state[section_key_v1008] = "benefits"
 
-    active_exercise_section_v1008 = st.session_state.get(section_key_v1008, "overview")
-    if active_exercise_section_v1008 == "overview":
-        section_title_v1013 = "Overview"
-        section_items_v1013 = split_lines(row.get("description", ""))
-    elif active_exercise_section_v1008 == "instructions":
-        section_title_v1013 = "Instructions"
-        section_items_v1013 = split_lines(row.get("instructions", ""))
+    active_recipe_section_v1008 = st.session_state.get(section_key_v1008, "ingredients")
+    if active_recipe_section_v1008 == "ingredients":
+        section_title_v1013 = "Ingredients"
+        section_items_v1013 = split_lines(row.get("ingredients", ""))
     else:
-        section_title_v1013 = "Benefits"
-        section_items_v1013 = split_lines(row.get("benefits", ""))
+        section_title_v1013 = "Instructions"
+        section_items_v1013 = split_lines(row.get("steps", ""))
 
     if section_items_v1013:
         rows_v1013 = "".join([
@@ -621,48 +638,48 @@ def render_detail(row, idx):
         unsafe_allow_html=True,
     )
 
-    existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "exercises", str(idx))
-    exercise_reset_token_v1006 = st.session_state.get(f"exercise_feedback_reset_{idx}", 0)
-    if st.session_state.pop(f"exercise_feedback_submitted_{idx}", False):
+    existing_feedback_v100 = get_resource_feedback(st.session_state["user_id"], "recipes", str(idx))
+    recipe_reset_token_v1006 = st.session_state.get(f"recipe_feedback_reset_{idx}", 0)
+    if st.session_state.pop(f"recipe_feedback_submitted_{idx}", False):
         st.balloons()
-        st.success("Exercise feedback submitted for admin review. The feedback form has been cleared.")
-    with st.expander("Exercise feedback", expanded=False):
+        st.success("Recipe feedback submitted for admin review. The feedback form has been cleared.")
+    with st.expander("Recipe feedback", expanded=False):
         st.markdown("<div class='hm-v1008-feedback-note'>Mark completion and share feedback for admin review.</div>", unsafe_allow_html=True)
-        status_options_v100 = ["Not started", "Completed", "Partially completed", "Need help / not suitable"]
-        exercise_status_v100 = st.selectbox("Exercise status", status_options_v100, index=0, key=f"exercise_feedback_status_{idx}_{exercise_reset_token_v1006}")
+        status_options_v100 = ["Not started", "Tried", "Liked", "Need help / not suitable"]
+        recipe_status_v100 = st.selectbox("Recipe status", status_options_v100, index=0, key=f"recipe_feedback_status_{idx}_{recipe_reset_token_v1006}")
         rating_options_v100 = ["", "1", "2", "3", "4", "5"]
-        exercise_rating_v100 = st.selectbox("Rating", rating_options_v100, index=0, key=f"exercise_feedback_rating_{idx}_{exercise_reset_token_v1006}")
-        exercise_notes_v100 = st.text_area("Member feedback", value="", key=f"exercise_feedback_notes_{idx}_{exercise_reset_token_v1006}")
-        if st.button("Submit feedback on exercise 🌿", type="primary", use_container_width=True, key=f"exercise_feedback_submit_{idx}_{exercise_reset_token_v1006}"):
+        recipe_rating_v100 = st.selectbox("Rating", rating_options_v100, index=0, key=f"recipe_feedback_rating_{idx}_{recipe_reset_token_v1006}")
+        recipe_notes_v100 = st.text_area("Member feedback", value="", key=f"recipe_feedback_notes_{idx}_{recipe_reset_token_v1006}")
+        if st.button("Submit feedback on recipe 🌿", type="primary", use_container_width=True, key=f"recipe_feedback_submit_{idx}_{recipe_reset_token_v1006}"):
             save_resource_feedback(
                 st.session_state["user_id"],
-                "exercises",
+                "recipes",
                 str(idx),
                 title=title,
-                status=exercise_status_v100,
-                rating=exercise_rating_v100,
-                notes=exercise_notes_v100,
+                status=recipe_status_v100,
+                rating=recipe_rating_v100,
+                notes=recipe_notes_v100,
             )
-            st.session_state[f"exercise_feedback_reset_{idx}"] = exercise_reset_token_v1006 + 1
-            st.session_state[f"exercise_feedback_submitted_{idx}"] = True
+            st.session_state[f"recipe_feedback_reset_{idx}"] = recipe_reset_token_v1006 + 1
+            st.session_state[f"recipe_feedback_submitted_{idx}"] = True
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 
 
-inject_exercise_css()
+inject_recipe_css()
 wf = get_workflow(st.session_state["user_id"])
 if not wf.get("admin_completed"):
     st.warning("Your personalized plan will unlock after expert evaluation is completed.")
     st.stop()
 
-df = load_exercises()
+df = load_recipes()
 df = df[df["status"].fillna("active").astype(str).str.lower().eq("active")].copy()
-assigned_ids = set(get_resource_assignments(st.session_state["user_id"], "exercises"))
+assigned_ids = set(get_resource_assignments(st.session_state["user_id"], "recipes"))
 if assigned_ids:
     df = df[df.index.astype(str).isin(assigned_ids)].copy()
 
-selected_id = st.session_state.get("hm_exercise_selected_id")
+selected_id = st.session_state.get("hm_recipe_selected_id")
 is_detail_view = selected_id is not None and selected_id.isdigit() and int(selected_id) in df.index
 
 if is_detail_view:
@@ -677,13 +694,15 @@ if is_detail_view:
     with nav_dashboard:
         pass  # v102.0 legacy direct navigation removed; use canonical footer
 else:
-    render_page_nav("Exercises", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
+    render_page_nav("Recipes", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
+
+# v96_recipe_macro_display: Recipe cards/details should display Protein, Fat and Carbohydrates below Calories when available.
 
 
-# v100.8: Deferred Exercise CSS after visible content to avoid invisible top spacing.
+# v100.8: Deferred Recipe CSS after visible content to avoid invisible top spacing.
 st.markdown("""
 <style>
-/* v100.8 Exercise structural polish */
+/* v100.8 Recipe structural polish */
 section.main > div.block-container,
 .main .block-container,
 [data-testid="stAppViewBlockContainer"],
@@ -812,7 +831,7 @@ div[data-testid="stExpander"] summary p{
 """, unsafe_allow_html=True)
 
 
-# v100.9: Deferred compact hero + premium detail CSS for Exercise Repository.
+# v100.9: Deferred compact hero + premium detail CSS for Recipes-1.
 inject_global_styles()
 apply_luxe_theme()
 inject_recipe_exercise_v1022a_styles()
@@ -906,5 +925,5 @@ div[data-testid="stExpander"] summary p{
 """, unsafe_allow_html=True)
 
 # v102.2B: single canonical member footer
-render_page_nav("Exercises", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_page_nav("Recipes-1", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

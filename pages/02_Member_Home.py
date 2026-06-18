@@ -851,3 +851,16 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+# v102.2B: optional parallel UX testing links
+st.markdown("""
+<div style="border:1px dashed #D9C28F;background:#FFF9EC;border-radius:18px;padding:.85rem .95rem;margin:.85rem 0;color:#7A5A16;font-weight:850;">
+New UX testing links
+</div>
+""", unsafe_allow_html=True)
+c1, c2 = st.columns(2, gap="medium")
+with c1:
+    if st.button("Recipes-1", key="member_home_recipes_1_v102_2b", use_container_width=True):
+        st.switch_page("pages/35_Recipe_Repository_1.py")
+with c2:
+    if st.button("Exercises-1", key="member_home_exercises_1_v102_2b", use_container_width=True):
+        st.switch_page("pages/36_Exercise_Repository_1.py")

@@ -553,3 +553,12 @@
 - Fixed Task Request Manager header spacing to align with Admin Dashboard global header.
 - Added reconciliation notes and UAT checklist.
 - No scoring/recalculation/scheduling/daily-log/report/database logic changes.
+
+## v102.2B - Recipe-1 / Exercise-1 Parallel UX + Member Nav Cleanup
+
+- Cleaned duplicate member navigation on My Schedule, Recipe Repository and Exercise Repository.
+- Added parallel Member Recipes-1 and Exercises-1 pages.
+- Added parallel Admin Manage & Allocate Recipes-1 and Exercises-1 pages.
+- Existing Recipe/Exercise pages retained as fallback.
+- Added Admin Dashboard and Member Home test entry points.
+- No database schema or business logic rewrite.

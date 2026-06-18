@@ -1,3 +1,12 @@
+
+# v102.2B: parallel page shell
+st.markdown("""<style>.hm-v1022b-shell{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:20px;padding:1rem;margin:.75rem 0 1rem 0;box-shadow:0 10px 24px rgba(15,23,42,.05)}.hm-v1022b-title{color:#064E3B;font-size:1.08rem;font-weight:950;margin:0 0 .35rem 0}.hm-v1022b-note{color:#475569;font-size:.86rem;font-weight:720;margin:0}.hm-v1022b-chip{display:inline-flex;padding:.22rem .58rem;border:1px solid #E3C98E;border-radius:999px;background:#FFF7E6;color:#7A5A16;font-size:.76rem;font-weight:850;margin:.45rem .2rem 0 0}</style>
+<div class="hm-v1022b-shell">
+  <div class="hm-v1022b-title">Exercise-1 parallel UX shell</div>
+  <div class="hm-v1022b-note">Member movement library workspace inspired by the new mockup. Existing Exercises page remains available as fallback.</div>
+  <span class="hm-v1022b-chip">Parallel UX</span><span class="hm-v1022b-chip">Existing data logic retained</span><span class="hm-v1022b-chip">Test safely</span>
+</div>
+""", unsafe_allow_html=True)
 from components.ui_common import render_page_nav, render_back_to_top
 # v100.5 direct topbar import hotfix
 
@@ -28,7 +37,7 @@ require_member(); utility_logout_bar()
 
 
 
-topbar("Exercise Repository", "", "Member content")
+topbar("Exercises-1", "", "Member content")
 
 DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
 
@@ -812,7 +821,7 @@ div[data-testid="stExpander"] summary p{
 """, unsafe_allow_html=True)
 
 
-# v100.9: Deferred compact hero + premium detail CSS for Exercise Repository.
+# v100.9: Deferred compact hero + premium detail CSS for Exercises-1.
 inject_global_styles()
 apply_luxe_theme()
 inject_recipe_exercise_v1022a_styles()
@@ -906,5 +915,5 @@ div[data-testid="stExpander"] summary p{
 """, unsafe_allow_html=True)
 
 # v102.2B: single canonical member footer
-render_page_nav("Exercises", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_page_nav("Exercises-1", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
