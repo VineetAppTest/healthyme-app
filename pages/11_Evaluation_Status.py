@@ -205,10 +205,11 @@ if selected_label != "Select member":
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 
 # v101.8: Evaluation Status dropdown and direct action flow.
 
 # v102.0: canonical global footer navigation
+
+# v102.1: single canonical footer navigation only
 render_page_nav("Evaluation Status", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

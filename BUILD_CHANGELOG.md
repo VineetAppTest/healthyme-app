@@ -535,3 +535,12 @@
 - Forced canonical bottom navigation via `render_page_nav()` / `render_back_to_top()`.
 - Excluded Admin Dashboard and Member Home from forced bottom navigation.
 - No scoring, recalculation, scheduling/reschedule, daily log data logic, report calculations, save, filter, or database schema changes.
+
+## v102.1 - Duplicate Legacy Navigation Removal
+
+- Removed duplicate older Back/Dashboard navigation from Evaluation Status.
+- Removed duplicate older Back/Dashboard navigation from Manage & Allocate Recipes.
+- Removed duplicate older Back/Dashboard navigation from Manage & Allocate Exercises.
+- Removed duplicate older Back/Dashboard navigation from Scheduling.
+- Each target page now has exactly one canonical bottom footer navigation.
+- No business logic, scoring, recalculation, scheduling/reschedule workflow, daily log data logic, report calculations, save, filter, or database schema changes.

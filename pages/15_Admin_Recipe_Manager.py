@@ -301,12 +301,13 @@ with tabs[4]:
             st.caption("No recipe feedback submitted by this member yet.")
 
 
-render_page_nav("Recipes", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
 
 # v96_recipe_macros: Protein, Fat, Carbohydrates, Additional nutrition metrics
 
 # v101.8: standard bottom navigation
 
 # v102.0: canonical global footer navigation
+
+# v102.1: single canonical footer navigation only
 render_page_nav("Manage & Allocate Recipes", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

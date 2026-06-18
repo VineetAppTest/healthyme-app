@@ -276,7 +276,6 @@ with tabs[4]:
             st.caption("No exercise feedback submitted by this member yet.")
 
 
-render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
 
 # v96: Allocation success message required: st.success("Exercise allocated successfully.") after allocation save.
 
@@ -285,5 +284,7 @@ render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evalu
 # v101.8: standard bottom navigation
 
 # v102.0: canonical global footer navigation
-render_page_nav("Manage & Allocate Exercise", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+
+# v102.1: single canonical footer navigation only
+render_page_nav("Manage & Allocate Exercises", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
