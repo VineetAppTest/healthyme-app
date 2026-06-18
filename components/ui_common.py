@@ -7651,8 +7651,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v101.8"
-APP_BUILD_LABEL = "Admin Nav Header EvalStatus Action Fix"
+APP_BUILD_VERSION = "v101.9"
+APP_BUILD_LABEL = "Admin BottomNav Import Hotfix"
 
 
 def admin_version_line_v98_1():
@@ -7974,8 +7974,8 @@ def inject_keepalive_guard_v96_11():
 # --------------------------------------------------------------------
 # v101.6: Canonical Header/Nav/Button Polish Final Override
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v101.8"
-APP_BUILD_LABEL = "Admin Nav Header EvalStatus Action Fix"
+APP_BUILD_VERSION = "v101.9"
+APP_BUILD_LABEL = "Admin BottomNav Import Hotfix"
 
 def _hm_v1016_is_admin_context():
     """Robust admin detection for version display.
@@ -8186,8 +8186,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v101.8: Final admin header/nav override
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v101.8"
-APP_BUILD_LABEL = "Admin Nav Header EvalStatus Action Fix"
+APP_BUILD_VERSION = "v101.9"
+APP_BUILD_LABEL = "Admin BottomNav Import Hotfix"
 
 def admin_version_line_v98_1():
     role = str(st.session_state.get("user_role", "") or st.session_state.get("role", "") or "").strip().lower()

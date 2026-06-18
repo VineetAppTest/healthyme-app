@@ -1,3 +1,4 @@
+from components.ui_common import render_page_nav, render_back_to_top
 import streamlit as st
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, compact_topbar, utility_logout_bar, render_back_to_top

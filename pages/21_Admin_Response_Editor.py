@@ -1,3 +1,4 @@
+from components.ui_common import render_page_nav, render_back_to_top
 
 def v96_response_editor_success():
     st.success("Response updated. Please download a fresh final report.")

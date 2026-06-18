@@ -1,3 +1,4 @@
+from components.ui_common import render_page_nav, render_back_to_top
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_keepalive_guard_v96_11, inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, format_local_ts, render_back_to_top

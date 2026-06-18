@@ -520,3 +520,9 @@
 - Evaluation Status expand/collapse flow replaced by direct workflow buttons.
 - Bottom Back/Dashboard navigation standardized on listed admin pages.
 - No scoring, recalculation, scheduling/reschedule, daily log data logic, report calculations, save, filter, or database schema changes.
+
+## v101.9 - Admin BottomNav Import Hotfix
+
+- Fixed `NameError: render_page_nav is not defined` on Admin Review, Task Request Manager and Create Users.
+- Added safe top-level `render_page_nav` / `render_back_to_top` fallback imports to every page using those helpers.
+- No UI redesign, scoring, recalculation, scheduling/reschedule, daily log data logic, report calculations, save, filter, or database schema changes.
