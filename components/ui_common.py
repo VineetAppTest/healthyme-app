@@ -3177,8 +3177,8 @@ def build_marker_v9():
     st.markdown("<div class='hm-build-marker'>✅ Build v9 active · Compact tooltip layout loaded</div>", unsafe_allow_html=True)
 
 
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def render_build_text_v11():
     """Small non-intrusive build text. Not a visual tag."""
@@ -3191,8 +3191,8 @@ def build_marker_v11():
 # --------------------------------------------------------------------
 # v12: Single source of truth for visible build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def render_current_build(compact=True):
     """Single current build marker used across all pages."""
@@ -3233,8 +3233,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v13: single current build text
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def render_current_build(compact=True):
     st.markdown(
@@ -3274,8 +3274,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v14: current build text
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def render_current_build(compact=True):
     st.markdown(
@@ -3378,8 +3378,8 @@ def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_A
 # --------------------------------------------------------------------
 # v23: version display + logout polish
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def render_build_text_v23():
     st.markdown(
@@ -3458,8 +3458,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v24: brand version placement
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def render_build_text_v24():
     st.markdown(
@@ -3526,8 +3526,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v25: current build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def render_build_text_v25():
     st.markdown(
@@ -3581,8 +3581,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v26: current build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def render_build_text_v26():
     st.markdown(
@@ -3637,8 +3637,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v27: current build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def render_build_text_v27():
     st.markdown(
@@ -3695,8 +3695,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v28: Body-Mind final unlock + version cleanup
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -3744,8 +3744,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v29: Manual Body-Mind unlock + version cleanup
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -3794,8 +3794,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v30: Manual Body-Mind unlock control
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -3845,8 +3845,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v31: Workflow + assessment instance sync
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -3897,8 +3897,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v32: Manual Body-Mind hard sync
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -3967,8 +3967,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v33: Body-Mind explicit access marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4046,8 +4046,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v34: Body-Mind NameError + logout fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4124,8 +4124,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v35: Body-Mind page guard fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4180,8 +4180,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v36: Body-Mind text removal + autosave check
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4237,8 +4237,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v37: Remove Body-Mind activation checkbox
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4295,8 +4295,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v38: Body-Mind disabled button UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4354,8 +4354,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v39: Admin 5 Pages autosave
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4414,8 +4414,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v40: Body-Mind status sync
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4475,8 +4475,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v41: Daily Log Flow
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4537,8 +4537,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v42: Day-based Daily Log
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4600,8 +4600,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v43: Progressive Daily Log + Repository
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4664,8 +4664,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v44: Daily Log one-section mode + Other slots
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4729,8 +4729,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v45: Daily Log compact Other fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4795,8 +4795,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v46: Admin info cleanup + Daily Log selector layout
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4881,8 +4881,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v47: Logout + Daily Log Backcompat + Reference Toggle
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4949,8 +4949,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v48: Nutritionist Message Archive
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5054,8 +5054,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v49: Logout Session Hardening
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5124,8 +5124,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v50: Member Home Message + Journey Compact
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5197,8 +5197,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v51: Timezone + Notes Archive + Back to Top
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5269,8 +5269,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v52: Login Logout Block Bottom
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5342,8 +5342,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v53: ImportError UI helper fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5416,8 +5416,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v54: Nutritionist Read Archive Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5491,8 +5491,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v55: Admin Dashboard Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5567,8 +5567,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v56: Daily Log Nutritionist Notification
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5644,8 +5644,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v57: Daily Log + LAF Restructure
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5722,8 +5722,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v58: LAF Restructure Correction
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5801,8 +5801,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v59: Structured Poop Rounds
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5881,8 +5881,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v60: Poop Layout Refinement
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5962,8 +5962,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v61: Stability + Premium UX Cleanup
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6061,8 +6061,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v62: Recent Saved Days Premium Layout
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6160,8 +6160,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v63: Recent Saved Days Borders + Toggle
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6260,8 +6260,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v64: Recent Saved Days Refinement
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6361,8 +6361,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v65: Daily Log + Admin UI Fixes
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6463,8 +6463,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v66: Nutritionist Message Dedupe
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6566,8 +6566,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v67: View History Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6670,8 +6670,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v68: View History Micro Alignment
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6775,8 +6775,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v69: Inline History Button Alignment
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6881,8 +6881,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v70: Streamlit Native Recent Saved Days
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6988,8 +6988,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v71: Compact Nutritionist History Block
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7096,8 +7096,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v72: Final Report Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7205,8 +7205,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v73: Guard Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7315,8 +7315,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v74: Final Report JSON Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7426,8 +7426,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v75: Final Report Diagnostics UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7538,8 +7538,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v76: Mobile Daily Log Timing Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7651,8 +7651,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 
 def admin_version_line_v98_1():
@@ -7974,8 +7974,8 @@ def inject_keepalive_guard_v96_11():
 # --------------------------------------------------------------------
 # v101.6: Canonical Header/Nav/Button Polish Final Override
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def _hm_v1016_is_admin_context():
     """Robust admin detection for version display.
@@ -8186,8 +8186,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v101.8: Final admin header/nav override
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def admin_version_line_v98_1():
     role = str(st.session_state.get("user_role", "") or st.session_state.get("role", "") or "").strip().lower()
@@ -8257,8 +8257,8 @@ def render_back_to_top():
 # --------------------------------------------------------------------
 # v102.0: Global Header/Footer Mechanism
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.2E"
-APP_BUILD_LABEL = "Mockup Aligned Recipe1 Exercise1 UX"
+APP_BUILD_VERSION = "v102.3"
+APP_BUILD_LABEL = "Supplements Module Shell"
 
 def _hm_v102_is_admin_context():
     role = str(st.session_state.get("user_role", "") or st.session_state.get("role", "") or "").strip().lower()

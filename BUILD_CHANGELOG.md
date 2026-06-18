@@ -561,3 +561,14 @@
 - Applied mockup-aligned layout to both Admin and Member parallel pages.
 - Kept existing Recipe/Exercise pages as fallback.
 - No database schema or core business logic rewrite.
+
+## v102.3 - Supplements Module Shell
+
+- Added Admin Supplement Management shell.
+- Added Member Supplements view shell.
+- Added Admin Dashboard Supplements entry point.
+- Added Member Home My Supplements entry point.
+- Admin add supplement is session-based only for workflow testing.
+- Added `V102_3_SUPPLEMENTS_MODULE_SHELL_NOTES.md` and `V102_3_SUPPLEMENTS_MODULE_SHELL_UAT_CHECKLIST.md`.
+- No database schema change or persistent publishing yet.
+- No changes to NSP, Daily Log, Scheduling, Reschedule, reports, or Recipe/Exercise fallback logic.
