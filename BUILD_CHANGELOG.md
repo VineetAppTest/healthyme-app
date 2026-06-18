@@ -553,3 +553,11 @@
 - Fixed member Recipe/Exercise duplicate footer/listing navigation behavior.
 - Fixed My Schedule old back-only footer behavior.
 - No database schema or core business logic rewrite.
+
+## v102.2E - Mockup-Aligned Recipe-1 / Exercise-1 UX
+
+- Replaced placeholder-style Recipe-1 page with mockup-aligned Library & Workspace layout.
+- Replaced placeholder-style Exercise-1 page with mockup-aligned Exercise Library layout.
+- Applied mockup-aligned layout to both Admin and Member parallel pages.
+- Kept existing Recipe/Exercise pages as fallback.
+- No database schema or core business logic rewrite.
