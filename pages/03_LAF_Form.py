@@ -21,7 +21,7 @@ def load_laf_questions_cached():
     config_path = pathlib.Path(__file__).resolve().parents[1] / "config" / "laf_questions.json"
     return json.loads(config_path.read_text(encoding="utf-8"))
 
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 questions = load_laf_questions_cached()
 questions = [q for q in questions if not q.get("deleted")]
@@ -603,8 +603,7 @@ st.markdown("<div class='autosave-note'>Auto-saved. You can also use the Previou
 
 c1, c2, c3 = st.columns(3)
 with c1:
-    if st.button("Back to Home", use_container_width=True):
-        st.switch_page("pages/02_Member_Home.py")
+    pass  # v102.0 legacy direct navigation removed; use canonical footer
 with c2:
     if st.button("Previous Page", use_container_width=True, disabled=current_idx == 0):
         go_to_laf_page(current_idx - 1)
@@ -626,3 +625,7 @@ with c3:
                 update_workflow(user_id, laf_completed=True)
                 set_system_message("LAF submitted successfully. Please continue with NSP Page 1.", "success", celebrate=True)
                 st.switch_page("pages/04_NSP_Page1.py")
+
+# v102.0: canonical global footer navigation
+render_page_nav("LAF", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

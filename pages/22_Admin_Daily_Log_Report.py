@@ -452,5 +452,7 @@ if st.button("Send gentle Daily Log reminder", type="secondary", use_container_w
 card_end()
 
 # v101.8: standard bottom navigation
-render_page_nav("Daily Food Journal Report", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+
+# v102.0: canonical global footer navigation
+render_page_nav("Daily Food Journal Report", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

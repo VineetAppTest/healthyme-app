@@ -81,11 +81,11 @@ else:
 
 back_col, _ = st.columns([1.2, 4])
 with back_col:
-    if st.button("Back to Dashboard", key="back_to_admin_dashboard"):
-        st.switch_page("pages/10_Admin_Dashboard.py")
-
+    pass  # v102.0 legacy direct navigation removed; use canonical footer
 # v96: Add st.success("Action completed successfully.") after completed communication actions.
 
 # v101.8: standard bottom navigation
-render_page_nav("Admin-Member Communication", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+
+# v102.0: canonical global footer navigation
+render_page_nav("Admin-Member Communication", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

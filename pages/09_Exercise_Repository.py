@@ -672,13 +672,9 @@ else:
 if is_detail_view:
     nav_back, nav_dashboard = st.columns(2)
     with nav_back:
-        if st.button("← Back", key="exercise_detail_bottom_back", use_container_width=True):
-            st.session_state.pop("hm_exercise_selected_id", None)
-            st.rerun()
+        pass  # v102.0 legacy direct navigation removed; use canonical footer
     with nav_dashboard:
-        if st.button("Dashboard", key="exercise_detail_bottom_dashboard", use_container_width=True):
-            st.session_state.pop("hm_exercise_selected_id", None)
-            st.switch_page("pages/02_Member_Home.py")
+        pass  # v102.0 legacy direct navigation removed; use canonical footer
 else:
     render_page_nav("Exercises", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, location="bottom")
 
@@ -818,7 +814,6 @@ div[data-testid="stExpander"] summary p{
 # v100.9: Deferred compact hero + premium detail CSS for Exercise Repository.
 inject_global_styles()
 apply_luxe_theme()
-render_back_to_top()
 
 
 st.markdown("""
@@ -908,3 +903,6 @@ div[data-testid="stExpander"] summary p{
 </style>
 """, unsafe_allow_html=True)
 
+# v102.0: canonical global footer navigation
+render_page_nav("Exercises", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

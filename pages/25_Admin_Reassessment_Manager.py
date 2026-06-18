@@ -316,9 +316,9 @@ with right:
             set_system_message(msg, "success" if ok else "error", celebrate=ok)
             st.rerun()
 
-if st.button("Back to Dashboard"):
-    st.switch_page("pages/10_Admin_Dashboard.py")
-
+pass  # v102.0 legacy direct navigation removed; use canonical footer
 # v101.8: standard bottom navigation
-render_page_nav("Task Request Manager", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+
+# v102.0: canonical global footer navigation
+render_page_nav("Task Request Manager", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

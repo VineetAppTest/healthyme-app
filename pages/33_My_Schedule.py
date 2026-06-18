@@ -223,6 +223,9 @@ else:
 st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("My Schedule", back_page="pages/02_Member_Home.py", show_dashboard=False, show_evaluation=False, location="bottom")
-render_back_to_top()
 
 # v101.2: Member reschedule request build.
+
+# v102.0: canonical global footer navigation
+render_page_nav("My Schedule", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

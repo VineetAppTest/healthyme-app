@@ -8,7 +8,7 @@ from components.assessment_instances import get_current_assessment_instance, sub
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Consent & Submit", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 user_id = st.session_state["user_id"]
 inst = get_current_assessment_instance(user_id)
@@ -66,14 +66,7 @@ consent_date = st.date_input("Date", value=date.today())
 
 c1, c2 = st.columns(2)
 with c1:
-    if st.button("Back", use_container_width=True):
-        pages = inst.get("requested_pages", [])
-        if "nsp2" in pages:
-            st.switch_page("pages/05_NSP_Page2.py")
-        elif "nsp1" in pages:
-            st.switch_page("pages/04_NSP_Page1.py")
-        else:
-            st.switch_page("pages/02_Member_Home.py")
+    pass  # v102.0 legacy direct navigation removed; use canonical footer
 with c2:
     if st.button("Submit Assessment for Admin Review", type="primary", use_container_width=True):
         incomplete_tasks = [task_title_v96_2(p) for p in inst.get("requested_pages", []) if not task_done_v96_2(inst, p)]
@@ -100,3 +93,7 @@ with c2:
                 set_system_message("This assessment was already submitted. Admin review is already pending.", "info")
             st.switch_page("pages/06_Submit_Status.py")
 card_end()
+
+# v102.0: canonical global footer navigation
+render_page_nav("NSP Submit", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

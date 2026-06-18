@@ -9,7 +9,7 @@ from components.scoring import map_answer
 from components.flash import set_system_message, render_system_message
 from components.admin_value_resolver import resolve_admin_linked_value
 st.set_page_config(page_title="Admin Assessment", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 mid=st.session_state.get("selected_member_id")
 if not mid: st.switch_page("pages/11_Evaluation_Status.py")
 templates=json.loads((pathlib.Path(__file__).resolve().parents[1]/"config"/"admin_templates.json").read_text())
@@ -27,7 +27,6 @@ nsp1=_inst_resp.get("nsp1") or get_form_response("nsp1_responses", mid)
 nsp2=_inst_resp.get("nsp2") or get_form_response("nsp2_responses", mid)
 laf=get_form_response("laf_responses", mid)
 # v101.6: top page navigation removed; bottom nav remains standard
-# render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="top")
 compact_topbar("Fill Admin Page", f"Linked items are auto-pulled; manual items can be NA, 1, 2, or 3.{' Instance: ' + selected_instance_id if selected_instance_id else ''}", "Admin assessment")
 render_system_message()
 
@@ -174,4 +173,7 @@ with c2:
                 )
             st.rerun()
 card_end()
-render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="bottom")
+
+# v102.0: canonical global footer navigation
+render_page_nav("Admin Assessment", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

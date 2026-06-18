@@ -10,7 +10,7 @@ from components.assessment_instances import get_current_assessment_instance, mar
 
 
 st.set_page_config(page_title="Body-Mind Connection", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 st.markdown("""
 <style>
@@ -143,12 +143,14 @@ st.markdown("<div class='autosave-note'>Auto-saved. Submit this page when ready.
 
 c1, c2 = st.columns(2)
 with c1:
-    if st.button("Back to Home", use_container_width=True):
-        save_body_mind_response(user_id, answers, completed=False)
-        st.switch_page("pages/02_Member_Home.py")
+    pass  # v102.0 legacy direct navigation removed; use canonical footer
 with c2:
     if st.button("Submit Body-Mind Page", type="secondary", use_container_width=True):
         save_body_mind_response(user_id, answers, completed=True)
         mark_body_mind_completed_for_current_instance(user_id, answers)
         set_system_message("Body-Mind page submitted successfully. Body-Mind task marked completed.", "success", celebrate=True)
         st.switch_page("pages/02_Member_Home.py")
+
+# v102.0: canonical global footer navigation
+render_page_nav("Body-Mind Connection", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

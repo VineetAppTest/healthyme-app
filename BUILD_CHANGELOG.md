@@ -526,3 +526,12 @@
 - Fixed `NameError: render_page_nav is not defined` on Admin Review, Task Request Manager and Create Users.
 - Added safe top-level `render_page_nav` / `render_back_to_top` fallback imports to every page using those helpers.
 - No UI redesign, scoring, recalculation, scheduling/reschedule, daily log data logic, report calculations, save, filter, or database schema changes.
+
+## v102.0 - Global Header/Footer Mechanism
+
+- Added global `render_global_header()` and `render_global_footer()` mechanism in `ui_common`.
+- Standardized signed-in/logout row then Hero then content structure.
+- Removed page-level Back/Dashboard/Back to Dashboard/Back to Home direct navigation blocks.
+- Forced canonical bottom navigation via `render_page_nav()` / `render_back_to_top()`.
+- Excluded Admin Dashboard and Member Home from forced bottom navigation.
+- No scoring, recalculation, scheduling/reschedule, daily log data logic, report calculations, save, filter, or database schema changes.

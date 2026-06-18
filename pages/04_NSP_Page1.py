@@ -9,7 +9,7 @@ from components.flash import set_system_message, render_system_message
 from components.config_cache import load_config_json
 
 st.set_page_config(page_title="NSP Client Assessment - Page 1", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 user_id = st.session_state["user_id"]
 current_instance = get_current_assessment_instance(user_id)
@@ -18,8 +18,7 @@ requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
 
 if "nsp1" not in requested_pages:
     st.warning("NSP Page 1 is not part of the current requested assessment.")
-    if st.button("Back to Home"):
-        st.switch_page("pages/02_Member_Home.py")
+    pass  # v102.0 legacy direct navigation removed; use canonical footer
     st.stop()
 
 questions = load_config_json("config/nsp_page1_questions.json")
@@ -97,8 +96,7 @@ if all_na:
 
 c1, c2 = st.columns(2)
 with c1:
-    if st.button("Back to Home", use_container_width=True):
-        st.switch_page("pages/02_Member_Home.py")
+    pass  # v102.0 legacy direct navigation removed; use canonical footer
 with c2:
     next_label = "Next Page" if "nsp2" in requested_pages else "Proceed to Consent & Submit"
     if st.button(next_label, type="primary", use_container_width=True):
@@ -114,3 +112,7 @@ with c2:
             else:
                 st.switch_page("pages/24_NSP_Consent_Submit.py")
 card_end()
+
+# v102.0: canonical global footer navigation
+render_page_nav("NSP Page 1", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

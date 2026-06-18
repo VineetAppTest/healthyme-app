@@ -312,6 +312,9 @@ else:
 st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("Scheduling", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
-render_back_to_top()
 
 # v101.2: Scheduling page includes admin reschedule review.
+
+# v102.0: canonical global footer navigation
+render_page_nav("Scheduling", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

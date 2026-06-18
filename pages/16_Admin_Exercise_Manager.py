@@ -283,5 +283,7 @@ render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evalu
 # v96_back_route_note: Edit Back button should return to Manage & Allocate Exercise page.
 
 # v101.8: standard bottom navigation
-render_page_nav("Manage & Allocate Exercise", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+
+# v102.0: canonical global footer navigation
+render_page_nav("Manage & Allocate Exercise", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

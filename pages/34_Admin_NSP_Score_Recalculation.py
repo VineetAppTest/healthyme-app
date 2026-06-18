@@ -125,6 +125,9 @@ else:
 st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("NSP Score Recalculation", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
-render_back_to_top()
 
 # v101.4: Existing member NSP score recalculation utility.
+
+# v102.0: canonical global footer navigation
+render_page_nav("NSP Score Recalculation", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

@@ -173,6 +173,5 @@ end_section()
 st.markdown("</div>", unsafe_allow_html=True)
 
 inject_keepalive_guard_v96_11()
-render_back_to_top()
 
 # v101.7: Admin Dashboard restructured per client placement request.

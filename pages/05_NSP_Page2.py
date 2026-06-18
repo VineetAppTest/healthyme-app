@@ -9,7 +9,7 @@ from components.flash import set_system_message, render_system_message
 from components.config_cache import load_config_json
 
 st.set_page_config(page_title="NSP Client Assessment - Page 2", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 user_id = st.session_state["user_id"]
 current_instance = get_current_assessment_instance(user_id)
@@ -18,8 +18,7 @@ requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
 
 if "nsp2" not in requested_pages:
     st.warning("NSP Page 2 is not part of the current requested assessment.")
-    if st.button("Back to Home"):
-        st.switch_page("pages/02_Member_Home.py")
+    pass  # v102.0 legacy direct navigation removed; use canonical footer
     st.stop()
 
 questions = load_config_json("config/nsp_page2_questions.json")
@@ -127,3 +126,7 @@ with c2:
             recalculate_member_nsp_system_scores(user_id, actor_id=user_id)
             st.switch_page("pages/24_NSP_Consent_Submit.py")
 card_end()
+
+# v102.0: canonical global footer navigation
+render_page_nav("NSP Page 2", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

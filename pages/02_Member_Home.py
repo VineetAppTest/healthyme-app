@@ -311,7 +311,6 @@ st.markdown("""
 inject_global_styles()
 apply_luxe_theme()
 inject_keepalive_guard_v96_11()
-render_back_to_top()
 
 st.markdown("""
 <style>
@@ -852,4 +851,3 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
-

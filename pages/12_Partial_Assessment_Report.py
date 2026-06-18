@@ -15,7 +15,7 @@ from components.systems_rating import calculate_systems_rating
 from components.report_engine import prepare_report_db
 
 st.set_page_config(page_title="Partial Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 mid = st.session_state.get("selected_member_id")
 if not mid:
@@ -145,7 +145,6 @@ systems_rating_rows = calculate_systems_rating(nsp1, nsp2)
 
 # v101.6: top page navigation removed; bottom nav remains standard
 
-# render_page_nav("Partial Assessment Report", back_page="pages/11_Evaluation_Status.py", location="top")
 compact_topbar(
     "Partial Assessment Report",
     "View and download the member's LAF, NSP responses and Systems Rating Table before admin assessment.",
@@ -264,4 +263,6 @@ st.download_button(
 )
 card_end()
 
-render_page_nav("Partial Assessment Report", back_page="pages/11_Evaluation_Status.py", location="bottom")
+# v102.0: canonical global footer navigation
+render_page_nav("Partial Assessment Report", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

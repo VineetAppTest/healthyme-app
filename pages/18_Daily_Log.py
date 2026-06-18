@@ -272,7 +272,7 @@ def get_saved_day_display_date_v97_20(day):
 
 
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 st.markdown(
     """
@@ -2973,9 +2973,11 @@ with sample_btn_col:
     if st.button("Show / Hide sample journal format", use_container_width=True):
         st.session_state["show_daily_reference_sample"] = not st.session_state["show_daily_reference_sample"]
 with home_btn_col:
-    if st.button("Back to Home", use_container_width=True):
-        st.switch_page("pages/02_Member_Home.py")
-
+    pass  # v102.0 legacy direct navigation removed; use canonical footer
 if st.session_state["show_daily_reference_sample"]:
     st.markdown("<div class='hm-v981-bottom-nav-gap'></div>", unsafe_allow_html=True)
     st.dataframe(SAMPLE_ROWS, use_container_width=True, hide_index=True)
+
+# v102.0: canonical global footer navigation
+render_page_nav("Daily Log", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

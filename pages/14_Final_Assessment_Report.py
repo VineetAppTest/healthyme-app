@@ -12,7 +12,7 @@ def build_full_admin_report_cached(db_payload_json: str, member_id: str):
     return build_full_admin_report(json.loads(db_payload_json), member_id)
 
 st.set_page_config(page_title="Final Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 mid = st.session_state.get("selected_member_id")
 if not mid:
@@ -20,7 +20,6 @@ if not mid:
 
 # v101.6: top page navigation removed; bottom nav remains standard
 
-# render_page_nav("Final Assessment Report", back_page="pages/11_Evaluation_Status.py", location="top")
 db_raw = load_db()
 selected_instance_id = st.session_state.get('selected_instance_id')
 db, report_diag = prepare_report_db(db_raw, mid, selected_instance_id)
@@ -55,8 +54,7 @@ if not (admin_assessment and final_report_ready):
         if st.button("Go to Fill Admin Page", type="primary", use_container_width=True):
             st.switch_page("pages/13_Admin_Assessment_Form.py")
     with c2:
-        if st.button("Back to Evaluation Status", use_container_width=True):
-            st.switch_page("pages/11_Evaluation_Status.py")
+        pass  # v102.0 legacy direct navigation removed; use canonical footer
     card_end()
     render_page_nav("Final Assessment Report", back_page="pages/11_Evaluation_Status.py", location="bottom")
     st.stop()
@@ -180,4 +178,6 @@ st.markdown(
 )
 card_end()
 
-render_page_nav("Final Assessment Report", back_page="pages/11_Evaluation_Status.py", location="bottom")
+# v102.0: canonical global footer navigation
+render_page_nav("Final Assessment Report", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

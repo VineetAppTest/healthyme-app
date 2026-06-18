@@ -8,7 +8,7 @@ from components.assessment_instances import get_assessment_instances, get_curren
 from components.flash import render_system_message
 
 st.set_page_config(page_title="Submit Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
 
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id)
@@ -71,5 +71,8 @@ Requested: {', '.join([task_title_v96_2(p) for p in inst.get('requested_pages', 
     )
 card_end()
 
-if st.button("Back to Home"):
-    st.switch_page("pages/02_Member_Home.py")
+pass  # v102.0 legacy direct navigation removed; use canonical footer
+
+# v102.0: canonical global footer navigation
+render_page_nav("Submit Status", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

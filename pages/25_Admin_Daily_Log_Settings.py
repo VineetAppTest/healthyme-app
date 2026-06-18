@@ -6,9 +6,8 @@ from components.db import get_meal_type_repository, save_meal_type_repository
 from components.flash import set_system_message, render_system_message
 
 st.set_page_config(page_title="Daily Log Settings", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 # v101.6: top page navigation removed; bottom nav remains standard
-# render_page_nav("Daily Log Settings", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 compact_topbar("Daily Log Settings", "", "Admin repository")
 render_system_message()
 
@@ -47,4 +46,6 @@ if st.button("Reset to Recommended Client Format", use_container_width=True):
     st.rerun()
 card_end()
 
-render_page_nav("Daily Log Settings", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="bottom")
+# v102.0: canonical global footer navigation
+render_page_nav("Daily Log Settings", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()

@@ -78,7 +78,6 @@ members = list_members()
 if not members:
     st.info("No members available.")
     render_page_nav("Comparative NSP", back_page="pages/10_Admin_Dashboard.py", show_evaluation=True, show_dashboard=True, location="bottom")
-    render_back_to_top()
     st.stop()
 
 selected = st.selectbox("Select member", [f"{m['id']} — {m['name']} — {m['email']}" for m in members])
@@ -102,7 +101,6 @@ stat_grid([
 if not completed_instances:
     st.info("No NSP assessment instances available for comparison yet.")
     render_page_nav("Comparative NSP", back_page="pages/10_Admin_Dashboard.py", show_evaluation=True, show_dashboard=True, location="bottom")
-    render_back_to_top()
     st.stop()
 
 # Systems comparison
@@ -175,5 +173,7 @@ st.download_button(
 card_end()
 
 # v101.8: bottom-only standard navigation
-render_page_nav("Comparative NSP", back_page="pages/10_Admin_Dashboard.py", show_evaluation=True, show_dashboard=True, location="bottom")
+
+# v102.0: canonical global footer navigation
+render_page_nav("Comparative NSP", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=True, show_dashboard=True, location="bottom")
 render_back_to_top()

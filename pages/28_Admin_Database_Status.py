@@ -13,7 +13,7 @@ from components.flash import set_system_message, render_system_message
 from components.normalized_store import check_normalized_tables, sync_users_workflow_to_normalized
 
 st.set_page_config(page_title="Database Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
+inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
 
 topbar("Database Status", "Check Supabase connection, fallback mode, migration, and backups.", "Admin database")
 render_system_message()
@@ -136,5 +136,8 @@ st.markdown(
 )
 card_end()
 
-if st.button("Back to Dashboard"):
-    st.switch_page("pages/10_Admin_Dashboard.py")
+pass  # v102.0 legacy direct navigation removed; use canonical footer
+
+# v102.0: canonical global footer navigation
+render_page_nav("Database Status", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_back_to_top()
