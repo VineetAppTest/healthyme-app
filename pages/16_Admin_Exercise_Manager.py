@@ -1,4 +1,4 @@
-from components.ui_common import render_page_nav, render_back_to_top
+from components.ui_common import render_page_nav, render_back_to_top, inject_recipe_exercise_v1022a_styles
 
 import pathlib
 import pandas as pd
@@ -11,6 +11,8 @@ from components.db import list_members, get_resource_assignments, save_resource_
 
 st.set_page_config(page_title="Manage & Allocate Exercises", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+inject_recipe_exercise_v1022a_styles()
+st.markdown("""<div class='hm-v1022a-admin-note'>v102.2A restores the v93 allocation-first Recipe/Exercise manager layout while retaining latest image upload, feedback and allocation functionality.</div>""", unsafe_allow_html=True)
 
 PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
 EXERCISE_COLUMNS = ['title', 'description', 'category', 'difficulty', 'goal_tags', 'condition_tags', 'duration_or_reps', 'hidden_calories_v96', 'equipment', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'instructions', 'benefits', 'status']
@@ -141,9 +143,9 @@ def exercise_form(prefix, row=None):
 
 topbar("Manage & Allocate Exercises", "Manage image, title, timing, exercise details and member allocation.", "Admin content manager")
 
-tabs = st.tabs(["Current Repository", "Add Exercise", "Import CSV", "Edit / Delete", "Member Feedback", "Allocate to Member"])
+tabs = st.tabs(["Allocate to Member", "Current Repository", "Add Exercise", "Import CSV", "Edit / Delete", "Member Feedback"])
 
-with tabs[5]:
+with tabs[0]:
     st.subheader("Allocate Exercises to Member")
     members = list_members()
     df = load()
@@ -192,11 +194,11 @@ with tabs[5]:
             st.session_state[state_key] = set(selected)
             st.success("Exercise allocation saved. Member notification/email has been queued.")
 
-with tabs[0]:
+with tabs[1]:
     st.subheader("Current Exercise Repository")
     st.dataframe(load(), use_container_width=True, hide_index=False)
 
-with tabs[1]:
+with tabs[2]:
     st.subheader("Add New Exercise")
     values = exercise_form("new_exercise_v93")
     if st.button("Save Exercise", type="primary", use_container_width=True):
@@ -209,7 +211,7 @@ with tabs[1]:
             st.success("Exercise saved.")
             st.rerun()
 
-with tabs[2]:
+with tabs[3]:
     st.subheader("Import Exercise CSV")
     st.caption("CSV can include exercise details and image reference fields. For local images, fill image_file_name_to_upload in the CSV and upload matching image files below.")
     csv_file = st.file_uploader("Choose exercise CSV file", type=["csv"], key="exercise_csv_upload_v96_12")
@@ -230,7 +232,7 @@ with tabs[2]:
             st.success(f"CSV imported. {upload_count} image(s) uploaded and linked.")
             st.rerun()
 
-with tabs[3]:
+with tabs[4]:
     st.subheader("Edit or Delete Exercise")
     df = load()
     if df.empty:
@@ -258,7 +260,7 @@ with tabs[3]:
                 st.rerun()
 
 
-with tabs[4]:
+with tabs[5]:
     st.subheader("Member Exercise Feedback")
     members = list_members()
     if not members:
@@ -288,3 +290,5 @@ with tabs[4]:
 # v102.1: single canonical footer navigation only
 render_page_nav("Manage & Allocate Exercises", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
+
+# v102.2A reconciliation marker: v93 UX restored, latest functionality retained.

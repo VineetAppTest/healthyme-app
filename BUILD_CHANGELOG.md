@@ -544,3 +544,12 @@
 - Removed duplicate older Back/Dashboard navigation from Scheduling.
 - Each target page now has exactly one canonical bottom footer navigation.
 - No business logic, scoring, recalculation, scheduling/reschedule workflow, daily log data logic, report calculations, save, filter, or database schema changes.
+
+## v102.2A - Recipe/Exercise v93 UX Restoration
+
+- Restored v93-style Recipe/Exercise visual direction while retaining latest functionality.
+- Restored allocation-first admin tab order for Recipe/Exercise managers while retaining Member Feedback tab.
+- Added v102.2A Recipe/Exercise visual CSS guard.
+- Fixed Task Request Manager header spacing to align with Admin Dashboard global header.
+- Added reconciliation notes and UAT checklist.
+- No scoring/recalculation/scheduling/daily-log/report/database logic changes.

@@ -322,3 +322,12 @@ pass  # v102.0 legacy direct navigation removed; use canonical footer
 # v102.0: canonical global footer navigation
 render_page_nav("Task Request Manager", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
+
+# v102.2A: strict Admin Dashboard header spacing alignment
+st.markdown("""
+<style>
+.block-container{padding-top:.72rem!important;max-width:1120px!important;}
+.utility-bar{margin-bottom:.72rem!important;}
+.hero-shell{margin-top:0!important;margin-bottom:.72rem!important;padding:.85rem 1rem!important;}
+</style>
+""", unsafe_allow_html=True)

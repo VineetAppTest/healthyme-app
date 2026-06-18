@@ -7,7 +7,8 @@ import pandas as pd
 import streamlit as st
 
 from components.guards import require_member
-from components.ui_common import (
+from components.ui_common import (    inject_recipe_exercise_v1022a_styles,
+
     inject_global_styles,
     apply_luxe_theme,
     utility_logout_bar,
@@ -824,6 +825,7 @@ div[data-testid="stExpander"] summary p{
 # v100.9: Deferred compact hero + premium detail CSS for Recipe Repository.
 inject_global_styles()
 apply_luxe_theme()
+inject_recipe_exercise_v1022a_styles()
 
 
 st.markdown("""
