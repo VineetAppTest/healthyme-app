@@ -160,7 +160,10 @@ def recipe_form(prefix, row=None):
     }
 
 
-render_page_nav("Recipes", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
+# v101.6: top page navigation removed; bottom nav remains standard
+
+
+# render_page_nav("Recipes", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 topbar("Manage & Allocate Recipes", "Manage image, title, timing, calories, macros, recipe details and member allocation.", "Admin content manager")
 
 tabs = st.tabs(["Current Repository", "Add Recipe", "Import CSV", "Edit / Delete", "Member Feedback", "Allocate to Member"])

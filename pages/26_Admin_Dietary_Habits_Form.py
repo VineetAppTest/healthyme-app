@@ -4,8 +4,8 @@ from components.ui_common import inject_global_styles, apply_luxe_theme, topbar,
 
 st.set_page_config(page_title="Dietary Habits Form", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
-render_page_nav("Dietary Habits Form", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
-
+# v101.6: top page navigation removed; bottom nav remains standard
+# render_page_nav("Dietary Habits Form", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 compact_topbar("Dietary Habits Form", "", "Admin form")
 
 card_start()

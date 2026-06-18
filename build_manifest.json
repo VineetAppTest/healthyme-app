@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v101_5_Global_Header_Version_Button_Polish",
-  "version": "v101.5",
-  "updated_on": "2026-06-17T17:17:57.593789+00:00",
+  "build_name": "HealthyMe_v101_7_AdminDashboard_ComparativeNav_Polish",
+  "version": "v101.7",
+  "updated_on": "2026-06-18T07:48:33.345815+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,13 +18,13 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed stale app-facing version labels such as v95.14 from Python pages.",
-    "Standardized admin version display to v101.5 adjacent to HealthyMe only.",
-    "Kept member pages/login free from visible version markers.",
-    "Applied global signed-in/logout row spacing and hero banner spacing.",
-    "Applied global HealthyMe button normalization to prevent black/default buttons.",
-    "Added global form-control rounding/spacing polish.",
-    "No scoring, recalculation, scheduling/reschedule, daily log, reports, save, filter, or database schema changes."
+    "Admin Dashboard placement restructured: Column 1 Review & Assessment, Member & Access, Content & Allocation.",
+    "Admin Dashboard placement restructured: Column 2 Reports & Logs, Communication & Scheduling.",
+    "Added placeholder Recommendations to Members under Reports & Logs.",
+    "Demo button hidden under System Tools.",
+    "System Tools retained with Database and NSP Recalculate only.",
+    "Comparative NSP Report Back/Evaluation Status/Dashboard navigation moved to bottom only.",
+    "No scoring, recalculation, scheduling/reschedule, daily log, report logic, save, filter, or database schema changes."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -321,7 +321,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v101_4_Existing_Member_NSP_Recalculation.zip",
+  "base_build": "HealthyMe_v101_6_Canonical_Header_Nav_Button_Polish.zip",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",

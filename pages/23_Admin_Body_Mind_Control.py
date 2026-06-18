@@ -7,8 +7,8 @@ from components.flash import set_system_message, render_system_message
 st.set_page_config(page_title="Body-Mind Access Control", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); render_back_to_top()
 render_build_text_v15()
-render_page_nav("Body-Mind Access", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
-
+# v101.6: top page navigation removed; bottom nav remains standard
+# render_page_nav("Body-Mind Access", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 compact_topbar(
     "Body-Mind Access Control",
     "Manually activate Body-Mind after final admin completion, or explicitly disable access if required.",

@@ -489,3 +489,24 @@
 - Applied global HealthyMe button normalization to prevent black/default buttons.
 - Added global form-control rounding/spacing polish.
 - No scoring, recalculation, scheduling/reschedule, daily log, reports, save, filter, or database schema changes.
+
+## v101.6 - Canonical Header/Nav/Button Polish
+
+- Added final canonical `ui_common` overrides so latest `topbar()` / `render_page_nav()` definitions win over old duplicates.
+- Admin version now uses robust admin-role detection and shows `v101.6 · Canonical Header Nav Button Polish` beside HealthyMe in Hero.
+- Top Back/Dashboard nav no longer renders between Signed in/Logout row and Hero Banner.
+- Evaluation Status legacy custom Hero replaced with canonical topbar.
+- Bottom Back/Dashboard navigation remains standardized.
+- Final DOM-level button styling is injected late to override older page CSS and prevent black/default buttons.
+- No scoring, recalculation, scheduling/reschedule, daily log, reports, save, filter, or database schema changes.
+
+## v101.7 - Admin Dashboard Placement + Comparative Nav Polish
+
+- Admin Dashboard placement restructured:
+  - Column 1: Review & Assessment, Member & Access, Content & Allocation.
+  - Column 2: Reports & Logs, Communication & Scheduling.
+- Added placeholder `Recommendations to Members` under Reports & Logs.
+- Demo button hidden under System Tools.
+- System Tools retained with Database and NSP Recalculate only.
+- Comparative NSP Report Back/Evaluation Status/Dashboard navigation moved to bottom only.
+- No scoring, recalculation, scheduling/reschedule, daily log, report logic, save, filter, or database schema changes.

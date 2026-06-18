@@ -7651,8 +7651,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v101.5"
-APP_BUILD_LABEL = "Global Header Version Button Polish"
+APP_BUILD_VERSION = "v101.7"
+APP_BUILD_LABEL = "Admin Dashboard Comparative Nav Polish"
 
 
 def admin_version_line_v98_1():
@@ -7969,3 +7969,216 @@ def inject_keepalive_guard_v96_11():
         """,
         height=0,
     )
+
+
+# --------------------------------------------------------------------
+# v101.6: Canonical Header/Nav/Button Polish Final Override
+# --------------------------------------------------------------------
+APP_BUILD_VERSION = "v101.7"
+APP_BUILD_LABEL = "Admin Dashboard Comparative Nav Polish"
+
+def _hm_v1016_is_admin_context():
+    """Robust admin detection for version display.
+
+    Member pages/login must not show version. Admin-side sessions should show
+    the current version beside HealthyMe even if role casing differs.
+    """
+    role = str(st.session_state.get("user_role", "") or st.session_state.get("role", "") or "").strip().lower()
+    if "member" in role:
+        return False
+    if "admin" in role or "nutrition" in role:
+        return True
+    if st.session_state.get("is_admin") or st.session_state.get("admin_logged_in"):
+        return True
+    return False
+
+def admin_version_line_v98_1():
+    if not _hm_v1016_is_admin_context():
+        return ""
+    return f"<span class='hm-admin-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
+
+def _hm_v1016_final_polish_css():
+    st.markdown(
+        """
+        <style>
+        /* v101.6 final DOM-level polish override */
+        section.main > div.block-container,
+        .main .block-container,
+        [data-testid="stAppViewBlockContainer"],
+        .stMainBlockContainer,
+        .block-container{
+          padding-top:.72rem!important;
+        }
+
+        .utility-bar{
+          min-height:2.84rem!important;
+          height:2.84rem!important;
+          padding:.42rem .72rem!important;
+          margin-top:0!important;
+          margin-bottom:.72rem!important;
+          display:flex!important;
+          align-items:center!important;
+          box-sizing:border-box!important;
+        }
+
+        .hero-shell{
+          margin-top:0!important;
+          margin-bottom:.72rem!important;
+        }
+
+        .hm-v1016-brand-row{
+          display:flex!important;
+          align-items:center!important;
+          gap:.62rem!important;
+          flex-wrap:wrap!important;
+        }
+
+        .hm-v1016-brand{
+          color:#064E3B!important;
+          font-size:.82rem!important;
+          font-weight:950!important;
+          letter-spacing:.10em!important;
+          text-transform:uppercase!important;
+        }
+
+        .hm-admin-version-inline{
+          display:inline-flex!important;
+          align-items:center!important;
+          padding:.14rem .46rem!important;
+          border-radius:999px!important;
+          border:1px solid #E3C98E!important;
+          background:#FFF7E6!important;
+          color:#475569!important;
+          font-size:.72rem!important;
+          font-weight:850!important;
+          letter-spacing:.01em!important;
+          vertical-align:middle!important;
+        }
+
+        .hm-native-nav-shell,
+        .hm-bottom-nav-shell{
+          border:0!important;
+          background:transparent!important;
+          box-shadow:none!important;
+          padding:0!important;
+          margin:1rem 0 .90rem 0!important;
+        }
+
+        div[data-testid="stButton"] > button,
+        button[kind="secondary"],
+        button[kind="primary"],
+        .stButton > button,
+        div[data-testid="stPageLink"] a{
+          min-height:2.72rem!important;
+          border-radius:14px!important;
+          border:1.25px solid #D9C28F!important;
+          background:#FFFDF8!important;
+          color:#064E3B!important;
+          font-weight:850!important;
+          box-shadow:none!important;
+          display:flex!important;
+          align-items:center!important;
+          justify-content:center!important;
+          text-decoration:none!important;
+        }
+
+        div[data-testid="stButton"] > button:hover,
+        button[kind="secondary"]:hover,
+        button[kind="primary"]:hover,
+        .stButton > button:hover,
+        div[data-testid="stPageLink"] a:hover{
+          border-color:#B89345!important;
+          background:#FFF7E6!important;
+          color:#003C36!important;
+          box-shadow:0 6px 16px rgba(15,23,42,.06)!important;
+        }
+
+        div[data-testid="stTextInput"] input,
+        div[data-testid="stNumberInput"] input,
+        div[data-testid="stTextArea"] textarea,
+        div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+        div[data-testid="stDateInput"] input,
+        div[data-testid="stTimeInput"] input{
+          border-radius:12px!important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def topbar(title, subtitle="", kicker="HealthyMe premium"):
+    _hm_v1016_final_polish_css()
+    st.markdown(
+        f"""
+        <div class='hero-shell'>
+          <div class='hm-v1016-brand-row'>
+            <span class='hm-v1016-brand'>HealthyMe</span>
+            {admin_version_line_v98_1()}
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+          <div><span class='meta-pill'>Guided wellness workflow</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def compact_topbar(title, subtitle="", kicker="HealthyMe"):
+    _hm_v1016_final_polish_css()
+    st.markdown(
+        f"""
+        <div class='hero-shell hm-compact-page-section'>
+          <div class='hm-v1016-brand-row'>
+            <span class='hm-v1016-brand'>HealthyMe</span>
+            {admin_version_line_v98_1()}
+          </div>
+          <div class='hero-kicker'>{kicker}</div>
+          <div class='hero-title'>{title}</div>
+          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_Admin_Dashboard.py', evaluation_page='pages/11_Evaluation_Status.py', *, location='top', show_dashboard=True, show_evaluation=True):
+    """v101.6 canonical navigation.
+
+    Top navigation intentionally renders nothing so Back/Dashboard buttons never
+    appear between Signed in/Logout and Hero Banner. Bottom navigation remains
+    the standard Back/Dashboard action row.
+    """
+    if location == 'top':
+        return
+
+    _hm_v1016_final_polish_css()
+    st.markdown("<div class='hm-bottom-nav-shell hm-native-nav-shell'>", unsafe_allow_html=True)
+
+    visible_cols = []
+    if back_page:
+        visible_cols.append("back")
+    if show_dashboard:
+        visible_cols.append("dashboard")
+
+    if not visible_cols:
+        st.markdown("</div>", unsafe_allow_html=True)
+        return
+
+    cols = st.columns(len(visible_cols), gap="large")
+    for idx, item in enumerate(visible_cols):
+        with cols[idx]:
+            if item == "back":
+                _safe_page_link(back_page, "← Back")
+            elif item == "dashboard":
+                _safe_page_link(dashboard_page, "Dashboard")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+def render_back_to_top():
+    # Inject final CSS late in the page lifecycle as a defensive override against old page-level button CSS.
+    _hm_v1016_final_polish_css()
+    st.markdown("<a id='top'></a><a class='hm-back-to-top' href='#top'>↑ Back to Top</a>", unsafe_allow_html=True)
+
+def render_build_text_v101_6(): return None
+def render_version_tag(): return None
+

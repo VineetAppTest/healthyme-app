@@ -25,7 +25,8 @@ except Exception:
 nsp1=_inst_resp.get("nsp1") or get_form_response("nsp1_responses", mid)
 nsp2=_inst_resp.get("nsp2") or get_form_response("nsp2_responses", mid)
 laf=get_form_response("laf_responses", mid)
-render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="top")
+# v101.6: top page navigation removed; bottom nav remains standard
+# render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="top")
 compact_topbar("Fill Admin Page", f"Linked items are auto-pulled; manual items can be NA, 1, 2, or 3.{' Instance: ' + selected_instance_id if selected_instance_id else ''}", "Admin assessment")
 render_system_message()
 

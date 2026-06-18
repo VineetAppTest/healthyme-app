@@ -135,7 +135,10 @@ def exercise_form(prefix, row=None):
     }
 
 
-render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
+# v101.6: top page navigation removed; bottom nav remains standard
+
+
+# render_page_nav("Exercises", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 topbar("Manage & Allocate Exercises", "Manage image, title, timing, exercise details and member allocation.", "Admin content manager")
 
 tabs = st.tabs(["Current Repository", "Add Exercise", "Import CSV", "Edit / Delete", "Member Feedback", "Allocate to Member"])

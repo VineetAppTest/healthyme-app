@@ -17,8 +17,9 @@ mid = st.session_state.get("selected_member_id")
 if not mid:
     st.switch_page("pages/11_Evaluation_Status.py")
 
-render_page_nav("Final Assessment Report", back_page="pages/11_Evaluation_Status.py", location="top")
+# v101.6: top page navigation removed; bottom nav remains standard
 
+# render_page_nav("Final Assessment Report", back_page="pages/11_Evaluation_Status.py", location="top")
 db_raw = load_db()
 selected_instance_id = st.session_state.get('selected_instance_id')
 db, report_diag = prepare_report_db(db_raw, mid, selected_instance_id)

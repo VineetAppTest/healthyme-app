@@ -142,8 +142,9 @@ for code, q in nsp2_map.items():
 
 systems_rating_rows = calculate_systems_rating(nsp1, nsp2)
 
-render_page_nav("Partial Assessment Report", back_page="pages/11_Evaluation_Status.py", location="top")
+# v101.6: top page navigation removed; bottom nav remains standard
 
+# render_page_nav("Partial Assessment Report", back_page="pages/11_Evaluation_Status.py", location="top")
 compact_topbar(
     "Partial Assessment Report",
     "View and download the member's LAF, NSP responses and Systems Rating Table before admin assessment.",

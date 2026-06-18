@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, stat_grid, render_page_nav, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, topbar, stat_grid, render_page_nav, render_back_to_top
 from components.db import list_members
 
 st.set_page_config(page_title="Eval Status", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -20,14 +20,8 @@ st.markdown("""
 .hm-native-nav-shell{display:none!important;}
 
 
-/* Inline version beside HealthyMe */
-.hm-v95-14-inline-version{
-  margin-left:.5rem;
-  color:#6B7280;
-  font-size:.72rem;
-  font-weight:700;
-  vertical-align:middle;
-}
+/* v101.6: inline version now handled by canonical topbar */
+
 
 /* Top/bottom page nav on Evaluation Status */
 .hm-native-nav-shell{
@@ -205,22 +199,13 @@ st.markdown("""
 
 rows = list_members()
 
-render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
+# v101.6: top Back/Dashboard row removed to preserve standard header order
+# render_page_nav("Eval Status", back_page="pages/10_Admin_Dashboard.py", show_evaluation=False, location="top")
 
-st.markdown(
-    """
-    <div class='hero-shell'>
-      <div class='hm-v77-brand-row'>
-        <span class='hm-v77-brand'>HealthyMe</span>
-        <span class='hm-v95-14-inline-version'> </span>
-      </div>
-      <div class='hero-kicker'>Review workflow</div>
-      <div class='hero-title'>Evaluation Status of All Members</div>
-      <div class='hero-subtitle'>Track member progress, then open a member row below to continue admin assessment.</div>
-      <div><span class='meta-pill'>Guided wellness workflow</span></div>
-    </div>
-    """,
-    unsafe_allow_html=True,
+topbar(
+    "Evaluation Status of All Members",
+    "Track member progress, then open a member row below to continue admin assessment.",
+    "Review workflow",
 )
 
 
