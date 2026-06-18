@@ -222,9 +222,9 @@ else:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-
+pass  # v102.2D old back-only footer removed
 # v101.2: Member reschedule request build.
 
-# v102.2C: single canonical member footer
+# v102.2D: single canonical member footer
 render_page_nav("My Schedule", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

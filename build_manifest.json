@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v102_2C_Recipe1_Exercise1_Runtime_MemberNav_Hotfix",
-  "version": "v102.2C",
-  "updated_on": "2026-06-18T17:31:44.125458+00:00",
+  "build_name": "HealthyMe_v102_2D_Recipe1_Exercise1_RealParallel_MemberListingNav",
+  "version": "v102.2D",
+  "updated_on": "2026-06-18T18:22:08.815096+00:00",
   "scope": [
     "Freeze v97.36 Daily Log as GTG functional baseline.",
     "Prepare Daily Log closure build for UAT.",
@@ -18,12 +18,12 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Fixed Recipe-1 / Exercise-1 runtime issue by placing shell after Streamlit setup.",
-    "Added/verified Member Recipes-1 and Member Exercises-1 pages.",
-    "Added/verified Admin Recipe-1 and Admin Exercise-1 pages.",
-    "Removed duplicate member-side footer navigation from My Schedule, Recipe Repository and Exercise Repository.",
-    "Old Recipe/Exercise pages remain available as fallback.",
-    "No database schema or business logic rewrite."
+    "Created real standalone Member Recipes-1 and Exercises-1 pages.",
+    "Created real standalone Admin Recipes-1 and Exercises-1 pages.",
+    "Added clear visual UX difference from fallback pages.",
+    "Fixed member Recipe/Exercise duplicate footer/listing navigation behavior.",
+    "Fixed My Schedule old back-only footer behavior.",
+    "No database schema or core business logic rewrite."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"

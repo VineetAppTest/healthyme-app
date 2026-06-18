@@ -545,11 +545,11 @@
 - Each target page now has exactly one canonical bottom footer navigation.
 - No business logic, scoring, recalculation, scheduling/reschedule workflow, daily log data logic, report calculations, save, filter, or database schema changes.
 
-## v102.2C - Recipe1 Exercise1 Runtime + Member Nav Hotfix
+## v102.2D - Real Parallel Recipe-1 / Exercise-1 + Member Listing Navigation Fix
 
-- Fixed Recipe-1 / Exercise-1 runtime issue by placing shell after Streamlit setup.
-- Added/verified Member Recipes-1 and Member Exercises-1 pages.
-- Added/verified Admin Recipe-1 and Admin Exercise-1 pages.
-- Removed duplicate member-side footer navigation from My Schedule, Recipe Repository and Exercise Repository.
-- Old Recipe/Exercise pages remain available as fallback.
-- No database schema or business logic rewrite.
+- Created real standalone Member Recipes-1 and Exercises-1 pages.
+- Created real standalone Admin Recipes-1 and Exercises-1 pages.
+- Added clear visual UX difference from fallback pages.
+- Fixed member Recipe/Exercise duplicate footer/listing navigation behavior.
+- Fixed My Schedule old back-only footer behavior.
+- No database schema or core business logic rewrite.

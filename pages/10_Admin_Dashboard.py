@@ -145,9 +145,9 @@ with left:
 
     start_section("Content & Allocation")
     nav_cell("Recipes", "pages/15_Admin_Recipe_Manager.py", "dash_recipes_v101_7")
-    nav_cell("Recipes-1", "pages/37_Admin_Recipe_Manager_1.py", "dash_recipes_1_v102_2c")
+    nav_cell("Recipes-1", "pages/37_Admin_Recipe_Manager_1.py", "dash_recipes_1_v102_2d")
     nav_cell("Exercises", "pages/16_Admin_Exercise_Manager.py", "dash_exercises_v101_7")
-    nav_cell("Exercises-1", "pages/38_Admin_Exercise_Manager_1.py", "dash_exercises_1_v102_2c")
+    nav_cell("Exercises-1", "pages/38_Admin_Exercise_Manager_1.py", "dash_exercises_1_v102_2d")
     end_section()
 
 with right:

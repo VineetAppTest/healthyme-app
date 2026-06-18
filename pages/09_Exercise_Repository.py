@@ -676,7 +676,7 @@ if is_detail_view:
     with nav_dashboard:
         pass  # v102.0 legacy direct navigation removed; use canonical footer
 else:
-    pass  # v102.2C internal duplicate footer removed; canonical footer below
+    pass  # v102.2D internal duplicate footer removed
 # v100.8: Deferred Exercise CSS after visible content to avoid invisible top spacing.
 st.markdown("""
 <style>
@@ -901,6 +901,10 @@ div[data-testid="stExpander"] summary p{
 </style>
 """, unsafe_allow_html=True)
 
-# v102.2C: single canonical member footer
+# v102.0: canonical global footer navigation
+pass  # v102.2D internal duplicate footer removed
+render_back_to_top()
+
+# v102.2D: single canonical member footer
 render_page_nav("Exercises", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
