@@ -463,42 +463,43 @@ div[data-testid="stButton"] > button *{
 def render_landing(df):
     st.markdown("<div class='hm-module-shell'>", unsafe_allow_html=True)
 
-    if "hm_exercise_filter_open" not in st.session_state:
-        st.session_state["hm_exercise_filter_open"] = False
     if "hm_exercise_fav_only" not in st.session_state:
         st.session_state["hm_exercise_fav_only"] = False
     if "hm_exercise_favorites" not in st.session_state:
         st.session_state["hm_exercise_favorites"] = set()
+    if "hm_exercise_grid_page" not in st.session_state:
+        st.session_state["hm_exercise_grid_page"] = 1
 
     st.markdown("<div class='hm-content-toolbar-anchor'></div>", unsafe_allow_html=True)
-    tool_search_col, tool_filter_col, tool_fav_col = st.columns([12, 1, 1], gap="small")
+    tool_search_col, tool_fav_col = st.columns([14, 1], gap="small")
     with tool_search_col:
         search = st.text_input("Search exercises", placeholder="Search exercises...", label_visibility="collapsed", key="exercise_search_v94_4")
-    with tool_filter_col:
-        if st.button("☷", key="exercise_filter_toggle_v94_4", help="Filter exercises"):
-            st.session_state["hm_exercise_filter_open"] = not st.session_state["hm_exercise_filter_open"]
     with tool_fav_col:
         fav_label = "♥" if st.session_state["hm_exercise_fav_only"] else "♡"
         if st.button(fav_label, key="exercise_fav_only_toggle_v94_4", help="Show favourites only"):
             st.session_state["hm_exercise_fav_only"] = not st.session_state["hm_exercise_fav_only"]
+            st.session_state["hm_exercise_grid_page"] = 1
 
-    category_filter = "All"
-    difficulty_filter = "All"
-    if st.session_state["hm_exercise_filter_open"]:
-        st.markdown("<div class='hm-filter-panel'>", unsafe_allow_html=True)
-        st.markdown("<div class='hm-filter-note'>Filter exercises by category or difficulty.</div>", unsafe_allow_html=True)
-        fc1, fc2, fc3 = st.columns([1, 1, .7])
-        category_options = ["All"] + sorted([x for x in df.get("category", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
-        difficulty_options = ["All"] + sorted([x for x in df.get("difficulty", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
-        with fc1:
-            category_filter = st.selectbox("Category", category_options, key="exercise_category_filter_v94_4")
-        with fc2:
-            difficulty_filter = st.selectbox("Difficulty", difficulty_options, key="exercise_difficulty_filter_v94_4")
-        with fc3:
-            if st.button("Clear filters", use_container_width=True, key="exercise_clear_filters_v94_4"):
-                st.session_state["exercise_category_filter_v94_4"] = "All"
-                st.session_state["exercise_difficulty_filter_v94_4"] = "All"
-        st.markdown("</div>", unsafe_allow_html=True)
+    # v102.4B7: filters are persistently visible to avoid the toggle/open rerun flicker.
+    st.markdown("<div class='hm-filter-panel hm-filter-panel-always-on'>", unsafe_allow_html=True)
+    fc1, fc2, fc3 = st.columns([1, 1, .62])
+    category_options = ["All"] + sorted([x for x in df.get("category", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
+    difficulty_options = ["All"] + sorted([x for x in df.get("difficulty", pd.Series(dtype=str)).fillna("").astype(str).unique().tolist() if x.strip()])
+    if st.session_state.get("exercise_category_filter_v94_4", "All") not in category_options:
+        st.session_state["exercise_category_filter_v94_4"] = "All"
+    if st.session_state.get("exercise_difficulty_filter_v94_4", "All") not in difficulty_options:
+        st.session_state["exercise_difficulty_filter_v94_4"] = "All"
+    with fc1:
+        category_filter = st.selectbox("Category", category_options, key="exercise_category_filter_v94_4")
+    with fc2:
+        difficulty_filter = st.selectbox("Difficulty", difficulty_options, key="exercise_difficulty_filter_v94_4")
+    with fc3:
+        st.markdown("<div class='hm-clear-filter-spacer'></div>", unsafe_allow_html=True)
+        if st.button("Clear filters", use_container_width=True, key="exercise_clear_filters_v94_4"):
+            st.session_state["exercise_category_filter_v94_4"] = "All"
+            st.session_state["exercise_difficulty_filter_v94_4"] = "All"
+            st.session_state["hm_exercise_grid_page"] = 1
+    st.markdown("</div>", unsafe_allow_html=True)
 
     results = df.copy()
     if search.strip():
@@ -510,8 +511,6 @@ def render_landing(df):
                 mask = mask | results[c].fillna("").astype(str).str.lower().str.contains(q, regex=False)
         results = results[mask]
 
-    category_filter = st.session_state.get("exercise_category_filter_v94_4", category_filter)
-    difficulty_filter = st.session_state.get("exercise_difficulty_filter_v94_4", difficulty_filter)
     if category_filter and category_filter != "All" and "category" in results.columns:
         results = results[results["category"].fillna("").astype(str).eq(category_filter)]
     if difficulty_filter and difficulty_filter != "All" and "difficulty" in results.columns:
@@ -522,15 +521,29 @@ def render_landing(df):
         results = results[results.index.astype(str).isin(favs)]
 
     display_label = "Favourites" if st.session_state["hm_exercise_fav_only"] else ("All" if not search.strip() else esc(search.strip()))
-    st.markdown(f"<div class='hm-displaying'>Displaying - {display_label}</div>", unsafe_allow_html=True)
+    total_results = len(results)
+    page_size = 9
+    max_page = max(1, ((total_results - 1) // page_size) + 1)
+    if st.session_state.get("hm_exercise_grid_page", 1) > max_page:
+        st.session_state["hm_exercise_grid_page"] = max_page
+    page = int(st.session_state.get("hm_exercise_grid_page", 1))
+    start_i = (page - 1) * page_size
+    end_i = min(start_i + page_size, total_results)
+    st.markdown(f"<div class='hm-displaying'>Displaying - {display_label} · {total_results} result(s) · 3-column grid, max 9 per page</div>", unsafe_allow_html=True)
 
     if results.empty:
         st.info("No matching exercises found.")
     else:
-        for row_start in range(0, len(results), 3):
-            cols = st.columns(3)
-            for col_i, (idx, row) in enumerate(results.iloc[row_start:row_start+3].iterrows()):
+        page_results = results.iloc[start_i:end_i]
+        for row_start in range(0, len(page_results), 3):
+            cols = st.columns([1, 1, 1], gap="small")
+            row_slice = list(page_results.iloc[row_start:row_start+3].iterrows())
+            for col_i in range(3):
                 with cols[col_i]:
+                    if col_i >= len(row_slice):
+                        st.markdown("<div class='hm-grid-empty-cell'></div>", unsafe_allow_html=True)
+                        continue
+                    idx, row = row_slice[col_i]
                     img = image_for(row, idx)
                     title = esc(row.get("title", "Untitled Exercise"))
                     duration = esc(first_value(row, ["duration_or_reps"], ""))
@@ -563,6 +576,21 @@ def render_landing(df):
                             st.session_state["hm_exercise_favorites"] = favs
                             st.rerun()
                     st.markdown("</div>", unsafe_allow_html=True)
+
+        if total_results > page_size:
+            st.markdown("<div class='hm-pagination-bar'>", unsafe_allow_html=True)
+            prev_col, page_col, next_col = st.columns([1, 2, 1], gap="small")
+            with prev_col:
+                if st.button("← Previous", use_container_width=True, disabled=(page <= 1), key="exercise_prev_page_v1024b7"):
+                    st.session_state["hm_exercise_grid_page"] = max(1, page - 1)
+                    st.rerun()
+            with page_col:
+                st.markdown(f"<div class='hm-page-indicator'>Page {page} of {max_page} · Showing {start_i + 1}-{end_i}</div>", unsafe_allow_html=True)
+            with next_col:
+                if st.button("Next →", use_container_width=True, disabled=(page >= max_page), key="exercise_next_page_v1024b7"):
+                    st.session_state["hm_exercise_grid_page"] = min(max_page, page + 1)
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 def render_detail(row, idx):
@@ -991,6 +1019,67 @@ st.markdown("""
 @media(max-width:640px){
   .hm-content-card img{height:158px!important;}
   .hm-content-title{font-size:1.06rem!important;}
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+# v102.4B7: persistent filter panel and 3x3 paged grid refinement.
+st.markdown("""
+<style>
+/* remove the old filter-toggle affordance by making filters always available */
+.hm-filter-panel-always-on{
+  display:block!important;
+  margin:.18rem 0 .48rem 0!important;
+  padding:.48rem .58rem .56rem .58rem!important;
+  border:1px solid #E5D2A9!important;
+  border-radius:14px!important;
+  background:rgba(255,253,248,.74)!important;
+  box-shadow:none!important;
+  transition:none!important;
+}
+.hm-filter-panel-always-on label p,
+.hm-filter-panel-always-on div[data-testid="stSelectbox"] label p{
+  font-size:.76rem!important;
+  font-weight:760!important;
+  color:#475569!important;
+}
+.hm-clear-filter-spacer{height:1.36rem!important;}
+.hm-grid-empty-cell{min-height:1px!important;}
+.hm-pagination-bar{
+  margin:.2rem 0 .25rem 0!important;
+  padding:.35rem 0!important;
+}
+.hm-page-indicator{
+  text-align:center;
+  color:#475569;
+  font-size:.86rem;
+  font-weight:760;
+  padding:.56rem .5rem;
+}
+.hm-content-card img{
+  height:132px!important;
+}
+.hm-content-card-body{
+  min-height:76px!important;
+}
+.hm-content-title{
+  font-size:.98rem!important;
+  line-height:1.12!important;
+}
+.hm-content-meta{
+  font-size:.70rem!important;
+  max-height:2.8rem!important;
+  overflow:hidden!important;
+}
+@media(max-width:900px){
+  .hm-content-card img{height:126px!important;}
+  .hm-content-title{font-size:.94rem!important;}
+}
+@media(max-width:640px){
+  .hm-content-card img{height:150px!important;}
+  .hm-content-title{font-size:1.02rem!important;}
 }
 </style>
 """, unsafe_allow_html=True)
