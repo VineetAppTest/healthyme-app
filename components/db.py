@@ -3138,3 +3138,289 @@ def supplement_regimen_counts(member_id):
         "stopped": len([r for r in rows if r.get("status") == "Stopped"]),
         "total": len(rows),
     }
+
+
+# --------------------------------------------------------------------
+# v102.4: Recommendations Share + Today's Journey helpers
+# --------------------------------------------------------------------
+
+def _rec_now_iso_v102_4():
+    return datetime.datetime.now().isoformat(timespec="seconds")
+
+
+def _rec_clean_text_v102_4(value):
+    return str(value or "").strip()
+
+
+def _rec_date_iso_v102_4(value):
+    if value in (None, ""):
+        return ""
+    try:
+        return value.isoformat()
+    except Exception:
+        return str(value)[:10]
+
+
+def _rec_parse_date_v102_4(value):
+    raw = _rec_clean_text_v102_4(value)
+    if not raw:
+        return None
+    try:
+        return datetime.date.fromisoformat(raw[:10])
+    except Exception:
+        return None
+
+
+def _rec_find_member_v102_4(db, member_id):
+    member_id = _rec_clean_text_v102_4(member_id)
+    for user in db.get("users", []):
+        if str(user.get("id")) == member_id:
+            return user
+    return {}
+
+
+def _ensure_recommendations_store_v102_4(db):
+    db.setdefault("recommendation_shares", {})
+    db.setdefault("recommendation_share_audit", [])
+    db.setdefault("resource_assignments", {})
+    db["resource_assignments"].setdefault("recipes", {})
+    db["resource_assignments"].setdefault("exercises", {})
+    if not isinstance(db.get("recommendation_shares"), dict):
+        db["recommendation_shares"] = {}
+    if not isinstance(db.get("recommendation_share_audit"), list):
+        db["recommendation_share_audit"] = []
+    return db
+
+
+def _rec_days_for_window_v102_4(start_date):
+    start_dt = _rec_parse_date_v102_4(start_date) or datetime.date.today()
+    return [(start_dt + datetime.timedelta(days=i)).isoformat() for i in range(7)]
+
+
+def _rec_normalise_meal_plan_v102_4(plan, start_date):
+    days = _rec_days_for_window_v102_4(start_date)
+    slots = ["Breakfast", "Lunch", "Snacks", "Dinner", "Bedtime"]
+    existing = {}
+    for item in plan or []:
+        if not isinstance(item, dict):
+            continue
+        key = (_rec_date_iso_v102_4(item.get("date")), _rec_clean_text_v102_4(item.get("meal_slot")) or _rec_clean_text_v102_4(item.get("slot")))
+        existing[key] = item
+    rows = []
+    for i, day in enumerate(days, start=1):
+        for slot in slots:
+            item = existing.get((day, slot), {})
+            rows.append({
+                "day_number": i,
+                "date": day,
+                "meal_slot": slot,
+                "recipe_id": _rec_clean_text_v102_4(item.get("recipe_id")),
+                "notes": _rec_clean_text_v102_4(item.get("notes")),
+            })
+    return rows
+
+
+def _rec_normalise_exercise_plan_v102_4(plan, start_date):
+    days = _rec_days_for_window_v102_4(start_date)
+    existing = {}
+    for item in plan or []:
+        if not isinstance(item, dict):
+            continue
+        existing[_rec_date_iso_v102_4(item.get("date"))] = item
+    rows = []
+    for i, day in enumerate(days, start=1):
+        item = existing.get(day, {})
+        rows.append({
+            "day_number": i,
+            "date": day,
+            "exercise_id": _rec_clean_text_v102_4(item.get("exercise_id")),
+            "timing": _rec_clean_text_v102_4(item.get("timing")),
+            "notes": _rec_clean_text_v102_4(item.get("notes")),
+        })
+    return rows
+
+
+def _rec_normalise_supplement_plan_v102_4(plan, start_date):
+    days = _rec_days_for_window_v102_4(start_date)
+    existing = {}
+    for item in plan or []:
+        if not isinstance(item, dict):
+            continue
+        existing[_rec_date_iso_v102_4(item.get("date"))] = item
+    rows = []
+    for i, day in enumerate(days, start=1):
+        item = existing.get(day, {})
+        supplement_ids = item.get("supplement_ids", [])
+        if isinstance(supplement_ids, str):
+            supplement_ids = [x.strip() for x in supplement_ids.replace("|", ",").split(",") if x.strip()]
+        rows.append({
+            "day_number": i,
+            "date": day,
+            "supplement_ids": [str(x).strip() for x in (supplement_ids or []) if str(x).strip()],
+            "notes": _rec_clean_text_v102_4(item.get("notes")),
+        })
+    return rows
+
+
+def _normalise_recommendation_share_v102_4(share, member=None):
+    share = dict(share or {})
+    start_dt = _rec_parse_date_v102_4(share.get("start_date")) or datetime.date.today()
+    end_dt = start_dt + datetime.timedelta(days=6)
+    share.setdefault("id", str(uuid.uuid4())[:8])
+    share["member_id"] = _rec_clean_text_v102_4(share.get("member_id") or (member or {}).get("id", ""))
+    share["member_email"] = _rec_clean_text_v102_4(share.get("member_email") or (member or {}).get("email", ""))
+    share["member_name"] = _rec_clean_text_v102_4(share.get("member_name") or (member or {}).get("name", ""))
+    share["start_date"] = start_dt.isoformat()
+    share["end_date"] = end_dt.isoformat()
+    share["status"] = _rec_clean_text_v102_4(share.get("status") or "Draft")
+    if share["status"] not in ["Draft", "Published", "Archived"]:
+        share["status"] = "Draft"
+    share["nutritionist_report"] = _rec_clean_text_v102_4(share.get("nutritionist_report"))
+    share["meal_plan"] = _rec_normalise_meal_plan_v102_4(share.get("meal_plan", []), share["start_date"])
+    share["exercise_plan"] = _rec_normalise_exercise_plan_v102_4(share.get("exercise_plan", []), share["start_date"])
+    share["supplement_plan"] = _rec_normalise_supplement_plan_v102_4(share.get("supplement_plan", []), share["start_date"])
+    share.setdefault("created_at", "")
+    share.setdefault("updated_at", "")
+    share.setdefault("published_at", "")
+    share.setdefault("created_by", "")
+    share.setdefault("updated_by", "")
+    share.setdefault("published_by", "")
+    share["created_at"] = _rec_clean_text_v102_4(share.get("created_at"))
+    share["updated_at"] = _rec_clean_text_v102_4(share.get("updated_at"))
+    share["published_at"] = _rec_clean_text_v102_4(share.get("published_at"))
+    share["created_by"] = _rec_clean_text_v102_4(share.get("created_by"))
+    share["updated_by"] = _rec_clean_text_v102_4(share.get("updated_by"))
+    share["published_by"] = _rec_clean_text_v102_4(share.get("published_by"))
+    return share
+
+
+def _recommendation_windows_overlap_v102_4(a, b):
+    a_start = _rec_parse_date_v102_4(a.get("start_date"))
+    a_end = _rec_parse_date_v102_4(a.get("end_date"))
+    b_start = _rec_parse_date_v102_4(b.get("start_date"))
+    b_end = _rec_parse_date_v102_4(b.get("end_date"))
+    if not all([a_start, a_end, b_start, b_end]):
+        return False
+    return a_start <= b_end and b_start <= a_end
+
+
+def _materialize_recommendation_resource_assignments_v102_4(db, member_id, share):
+    meal_ids = []
+    for item in share.get("meal_plan", []) or []:
+        rid = _rec_clean_text_v102_4(item.get("recipe_id"))
+        if rid and rid not in meal_ids:
+            meal_ids.append(rid)
+    exercise_ids = []
+    for item in share.get("exercise_plan", []) or []:
+        eid = _rec_clean_text_v102_4(item.get("exercise_id"))
+        if eid and eid not in exercise_ids:
+            exercise_ids.append(eid)
+    db.setdefault("resource_assignments", {}).setdefault("recipes", {})[member_id] = meal_ids
+    db.setdefault("resource_assignments", {}).setdefault("exercises", {})[member_id] = exercise_ids
+
+
+def save_recommendation_share(member_id, share_data, actor_id="admin", publish=False):
+    """Create/update the 7-day Recommendations Share for a member.
+
+    This is the source of truth for Today's Journey. On publish, recipe and
+    exercise IDs are also materialized into the existing member repositories so
+    the upgraded Recipe/Exercise pages remain connected to the same plan.
+    """
+    db = _ensure_recommendations_store_v102_4(load_db())
+    member_id = _rec_clean_text_v102_4(member_id)
+    member = _rec_find_member_v102_4(db, member_id)
+    if not member:
+        raise ValueError("Selected member was not found.")
+    now = _rec_now_iso_v102_4()
+    share = _normalise_recommendation_share_v102_4(share_data, member=member)
+    share["member_id"] = member_id
+    share["member_email"] = member.get("email", "")
+    share["member_name"] = member.get("name", "")
+    existing_list = db.setdefault("recommendation_shares", {}).setdefault(member_id, [])
+    existing_index = None
+    for idx, raw in enumerate(existing_list):
+        if str(raw.get("id")) == str(share.get("id")):
+            existing_index = idx
+            break
+    if existing_index is not None:
+        before = _normalise_recommendation_share_v102_4(existing_list[existing_index], member=member)
+        share["created_at"] = before.get("created_at") or now
+        share["created_by"] = before.get("created_by") or actor_id or "admin"
+    else:
+        share["created_at"] = now
+        share["created_by"] = actor_id or "admin"
+    share["updated_at"] = now
+    share["updated_by"] = actor_id or "admin"
+    if publish:
+        share["status"] = "Published"
+        share["published_at"] = now
+        share["published_by"] = actor_id or "admin"
+        for idx, raw in enumerate(existing_list):
+            other = _normalise_recommendation_share_v102_4(raw, member=member)
+            if str(other.get("id")) != str(share.get("id")) and other.get("status") == "Published" and _recommendation_windows_overlap_v102_4(other, share):
+                other["status"] = "Archived"
+                other["updated_at"] = now
+                other["updated_by"] = actor_id or "admin"
+                existing_list[idx] = other
+        _materialize_recommendation_resource_assignments_v102_4(db, member_id, share)
+        db.setdefault("notifications", []).append({
+            "ts": now,
+            "kind": "recommendations_shared",
+            "user_id": member_id,
+            "message": "Your nutritionist has shared your recommendations and today's journey.",
+            "status": "queued",
+            "email_required": True,
+            "created_by": actor_id or "admin",
+        })
+    elif share.get("status") != "Published":
+        share["status"] = "Draft"
+    if existing_index is not None:
+        existing_list[existing_index] = share
+    else:
+        existing_list.append(share)
+    db["recommendation_shares"][member_id] = existing_list[-20:]
+    db.setdefault("recommendation_share_audit", []).append({
+        "ts": now,
+        "action": "published" if publish else "saved_draft",
+        "share_id": share.get("id"),
+        "member_id": member_id,
+        "actor_id": actor_id or "admin",
+        "start_date": share.get("start_date"),
+        "end_date": share.get("end_date"),
+    })
+    db["recommendation_share_audit"] = db["recommendation_share_audit"][-500:]
+    save_db(db)
+    return share
+
+
+def list_recommendation_shares(member_id, status=None):
+    db = _ensure_recommendations_store_v102_4(load_db())
+    member_id = _rec_clean_text_v102_4(member_id)
+    member = _rec_find_member_v102_4(db, member_id)
+    rows = [_normalise_recommendation_share_v102_4(x, member=member) for x in db.get("recommendation_shares", {}).get(member_id, [])]
+    if status:
+        rows = [r for r in rows if str(r.get("status")) == str(status)]
+    rows.sort(key=lambda r: (str(r.get("updated_at") or r.get("created_at") or ""), str(r.get("start_date") or "")), reverse=True)
+    return rows
+
+
+def get_latest_recommendation_share(member_id, include_draft=True):
+    rows = list_recommendation_shares(member_id)
+    if include_draft:
+        return rows[0] if rows else None
+    published = [r for r in rows if r.get("status") == "Published"]
+    return published[0] if published else None
+
+
+def get_published_recommendation_for_date(member_id, target_date=None, fallback_latest=False):
+    target = _rec_parse_date_v102_4(target_date) or datetime.date.today()
+    published = list_recommendation_shares(member_id, status="Published")
+    in_window = []
+    for share in published:
+        start_dt = _rec_parse_date_v102_4(share.get("start_date"))
+        end_dt = _rec_parse_date_v102_4(share.get("end_date"))
+        if start_dt and end_dt and start_dt <= target <= end_dt:
+            in_window.append(share)
+    if in_window:
+        return in_window[0]
+    return published[0] if (fallback_latest and published) else None

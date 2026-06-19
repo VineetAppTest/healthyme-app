@@ -1,4 +1,1 @@
-HealthyMe v102.3A - Supplement Frequency Dropdown + End Date Alignment Fix
-Base: v102.3A Admin Info/Layout Fix full build
-Scope: Add/Edit Supplement Frequency dropdown up to 10; compact adjacent End Date controls; no PDF or Recommendations module.
-Exclusions: No PDF, no Recommendations module.
+v102.4 — Recommendations Share + Today’s Journey Foundation

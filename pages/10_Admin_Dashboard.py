@@ -145,9 +145,7 @@ with left:
 
     start_section("Content & Allocation")
     nav_cell("Recipes", "pages/15_Admin_Recipe_Manager.py", "dash_recipes_v101_7")
-    nav_cell("Recipes-1", "pages/37_Admin_Recipe_Manager_1.py", "dash_recipes_1_v102_2d")
     nav_cell("Exercises", "pages/16_Admin_Exercise_Manager.py", "dash_exercises_v101_7")
-    nav_cell("Exercises-1", "pages/38_Admin_Exercise_Manager_1.py", "dash_exercises_1_v102_2d")
     nav_cell("Supplements", "pages/39_Admin_Supplement_Manager.py", "dash_supplements_v102_3")
     end_section()
 
@@ -156,7 +154,7 @@ with right:
     nav_cell("Daily Logs", "pages/22_Admin_Daily_Log_Report.py", "dash_daily_logs_v101_7")
     nav_cell("Questions", "pages/20_Admin_Question_Manager.py", "dash_questions_v101_7")
     nav_cell("Responses", "pages/21_Admin_Response_Editor.py", "dash_responses_v101_7")
-    placeholder_cell("Recommendations to Members")
+    nav_cell("Recommendations Share", "pages/35_Admin_Recommendations_Share.py", "dash_recommendations_share_v102_4")
     end_section()
 
     start_section("Communication & Scheduling")
@@ -178,3 +176,4 @@ st.markdown("</div>", unsafe_allow_html=True)
 inject_keepalive_guard_v96_11()
 
 # v101.7: Admin Dashboard restructured per client placement request.
+# v102.4: Recipe-1/Exercise-1 testing buttons removed; Recommendations Share added as admin source of truth.
