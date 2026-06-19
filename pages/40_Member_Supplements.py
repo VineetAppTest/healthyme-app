@@ -39,8 +39,10 @@ def _chips(text):
 
 st.markdown("""
 <style>
-.hm-ms-page{max-width:960px;margin:0 auto;}
-.hm-ms-card{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:20px;padding:1rem;box-shadow:0 10px 24px rgba(15,23,42,.05);margin:.75rem 0;}
+.hero-shell{margin-bottom:.20rem!important;}
+div[data-testid="stVerticalBlock"] > div:has(.hero-shell){margin-bottom:.05rem!important;padding-bottom:.05rem!important;}
+.hm-ms-page{max-width:960px;margin:-.18rem auto 0 auto;}
+.hm-ms-card{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:20px;padding:1rem;box-shadow:0 10px 24px rgba(15,23,42,.05);margin:.25rem 0 .55rem 0;}
 .hm-ms-title{color:#064E3B;font-size:1.05rem;font-weight:950;margin-bottom:.25rem;}
 .hm-ms-sub{color:#475569;font-size:.86rem;font-weight:700;line-height:1.45;}
 .hm-ms-row{border:1px solid #E6D4A8;background:#FFFDF8;border-radius:16px;padding:.85rem;margin:.7rem 0;display:grid;grid-template-columns:42px 1fr;gap:.75rem;}
@@ -86,20 +88,9 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-st.markdown("<div class='hm-ms-note'>Do not start, stop, or change dosage without checking with your nutritionist or physician, especially if you are on medication or have a medical condition.</div>", unsafe_allow_html=True)
-
-st.markdown("""
-<div class='hm-ms-tabs'>
-  <span class='hm-ms-tab'>Member Plan</span>
-  <span class='hm-ms-tab'>Meal Diary</span>
-  <span class='hm-ms-tab active'>Supplements</span>
-  <span class='hm-ms-tab'>Exercises</span>
-</div>
-""", unsafe_allow_html=True)
-
 st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("My Supplements", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
 
-# v102.3A: Member Supplements active regimen publishing view.
+# v102.3A: Member Supplements active regimen publishing view. Screenshot cleanup: advisory note and local tab strip removed; hero-to-regimen spacing tightened.

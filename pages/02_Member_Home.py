@@ -281,6 +281,8 @@ with right:
             st.switch_page("pages/08_Recipe_Repository.py")
         if st.button("Exercise Repository", use_container_width=True):
             st.switch_page("pages/09_Exercise_Repository.py")
+        if st.button("Supplements", use_container_width=True):
+            st.switch_page("pages/40_Member_Supplements.py")
 
     card_end()
 
@@ -865,11 +867,4 @@ with c2:
     if st.button("Exercises-1", key="member_home_exercises_1_v102_2d", use_container_width=True):
         st.switch_page("pages/36_Exercise_Repository_1.py")
 
-# v102.3: Supplements member entry
-st.markdown("""
-<div style="border:1px dashed #D9C28F;background:#FFF9EC;border-radius:18px;padding:.85rem .95rem;margin:.85rem 0;color:#7A5A16;font-weight:850;">
-Supplements module testing
-</div>
-""", unsafe_allow_html=True)
-if st.button("My Supplements", key="member_home_supplements_v102_3", use_container_width=True):
-    st.switch_page("pages/40_Member_Supplements.py")
+# v102.3A: Supplements entry is now placed in Personalized Content under Exercise Repository.

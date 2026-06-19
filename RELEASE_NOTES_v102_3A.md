@@ -17,3 +17,11 @@ This full build converts the v102.3 supplement shell into a persisted member-spe
 - Recommendations module.
 - Meal plan integration.
 - Exercise plan integration.
+
+## v102.3A UX Alignment Update
+
+- Member Supplements page: removed the lower advisory information box and local pill menu shown in UAT screenshot.
+- Member Supplements page: tightened spacing between the hero banner and My Supplement Regimen.
+- Member Home: added the Supplements button directly under Exercise Repository.
+- Admin Supplement Management: Edit Supplement timing controls now match Add Supplement with multi-select timing plus additional timing.
+

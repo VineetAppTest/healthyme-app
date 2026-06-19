@@ -42,6 +42,9 @@ def _actor_id():
     return st.session_state.get("user_id") or st.session_state.get("oidc_email") or "admin"
 
 
+TIMING_OPTIONS = ["Morning", "Midday", "Evening", "Before Bed", "With Food", "Empty Stomach", "After Meals"]
+
+
 def _timing_from_choices(choices, extra):
     parts = [str(x).strip() for x in (choices or []) if str(x).strip()]
     if str(extra or "").strip():
@@ -54,6 +57,31 @@ def _chips(text):
     if not parts:
         return "<span class='hm-sup-mini'>As advised</span>"
     return "".join([f"<span class='hm-sup-mini'>{_esc(p)}</span>" for p in parts])
+
+
+def _split_timing_for_edit(text):
+    parts = [p.strip() for p in str(text or "").replace("|", ",").split(",") if p.strip()]
+    option_lookup = {opt.lower(): opt for opt in TIMING_OPTIONS}
+    selected = []
+    extra_parts = []
+    for part in parts:
+        matched = option_lookup.get(part.lower())
+        if matched:
+            if matched not in selected:
+                selected.append(matched)
+        else:
+            extra_parts.append(part)
+    return selected, ", ".join(extra_parts)
+
+
+def _safe_date_value(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return date.today()
+    try:
+        return date.fromisoformat(raw[:10])
+    except Exception:
+        return date.today()
 
 
 def _card(row, stopped=False):
@@ -146,8 +174,15 @@ with left:
                     e_dosage = st.text_input("Dosage", value=row.get("dosage", ""), key=f"edit_dose_{row['id']}")
                     e_frequency = st.text_input("Frequency", value=row.get("frequency", ""), key=f"edit_freq_{row['id']}")
                 with e2:
-                    e_timing = st.text_input("Timing", value=row.get("timing", ""), key=f"edit_time_{row['id']}")
-                    e_start = st.text_input("Start Date", value=row.get("start_date", ""), key=f"edit_start_{row['id']}")
+                    edit_timing_default, edit_custom_default = _split_timing_for_edit(row.get("timing", ""))
+                    e_timing_options = st.multiselect(
+                        "Timing",
+                        TIMING_OPTIONS,
+                        default=edit_timing_default,
+                        key=f"edit_time_choices_{row['id']}",
+                    )
+                    e_custom_timing = st.text_input("Additional Timing", value=edit_custom_default, key=f"edit_time_extra_{row['id']}")
+                    e_start = st.date_input("Start Date", value=_safe_date_value(row.get("start_date", "")), key=f"edit_start_{row['id']}")
                 e_instructions = st.text_area("Member Instructions", value=row.get("instructions", ""), key=f"edit_inst_{row['id']}")
                 e_notes = st.text_area("Admin Notes", value=row.get("admin_notes", ""), key=f"edit_notes_{row['id']}")
                 save_col, cancel_col = st.columns(2)
@@ -161,7 +196,7 @@ with left:
                             "supplement_name": e_name,
                             "dosage": e_dosage,
                             "frequency": e_frequency,
-                            "timing": e_timing,
+                            "timing": _timing_from_choices(e_timing_options, e_custom_timing),
                             "start_date": e_start,
                             "instructions": e_instructions,
                             "admin_notes": e_notes,
@@ -217,7 +252,7 @@ with right:
             frequency = st.text_input("Frequency", placeholder="e.g. Once daily")
         timing_options = st.multiselect(
             "Timing",
-            ["Morning", "Midday", "Evening", "Before Bed", "With Food", "Empty Stomach", "After Meals"],
+            TIMING_OPTIONS,
             default=[],
         )
         custom_timing = st.text_input("Additional Timing", placeholder="Optional custom timing")
@@ -248,4 +283,4 @@ st.markdown("</div>", unsafe_allow_html=True)
 render_page_nav("Supplement Management", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
 
-# v102.3A: Admin Supplement Management with persistent member-specific publishing.
+# v102.3A: Admin Supplement Management with persistent member-specific publishing. Edit timing now matches Add timing controls.
