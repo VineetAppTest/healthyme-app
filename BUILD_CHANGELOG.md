@@ -572,3 +572,12 @@
 - Added `V102_3_SUPPLEMENTS_MODULE_SHELL_NOTES.md` and `V102_3_SUPPLEMENTS_MODULE_SHELL_UAT_CHECKLIST.md`.
 - No database schema change or persistent publishing yet.
 - No changes to NSP, Daily Log, Scheduling, Reschedule, reports, or Recipe/Exercise fallback logic.
+
+
+## v102.3A — Supplement Frequency Dropdown + End Date Alignment Fix
+
+- Converted Add Supplement Frequency from free text to dropdown Once through Ten times.
+- Converted Edit Supplement Frequency from free text to dropdown Once through Ten times.
+- Preserved Frequency vs Timing + Additional Timing validation.
+- Aligned Set End Date with End Date / End Date: NA in Add and Edit flows.
+- No PDF or Recommendations module added.

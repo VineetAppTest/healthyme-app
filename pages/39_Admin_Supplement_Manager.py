@@ -44,6 +44,7 @@ def _actor_id():
 
 
 TIMING_OPTIONS = ["Morning", "Midday", "Evening", "Before Bed", "With Food", "Empty Stomach", "After Meals"]
+FREQUENCY_OPTIONS = ["Once", "Twice", "Thrice", "Four times", "Five times", "Six times", "Seven times", "Eight times", "Nine times", "Ten times"]
 FREQUENCY_WORD_COUNTS = {
     "once": 1,
     "one": 1,
@@ -102,6 +103,17 @@ def _frequency_expected_count(frequency):
             return count
 
     return None
+
+
+def _frequency_default_option(value):
+    expected = _frequency_expected_count(value)
+    if expected and 1 <= expected <= len(FREQUENCY_OPTIONS):
+        return FREQUENCY_OPTIONS[expected - 1]
+    raw = str(value or "").strip().lower()
+    for option in FREQUENCY_OPTIONS:
+        if option.lower() == raw:
+            return option
+    return FREQUENCY_OPTIONS[0]
 
 
 def _frequency_timing_error(frequency, choices, extra):
@@ -200,7 +212,7 @@ st.markdown("""
 .hm-sup-status{font-size:.72rem;font-weight:900;color:#006D6F;border:1px solid #BEEBE4;background:#F0FDFA;border-radius:999px;padding:.22rem .5rem;}
 .hm-sup-note{border:1px dashed #D9C28F;background:#FFF9EC;border-radius:16px;padding:.85rem;color:#7A5A16;font-size:.82rem;font-weight:790;margin:.85rem 0;}
 .hm-sup-empty{border:1px dashed #D9C28F;background:#FFFDF8;border-radius:16px;padding:1rem;color:#64748B;font-size:.85rem;font-weight:760;margin:.8rem 0;}
-.hm-sup-na{font-size:.78rem;font-weight:820;color:#64748B;background:#FFFDF8;border:1px dashed #D9C28F;border-radius:12px;padding:.55rem;margin-top:.18rem;}
+.hm-sup-na{font-size:.78rem;font-weight:820;color:#64748B;background:#FFFDF8;border:1px dashed #D9C28F;border-radius:12px;padding:.52rem .58rem;margin-top:0;min-height:38px;display:flex;align-items:center;}
 @media(max-width:850px){.hm-sup-layout{grid-template-columns:1fr}.hm-sup-card{grid-template-columns:34px 1fr}.hm-sup-card>div:last-child{grid-column:2}}
 </style>
 """, unsafe_allow_html=True)
@@ -249,7 +261,12 @@ with left:
                 with dose_col:
                     e_dosage = st.text_input("Dosage", value=row.get("dosage", ""), key=f"edit_dose_{row['id']}")
                 with freq_col:
-                    e_frequency = st.text_input("Frequency", value=row.get("frequency", ""), key=f"edit_freq_{row['id']}")
+                    e_frequency = st.selectbox(
+                        "Frequency",
+                        FREQUENCY_OPTIONS,
+                        index=FREQUENCY_OPTIONS.index(_frequency_default_option(row.get("frequency", ""))),
+                        key=f"edit_freq_{row['id']}",
+                    )
 
                 edit_timing_default, edit_custom_default = _split_timing_for_edit(row.get("timing", ""))
                 timing_col, add_timing_col = st.columns(2)
@@ -268,12 +285,15 @@ with left:
                     e_start = st.date_input("Start Date", value=_safe_date_value(row.get("start_date", "")), key=f"edit_start_{row['id']}")
                 with d2:
                     existing_end = str(row.get("end_date") or "").strip()
-                    set_e_end = st.checkbox("Set End Date", value=bool(existing_end), key=f"edit_end_enabled_{row['id']}")
-                    if set_e_end:
-                        e_end = st.date_input("End Date", value=_safe_optional_date_value(existing_end, e_start), key=f"edit_end_{row['id']}")
-                    else:
-                        st.markdown("<div class='hm-sup-na'>End Date: NA</div>", unsafe_allow_html=True)
-                        e_end = None
+                    end_toggle_col, end_value_col = st.columns([.44, .56], gap="small")
+                    with end_toggle_col:
+                        set_e_end = st.checkbox("Set End Date", value=bool(existing_end), key=f"edit_end_enabled_{row['id']}")
+                    with end_value_col:
+                        if set_e_end:
+                            e_end = st.date_input("End Date", value=_safe_optional_date_value(existing_end, e_start), key=f"edit_end_{row['id']}")
+                        else:
+                            st.markdown("<div class='hm-sup-na'>End Date: NA</div>", unsafe_allow_html=True)
+                            e_end = None
 
                 n1, n2 = st.columns(2)
                 with n1:
@@ -359,7 +379,7 @@ with right:
         with c1:
             dosage = st.text_input("Dosage", placeholder="e.g. 400 mg")
         with c2:
-            frequency = st.text_input("Frequency", placeholder="e.g. Once daily")
+            frequency = st.selectbox("Frequency", FREQUENCY_OPTIONS, index=0, key="hm_v1023a_add_frequency")
         timing_options = st.multiselect(
             "Timing",
             TIMING_OPTIONS,
@@ -367,12 +387,15 @@ with right:
         )
         custom_timing = st.text_input("Additional Timing", placeholder="Optional custom timing. Use commas for multiple custom timings.")
         start_date = st.date_input("Start Date", value=date.today())
-        set_end_date = st.checkbox("Set End Date", value=False, key="hm_v1023a_add_end_enabled")
-        if set_end_date:
-            end_date = st.date_input("End Date", value=start_date, key="hm_v1023a_add_end_date")
-        else:
-            st.markdown("<div class='hm-sup-na'>End Date: NA</div>", unsafe_allow_html=True)
-            end_date = None
+        end_toggle_col, end_value_col = st.columns([.44, .56], gap="small")
+        with end_toggle_col:
+            set_end_date = st.checkbox("Set End Date", value=False, key="hm_v1023a_add_end_enabled")
+        with end_value_col:
+            if set_end_date:
+                end_date = st.date_input("End Date", value=start_date, key="hm_v1023a_add_end_date")
+            else:
+                st.markdown("<div class='hm-sup-na'>End Date: NA</div>", unsafe_allow_html=True)
+                end_date = None
         note1, note2 = st.columns(2)
         with note1:
             instructions = st.text_area("Member Instructions", placeholder="What the member should follow")
@@ -410,3 +433,4 @@ render_back_to_top()
 
 # v102.3A: Admin Supplement Management with persistent member-specific publishing.
 # UX layout update: Admin info messages removed; Edit form aligns Dosage/Frequency and Timing/Additional Timing side by side.
+# Frequency dropdown/end-date alignment update: Add/Edit Frequency is capped to Once through Ten times; End Date controls are adjacent and compact.

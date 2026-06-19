@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v102_3A_Supplement_Admin_Info_Layout_Fix_Full_Build",
+  "build_name": "HealthyMe_v102_3A_SUPPLEMENT_FREQ_ENDDATE_ALIGNMENT_FULL_BUILD",
   "version": "v102.3A",
-  "updated_on": "2026-06-19T10:13:50.221499+00:00",
+  "updated_on": "2026-06-19T10:25:00.560521+00:00",
   "scope": [
     "Persistent member-linked supplement storage in existing HealthyMe app state",
     "Admin add/edit/stop supplements for selected member",
@@ -10,7 +10,9 @@
     "Frequency count validation against Timing + Additional Timing",
     "Optional End Date with automatic stop reason Predefined Timelines",
     "Admin supplement screen information messages removed",
-    "Edit Supplement layout aligns Dosage with Frequency and Timing with Additional Timing"
+    "Edit Supplement layout aligns Dosage with Frequency and Timing with Additional Timing",
+    "Add/Edit Frequency dropdown capped from Once through Ten times",
+    "Compact adjacent Set End Date and End Date/NA controls"
   ],
   "excluded": [
     "No scoring changes",
@@ -19,10 +21,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Removed the v102.3A informational message under the Supplement Management header.",
-    "Removed the v102.3A scope guard message from the bottom of the Supplement Management page.",
-    "Edit Supplement now places Dosage and Frequency adjacent in equal half-width columns.",
-    "Edit Supplement now places Timing and Additional Timing adjacent in equal half-width columns.",
+    "Add Supplement Frequency is now a dropdown from Once through Ten times.",
+    "Edit Supplement Frequency is now a dropdown from Once through Ten times, with existing values mapped to the nearest count option.",
+    "Frequency validation still checks the selected Timing count plus Additional Timing entries.",
+    "Set End Date and End Date / End Date: NA are now compact and adjacent in Add Supplement.",
+    "Set End Date and End Date / End Date: NA are now compact and adjacent beside Start Date in Edit Supplement.",
     "No PDF or Recommendations module added."
   ],
   "required_setup": [
@@ -106,7 +109,7 @@
     "Simplified logout to avoid switch_page plus refresh double behavior.",
     "Retained v33 explicit body_mind_access fallback marker."
   ],
-  "patched_body_mind_preview": "    st.info(\"No members available.\")\n    st.stop()\n\nselected = st.selectbox(\"Select member\", [f\"{m['id']} \u2014 {m['name']} \u2014 {m['email']}\" for m in members])\nmember_id = selected.split(\" \u2014 \")[0]\nmember = next(m for m in members if m[\"id\"] == member_id)\nwf = get_workflow(member_id)\nexplicit_body_mind_access = has_explicit_body_mind_access(member_id)\nif explicit_body_mind_access:\n    wf[\"body_mind_unlocked\"] = True\n\n# v31: repair stale review/instance status for finalized records without auto-unlocking Body-Mind.\nif wf.get(\"admin_completed\") or wf.get(\"final_report_ready\") or wf.get(\"workflow_status\") == \"finalized\":\n    wf = sync_member_finalization_state(member_id, body_mind_unlock=None)\n\ndb = load_db()\nbody_response = db.get(\"body_mind_responses\", {}).get(member_id, {})\nadmin_assessment = get_admin_assessment(member_id)\n\nadmin_assessment_saved = bool(admin_assessment) or bool(wf.get(\"admin_completed\"))\nadmin_final_completed = bool(wf.get(\"admin_completed\")) or bool(wf.get(\"final_report_ready\"))\n\ncard_start()\nst.subheader(member[\"name\"])\nst.caption(member[\"email\"])\nstat_grid([\n    {\"label\": \"Visibility\", \"value\": \"Visible\" if (wf.get(\"body_mind_unlocked\") or explicit_body_mind_access) else \"Hidden\", \"note\": \"Member access\"},\n    {\"label\": \"Activation\", \"value\": \"Requested\" if wf.get(\"body_mind_activation_requested\") else \"Not requested\", \"note\": \"Admin selection\"},\n    {\"label\": \"Admin Assessment\", \"value\": \"Saved\" if admin_assessment_saved else \"Not saved\", \"note\": \"Unlock prerequisite\"},\n    {\"label\": \"Body-Mind\", \"value\": \"Completed\" if wf.get(\"body_mind_completed\") else \"Not completed\", \"note\": \"Member progress\"},",
+  "patched_body_mind_preview": "    st.info(\"No members available.\")\n    st.stop()\n\nselected = st.selectbox(\"Select member\", [f\"{m['id']} — {m['name']} — {m['email']}\" for m in members])\nmember_id = selected.split(\" — \")[0]\nmember = next(m for m in members if m[\"id\"] == member_id)\nwf = get_workflow(member_id)\nexplicit_body_mind_access = has_explicit_body_mind_access(member_id)\nif explicit_body_mind_access:\n    wf[\"body_mind_unlocked\"] = True\n\n# v31: repair stale review/instance status for finalized records without auto-unlocking Body-Mind.\nif wf.get(\"admin_completed\") or wf.get(\"final_report_ready\") or wf.get(\"workflow_status\") == \"finalized\":\n    wf = sync_member_finalization_state(member_id, body_mind_unlock=None)\n\ndb = load_db()\nbody_response = db.get(\"body_mind_responses\", {}).get(member_id, {})\nadmin_assessment = get_admin_assessment(member_id)\n\nadmin_assessment_saved = bool(admin_assessment) or bool(wf.get(\"admin_completed\"))\nadmin_final_completed = bool(wf.get(\"admin_completed\")) or bool(wf.get(\"final_report_ready\"))\n\ncard_start()\nst.subheader(member[\"name\"])\nst.caption(member[\"email\"])\nstat_grid([\n    {\"label\": \"Visibility\", \"value\": \"Visible\" if (wf.get(\"body_mind_unlocked\") or explicit_body_mind_access) else \"Hidden\", \"note\": \"Member access\"},\n    {\"label\": \"Activation\", \"value\": \"Requested\" if wf.get(\"body_mind_activation_requested\") else \"Not requested\", \"note\": \"Admin selection\"},\n    {\"label\": \"Admin Assessment\", \"value\": \"Saved\" if admin_assessment_saved else \"Not saved\", \"note\": \"Unlock prerequisite\"},\n    {\"label\": \"Body-Mind\", \"value\": \"Completed\" if wf.get(\"body_mind_completed\") else \"Not completed\", \"note\": \"Member progress\"},",
   "autosave_check": {
     "LAF": "Auto-save enabled.",
     "NSP Page 1": "Auto-save enabled.",
@@ -383,11 +386,11 @@
       "if st.button(\"Back to Home\", use_container_width=True):"
     ],
     "08_Recipe_Repository.py": [
-      "if st.button(\"\u2190 Back\", key=\"recipe_detail_bottom_back\", use_container_width=True):",
+      "if st.button(\"← Back\", key=\"recipe_detail_bottom_back\", use_container_width=True):",
       "if st.button(\"Dashboard\", key=\"recipe_detail_bottom_dashboard\", use_container_width=True):"
     ],
     "09_Exercise_Repository.py": [
-      "if st.button(\"\u2190 Back\", key=\"exercise_detail_bottom_back\", use_container_width=True):",
+      "if st.button(\"← Back\", key=\"exercise_detail_bottom_back\", use_container_width=True):",
       "if st.button(\"Dashboard\", key=\"exercise_detail_bottom_dashboard\", use_container_width=True):"
     ],
     "14_Final_Assessment_Report.py": [

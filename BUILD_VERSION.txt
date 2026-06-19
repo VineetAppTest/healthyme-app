@@ -1,4 +1,4 @@
-HealthyMe v102.3A - Supplement Admin Info/Layout Fix
-Base: v102.3A Supplement Validation + End Date full build
-Scope: Remove admin informational scope messages; align Edit Supplement Dosage/Frequency and Timing/Additional Timing side by side.
+HealthyMe v102.3A - Supplement Frequency Dropdown + End Date Alignment Fix
+Base: v102.3A Admin Info/Layout Fix full build
+Scope: Add/Edit Supplement Frequency dropdown up to 10; compact adjacent End Date controls; no PDF or Recommendations module.
 Exclusions: No PDF, no Recommendations module.
