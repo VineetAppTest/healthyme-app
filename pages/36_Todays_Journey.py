@@ -71,7 +71,40 @@ def _date_label(value):
 
 
 def _fold_label(label):
-    return f"＋ / −  {label}"
+    return label
+
+
+def _merge_supp_detail(detail, supplements_by_id):
+    detail = dict(detail or {})
+    sid = str(detail.get("supplement_id") or detail.get("source_supplement_id") or detail.get("id") or "")
+    merged = dict(supplements_by_id.get(sid, {}) or {})
+    for key, value in detail.items():
+        if value not in [None, ""]:
+            merged[key] = value
+    if sid:
+        merged["id"] = sid
+        merged["supplement_id"] = sid
+    return merged
+
+
+def _supp_entries_for_day(items, supplements_by_id):
+    entries = []
+    seen = set()
+    for item in items or []:
+        details = item.get("supplement_details", []) or []
+        if details:
+            for detail in details:
+                row = _merge_supp_detail(detail, supplements_by_id)
+                marker = (str(row.get("supplement_id") or row.get("id") or ""), str(row.get("supplement_name") or ""), str(row.get("timing") or ""))
+                if marker not in seen:
+                    entries.append(row)
+                    seen.add(marker)
+        else:
+            for sid in item.get("supplement_ids", []) or []:
+                if sid in supplements_by_id and (sid, "", "") not in seen:
+                    entries.append(supplements_by_id.get(sid, {}))
+                    seen.add((sid, "", ""))
+    return entries
 
 
 def _day_rows(plan, day_iso):
@@ -100,6 +133,15 @@ st.markdown("""
 .hm-tj-week-card{border:1px solid #E6D4A8;background:#FFFDF8;border-radius:16px;padding:.8rem;margin:.55rem 0;}
 .hm-tj-week-title{color:#064E3B;font-size:.90rem;font-weight:940;margin-bottom:.25rem;}
 .hm-tj-chip{display:inline-flex;background:#F8F5EE;border:1px solid #E6D4A8;border-radius:999px;padding:.12rem .42rem;font-size:.68rem;font-weight:850;color:#475569;margin:.25rem .16rem 0 0;}
+
+/* Clean +/- expander controls */
+div[data-testid="stExpander"] details summary{list-style:none!important;border:1.5px solid #D8A84E!important;background:linear-gradient(135deg,#FFFDF8 0%,#FFF4DE 100%)!important;border-radius:999px!important;padding:.48rem .85rem!important;box-shadow:0 8px 20px rgba(138,95,16,.08)!important;}
+div[data-testid="stExpander"] details summary::-webkit-details-marker{display:none!important;}
+div[data-testid="stExpander"] details summary::marker{font-size:0!important;content:""!important;}
+div[data-testid="stExpander"] details summary svg{display:none!important;}
+div[data-testid="stExpander"] details summary::before{content:"+";display:inline-flex;align-items:center;justify-content:center;width:1.35rem;height:1.35rem;margin-right:.45rem;border-radius:999px;background:#064E3B;color:#FFFDF8;font-weight:950;font-size:.86rem;line-height:1;}
+div[data-testid="stExpander"] details[open] summary::before{content:"−";}
+div[data-testid="stExpander"] details summary p{display:inline!important;font-weight:950!important;color:#064E3B!important;font-size:.84rem!important;}
 @media(max-width:850px){.hm-tj-grid{grid-template-columns:1fr}}
 </style>
 """, unsafe_allow_html=True)
@@ -153,16 +195,14 @@ with ecol:
 
 with scol:
     st.markdown("<div class='hm-tj-card'><div class='hm-tj-card-title'>Today’s Supplements</div>", unsafe_allow_html=True)
-    visible_supp_ids = []
-    for item in supp_today:
-        visible_supp_ids.extend(item.get("supplement_ids", []) or [])
-    visible_supp_ids = [sid for sid in visible_supp_ids if sid in supplements_by_id]
-    if not visible_supp_ids:
+    visible_supps = _supp_entries_for_day(supp_today, supplements_by_id)
+    if not visible_supps:
         _render_empty("No supplement is scheduled for today.")
-    for sid in visible_supp_ids:
-        row = supplements_by_id.get(sid, {})
+    for row in visible_supps:
         chips = "".join([f"<span class='hm-tj-chip'>{_esc(x)}</span>" for x in _split_timing(row.get("timing"))])
-        st.markdown(f"<div class='hm-tj-item'>{_esc(row.get('supplement_name') or 'Supplement')}<div class='hm-tj-meta'>{_esc(row.get('dosage') or '')} · {_esc(row.get('frequency') or '')}</div><div class='hm-tj-meta'>Start: {_esc(_date_label(row.get('start_date')))} · End: {_esc(_date_label(row.get('end_date')))}</div>{chips}</div>", unsafe_allow_html=True)
+        instruction = row.get("instructions") or row.get("member_instructions") or ""
+        instruction_html = f"<div class='hm-tj-meta'>{_esc(instruction)}</div>" if instruction else ""
+        st.markdown(f"<div class='hm-tj-item'>{_esc(row.get('supplement_name') or 'Supplement')}<div class='hm-tj-meta'>{_esc(row.get('dosage') or '')} · {_esc(row.get('frequency') or '')}</div><div class='hm-tj-meta'>Start: {_esc(_date_label(row.get('start_date')))} · End: {_esc(_date_label(row.get('end_date')))}</div>{instruction_html}{chips}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -200,14 +240,12 @@ for i in range(7):
         else:
             st.caption("No exercise scheduled.")
         st.markdown("**Supplements**")
-        ids = []
-        for item in supps:
-            ids.extend(item.get("supplement_ids", []) or [])
-        ids = [sid for sid in ids if sid in supplements_by_id]
-        if ids:
-            for sid in ids:
-                row = supplements_by_id.get(sid, {})
-                st.markdown(f"- {_esc(row.get('supplement_name') or 'Supplement')} · {_esc(row.get('dosage') or 'Dosage NA')} · {_esc(row.get('frequency') or 'Frequency NA')} · {_esc(row.get('timing') or 'As advised')} · Start: {_esc(_date_label(row.get('start_date')))} · End: {_esc(_date_label(row.get('end_date')))}")
+        supp_entries = _supp_entries_for_day(supps, supplements_by_id)
+        if supp_entries:
+            for row in supp_entries:
+                instruction = row.get("instructions") or row.get("member_instructions") or ""
+                extra = f" · {_esc(instruction)}" if instruction else ""
+                st.markdown(f"- {_esc(row.get('supplement_name') or 'Supplement')} · {_esc(row.get('dosage') or 'Dosage NA')} · {_esc(row.get('frequency') or 'Frequency NA')} · {_esc(row.get('timing') or 'As advised')} · Start: {_esc(_date_label(row.get('start_date')))} · End: {_esc(_date_label(row.get('end_date')))}{extra}")
         else:
             st.caption("No supplements scheduled.")
 
@@ -215,4 +253,4 @@ st.markdown("</div>", unsafe_allow_html=True)
 render_page_nav("Today's Journey", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
 
-# v102.4A: Member Today's Journey. Derived from Recommendations Share only, with +/- full-plan folds and richer supplement details.
+# v102.4B2: Member Today's Journey reads editable supplement details from Recommendations Share and uses clean +/- folds.

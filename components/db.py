@@ -3240,6 +3240,24 @@ def _rec_normalise_exercise_plan_v102_4(plan, start_date):
     return rows
 
 
+def _rec_normalise_supplement_detail_v102_4(detail):
+    detail = dict(detail or {})
+    raw_id = detail.get("supplement_id") or detail.get("source_supplement_id") or detail.get("id")
+    start_raw = _rec_clean_text_v102_4(detail.get("start_date"))
+    end_raw = _rec_clean_text_v102_4(detail.get("end_date"))
+    return {
+        "supplement_id": _rec_clean_text_v102_4(raw_id),
+        "supplement_name": _rec_clean_text_v102_4(detail.get("supplement_name") or detail.get("name")),
+        "dosage": _rec_clean_text_v102_4(detail.get("dosage")),
+        "frequency": _rec_clean_text_v102_4(detail.get("frequency")),
+        "timing": _rec_clean_text_v102_4(detail.get("timing")),
+        "start_date": start_raw[:10] if start_raw else "",
+        "end_date": end_raw[:10] if end_raw else "",
+        "instructions": _rec_clean_text_v102_4(detail.get("instructions") or detail.get("member_instructions")),
+        "admin_notes": _rec_clean_text_v102_4(detail.get("admin_notes")),
+    }
+
+
 def _rec_normalise_supplement_plan_v102_4(plan, start_date):
     days = _rec_days_for_window_v102_4(start_date)
     existing = {}
@@ -3253,10 +3271,38 @@ def _rec_normalise_supplement_plan_v102_4(plan, start_date):
         supplement_ids = item.get("supplement_ids", [])
         if isinstance(supplement_ids, str):
             supplement_ids = [x.strip() for x in supplement_ids.replace("|", ",").split(",") if x.strip()]
+        supplement_ids = [str(x).strip() for x in (supplement_ids or []) if str(x).strip()]
+
+        details = []
+        for raw_detail in item.get("supplement_details", []) or []:
+            if not isinstance(raw_detail, dict):
+                continue
+            clean_detail = _rec_normalise_supplement_detail_v102_4(raw_detail)
+            sid = clean_detail.get("supplement_id")
+            if sid and sid not in supplement_ids:
+                supplement_ids.append(sid)
+            if sid or clean_detail.get("supplement_name"):
+                details.append(clean_detail)
+
+        # Keep the detail order aligned with the selected IDs so member views remain predictable.
+        detail_by_id = {str(d.get("supplement_id")): d for d in details if d.get("supplement_id")}
+        ordered_details = []
+        used_ids = set()
+        for sid in supplement_ids:
+            detail = detail_by_id.get(str(sid))
+            if detail:
+                ordered_details.append(detail)
+                used_ids.add(str(sid))
+        for detail in details:
+            sid = str(detail.get("supplement_id") or "")
+            if sid not in used_ids:
+                ordered_details.append(detail)
+
         rows.append({
             "day_number": i,
             "date": day,
-            "supplement_ids": [str(x).strip() for x in (supplement_ids or []) if str(x).strip()],
+            "supplement_ids": supplement_ids,
+            "supplement_details": ordered_details,
             "notes": _rec_clean_text_v102_4(item.get("notes")),
         })
     return rows
