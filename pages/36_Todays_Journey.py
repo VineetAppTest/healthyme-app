@@ -65,6 +65,15 @@ def _today_iso():
     return date.today().isoformat()
 
 
+def _date_label(value):
+    raw = str(value or "").strip()
+    return raw[:10] if raw else "NA"
+
+
+def _fold_label(label):
+    return f"＋ / −  {label}"
+
+
 def _day_rows(plan, day_iso):
     return [x for x in (plan or []) if str(x.get("date")) == str(day_iso)]
 
@@ -153,7 +162,7 @@ with scol:
     for sid in visible_supp_ids:
         row = supplements_by_id.get(sid, {})
         chips = "".join([f"<span class='hm-tj-chip'>{_esc(x)}</span>" for x in _split_timing(row.get("timing"))])
-        st.markdown(f"<div class='hm-tj-item'>{_esc(row.get('supplement_name') or 'Supplement')}<div class='hm-tj-meta'>{_esc(row.get('dosage') or '')} · {_esc(row.get('frequency') or '')}</div>{chips}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='hm-tj-item'>{_esc(row.get('supplement_name') or 'Supplement')}<div class='hm-tj-meta'>{_esc(row.get('dosage') or '')} · {_esc(row.get('frequency') or '')}</div><div class='hm-tj-meta'>Start: {_esc(_date_label(row.get('start_date')))} · End: {_esc(_date_label(row.get('end_date')))}</div>{chips}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -172,7 +181,7 @@ for i in range(7):
         label = f"Day {i+1} · " + day_dt.strftime("%a, %d %b %Y")
     except Exception:
         label = f"Day {i+1}"
-    with st.expander(label, expanded=(day_iso == today_iso)):
+    with st.expander(_fold_label(label), expanded=(day_iso == today_iso)):
         meals = [x for x in _day_rows(share.get("meal_plan"), day_iso) if x.get("recipe_id")]
         exercises = [x for x in _day_rows(share.get("exercise_plan"), day_iso) if x.get("exercise_id")]
         supps = _day_rows(share.get("supplement_plan"), day_iso)
@@ -198,7 +207,7 @@ for i in range(7):
         if ids:
             for sid in ids:
                 row = supplements_by_id.get(sid, {})
-                st.markdown(f"- {_esc(row.get('supplement_name') or 'Supplement')} · {_esc(row.get('timing') or 'As advised')}")
+                st.markdown(f"- {_esc(row.get('supplement_name') or 'Supplement')} · {_esc(row.get('dosage') or 'Dosage NA')} · {_esc(row.get('frequency') or 'Frequency NA')} · {_esc(row.get('timing') or 'As advised')} · Start: {_esc(_date_label(row.get('start_date')))} · End: {_esc(_date_label(row.get('end_date')))}")
         else:
             st.caption("No supplements scheduled.")
 
@@ -206,4 +215,4 @@ st.markdown("</div>", unsafe_allow_html=True)
 render_page_nav("Today's Journey", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
 
-# v102.4: Member Today's Journey. Derived from Recommendations Share only.
+# v102.4A: Member Today's Journey. Derived from Recommendations Share only, with +/- full-plan folds and richer supplement details.
