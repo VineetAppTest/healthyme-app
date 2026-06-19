@@ -139,6 +139,7 @@ div[data-testid="stExpander"] details summary{list-style:none!important;border:1
 div[data-testid="stExpander"] details summary::-webkit-details-marker{display:none!important;}
 div[data-testid="stExpander"] details summary::marker{font-size:0!important;content:""!important;}
 div[data-testid="stExpander"] details summary svg{display:none!important;}
+div[data-testid="stExpander"] details summary [data-testid="stExpanderToggleIcon"],div[data-testid="stExpander"] details summary [data-testid="stIconMaterial"],div[data-testid="stExpander"] details summary > span:first-child{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;max-width:0!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
 div[data-testid="stExpander"] details summary::before{content:"+";display:inline-flex;align-items:center;justify-content:center;width:1.35rem;height:1.35rem;margin-right:.45rem;border-radius:999px;background:#064E3B;color:#FFFDF8;font-weight:950;font-size:.86rem;line-height:1;}
 div[data-testid="stExpander"] details[open] summary::before{content:"−";}
 div[data-testid="stExpander"] details summary p{display:inline!important;font-weight:950!important;color:#064E3B!important;font-size:.84rem!important;}
@@ -253,4 +254,4 @@ st.markdown("</div>", unsafe_allow_html=True)
 render_page_nav("Today's Journey", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
 
-# v102.4B2: Member Today's Journey reads editable supplement details from Recommendations Share and uses clean +/- folds.
+# v102.4B3: Member Today's Journey uses premium green circular +/- expanders with default glyph removed.

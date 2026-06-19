@@ -3057,6 +3057,74 @@ div[data-testid="stTimeInput"] input{
   border-radius:12px!important;
 }
 
+
+
+/* --- v102.4B3 Global Premium Expander Control --- */
+/* Collapsed: green circular + only. Expanded: green circular − only. Hide Streamlit's default glyph/caret everywhere. */
+div[data-testid="stExpander"] details > summary{
+  display:flex!important;
+  align-items:center!important;
+  gap:.45rem!important;
+  list-style:none!important;
+  border:1.5px solid var(--hm-gold, #D8A84E)!important;
+  background:linear-gradient(135deg,#FFFDF8 0%,#FFF4DE 100%)!important;
+  border-radius:999px!important;
+  padding:.48rem .85rem!important;
+  min-height:2.45rem!important;
+  box-shadow:0 8px 20px rgba(138,95,16,.08)!important;
+}
+div[data-testid="stExpander"] details > summary::-webkit-details-marker{display:none!important;}
+div[data-testid="stExpander"] details > summary::marker{font-size:0!important;content:""!important;}
+div[data-testid="stExpander"] details > summary > svg,
+div[data-testid="stExpander"] details > summary svg,
+div[data-testid="stExpander"] details > summary [data-testid="stExpanderToggleIcon"],
+div[data-testid="stExpander"] details > summary [data-testid="stIconMaterial"],
+div[data-testid="stExpander"] details > summary > span:first-child{
+  display:none!important;
+  visibility:hidden!important;
+  width:0!important;
+  min-width:0!important;
+  max-width:0!important;
+  height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+div[data-testid="stExpander"] details > summary::before{
+  content:"+";
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 1.35rem!important;
+  width:1.35rem!important;
+  height:1.35rem!important;
+  margin-right:.28rem!important;
+  border-radius:999px!important;
+  background:#064E3B!important;
+  color:#FFFDF8!important;
+  font-weight:950!important;
+  font-size:.86rem!important;
+  line-height:1!important;
+}
+div[data-testid="stExpander"] details[open] > summary::before{content:"−";}
+div[data-testid="stExpander"] details > summary p,
+div[data-testid="stExpander"] details > summary div,
+div[data-testid="stExpander"] details > summary span{
+  display:inline!important;
+  color:#064E3B!important;
+  font-weight:950!important;
+  font-size:.84rem!important;
+  line-height:1.18!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  padding:0!important;
+  margin:0!important;
+}
+div[data-testid="stExpander"] details > summary:hover{
+  border-color:#064E3B!important;
+  box-shadow:0 10px 24px rgba(6,78,59,.10)!important;
+}
+
 </style>
 """
 
