@@ -2824,3 +2824,249 @@ def get_nsp_system_score_snapshot(member_id, instance_id=None):
         return db.get("nsp_system_scores_by_instance", {}).get(instance_id, {})
     return db.get("nsp_system_scores", {}).get(member_id, {})
 
+
+
+# --------------------------------------------------------------------
+# v102.3A: Supplements persistence helpers
+# --------------------------------------------------------------------
+
+def _supp_now_iso_v102_3a():
+    return datetime.datetime.now().isoformat(timespec="seconds")
+
+
+def _supp_clean_text_v102_3a(value):
+    return str(value or "").strip()
+
+
+def _supp_clean_date_v102_3a(value):
+    if value in (None, ""):
+        return ""
+    try:
+        return value.isoformat()
+    except Exception:
+        return str(value)
+
+
+def _supp_find_member_v102_3a(db, member_id):
+    member_id = str(member_id or "").strip()
+    for user in db.get("users", []):
+        if str(user.get("id")) == member_id:
+            return user
+    return {}
+
+
+def _ensure_supplement_store_v102_3a(db):
+    db.setdefault("member_supplements", [])
+    db.setdefault("supplement_audit_logs", [])
+    db.setdefault("notifications", [])
+    if not isinstance(db.get("member_supplements"), list):
+        db["member_supplements"] = []
+    if not isinstance(db.get("supplement_audit_logs"), list):
+        db["supplement_audit_logs"] = []
+    return db
+
+
+def _normalise_supplement_record_v102_3a(record):
+    record = dict(record or {})
+    record.setdefault("id", str(uuid.uuid4())[:8])
+    record.setdefault("member_id", "")
+    record.setdefault("member_email", "")
+    record.setdefault("member_name", "")
+    record.setdefault("supplement_name", record.get("name", ""))
+    record.setdefault("dosage", "")
+    record.setdefault("frequency", "")
+    record.setdefault("timing", "")
+    record.setdefault("instructions", "")
+    record.setdefault("start_date", "")
+    record.setdefault("stop_date", "")
+    record.setdefault("status", "Active")
+    record.setdefault("admin_notes", "")
+    record.setdefault("stop_reason", "")
+    record.setdefault("created_at", "")
+    record.setdefault("updated_at", "")
+    record.setdefault("created_by", "")
+    record.setdefault("updated_by", "")
+    record.setdefault("stopped_at", "")
+    record.setdefault("stopped_by", "")
+    for key in ["member_id", "member_email", "member_name", "supplement_name", "dosage", "frequency", "timing", "instructions", "start_date", "stop_date", "status", "admin_notes", "stop_reason", "created_at", "updated_at", "created_by", "updated_by", "stopped_at", "stopped_by"]:
+        record[key] = _supp_clean_text_v102_3a(record.get(key))
+    if record["status"].lower() not in ["active", "stopped"]:
+        record["status"] = "Active"
+    record["status"] = "Stopped" if record["status"].lower() == "stopped" else "Active"
+    return record
+
+
+def _write_supplement_audit_v102_3a(db, action, record, actor_id="", changes=None):
+    db.setdefault("supplement_audit_logs", [])
+    db["supplement_audit_logs"].append({
+        "ts": _supp_now_iso_v102_3a(),
+        "action": action,
+        "supplement_id": record.get("id", ""),
+        "member_id": record.get("member_id", ""),
+        "member_email": record.get("member_email", ""),
+        "supplement_name": record.get("supplement_name", ""),
+        "actor_id": actor_id or "admin",
+        "changes": changes or {},
+    })
+    db["supplement_audit_logs"] = db["supplement_audit_logs"][-500:]
+
+
+def list_member_supplements(member_id=None, status=None, include_inactive_member=True):
+    """Return persisted supplement records.
+
+    member_id filters to one member. status can be Active or Stopped.
+    Member pages should call list_active_member_supplements(member_id) for publishing.
+    """
+    db = _ensure_supplement_store_v102_3a(load_db())
+    rows = []
+    status_filter = _supp_clean_text_v102_3a(status).lower()
+    member_id_filter = _supp_clean_text_v102_3a(member_id)
+    active_member_ids = None
+    if not include_inactive_member:
+        active_member_ids = {str(u.get("id")) for u in db.get("users", []) if u.get("role") == "member" and u.get("is_active", True)}
+    changed = False
+    for raw in db.get("member_supplements", []):
+        row = _normalise_supplement_record_v102_3a(raw)
+        if row != raw:
+            raw.update(row)
+            changed = True
+        if member_id_filter and str(row.get("member_id")) != member_id_filter:
+            continue
+        if status_filter and str(row.get("status", "")).lower() != status_filter:
+            continue
+        if active_member_ids is not None and str(row.get("member_id")) not in active_member_ids:
+            continue
+        rows.append(row)
+    if changed:
+        save_db(db)
+    rows.sort(key=lambda r: (0 if r.get("status") == "Active" else 1, str(r.get("updated_at") or r.get("created_at") or "")), reverse=True)
+    return rows
+
+
+def list_active_member_supplements(member_id):
+    """Member-publishing helper: only this member's active assigned regimen."""
+    return list_member_supplements(member_id=member_id, status="Active")
+
+
+def add_member_supplement(member_id, data, actor_id="admin"):
+    db = _ensure_supplement_store_v102_3a(load_db())
+    member_id = _supp_clean_text_v102_3a(member_id)
+    if not member_id:
+        raise ValueError("Member is required.")
+    member = _supp_find_member_v102_3a(db, member_id)
+    if not member:
+        raise ValueError("Selected member was not found.")
+    name = _supp_clean_text_v102_3a((data or {}).get("supplement_name") or (data or {}).get("name"))
+    if not name:
+        raise ValueError("Supplement name is required.")
+    now = _supp_now_iso_v102_3a()
+    record = _normalise_supplement_record_v102_3a({
+        "id": str(uuid.uuid4())[:8],
+        "member_id": member_id,
+        "member_email": member.get("email", ""),
+        "member_name": member.get("name", ""),
+        "supplement_name": name,
+        "dosage": (data or {}).get("dosage", ""),
+        "frequency": (data or {}).get("frequency", ""),
+        "timing": (data or {}).get("timing", ""),
+        "instructions": (data or {}).get("instructions", ""),
+        "start_date": _supp_clean_date_v102_3a((data or {}).get("start_date", "")),
+        "stop_date": "",
+        "status": "Active",
+        "admin_notes": (data or {}).get("admin_notes", ""),
+        "stop_reason": "",
+        "created_at": now,
+        "updated_at": now,
+        "created_by": actor_id or "admin",
+        "updated_by": actor_id or "admin",
+    })
+    db["member_supplements"].append(record)
+    _write_supplement_audit_v102_3a(db, "created", record, actor_id=actor_id)
+    db.setdefault("notifications", []).append({
+        "ts": now,
+        "kind": "supplement_regimen_updated",
+        "user_id": member_id,
+        "message": "Your nutritionist has updated your supplement regimen.",
+        "status": "queued",
+        "email_required": False,
+        "created_by": actor_id or "admin",
+    })
+    save_db(db)
+    return record
+
+
+def update_member_supplement(supplement_id, updates, actor_id="admin"):
+    db = _ensure_supplement_store_v102_3a(load_db())
+    supplement_id = _supp_clean_text_v102_3a(supplement_id)
+    allowed = {"supplement_name", "dosage", "frequency", "timing", "instructions", "start_date", "admin_notes"}
+    for idx, raw in enumerate(db.get("member_supplements", [])):
+        row = _normalise_supplement_record_v102_3a(raw)
+        if str(row.get("id")) != supplement_id:
+            continue
+        if row.get("status") != "Active":
+            raise ValueError("Stopped supplements cannot be edited. Add a new active supplement instead.")
+        before = dict(row)
+        for key in allowed:
+            if key in (updates or {}):
+                value = (updates or {}).get(key)
+                row[key] = _supp_clean_date_v102_3a(value) if key == "start_date" else _supp_clean_text_v102_3a(value)
+        if not row.get("supplement_name"):
+            raise ValueError("Supplement name is required.")
+        row["updated_at"] = _supp_now_iso_v102_3a()
+        row["updated_by"] = actor_id or "admin"
+        db["member_supplements"][idx] = _normalise_supplement_record_v102_3a(row)
+        changes = {k: {"from": before.get(k, ""), "to": row.get(k, "")} for k in allowed if before.get(k, "") != row.get(k, "")}
+        _write_supplement_audit_v102_3a(db, "updated", row, actor_id=actor_id, changes=changes)
+        db.setdefault("notifications", []).append({
+            "ts": row["updated_at"],
+            "kind": "supplement_regimen_updated",
+            "user_id": row.get("member_id", ""),
+            "message": "Your nutritionist has updated your supplement regimen.",
+            "status": "queued",
+            "email_required": False,
+            "created_by": actor_id or "admin",
+        })
+        save_db(db)
+        return db["member_supplements"][idx]
+    raise ValueError("Supplement record was not found.")
+
+
+def stop_member_supplement(supplement_id, stop_date=None, stop_reason="", actor_id="admin"):
+    db = _ensure_supplement_store_v102_3a(load_db())
+    supplement_id = _supp_clean_text_v102_3a(supplement_id)
+    for idx, raw in enumerate(db.get("member_supplements", [])):
+        row = _normalise_supplement_record_v102_3a(raw)
+        if str(row.get("id")) != supplement_id:
+            continue
+        before = dict(row)
+        now = _supp_now_iso_v102_3a()
+        row["status"] = "Stopped"
+        row["stop_date"] = _supp_clean_date_v102_3a(stop_date) or datetime.date.today().isoformat()
+        row["stop_reason"] = _supp_clean_text_v102_3a(stop_reason)
+        row["stopped_at"] = now
+        row["stopped_by"] = actor_id or "admin"
+        row["updated_at"] = now
+        row["updated_by"] = actor_id or "admin"
+        db["member_supplements"][idx] = _normalise_supplement_record_v102_3a(row)
+        _write_supplement_audit_v102_3a(db, "stopped", row, actor_id=actor_id, changes={"status": {"from": before.get("status", ""), "to": "Stopped"}, "stop_date": row.get("stop_date", "")})
+        db.setdefault("notifications", []).append({
+            "ts": now,
+            "kind": "supplement_regimen_updated",
+            "user_id": row.get("member_id", ""),
+            "message": "Your nutritionist has updated your supplement regimen.",
+            "status": "queued",
+            "email_required": False,
+            "created_by": actor_id or "admin",
+        })
+        save_db(db)
+        return db["member_supplements"][idx]
+    raise ValueError("Supplement record was not found.")
+
+
+def supplement_regimen_counts(member_id):
+    rows = list_member_supplements(member_id=member_id)
+    return {
+        "active": len([r for r in rows if r.get("status") == "Active"]),
+        "stopped": len([r for r in rows if r.get("status") == "Stopped"]),
+        "total": len(rows),
+    }

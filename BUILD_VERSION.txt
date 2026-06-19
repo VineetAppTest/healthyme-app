@@ -1,2 +1,4 @@
-HealthyMe v98.0 - Daily Log Closure + Admin/Report Validation
-Base: v97.36 GTG
+HealthyMe v102.3A - Supplements Persistence + Member Publishing
+Base: v102.3 Supplements Module Shell
+Scope: Persistent admin supplement regimen storage, admin add/edit/stop, member active-only publishing, stopped supplement admin history.
+Exclusions: No PDF, no Recommendations module.

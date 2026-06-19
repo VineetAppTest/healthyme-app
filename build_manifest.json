@@ -1,15 +1,12 @@
 {
-  "build_name": "HealthyMe_v102_3_Supplements_Module_Shell",
-  "version": "v102.3",
+  "build_name": "HealthyMe_v102_3A_Supplements_Persistence_Member_Publishing",
+  "version": "v102.3A",
   "updated_on": "2026-06-18T19:33:31.819045+00:00",
   "scope": [
-    "Freeze v97.36 Daily Log as GTG functional baseline.",
-    "Prepare Daily Log closure build for UAT.",
-    "Add Admin/Report validation checklist.",
-    "Preserve button-driven Recent Saved Days filter.",
-    "Preserve Food Journal Date alignment.",
-    "Preserve Fluid Timing label.",
-    "Preserve meal timing, snacking, other fluids, and save logic."
+    "Persistent member-linked supplement storage in existing HealthyMe app state",
+    "Admin add/edit/stop supplements for selected member",
+    "Member active-only assigned regimen view",
+    "Stopped supplements retained in admin history"
   ],
   "excluded": [
     "No scoring changes",
@@ -18,13 +15,11 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Added Admin Supplement Management shell.",
-    "Added Member Supplements view shell.",
-    "Added Admin Dashboard Supplements entry point.",
-    "Added Member Home My Supplements entry point.",
-    "Admin add supplement is session-based only for workflow testing.",
-    "No database schema change or persistent publishing yet.",
-    "No changes to NSP, Daily Log, Scheduling, Reschedule, reports, or Recipe/Exercise fallback logic."
+    "Converted Admin Supplement Management from shell/session state to persistent member-specific storage.",
+    "Converted Member Supplements from static shell to active-only member-specific publishing.",
+    "Admin can add, edit, and stop supplements for the selected member.",
+    "Stopped supplements remain retained under Admin history and are removed from Member view.",
+    "No PDF, Recommendations module, meal plan integration, or exercise plan integration added."
   ],
   "required_setup": [
     "Set GitHub Actions secret or variable WAKEME_URLS to the deployed Streamlit app URL"
@@ -63,7 +58,7 @@
     "Final report NSP data integrity fix",
     "Final report calculation",
     "Auth structure",
-    "Database schema"
+    "No dedicated Supabase table/schema migration required; uses existing HealthyMe app-state storage."
   ],
   "diagnostics_added": [
     "NSP Source",
@@ -321,7 +316,7 @@
     ]
   },
   "patched_page": "pages/11_Evaluation_Status.py",
-  "base_build": "HealthyMe_v102_2E_Mockup_Aligned_Recipe1_Exercise1_UX.zip",
+  "base_build": "HealthyMe_v102_3_Supplements_Module_Shell",
   "daily_log_source": "HealthyMe_v97_8_DailyLog_DateRow_Snacking_OtherFluids_Fix.zip",
   "daily_log_baseline": "v97.36 GTG",
   "sprint_type": "baseline_validation_candidate",
@@ -432,5 +427,22 @@
     "15_Admin_Recipe_Manager.py": [],
     "16_Admin_Exercise_Manager.py": [],
     "32_Admin_Scheduling.py": []
-  }
+  },
+  "explicit_exclusions": [
+    "No PDF",
+    "No Recommendations module",
+    "No meal plan integration",
+    "No exercise plan integration"
+  ],
+  "updated_files_v102_3A": [
+    "components/storage_backend.py",
+    "components/db.py",
+    "components/ui_common.py",
+    "pages/39_Admin_Supplement_Manager.py",
+    "pages/40_Member_Supplements.py",
+    "BUILD_VERSION.txt",
+    "RELEASE_NOTES_v102_3A.md",
+    "V102_3A_SUPPLEMENTS_PERSISTENCE_MEMBER_PUBLISHING_UAT_CHECKLIST.md"
+  ],
+  "generated_at": "2026-06-19T09:12:54"
 }

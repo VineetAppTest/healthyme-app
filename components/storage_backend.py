@@ -42,6 +42,9 @@ DEFAULT_STORES = {
     "login_sessions": {},
     "resource_assignments": {"recipes": {}, "exercises": {}},
     "messages": [],
+    # v102.3A: persistent member-specific supplement regimen storage.
+    "member_supplements": [],
+    "supplement_audit_logs": [],
 }
 
 def _session_state():
