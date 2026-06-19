@@ -28,7 +28,7 @@ require_admin()
 utility_logout_bar()
 topbar(
     "Recommendations Share",
-    "Create one 7-day recommendation window that feeds Today’s Journey, member report, meal plan, exercise plan and supplements.",
+    "Create and publish one 7-day member recommendation window.",
     "Admin recommendations",
 )
 
@@ -77,7 +77,7 @@ def _day_label(day_date, idx):
 
 
 def _fold_label(day_date, idx):
-    return f"＋ / −  {_day_label(day_date, idx)}"
+    return f"Open / Close Details · {_day_label(day_date, idx)}"
 
 
 def _recipe_options(df):
@@ -190,10 +190,18 @@ def _supp_detail_html(rows):
 st.markdown("""
 <style>
 .hm-rec-page{max-width:1180px;margin:0 auto;}
-.hm-rec-note{border:1px solid #E3C98E;background:#FFFDF8;border-radius:16px;padding:.85rem 1rem;color:#475569;font-size:.86rem;font-weight:720;line-height:1.45;margin:.6rem 0 1rem;}
+/* v102.4B: compact header and source-of-truth note */
+.hero-shell{padding:.72rem .95rem!important;margin-bottom:.45rem!important;border-radius:20px!important;}
+.hero-kicker{padding:.28rem .62rem!important;margin-bottom:.28rem!important;font-size:.70rem!important;}
+.hero-title{font-size:1.55rem!important;line-height:1.08!important;}
+.hero-subtitle{margin-top:.16rem!important;font-size:.84rem!important;}
+.meta-pill{display:none!important;}
+.hm-rec-note{border:1px solid #E3C98E;background:#FFFDF8;border-radius:14px;padding:.55rem .8rem;color:#475569;font-size:.78rem;font-weight:720;line-height:1.35;margin:.25rem 0 .7rem;}
 .hm-rec-alert{border:2px solid #F59E0B;background:#FFFBEB;border-radius:18px;padding:1rem 1.05rem;color:#78350F;font-size:.92rem;font-weight:850;line-height:1.45;margin:.75rem 0 1rem;box-shadow:0 10px 24px rgba(245,158,11,.12);}
-.hm-rec-section{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:20px;padding:1rem;box-shadow:0 10px 24px rgba(15,23,42,.05);margin:.9rem 0;}
-.hm-rec-title{color:#064E3B;font-size:1.03rem;font-weight:950;margin-bottom:.35rem;}
+.hm-member-control-card{border:2px solid #D8A84E;background:linear-gradient(135deg,#FFFDF8 0%,#FFF6DF 100%);border-radius:20px;padding:.85rem 1rem;margin:.35rem 0 1rem;box-shadow:0 12px 28px rgba(138,95,16,.10);}
+.hm-member-control-title{color:#064E3B;font-size:1.02rem;font-weight:950;margin-bottom:.16rem;}
+.hm-member-control-sub{color:#8A5F10;font-size:.78rem;font-weight:830;margin-bottom:.35rem;}
+.hm-rec-title{color:#064E3B;font-size:1.03rem;font-weight:950;margin:.65rem 0 .35rem;}
 .hm-rec-sub{color:#64748B;font-size:.80rem;font-weight:720;line-height:1.4;margin-bottom:.75rem;}
 .hm-rec-day{border:1px solid #E6D4A8;background:#FFFDF8;border-radius:16px;padding:.85rem;margin:.75rem 0;}
 .hm-rec-day-title{color:#064E3B;font-size:.92rem;font-weight:940;margin-bottom:.48rem;}
@@ -203,8 +211,17 @@ st.markdown("""
 .hm-rec-supp-title{color:#064E3B;font-size:.88rem;font-weight:950;margin-bottom:.42rem;}
 .hm-rec-supp-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;color:#475569;font-size:.72rem;font-weight:740;line-height:1.35;}
 .hm-rec-supp-grid b{color:#1F2937;font-size:.70rem;font-weight:930;}
-div[data-testid="stExpander"] details summary p{font-weight:950;color:#064E3B;}
-@media(max-width:850px){.hm-rec-grid2{grid-template-columns:1fr}.hm-rec-supp-grid{grid-template-columns:1fr 1fr}}
+/* Remove visual dividers and convert expanders into premium open/close controls */
+div[data-testid="stTabs"] [role="tablist"]{border-bottom:0!important;box-shadow:none!important;margin-bottom:.4rem!important;}
+div[data-testid="stTabs"] [role="tab"]{border:1px solid #E3C98E!important;border-radius:999px!important;margin-right:.35rem!important;background:#FFFDF8!important;padding:.35rem .75rem!important;}
+div[data-testid="stTabs"] [aria-selected="true"]{background:#064E3B!important;color:#fff!important;border-color:#064E3B!important;}
+div[data-testid="stTabs"] [aria-selected="true"] p{color:#fff!important;}
+div[data-testid="stExpander"] details{border:0!important;background:transparent!important;box-shadow:none!important;margin:.55rem 0!important;}
+div[data-testid="stExpander"] details summary{border:1.5px solid #D8A84E!important;background:linear-gradient(135deg,#FFFDF8 0%,#FFF4DE 100%)!important;border-radius:999px!important;padding:.48rem .85rem!important;box-shadow:0 8px 20px rgba(138,95,16,.08)!important;}
+div[data-testid="stExpander"] details summary p{font-weight:950!important;color:#064E3B!important;font-size:.84rem!important;}
+div[data-testid="stExpander"] details summary:hover{border-color:#064E3B!important;box-shadow:0 10px 24px rgba(6,78,59,.10)!important;}
+hr{display:none!important;}
+@media(max-width:850px){.hm-rec-grid2{grid-template-columns:1fr}.hm-rec-supp-grid{grid-template-columns:1fr 1fr}.hero-title{font-size:1.28rem!important}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -220,12 +237,13 @@ exercise_df = _active(_load_csv(EXERCISES_PATH, ["title", "category", "duration_
 recipe_opts = _recipe_options(recipe_df)
 exercise_opts = _exercise_options(exercise_df)
 
-st.markdown("<div class='hm-rec-page'>", unsafe_allow_html=True)
-st.markdown("<div class='hm-rec-note'><b>Source of truth:</b> this 7-day Recommendations Share feeds Today’s Journey, Nutritionist Report, Meal Plan, Exercise Plan and Supplements. Today’s Journey is only a date-filtered snapshot of this share.</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-rec-note'><b>Source of truth:</b> this 7-day share feeds Today’s Journey, Nutritionist Report, Meal Plan, Exercise Plan and Supplements.</div>", unsafe_allow_html=True)
 validation_slot = st.empty()
 
 member_options = {f"{m.get('name') or 'Member'} — {m.get('email') or m.get('id')}": m for m in members}
-selected_label = st.selectbox("Select Member", list(member_options.keys()), key="hm_v1024_rec_member")
+with st.container(border=True):
+    st.markdown("<div class='hm-member-control-title'>Member Control</div><div class='hm-member-control-sub'>Select the member first. Every field below is controlled by this selection.</div>", unsafe_allow_html=True)
+    selected_label = st.selectbox("🔎 Select Member — controls this full Recommendations Share", list(member_options.keys()), key="hm_v1024_rec_member")
 member = member_options[selected_label]
 member_id = member["id"]
 existing = get_latest_recommendation_share(member_id, include_draft=True) or {}
@@ -237,7 +255,6 @@ start_default = _date_from_iso(existing.get("start_date"))
 existing_status = existing.get("status") or "New"
 
 with st.form("hm_v1024_recommendations_form"):
-    st.markdown("<div class='hm-rec-section'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-rec-title'>Recommendation Window</div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([.34, .33, .33], gap="small")
     with c1:
@@ -253,14 +270,12 @@ with st.form("hm_v1024_recommendations_form"):
         placeholder="Write the member-facing recommendation note here. This appears on the member side as the Nutritionist Report.",
         height=140,
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
     days = [start_date + timedelta(days=i) for i in range(7)]
 
     recipe_tab, exercise_tab, supplement_tab = st.tabs(["Recipe", "Exercise", "Supplement"])
 
     with recipe_tab:
-        st.markdown("<div class='hm-rec-section'>", unsafe_allow_html=True)
         st.markdown("<div class='hm-rec-title'>7-Day Meal Plan</div><div class='hm-rec-sub'>Select recipes from the repository for each day and meal slot. These selections also keep the member Recipe page connected to the same plan.</div>", unsafe_allow_html=True)
         meal_plan = []
         for idx, day in enumerate(days, start=1):
@@ -275,10 +290,8 @@ with st.form("hm_v1024_recommendations_form"):
                     with c_note:
                         note = st.text_input(f"{slot} Note", value=existing_item.get("notes", ""), key=f"hm_v1024_meal_note_{idx}_{slot}")
                     meal_plan.append({"day_number": idx, "date": day_iso, "meal_slot": slot, "recipe_id": recipe_opts.get(chosen_label, ""), "notes": note})
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with exercise_tab:
-        st.markdown("<div class='hm-rec-section'>", unsafe_allow_html=True)
         st.markdown("<div class='hm-rec-title'>7-Day Exercise Plan</div><div class='hm-rec-sub'>Select one primary exercise recommendation per day. Use the notes field for additional instruction or rest-day guidance.</div>", unsafe_allow_html=True)
         exercise_plan = []
         for idx, day in enumerate(days, start=1):
@@ -293,10 +306,8 @@ with st.form("hm_v1024_recommendations_form"):
                 with ex_col2:
                     ex_notes = st.text_input("Instruction", value=existing_item.get("notes", ""), key=f"hm_v1024_ex_note_{idx}")
                 exercise_plan.append({"day_number": idx, "date": day_iso, "exercise_id": exercise_opts.get(ex_label, ""), "timing": ex_timing, "notes": ex_notes})
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with supplement_tab:
-        st.markdown("<div class='hm-rec-section'>", unsafe_allow_html=True)
         st.markdown("<div class='hm-rec-title'>7-Day Supplement Schedule</div><div class='hm-rec-sub'>Supplements come from the member’s active regimen. Dropdown labels and selected detail cards now show dosage, frequency, timing, start date and end date.</div>", unsafe_allow_html=True)
         supplement_plan = []
         if not supp_opts:
@@ -316,7 +327,6 @@ with st.form("hm_v1024_recommendations_form"):
                 st.markdown(_supp_detail_html(selected_rows), unsafe_allow_html=True)
                 supp_notes = st.text_input("Supplement Note", value=existing_item.get("notes", ""), key=f"hm_v1024_supp_note_{idx}")
                 supplement_plan.append({"day_number": idx, "date": day_iso, "supplement_ids": selected_ids, "notes": supp_notes})
-        st.markdown("</div>", unsafe_allow_html=True)
 
     save_col, publish_col = st.columns(2, gap="large")
     with save_col:
@@ -347,8 +357,7 @@ with st.form("hm_v1024_recommendations_form"):
             validation_slot.markdown(f"<div class='hm-rec-alert'>⚠️ <b>Validation check failed.</b><br>{_esc(message)}<br><span style='font-weight:720'>Your filled data has not been cleared. Correct the issue and save again.</span></div>", unsafe_allow_html=True)
             st.error(message)
 
-st.markdown("</div>", unsafe_allow_html=True)
 render_page_nav("Recommendations Share", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
 
-# v102.4A: Admin Recommendations Share section tabs, +/- day groups, richer supplement details, and non-clearing validation banner.
+# v102.4B: prominent member selector, compact source note/header, divider cleanup, and premium open/close day controls.
