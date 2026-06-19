@@ -77,7 +77,7 @@ def _day_label(day_date, idx):
 
 
 def _fold_label(day_date, idx):
-    return f"Open / Close Details · {_day_label(day_date, idx)}"
+    return f"+/- · {_day_label(day_date, idx)}"
 
 
 def _recipe_options(df):
@@ -218,6 +218,7 @@ div[data-testid="stTabs"] [aria-selected="true"]{background:#064E3B!important;co
 div[data-testid="stTabs"] [aria-selected="true"] p{color:#fff!important;}
 div[data-testid="stExpander"] details{border:0!important;background:transparent!important;box-shadow:none!important;margin:.55rem 0!important;}
 div[data-testid="stExpander"] details summary{border:1.5px solid #D8A84E!important;background:linear-gradient(135deg,#FFFDF8 0%,#FFF4DE 100%)!important;border-radius:999px!important;padding:.48rem .85rem!important;box-shadow:0 8px 20px rgba(138,95,16,.08)!important;}
+div[data-testid="stExpander"] details summary svg{display:none!important;}
 div[data-testid="stExpander"] details summary p{font-weight:950!important;color:#064E3B!important;font-size:.84rem!important;}
 div[data-testid="stExpander"] details summary:hover{border-color:#064E3B!important;box-shadow:0 10px 24px rgba(6,78,59,.10)!important;}
 hr{display:none!important;}
@@ -360,4 +361,4 @@ with st.form("hm_v1024_recommendations_form"):
 render_page_nav("Recommendations Share", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
 
-# v102.4B: prominent member selector, compact source note/header, divider cleanup, and premium open/close day controls.
+# v102.4B1: expander labels use +/- and default expander glyph is hidden for cleaner display.
