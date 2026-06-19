@@ -479,12 +479,10 @@ def render_landing(df):
     with tool_filter_col:
         if st.button("☷", key="recipe_filter_toggle_v94_4", help="Filter recipes"):
             st.session_state["hm_recipe_filter_open"] = not st.session_state["hm_recipe_filter_open"]
-            st.rerun()
     with tool_fav_col:
         fav_label = "♥" if st.session_state["hm_recipe_fav_only"] else "♡"
         if st.button(fav_label, key="recipe_fav_only_toggle_v94_4", help="Show favourites only"):
             st.session_state["hm_recipe_fav_only"] = not st.session_state["hm_recipe_fav_only"]
-            st.rerun()
 
     meal_filter = "All"
     diet_filter = "All"
@@ -502,7 +500,6 @@ def render_landing(df):
             if st.button("Clear filters", use_container_width=True, key="recipe_clear_filters_v94_4"):
                 st.session_state["recipe_meal_filter_v94_4"] = "All"
                 st.session_state["recipe_diet_filter_v94_4"] = "All"
-                st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
     results = df.copy()
@@ -532,9 +529,9 @@ def render_landing(df):
     if results.empty:
         st.info("No matching recipes found.")
     else:
-        for row_start in range(0, len(results), 2):
-            cols = st.columns(2)
-            for col_i, (idx, row) in enumerate(results.iloc[row_start:row_start+2].iterrows()):
+        for row_start in range(0, len(results), 3):
+            cols = st.columns(3)
+            for col_i, (idx, row) in enumerate(results.iloc[row_start:row_start+3].iterrows()):
                 with cols[col_i]:
                     img = image_for(row, idx)
                     title = esc(row.get("title", "Untitled Recipe"))
@@ -924,10 +921,97 @@ div[data-testid="stExpander"] summary p{
 </style>
 """, unsafe_allow_html=True)
 
+
+# v102.4B6: Recipe repository spacing, 3-column grid and smoother filter transition.
+st.markdown("""
+<style>
+/* v102.4B6 Recipe Repository compact layout */
+.hero-shell{
+  margin-bottom:.05rem!important;
+  padding-top:.68rem!important;
+  padding-bottom:.62rem!important;
+}
+.hm-module-shell{
+  padding-top:.02rem!important;
+  padding-bottom:.18rem!important;
+}
+.hm-content-toolbar-anchor{
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-content-toolbar-anchor + div{
+  margin-top:0!important;
+  margin-bottom:.34rem!important;
+}
+.hm-filter-panel{
+  margin:.20rem 0 .46rem 0!important;
+  padding:.62rem .72rem!important;
+  transition:opacity .16s ease, transform .16s ease;
+}
+.hm-displaying{
+  margin:.20rem 0 .45rem 0!important;
+  font-size:.91rem!important;
+}
+.hm-content-card{
+  border-radius:16px!important;
+  margin-bottom:.34rem!important;
+  box-shadow:0 6px 16px rgba(15,23,42,.045)!important;
+}
+.hm-content-card img{
+  height:150px!important;
+  object-fit:cover!important;
+}
+.hm-content-card-body{
+  padding:.72rem .78rem .68rem .78rem!important;
+}
+.hm-content-title{
+  font-size:1.06rem!important;
+  margin-bottom:.42rem!important;
+}
+.hm-content-meta{
+  gap:.34rem!important;
+  font-size:.76rem!important;
+  flex-wrap:wrap!important;
+  line-height:1.18!important;
+}
+.hm-card-action-row{
+  margin:-.10rem 0 .48rem 0!important;
+}
+.hm-card-action-row + div div[data-testid="stHorizontalBlock"]{
+  gap:.38rem!important;
+}
+.hm-card-action-row + div div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button{
+  min-height:38px!important;
+  height:38px!important;
+  max-height:38px!important;
+  font-size:.82rem!important;
+  border-radius:12px!important;
+}
+/* keep the footer close to the card grid */
+.hm-member-footer-nav,
+.hm-page-nav,
+.hm-nav-footer,
+[class*="page-nav"]{
+  margin-top:.35rem!important;
+}
+@media(max-width:900px){
+  .hm-content-card img{height:142px!important;}
+  .hm-content-title{font-size:1rem!important;}
+}
+@media(max-width:640px){
+  .hm-content-card img{height:158px!important;}
+  .hm-content-title{font-size:1.06rem!important;}
+}
+</style>
+""", unsafe_allow_html=True)
+
 # v102.0: canonical global footer navigation
 pass  # v102.2D internal duplicate footer removed
 render_back_to_top()
 
+# v102.4B6: Recipe Repository now uses compact 3-column member grid, reduced spacing, and single-rerun filter toggle.
 # v102.4B5: restored legacy v93+ Recipe Repository member UI while preserving Recommendations Share binding.
 # v102.2D: single canonical member footer
 render_page_nav("Recipes", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")

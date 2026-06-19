@@ -1,1 +1,1 @@
-v102.4B5 — Recipe/Exercise Member UI Rollback + Recommendations Binding
+v102.4B6 — Recipe/Exercise Grid, Spacing and Filter Smoothness
