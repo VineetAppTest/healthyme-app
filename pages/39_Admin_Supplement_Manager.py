@@ -206,7 +206,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<div class='hm-sup-page'>", unsafe_allow_html=True)
-st.markdown("<div class='hm-sup-sub'>v102.3A stores the regimen against the selected member. Active supplements are published to that member only; stopped supplements remain visible here for history.</div>", unsafe_allow_html=True)
 
 members = list_members()
 if not members:
@@ -245,20 +244,24 @@ with left:
             with st.form(f"hm_v1023a_edit_form_{row['id']}"):
                 st.markdown("**Edit supplement**")
                 e_name = st.text_input("Supplement Name", value=row.get("supplement_name", ""), key=f"edit_name_{row['id']}")
-                e_dosage = st.text_input("Dosage", value=row.get("dosage", ""), key=f"edit_dose_{row['id']}")
+
+                dose_col, freq_col = st.columns(2)
+                with dose_col:
+                    e_dosage = st.text_input("Dosage", value=row.get("dosage", ""), key=f"edit_dose_{row['id']}")
+                with freq_col:
+                    e_frequency = st.text_input("Frequency", value=row.get("frequency", ""), key=f"edit_freq_{row['id']}")
 
                 edit_timing_default, edit_custom_default = _split_timing_for_edit(row.get("timing", ""))
-                pos1, pos2 = st.columns(2)
-                with pos1:
+                timing_col, add_timing_col = st.columns(2)
+                with timing_col:
                     e_timing_options = st.multiselect(
                         "Timing",
                         TIMING_OPTIONS,
                         default=edit_timing_default,
                         key=f"edit_time_choices_{row['id']}",
                     )
+                with add_timing_col:
                     e_custom_timing = st.text_input("Additional Timing", value=edit_custom_default, key=f"edit_time_extra_{row['id']}")
-                with pos2:
-                    e_frequency = st.text_input("Frequency", value=row.get("frequency", ""), key=f"edit_freq_{row['id']}")
 
                 d1, d2 = st.columns(2)
                 with d1:
@@ -400,11 +403,10 @@ with right:
                     st.error(str(exc))
     st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("<div class='hm-sup-note'>v102.3A scope guard: persistence and member publishing are active. PDF and Recommendations module are intentionally not included in this build.</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("Supplement Management", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
 
 # v102.3A: Admin Supplement Management with persistent member-specific publishing.
-# UX validation update: Frequency count is checked against Timing + Additional Timing, End Date can auto-stop records, and history uses +/- toggle.
+# UX layout update: Admin info messages removed; Edit form aligns Dosage/Frequency and Timing/Additional Timing side by side.

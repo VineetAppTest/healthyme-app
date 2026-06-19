@@ -1,7 +1,7 @@
 {
-  "build_name": "HealthyMe_v102_3A_Supplement_Validation_EndDate_UX_Full_Build",
+  "build_name": "HealthyMe_v102_3A_Supplement_Admin_Info_Layout_Fix_Full_Build",
   "version": "v102.3A",
-  "updated_on": "2026-06-19T10:03:03.731675+00:00",
+  "updated_on": "2026-06-19T10:13:50.221499+00:00",
   "scope": [
     "Persistent member-linked supplement storage in existing HealthyMe app state",
     "Admin add/edit/stop supplements for selected member",
@@ -9,7 +9,8 @@
     "Stopped supplements retained in admin history",
     "Frequency count validation against Timing + Additional Timing",
     "Optional End Date with automatic stop reason Predefined Timelines",
-    "Admin form layout refinements and +/- stopped-history toggle"
+    "Admin supplement screen information messages removed",
+    "Edit Supplement layout aligns Dosage with Frequency and Timing with Additional Timing"
   ],
   "excluded": [
     "No scoring changes",
@@ -18,12 +19,10 @@
     "No new feature expansion"
   ],
   "latest_fix": [
-    "Add Supplement and Edit Supplement now validate Frequency against count of selected Timing options plus Additional Timing entries.",
-    "End Date added to Add and Edit Supplement with NA default and date picker defaulting to Start Date when enabled.",
-    "Supplements auto-stop when End Date arrives; stop reason is Predefined Timelines.",
-    "Member Instructions and Admin Notes placed adjacent in Add and Edit.",
-    "Edit Supplement places Timing before Frequency and places Start Date / End Date adjacent.",
-    "Stopped Supplements / History now uses +/- toggle instead of an expander.",
+    "Removed the v102.3A informational message under the Supplement Management header.",
+    "Removed the v102.3A scope guard message from the bottom of the Supplement Management page.",
+    "Edit Supplement now places Dosage and Frequency adjacent in equal half-width columns.",
+    "Edit Supplement now places Timing and Additional Timing adjacent in equal half-width columns.",
     "No PDF or Recommendations module added."
   ],
   "required_setup": [

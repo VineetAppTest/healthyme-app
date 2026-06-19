@@ -26,3 +26,12 @@
 8. Confirm it disappears from the member view.
 9. Confirm it remains under Stopped Supplements / History in Admin.
 10. Confirm no PDF or Recommendations module was added.
+
+## UAT additions after member/admin UX feedback
+
+- Member view does not show the advisory box below the regimen.
+- Member view does not show the local Member Plan / Meal Diary / Supplements / Exercises pill menu.
+- Hero-to-regimen spacing is compact.
+- Member Home shows Supplements directly under Exercise Repository.
+- Admin Edit Supplement uses the same timing option multi-select behavior as Add Supplement.
+

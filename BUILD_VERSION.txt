@@ -1,4 +1,4 @@
-HealthyMe v102.3A - Supplements Persistence + Member Publishing UX Validation Fix
-Base: v102.3A Member/Admin UX Fix full build
-Scope: Frequency-vs-timing validation, optional End Date with automatic stop, adjacent notes, edit layout alignment, +/- stopped-history toggle.
+HealthyMe v102.3A - Supplement Admin Info/Layout Fix
+Base: v102.3A Supplement Validation + End Date full build
+Scope: Remove admin informational scope messages; align Edit Supplement Dosage/Frequency and Timing/Additional Timing side by side.
 Exclusions: No PDF, no Recommendations module.
