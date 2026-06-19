@@ -1,1 +1,1 @@
-HealthyMe v102.4B4 — Admin Dashboard Premium Polish
+v102.4B5 — Recipe/Exercise Member UI Rollback + Recommendations Binding
