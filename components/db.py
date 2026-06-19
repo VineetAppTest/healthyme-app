@@ -2847,6 +2847,16 @@ def _supp_clean_date_v102_3a(value):
         return str(value)
 
 
+def _supp_parse_date_v102_3a(value):
+    raw = _supp_clean_text_v102_3a(value)
+    if not raw:
+        return None
+    try:
+        return datetime.date.fromisoformat(raw[:10])
+    except Exception:
+        return None
+
+
 def _supp_find_member_v102_3a(db, member_id):
     member_id = str(member_id or "").strip()
     for user in db.get("users", []):
@@ -2878,6 +2888,7 @@ def _normalise_supplement_record_v102_3a(record):
     record.setdefault("timing", "")
     record.setdefault("instructions", "")
     record.setdefault("start_date", "")
+    record.setdefault("end_date", "")
     record.setdefault("stop_date", "")
     record.setdefault("status", "Active")
     record.setdefault("admin_notes", "")
@@ -2888,7 +2899,7 @@ def _normalise_supplement_record_v102_3a(record):
     record.setdefault("updated_by", "")
     record.setdefault("stopped_at", "")
     record.setdefault("stopped_by", "")
-    for key in ["member_id", "member_email", "member_name", "supplement_name", "dosage", "frequency", "timing", "instructions", "start_date", "stop_date", "status", "admin_notes", "stop_reason", "created_at", "updated_at", "created_by", "updated_by", "stopped_at", "stopped_by"]:
+    for key in ["member_id", "member_email", "member_name", "supplement_name", "dosage", "frequency", "timing", "instructions", "start_date", "end_date", "stop_date", "status", "admin_notes", "stop_reason", "created_at", "updated_at", "created_by", "updated_by", "stopped_at", "stopped_by"]:
         record[key] = _supp_clean_text_v102_3a(record.get(key))
     if record["status"].lower() not in ["active", "stopped"]:
         record["status"] = "Active"
@@ -2911,6 +2922,57 @@ def _write_supplement_audit_v102_3a(db, action, record, actor_id="", changes=Non
     db["supplement_audit_logs"] = db["supplement_audit_logs"][-500:]
 
 
+def _auto_stop_expired_supplements_v102_3a(db, actor_id="system"):
+    """Deactivate active supplements whose predefined end date has arrived.
+
+    End Date is stored separately from Stop Date. When the End Date is today
+    or in the past, the normal stop fields are completed automatically and
+    the stop reason is fixed as "Predefined Timelines".
+    """
+    _ensure_supplement_store_v102_3a(db)
+    today = datetime.date.today()
+    now = _supp_now_iso_v102_3a()
+    changed = False
+    for idx, raw in enumerate(list(db.get("member_supplements", []))):
+        row = _normalise_supplement_record_v102_3a(raw)
+        before = dict(row)
+        end_dt = _supp_parse_date_v102_3a(row.get("end_date"))
+        if row.get("status") == "Active" and end_dt and end_dt <= today:
+            row["status"] = "Stopped"
+            row["stop_date"] = end_dt.isoformat()
+            row["stop_reason"] = "Predefined Timelines"
+            row["stopped_at"] = now
+            row["stopped_by"] = actor_id or "system"
+            row["updated_at"] = now
+            row["updated_by"] = actor_id or "system"
+            db["member_supplements"][idx] = _normalise_supplement_record_v102_3a(row)
+            _write_supplement_audit_v102_3a(
+                db,
+                "auto_stopped",
+                row,
+                actor_id=actor_id or "system",
+                changes={
+                    "status": {"from": before.get("status", ""), "to": "Stopped"},
+                    "stop_date": row.get("stop_date", ""),
+                    "stop_reason": "Predefined Timelines",
+                },
+            )
+            db.setdefault("notifications", []).append({
+                "ts": now,
+                "kind": "supplement_regimen_updated",
+                "user_id": row.get("member_id", ""),
+                "message": "Your nutritionist has updated your supplement regimen.",
+                "status": "queued",
+                "email_required": False,
+                "created_by": actor_id or "system",
+            })
+            changed = True
+        elif row != raw:
+            db["member_supplements"][idx] = row
+            changed = True
+    return changed
+
+
 def list_member_supplements(member_id=None, status=None, include_inactive_member=True):
     """Return persisted supplement records.
 
@@ -2924,12 +2986,9 @@ def list_member_supplements(member_id=None, status=None, include_inactive_member
     active_member_ids = None
     if not include_inactive_member:
         active_member_ids = {str(u.get("id")) for u in db.get("users", []) if u.get("role") == "member" and u.get("is_active", True)}
-    changed = False
+    changed = _auto_stop_expired_supplements_v102_3a(db)
     for raw in db.get("member_supplements", []):
         row = _normalise_supplement_record_v102_3a(raw)
-        if row != raw:
-            raw.update(row)
-            changed = True
         if member_id_filter and str(row.get("member_id")) != member_id_filter:
             continue
         if status_filter and str(row.get("status", "")).lower() != status_filter:
@@ -2971,6 +3030,7 @@ def add_member_supplement(member_id, data, actor_id="admin"):
         "timing": (data or {}).get("timing", ""),
         "instructions": (data or {}).get("instructions", ""),
         "start_date": _supp_clean_date_v102_3a((data or {}).get("start_date", "")),
+        "end_date": _supp_clean_date_v102_3a((data or {}).get("end_date", "")),
         "stop_date": "",
         "status": "Active",
         "admin_notes": (data or {}).get("admin_notes", ""),
@@ -2980,6 +3040,10 @@ def add_member_supplement(member_id, data, actor_id="admin"):
         "created_by": actor_id or "admin",
         "updated_by": actor_id or "admin",
     })
+    start_dt = _supp_parse_date_v102_3a(record.get("start_date"))
+    end_dt = _supp_parse_date_v102_3a(record.get("end_date"))
+    if start_dt and end_dt and end_dt < start_dt:
+        raise ValueError("End Date cannot be earlier than Start Date.")
     db["member_supplements"].append(record)
     _write_supplement_audit_v102_3a(db, "created", record, actor_id=actor_id)
     db.setdefault("notifications", []).append({
@@ -2998,7 +3062,7 @@ def add_member_supplement(member_id, data, actor_id="admin"):
 def update_member_supplement(supplement_id, updates, actor_id="admin"):
     db = _ensure_supplement_store_v102_3a(load_db())
     supplement_id = _supp_clean_text_v102_3a(supplement_id)
-    allowed = {"supplement_name", "dosage", "frequency", "timing", "instructions", "start_date", "admin_notes"}
+    allowed = {"supplement_name", "dosage", "frequency", "timing", "instructions", "start_date", "end_date", "admin_notes"}
     for idx, raw in enumerate(db.get("member_supplements", [])):
         row = _normalise_supplement_record_v102_3a(raw)
         if str(row.get("id")) != supplement_id:
@@ -3009,9 +3073,13 @@ def update_member_supplement(supplement_id, updates, actor_id="admin"):
         for key in allowed:
             if key in (updates or {}):
                 value = (updates or {}).get(key)
-                row[key] = _supp_clean_date_v102_3a(value) if key == "start_date" else _supp_clean_text_v102_3a(value)
+                row[key] = _supp_clean_date_v102_3a(value) if key in {"start_date", "end_date"} else _supp_clean_text_v102_3a(value)
         if not row.get("supplement_name"):
             raise ValueError("Supplement name is required.")
+        start_dt = _supp_parse_date_v102_3a(row.get("start_date"))
+        end_dt = _supp_parse_date_v102_3a(row.get("end_date"))
+        if start_dt and end_dt and end_dt < start_dt:
+            raise ValueError("End Date cannot be earlier than Start Date.")
         row["updated_at"] = _supp_now_iso_v102_3a()
         row["updated_by"] = actor_id or "admin"
         db["member_supplements"][idx] = _normalise_supplement_record_v102_3a(row)

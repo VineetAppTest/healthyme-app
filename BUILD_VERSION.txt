@@ -1,4 +1,4 @@
-HealthyMe v102.3A - Supplements Persistence + Member Publishing
-Base: v102.3 Supplements Module Shell
-Scope: Persistent admin supplement regimen storage, admin add/edit/stop, member active-only publishing, stopped supplement admin history.
+HealthyMe v102.3A - Supplements Persistence + Member Publishing UX Validation Fix
+Base: v102.3A Member/Admin UX Fix full build
+Scope: Frequency-vs-timing validation, optional End Date with automatic stop, adjacent notes, edit layout alignment, +/- stopped-history toggle.
 Exclusions: No PDF, no Recommendations module.

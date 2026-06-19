@@ -82,6 +82,7 @@ else:
             <div class='hm-ms-name'>{_esc(item.get('supplement_name'))}</div>
             <div class='hm-ms-dose'>{_esc(item.get('dosage') or 'Dosage not specified')} · {_esc(item.get('frequency') or 'Frequency not specified')}</div>
             <div class='hm-ms-dose'>Start date: {_esc(item.get('start_date') or 'As advised')}</div>
+            {f"<div class='hm-ms-dose'>End date: {_esc(item.get('end_date'))}</div>" if item.get('end_date') else ""}
             <div>{_chips(item.get('timing'))}</div>
             <div class='hm-ms-dose'>Instructions: {_esc(item.get('instructions') or 'Follow as advised by your nutritionist.')}</div>
           </div>
@@ -93,4 +94,4 @@ st.markdown("</div>", unsafe_allow_html=True)
 render_page_nav("My Supplements", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
 
-# v102.3A: Member Supplements active regimen publishing view. Screenshot cleanup: advisory note and local tab strip removed; hero-to-regimen spacing tightened.
+# v102.3A: Member Supplements active regimen publishing view. Expired end-date records auto-stop before reaching this active view.

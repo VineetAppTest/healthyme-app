@@ -25,3 +25,24 @@ This full build converts the v102.3 supplement shell into a persisted member-spe
 - Member Home: added the Supplements button directly under Exercise Repository.
 - Admin Supplement Management: Edit Supplement timing controls now match Add Supplement with multi-select timing plus additional timing.
 
+
+
+## v102.3A Supplement Validation + End-Date UX Update
+
+- Add Supplement and Edit Supplement now validate Frequency against the count of Timing selections plus Additional Timing entries.
+- Additional Timing supports comma, semicolon, pipe, or line-break separated custom timings for count validation.
+- Optional End Date added to Add Supplement and Edit Supplement; default remains NA.
+- When End Date is set, the date picker defaults to the selected Start Date.
+- End Date automatically stops the supplement when the date arrives, with stop reason set to `Predefined Timelines`.
+- Edit Supplement now places Start Date and End Date adjacent to each other.
+- Add Supplement places End Date directly under Start Date.
+- Member Instructions and Admin Notes now sit adjacent to each other in Add and Edit forms.
+- Edit Supplement layout now places Timing before Frequency.
+- Stopped Supplements / History now uses a +/- toggle instead of the previous expander.
+
+## Still not added
+
+- No PDF generation.
+- No Recommendations module.
+- No meal plan integration.
+- No exercise plan integration.
