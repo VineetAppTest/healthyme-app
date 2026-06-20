@@ -56,8 +56,28 @@ FREQUENCY_WORD_COUNTS = {
 }
 
 
+def _plain(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    text = raw
+    for _ in range(5):
+        decoded = html.unescape(text)
+        if decoded == text:
+            break
+        text = decoded
+    text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
+    text = re.sub(r"</\s*(div|p|span|li|td|th)\s*>", ", ", text, flags=re.I)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("\u00a0", " ").replace("&nbsp;", " ")
+    text = re.sub(r"\s*,\s*", ", ", text)
+    text = re.sub(r",\s*,+", ", ", text)
+    text = re.sub(r"\s+", " ", text).strip(" ,")
+    return text
+
+
 def _esc(value):
-    return html.escape(str(value or ""))
+    return html.escape(_plain(value))
 
 
 def _actor_id():
@@ -134,10 +154,10 @@ def _clean_date_label(value):
 def _supp_options(supps):
     options = {}
     for row in supps:
-        title = str(row.get("supplement_name") or "Supplement").strip()
-        dosage = str(row.get("dosage") or "Dosage NA").strip()
-        frequency = str(row.get("frequency") or "Frequency NA").strip()
-        timing = str(row.get("timing") or "Timing NA").strip()
+        title = _plain(row.get("supplement_name") or "Supplement")
+        dosage = _plain(row.get("dosage") or "Dosage NA")
+        frequency = _plain(row.get("frequency") or "Frequency NA")
+        timing = _plain(row.get("timing") or "Timing NA")
         start_date = _clean_date_label(row.get("start_date"))
         end_date = _clean_date_label(row.get("end_date"))
         label = f"{title} · {dosage} · {frequency} · {timing} · Start {start_date} · End {end_date}"
@@ -196,14 +216,14 @@ def _eligible_supp_ids_for_date(supps, day_iso):
 
 
 def _custom_timing_parts(extra):
-    raw = str(extra or "").strip()
+    raw = _plain(extra)
     if not raw:
         return []
-    return [part.strip() for part in re.split(r"[,;|\n]+", raw) if part.strip()]
+    return [part.strip() for part in re.split(r"[,;|\n]+", raw) if part.strip() and part.strip().lower() not in {"none", "na", "n/a"}]
 
 
 def _timing_from_choices(choices, extra):
-    parts = [str(x).strip() for x in (choices or []) if str(x).strip()]
+    parts = [str(x).strip() for x in (choices or []) if str(x).strip() and str(x).strip().lower() not in {"none", "na", "n/a"}]
     parts.extend(_custom_timing_parts(extra))
     return ", ".join(parts)
 
@@ -256,7 +276,7 @@ def _frequency_timing_error(frequency, choices, extra):
 
 
 def _split_timing_for_edit(text):
-    parts = [p.strip() for p in str(text or "").replace("|", ",").split(",") if p.strip()]
+    parts = [p.strip() for p in _plain(text).replace("|", ",").split(",") if p.strip() and p.strip().lower() not in {"none", "na", "n/a"}]
     option_lookup = {opt.lower(): opt for opt in TIMING_OPTIONS}
     selected = []
     extra_parts = []
@@ -273,14 +293,14 @@ def _split_timing_for_edit(text):
 def _existing_supp_detail(existing_item, sid, source_row):
     base = {
         "supplement_id": str(sid or ""),
-        "supplement_name": source_row.get("supplement_name") or "Supplement",
-        "dosage": source_row.get("dosage") or "",
-        "frequency": source_row.get("frequency") or FREQUENCY_OPTIONS[0],
-        "timing": source_row.get("timing") or "",
-        "start_date": source_row.get("start_date") or "",
-        "end_date": source_row.get("end_date") or "",
-        "instructions": source_row.get("instructions") or "",
-        "admin_notes": source_row.get("admin_notes") or "",
+        "supplement_name": _plain(source_row.get("supplement_name") or "Supplement"),
+        "dosage": _plain(source_row.get("dosage") or ""),
+        "frequency": _plain(source_row.get("frequency") or FREQUENCY_OPTIONS[0]),
+        "timing": _plain(source_row.get("timing") or ""),
+        "start_date": _plain(source_row.get("start_date") or ""),
+        "end_date": _plain(source_row.get("end_date") or ""),
+        "instructions": _plain(source_row.get("instructions") or ""),
+        "admin_notes": _plain(source_row.get("admin_notes") or ""),
     }
     for detail in existing_item.get("supplement_details", []) or []:
         if not isinstance(detail, dict):
@@ -290,7 +310,7 @@ def _existing_supp_detail(existing_item, sid, source_row):
             merged = dict(base)
             for key in ["supplement_name", "dosage", "frequency", "timing", "start_date", "end_date", "instructions", "admin_notes"]:
                 if detail.get(key) not in [None]:
-                    merged[key] = detail.get(key)
+                    merged[key] = _plain(detail.get(key))
             return merged
     return base
 
@@ -441,10 +461,10 @@ with supplement_tab:
                 source_row = supp_lookup.get(str(sid), {})
                 detail = _existing_supp_detail(existing_item, sid, source_row)
                 st.markdown(f"<div class='hm-rec-supp-editor-title'>{order}. {_esc(detail.get('supplement_name') or 'Supplement')}</div><div class='hm-rec-supp-source'>Pulled from active regimen. Edits below apply to this Recommendations Share only.</div>", unsafe_allow_html=True)
-                name = st.text_input("Supplement Name", value=detail.get("supplement_name", ""), key=f"hm_v1024_supp_name_{idx}_{sid}")
+                name = st.text_input("Supplement Name", value=_plain(detail.get("supplement_name", "")), key=f"hm_v1024_supp_name_{idx}_{sid}")
                 d_col, f_col = st.columns(2, gap="small")
                 with d_col:
-                    dosage = st.text_input("Dosage", value=detail.get("dosage", ""), key=f"hm_v1024_supp_dose_{idx}_{sid}")
+                    dosage = st.text_input("Dosage", value=_plain(detail.get("dosage", "")), key=f"hm_v1024_supp_dose_{idx}_{sid}")
                 with f_col:
                     frequency_default = _frequency_default_option(detail.get("frequency", ""))
                     frequency = st.selectbox("Frequency", FREQUENCY_OPTIONS, index=FREQUENCY_OPTIONS.index(frequency_default), key=f"hm_v1024_supp_freq_{idx}_{sid}")
@@ -468,9 +488,9 @@ with supplement_tab:
                         supp_end = None
                 i_col, n_col = st.columns(2, gap="small")
                 with i_col:
-                    instructions = st.text_area("Member Instructions", value=detail.get("instructions", ""), key=f"hm_v1024_supp_instr_{idx}_{sid}", height=90)
+                    instructions = st.text_area("Member Instructions", value=_plain(detail.get("instructions", "")), key=f"hm_v1024_supp_instr_{idx}_{sid}", height=90)
                 with n_col:
-                    admin_notes = st.text_area("Admin Notes", value=detail.get("admin_notes", ""), key=f"hm_v1024_supp_admin_{idx}_{sid}", height=90)
+                    admin_notes = st.text_area("Admin Notes", value=_plain(detail.get("admin_notes", "")), key=f"hm_v1024_supp_admin_{idx}_{sid}", height=90)
 
                 timing_error = _frequency_timing_error(frequency, timing_choices, custom_timing)
                 if timing_error:

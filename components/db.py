@@ -2836,17 +2836,24 @@ def _strip_html_to_text_v102_4(value):
     """Convert accidental persisted HTML/markup into safe plain text.
 
     A few interim builds allowed rendered chip/card HTML to leak into
-    supplement and recommendation text fields. This keeps existing data usable
-    and prevents member pages from displaying raw <div>/<span> markup.
+    supplement and recommendation text fields. This helper is intentionally
+    defensive: it repeatedly decodes escaped HTML, removes tags, and normalises
+    whitespace so older saved values never render as raw <div>/<span> text.
     """
     raw = str(value or "").strip()
     if not raw:
         return ""
-    text = html.unescape(raw)
-    if "<" in text and ">" in text:
-        text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
-        text = re.sub(r"</\s*(div|p|span|li|td|th)\s*>", ", ", text, flags=re.I)
-        text = re.sub(r"<[^>]+>", "", text)
+    text = raw
+    for _ in range(5):
+        decoded = html.unescape(text)
+        if decoded == text:
+            break
+        text = decoded
+    # Common leaked presentation wrappers should become separators, not visible text.
+    text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
+    text = re.sub(r"</\s*(div|p|span|li|td|th)\s*>", ", ", text, flags=re.I)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("\u00a0", " ").replace("&nbsp;", " ")
     text = re.sub(r"\s*,\s*", ", ", text)
     text = re.sub(r",\s*,+", ", ", text)
     text = re.sub(r"\s+", " ", text).strip(" ,")

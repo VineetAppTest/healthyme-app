@@ -37,11 +37,16 @@ def _plain(value):
     raw = str(value or "").strip()
     if not raw:
         return ""
-    text = html.unescape(raw)
-    if "<" in text and ">" in text:
-        text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
-        text = re.sub(r"</\s*(div|p|span|li)\s*>", ", ", text, flags=re.I)
-        text = re.sub(r"<[^>]+>", "", text)
+    text = raw
+    for _ in range(5):
+        decoded = html.unescape(text)
+        if decoded == text:
+            break
+        text = decoded
+    text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
+    text = re.sub(r"</\s*(div|p|span|li|td|th)\s*>", ", ", text, flags=re.I)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("\u00a0", " ").replace("&nbsp;", " ")
     text = re.sub(r"\s*,\s*", ", ", text)
     text = re.sub(r",\s*,+", ", ", text)
     text = re.sub(r"\s+", " ", text).strip(" ,")
@@ -72,7 +77,7 @@ def _split_timing(text):
     clean = _plain(text)
     if "instructions:" in clean.lower():
         clean = re.split(r"instructions\s*:", clean, maxsplit=1, flags=re.I)[0].strip(" ,")
-    return [p.strip() for p in clean.replace("|", ",").split(",") if p.strip()]
+    return [p.strip() for p in clean.replace("|", ",").split(",") if p.strip() and p.strip().lower() not in {"none", "na", "n/a"}]
 
 
 def _supp_map(member_id):
@@ -220,8 +225,10 @@ with scol:
         _render_empty("No supplement is scheduled for today.")
     for row in visible_supps:
         chips = "".join([f"<span class='hm-tj-chip'>{_esc(x)}</span>" for x in _split_timing(row.get("timing"))])
-        instruction = row.get("instructions") or row.get("member_instructions") or ""
-        instruction_html = f"<div class='hm-tj-meta'>{_esc(instruction)}</div>" if instruction else ""
+        instruction = _plain(row.get("instructions") or row.get("member_instructions") or "")
+        if "instructions:" in instruction.lower():
+            instruction = re.split(r"instructions\s*:", instruction, maxsplit=1, flags=re.I)[-1].strip(" ,")
+        instruction_html = f"<div class='hm-tj-meta'>Instructions: {_esc(instruction)}</div>" if instruction else ""
         st.markdown(f"<div class='hm-tj-item'>{_esc(row.get('supplement_name') or 'Supplement')}<div class='hm-tj-meta'>{_esc(row.get('dosage') or '')} · {_esc(row.get('frequency') or '')}</div><div class='hm-tj-meta'>Start: {_esc(_date_label(row.get('start_date')))} · End: {_esc(_date_label(row.get('end_date')))}</div>{instruction_html}{chips}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -263,8 +270,10 @@ for i in range(7):
         supp_entries = _supp_entries_for_day(supps, supplements_by_id)
         if supp_entries:
             for row in supp_entries:
-                instruction = row.get("instructions") or row.get("member_instructions") or ""
-                extra = f" · {_esc(instruction)}" if instruction else ""
+                instruction = _plain(row.get("instructions") or row.get("member_instructions") or "")
+                if "instructions:" in instruction.lower():
+                    instruction = re.split(r"instructions\s*:", instruction, maxsplit=1, flags=re.I)[-1].strip(" ,")
+                extra = f" · Instructions: {_esc(instruction)}" if instruction else ""
                 st.markdown(f"- {_esc(row.get('supplement_name') or 'Supplement')} · {_esc(row.get('dosage') or 'Dosage NA')} · {_esc(row.get('frequency') or 'Frequency NA')} · {_esc(row.get('timing') or 'As advised')} · Start: {_esc(_date_label(row.get('start_date')))} · End: {_esc(_date_label(row.get('end_date')))}{extra}")
         else:
             st.caption("No supplements scheduled.")

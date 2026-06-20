@@ -31,11 +31,16 @@ def _plain(value):
     raw = str(value or "").strip()
     if not raw:
         return ""
-    text = html.unescape(raw)
-    if "<" in text and ">" in text:
-        text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
-        text = re.sub(r"</\s*(div|p|span|li)\s*>", ", ", text, flags=re.I)
-        text = re.sub(r"<[^>]+>", "", text)
+    text = raw
+    for _ in range(5):
+        decoded = html.unescape(text)
+        if decoded == text:
+            break
+        text = decoded
+    text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
+    text = re.sub(r"</\s*(div|p|span|li|td|th)\s*>", ", ", text, flags=re.I)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("\u00a0", " ").replace("&nbsp;", " ")
     text = re.sub(r"\s*,\s*", ", ", text)
     text = re.sub(r",\s*,+", ", ", text)
     text = re.sub(r"\s+", " ", text).strip(" ,")
@@ -62,7 +67,7 @@ def _instruction_text(value):
 
 def _chips(text):
     clean = _timing_text(text)
-    parts = [p.strip() for p in clean.replace("|", ",").split(",") if p.strip()]
+    parts = [p.strip() for p in clean.replace("|", ",").split(",") if p.strip() and p.strip().lower() not in {"none", "na", "n/a"}]
     if not parts:
         return "<span class='hm-ms-chip'>As advised</span>"
     return "".join([f"<span class='hm-ms-chip'>{_esc(p)}</span>" for p in parts])
