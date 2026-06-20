@@ -177,6 +177,10 @@ else:
                     value=datetime.date.today(),
                     key=f"reschedule_date_{row.get('id')}",
                 )
+                requested_date_in_past_v104b12 = preferred_date < datetime.date.today()
+                if requested_date_in_past_v104b12:
+                    st.error("Please choose today or a future date for the reschedule request.")
+
                 t_col1, t_col2 = st.columns(2, gap="medium")
                 with t_col1:
                     preferred_start = st.time_input(
@@ -216,7 +220,7 @@ else:
                     "Submit Reschedule Request",
                     key=f"submit_reschedule_{row.get('id')}",
                     use_container_width=True,
-                    disabled=not st.session_state.get(confirm_key, False),
+                    disabled=(not st.session_state.get(confirm_key, False)) or requested_date_in_past_v104b12,
                 ):
                     req = request_member_schedule_reschedule(
                         schedule_id=row.get("id"),
@@ -226,7 +230,9 @@ else:
                         requested_end_time=preferred_end.strftime("%I:%M %p"),
                         reason=reason,
                     )
-                    if req:
+                    if req and isinstance(req, dict) and req.get("error"):
+                        st.error(req.get("error"))
+                    elif req:
                         st.success("Reschedule request submitted for admin review.")
                         st.session_state[f"show_reschedule_{row.get('id')}"] = False
                         st.rerun()

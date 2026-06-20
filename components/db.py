@@ -2386,13 +2386,89 @@ def _hm_v104b11_schedule_is_upcoming(schedule):
         return True
     return schedule_date >= _dt.date.today()
 
+def _hm_v104b12_member_schedule_tokens(member_id):
+    """Return accepted identity tokens for member schedule lookup.
+
+    Older builds sometimes stored schedules against a member id, while some
+    imported/test records may carry email in member_id/member_email. Member
+    Schedule and Member Home must therefore resolve by both id and email so
+    a valid upcoming schedule does not disappear from the member side.
+    """
+    db = _ensure_schedule_store(load_db())
+    tokens = set()
+    raw = str(member_id or "").strip()
+    if raw:
+        tokens.add(raw)
+        tokens.add(raw.lower())
+    for u in db.get("users", []):
+        uid = str(u.get("id", "") or "").strip()
+        email = str(u.get("email", "") or "").strip().lower()
+        if raw and (raw == uid or raw.lower() == email):
+            if uid:
+                tokens.add(uid)
+            if email:
+                tokens.add(email)
+    return {t for t in tokens if t}
+
+def _hm_v104b12_schedule_member_matches(schedule, member_id):
+    tokens = _hm_v104b12_member_schedule_tokens(member_id)
+    if not tokens:
+        return False
+    values = {
+        str((schedule or {}).get("member_id", "") or "").strip(),
+        str((schedule or {}).get("member_id", "") or "").strip().lower(),
+        str((schedule or {}).get("member_email", "") or "").strip().lower(),
+    }
+    return bool(tokens.intersection({v for v in values if v}))
+
 def list_upcoming_member_schedules(member_id, limit=3):
+    db = _ensure_schedule_store(load_db())
     rows = [
-        r for r in list_member_schedules(member_id=member_id, include_cancelled=False, limit=0)
-        if _hm_v104b11_schedule_is_upcoming(r)
+        dict(r) for r in db.get("schedules", [])
+        if _hm_v104b12_schedule_member_matches(r, member_id) and _hm_v104b11_schedule_is_upcoming(r)
     ]
     rows.sort(key=lambda r: (_hm_v104b11_parse_schedule_start_dt(r) or datetime.datetime.max, str(r.get("created_at", ""))))
     return rows[:limit] if limit else rows
+
+def list_admin_open_schedules_v104b12(member_id=None, limit=0):
+    """Admin-side open/upcoming schedule rows used for action counters.
+
+    Admin may still see historical rows in Schedule Status, but counters should
+    represent rows that can still be acted upon.
+    """
+    rows = []
+    for row in list_member_schedules(member_id=member_id, include_cancelled=True, limit=0):
+        status = str(row.get("status", "scheduled") or "scheduled").lower().strip()
+        if status not in {"scheduled", "acknowledged"}:
+            continue
+        if not _hm_v104b11_schedule_is_upcoming(row):
+            continue
+        rows.append(row)
+    rows.sort(key=lambda r: (_hm_v104b11_parse_schedule_start_dt(r) or datetime.datetime.max, str(r.get("created_at", ""))))
+    return rows[:limit] if limit else rows
+
+def _hm_v104b12_requested_reschedule_is_past(request_or_date):
+    """True when requested reschedule date is before today. Past reschedules should not be approved."""
+    import datetime as _dt
+    if isinstance(request_or_date, dict):
+        date_text = str(request_or_date.get("requested_date", "") or "").strip()
+    else:
+        date_text = str(request_or_date or "").strip()
+    if not date_text:
+        return False
+    parsed = None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d-%m-%Y", "%d/%m/%Y"):
+        try:
+            parsed = _dt.datetime.strptime(date_text[:10], fmt).date()
+            break
+        except Exception:
+            pass
+    if parsed is None:
+        try:
+            parsed = _dt.date.fromisoformat(date_text[:10])
+        except Exception:
+            return False
+    return parsed < _dt.date.today()
 
 def schedule_display_status_label_v104b11(schedule):
     """Lifecycle label for member/admin schedule cards."""
@@ -2593,6 +2669,8 @@ def request_member_schedule_reschedule(
             break
     if not schedule:
         return None
+    if _hm_v104b12_requested_reschedule_is_past(requested_date):
+        return {"error": "Requested reschedule date cannot be in the past."}
 
     # Do not create another pending request for the same schedule.
     for existing in db.get("reschedule_requests", []):
@@ -2706,6 +2784,13 @@ def decide_reschedule_request(request_id, decision, admin_note="", actor_id="adm
     req["decided_by"] = actor_id or "admin"
 
     new_schedule = None
+    if decision == "approved" and _hm_v104b12_requested_reschedule_is_past(req):
+        req["status"] = "pending"
+        req["admin_note"] = str(admin_note or "").strip()
+        req["updated_at"] = now
+        req["decision_error"] = "Requested reschedule date cannot be in the past."
+        save_db(db)
+        return {"error": "Requested reschedule date cannot be in the past.", "request": dict(req), "new_schedule": None}
     if decision == "approved" and schedule:
         schedule["status"] = "rescheduled"
         schedule["reschedule_request_status"] = "approved"

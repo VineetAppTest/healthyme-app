@@ -17,6 +17,7 @@ from components.db import (
     list_member_schedules,
     update_member_schedule_status,
     schedule_display_status_label_v104b11,
+    list_admin_open_schedules_v104b12,
     list_reschedule_requests,
     decide_reschedule_request,
     reschedule_policy_text_v1012,
@@ -153,9 +154,17 @@ selected_label = st.selectbox("Select member", list(member_options.keys()), labe
 member_id = member_options[selected_label]
 st.markdown("</div>", unsafe_allow_html=True)
 
-left, right = st.columns([1.04, .96], gap="large")
 
-with left:
+open_schedule_count_v104b12 = len(list_admin_open_schedules_v104b12(member_id=member_id, limit=0))
+pending_reschedule_count_v104b12 = len(list_reschedule_requests(member_id=member_id, status="pending", limit=0))
+
+tab_create, tab_status, tab_reschedule = st.tabs([
+    "Create Schedule",
+    f"Schedule Status ({open_schedule_count_v104b12})" if open_schedule_count_v104b12 else "Schedule Status",
+    f"Reschedule Status ({pending_reschedule_count_v104b12})" if pending_reschedule_count_v104b12 else "Reschedule Status",
+])
+
+with tab_create:
     st.markdown("<div class='hm-v1011-section-card'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-v1011-section-title'>Create schedule</div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-v1011-section-sub'>Set an appointment, review session or follow-up and notify the member.</div>", unsafe_allow_html=True)
@@ -208,17 +217,17 @@ with left:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-with right:
+with tab_status:
     st.markdown("<div class='hm-v1011-section-card'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-v1011-section-title'>Schedule status</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-v1011-section-sub'>Track upcoming, acknowledged, completed, cancelled and rescheduled sessions.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v1011-section-sub'>Track upcoming, acknowledged, completed, cancelled and rescheduled sessions. Closed rows are shown for admin history only.</div>", unsafe_allow_html=True)
 
-    rows = list_member_schedules(member_id=member_id, include_cancelled=True, limit=20)
+    rows = list_member_schedules(member_id=member_id, include_cancelled=True, limit=30)
     if not rows:
         st.info("No schedules created for this member yet.")
     else:
         for row in rows:
-            status = row.get("status", "scheduled")
+            status = str(row.get("status", "scheduled") or "scheduled").lower().strip()
             time_text = row.get("start_time", "")
             if row.get("end_time"):
                 time_text += f" - {row.get('end_time')}"
@@ -234,81 +243,96 @@ with right:
                 """,
                 unsafe_allow_html=True,
             )
-            c1, c2 = st.columns(2, gap="medium")
-            with c1:
-                if st.button("Mark Completed", key=f"schedule_done_{row.get('id')}", use_container_width=True, disabled=status == "completed"):
-                    update_member_schedule_status(row.get("id"), "completed", actor_id=st.session_state.get("user_id", "admin"))
-                    st.success("Schedule marked completed.")
-                    st.rerun()
-            with c2:
-                if st.button("Cancel", key=f"schedule_cancel_{row.get('id')}", use_container_width=True, disabled=status == "cancelled"):
-                    update_member_schedule_status(row.get("id"), "cancelled", actor_id=st.session_state.get("user_id", "admin"))
-                    st.warning("Schedule cancelled.")
-                    st.rerun()
+            if status in {"scheduled", "acknowledged"}:
+                c1, c2 = st.columns(2, gap="medium")
+                with c1:
+                    if st.button("Mark Completed", key=f"schedule_done_{row.get('id')}", use_container_width=True):
+                        update_member_schedule_status(row.get("id"), "completed", actor_id=st.session_state.get("user_id", "admin"))
+                        st.success("Schedule marked completed.")
+                        st.rerun()
+                with c2:
+                    if st.button("Cancel", key=f"schedule_cancel_{row.get('id')}", use_container_width=True):
+                        update_member_schedule_status(row.get("id"), "cancelled", actor_id=st.session_state.get("user_id", "admin"))
+                        st.warning("Schedule cancelled.")
+                        st.rerun()
+            else:
+                st.caption("Closed schedule — no action available.")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("<div class='hm-v1011-section-card'>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v1011-section-title'>Reschedule requests</div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v1011-section-sub'>Approve or reject member-requested schedule changes. The 24-hour rule is shown for each request.</div>", unsafe_allow_html=True)
+with tab_reschedule:
+    st.markdown("<div class='hm-v1011-section-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v1011-section-title'>Reschedule status</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v1011-section-sub'>Approve or reject member-requested schedule changes. Pending requests are counted in the tab title.</div>", unsafe_allow_html=True)
 
-requests_v1012 = list_reschedule_requests(member_id=member_id, status=None, limit=30)
-if not requests_v1012:
-    st.info("No reschedule requests for this member.")
-else:
-    for req_v1012 in requests_v1012:
-        status_v1012 = req_v1012.get("status", "pending")
-        st.markdown(
-            f"""
-            <div class='hm-v1012-request-card'>
-              <div class='hm-v1011-schedule-title'>{req_v1012.get('current_title','Scheduled session')}<span class='hm-v1011-pill'>{status_v1012.title()}</span></div>
-              <div class='hm-v1011-schedule-line'>Current: {req_v1012.get('current_date','')} · {req_v1012.get('current_start_time','')}</div>
-              <div class='hm-v1011-schedule-line'>Requested: {req_v1012.get('requested_date','')} · {req_v1012.get('requested_start_time','')} - {req_v1012.get('requested_end_time','')}</div>
-              <div class='hm-v1011-schedule-line'>Reason: {req_v1012.get('reason') or '-'}</div>
-            </div>
-            <div class='hm-v1012-request-warning'>{reschedule_policy_text_v1012(bool(req_v1012.get('within_24_hours')))}</div>
-            """,
-            unsafe_allow_html=True,
-        )
-        admin_note_v1012 = st.text_input(
-            "Admin note",
-            key=f"reschedule_admin_note_{req_v1012.get('id')}",
-            placeholder="Optional note to member",
-            disabled=status_v1012 != "pending",
-        )
-        approve_col_v1012, reject_col_v1012 = st.columns(2, gap="medium")
-        with approve_col_v1012:
-            if st.button(
-                "Approve Reschedule",
-                key=f"approve_reschedule_{req_v1012.get('id')}",
-                use_container_width=True,
+    requests_v1012 = list_reschedule_requests(member_id=member_id, status=None, limit=30)
+    if not requests_v1012:
+        st.info("No reschedule requests for this member.")
+    else:
+        for req_v1012 in requests_v1012:
+            status_v1012 = req_v1012.get("status", "pending")
+            requested_date_text_v104b12 = str(req_v1012.get("requested_date", "") or "")[:10]
+            requested_in_past_v104b12 = False
+            try:
+                requested_in_past_v104b12 = bool(requested_date_text_v104b12 and datetime.date.fromisoformat(requested_date_text_v104b12) < datetime.date.today())
+            except Exception:
+                requested_in_past_v104b12 = False
+            st.markdown(
+                f"""
+                <div class='hm-v1012-request-card'>
+                  <div class='hm-v1011-schedule-title'>{req_v1012.get('current_title','Scheduled session')}<span class='hm-v1011-pill'>{status_v1012.title()}</span></div>
+                  <div class='hm-v1011-schedule-line'>Current: {req_v1012.get('current_date','')} · {req_v1012.get('current_start_time','')}</div>
+                  <div class='hm-v1011-schedule-line'>Requested: {req_v1012.get('requested_date','')} · {req_v1012.get('requested_start_time','')} - {req_v1012.get('requested_end_time','')}</div>
+                  <div class='hm-v1011-schedule-line'>Reason: {req_v1012.get('reason') or '-'}</div>
+                </div>
+                <div class='hm-v1012-request-warning'>{reschedule_policy_text_v1012(bool(req_v1012.get('within_24_hours')))}</div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if requested_in_past_v104b12 and status_v1012 == "pending":
+                st.error("This requested date is already in the past. Ask the member to submit a fresh future date or reject this request.")
+            admin_note_v1012 = st.text_input(
+                "Admin note",
+                key=f"reschedule_admin_note_{req_v1012.get('id')}",
+                placeholder="Optional note to member",
                 disabled=status_v1012 != "pending",
-            ):
-                decide_reschedule_request(
-                    req_v1012.get("id"),
-                    "approved",
-                    admin_note=admin_note_v1012,
-                    actor_id=st.session_state.get("user_id", "admin"),
-                )
-                st.success("Reschedule approved and member notified.")
-                st.rerun()
-        with reject_col_v1012:
-            if st.button(
-                "Reject Request",
-                key=f"reject_reschedule_{req_v1012.get('id')}",
-                use_container_width=True,
-                disabled=status_v1012 != "pending",
-            ):
-                decide_reschedule_request(
-                    req_v1012.get("id"),
-                    "rejected",
-                    admin_note=admin_note_v1012,
-                    actor_id=st.session_state.get("user_id", "admin"),
-                )
-                st.warning("Reschedule request rejected and member notified.")
-                st.rerun()
+            )
+            approve_col_v1012, reject_col_v1012 = st.columns(2, gap="medium")
+            with approve_col_v1012:
+                if st.button(
+                    "Approve Reschedule",
+                    key=f"approve_reschedule_{req_v1012.get('id')}",
+                    use_container_width=True,
+                    disabled=status_v1012 != "pending" or requested_in_past_v104b12,
+                ):
+                    result_v104b12 = decide_reschedule_request(
+                        req_v1012.get("id"),
+                        "approved",
+                        admin_note=admin_note_v1012,
+                        actor_id=st.session_state.get("user_id", "admin"),
+                    )
+                    if result_v104b12 and result_v104b12.get("error"):
+                        st.error(result_v104b12.get("error"))
+                    else:
+                        st.success("Reschedule approved and member notified.")
+                        st.rerun()
+            with reject_col_v1012:
+                if st.button(
+                    "Reject Request",
+                    key=f"reject_reschedule_{req_v1012.get('id')}",
+                    use_container_width=True,
+                    disabled=status_v1012 != "pending",
+                ):
+                    decide_reschedule_request(
+                        req_v1012.get("id"),
+                        "rejected",
+                        admin_note=admin_note_v1012,
+                        actor_id=st.session_state.get("user_id", "admin"),
+                    )
+                    st.warning("Reschedule request rejected and member notified.")
+                    st.rerun()
 
-st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # v101.2: Scheduling page includes admin reschedule review.
