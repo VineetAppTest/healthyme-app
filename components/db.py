@@ -2368,6 +2368,59 @@ def list_packages_v1024b14(active_only=True):
     rows.sort(key=lambda r: (str(r.get("created_at", "")), str(r.get("package_name", ""))), reverse=True)
     return rows
 
+def update_package_v1024b14(
+    package_id,
+    package_name="",
+    session_count=1,
+    cost_per_session=0.0,
+    currency="INR",
+    number_of_people=1,
+    inclusions=None,
+    status="active",
+    actor_id="admin",
+):
+    """Update an existing package in-place for admin package maintenance."""
+    db = _ensure_package_store(load_db())
+    inclusions = inclusions or {}
+    now = _now_iso()
+    try:
+        session_count = max(1, int(session_count or 1))
+    except Exception:
+        session_count = 1
+    try:
+        number_of_people = max(1, int(number_of_people or 1))
+    except Exception:
+        number_of_people = 1
+    try:
+        cost_per_session = float(cost_per_session or 0)
+    except Exception:
+        cost_per_session = 0.0
+    name = str(package_name or "").strip() or f"{session_count} Session Package"
+    package_id = str(package_id or "").strip()
+    for row in db.get("packages", []) or []:
+        if str(row.get("id", "")) == package_id:
+            row.update({
+                "package_name": name,
+                "session_count": session_count,
+                "cost_per_session": cost_per_session,
+                "currency": str(currency or "INR").strip() or "INR",
+                "number_of_people": number_of_people,
+                "inclusions": {
+                    "Evaluation": bool(inclusions.get("Evaluation", True)),
+                    "Meal plan": bool(inclusions.get("Meal plan", True)),
+                    "Exercise plan": bool(inclusions.get("Exercise plan", True)),
+                    "Supplement plan": bool(inclusions.get("Supplement plan", True)),
+                    "Review sessions": bool(inclusions.get("Review sessions", True)),
+                },
+                "status": str(status or "active").strip().lower() or "active",
+                "updated_at": now,
+                "updated_by": actor_id or "admin",
+            })
+            save_db(db)
+            return dict(row)
+    return {"error": "Selected package was not found."}
+
+
 def assign_member_package_v1024b14(member_id, package_id, actor_id="admin"):
     db = _ensure_package_store(load_db())
     pkg = None

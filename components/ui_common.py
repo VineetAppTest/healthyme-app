@@ -3200,15 +3200,29 @@ button[kind="primary"] * {
   font-weight:950 !important;
 }
 div[data-testid="stButton"] > button:disabled,
-.stButton > button:disabled {
-  background:#F4F1EA !important;
-  color:#777E7A !important;
-  border-color:#E2D7C2 !important;
+.stButton > button:disabled,
+div[data-testid="stFormSubmitButton"] > button:disabled,
+button[kind="primary"]:disabled,
+button[data-testid="baseButton-primary"]:disabled,
+button[data-testid="baseButton-secondary"]:disabled {
+  background:#FAF7F1 !important;
+  color:#8A6A14 !important;
+  -webkit-text-fill-color:#8A6A14 !important;
+  border-color:#D8A84E !important;
   box-shadow:none !important;
   transform:none !important;
+  opacity:1 !important;
 }
 div[data-testid="stButton"] > button:disabled *,
-.stButton > button:disabled * {color:#777E7A !important;}
+.stButton > button:disabled *,
+div[data-testid="stFormSubmitButton"] > button:disabled *,
+button[kind="primary"]:disabled *,
+button[data-testid="baseButton-primary"]:disabled *,
+button[data-testid="baseButton-secondary"]:disabled * {
+  color:#8A6A14 !important;
+  -webkit-text-fill-color:#8A6A14 !important;
+  opacity:1 !important;
+}
 </style>
 """
 
