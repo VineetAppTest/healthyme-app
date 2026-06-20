@@ -31,6 +31,7 @@ section.main > div.block-container,.main .block-container,[data-testid="stAppVie
 div[data-testid="stTabs"] button p{font-weight:520!important;color:#064E3B!important;}
 div[data-testid="stButton"] > button{min-height:2.72rem!important;border-radius:14px!important;border:1.25px solid #D9C28F!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:500!important;box-shadow:none!important;}
 div[data-testid="stButton"] > button:hover{border-color:#B89345!important;background:#FFF7E6!important;}
+div[data-testid="stFormSubmitButton"] > button:not(:disabled),div[data-testid="stFormSubmitButton"] > button:not(:disabled) *{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important;font-weight:500!important;}
 </style>
 """, unsafe_allow_html=True)
 
