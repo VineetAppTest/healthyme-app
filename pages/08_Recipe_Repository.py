@@ -570,6 +570,7 @@ def render_landing(df):
                     with ac1:
                         if st.button("View recipe", key=f"view_recipe_{idx}", type="secondary", use_container_width=True):
                             st.session_state["hm_recipe_selected_id"] = rid
+                            st.session_state["hm_recipe_detail_mode"] = True
                             st.rerun()
                     with ac2:
                         if st.button(fav_mark, key=f"fav_recipe_{idx}", help="Add/remove favourite", type="secondary", use_container_width=True):
@@ -707,7 +708,15 @@ if assigned_ids:
     df = df[df.index.astype(str).isin(assigned_ids)].copy()
 
 selected_id = st.session_state.get("hm_recipe_selected_id")
-is_detail_view = selected_id is not None and selected_id.isdigit() and int(selected_id) in df.index
+is_detail_view = (
+    bool(st.session_state.get("hm_recipe_detail_mode"))
+    and selected_id is not None
+    and str(selected_id).isdigit()
+    and int(selected_id) in df.index
+)
+if not is_detail_view:
+    st.session_state.pop("hm_recipe_detail_mode", None)
+    st.session_state.pop("hm_recipe_selected_id", None)
 
 if is_detail_view:
     render_detail(df.loc[int(selected_id)], int(selected_id))
@@ -717,9 +726,15 @@ else:
 if is_detail_view:
     nav_back, nav_dashboard = st.columns(2)
     with nav_back:
-        pass  # v102.0 legacy direct navigation removed; use canonical footer
+        if st.button("← Back to Recipe Repository", use_container_width=True, key="recipe_detail_back_to_repository_v1024b8"):
+            st.session_state.pop("hm_recipe_selected_id", None)
+            st.session_state.pop("hm_recipe_detail_mode", None)
+            st.rerun()
     with nav_dashboard:
-        pass  # v102.0 legacy direct navigation removed; use canonical footer
+        if st.button("Dashboard", use_container_width=True, key="recipe_detail_dashboard_v1024b8"):
+            st.session_state.pop("hm_recipe_selected_id", None)
+            st.session_state.pop("hm_recipe_detail_mode", None)
+            st.switch_page("pages/02_Member_Home.py")
 else:
     pass  # v102.2D internal duplicate footer removed
 # v96_recipe_macro_display: Recipe cards/details should display Protein, Fat and Carbohydrates below Calories when available.
@@ -1101,7 +1116,9 @@ pass  # v102.2D internal duplicate footer removed
 render_back_to_top()
 
 # v102.4B6: Recipe Repository now uses compact 3-column member grid, reduced spacing, and single-rerun filter toggle.
+# v102.4B8: detail view uses local Back to Repository so selected card state is cleared safely.
 # v102.4B5: restored legacy v93+ Recipe Repository member UI while preserving Recommendations Share binding.
 # v102.2D: single canonical member footer
-render_page_nav("Recipes", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
+if not is_detail_view:
+    render_page_nav("Recipes", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()

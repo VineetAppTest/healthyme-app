@@ -26,6 +26,15 @@ if (wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflo
 
 current_instance = get_current_assessment_instance(user_id)
 
+# v102.4B8: Member Home is the clean re-entry point for repositories.
+# Clear any persisted detail view so Repository buttons always open the landing grid.
+for _repo_detail_key in [
+    "hm_recipe_selected_id", "hm_recipe_detail_mode",
+    "hm_exercise_selected_id", "hm_exercise_detail_mode",
+]:
+    st.session_state.pop(_repo_detail_key, None)
+
+
 
 
 def should_show_body_mind_next_step_v96_6(wf_state, current_inst):
@@ -280,8 +289,12 @@ with right:
         if st.button("Today's Journey", use_container_width=True):
             st.switch_page("pages/36_Todays_Journey.py")
         if st.button("Recipe Repository", use_container_width=True):
+            st.session_state.pop("hm_recipe_selected_id", None)
+            st.session_state.pop("hm_recipe_detail_mode", None)
             st.switch_page("pages/08_Recipe_Repository.py")
         if st.button("Exercise Repository", use_container_width=True):
+            st.session_state.pop("hm_exercise_selected_id", None)
+            st.session_state.pop("hm_exercise_detail_mode", None)
             st.switch_page("pages/09_Exercise_Repository.py")
         if st.button("Supplements", use_container_width=True):
             st.switch_page("pages/40_Member_Supplements.py")
