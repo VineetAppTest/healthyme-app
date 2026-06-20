@@ -3128,7 +3128,77 @@ div[data-testid="stExpander"] details > summary:hover{
 </style>
 """
 
-def inject_global_styles(): st.markdown(LUXE_CSS, unsafe_allow_html=True)
+
+HM_GLOBAL_BUTTON_POLISH_V102_4B9 = """
+<style>
+/* v102.4B9 global button standard: match Back/Dashboard premium button language everywhere. */
+div[data-testid="stButton"] > button,
+.stButton > button,
+button[data-testid="baseButton-secondary"],
+div[data-testid="stDownloadButton"] > button,
+.stDownloadButton > button,
+div[data-testid="stPageLink"] a {
+  background:#FFFFFF !important;
+  color:#064E3B !important;
+  border:1.5px solid #D8A84E !important;
+  border-radius:16px !important;
+  min-height:2.65rem !important;
+  font-size:.92rem !important;
+  font-weight:950 !important;
+  letter-spacing:-.01em !important;
+  box-shadow:0 6px 16px rgba(6,78,59,.055) !important;
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease !important;
+}
+div[data-testid="stButton"] > button *,
+.stButton > button *,
+button[data-testid="baseButton-secondary"] *,
+div[data-testid="stDownloadButton"] > button *,
+.stDownloadButton > button *,
+div[data-testid="stPageLink"] a * {
+  color:#064E3B !important;
+  font-weight:950 !important;
+}
+div[data-testid="stButton"] > button:hover,
+.stButton > button:hover,
+div[data-testid="stDownloadButton"] > button:hover,
+.stDownloadButton > button:hover,
+div[data-testid="stPageLink"] a:hover {
+  transform:translateY(-1px) !important;
+  border-color:#B8892C !important;
+  box-shadow:0 10px 24px rgba(6,78,59,.12) !important;
+}
+button[data-testid="baseButton-primary"],
+div[data-testid="stButton"] > button[kind="primary"],
+.stButton > button[kind="primary"],
+button[kind="primary"] {
+  background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%) !important;
+  color:#FFFFFF !important;
+  border-color:#064E3B !important;
+  box-shadow:0 12px 28px rgba(6,78,59,.20) !important;
+}
+button[data-testid="baseButton-primary"] *,
+div[data-testid="stButton"] > button[kind="primary"] *,
+.stButton > button[kind="primary"] *,
+button[kind="primary"] * {
+  color:#FFFFFF !important;
+  font-weight:950 !important;
+}
+div[data-testid="stButton"] > button:disabled,
+.stButton > button:disabled {
+  background:#F4F1EA !important;
+  color:#777E7A !important;
+  border-color:#E2D7C2 !important;
+  box-shadow:none !important;
+  transform:none !important;
+}
+div[data-testid="stButton"] > button:disabled *,
+.stButton > button:disabled * {color:#777E7A !important;}
+</style>
+"""
+
+def inject_global_styles():
+    st.markdown(LUXE_CSS, unsafe_allow_html=True)
+    st.markdown(HM_GLOBAL_BUTTON_POLISH_V102_4B9, unsafe_allow_html=True)
 def apply_luxe_theme():
     return None
 def apply_mobile_first_premium_theme():

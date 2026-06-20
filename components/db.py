@@ -1,5 +1,6 @@
 import datetime
 import uuid
+import re, html
 
 import json, pathlib, hashlib, uuid, datetime
 BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
@@ -2830,12 +2831,43 @@ def get_nsp_system_score_snapshot(member_id, instance_id=None):
 # v102.3A: Supplements persistence helpers
 # --------------------------------------------------------------------
 
+
+def _strip_html_to_text_v102_4(value):
+    """Convert accidental persisted HTML/markup into safe plain text.
+
+    A few interim builds allowed rendered chip/card HTML to leak into
+    supplement and recommendation text fields. This keeps existing data usable
+    and prevents member pages from displaying raw <div>/<span> markup.
+    """
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    text = html.unescape(raw)
+    if "<" in text and ">" in text:
+        text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
+        text = re.sub(r"</\s*(div|p|span|li|td|th)\s*>", ", ", text, flags=re.I)
+        text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"\s*,\s*", ", ", text)
+    text = re.sub(r",\s*,+", ", ", text)
+    text = re.sub(r"\s+", " ", text).strip(" ,")
+    return text
+
+
+def _split_instruction_marker_v102_4(value, *, before_marker=False):
+    text = _strip_html_to_text_v102_4(value)
+    match = re.search(r"instructions\s*:", text, flags=re.I)
+    if not match:
+        return text
+    if before_marker:
+        return text[:match.start()].strip(" ,")
+    return text[match.end():].strip(" ,")
+
 def _supp_now_iso_v102_3a():
     return datetime.datetime.now().isoformat(timespec="seconds")
 
 
 def _supp_clean_text_v102_3a(value):
-    return str(value or "").strip()
+    return _strip_html_to_text_v102_4(value)
 
 
 def _supp_clean_date_v102_3a(value):
@@ -2901,6 +2933,14 @@ def _normalise_supplement_record_v102_3a(record):
     record.setdefault("stopped_by", "")
     for key in ["member_id", "member_email", "member_name", "supplement_name", "dosage", "frequency", "timing", "instructions", "start_date", "end_date", "stop_date", "status", "admin_notes", "stop_reason", "created_at", "updated_at", "created_by", "updated_by", "stopped_at", "stopped_by"]:
         record[key] = _supp_clean_text_v102_3a(record.get(key))
+    # Repair any older persisted chip/card HTML that carried instructions inside timing/text fields.
+    timing_with_marker = _strip_html_to_text_v102_4(record.get("timing"))
+    instruction_with_marker = _strip_html_to_text_v102_4(record.get("instructions"))
+    timing_instruction = _split_instruction_marker_v102_4(timing_with_marker, before_marker=False) if re.search(r"instructions\s*:", timing_with_marker, flags=re.I) else ""
+    record["timing"] = _split_instruction_marker_v102_4(timing_with_marker, before_marker=True)
+    record["instructions"] = _split_instruction_marker_v102_4(instruction_with_marker, before_marker=False)
+    if not record.get("instructions") and timing_instruction:
+        record["instructions"] = timing_instruction
     if record["status"].lower() not in ["active", "stopped"]:
         record["status"] = "Active"
     record["status"] = "Stopped" if record["status"].lower() == "stopped" else "Active"
@@ -3149,7 +3189,7 @@ def _rec_now_iso_v102_4():
 
 
 def _rec_clean_text_v102_4(value):
-    return str(value or "").strip()
+    return _strip_html_to_text_v102_4(value)
 
 
 def _rec_date_iso_v102_4(value):
@@ -3250,10 +3290,10 @@ def _rec_normalise_supplement_detail_v102_4(detail):
         "supplement_name": _rec_clean_text_v102_4(detail.get("supplement_name") or detail.get("name")),
         "dosage": _rec_clean_text_v102_4(detail.get("dosage")),
         "frequency": _rec_clean_text_v102_4(detail.get("frequency")),
-        "timing": _rec_clean_text_v102_4(detail.get("timing")),
+        "timing": _split_instruction_marker_v102_4(detail.get("timing"), before_marker=True),
         "start_date": start_raw[:10] if start_raw else "",
         "end_date": end_raw[:10] if end_raw else "",
-        "instructions": _rec_clean_text_v102_4(detail.get("instructions") or detail.get("member_instructions")),
+        "instructions": _split_instruction_marker_v102_4(detail.get("instructions") or detail.get("member_instructions"), before_marker=False),
         "admin_notes": _rec_clean_text_v102_4(detail.get("admin_notes")),
     }
 

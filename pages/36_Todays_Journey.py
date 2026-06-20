@@ -1,4 +1,5 @@
 import html
+import re
 import pathlib
 from datetime import date, timedelta
 
@@ -32,8 +33,23 @@ RECIPES_PATH = BASE / "data" / "recipes.csv"
 EXERCISES_PATH = BASE / "data" / "exercises.csv"
 
 
+def _plain(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    text = html.unescape(raw)
+    if "<" in text and ">" in text:
+        text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
+        text = re.sub(r"</\s*(div|p|span|li)\s*>", ", ", text, flags=re.I)
+        text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"\s*,\s*", ", ", text)
+    text = re.sub(r",\s*,+", ", ", text)
+    text = re.sub(r"\s+", " ", text).strip(" ,")
+    return text
+
+
 def _esc(value):
-    return html.escape(str(value or ""))
+    return html.escape(_plain(value))
 
 
 def _load_csv(path):
@@ -53,7 +69,10 @@ def _row_by_id(df, item_id):
 
 
 def _split_timing(text):
-    return [p.strip() for p in str(text or "").replace("|", ",").split(",") if p.strip()]
+    clean = _plain(text)
+    if "instructions:" in clean.lower():
+        clean = re.split(r"instructions\s*:", clean, maxsplit=1, flags=re.I)[0].strip(" ,")
+    return [p.strip() for p in clean.replace("|", ",").split(",") if p.strip()]
 
 
 def _supp_map(member_id):

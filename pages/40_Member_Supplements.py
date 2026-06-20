@@ -1,4 +1,5 @@
 import html
+import re
 
 import streamlit as st
 
@@ -26,12 +27,42 @@ topbar(
 )
 
 
+def _plain(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    text = html.unescape(raw)
+    if "<" in text and ">" in text:
+        text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
+        text = re.sub(r"</\s*(div|p|span|li)\s*>", ", ", text, flags=re.I)
+        text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"\s*,\s*", ", ", text)
+    text = re.sub(r",\s*,+", ", ", text)
+    text = re.sub(r"\s+", " ", text).strip(" ,")
+    return text
+
+
 def _esc(value):
-    return html.escape(str(value or ""))
+    return html.escape(_plain(value))
+
+
+def _timing_text(value):
+    text = _plain(value)
+    if "instructions:" in text.lower():
+        text = re.split(r"instructions\s*:", text, maxsplit=1, flags=re.I)[0].strip(" ,")
+    return text
+
+
+def _instruction_text(value):
+    text = _plain(value)
+    if "instructions:" in text.lower():
+        return re.split(r"instructions\s*:", text, maxsplit=1, flags=re.I)[-1].strip(" ,")
+    return text
 
 
 def _chips(text):
-    parts = [p.strip() for p in str(text or "").replace("|", ",").split(",") if p.strip()]
+    clean = _timing_text(text)
+    parts = [p.strip() for p in clean.replace("|", ",").split(",") if p.strip()]
     if not parts:
         return "<span class='hm-ms-chip'>As advised</span>"
     return "".join([f"<span class='hm-ms-chip'>{_esc(p)}</span>" for p in parts])
@@ -75,6 +106,9 @@ if not supplements:
     st.markdown("<div class='hm-ms-empty'>No supplements have been assigned yet. Your nutritionist will update this section when applicable.</div>", unsafe_allow_html=True)
 else:
     for item in supplements:
+        instruction_value = _instruction_text(item.get('instructions')) or 'Follow as advised by your nutritionist.'
+        end_value = _plain(item.get('end_date'))
+        end_html = f"<div class='hm-ms-dose'>End date: {_esc(end_value)}</div>" if end_value else ""
         st.markdown(f"""
         <div class='hm-ms-row'>
           <div class='hm-ms-icon'>◉</div>
@@ -82,9 +116,9 @@ else:
             <div class='hm-ms-name'>{_esc(item.get('supplement_name'))}</div>
             <div class='hm-ms-dose'>{_esc(item.get('dosage') or 'Dosage not specified')} · {_esc(item.get('frequency') or 'Frequency not specified')}</div>
             <div class='hm-ms-dose'>Start date: {_esc(item.get('start_date') or 'As advised')}</div>
-            {f"<div class='hm-ms-dose'>End date: {_esc(item.get('end_date'))}</div>" if item.get('end_date') else ""}
+            {end_html}
             <div>{_chips(item.get('timing'))}</div>
-            <div class='hm-ms-dose'>Instructions: {_esc(item.get('instructions') or 'Follow as advised by your nutritionist.')}</div>
+            <div class='hm-ms-dose'>Instructions: {_esc(instruction_value)}</div>
           </div>
         </div>
         """, unsafe_allow_html=True)
