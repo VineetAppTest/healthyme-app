@@ -181,6 +181,7 @@ with left:
         section_header("Member & Access", "Create users and manage member/admin access controls.")
         nav_cell("Create Users", "pages/17_Admin_User_Manager.py", "dash_create_users_v102_4b4")
         nav_cell("Access Manager", "pages/30_Admin_User_Access_Manager.py", "dash_access_manager_v102_4b4")
+        nav_cell("Packages", "pages/41_Admin_Packages.py", "dash_packages_v102_4b14")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with st.container(border=True):

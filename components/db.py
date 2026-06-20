@@ -2228,6 +2228,205 @@ def resource_feedback_counts(member_id, resource_type):
 # v101.0: Scheduling helpers
 # --------------------------------------------------------------------
 
+
+# --------------------------------------------------------------------
+# v102.4B14: Packages + schedule validation helpers
+# --------------------------------------------------------------------
+
+def _hm_v1024b14_member_tokens_from_db(db, member_id):
+    tokens = set()
+    raw = str(member_id or "").strip()
+    if raw:
+        tokens.add(raw)
+        tokens.add(raw.lower())
+    for u in db.get("users", []) or []:
+        uid = str(u.get("id", "") or "").strip()
+        email = str(u.get("email", "") or "").strip().lower()
+        if raw and (raw == uid or raw.lower() == email):
+            if uid:
+                tokens.add(uid)
+            if email:
+                tokens.add(email)
+    return {t for t in tokens if t}
+
+def _hm_v1024b14_row_matches_member(db, row, member_id):
+    tokens = _hm_v1024b14_member_tokens_from_db(db, member_id)
+    values = {
+        str((row or {}).get("member_id", "") or "").strip(),
+        str((row or {}).get("member_id", "") or "").strip().lower(),
+        str((row or {}).get("member_email", "") or "").strip().lower(),
+    }
+    return bool(tokens.intersection({v for v in values if v}))
+
+def _hm_v1024b14_parse_time_minutes(value):
+    import datetime as _dt
+    text = str(value or "").strip()
+    if not text:
+        return None
+    for fmt in ("%I:%M %p", "%H:%M", "%I %p", "%H"):
+        try:
+            t = _dt.datetime.strptime(text, fmt).time()
+            return t.hour * 60 + t.minute
+        except Exception:
+            pass
+    return None
+
+def _hm_v1024b14_schedule_overlaps(existing, schedule_date, start_time, end_time):
+    if str(existing.get("schedule_date", "") or "").strip() != str(schedule_date or "").strip():
+        return False
+    existing_start = _hm_v1024b14_parse_time_minutes(existing.get("start_time"))
+    existing_end = _hm_v1024b14_parse_time_minutes(existing.get("end_time"))
+    new_start = _hm_v1024b14_parse_time_minutes(start_time)
+    new_end = _hm_v1024b14_parse_time_minutes(end_time)
+    if existing_start is None or new_start is None:
+        return False
+    if existing_end is None or existing_end <= existing_start:
+        existing_end = existing_start + 30
+    if new_end is None or new_end <= new_start:
+        new_end = new_start + 30
+    return new_start < existing_end and new_end > existing_start
+
+def validate_member_schedule_slot_v1024b14(member_id, schedule_date, start_time, end_time="", ignore_schedule_id=""):
+    """Block duplicate or overlapping schedule rows for the same member/date/time."""
+    db = _ensure_schedule_store(load_db())
+    for row in db.get("schedules", []) or []:
+        if ignore_schedule_id and row.get("id") == ignore_schedule_id:
+            continue
+        status = str(row.get("status", "scheduled") or "scheduled").lower().strip()
+        if status in {"cancelled", "completed", "rescheduled"}:
+            continue
+        if not _hm_v1024b14_row_matches_member(db, row, member_id):
+            continue
+        if _hm_v1024b14_schedule_overlaps(row, schedule_date, start_time, end_time):
+            return {
+                "ok": False,
+                "error": "This member already has a scheduled session during the selected time window. Please choose a different date or time.",
+                "conflict": dict(row),
+            }
+    return {"ok": True, "error": "", "conflict": None}
+
+def _ensure_package_store(db):
+    db.setdefault("packages", [])
+    db.setdefault("member_packages", [])
+    return db
+
+def create_package_v1024b14(
+    package_name="",
+    session_count=1,
+    cost_per_session=0.0,
+    currency="INR",
+    number_of_people=1,
+    inclusions=None,
+    actor_id="admin",
+):
+    db = _ensure_package_store(load_db())
+    now = _now_iso()
+    inclusions = inclusions or {}
+    try:
+        session_count = max(1, int(session_count or 1))
+    except Exception:
+        session_count = 1
+    try:
+        number_of_people = max(1, int(number_of_people or 1))
+    except Exception:
+        number_of_people = 1
+    try:
+        cost_per_session = float(cost_per_session or 0)
+    except Exception:
+        cost_per_session = 0.0
+    name = str(package_name or "").strip() or f"{session_count} Session Package"
+    row = {
+        "id": str(uuid.uuid4())[:8],
+        "package_name": name,
+        "session_count": session_count,
+        "cost_per_session": cost_per_session,
+        "currency": str(currency or "INR").strip() or "INR",
+        "number_of_people": number_of_people,
+        "inclusions": {
+            "Evaluation": bool(inclusions.get("Evaluation", True)),
+            "Meal plan": bool(inclusions.get("Meal plan", True)),
+            "Exercise plan": bool(inclusions.get("Exercise plan", True)),
+            "Supplement plan": bool(inclusions.get("Supplement plan", True)),
+            "Review sessions": bool(inclusions.get("Review sessions", True)),
+        },
+        "status": "active",
+        "created_at": now,
+        "created_by": actor_id or "admin",
+        "updated_at": now,
+    }
+    db["packages"].append(row)
+    save_db(db)
+    return row
+
+def list_packages_v1024b14(active_only=True):
+    db = _ensure_package_store(load_db())
+    rows = []
+    for row in db.get("packages", []) or []:
+        if active_only and str(row.get("status", "active") or "active").lower() != "active":
+            continue
+        rows.append(dict(row))
+    rows.sort(key=lambda r: (str(r.get("created_at", "")), str(r.get("package_name", ""))), reverse=True)
+    return rows
+
+def assign_member_package_v1024b14(member_id, package_id, actor_id="admin"):
+    db = _ensure_package_store(load_db())
+    pkg = None
+    for row in db.get("packages", []) or []:
+        if row.get("id") == package_id:
+            pkg = row
+            break
+    if not pkg:
+        return {"error": "Selected package was not found."}
+    member = _schedule_member_lookup_v101(db, member_id)
+    now = _now_iso()
+    for sub in db.get("member_packages", []) or []:
+        if _hm_v1024b14_row_matches_member(db, sub, member_id) and str(sub.get("status", "active")).lower() == "active":
+            sub["status"] = "replaced"
+            sub["ended_at"] = now
+            sub["updated_at"] = now
+            sub["updated_by"] = actor_id or "admin"
+    sub = {
+        "id": str(uuid.uuid4())[:8],
+        "member_id": member_id,
+        "member_name": member.get("name", ""),
+        "member_email": member.get("email", ""),
+        "package_id": package_id,
+        "package_name": pkg.get("package_name", ""),
+        "session_count": int(pkg.get("session_count", 1) or 1),
+        "cost_per_session": float(pkg.get("cost_per_session", 0) or 0),
+        "currency": pkg.get("currency", "INR"),
+        "number_of_people": int(pkg.get("number_of_people", 1) or 1),
+        "inclusions": dict(pkg.get("inclusions", {}) or {}),
+        "status": "active",
+        "subscribed_at": now,
+        "created_by": actor_id or "admin",
+        "updated_at": now,
+    }
+    db["member_packages"].append(sub)
+    save_db(db)
+    return sub
+
+def get_member_active_package_v1024b14(member_id):
+    db = _ensure_package_store(load_db())
+    rows = []
+    for sub in db.get("member_packages", []) or []:
+        if str(sub.get("status", "active") or "active").lower() != "active":
+            continue
+        if _hm_v1024b14_row_matches_member(db, sub, member_id):
+            rows.append(dict(sub))
+    rows.sort(key=lambda r: str(r.get("subscribed_at", "")), reverse=True)
+    return rows[0] if rows else None
+
+def list_member_packages_v1024b14(member_id=None):
+    db = _ensure_package_store(load_db())
+    rows = []
+    for sub in db.get("member_packages", []) or []:
+        if member_id and not _hm_v1024b14_row_matches_member(db, sub, member_id):
+            continue
+        rows.append(dict(sub))
+    rows.sort(key=lambda r: str(r.get("subscribed_at", "")), reverse=True)
+    return rows
+
 def _ensure_schedule_store(db):
     db.setdefault("schedules", [])
     db.setdefault("messages", [])
@@ -2251,6 +2450,7 @@ def create_member_schedule(
     location_or_link="",
     notes="",
     actor_id="admin",
+    session_cost=None,
 ):
     """Create a member schedule item and queue member app/email notification.
 
@@ -2258,6 +2458,16 @@ def create_member_schedule(
     """
     db = _ensure_schedule_store(load_db())
     member = _schedule_member_lookup_v101(db, member_id)
+    slot_check = validate_member_schedule_slot_v1024b14(member_id, schedule_date, start_time, end_time)
+    if not slot_check.get("ok"):
+        return {"error": slot_check.get("error"), "conflict": slot_check.get("conflict")}
+    active_pkg = get_member_active_package_v1024b14(member_id)
+    if session_cost is None:
+        session_cost = (active_pkg or {}).get("cost_per_session", 0)
+    try:
+        session_cost = float(session_cost or 0)
+    except Exception:
+        session_cost = 0.0
     schedule_id = str(uuid.uuid4())[:8]
     created_at = _now_iso()
     title = str(title or "").strip() or str(schedule_type or "Scheduled session").strip() or "Scheduled session"
@@ -2275,6 +2485,9 @@ def create_member_schedule(
         "location_or_link": str(location_or_link or "").strip(),
         "notes": str(notes or "").strip(),
         "status": "scheduled",
+        "session_cost": session_cost,
+        "package_id": (active_pkg or {}).get("package_id", ""),
+        "member_package_id": (active_pkg or {}).get("id", ""),
         "created_at": created_at,
         "created_by": actor_id or "admin",
         "acknowledged_at": "",
@@ -3851,14 +4064,17 @@ def create_member_schedule(
     location_or_link="",
     notes="",
     actor_id="admin",
-    session_cost=0,
+    session_cost=None,
 ):
-    """Create a member schedule item with duplicate-slot validation and session cost."""
+    """Create a member schedule item with duplicate-slot validation and package-derived session cost."""
     db = _ensure_schedule_store(load_db())
     validation = validate_member_schedule_slot_v1024b13(member_id, schedule_date, start_time, end_time)
     if not validation.get("ok"):
         return {"error": validation.get("error"), "conflict": validation.get("conflict")}
     member = _schedule_member_lookup_v101(db, member_id)
+    active_pkg = get_member_active_package_v1024b14(member_id)
+    if session_cost is None:
+        session_cost = (active_pkg or {}).get("cost_per_session", 0)
     schedule_id = str(uuid.uuid4())[:8]
     created_at = _now_iso()
     title = str(title or "").strip() or str(schedule_type or "Scheduled session").strip() or "Scheduled session"
@@ -3880,6 +4096,8 @@ def create_member_schedule(
         "location_or_link": str(location_or_link or "").strip(),
         "notes": str(notes or "").strip(),
         "session_cost": clean_cost,
+        "package_id": (active_pkg or {}).get("package_id", ""),
+        "member_package_id": (active_pkg or {}).get("id", ""),
         "status": "scheduled",
         "created_at": created_at,
         "created_by": actor_id or "admin",
@@ -4172,6 +4390,7 @@ def get_member_archived_messages(member_id, limit=50):
 def get_member_session_ledger_v1024b13(member_id=None):
     """Return session rows and consumed totals driven from Scheduler state."""
     db = _ensure_schedule_store(load_db())
+    active_pkg_v1024b14 = get_member_active_package_v1024b14(member_id) if member_id else None
     rows = []
     consumed_count = 0
     consumed_cost = 0.0
@@ -4184,6 +4403,11 @@ def get_member_session_ledger_v1024b13(member_id=None):
             cost = float(row.get("session_cost", 0) or 0)
         except Exception:
             cost = 0.0
+        if cost <= 0 and active_pkg_v1024b14:
+            try:
+                cost = float(active_pkg_v1024b14.get("cost_per_session", 0) or 0)
+            except Exception:
+                cost = 0.0
         if consumed:
             consumed_count += 1
             consumed_cost += cost
@@ -4202,4 +4426,5 @@ def get_member_session_ledger_v1024b13(member_id=None):
             "count_note": "Consumed" if consumed else ("Late reschedule counted if approved" if row.get("session_counted") else "Not consumed"),
         })
     rows.sort(key=lambda r: (str(r.get("date", "")), str(r.get("time", ""))), reverse=True)
-    return {"rows": rows, "consumed_count": consumed_count, "consumed_cost": consumed_cost}
+    package_sessions = int((active_pkg_v1024b14 or {}).get("session_count", 0) or 0)
+    return {"rows": rows, "consumed_count": consumed_count, "consumed_cost": consumed_cost, "package": active_pkg_v1024b14, "package_sessions": package_sessions, "remaining_sessions": max(0, package_sessions - consumed_count) if package_sessions else 0}

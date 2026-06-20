@@ -22,6 +22,7 @@ from components.db import (
     decide_reschedule_request,
     reschedule_policy_text_v1012,
     get_member_session_ledger_v1024b13,
+    get_member_active_package_v1024b14,
 )
 
 st.set_page_config(page_title="Admin Scheduling", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -44,19 +45,38 @@ section.main > div.block-container,
   padding-top:.72rem!important;
 }
 .hm-v1011-context-shell{
-  border:1px solid #E3C98E;
-  background:#FFFDF8;
-  border-radius:18px;
-  padding:.82rem 1rem;
-  margin:.25rem 0 .80rem 0;
-  box-shadow:0 8px 20px rgba(15,23,42,.04);
+  border:1.5px solid #B89345;
+  background:linear-gradient(135deg,#FFFDF8 0%,#FFF3D6 100%);
+  border-radius:20px;
+  padding:1rem 1.05rem;
+  margin:.20rem 0 .82rem 0;
+  box-shadow:0 12px 26px rgba(15,23,42,.07);
 }
 .hm-v1011-context-title{
   color:#064E3B;
-  font-size:.84rem;
-  font-weight:950;
-  margin-bottom:.32rem;
+  font-size:1.00rem;
+  font-weight:900;
+  margin-bottom:.16rem;
   letter-spacing:.01em;
+}
+.hm-v1011-context-sub{
+  color:#72551A;
+  font-size:.80rem;
+  font-weight:620;
+  margin-bottom:.52rem;
+}
+.hm-b14-notify-zone{
+  border:1px dashed #D9C28F;
+  border-radius:16px;
+  padding:.70rem .82rem;
+  margin:.70rem 0 .80rem 0;
+  background:#FFFDF8;
+}
+.hm-b14-package-line{
+  color:#334155;
+  font-size:.82rem;
+  font-weight:620;
+  margin:.25rem 0 .45rem 0;
 }
 .hm-v1011-section-card{
   border:1px solid #E3C98E;
@@ -159,17 +179,15 @@ if not members:
     st.stop()
 
 st.markdown("<div class='hm-v1011-context-shell'>", unsafe_allow_html=True)
-st.markdown("<div class='hm-v1011-context-title'>Page Context Selector</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v1011-context-title'>Page Context Selector · Controls this full page</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-v1011-context-sub'>All schedule creation, status, reschedule review and session usage below are for the selected member only.</div>", unsafe_allow_html=True)
 member_options = {f"{m.get('name','')} — {m.get('email','')}": m.get("id") for m in members}
-selected_label = st.selectbox("Select member", list(member_options.keys()), label_visibility="collapsed")
+selected_label = st.selectbox("Select member controlling this page", list(member_options.keys()))
 member_id = member_options[selected_label]
 st.markdown("</div>", unsafe_allow_html=True)
 
-# v102.4B13: durable admin action feedback after rerun.
+# v102.4B14: durable create/notify feedback is rendered inside the Create Schedule tab.
 _flash = st.session_state.pop('hm_b13_schedule_flash', None)
-if _flash:
-    _klass = 'hm-b13-flash-ok' if _flash.get('kind') == 'success' else 'hm-b13-flash-error'
-    st.markdown(f"<div class='{_klass}'>{_flash.get('message','')}</div>", unsafe_allow_html=True)
 
 open_schedule_count_v104b12 = len(list_admin_open_schedules_v104b12(member_id=member_id, limit=0))
 pending_reschedule_count_v104b12 = len(list_reschedule_requests(member_id=member_id, status="pending", limit=0))
@@ -183,8 +201,11 @@ tab_create, tab_status, tab_reschedule, tab_ledger = st.tabs([
 
 with tab_create:
     st.markdown("<div class='hm-v1011-section-card'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-v1011-section-title'>Create schedule</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-v1011-section-sub'>Set an appointment, review session or follow-up and notify the member.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v1011-section-title'>Create Schedule / Notify Member</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v1011-section-sub'>Set an appointment, review session or follow-up. Member notification status appears directly under this action area.</div>", unsafe_allow_html=True)
+    active_pkg_v1024b14 = get_member_active_package_v1024b14(member_id)
+    if active_pkg_v1024b14:
+        st.markdown(f"<div class='hm-b14-package-line'>Active package: <b>{active_pkg_v1024b14.get('package_name','Package')}</b> · {active_pkg_v1024b14.get('session_count',0)} sessions · {active_pkg_v1024b14.get('currency','INR')} {float(active_pkg_v1024b14.get('cost_per_session',0) or 0):,.2f} per session</div>", unsafe_allow_html=True)
 
     schedule_type = st.selectbox(
         "Schedule type",
@@ -204,9 +225,10 @@ with tab_create:
     with date_col:
         schedule_date = st.date_input("Date", value=datetime.date.today())
     with start_col:
-        start_time = st.time_input("Start time", value=datetime.time(10, 0))
+        start_time = st.time_input("Start time", value=datetime.time(10, 0), key="hm_b14_schedule_start_time")
+    default_end_dt = datetime.datetime.combine(datetime.date.today(), start_time) + datetime.timedelta(minutes=30)
     with end_col:
-        end_time = st.time_input("End time", value=datetime.time(10, 30))
+        end_time = st.time_input("End time", value=default_end_dt.time(), key="hm_b14_schedule_end_time")
 
     mode_col, link_col = st.columns([.9, 1.4], gap="medium")
     with mode_col:
@@ -216,9 +238,6 @@ with tab_create:
 
     notes = st.text_area("Notes for member", placeholder="Optional instructions for the member", height=100)
 
-    cost_col, _cost_spacer = st.columns([0.55, 1.45], gap="medium")
-    with cost_col:
-        session_cost = st.number_input("Session cost", min_value=0.0, value=0.0, step=100.0, format="%.2f")
 
     if st.button("Create Schedule / Notify Member", use_container_width=True):
         created = create_member_schedule(
@@ -232,13 +251,21 @@ with tab_create:
             location_or_link=location_or_link,
             notes=notes,
             actor_id=st.session_state.get("user_id", "admin"),
-            session_cost=session_cost,
         )
         if created and isinstance(created, dict) and created.get("error"):
             st.session_state["hm_b13_schedule_flash"] = {"kind": "error", "message": created.get("error")}
         else:
             st.session_state["hm_b13_schedule_flash"] = {"kind": "success", "message": "Schedule created successfully and shared with the member."}
         st.rerun()
+
+    st.markdown("<div class='hm-b14-notify-zone'>", unsafe_allow_html=True)
+    st.markdown("<b>Notification status</b>", unsafe_allow_html=True)
+    if _flash:
+        _klass = 'hm-b13-flash-ok' if _flash.get('kind') == 'success' else 'hm-b13-flash-error'
+        st.markdown(f"<div class='{_klass}'>{_flash.get('message','')}</div>", unsafe_allow_html=True)
+    else:
+        st.caption("Create Schedule / Notify Member will show success or validation errors here.")
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 

@@ -21,6 +21,7 @@ from components.db import (
     reschedule_policy_text_v1012,
     _hm_v1012_is_within_24_hours,
     get_member_session_ledger_v1024b13,
+    get_member_active_package_v1024b14,
 )
 
 st.set_page_config(page_title="My Schedule", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -110,6 +111,9 @@ section.main > div.block-container,
 .hm-b13-ledger-row{display:grid;grid-template-columns:1.3fr .8fr .9fr .65fr .75fr;gap:.5rem;padding:.62rem .72rem;border-top:1px solid #F0E3C5;align-items:center;font-size:.82rem;}
 .hm-b13-ledger-head{background:#FFF7E6;border-top:0;font-weight:700;color:#064E3B;}
 .hm-b13-ledger-table{border:1px solid #E3C98E;border-radius:16px;overflow:hidden;background:#FFFDF8;margin:.35rem 0;}
+.hm-b14-package-summary{border:1px solid #E3C98E;border-radius:16px;background:#FFFDF8;padding:.82rem .92rem;margin:.35rem 0 .85rem 0;}
+.hm-b14-package-title{color:#064E3B;font-size:.98rem;font-weight:760;margin-bottom:.18rem;}
+.hm-b14-package-line{color:#334155;font-size:.84rem;font-weight:520;margin:.08rem 0;}
 div[data-testid="stButton"] > button{
   min-height:2.72rem!important;
   border-radius:14px!important;
@@ -133,6 +137,23 @@ div[data-testid="stButton"] > button:hover{
 }
 </style>
 """, unsafe_allow_html=True)
+
+
+active_pkg_v1024b14 = get_member_active_package_v1024b14(user_id)
+st.markdown("<div class='hm-member-schedule-shell'>", unsafe_allow_html=True)
+st.markdown("<div class='hm-member-schedule-heading'>Package Subscribed</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-member-schedule-sub'>Your subscribed package and session allowance.</div>", unsafe_allow_html=True)
+if active_pkg_v1024b14:
+    inclusions_v1024b14 = ", ".join([k for k, v in (active_pkg_v1024b14.get("inclusions", {}) or {}).items() if v]) or "No inclusions selected"
+    st.markdown(
+        f"<div class='hm-b14-package-summary'><div class='hm-b14-package-title'>{active_pkg_v1024b14.get('package_name','Package')}</div>"
+        f"<div class='hm-b14-package-line'>{active_pkg_v1024b14.get('session_count',0)} sessions · {active_pkg_v1024b14.get('currency','INR')} {float(active_pkg_v1024b14.get('cost_per_session',0) or 0):,.2f} per session · {active_pkg_v1024b14.get('number_of_people',1)} people</div>"
+        f"<div class='hm-b14-package-line'>Inclusions: {inclusions_v1024b14}</div></div>",
+        unsafe_allow_html=True,
+    )
+else:
+    st.info("No package has been subscribed for you yet.")
+st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<div class='hm-member-schedule-shell'>", unsafe_allow_html=True)
 st.markdown("<div class='hm-member-schedule-heading'>Upcoming Schedule</div>", unsafe_allow_html=True)
@@ -253,13 +274,15 @@ st.markdown("<div class='hm-member-schedule-heading'>Session Usage</div>", unsaf
 st.markdown("<div class='hm-member-schedule-sub'>Session count is controlled by your scheduled sessions and approved late reschedules.</div>", unsafe_allow_html=True)
 ledger_v1024b13 = get_member_session_ledger_v1024b13(user_id)
 rows_v1024b13 = ledger_v1024b13.get("rows", [])
+currency_v1024b14 = (ledger_v1024b13.get("package") or {}).get("currency", "INR")
 st.markdown(
     f"""
     <div class='hm-b13-ledger-grid'>
-      <div class='hm-b13-ledger-kpi'>Total scheduled<b>{len(rows_v1024b13)}</b></div>
+      <div class='hm-b13-ledger-kpi'>Package sessions<b>{ledger_v1024b13.get('package_sessions',0) or len(rows_v1024b13)}</b></div>
       <div class='hm-b13-ledger-kpi'>Sessions consumed<b>{ledger_v1024b13.get('consumed_count',0)}</b></div>
-      <div class='hm-b13-ledger-kpi'>Consumed cost<b>₹{ledger_v1024b13.get('consumed_cost',0):,.2f}</b></div>
+      <div class='hm-b13-ledger-kpi'>Remaining<b>{ledger_v1024b13.get('remaining_sessions',0)}</b></div>
     </div>
+    <div class='hm-b14-package-line'>Consumed cost: {currency_v1024b14} {ledger_v1024b13.get('consumed_cost',0):,.2f}</div>
     """,
     unsafe_allow_html=True,
 )
@@ -269,7 +292,7 @@ if rows_v1024b13:
     for r in rows_v1024b13:
         usage_text = "Consumed" if r.get("consumed") else "Open"
         st.markdown(
-            f"<div class='hm-b13-ledger-row'><div>{r.get('title','Session')}<br><small>{r.get('status','')}</small></div><div>{r.get('date','')}</div><div>{r.get('time','')}</div><div>₹{r.get('cost',0):,.2f}</div><div>{usage_text}</div></div>",
+            f"<div class='hm-b13-ledger-row'><div>{r.get('title','Session')}<br><small>{r.get('status','')}</small></div><div>{r.get('date','')}</div><div>{r.get('time','')}</div><div>{currency_v1024b14} {r.get('cost',0):,.2f}</div><div>{usage_text}</div></div>",
             unsafe_allow_html=True,
         )
     st.markdown("</div>", unsafe_allow_html=True)
