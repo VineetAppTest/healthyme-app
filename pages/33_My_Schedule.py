@@ -20,6 +20,7 @@ from components.db import (
     request_member_schedule_reschedule,
     reschedule_policy_text_v1012,
     _hm_v1012_is_within_24_hours,
+    get_member_session_ledger_v1024b13,
 )
 
 st.set_page_config(page_title="My Schedule", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -100,9 +101,15 @@ section.main > div.block-container,
   padding:.72rem .84rem;
   color:#7A5A16;
   font-size:.84rem;
-  font-weight:780;
+  font-weight:650;
   margin:.45rem 0 .65rem 0;
 }
+.hm-b13-ledger-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:.45rem 0 1rem 0;}
+.hm-b13-ledger-kpi{border:1px solid #E3C98E;background:#FFFDF8;border-radius:16px;padding:.75rem .85rem;}
+.hm-b13-ledger-kpi b{display:block;color:#064E3B;font-size:1.25rem;margin-top:.12rem;}
+.hm-b13-ledger-row{display:grid;grid-template-columns:1.3fr .8fr .9fr .65fr .75fr;gap:.5rem;padding:.62rem .72rem;border-top:1px solid #F0E3C5;align-items:center;font-size:.82rem;}
+.hm-b13-ledger-head{background:#FFF7E6;border-top:0;font-weight:700;color:#064E3B;}
+.hm-b13-ledger-table{border:1px solid #E3C98E;border-radius:16px;overflow:hidden;background:#FFFDF8;margin:.35rem 0;}
 div[data-testid="stButton"] > button{
   min-height:2.72rem!important;
   border-radius:14px!important;
@@ -239,6 +246,35 @@ else:
                     else:
                         st.error("Unable to submit reschedule request. Please try again or contact admin.")
 
+st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown("<div class='hm-member-schedule-shell'>", unsafe_allow_html=True)
+st.markdown("<div class='hm-member-schedule-heading'>Session Usage</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-member-schedule-sub'>Session count is controlled by your scheduled sessions and approved late reschedules.</div>", unsafe_allow_html=True)
+ledger_v1024b13 = get_member_session_ledger_v1024b13(user_id)
+rows_v1024b13 = ledger_v1024b13.get("rows", [])
+st.markdown(
+    f"""
+    <div class='hm-b13-ledger-grid'>
+      <div class='hm-b13-ledger-kpi'>Total scheduled<b>{len(rows_v1024b13)}</b></div>
+      <div class='hm-b13-ledger-kpi'>Sessions consumed<b>{ledger_v1024b13.get('consumed_count',0)}</b></div>
+      <div class='hm-b13-ledger-kpi'>Consumed cost<b>₹{ledger_v1024b13.get('consumed_cost',0):,.2f}</b></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+if rows_v1024b13:
+    st.markdown("<div class='hm-b13-ledger-table'>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-b13-ledger-row hm-b13-ledger-head'><div>Session</div><div>Date</div><div>Time</div><div>Cost</div><div>Usage</div></div>", unsafe_allow_html=True)
+    for r in rows_v1024b13:
+        usage_text = "Consumed" if r.get("consumed") else "Open"
+        st.markdown(
+            f"<div class='hm-b13-ledger-row'><div>{r.get('title','Session')}<br><small>{r.get('status','')}</small></div><div>{r.get('date','')}</div><div>{r.get('time','')}</div><div>₹{r.get('cost',0):,.2f}</div><div>{usage_text}</div></div>",
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+else:
+    st.info("No sessions have been scheduled yet.")
 st.markdown("</div>", unsafe_allow_html=True)
 
 pass  # v102.2D old back-only footer removed

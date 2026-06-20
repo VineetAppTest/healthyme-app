@@ -36,7 +36,9 @@ LUXE_CSS = """
 #MainMenu {visibility:hidden !important;}
 header[data-testid="stHeader"] {visibility:hidden !important; height:0 !important;}
 [data-testid="stToolbar"] {display:none !important;}
-[data-testid="stSidebar"], [data-testid="collapsedControl"], section[data-testid="stSidebar"] {display:none !important;}
+[data-testid="stSidebar"], [data-testid="collapsedControl"], section[data-testid="stSidebar"] {display:none !important; width:0!important; min-width:0!important;}
+[data-testid="stAppViewContainer"] > .main {margin-left:0!important;}
+*{scroll-behavior:auto!important;}
 :root{--hm-emerald:#064E3B;--hm-emerald-2:#0F766E;--hm-gold:#D8A84E;--hm-gold-deep:#8A5F10;--hm-gold-soft:#F5E7C8;--hm-ivory:#FFF8EE;--hm-text:#17211F;--hm-heading:#063F32;--hm-muted:#4B5A57;--hm-border:#E9DFCC;--hm-shadow:0 14px 34px rgba(25,36,31,.08);}
 html, body, [data-testid="stAppViewContainer"]{background:radial-gradient(circle at top right, rgba(216,168,78,.18), transparent 25%),radial-gradient(circle at top left, rgba(6,78,59,.10), transparent 30%),linear-gradient(180deg,var(--hm-ivory) 0%,#FFFDF8 100%) !important;color:var(--hm-text)!important;}
 .block-container{padding-top:.75rem!important;padding-bottom:1.1rem!important;max-width:1180px!important;}

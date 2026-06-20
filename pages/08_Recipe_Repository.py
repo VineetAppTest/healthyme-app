@@ -41,7 +41,8 @@ FALLBACK_IMAGES = [
 ]
 
 
-def load_recipes():
+@st.cache_data(show_spinner=False)
+def load_recipes(_mtime=0):
     if not DATA_PATH.exists():
         return pd.DataFrame(columns=RECIPE_COLUMNS)
     df = pd.read_csv(DATA_PATH)
@@ -699,7 +700,7 @@ if not wf.get("admin_completed"):
     st.warning("Your personalized plan will unlock after expert evaluation is completed.")
     st.stop()
 
-df = load_recipes()
+df = load_recipes(DATA_PATH.stat().st_mtime if DATA_PATH.exists() else 0)
 df = df[df["status"].fillna("active").astype(str).str.lower().eq("active")].copy()
 user_id = st.session_state["user_id"]
 published_plan_ids = _published_recipe_ids_for_member(user_id)

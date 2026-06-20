@@ -3745,3 +3745,461 @@ def get_published_recommendation_for_date(member_id, target_date=None, fallback_
     if in_window:
         return in_window[0]
     return published[0] if (fallback_latest and published) else None
+
+# --------------------------------------------------------------------
+# v102.4B13: Schedule validation, message archive stability, session ledger
+# --------------------------------------------------------------------
+
+def _hm_v1024b13_now_dt():
+    import datetime as _dt
+    return _dt.datetime.now()
+
+def _hm_v1024b13_member_tokens_from_db(db, member_id):
+    raw = str(member_id or "").strip()
+    tokens = set()
+    if raw:
+        tokens.add(raw)
+        tokens.add(raw.lower())
+    for u in db.get("users", []) or []:
+        uid = str(u.get("id", "") or "").strip()
+        email = str(u.get("email", "") or "").strip().lower()
+        if raw and (raw == uid or raw.lower() == email):
+            if uid:
+                tokens.add(uid)
+            if email:
+                tokens.add(email)
+    return {t for t in tokens if t}
+
+def _hm_v1024b13_member_matches_value(db, row, member_id):
+    tokens = _hm_v1024b13_member_tokens_from_db(db, member_id)
+    values = {
+        str((row or {}).get("member_id", "") or "").strip(),
+        str((row or {}).get("member_id", "") or "").strip().lower(),
+        str((row or {}).get("member_email", "") or "").strip().lower(),
+    }
+    return bool(tokens.intersection({v for v in values if v}))
+
+def _hm_v1024b13_parse_time_minutes(value):
+    import datetime as _dt
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    for fmt in ("%I:%M %p", "%H:%M", "%I %p", "%H"):
+        try:
+            t = _dt.datetime.strptime(raw, fmt).time()
+            return t.hour * 60 + t.minute
+        except Exception:
+            pass
+    return None
+
+def _hm_v1024b13_schedule_windows_overlap(a_start, a_end, b_start, b_end):
+    a1 = _hm_v1024b13_parse_time_minutes(a_start)
+    a2 = _hm_v1024b13_parse_time_minutes(a_end) if a_end else None
+    b1 = _hm_v1024b13_parse_time_minutes(b_start)
+    b2 = _hm_v1024b13_parse_time_minutes(b_end) if b_end else None
+    if a1 is None or b1 is None:
+        return False
+    if a2 is None:
+        a2 = a1 + 30
+    if b2 is None:
+        b2 = b1 + 30
+    if a2 <= a1:
+        a2 = a1 + 30
+    if b2 <= b1:
+        b2 = b1 + 30
+    return a1 < b2 and b1 < a2
+
+def validate_member_schedule_slot_v1024b13(member_id, schedule_date, start_time, end_time="", exclude_schedule_id=None):
+    """Validate one member cannot have duplicate/overlapping open sessions."""
+    db = _ensure_schedule_store(load_db())
+    date_text = str(schedule_date or "").strip()[:10]
+    start_text = str(start_time or "").strip()
+    end_text = str(end_time or "").strip()
+    start_minutes = _hm_v1024b13_parse_time_minutes(start_text)
+    end_minutes = _hm_v1024b13_parse_time_minutes(end_text) if end_text else None
+    if start_minutes is None:
+        return {"ok": False, "error": "Please select a valid start time."}
+    if end_minutes is not None and end_minutes <= start_minutes:
+        return {"ok": False, "error": "End time must be later than start time."}
+    active_statuses = {"scheduled", "acknowledged"}
+    for row in db.get("schedules", []) or []:
+        if exclude_schedule_id and row.get("id") == exclude_schedule_id:
+            continue
+        if not _hm_v1024b13_member_matches_value(db, row, member_id):
+            continue
+        if str(row.get("schedule_date", "") or "").strip()[:10] != date_text:
+            continue
+        status = str(row.get("status", "scheduled") or "scheduled").lower().strip()
+        if status not in active_statuses:
+            continue
+        if _hm_v1024b13_schedule_windows_overlap(start_text, end_text, row.get("start_time"), row.get("end_time")):
+            return {
+                "ok": False,
+                "error": "This member already has a scheduled session during the selected time window. Please choose a different date or time.",
+                "conflict": dict(row),
+            }
+    return {"ok": True, "error": ""}
+
+def create_member_schedule(
+    member_id,
+    title,
+    schedule_type,
+    schedule_date,
+    start_time,
+    end_time="",
+    mode="",
+    location_or_link="",
+    notes="",
+    actor_id="admin",
+    session_cost=0,
+):
+    """Create a member schedule item with duplicate-slot validation and session cost."""
+    db = _ensure_schedule_store(load_db())
+    validation = validate_member_schedule_slot_v1024b13(member_id, schedule_date, start_time, end_time)
+    if not validation.get("ok"):
+        return {"error": validation.get("error"), "conflict": validation.get("conflict")}
+    member = _schedule_member_lookup_v101(db, member_id)
+    schedule_id = str(uuid.uuid4())[:8]
+    created_at = _now_iso()
+    title = str(title or "").strip() or str(schedule_type or "Scheduled session").strip() or "Scheduled session"
+    try:
+        clean_cost = float(session_cost or 0)
+    except Exception:
+        clean_cost = 0.0
+    schedule = {
+        "id": schedule_id,
+        "member_id": member_id,
+        "member_name": member.get("name", ""),
+        "member_email": member.get("email", ""),
+        "title": title,
+        "schedule_type": str(schedule_type or "").strip(),
+        "schedule_date": str(schedule_date or "").strip(),
+        "start_time": str(start_time or "").strip(),
+        "end_time": str(end_time or "").strip(),
+        "mode": str(mode or "").strip(),
+        "location_or_link": str(location_or_link or "").strip(),
+        "notes": str(notes or "").strip(),
+        "session_cost": clean_cost,
+        "status": "scheduled",
+        "created_at": created_at,
+        "created_by": actor_id or "admin",
+        "acknowledged_at": "",
+        "completed_at": "",
+        "cancelled_at": "",
+    }
+    db["schedules"].append(schedule)
+
+    time_window = schedule["start_time"]
+    if schedule["end_time"]:
+        time_window = f"{schedule['start_time']} - {schedule['end_time']}"
+    subject = f"Schedule: {title}"
+    message = (
+        f"{title} is scheduled for {schedule['schedule_date']} at {time_window}."
+        f" Mode: {schedule['mode'] or 'Not specified'}."
+    )
+    if schedule["location_or_link"]:
+        message += f" Link/location: {schedule['location_or_link']}."
+    if schedule["notes"]:
+        message += f" Note: {schedule['notes']}"
+
+    msg = {
+        "id": str(uuid.uuid4())[:8],
+        "ts": created_at,
+        "member_id": member_id,
+        "member_email": member.get("email", ""),
+        "sender_role": "admin",
+        "actor_id": actor_id or "admin",
+        "subject": subject,
+        "message": message,
+        "status": "queued",
+        "email_required": True,
+        "source": "schedule",
+        "schedule_id": schedule_id,
+        "read": False,
+        "archived": False,
+    }
+    db["messages"].append(msg)
+    db["notifications"].append({
+        "ts": created_at,
+        "kind": "schedule_created",
+        "user_id": member_id,
+        "member_id": member_id,
+        "message": f"{subject}: {message[:160]}",
+        "status": "queued",
+        "email_required": True,
+        "email_to": member.get("email", ""),
+        "created_by": actor_id or "admin",
+        "schedule_id": schedule_id,
+    })
+    save_db(db)
+    return schedule
+
+def list_member_schedules(member_id=None, include_cancelled=False, limit=50):
+    db = _ensure_schedule_store(load_db())
+    rows = []
+    for row in db.get("schedules", []) or []:
+        if member_id and not _hm_v1024b13_member_matches_value(db, row, member_id):
+            continue
+        if not include_cancelled and row.get("status") == "cancelled":
+            continue
+        rows.append(dict(row))
+    rows.sort(key=lambda r: (_hm_v104b11_parse_schedule_start_dt(r) or datetime.datetime.max, str(r.get("created_at", ""))))
+    return rows[:limit] if limit else rows
+
+def acknowledge_member_schedule(schedule_id, member_id):
+    db = _ensure_schedule_store(load_db())
+    now = _now_iso()
+    updated = None
+    for row in db.get("schedules", []) or []:
+        if row.get("id") == schedule_id and _hm_v1024b13_member_matches_value(db, row, member_id):
+            if row.get("status") == "scheduled":
+                row["status"] = "acknowledged"
+                row["acknowledged_at"] = now
+                row["updated_at"] = now
+                row["updated_by"] = member_id
+            updated = dict(row)
+            break
+    if updated:
+        save_db(db)
+    return updated
+
+def request_member_schedule_reschedule(
+    schedule_id,
+    member_id,
+    requested_date,
+    requested_start_time,
+    requested_end_time="",
+    reason="",
+):
+    """Member requests a reschedule with late-reschedule consent tracking."""
+    import uuid as _uuid
+    db = _ensure_schedule_store(load_db())
+    db.setdefault("reschedule_requests", [])
+    now = _now_iso()
+    schedule = None
+    for row in db.get("schedules", []) or []:
+        if row.get("id") == schedule_id and _hm_v1024b13_member_matches_value(db, row, member_id):
+            schedule = row
+            break
+    if not schedule:
+        return None
+    if _hm_v104b12_requested_reschedule_is_past(requested_date):
+        return {"error": "Requested reschedule date cannot be in the past."}
+
+    for existing in db.get("reschedule_requests", []) or []:
+        if existing.get("schedule_id") == schedule_id and existing.get("status") == "pending":
+            return dict(existing)
+
+    within_24 = _hm_v1012_is_within_24_hours(schedule)
+    request_id = str(_uuid.uuid4())[:8]
+    request_row = {
+        "id": request_id,
+        "schedule_id": schedule_id,
+        "member_id": schedule.get("member_id") or member_id,
+        "member_name": schedule.get("member_name", ""),
+        "member_email": schedule.get("member_email", ""),
+        "current_title": schedule.get("title", ""),
+        "current_date": schedule.get("schedule_date", ""),
+        "current_start_time": schedule.get("start_time", ""),
+        "current_end_time": schedule.get("end_time", ""),
+        "requested_date": str(requested_date or "").strip(),
+        "requested_start_time": str(requested_start_time or "").strip(),
+        "requested_end_time": str(requested_end_time or "").strip(),
+        "reason": str(reason or "").strip(),
+        "within_24_hours": bool(within_24),
+        "late_reschedule_request": bool(within_24),
+        "prior_session_counted_if_approved": bool(within_24),
+        "status": "pending",
+        "created_at": now,
+        "updated_at": now,
+    }
+    db["reschedule_requests"].append(request_row)
+    schedule["reschedule_request_status"] = "pending"
+    schedule["latest_reschedule_request_id"] = request_id
+    schedule["updated_at"] = now
+    schedule["updated_by"] = member_id
+
+    admin_message = (
+        f"Reschedule requested for {schedule.get('title','Scheduled session')} "
+        f"from {schedule.get('schedule_date','')} {schedule.get('start_time','')} "
+        f"to {request_row['requested_date']} {request_row['requested_start_time']}."
+    )
+    if within_24:
+        admin_message += " Late reschedule: the existing session may be counted as consumed if approved."
+    db.setdefault("notifications", []).append({
+        "ts": now,
+        "kind": "reschedule_requested",
+        "user_id": "admin",
+        "member_id": schedule.get("member_id") or member_id,
+        "message": admin_message,
+        "status": "queued",
+        "email_required": False,
+        "schedule_id": schedule_id,
+        "reschedule_request_id": request_id,
+    })
+    save_db(db)
+    return request_row
+
+def queue_schedule_acknowledgement_reminders_v104b11(member_id, actor_id="system"):
+    """Queue one reminder when an unacknowledged schedule is within 48 hours. Uses robust member matching."""
+    db = _ensure_schedule_store(load_db())
+    queued = []
+    now = _now_iso()
+    for row in db.get("schedules", []) or []:
+        if not _hm_v1024b13_member_matches_value(db, row, member_id):
+            continue
+        notice = schedule_acknowledgement_notice_v104b11(row)
+        if not notice or row.get("ack_reminder_48h_sent_at"):
+            continue
+        member = _schedule_member_lookup_v101(db, row.get("member_id") or member_id)
+        title = row.get("title", "Scheduled session")
+        time_text = row.get("start_time", "")
+        if row.get("end_time"):
+            time_text += f" - {row.get('end_time')}"
+        message = (
+            f"Reminder: {title} is scheduled for {row.get('schedule_date','')} at {time_text}. "
+            f"{notice}"
+        )
+        db.setdefault("messages", []).append({
+            "id": str(uuid.uuid4())[:8],
+            "ts": now,
+            "member_id": row.get("member_id") or member_id,
+            "member_email": row.get("member_email") or member.get("email", ""),
+            "sender_role": "admin",
+            "actor_id": actor_id,
+            "subject": "Action required: Scheduled session acknowledgement",
+            "message": message,
+            "status": "queued",
+            "email_required": True,
+            "source": "schedule_48h_acknowledgement_reminder",
+            "schedule_id": row.get("id"),
+            "read": False,
+            "archived": False,
+        })
+        db.setdefault("notifications", []).append({
+            "ts": now,
+            "kind": "schedule_48h_acknowledgement_reminder",
+            "user_id": row.get("member_id") or member_id,
+            "member_id": row.get("member_id") or member_id,
+            "message": message[:220],
+            "status": "queued",
+            "email_required": True,
+            "email_to": row.get("member_email") or member.get("email", ""),
+            "created_by": actor_id,
+            "schedule_id": row.get("id"),
+        })
+        row["ack_reminder_48h_sent_at"] = now
+        queued.append(dict(row))
+    if queued:
+        save_db(db)
+    return queued
+
+def _hm_v1024b13_message_key(m):
+    return "|".join([
+        str(m.get("member_id", "") or "").strip().lower(),
+        str(m.get("member_email", "") or "").strip().lower(),
+        str(m.get("source", "") or "").strip().lower(),
+        str(m.get("schedule_id", "") or "").strip().lower(),
+        str(m.get("reschedule_request_id", "") or "").strip().lower(),
+        str(m.get("subject", "") or "").strip().lower(),
+        " ".join(str(m.get("message", "") or "").strip().split()).lower(),
+    ])
+
+def mark_member_message_read(member_id, message_id):
+    """Read/archive a message and any duplicate records so one click clears the card."""
+    db = load_db()
+    now = datetime.datetime.now().isoformat(timespec="seconds")
+    target = None
+    for m in db.get("messages", []) or []:
+        if str(m.get("id", "")) == str(message_id) and _hm_v1024b13_member_matches_value(db, m, member_id):
+            target = dict(m)
+            break
+    if not target:
+        return False
+    target_key = _hm_v1024b13_message_key(target)
+    changed = False
+    for m in db.get("messages", []) or []:
+        same_id = str(m.get("id", "")) == str(message_id)
+        same_key = _hm_v1024b13_message_key(m) == target_key
+        if _hm_v1024b13_member_matches_value(db, m, member_id) and (same_id or same_key):
+            m["read"] = True
+            m["archived"] = True
+            m["read_ts"] = now
+            m["archive_reason"] = "member_read"
+            changed = True
+    if changed:
+        save_db(db)
+    return changed
+
+def get_member_unread_messages(member_id, limit=10):
+    """Unread/unarchived messages with robust id/email matching and duplicate collapse."""
+    db = load_db()
+    rows = []
+    seen = set()
+    for m in db.get("messages", []) or []:
+        if not _hm_v1024b13_member_matches_value(db, m, member_id):
+            continue
+        if m.get("read") or m.get("archived"):
+            continue
+        k = _hm_v1024b13_message_key(m)
+        if k in seen:
+            continue
+        seen.add(k)
+        rows.append(dict(m))
+    rows.sort(key=lambda r: r.get("ts", ""), reverse=True)
+    return rows[:limit]
+
+def get_member_messages(member_id, limit=10):
+    return get_member_unread_messages(member_id, limit=limit)
+
+def get_member_archived_messages(member_id, limit=50):
+    db = load_db()
+    rows = []
+    seen = set()
+    for m in db.get("messages", []) or []:
+        if not _hm_v1024b13_member_matches_value(db, m, member_id):
+            continue
+        if not (m.get("read") or m.get("archived")):
+            continue
+        k = _hm_v1024b13_message_key(m)
+        if k in seen:
+            continue
+        seen.add(k)
+        rows.append(dict(m))
+    rows.sort(key=lambda r: r.get("read_ts", r.get("ts", "")), reverse=True)
+    return rows[:limit]
+
+def get_member_session_ledger_v1024b13(member_id=None):
+    """Return session rows and consumed totals driven from Scheduler state."""
+    db = _ensure_schedule_store(load_db())
+    rows = []
+    consumed_count = 0
+    consumed_cost = 0.0
+    for row in db.get("schedules", []) or []:
+        if member_id and not _hm_v1024b13_member_matches_value(db, row, member_id):
+            continue
+        status = str(row.get("status", "scheduled") or "scheduled").lower().strip()
+        consumed = bool(status == "completed" or (status == "rescheduled" and row.get("session_counted")))
+        try:
+            cost = float(row.get("session_cost", 0) or 0)
+        except Exception:
+            cost = 0.0
+        if consumed:
+            consumed_count += 1
+            consumed_cost += cost
+        time_text = str(row.get("start_time", "") or "")
+        if row.get("end_time"):
+            time_text += f" - {row.get('end_time')}"
+        rows.append({
+            "id": row.get("id", ""),
+            "title": row.get("title") or row.get("schedule_type") or "Scheduled session",
+            "date": row.get("schedule_date", ""),
+            "time": time_text,
+            "status": schedule_display_status_label_v104b11(row),
+            "raw_status": status,
+            "cost": cost,
+            "consumed": consumed,
+            "count_note": "Consumed" if consumed else ("Late reschedule counted if approved" if row.get("session_counted") else "Not consumed"),
+        })
+    rows.sort(key=lambda r: (str(r.get("date", "")), str(r.get("time", ""))), reverse=True)
+    return {"rows": rows, "consumed_count": consumed_count, "consumed_cost": consumed_cost}

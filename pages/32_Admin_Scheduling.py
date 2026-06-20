@@ -21,6 +21,7 @@ from components.db import (
     list_reschedule_requests,
     decide_reschedule_request,
     reschedule_policy_text_v1012,
+    get_member_session_ledger_v1024b13,
 )
 
 st.set_page_config(page_title="Admin Scheduling", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -119,6 +120,16 @@ section.main > div.block-container,
   font-weight:780;
   margin:.45rem 0;
 }
+.hm-b13-flash-ok{border:1px solid #B7DEC5;background:#EEF9F1;color:#14532D;border-radius:14px;padding:.72rem .86rem;margin:.45rem 0 .80rem 0;font-weight:650;}
+.hm-b13-flash-error{border:1px solid #F0B4A5;background:#FFF2EE;color:#9A3412;border-radius:14px;padding:.72rem .86rem;margin:.45rem 0 .80rem 0;font-weight:650;}
+.hm-b13-ledger-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:.45rem 0 1rem 0;}
+.hm-b13-ledger-kpi{border:1px solid #E3C98E;background:#FFFDF8;border-radius:16px;padding:.75rem .85rem;}
+.hm-b13-ledger-kpi b{display:block;color:#064E3B;font-size:1.25rem;margin-top:.12rem;}
+.hm-b13-ledger-table{border:1px solid #E3C98E;border-radius:16px;overflow:hidden;background:#FFFDF8;margin:.35rem 0;}
+.hm-b13-ledger-row{display:grid;grid-template-columns:1.3fr .9fr .85fr .75fr .75fr;gap:.5rem;padding:.62rem .72rem;border-top:1px solid #F0E3C5;align-items:center;font-size:.82rem;}
+.hm-b13-ledger-head{background:#FFF7E6;border-top:0;font-weight:760;color:#064E3B;}
+.hm-b13-consumed{color:#166534;font-weight:700;}
+.hm-b13-notconsumed{color:#64748B;font-weight:600;}
 div[data-testid="stButton"] > button{
   min-height:2.72rem!important;
   border-radius:14px!important;
@@ -154,14 +165,20 @@ selected_label = st.selectbox("Select member", list(member_options.keys()), labe
 member_id = member_options[selected_label]
 st.markdown("</div>", unsafe_allow_html=True)
 
+# v102.4B13: durable admin action feedback after rerun.
+_flash = st.session_state.pop('hm_b13_schedule_flash', None)
+if _flash:
+    _klass = 'hm-b13-flash-ok' if _flash.get('kind') == 'success' else 'hm-b13-flash-error'
+    st.markdown(f"<div class='{_klass}'>{_flash.get('message','')}</div>", unsafe_allow_html=True)
 
 open_schedule_count_v104b12 = len(list_admin_open_schedules_v104b12(member_id=member_id, limit=0))
 pending_reschedule_count_v104b12 = len(list_reschedule_requests(member_id=member_id, status="pending", limit=0))
 
-tab_create, tab_status, tab_reschedule = st.tabs([
+tab_create, tab_status, tab_reschedule, tab_ledger = st.tabs([
     "Create Schedule",
     f"Schedule Status ({open_schedule_count_v104b12})" if open_schedule_count_v104b12 else "Schedule Status",
     f"Reschedule Status ({pending_reschedule_count_v104b12})" if pending_reschedule_count_v104b12 else "Reschedule Status",
+    "Session Ledger",
 ])
 
 with tab_create:
@@ -199,6 +216,10 @@ with tab_create:
 
     notes = st.text_area("Notes for member", placeholder="Optional instructions for the member", height=100)
 
+    cost_col, _cost_spacer = st.columns([0.55, 1.45], gap="medium")
+    with cost_col:
+        session_cost = st.number_input("Session cost", min_value=0.0, value=0.0, step=100.0, format="%.2f")
+
     if st.button("Create Schedule / Notify Member", use_container_width=True):
         created = create_member_schedule(
             member_id=member_id,
@@ -211,8 +232,12 @@ with tab_create:
             location_or_link=location_or_link,
             notes=notes,
             actor_id=st.session_state.get("user_id", "admin"),
+            session_cost=session_cost,
         )
-        st.success(f"Schedule created and member notification queued. Schedule ID: {created.get('id')}")
+        if created and isinstance(created, dict) and created.get("error"):
+            st.session_state["hm_b13_schedule_flash"] = {"kind": "error", "message": created.get("error")}
+        else:
+            st.session_state["hm_b13_schedule_flash"] = {"kind": "success", "message": "Schedule created successfully and shared with the member."}
         st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
@@ -332,6 +357,41 @@ with tab_reschedule:
                     st.warning("Reschedule request rejected and member notified.")
                     st.rerun()
 
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+with tab_ledger:
+    st.markdown("<div class='hm-v1011-section-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v1011-section-title'>Session ledger</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-v1011-section-sub'>Scheduler-controlled session usage and cost view for the selected member.</div>", unsafe_allow_html=True)
+    ledger_v1024b13 = get_member_session_ledger_v1024b13(member_id)
+    rows_v1024b13 = ledger_v1024b13.get("rows", [])
+    total_sessions_v1024b13 = len(rows_v1024b13)
+    consumed_v1024b13 = ledger_v1024b13.get("consumed_count", 0)
+    consumed_cost_v1024b13 = ledger_v1024b13.get("consumed_cost", 0)
+    st.markdown(
+        f"""
+        <div class='hm-b13-ledger-grid'>
+          <div class='hm-b13-ledger-kpi'>Total scheduled<b>{total_sessions_v1024b13}</b></div>
+          <div class='hm-b13-ledger-kpi'>Sessions consumed<b>{consumed_v1024b13}</b></div>
+          <div class='hm-b13-ledger-kpi'>Consumed cost<b>₹{consumed_cost_v1024b13:,.2f}</b></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if not rows_v1024b13:
+        st.info("No sessions have been scheduled for this member yet.")
+    else:
+        st.markdown("<div class='hm-b13-ledger-table'>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-b13-ledger-row hm-b13-ledger-head'><div>Session</div><div>Date</div><div>Time</div><div>Cost</div><div>Usage</div></div>", unsafe_allow_html=True)
+        for r in rows_v1024b13:
+            usage_class = "hm-b13-consumed" if r.get("consumed") else "hm-b13-notconsumed"
+            usage_text = "Consumed" if r.get("consumed") else "Open / not consumed"
+            st.markdown(
+                f"<div class='hm-b13-ledger-row'><div>{r.get('title','Session')}<br><small>{r.get('status','')}</small></div><div>{r.get('date','')}</div><div>{r.get('time','')}</div><div>₹{r.get('cost',0):,.2f}</div><div class='{usage_class}'>{usage_text}</div></div>",
+                unsafe_allow_html=True,
+            )
+        st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 

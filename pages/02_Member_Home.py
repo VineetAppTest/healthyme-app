@@ -103,6 +103,12 @@ st.markdown("""
   margin-top:.45rem!important;
   font-weight:560!important;
 }
+.hm-b13-message-shell{border:1px solid #E3C98E;background:#FFFDF8;border-radius:20px;padding:.85rem .95rem;margin:.60rem 0 1rem 0;box-shadow:0 8px 22px rgba(15,23,42,.045);}
+.hm-b13-message-title{color:#064E3B;font-size:1.05rem;font-weight:760;margin-bottom:.50rem;}
+.hm-b13-message-card{border:1px solid #EAD9AA;background:#FFF9EC;border-radius:16px;padding:.75rem .82rem;margin:.45rem 0;}
+.hm-b13-message-subject{color:#064E3B;font-weight:700;margin-bottom:.15rem;}
+.hm-b13-message-date{color:#64748B;font-size:.78rem;margin-bottom:.35rem;}
+.hm-b13-message-body{color:#334155!important;font-size:.88rem;line-height:1.45;margin:0;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -120,8 +126,8 @@ queue_schedule_acknowledgement_reminders_v104b11(user_id)
 
 messages = get_member_messages(user_id, limit=3)
 if messages:
-    st.markdown("<div class='hm-nutritionist-message-shell'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-nutritionist-message-title'>Messages from Nutritionist</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-b13-message-shell'>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-b13-message-title'>Messages from Nutritionist</div>", unsafe_allow_html=True)
 
     v66_seen_msg_keys = set()
     for msg in messages:
@@ -131,15 +137,15 @@ if messages:
         v66_seen_msg_keys.add(v66_key)
         st.markdown(
             f"""
-            <div class='info-banner hm-nutritionist-message-card'>
-              <b>{msg.get('subject','Message')}</b><br>
-              <small>{format_local_ts(msg.get('ts',''))}</small><br>
-              <p>{msg.get('message','')}</p>
+            <div class='hm-b13-message-card'>
+              <div class='hm-b13-message-subject'>{msg.get('subject','Message')}</div>
+              <div class='hm-b13-message-date'>{format_local_ts(msg.get('ts',''))}</div>
+              <p class='hm-b13-message-body'>{msg.get('message','')}</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        if st.button("Read / Archive message from Nutritionist", key=f"read_msg_{msg.get('id','')}", use_container_width=True):
+        if st.button("Read & Archive", key=f"read_msg_{msg.get('id','')}", use_container_width=True):
             ok = mark_member_message_read(user_id, msg.get("id", ""))
             if ok:
                 set_system_message("Message archived. You can find it in Daily Food Journal → Nutritionist Notes Archive.", "success")
