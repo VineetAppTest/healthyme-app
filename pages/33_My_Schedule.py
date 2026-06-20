@@ -12,9 +12,11 @@ from components.ui_common import (
     render_page_nav,
 )
 from components.db import (
-    list_member_schedules,
+    list_upcoming_member_schedules,
     acknowledge_member_schedule,
-    schedule_status_label_v101,
+    schedule_display_status_label_v104b11,
+    queue_schedule_acknowledgement_reminders_v104b11,
+    schedule_acknowledgement_notice_v104b11,
     request_member_schedule_reschedule,
     reschedule_policy_text_v1012,
     _hm_v1012_is_within_24_hours,
@@ -107,22 +109,32 @@ div[data-testid="stButton"] > button{
   border:1.25px solid #D9C28F!important;
   background:#FFFDF8!important;
   color:#064E3B!important;
-  font-weight:850!important;
+  font-weight:500!important;
 }
 div[data-testid="stButton"] > button:hover{
   border-color:#B89345!important;
   background:#FFF7E6!important;
 }
+.hm-v104b11-ack-note{
+  border:1px solid #E3C98E;
+  background:#FFF7E6;
+  color:#7A5A16!important;
+  border-radius:12px;
+  padding:.55rem .70rem;
+  margin-top:.45rem!important;
+  font-weight:560!important;
+}
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("<div class='hm-member-schedule-shell'>", unsafe_allow_html=True)
-st.markdown("<div class='hm-member-schedule-heading'>Upcoming and recent schedules</div>", unsafe_allow_html=True)
-st.markdown("<div class='hm-member-schedule-sub'>Acknowledge upcoming sessions or request a reschedule where needed.</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-member-schedule-heading'>Upcoming Schedule</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-member-schedule-sub'>Acknowledge scheduled sessions or request a reschedule where needed. Past and closed sessions are automatically removed from this view.</div>", unsafe_allow_html=True)
 
-rows = list_member_schedules(member_id=user_id, include_cancelled=True, limit=30)
+queue_schedule_acknowledgement_reminders_v104b11(user_id)
+rows = list_upcoming_member_schedules(member_id=user_id, limit=30)
 if not rows:
-    st.info("No schedule has been created for you yet.")
+    st.info("No upcoming schedule has been created for you yet.")
 else:
     for row in rows:
         status = row.get("status", "scheduled")
@@ -132,10 +144,11 @@ else:
         st.markdown(
             f"""
             <div class='hm-member-schedule-card'>
-              <div class='hm-member-schedule-title'>{row.get('title','Scheduled session')}<span class='hm-member-schedule-pill'>{schedule_status_label_v101(status)}</span></div>
+              <div class='hm-member-schedule-title'>{row.get('title','Scheduled session')}<span class='hm-member-schedule-pill'>{schedule_display_status_label_v104b11(row)}</span></div>
               <div class='hm-member-schedule-line'>{row.get('schedule_date','')} · {time_text}</div>
               <div class='hm-member-schedule-line'>Mode: {row.get('mode','-')} · Link/location: {row.get('location_or_link') or '-'}</div>
               <div class='hm-member-schedule-line'>Notes: {row.get('notes') or '-'}</div>
+              {f"<div class='hm-member-schedule-line hm-v104b11-ack-note'>{schedule_acknowledgement_notice_v104b11(row)}</div>" if schedule_acknowledgement_notice_v104b11(row) else ""}
             </div>
             """,
             unsafe_allow_html=True,

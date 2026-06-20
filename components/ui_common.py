@@ -3125,10 +3125,10 @@ div[data-testid="stExpander"] details > summary:hover{
   box-shadow:0 10px 24px rgba(6,78,59,.10)!important;
 }
 
-/* v102.4B10: global button text should not render bold. */
+/* v102.4B11: global button text should not render bold. */
 div[data-testid="stButton"]>button,div[data-testid="stButton"]>button *,button[kind="secondary"],button[kind="secondary"] *,button[kind="primary"],button[kind="primary"] *,div[data-testid="stFormSubmitButton"] button,div[data-testid="stFormSubmitButton"] button *,div[data-testid="stPageLink"] a,div[data-testid="stPageLink"] a *{font-weight:500!important;}
 
-/* v102.4B10: high-specificity final override for non-bold button text. */
+/* v102.4B11: high-specificity final override for non-bold button text. */
 html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] button,
 html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] button *,
 html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] button,
@@ -3329,7 +3329,7 @@ def build_marker_v9():
     st.markdown("<div class='hm-build-marker'>✅ Build v9 active · Compact tooltip layout loaded</div>", unsafe_allow_html=True)
 
 
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def render_build_text_v11():
@@ -3343,7 +3343,7 @@ def build_marker_v11():
 # --------------------------------------------------------------------
 # v12: Single source of truth for visible build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def render_current_build(compact=True):
@@ -3385,7 +3385,7 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v13: single current build text
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def render_current_build(compact=True):
@@ -3426,7 +3426,7 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v14: current build text
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def render_current_build(compact=True):
@@ -3530,7 +3530,7 @@ def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_A
 # --------------------------------------------------------------------
 # v23: version display + logout polish
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def render_build_text_v23():
@@ -3610,7 +3610,7 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v24: brand version placement
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def render_build_text_v24():
@@ -3678,7 +3678,7 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v25: current build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def render_build_text_v25():
@@ -3733,7 +3733,7 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v26: current build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def render_build_text_v26():
@@ -3789,7 +3789,7 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v27: current build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def render_build_text_v27():
@@ -3847,7 +3847,7 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v28: Body-Mind final unlock + version cleanup
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -3896,7 +3896,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v29: Manual Body-Mind unlock + version cleanup
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -3946,7 +3946,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v30: Manual Body-Mind unlock control
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -3997,7 +3997,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v31: Workflow + assessment instance sync
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4049,7 +4049,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v32: Manual Body-Mind hard sync
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4119,7 +4119,7 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v33: Body-Mind explicit access marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4198,7 +4198,7 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v34: Body-Mind NameError + logout fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4276,7 +4276,7 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v35: Body-Mind page guard fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4332,7 +4332,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v36: Body-Mind text removal + autosave check
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4389,7 +4389,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v37: Remove Body-Mind activation checkbox
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4447,7 +4447,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v38: Body-Mind disabled button UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4506,7 +4506,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v39: Admin 5 Pages autosave
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4566,7 +4566,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v40: Body-Mind status sync
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4627,7 +4627,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v41: Daily Log Flow
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4689,7 +4689,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v42: Day-based Daily Log
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4752,7 +4752,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v43: Progressive Daily Log + Repository
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4816,7 +4816,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v44: Daily Log one-section mode + Other slots
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4881,7 +4881,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v45: Daily Log compact Other fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -4947,7 +4947,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v46: Admin info cleanup + Daily Log selector layout
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5033,7 +5033,7 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v47: Logout + Daily Log Backcompat + Reference Toggle
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5101,7 +5101,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v48: Nutritionist Message Archive
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5206,7 +5206,7 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v49: Logout Session Hardening
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5276,7 +5276,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v50: Member Home Message + Journey Compact
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5349,7 +5349,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v51: Timezone + Notes Archive + Back to Top
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5421,7 +5421,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v52: Login Logout Block Bottom
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5494,7 +5494,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v53: ImportError UI helper fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5568,7 +5568,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v54: Nutritionist Read Archive Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5643,7 +5643,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v55: Admin Dashboard Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5719,7 +5719,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v56: Daily Log Nutritionist Notification
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5796,7 +5796,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v57: Daily Log + LAF Restructure
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5874,7 +5874,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v58: LAF Restructure Correction
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -5953,7 +5953,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v59: Structured Poop Rounds
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6033,7 +6033,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v60: Poop Layout Refinement
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6114,7 +6114,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v61: Stability + Premium UX Cleanup
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6213,7 +6213,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v62: Recent Saved Days Premium Layout
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6312,7 +6312,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v63: Recent Saved Days Borders + Toggle
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6412,7 +6412,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v64: Recent Saved Days Refinement
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6513,7 +6513,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v65: Daily Log + Admin UI Fixes
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6615,7 +6615,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v66: Nutritionist Message Dedupe
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6718,7 +6718,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v67: View History Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6822,7 +6822,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v68: View History Micro Alignment
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -6927,7 +6927,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v69: Inline History Button Alignment
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7033,7 +7033,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v70: Streamlit Native Recent Saved Days
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7140,7 +7140,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v71: Compact Nutritionist History Block
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7248,7 +7248,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v72: Final Report Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7357,7 +7357,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v73: Guard Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7467,7 +7467,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v74: Final Report JSON Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7578,7 +7578,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v75: Final Report Diagnostics UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7690,7 +7690,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v76: Mobile Daily Log Timing Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -7803,7 +7803,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 
@@ -8126,7 +8126,7 @@ def inject_keepalive_guard_v96_11():
 # --------------------------------------------------------------------
 # v101.6: Canonical Header/Nav/Button Polish Final Override
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def _hm_v1016_is_admin_context():
@@ -8338,7 +8338,7 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v101.8: Final admin header/nav override
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def admin_version_line_v98_1():
@@ -8362,7 +8362,7 @@ def _hm_v1018_css():
     div[data-testid="stButton"]>button,button[kind="secondary"],button[kind="primary"],.stButton>button,div[data-testid="stPageLink"] a{min-height:2.72rem!important;border-radius:14px!important;border:1.25px solid #D9C28F!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:500!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;text-decoration:none!important;}
     div[data-testid="stButton"]>button:hover,button[kind="secondary"]:hover,button[kind="primary"]:hover,.stButton>button:hover,div[data-testid="stPageLink"] a:hover{border-color:#B89345!important;background:#FFF7E6!important;color:#003C36!important;box-shadow:0 6px 16px rgba(15,23,42,.06)!important;}
     div[data-testid="stTextInput"] input,div[data-testid="stNumberInput"] input,div[data-testid="stTextArea"] textarea,div[data-testid="stSelectbox"] [data-baseweb="select"]>div,div[data-testid="stDateInput"] input,div[data-testid="stTimeInput"] input{border-radius:12px!important;}
-    /* v102.4B10: buttons should keep the premium shape without bold text. */
+    /* v102.4B11: buttons should keep the premium shape without bold text. */
     div[data-testid="stButton"]>button,div[data-testid="stButton"]>button *,button[kind="secondary"],button[kind="secondary"] *,button[kind="primary"],button[kind="primary"] *,div[data-testid="stFormSubmitButton"] button,div[data-testid="stFormSubmitButton"] button *,div[data-testid="stPageLink"] a,div[data-testid="stPageLink"] a *{font-weight:500!important;}
     </style>
     """, unsafe_allow_html=True)
@@ -8411,7 +8411,7 @@ def render_back_to_top():
 # --------------------------------------------------------------------
 # v102.0: Global Header/Footer Mechanism
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B10"
+APP_BUILD_VERSION = "v102.4B11"
 APP_BUILD_LABEL = "Supplement HTML Cleanup + Button Polish"
 
 def _hm_v102_is_admin_context():
@@ -8439,7 +8439,7 @@ def _hm_v102_global_css():
     div[data-testid="stButton"]>button:hover,button[kind="secondary"]:hover,button[kind="primary"]:hover,.stButton>button:hover,div[data-testid="stPageLink"] a:hover{border-color:#B89345!important;background:#FFF7E6!important;color:#003C36!important;box-shadow:0 6px 16px rgba(15,23,42,.06)!important;}
     div[data-testid="stTextInput"] input,div[data-testid="stNumberInput"] input,div[data-testid="stTextArea"] textarea,div[data-testid="stSelectbox"] [data-baseweb="select"]>div,div[data-testid="stDateInput"] input,div[data-testid="stTimeInput"] input{border-radius:12px!important;}
 
-    /* v102.4B10: high-specificity final override for non-bold button text. */
+    /* v102.4B11: high-specificity final override for non-bold button text. */
     html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] button,
     html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] button *,
     html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] button,

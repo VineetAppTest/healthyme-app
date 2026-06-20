@@ -16,7 +16,7 @@ from components.db import (
     create_member_schedule,
     list_member_schedules,
     update_member_schedule_status,
-    schedule_status_label_v101,
+    schedule_display_status_label_v104b11,
     list_reschedule_requests,
     decide_reschedule_request,
     reschedule_policy_text_v1012,
@@ -124,7 +124,7 @@ div[data-testid="stButton"] > button{
   border:1.25px solid #D9C28F!important;
   background:#FFFDF8!important;
   color:#064E3B!important;
-  font-weight:850!important;
+  font-weight:500!important;
   box-shadow:none!important;
 }
 div[data-testid="stButton"] > button:hover{
@@ -226,7 +226,7 @@ with right:
             st.markdown(
                 f"""
                 <div class='hm-v1011-schedule-card'>
-                  <div class='hm-v1011-schedule-title'>{row.get('title','Scheduled session')}<span class='hm-v1011-pill'>{schedule_status_label_v101(status)}</span></div>
+                  <div class='hm-v1011-schedule-title'>{row.get('title','Scheduled session')}<span class='hm-v1011-pill'>{schedule_display_status_label_v104b11(row)}</span></div>
                   <div class='hm-v1011-schedule-line'>{row.get('schedule_date','')} · {time_text}{counted_note}</div>
                   <div class='hm-v1011-schedule-line'>Mode: {row.get('mode','-')} · Link/location: {row.get('location_or_link') or '-'}</div>
                   <div class='hm-v1011-schedule-line'>Notes: {row.get('notes') or '-'}</div>

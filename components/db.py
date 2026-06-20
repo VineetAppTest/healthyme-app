@@ -2342,12 +2342,154 @@ def list_member_schedules(member_id=None, include_cancelled=False, limit=50):
         return rows[:limit]
     return rows
 
+def _hm_v104b11_parse_schedule_date(schedule):
+    """Return the schedule date as a date object when possible."""
+    import datetime as _dt
+    date_text = str((schedule or {}).get("schedule_date", "") or "").strip()
+    if not date_text:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d-%m-%Y", "%d/%m/%Y"):
+        try:
+            return _dt.datetime.strptime(date_text, fmt).date()
+        except Exception:
+            pass
+    try:
+        return _dt.date.fromisoformat(date_text[:10])
+    except Exception:
+        return None
+
+def _hm_v104b11_parse_schedule_start_dt(schedule):
+    """Parse schedule start datetime for sorting and reminder windows."""
+    import datetime as _dt
+    schedule_date = _hm_v104b11_parse_schedule_date(schedule)
+    if not schedule_date:
+        return None
+    time_text = str((schedule or {}).get("start_time", "") or "").strip()
+    if not time_text:
+        return _dt.datetime.combine(schedule_date, _dt.time(0, 0))
+    for fmt in ("%I:%M %p", "%H:%M", "%I %p", "%H"):
+        try:
+            parsed_t = _dt.datetime.strptime(time_text, fmt).time()
+            return _dt.datetime.combine(schedule_date, parsed_t)
+        except Exception:
+            pass
+    return _dt.datetime.combine(schedule_date, _dt.time(0, 0))
+
+def _hm_v104b11_schedule_is_upcoming(schedule):
+    """Upcoming member-facing schedules only. Past dates and closed rows are hidden."""
+    import datetime as _dt
+    status = str((schedule or {}).get("status", "scheduled") or "scheduled").lower().strip()
+    if status in {"cancelled", "completed", "rescheduled"}:
+        return False
+    schedule_date = _hm_v104b11_parse_schedule_date(schedule)
+    if not schedule_date:
+        return True
+    return schedule_date >= _dt.date.today()
+
 def list_upcoming_member_schedules(member_id, limit=3):
     rows = [
         r for r in list_member_schedules(member_id=member_id, include_cancelled=False, limit=0)
-        if r.get("status") in ["scheduled", "acknowledged"]
+        if _hm_v104b11_schedule_is_upcoming(r)
     ]
-    return rows[:limit]
+    rows.sort(key=lambda r: (_hm_v104b11_parse_schedule_start_dt(r) or datetime.datetime.max, str(r.get("created_at", ""))))
+    return rows[:limit] if limit else rows
+
+def schedule_display_status_label_v104b11(schedule):
+    """Lifecycle label for member/admin schedule cards."""
+    row = schedule or {}
+    if str(row.get("reschedule_request_status", "")).lower() == "pending":
+        return "Reschedule Request"
+    status = str(row.get("status", "scheduled") or "scheduled").lower().strip()
+    if status == "scheduled" and row.get("rescheduled_from_schedule_id"):
+        return "Rescheduling Done"
+    mapping = {
+        "scheduled": "Scheduled",
+        "acknowledged": "Acknowledged",
+        "rescheduled": "Rescheduling Done",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+    }
+    return mapping.get(status, str(status or "Scheduled").replace("_", " ").title())
+
+def _hm_v104b11_is_within_hours(schedule, hours=48):
+    import datetime as _dt
+    scheduled_dt = _hm_v104b11_parse_schedule_start_dt(schedule)
+    if not scheduled_dt:
+        return False
+    now = _dt.datetime.now()
+    return now <= scheduled_dt <= now + _dt.timedelta(hours=hours)
+
+def schedule_acknowledgement_notice_v104b11(schedule):
+    """Professional 48-hour reminder copy shown to members and queued as email."""
+    row = schedule or {}
+    status = str(row.get("status", "scheduled") or "scheduled").lower().strip()
+    if status != "scheduled":
+        return ""
+    if str(row.get("reschedule_request_status", "")).lower() == "pending":
+        return ""
+    if not _hm_v104b11_is_within_hours(row, hours=48):
+        return ""
+    return (
+        "Please acknowledge this scheduled session or submit a reschedule request as soon as possible. "
+        "Reschedule requests raised within 24 hours of the session may not be accepted and, if accommodated, "
+        "may use an additional meeting count."
+    )
+
+def queue_schedule_acknowledgement_reminders_v104b11(member_id, actor_id="system"):
+    """Queue one app/email reminder when an unacknowledged schedule is within 48 hours."""
+    db = _ensure_schedule_store(load_db())
+    queued = []
+    now = _now_iso()
+    for row in db.get("schedules", []):
+        if row.get("member_id") != member_id:
+            continue
+        notice = schedule_acknowledgement_notice_v104b11(row)
+        if not notice:
+            continue
+        if row.get("ack_reminder_48h_sent_at"):
+            continue
+        member = _schedule_member_lookup_v101(db, member_id)
+        title = row.get("title", "Scheduled session")
+        time_text = row.get("start_time", "")
+        if row.get("end_time"):
+            time_text += f" - {row.get('end_time')}"
+        message = (
+            f"Reminder: {title} is scheduled for {row.get('schedule_date','')} at {time_text}. "
+            f"{notice}"
+        )
+        msg = {
+            "id": str(uuid.uuid4())[:8],
+            "ts": now,
+            "member_id": member_id,
+            "sender_role": "admin",
+            "actor_id": actor_id or "system",
+            "subject": "Action required: Scheduled session acknowledgement",
+            "message": message,
+            "status": "queued",
+            "email_required": True,
+            "source": "schedule_48h_acknowledgement_reminder",
+            "schedule_id": row.get("id"),
+        }
+        db.setdefault("messages", []).append(msg)
+        db.setdefault("notifications", []).append({
+            "ts": now,
+            "kind": "schedule_48h_acknowledgement_reminder",
+            "user_id": member_id,
+            "member_id": member_id,
+            "message": message,
+            "status": "queued",
+            "email_required": True,
+            "email_to": member.get("email", row.get("member_email", "")),
+            "created_by": actor_id or "system",
+            "schedule_id": row.get("id"),
+        })
+        row["ack_reminder_48h_sent_at"] = now
+        row["updated_at"] = now
+        row["updated_by"] = actor_id or "system"
+        queued.append(dict(row))
+    if queued:
+        save_db(db)
+    return queued
 
 def update_member_schedule_status(schedule_id, status, actor_id="admin"):
     db = _ensure_schedule_store(load_db())
@@ -2393,6 +2535,7 @@ def schedule_status_label_v101(status):
     mapping = {
         "scheduled": "Scheduled",
         "acknowledged": "Acknowledged",
+        "rescheduled": "Rescheduling Done",
         "completed": "Completed",
         "cancelled": "Cancelled",
     }
@@ -2648,7 +2791,7 @@ def reschedule_policy_text_v1012(within_24):
     if within_24:
         return (
             "This request is within 24 hours of the scheduled session. "
-            "If approved, the current session may still be counted as consumed and the rescheduled session may count separately."
+            "Approval is not guaranteed and, if accommodated, the current session may still be counted while the rescheduled session may use an additional meeting count."
         )
     return (
         "This request is outside the 24-hour window. "

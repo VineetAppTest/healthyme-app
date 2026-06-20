@@ -2,7 +2,7 @@ from components.ui_common import render_page_nav, render_back_to_top
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_keepalive_guard_v96_11, inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, format_local_ts, render_back_to_top
-from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read, mark_member_message_read, auto_archive_expired_nutritionist_messages, list_upcoming_member_schedules, schedule_status_label_v101
+from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read, mark_member_message_read, auto_archive_expired_nutritionist_messages, list_upcoming_member_schedules, schedule_display_status_label_v104b11, queue_schedule_acknowledgement_reminders_v104b11, schedule_acknowledgement_notice_v104b11
 from components.assessment_instances import get_current_assessment_instance, task_progress_summary_v99, task_progress_text_v99
 from components.flash import render_system_message, set_system_message
 
@@ -91,6 +91,21 @@ is_reassessment = is_task_instance
 utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 
+st.markdown("""
+<style>
+/* v102.4B11 schedule lifecycle notice styling */
+.hm-v104b11-ack-note{
+  border:1px solid #E3C98E;
+  background:#FFF7E6;
+  color:#7A5A16!important;
+  border-radius:12px;
+  padding:.55rem .70rem;
+  margin-top:.45rem!important;
+  font-weight:560!important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 
 
@@ -101,6 +116,7 @@ topbar("Member Home", "Continue your wellness assessment and access your tools."
 
 render_system_message()
 auto_archive_expired_nutritionist_messages(user_id)
+queue_schedule_acknowledgement_reminders_v104b11(user_id)
 
 messages = get_member_messages(user_id, limit=3)
 if messages:
@@ -134,7 +150,7 @@ if messages:
     st.markdown("</div>", unsafe_allow_html=True)
 
 
-upcoming_schedules_v101 = list_upcoming_member_schedules(user_id, limit=2)
+upcoming_schedules_v101 = list_upcoming_member_schedules(user_id, limit=5)
 if upcoming_schedules_v101:
     st.markdown("<div class='hm-nutritionist-message-shell'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-nutritionist-message-title'>Upcoming Schedule</div>", unsafe_allow_html=True)
@@ -142,12 +158,15 @@ if upcoming_schedules_v101:
         time_text_v101 = schedule_v101.get("start_time", "")
         if schedule_v101.get("end_time"):
             time_text_v101 += f" - {schedule_v101.get('end_time')}"
+        notice_v104b11 = schedule_acknowledgement_notice_v104b11(schedule_v101)
+        notice_html_v104b11 = f"<div class='hm-v101-schedule-line hm-v104b11-ack-note'>{notice_v104b11}</div>" if notice_v104b11 else ""
         st.markdown(
             f"""
             <div class='hm-v101-schedule-card'>
-              <div class='hm-v101-schedule-title'>{schedule_v101.get('title','Scheduled session')}<span class='hm-v101-schedule-pill'>{schedule_status_label_v101(schedule_v101.get('status','scheduled'))}</span></div>
+              <div class='hm-v101-schedule-title'>{schedule_v101.get('title','Scheduled session')}<span class='hm-v101-schedule-pill'>{schedule_display_status_label_v104b11(schedule_v101)}</span></div>
               <div class='hm-v101-schedule-line'>{schedule_v101.get('schedule_date','')} · {time_text_v101}</div>
               <div class='hm-v101-schedule-line'>Mode: {schedule_v101.get('mode','-')} · Link/location: {schedule_v101.get('location_or_link') or '-'}</div>
+              {notice_html_v104b11}
             </div>
             """,
             unsafe_allow_html=True,
