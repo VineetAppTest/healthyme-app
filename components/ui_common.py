@@ -3229,6 +3229,10 @@ button[data-testid="baseButton-secondary"]:disabled * {
 def inject_global_styles():
     st.markdown(LUXE_CSS, unsafe_allow_html=True)
     st.markdown(HM_GLOBAL_BUTTON_POLISH_V102_4B9, unsafe_allow_html=True)
+    try:
+        st.markdown(HM_GLOBAL_HEADER_FOOTER_SPACING_V102_4B14H3, unsafe_allow_html=True)
+    except NameError:
+        pass
     st.markdown(globals().get("HM_B14F_BUTTON_CONTRAST_CSS", ""), unsafe_allow_html=True)
 def apply_luxe_theme():
     return None
@@ -8700,3 +8704,90 @@ html body div[data-testid="stAppViewContainer"] button:disabled *{
 }
 </style>
 """
+
+
+HM_GLOBAL_HEADER_FOOTER_SPACING_V102_4B14H3 = '''
+<style>
+
+/* --- v102.4B14H3 · Global Header Footer Spacing Fix: Global header/footer spacing consistency --- */
+.hm-v1024b14h3-spacing-guard {
+  display:none;
+}
+
+/* Reduce excessive top whitespace before signed-in/logout row */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stAppViewBlockContainer"],
+.stMainBlockContainer,
+.block-container {
+  padding-top: .45rem !important;
+}
+
+/* Utility signed-in/logout row: compact and consistent */
+.utility-bar {
+  margin: .15rem 0 .55rem 0 !important;
+  min-height: 2.65rem !important;
+  padding: .34rem .58rem !important;
+  align-items: center !important;
+}
+
+/* Reduce gap between utility row and hero banner */
+.utility-bar + .hero-shell,
+.utility-bar + div + .hero-shell,
+div:has(> .utility-bar) + div:has(.hero-shell) {
+  margin-top: .35rem !important;
+}
+
+/* Compact hero banner globally without changing branding */
+.hero-shell {
+  margin-top: .40rem !important;
+  margin-bottom: .70rem !important;
+  padding: 1.05rem 1.25rem !important;
+  border-radius: 19px !important;
+}
+
+/* Reduce bottom spacing under hero before first field/section */
+.hero-shell + div,
+.hero-shell + [data-testid="stVerticalBlock"],
+div:has(> .hero-shell) + div {
+  margin-top: .25rem !important;
+  padding-top: .15rem !important;
+}
+
+/* Headings/controls immediately after hero should sit closer */
+.hero-shell ~ div [data-testid="stSelectbox"]:first-child,
+.hero-shell ~ div [data-testid="stTextInput"]:first-child,
+.hero-shell ~ div [data-testid="stDateInput"]:first-child {
+  margin-top: .15rem !important;
+}
+
+/* Bottom navigation/footer controls should not float too far from content */
+.hm-page-nav,
+.hm-footer-nav,
+div[data-testid="stHorizontalBlock"]:has(button) {
+  margin-top: .70rem !important;
+  margin-bottom: .40rem !important;
+}
+
+/* Mobile: preserve compactness on phone layouts */
+@media (max-width: 768px) {
+  section.main > div.block-container,
+  .main .block-container,
+  [data-testid="stAppViewBlockContainer"],
+  .stMainBlockContainer,
+  .block-container {
+    padding-top: .28rem !important;
+  }
+  .utility-bar {
+    margin: .05rem 0 .42rem 0 !important;
+    min-height: 2.35rem !important;
+  }
+  .hero-shell {
+    margin-top: .25rem !important;
+    margin-bottom: .55rem !important;
+    padding: .95rem 1rem !important;
+  }
+}
+
+</style>
+'''
