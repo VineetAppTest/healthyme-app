@@ -175,6 +175,9 @@ def provision_auth0_user(email: str, name: str = "", send_setup_email: bool = Tr
         "password_email_sent": False,
         "ok": False,
         "message": "",
+        "auth0_user_id": "",
+        "auth0_user": None,
+        "auth0_email_verified": False,
     }
 
     if not result["configured"]:
@@ -189,6 +192,9 @@ def provision_auth0_user(email: str, name: str = "", send_setup_email: bool = Tr
     if existing:
         result["auth0_user_exists"] = True
         result["ok"] = True
+        result["auth0_user"] = existing
+        result["auth0_user_id"] = existing.get("user_id", "")
+        result["auth0_email_verified"] = bool(existing.get("email_verified"))
         result["message"] = "Auth0 user already exists."
     else:
         ok, created, msg = create_auth0_user(email, name)
@@ -197,6 +203,9 @@ def provision_auth0_user(email: str, name: str = "", send_setup_email: bool = Tr
             return result
         result["auth0_user_created"] = True
         result["ok"] = True
+        result["auth0_user"] = created
+        result["auth0_user_id"] = created.get("user_id", "")
+        result["auth0_email_verified"] = bool(created.get("email_verified"))
         result["message"] = "Auth0 user created."
 
     if send_setup_email:

@@ -4,13 +4,14 @@ import pandas as pd
 
 from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_build_text_v15, render_page_nav, render_back_to_top
-from components.db import list_all_users_for_access_manager, update_user_access_record
+from components.db import list_all_users_for_access_manager, update_user_access_record, link_user_auth0_record_v1024b14g
 from components.auth0_management import (
     auth0_config_status,
     update_auth0_user_profile,
     set_auth0_user_blocked,
     send_password_setup_email,
     check_auth0_user_status,
+    provision_auth0_user,
 )
 from components.flash import set_system_message, render_system_message
 
@@ -96,7 +97,7 @@ if submitted:
     st.rerun()
 
 st.divider()
-c1, c2, c3 = st.columns(3)
+c1, c2, c3, c4 = st.columns(4)
 with c1:
     if st.button("Check Auth0 Status", use_container_width=True):
         status = check_auth0_user_status(user["email"])
@@ -105,11 +106,25 @@ with c1:
         else:
             st.error(status.get("message"))
 with c2:
+    if st.button("Create / Repair Auth0 User", use_container_width=True):
+        prov = provision_auth0_user(user["email"], user.get("name", ""), send_setup_email=True)
+        if prov.get("ok"):
+            link_user_auth0_record_v1024b14g(
+                user["id"],
+                auth0_user_id=prov.get("auth0_user_id", ""),
+                auth0_email_verified=prov.get("auth0_email_verified", False),
+                actor=st.session_state.get("user_id", "admin"),
+            )
+            set_system_message("Auth0 user is now linked to the HealthyMe user record. " + str(prov.get("message", "")), "success")
+        else:
+            set_system_message("Auth0 repair failed: " + str(prov.get("message", "")), "error")
+        st.rerun()
+with c3:
     if st.button("Resend Password Setup Email", use_container_width=True):
         ok, msg = send_password_setup_email(user["email"])
         set_system_message(msg, "success" if ok else "error")
         st.rerun()
-with c3:
+with c4:
     st.button("Hard Delete - Disabled", disabled=True, use_container_width=True)
     st.caption("Hard delete is intentionally disabled. Use deactivate for now.")
 

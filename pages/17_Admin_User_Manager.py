@@ -34,7 +34,9 @@ topbar("Create Members / Admins", "Create users once in HealthyMe. Auth0 provisi
 
 auth0_status = auth0_config_status()
 if not all([auth0_status.get("AUTH0_DOMAIN"), auth0_status.get("AUTH0_M2M_CLIENT_ID"), auth0_status.get("AUTH0_M2M_CLIENT_SECRET"), auth0_status.get("AUTH0_CONNECTION")]):
-    st.warning("Auth0 provisioning is not fully configured. HealthyMe users can still be created, but Auth0 invite/user creation may not happen.")
+    st.error("Auth0 provisioning is not fully configured. New users will not be created until Auth0 Management API settings are complete.")
+else:
+    st.success("Auth0-first provisioning is active. New users are created in Auth0 before HealthyMe records are saved.")
 
 # Show success messages after rerun, once the fields have been safely cleared.
 if "create_user_success_msg" in st.session_state:
@@ -56,14 +58,21 @@ with left:
         elif email_exists(e):
             st.error("This email is already registered.")
         else:
-            create_user(n.strip(), e.strip().lower(), "member")
             prov = provision_auth0_user(e.strip().lower(), n.strip(), send_setup_email=True)
-            if prov.get("ok"):
-                st.session_state["create_user_success_msg"] = "Member created in HealthyMe and Auth0 provisioning completed. " + str(prov.get("message", ""))
+            if not prov.get("ok"):
+                st.error("Member was not created. Auth0 user creation must complete first: " + str(prov.get("message", "")))
             else:
-                st.session_state["create_user_success_msg"] = "Member created in HealthyMe. Auth0 provisioning needs attention: " + str(prov.get("message", ""))
-            st.session_state["clear_member_fields_next_run"] = True
-            st.rerun()
+                create_user(
+                    n.strip(),
+                    e.strip().lower(),
+                    "member",
+                    auth_provider="auth0",
+                    auth0_user_id=prov.get("auth0_user_id", ""),
+                    auth0_email_verified=prov.get("auth0_email_verified", False),
+                )
+                st.session_state["create_user_success_msg"] = "Member created in Auth0 and HealthyMe. " + str(prov.get("message", ""))
+                st.session_state["clear_member_fields_next_run"] = True
+                st.rerun()
     card_end()
 
 with right:
@@ -80,14 +89,21 @@ with right:
         elif email_exists(e):
             st.error("This email is already registered.")
         else:
-            create_user(n.strip(), e.strip().lower(), "admin")
             prov = provision_auth0_user(e.strip().lower(), n.strip(), send_setup_email=True)
-            if prov.get("ok"):
-                st.session_state["create_user_success_msg"] = "Admin created in HealthyMe and Auth0 provisioning completed. " + str(prov.get("message", ""))
+            if not prov.get("ok"):
+                st.error("Admin was not created. Auth0 user creation must complete first: " + str(prov.get("message", "")))
             else:
-                st.session_state["create_user_success_msg"] = "Admin created in HealthyMe. Auth0 provisioning needs attention: " + str(prov.get("message", ""))
-            st.session_state["clear_admin_fields_next_run"] = True
-            st.rerun()
+                create_user(
+                    n.strip(),
+                    e.strip().lower(),
+                    "admin",
+                    auth_provider="auth0",
+                    auth0_user_id=prov.get("auth0_user_id", ""),
+                    auth0_email_verified=prov.get("auth0_email_verified", False),
+                )
+                st.session_state["create_user_success_msg"] = "Admin created in Auth0 and HealthyMe. " + str(prov.get("message", ""))
+                st.session_state["clear_admin_fields_next_run"] = True
+                st.rerun()
     card_end()
 
 card_start()

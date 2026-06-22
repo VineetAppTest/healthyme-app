@@ -121,13 +121,44 @@ def change_password(user_id, new_password):
     for u in db["users"]:
         if u["id"]==user_id:
             u["password_hash"]=hash_password(new_password); u["must_reset_password"]=False; save_db(db); return
-def create_user(name,email,role):
-    db=load_db(); user_id=str(uuid.uuid4())[:8]
-    db["users"].append({"id":user_id,"name":name,"email":email,"password_hash":hash_password("password@123"),"role":role,"must_reset_password":True,"is_active":True})
-    if role=="member":
-        db["profiles"][user_id]={"full_name":"","gender":"","age":"","height_cm":"","weight_kg":"","mobile_number":"","country":"","occupation":""}
-        db["workflow"][user_id]={"laf_completed":False,"nsp1_completed":False,"nsp2_completed":False,"submitted_for_review":False,"admin_completed":False,"final_report_ready":False,"workflow_status":"not_started"}
-    save_db(db); return user_id
+def create_user(name, email, role, auth_provider="auth0", auth0_user_id="", auth0_email_verified=False):
+    db = load_db()
+    user_id = str(uuid.uuid4())[:8]
+    clean_email = (email or "").strip().lower()
+    db["users"].append({
+        "id": user_id,
+        "name": name,
+        "email": clean_email,
+        "password_hash": hash_password("password@123") if auth_provider != "auth0" else "",
+        "role": role,
+        "must_reset_password": False if auth_provider == "auth0" else True,
+        "is_active": True,
+        "auth_provider": auth_provider or "auth0",
+        "auth0_user_id": auth0_user_id or "",
+        "auth0_email_verified": bool(auth0_email_verified),
+    })
+    if role == "member":
+        db["profiles"][user_id] = {"full_name": "", "gender": "", "age": "", "height_cm": "", "weight_kg": "", "mobile_number": "", "country": "", "occupation": ""}
+        db["workflow"][user_id] = {"laf_completed": False, "nsp1_completed": False, "nsp2_completed": False, "submitted_for_review": False, "admin_completed": False, "final_report_ready": False, "workflow_status": "not_started"}
+    save_db(db)
+    return user_id
+
+def link_user_auth0_record_v1024b14g(user_id, auth0_user_id="", auth0_email_verified=False, actor="admin"):
+    db = load_db()
+    for u in db.get("users", []):
+        if u.get("id") == user_id:
+            u["auth_provider"] = "auth0"
+            u["auth0_user_id"] = auth0_user_id or u.get("auth0_user_id", "")
+            u["auth0_email_verified"] = bool(auth0_email_verified)
+            u["auth0_linked_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+            u["auth0_linked_by"] = actor or "admin"
+            # Auth0 users should not depend on local password reset logic.
+            u["password_hash"] = ""
+            u["must_reset_password"] = False
+            save_db(db)
+            return True
+    return False
+
 def normalize_workflow(wf):
     base={"laf_completed":False,"nsp1_completed":False,"nsp2_completed":False,"submitted_for_review":False,"admin_completed":False,"final_report_ready":False,"body_mind_activation_requested":False,"body_mind_unlocked":False,"body_mind_completed":False,"workflow_status":"not_started"}
     base.update(wf or {})
@@ -3327,32 +3358,37 @@ def get_nsp_system_score_snapshot(member_id, instance_id=None):
 
 
 def _strip_html_to_text_v102_4(value):
-    """Convert accidental persisted HTML/markup into safe plain text.
+    """Convert leaked presentation HTML into safe plain text.
 
-    A few interim builds allowed rendered chip/card HTML to leak into
-    supplement and recommendation text fields. This helper is intentionally
-    defensive: it repeatedly decodes escaped HTML, removes tags, and normalises
-    whitespace so older saved values never render as raw <div>/<span> text.
+    Older supplement/recommendation records may contain rendered chip/card HTML
+    such as <div><span class='hm-ms-chip'>Morning</span></div>. Mobile rendering
+    is less forgiving, so this cleaner removes both real and escaped markup,
+    class-name remnants, code-fence artifacts, and duplicate separators.
     """
     raw = str(value or "").strip()
     if not raw:
         return ""
     text = raw
-    for _ in range(5):
+    for _ in range(8):
         decoded = html.unescape(text)
+        decoded = decoded.replace("\\u003c", "<").replace("\\u003e", ">")
+        decoded = decoded.replace("\\x3c", "<").replace("\\x3e", ">")
         if decoded == text:
             break
         text = decoded
-    # Common leaked presentation wrappers should become separators, not visible text.
-    text = re.sub(r"<\s*br\s*/?>", ", ", text, flags=re.I)
-    text = re.sub(r"</\s*(div|p|span|li|td|th)\s*>", ", ", text, flags=re.I)
-    text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("`", " ")
+    text = re.sub(r"<\s*br\s*/?\s*>", ", ", text, flags=re.I)
+    text = re.sub(r"<\s*/\s*(div|p|span|li|td|th)\s*>", ", ", text, flags=re.I)
+    text = re.sub(r"<\s*[^>]*>", " ", text)
+    text = re.sub(r"</?\s*(div|span|p|li|td|th)[^>]*", " ", text, flags=re.I)
+    text = re.sub(r"class\s*=\s*['\"][^'\"]*['\"]", " ", text, flags=re.I)
+    text = re.sub(r"style\s*=\s*['\"][^'\"]*['\"]", " ", text, flags=re.I)
+    text = re.sub(r"hm[-_](ms|tj)[-_](chip|dose|meta|item)", " ", text, flags=re.I)
     text = text.replace("\u00a0", " ").replace("&nbsp;", " ")
     text = re.sub(r"\s*,\s*", ", ", text)
     text = re.sub(r",\s*,+", ", ", text)
-    text = re.sub(r"\s+", " ", text).strip(" ,")
+    text = re.sub(r"\s+", " ", text).strip(" ,;:-")
     return text
-
 
 def _split_instruction_marker_v102_4(value, *, before_marker=False):
     text = _strip_html_to_text_v102_4(value)
@@ -3528,8 +3564,11 @@ def list_member_supplements(member_id=None, status=None, include_inactive_member
     if not include_inactive_member:
         active_member_ids = {str(u.get("id")) for u in db.get("users", []) if u.get("role") == "member" and u.get("is_active", True)}
     changed = _auto_stop_expired_supplements_v102_3a(db)
-    for raw in db.get("member_supplements", []):
+    for idx, raw in enumerate(list(db.get("member_supplements", []))):
         row = _normalise_supplement_record_v102_3a(raw)
+        if row != raw:
+            db["member_supplements"][idx] = row
+            changed = True
         if member_id_filter and str(row.get("member_id")) != member_id_filter:
             continue
         if status_filter and str(row.get("status", "")).lower() != status_filter:
