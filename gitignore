@@ -1,0 +1,164 @@
+# HealthyMe App - .gitignore
+# Covers Flutter, Android, iOS, Streamlit/Python, Supabase/local env files, and common editor/build artifacts.
+
+# -----------------------------------------------------------------------------
+# Secrets / environment files - never commit
+# -----------------------------------------------------------------------------
+.env
+.env.*
+*.env
+*.local
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+key.properties
+
+# Streamlit secrets
+.streamlit/secrets.toml
+secrets.toml
+
+# Supabase / production credentials
+supabase/.branches
+supabase/.temp
+supabase/config.toml
+**/service_role_key*
+**/*service-role*
+**/*service_role*
+**/*prod-secret*
+**/*production-secret*
+
+# Firebase / Google service credentials
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
+# -----------------------------------------------------------------------------
+# Flutter / Dart
+# -----------------------------------------------------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# Flutter generated files that are environment-specific
+.flutter-plugins*
+
+# Do not ignore pubspec.lock for application repos unless intentionally decided.
+# pubspec.lock should usually be committed for Flutter apps.
+
+# -----------------------------------------------------------------------------
+# Android
+# -----------------------------------------------------------------------------
+android/.gradle/
+android/local.properties
+android/**/build/
+android/captures/
+android/.idea/
+android/*.iml
+
+# Android Studio / Gradle
+.gradle/
+local.properties
+captures/
+
+# -----------------------------------------------------------------------------
+# iOS / macOS
+# -----------------------------------------------------------------------------
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Runner/GeneratedPluginRegistrant.*
+ios/build/
+
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/ephemeral/
+macos/build/
+
+# Xcode
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
+
+# -----------------------------------------------------------------------------
+# Python / Streamlit
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python package/build artifacts
+*.egg-info/
+dist/
+.eggs/
+
+# Streamlit cache/output
+.streamlit/cache/
+
+# -----------------------------------------------------------------------------
+# Logs / local outputs / temporary files
+# -----------------------------------------------------------------------------
+*.log
+logs/
+*.tmp
+*.temp
+tmp/
+temp/
+.DS_Store
+Thumbs.db
+
+# Reports/exports generated locally
+exports/
+output/
+outputs/
+reports/generated/
+*.sqlite
+*.db
+
+# -----------------------------------------------------------------------------
+# IDE / editor
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+
+# -----------------------------------------------------------------------------
+# Node / web tooling, if added later
+# -----------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -----------------------------------------------------------------------------
+# OS-specific
+# -----------------------------------------------------------------------------
+Icon?
+._*
