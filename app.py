@@ -1,14 +1,17 @@
 import streamlit as st
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12
 from components.auth_session import restore_login_from_token
+from components.auth_mode import supabase_auth_enabled
+from components.supabase_auth_session import restore_supabase_login_from_session
 
 st.set_page_config(page_title="HealthyMe", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
 
 # Auth0 redirects back to the root/home page after login.
+# Stage 3 also supports a Supabase Auth pilot session when AUTH_MODE allows it.
 # Route from here directly to the correct role page to avoid the extra Login page bounce.
-if restore_login_from_token():
+if restore_login_from_token() or (supabase_auth_enabled() and restore_supabase_login_from_session()):
     if st.session_state.get("user_role") == "admin":
         st.switch_page("pages/10_Admin_Dashboard.py")
     else:
