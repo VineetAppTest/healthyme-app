@@ -2,11 +2,13 @@ import streamlit as st
 from components.db import find_user_by_email
 from components.normalized_store import find_user_by_email_fast
 
+
 def oidc_is_logged_in():
     try:
         return bool(st.user and st.user.is_logged_in)
     except Exception:
         return False
+
 
 def get_oidc_email():
     try:
@@ -16,6 +18,7 @@ def get_oidc_email():
             return (getattr(st.user, "email", "") or "").strip().lower()
         except Exception:
             return ""
+
 
 def get_oidc_name():
     for key in ["name", "given_name", "nickname"]:
@@ -33,6 +36,7 @@ def get_oidc_name():
             pass
     return get_oidc_email() or "User"
 
+
 def _apply_user_to_session(app_user, email):
     st.session_state["logged_in"] = True
     st.session_state["user_id"] = app_user["id"]
@@ -40,8 +44,10 @@ def _apply_user_to_session(app_user, email):
     st.session_state["user_name"] = app_user.get("name") or get_oidc_name()
     st.session_state["must_reset_password"] = False
     st.session_state["oidc_email"] = email
+    st.session_state["auth_provider"] = "oidc"
     st.session_state["_hm_auth_role_resolved"] = True
     return True
+
 
 def restore_login_from_token():
     """Compatibility name retained, but now uses Streamlit OIDC identity."""
@@ -74,6 +80,7 @@ def restore_login_from_token():
 
     return _apply_user_to_session(app_user, email)
 
+
 def clear_app_session_for_logout():
     """Clear HealthyMe app-level session keys before logout."""
     for k in list(st.session_state.keys()):
@@ -84,10 +91,23 @@ def clear_app_session_for_logout():
     st.session_state["signed_out"] = True
     st.session_state["logout_requested"] = True
 
-def logout_current_user():
-    """Clear app session and call native Streamlit/OIDC logout.
 
+def logout_current_user():
+    """Clear app session and call native Streamlit/OIDC logout when needed.
+
+    Supabase pilot login is app-session based in Stage 3, so it should not call
+    Streamlit's OIDC logout endpoint. Auth0/OIDC login keeps existing behavior.
     Do not call st.rerun() or st.switch_page() after this function.
     """
+    provider = st.session_state.get("auth_provider")
+    if provider == "supabase":
+        try:
+            from components.supabase_auth_session import clear_supabase_auth_session
+            clear_supabase_auth_session()
+        except Exception:
+            pass
+        clear_app_session_for_logout()
+        return
+
     clear_app_session_for_logout()
     st.logout()
