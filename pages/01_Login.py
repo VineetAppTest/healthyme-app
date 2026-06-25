@@ -1,10 +1,24 @@
 import streamlit as st
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12, render_back_to_top
-from components.auth_session import restore_login_from_token, get_oidc_email, get_oidc_name, logout_current_user
+from components.auth_session import restore_login_from_token, logout_current_user
+from components.auth_mode import auth0_enabled, supabase_auth_enabled, auth_mode_label, get_auth_mode
+from components.supabase_auth_session import (
+    restore_supabase_login_from_session,
+    sign_in_with_supabase,
+    supabase_auth_configured,
+)
 
 st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
+
+
+def _route_authenticated_user():
+    if st.session_state.get("user_role") == "admin":
+        st.switch_page("pages/10_Admin_Dashboard.py")
+    else:
+        st.switch_page("pages/02_Member_Home.py")
+
 
 # v49 logout landing guard:
 # If user has just logged out, do not auto-restore and bounce back into app.
@@ -19,19 +33,21 @@ if logout_param:
     st.session_state["logout_requested"] = True
 
 # If already authenticated and authorized, route user.
-if not st.session_state.get("signed_out") and not st.session_state.get("logout_requested") and restore_login_from_token():
-    if st.session_state.get("user_role") == "admin":
-        st.switch_page("pages/10_Admin_Dashboard.py")
-    else:
-        st.switch_page("pages/02_Member_Home.py")
+if not st.session_state.get("signed_out") and not st.session_state.get("logout_requested"):
+    restored = restore_login_from_token()
+    if not restored and supabase_auth_enabled():
+        restored = restore_supabase_login_from_session()
+    if restored:
+        _route_authenticated_user()
 
-st.markdown("""
+mode = get_auth_mode()
+st.markdown(f"""
 <div class="login-brand-row">
   <div>
     <div class="login-brand-name">HealthyMe</div>
     <div class="login-brand-sub">Guided wellness assessment platform</div>
   </div>
-  <div class="login-secure-pill">Auth0 / OIDC secure access</div>
+  <div class="login-secure-pill">{auth_mode_label()}</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -45,7 +61,13 @@ with login_col:
 
     with box:
         st.markdown("## Secure Login")
-        st.caption("Sign in through Auth0. HealthyMe will allow access only if your email is authorized by the admin. Auth0 may take a few seconds during secure redirect.")
+
+        if mode == "supabase":
+            st.caption("Sign in through Supabase Auth. HealthyMe will allow access only if your email is authorized by the admin.")
+        elif mode == "dual":
+            st.caption("Auth0 remains available. Supabase Auth is enabled only for controlled pilot testing.")
+        else:
+            st.caption("Sign in through Auth0. HealthyMe will allow access only if your email is authorized by the admin. Auth0 may take a few seconds during secure redirect.")
 
         auth_error = st.session_state.get("auth_error")
         if auth_error:
@@ -53,40 +75,78 @@ with login_col:
             if st.button("Logout authenticated identity", use_container_width=True):
                 logout_current_user()
 
-        if st.button("Continue with Auth0", type="primary", use_container_width=True):
-            st.session_state.pop("signed_out", None)
-            st.session_state.pop("logout_requested", None)
-            try:
-                st.query_params.clear()
-            except Exception:
-                pass
-            st.login("auth0")
+        if auth0_enabled():
+            if st.button("Continue with Auth0", type="primary", use_container_width=True):
+                st.session_state.pop("signed_out", None)
+                st.session_state.pop("logout_requested", None)
+                try:
+                    st.query_params.clear()
+                except Exception:
+                    pass
+                st.login("auth0")
 
-        st.markdown("""
+        if supabase_auth_enabled():
+            if auth0_enabled():
+                st.markdown("---")
+                st.caption("Pilot only: Supabase Auth login")
+
+            if not supabase_auth_configured():
+                st.warning("Supabase Auth login is enabled by AUTH_MODE, but SUPABASE_URL and SUPABASE_ANON_KEY are not configured for Streamlit.")
+            else:
+                with st.form("supabase_auth_login_form"):
+                    email = st.text_input("Email", key="supabase_auth_email_input")
+                    password = st.text_input("Password", type="password", key="supabase_auth_password_input")
+                    submitted = st.form_submit_button("Continue with Supabase", type="primary", use_container_width=True)
+
+                if submitted:
+                    st.session_state.pop("signed_out", None)
+                    st.session_state.pop("logout_requested", None)
+                    ok, message = sign_in_with_supabase(email, password)
+                    if ok:
+                        st.success(message)
+                        _route_authenticated_user()
+                    else:
+                        st.error(message)
+
+        if mode == "supabase":
+            provider_copy = "Supabase confirms who you are. HealthyMe then checks whether your email exists in the app as Admin or Member."
+        elif mode == "dual":
+            provider_copy = "Auth0 remains the default path. Supabase login is available only for controlled migration testing. HealthyMe still checks whether your email exists in the app as Admin or Member."
+        else:
+            provider_copy = "Auth0 confirms who you are. HealthyMe then checks whether your email exists in the app as Admin or Member."
+
+        st.markdown(f"""
         <div class='info-banner'>
           <b>No public sign-up:</b><br>
-          Auth0 confirms who you are. HealthyMe then checks whether your email exists in the app as Admin or Member.
+          {provider_copy}
         </div>
         """, unsafe_allow_html=True)
 
     if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
         st.markdown("<div class='hm-logout-bottom-shell'>", unsafe_allow_html=True)
         st.success("You have been signed out.")
+        if mode == "supabase":
+            logout_copy = "Your HealthyMe app session has been cleared."
+            logout_button_label = "Clear session"
+        else:
+            logout_copy = "For a full secure logout, complete the Auth0/OIDC logout below. If your browser still signs in automatically, close the browser tab or use a fresh browser profile."
+            logout_button_label = "Complete secure logout"
         st.markdown(
-            "<div class='hm-logout-bottom-copy'>For a full secure logout, complete the Auth0/OIDC logout below. If your browser still signs in automatically, close the browser tab or use a fresh browser profile.</div>",
+            f"<div class='hm-logout-bottom-copy'>{logout_copy}</div>",
             unsafe_allow_html=True,
         )
-        if st.button("Complete secure logout", key="complete_secure_logout_bottom", use_container_width=True):
+        if st.button(logout_button_label, key="complete_secure_logout_bottom", use_container_width=True):
             logout_current_user()
         st.markdown("</div>", unsafe_allow_html=True)
 
 with journey_col:
-    st.markdown("""
+    provider_journey = "Supabase Secure Login" if mode == "supabase" else ("Auth0 / Supabase Login" if mode == "dual" else "Auth0 Secure Login")
+    st.markdown(f"""
     <div class="journey-card">
       <h3>Your wellness journey</h3>
       <p>A premium, expert-led flow from assessment to actionable wellness guidance.</p>
       <div class="journey-grid">
-        <div class="journey-item">✓ Auth0 Secure Login</div>
+        <div class="journey-item">✓ {provider_journey}</div>
         <div class="journey-item">✓ Lifestyle Assessment</div>
         <div class="journey-item">✓ NSP Assessment</div>
         <div class="journey-item">🔒 Expert Review</div>
@@ -94,9 +154,10 @@ with journey_col:
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("""
+feature_auth_label = "Supabase Auth" if mode == "supabase" else ("OIDC + Supabase" if mode == "dual" else "OIDC login")
+st.markdown(f"""
 <div class="login-feature-strip">
-  <div class="login-feature"><b>Secure</b><span>OIDC login</span></div>
+  <div class="login-feature"><b>Secure</b><span>{feature_auth_label}</span></div>
   <div class="login-feature"><b>Role-based</b><span>Admin / Member</span></div>
   <div class="login-feature"><b>Private</b><span>No URL token</span></div>
 </div>
