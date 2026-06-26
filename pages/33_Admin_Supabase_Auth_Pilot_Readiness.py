@@ -5,6 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from components.auth_mode import auth0_enabled, get_auth_mode, supabase_auth_enabled
+from components.auth_session import restore_login_from_token
 from components.ui_common import (
     apply_luxe_theme,
     card_end,
@@ -26,6 +27,12 @@ st.set_page_config(
 inject_global_styles()
 apply_luxe_theme()
 
+
+if not st.session_state.get("logged_in"):
+    try:
+        restore_login_from_token()
+    except Exception:
+        pass
 
 if not st.session_state.get("logged_in"):
     st.info("Please sign in as an admin to view Supabase Auth pilot readiness.")
