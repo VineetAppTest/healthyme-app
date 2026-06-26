@@ -27,9 +27,11 @@ if logout_param:
     st.session_state["logout_requested"] = True
 
 if not st.session_state.get("signed_out") and not st.session_state.get("logout_requested"):
-    restored = restore_login_from_token()
-    if not restored and supabase_auth_enabled():
+    restored = False
+    if supabase_auth_enabled():
         restored = restore_supabase_login_from_session()
+    if not restored:
+        restored = restore_login_from_token()
     if restored:
         _route_authenticated_user()
 
@@ -121,6 +123,9 @@ with login_col:
         if mode == "supabase":
             logout_copy = "Your HealthyMe app session has been cleared."
             logout_button_label = "Clear session"
+        elif mode == "dual":
+            logout_copy = "Your HealthyMe app session has been cleared. Dual mode may keep your Auth0 browser identity active. Use Complete secure logout before switching from Auth0 admin to Supabase member testing."
+            logout_button_label = "Complete secure logout"
         else:
             logout_copy = "For a full secure logout, complete the Auth0/OIDC logout below. If your browser still signs in automatically, close the browser tab or use a fresh browser profile."
             logout_button_label = "Complete secure logout"
