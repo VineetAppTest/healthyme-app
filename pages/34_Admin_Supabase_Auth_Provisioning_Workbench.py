@@ -60,13 +60,14 @@ topbar(
 
 
 SECRET_SECTIONS = ("auth", "auth0", "authentication", "healthyme", "supabase")
-ACTION_DRY_RUN = "Dry-run only"
+ACTION_NONE = "No email action"
 ACTION_INVITE = "Send Supabase invite for missing user"
 ACTION_RECOVERY = "Send Supabase recovery/reset email for existing user"
-ACTION_OPTIONS = (ACTION_DRY_RUN, ACTION_INVITE, ACTION_RECOVERY)
+ACTION_OPTIONS = (ACTION_NONE, ACTION_INVITE, ACTION_RECOVERY)
 SERVICE_ROLE_REQUIRED = "Service-role server-side access is required for provisioning actions."
 CONFIRMATION_TEXT = "PROVISION"
 VALID_ROLES = {"admin", "member"}
+READINESS_STATE_KEY = "supabase_auth_provisioning_readiness_result"
 
 
 def _clean_value(value: object, default: str = "") -> str:
@@ -282,6 +283,42 @@ def _readiness_row(email: str, hm_user: Dict[str, Any], auth_exists: Optional[bo
     }
 
 
+def _readiness_status_rows(result: Dict[str, Any]) -> List[Dict[str, str]]:
+    hm_user = result["hm_user"]
+    return [
+        {"Status item": "HealthyMe mapping", "Result": _yes_no_unknown(hm_user.get("exists"))},
+        {"Status item": "HealthyMe role", "Result": str(hm_user.get("role") or "other")},
+        {"Status item": "HealthyMe active status", "Result": _yes_no_unknown(hm_user.get("active"))},
+        {"Status item": "Supabase Auth user", "Result": _yes_no_unknown(result.get("auth_exists"))},
+        {"Status item": "Recommended next step", "Result": result.get("recommended", "Manual review required.")},
+    ]
+
+
+def _render_readiness_result(result: Dict[str, Any]) -> None:
+    email = result["email"]
+    hm_user = result["hm_user"]
+    auth_exists = result["auth_exists"]
+    recommended = result["recommended"]
+    auth_message = result.get("auth_message", "")
+
+    st.markdown(f"**Readiness result for:** `{email}`")
+    st.dataframe(
+        pd.DataFrame(_readiness_status_rows(result)),
+        use_container_width=True,
+        hide_index=True,
+    )
+    with st.expander("Compact detail row", expanded=False):
+        st.dataframe(
+            pd.DataFrame([_readiness_row(email, hm_user, auth_exists, recommended)]),
+            use_container_width=True,
+            hide_index=True,
+        )
+    st.caption(f"hm_users source: {hm_user.get('source', 'unknown')}")
+    if auth_exists is None:
+        st.info(auth_message or "Manual Supabase Dashboard check required before action.")
+    st.info(recommended)
+
+
 def _confirmation_ok(confirmed: bool, confirm_text: str) -> bool:
     return bool(confirmed and (confirm_text or "").strip() == CONFIRMATION_TEXT)
 
@@ -293,7 +330,7 @@ def _send_invite(service_client: Any, email: str) -> Tuple[bool, str]:
         return False, "Invite method is not available in the installed Supabase client. Use Supabase Dashboard manual invite."
     try:
         method(email)
-        return True, "Supabase invite sent for this one user."
+        return True, "Supabase email request submitted for this one user."
     except Exception as exc:
         return False, f"Supabase invite failed: {exc}"
 
@@ -305,9 +342,17 @@ def _send_recovery(service_client: Any, email: str) -> Tuple[bool, str]:
         return False, "Recovery method is not available in the installed Supabase client. Use Supabase Dashboard manual reset."
     try:
         method(email)
-        return True, "Supabase recovery/reset email sent for this one user."
+        return True, "Supabase email request submitted for this one user."
     except Exception as exc:
         return False, f"Supabase recovery/reset failed: {exc}"
+
+
+def _action_button_label(action: str) -> str:
+    if action == ACTION_INVITE:
+        return "Send one Supabase invite email"
+    if action == ACTION_RECOVERY:
+        return "Send one Supabase recovery/reset email"
+    return "No email action"
 
 
 def _handle_selected_action(
@@ -319,8 +364,12 @@ def _handle_selected_action(
     confirmed: bool,
     confirm_text: str,
 ) -> None:
-    if action == ACTION_DRY_RUN:
-        st.info("Dry-run only. No Supabase Auth action was performed.")
+    if action == ACTION_NONE:
+        st.info("No email action selected. No Supabase email request was submitted.")
+        return
+
+    if auth_exists is None:
+        st.error("Run readiness check and confirm Supabase Auth status before sending any email.")
         return
 
     if service_client is None:
@@ -357,6 +406,7 @@ def _handle_selected_action(
 st.warning(
     "AUTH-XPLAT-5C is a supervised one-user provisioning workbench only. It does not run SQL, does not update hm_users, and does not perform batch migration."
 )
+st.info("Dry-run/readiness does not send emails. Email actions are separated below.")
 
 config = _config_status()
 service_client = _service_role_client()
@@ -379,33 +429,71 @@ if service_client is None:
 card_end()
 
 card_start()
-st.subheader("One-user readiness and action")
-with st.form("supabase_auth_provisioning_workbench_form"):
+st.subheader("Stage 1: Readiness Check Only")
+st.caption("This stage normalizes one email, checks HealthyMe mapping, checks Supabase Auth existence where available, and stores the readiness result.")
+with st.form("supabase_auth_provisioning_readiness_form"):
     email_input = st.text_input("Email")
-    action = st.selectbox("Action", ACTION_OPTIONS, index=0)
-    confirmed = st.checkbox("I understand this is a one-user supervised Supabase Auth action.")
-    confirm_text = st.text_input("Type PROVISION to confirm invite/recovery action")
-    submitted = st.form_submit_button("Check Readiness / Dry Run", type="primary", use_container_width=True)
+    readiness_submitted = st.form_submit_button(
+        "Run readiness check — no email will be sent",
+        type="primary",
+        use_container_width=True,
+    )
 
-if submitted:
+if readiness_submitted:
     email = _normalize_email(email_input)
     if not email:
+        st.session_state.pop(READINESS_STATE_KEY, None)
         st.warning("Enter one email before running the readiness check.")
     else:
         hm_user = _lookup_hm_user(email, service_client)
         auth_exists, auth_message = _auth_exists_for_email(email, service_client)
         recommended = _recommended_action(hm_user, auth_exists)
-        st.dataframe(
-            pd.DataFrame([_readiness_row(email, hm_user, auth_exists, recommended)]),
-            use_container_width=True,
-            hide_index=True,
-        )
-        st.caption(f"hm_users source: {hm_user.get('source', 'unknown')}")
-        if auth_exists is None:
-            st.info(auth_message or "Manual Supabase Dashboard check required before action.")
-        st.info(recommended)
-        _handle_selected_action(action, email, hm_user, auth_exists, service_client, confirmed, confirm_text)
+        st.session_state[READINESS_STATE_KEY] = {
+            "email": email,
+            "hm_user": hm_user,
+            "auth_exists": auth_exists,
+            "auth_message": auth_message,
+            "recommended": recommended,
+        }
+
+readiness_result = st.session_state.get(READINESS_STATE_KEY)
+if readiness_result:
+    _render_readiness_result(readiness_result)
 card_end()
+
+if readiness_result:
+    card_start()
+    st.subheader("Optional email action")
+    st.warning(
+        "This action can send a real Supabase email. Use only for one supervised user after confirming the readiness result."
+    )
+    st.info(
+        "Email delivery is requested through Supabase. Actual receipt depends on Supabase/email provider delivery, spam filtering, and rate limits."
+    )
+
+    selected_action = st.selectbox("Email action", ACTION_OPTIONS, index=0)
+    if selected_action == ACTION_NONE:
+        st.info("No email action selected. No Supabase email will be requested.")
+    elif readiness_result.get("auth_exists") is None:
+        st.error("Run readiness check and confirm Supabase Auth status before sending any email.")
+    else:
+        button_label = _action_button_label(selected_action)
+        with st.form("supabase_auth_provisioning_email_action_form"):
+            confirmed = st.checkbox("I understand this is a one-user supervised Supabase Auth email action.")
+            confirm_text = st.text_input("Type PROVISION to confirm invite/recovery action")
+            action_submitted = st.form_submit_button(button_label, type="primary", use_container_width=True)
+
+        if action_submitted:
+            _handle_selected_action(
+                selected_action,
+                readiness_result["email"],
+                readiness_result["hm_user"],
+                readiness_result["auth_exists"],
+                service_client,
+                confirmed,
+                confirm_text,
+            )
+    card_end()
 
 card_start()
 st.subheader("Manual rollback and safety notes")
@@ -413,7 +501,8 @@ st.markdown(
     """
 - This page processes one email at a time.
 - No CSV upload, batch loop, SQL migration, schema change, hm_users update, role change, or password edit is included.
-- If an invite or recovery email is sent by mistake, use the Supabase Dashboard > Authentication > Users view for manual review.
+- If an invite or recovery/reset email is requested by mistake, use the Supabase Dashboard > Authentication > Users view for manual review.
+- A successful API call means the email request was submitted to Supabase; it does not guarantee inbox delivery.
 - Fast auth-mode rollback remains: remove `AUTH_MODE` or set `AUTH_MODE = "auth0"`.
 - Code rollback branch remains: `backup/pre-auth-xplat-current-streamlit-20260625-clean`.
 """
