@@ -1,7 +1,7 @@
 import streamlit as st
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12, render_back_to_top
 from components.auth_mode import auth0_enabled, supabase_auth_enabled, auth_mode_label, get_auth_mode
-from components.auth_session import restore_login_from_token, logout_current_user, login_with_supabase_password
+from components.auth_session import restore_login_from_token, logout_current_user, login_with_supabase_password, pop_secure_logout_feedback
 from components.supabase_auth_session import restore_supabase_login_from_session, supabase_auth_configured
 
 st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
@@ -14,6 +14,17 @@ def _route_authenticated_user():
         st.switch_page("pages/10_Admin_Dashboard.py")
     else:
         st.switch_page("pages/02_Member_Home.py")
+
+
+def _render_secure_logout_feedback(feedback):
+    if not feedback:
+        return
+    message = feedback.get("message") or "Complete secure logout finished. Please open a fresh login session before switching users."
+    level = feedback.get("level") or "success"
+    if level == "success":
+        st.success(message)
+    else:
+        st.warning(message)
 
 
 logout_param = False
@@ -68,6 +79,7 @@ with login_col:
             st.error(auth_error)
             if st.button("Logout authenticated identity", use_container_width=True):
                 logout_current_user()
+                st.rerun()
 
         if auth0_enabled():
             if st.button("Continue with Auth0", type="primary", use_container_width=True):
@@ -119,7 +131,11 @@ with login_col:
 
     if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
         st.markdown("<div class='hm-logout-bottom-shell'>", unsafe_allow_html=True)
-        st.success("You have been signed out.")
+        secure_logout_feedback = pop_secure_logout_feedback()
+        if secure_logout_feedback:
+            _render_secure_logout_feedback(secure_logout_feedback)
+        else:
+            st.success("You have been signed out.")
         if mode == "supabase":
             logout_copy = "Your HealthyMe app session has been cleared."
             logout_button_label = "Clear session"
@@ -133,8 +149,10 @@ with login_col:
             f"<div class='hm-logout-bottom-copy'>{logout_copy}</div>",
             unsafe_allow_html=True,
         )
+        st.caption("Use Complete Secure Logout before switching between admin and member accounts during Supabase pilot testing.")
         if st.button(logout_button_label, key="complete_secure_logout_bottom", use_container_width=True):
             logout_current_user()
+            st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
 with journey_col:
