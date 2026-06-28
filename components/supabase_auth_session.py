@@ -185,11 +185,38 @@ def _get_browser_query_marker(include_missing: bool = False) -> str:
     return marker
 
 
+def _clear_browser_query_marker() -> None:
+    try:
+        if SUPABASE_BROWSER_QUERY_PARAM in st.query_params:
+            del st.query_params[SUPABASE_BROWSER_QUERY_PARAM]
+    except Exception:
+        try:
+            st.query_params.pop(SUPABASE_BROWSER_QUERY_PARAM, None)
+        except Exception:
+            pass
+
+
 def _current_browser_session_id() -> str:
     return (
         str(st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or "").strip()
         or _get_browser_query_marker()
     )
+
+
+def publish_supabase_browser_session_marker_to_query() -> bool:
+    """Publish the opaque Supabase pilot marker to the URL for refresh-safe restore.
+
+    This marker is not a Supabase token. Tokens remain server-side in the registry.
+    """
+
+    session_id = str(st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or "").strip()
+    if not session_id:
+        return False
+    try:
+        st.query_params[SUPABASE_BROWSER_QUERY_PARAM] = session_id
+        return True
+    except Exception:
+        return False
 
 
 def _store_browser_session(auth_response, email: str) -> str:
@@ -207,6 +234,7 @@ def _store_browser_session(auth_response, email: str) -> str:
     st.session_state[SUPABASE_SESSION_KEY] = True
     st.session_state[SUPABASE_BROWSER_SESSION_ID_KEY] = session_id
     st.session_state.pop(SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, None)
+    publish_supabase_browser_session_marker_to_query()
     return session_id
 
 
@@ -225,13 +253,15 @@ def _update_browser_session_record(session_id: str, response, email: str) -> Non
     st.session_state[SUPABASE_SESSION_KEY] = True
     st.session_state[SUPABASE_BROWSER_SESSION_ID_KEY] = session_id
     st.session_state.pop(SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, None)
+    publish_supabase_browser_session_marker_to_query()
 
 
 def render_supabase_browser_session_bridge(clear: bool = False, stop_for_sync: bool = False) -> None:
     """Synchronize the opaque Supabase pilot marker between browser and Streamlit.
 
     The browser stores only a random marker. Supabase access and refresh tokens stay in
-    the server-side registry for the current Streamlit process.
+    the server-side registry for the current Streamlit process. The marker is also kept
+    in the URL query string as the reliable Streamlit-readable fallback for refreshes.
     """
 
     current_marker = str(st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or "")
@@ -268,8 +298,8 @@ def render_supabase_browser_session_bridge(clear: bool = False, stop_for_sync: b
 
     if (currentMarker) {{
       window.parent.localStorage.setItem(storageKey, currentMarker);
-      if (params.has(queryKey)) {{
-        params.delete(queryKey);
+      if (!params.has(queryKey)) {{
+        params.set(queryKey, currentMarker);
         replaceUrl();
       }}
       return;
@@ -316,6 +346,7 @@ def render_supabase_browser_session_bridge(clear: bool = False, stop_for_sync: b
 def _clear_expired_or_invalid_browser_session(session_id: str) -> None:
     if session_id:
         _browser_session_registry().pop(session_id, None)
+    _clear_browser_query_marker()
     render_supabase_browser_session_bridge(clear=True)
     st.session_state.pop(SUPABASE_BROWSER_SESSION_ID_KEY, None)
     st.session_state.pop(SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, None)
@@ -328,6 +359,7 @@ def _restore_from_browser_marker() -> bool:
 
     record = _browser_session_registry().get(session_id)
     if not record:
+        _clear_browser_query_marker()
         render_supabase_browser_session_bridge(clear=True)
         return False
 
@@ -444,6 +476,7 @@ def clear_supabase_auth_session() -> bool:
         except Exception:
             cleared = False
 
+    _clear_browser_query_marker()
     for key in [SUPABASE_SESSION_KEY, SUPABASE_BROWSER_SESSION_ID_KEY, SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, "supabase_auth_email"]:
         st.session_state.pop(key, None)
 
