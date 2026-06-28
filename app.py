@@ -2,7 +2,7 @@ import streamlit as st
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12
 from components.auth_session import restore_login_from_token
 from components.auth_mode import supabase_auth_enabled
-from components.supabase_auth_session import restore_supabase_login_from_session
+from components.supabase_auth_session import restore_supabase_login_from_session, render_supabase_browser_session_bridge
 
 st.set_page_config(page_title="HealthyMe", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
@@ -13,6 +13,7 @@ apply_luxe_theme()
 # In dual mode, prefer an existing Supabase pilot session before falling back to Auth0.
 restored = False
 if supabase_auth_enabled():
+    render_supabase_browser_session_bridge(stop_for_sync=True)
     restored = restore_supabase_login_from_session()
 if not restored:
     restored = restore_login_from_token()
