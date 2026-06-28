@@ -2,7 +2,11 @@ import streamlit as st
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12, render_back_to_top
 from components.auth_mode import auth0_enabled, supabase_auth_enabled, auth_mode_label, get_auth_mode
 from components.auth_session import restore_login_from_token, logout_current_user, login_with_supabase_password, pop_secure_logout_feedback
-from components.supabase_auth_session import restore_supabase_login_from_session, supabase_auth_configured
+from components.supabase_auth_session import (
+    restore_supabase_login_from_session,
+    supabase_auth_configured,
+    render_supabase_browser_session_bridge,
+)
 
 st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
@@ -36,6 +40,9 @@ except Exception:
 if logout_param:
     st.session_state["signed_out"] = True
     st.session_state["logout_requested"] = True
+
+if supabase_auth_enabled():
+    render_supabase_browser_session_bridge(clear=bool(st.session_state.get("signed_out") or st.session_state.get("logout_requested")))
 
 if not st.session_state.get("signed_out") and not st.session_state.get("logout_requested"):
     restored = False
@@ -111,6 +118,7 @@ with login_col:
                     st.session_state.pop("logout_requested", None)
                     if login_with_supabase_password(email, password):
                         st.success("Signed in with Supabase Auth.")
+                        render_supabase_browser_session_bridge()
                         _route_authenticated_user()
                     else:
                         st.error(st.session_state.get("auth_error") or "Supabase login failed.")
@@ -137,10 +145,10 @@ with login_col:
         else:
             st.success("You have been signed out.")
         if mode == "supabase":
-            logout_copy = "Your HealthyMe app session has been cleared."
+            logout_copy = "Your HealthyMe app session and Supabase pilot browser marker have been cleared."
             logout_button_label = "Clear session"
         elif mode == "dual":
-            logout_copy = "Your HealthyMe app session has been cleared. Dual mode may keep your Auth0 browser identity active. Use Complete secure logout before switching from Auth0 admin to Supabase member testing."
+            logout_copy = "Your HealthyMe app session and Supabase pilot browser marker have been cleared. Auth0 may still keep a browser identity active unless Complete Secure Logout is used; that can allow Auth0 to sign in again without credentials during rollback testing. Use Complete Secure Logout and a fresh/incognito browser before switching roles."
             logout_button_label = "Complete secure logout"
         else:
             logout_copy = "For a full secure logout, complete the Auth0/OIDC logout below. If your browser still signs in automatically, close the browser tab or use a fresh browser profile."
