@@ -133,7 +133,7 @@ def logout_current_user():
     had_oidc_session = oidc_is_logged_in()
     had_supabase_session = provider == "supabase" or login_method == "supabase"
     supabase_cleared = _clear_supabase_pilot_session_for_logout()
-    logout_warning = had_supabase_session and not supabase_cleared
+    logout_warning = not supabase_cleared
 
     if had_supabase_session:
         clear_app_session_for_logout(
