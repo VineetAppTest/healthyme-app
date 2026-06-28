@@ -118,25 +118,34 @@ def clear_app_session_for_logout(feedback_level="success", feedback_message=SECU
     _set_secure_logout_feedback(feedback_level, feedback_message)
 
 
+def _clear_supabase_pilot_session_for_logout() -> bool:
+    try:
+        from components.supabase_auth_session import clear_supabase_auth_session
+
+        return bool(clear_supabase_auth_session())
+    except Exception:
+        return False
+
+
 def logout_current_user():
     provider = st.session_state.get("auth_provider")
     login_method = st.session_state.get("auth_login_method")
     had_oidc_session = oidc_is_logged_in()
-    logout_warning = False
+    had_supabase_session = provider == "supabase" or login_method == "supabase"
+    supabase_cleared = _clear_supabase_pilot_session_for_logout()
+    logout_warning = had_supabase_session and not supabase_cleared
 
-    if provider == "supabase" or login_method == "supabase":
-        try:
-            from components.supabase_auth_session import clear_supabase_auth_session
-            clear_supabase_auth_session()
-        except Exception:
-            logout_warning = True
+    if had_supabase_session:
         clear_app_session_for_logout(
             feedback_level="warning" if logout_warning else "success",
             feedback_message=SECURE_LOGOUT_WARNING_MESSAGE if logout_warning else SECURE_LOGOUT_SUCCESS_MESSAGE,
         )
         return
 
-    clear_app_session_for_logout()
+    clear_app_session_for_logout(
+        feedback_level="warning" if logout_warning else "success",
+        feedback_message=SECURE_LOGOUT_WARNING_MESSAGE if logout_warning else SECURE_LOGOUT_SUCCESS_MESSAGE,
+    )
     if had_oidc_session:
         try:
             st.logout()
