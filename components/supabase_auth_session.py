@@ -16,6 +16,8 @@ SUPABASE_BROWSER_SESSION_ID_KEY = "_hm_supabase_auth_browser_session_id"
 SUPABASE_BROWSER_STORAGE_KEY = "hm_supabase_auth_session_id"
 SUPABASE_BROWSER_QUERY_PARAM = "hm_supabase_auth_sid"
 SUPABASE_BROWSER_MISSING_MARKER = "__missing__"
+SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY = "_hm_supabase_auth_browser_sync_attempted"
+SUPABASE_BROWSER_SESSION_TTL_SECONDS_DEFAULT = 12 * 60 * 60
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -47,6 +49,39 @@ def _client():
 @st.cache_resource
 def _browser_session_registry() -> Dict[str, dict]:
     return {}
+
+
+def _supabase_browser_session_ttl_seconds() -> int:
+    raw_ttl = _get_secret("SUPABASE_BROWSER_SESSION_TTL_SECONDS", str(SUPABASE_BROWSER_SESSION_TTL_SECONDS_DEFAULT))
+    try:
+        ttl = int(float(raw_ttl))
+    except Exception:
+        ttl = SUPABASE_BROWSER_SESSION_TTL_SECONDS_DEFAULT
+    return max(ttl, 5 * 60)
+
+
+def _browser_session_expiry() -> float:
+    return time.time() + _supabase_browser_session_ttl_seconds()
+
+
+def _browser_session_record_expired(record: dict) -> bool:
+    if not record:
+        return True
+
+    expires_at = record.get("marker_expires_at")
+    if expires_at is None:
+        updated_at = record.get("updated_at")
+        if updated_at is None:
+            return True
+        try:
+            expires_at = float(updated_at) + _supabase_browser_session_ttl_seconds()
+        except Exception:
+            return True
+
+    try:
+        return time.time() > float(expires_at)
+    except Exception:
+        return True
 
 
 def _value(source, key: str, default=None):
@@ -167,9 +202,11 @@ def _store_browser_session(auth_response, email: str) -> str:
         **payload,
         "email": (email or "").strip().lower(),
         "updated_at": time.time(),
+        "marker_expires_at": _browser_session_expiry(),
     }
     st.session_state[SUPABASE_SESSION_KEY] = True
     st.session_state[SUPABASE_BROWSER_SESSION_ID_KEY] = session_id
+    st.session_state.pop(SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, None)
     return session_id
 
 
@@ -183,9 +220,11 @@ def _update_browser_session_record(session_id: str, response, email: str) -> Non
         record.update(payload)
     record["email"] = (email or record.get("email") or "").strip().lower()
     record["updated_at"] = time.time()
+    record["marker_expires_at"] = _browser_session_expiry()
     _browser_session_registry()[session_id] = record
     st.session_state[SUPABASE_SESSION_KEY] = True
     st.session_state[SUPABASE_BROWSER_SESSION_ID_KEY] = session_id
+    st.session_state.pop(SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, None)
 
 
 def render_supabase_browser_session_bridge(clear: bool = False, stop_for_sync: bool = False) -> None:
@@ -196,6 +235,7 @@ def render_supabase_browser_session_bridge(clear: bool = False, stop_for_sync: b
     """
 
     current_marker = str(st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or "")
+    query_marker = _get_browser_query_marker(include_missing=True)
     script = f"""
 <script>
 (() => {{
@@ -256,15 +296,29 @@ def render_supabase_browser_session_bridge(clear: bool = False, stop_for_sync: b
 """
     components.html(script, height=0, width=0)
 
+    if clear or current_marker or query_marker:
+        st.session_state.pop(SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, None)
+        return
+
     if (
         stop_for_sync
-        and not current_marker
-        and not _get_browser_query_marker(include_missing=True)
         and not st.session_state.get("signed_out")
         and not st.session_state.get("logout_requested")
     ):
+        if st.session_state.get(SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY):
+            st.session_state.pop(SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, None)
+            return
+        st.session_state[SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY] = True
         st.caption("Restoring secure session...")
         st.stop()
+
+
+def _clear_expired_or_invalid_browser_session(session_id: str) -> None:
+    if session_id:
+        _browser_session_registry().pop(session_id, None)
+    render_supabase_browser_session_bridge(clear=True)
+    st.session_state.pop(SUPABASE_BROWSER_SESSION_ID_KEY, None)
+    st.session_state.pop(SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, None)
 
 
 def _restore_from_browser_marker() -> bool:
@@ -277,11 +331,14 @@ def _restore_from_browser_marker() -> bool:
         render_supabase_browser_session_bridge(clear=True)
         return False
 
+    if _browser_session_record_expired(record):
+        _clear_expired_or_invalid_browser_session(session_id)
+        return False
+
     access_token = str(record.get("access_token") or "")
     refresh_token = str(record.get("refresh_token") or "")
     if not access_token or not refresh_token:
-        _browser_session_registry().pop(session_id, None)
-        render_supabase_browser_session_bridge(clear=True)
+        _clear_expired_or_invalid_browser_session(session_id)
         return False
 
     try:
@@ -291,8 +348,7 @@ def _restore_from_browser_marker() -> bool:
         except Exception:
             auth_response = client.auth.refresh_session(refresh_token)
     except Exception:
-        _browser_session_registry().pop(session_id, None)
-        render_supabase_browser_session_bridge(clear=True)
+        _clear_expired_or_invalid_browser_session(session_id)
         st.session_state["logged_in"] = False
         st.session_state["auth_error"] = "Supabase session expired. Please sign in again."
         return False
@@ -388,7 +444,7 @@ def clear_supabase_auth_session() -> bool:
         except Exception:
             cleared = False
 
-    for key in [SUPABASE_SESSION_KEY, SUPABASE_BROWSER_SESSION_ID_KEY, "supabase_auth_email"]:
+    for key in [SUPABASE_SESSION_KEY, SUPABASE_BROWSER_SESSION_ID_KEY, SUPABASE_BROWSER_SYNC_ATTEMPTED_KEY, "supabase_auth_email"]:
         st.session_state.pop(key, None)
 
     return cleared
