@@ -2,7 +2,7 @@ import json
 import os
 import secrets
 import time
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 import streamlit as st
 import streamlit.components.v1 as components
