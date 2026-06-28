@@ -6,6 +6,7 @@ from components.supabase_auth_session import (
     restore_supabase_login_from_session,
     supabase_auth_configured,
     render_supabase_browser_session_bridge,
+    publish_supabase_browser_session_marker_to_query,
 )
 
 st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
@@ -117,9 +118,10 @@ with login_col:
                     st.session_state.pop("signed_out", None)
                     st.session_state.pop("logout_requested", None)
                     if login_with_supabase_password(email, password):
-                        st.success("Signed in with Supabase Auth.")
+                        publish_supabase_browser_session_marker_to_query()
                         render_supabase_browser_session_bridge()
-                        _route_authenticated_user()
+                        st.success("Signed in with Supabase Auth.")
+                        st.rerun()
                     else:
                         st.error(st.session_state.get("auth_error") or "Supabase login failed.")
 
