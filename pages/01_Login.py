@@ -110,7 +110,17 @@ with login_col:
                 if submitted:
                     st.session_state.pop("signed_out", None)
                     st.session_state.pop("logout_requested", None)
+                    try:
+                        st.query_params.clear()
+                    except Exception:
+                        pass
                     if login_with_supabase_password(email, password):
+                        st.session_state.pop("signed_out", None)
+                        st.session_state.pop("logout_requested", None)
+                        try:
+                            st.query_params.clear()
+                        except Exception:
+                            pass
                         st.success("Signed in with Supabase Auth.")
                         _route_authenticated_user()
                     else:

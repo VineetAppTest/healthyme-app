@@ -7,6 +7,7 @@ from components.admin_role_model import apply_app_user_to_session, resolve_app_u
 
 
 SUPABASE_SESSION_KEY = "_hm_supabase_auth_session"
+SUPABASE_LOGIN_JUST_COMPLETED_KEY = "_hm_supabase_login_just_completed"
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -135,9 +136,12 @@ def _extract_access_token(response) -> str:
 
 
 def _apply_supabase_user_to_session(app_user: dict, email: str, auth_user_id: str = "", access_token: str = "") -> bool:
-    ok = apply_app_user_to_session(app_user, email=email, auth_provider="supabase", auth_user_id=auth_user_id)
+    resolved_auth_user_id = (auth_user_id or app_user.get("auth_user_id") or "").strip()
+    ok = apply_app_user_to_session(app_user, email=email, auth_provider="supabase", auth_user_id=resolved_auth_user_id)
     if access_token:
         st.session_state["supabase_access_token"] = access_token
+    if resolved_auth_user_id:
+        st.session_state["supabase_auth_user_id"] = resolved_auth_user_id
     return ok
 
 
@@ -147,13 +151,24 @@ def _find_authorized_user(email: str, auth_user_id: str = ""):
 
 
 def restore_supabase_login_from_session(force_refresh: bool = False) -> bool:
-    if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
+    # A freshly completed Supabase login must win over a stale logout=1 URL flag.
+    # This prevents the login page from showing "signed out" immediately after
+    # successful pilot admin login when the tester arrived from /Login?logout=1.
+    if st.session_state.get(SUPABASE_LOGIN_JUST_COMPLETED_KEY):
+        st.session_state.pop("signed_out", None)
+        st.session_state.pop("logout_requested", None)
+    elif st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
         return False
 
-    if st.session_state.get("auth_provider") != "supabase":
+    if st.session_state.get("auth_provider") != "supabase" and st.session_state.get("auth_login_method") != "supabase":
         return False
 
-    email = (st.session_state.get("supabase_auth_email") or "").strip().lower()
+    email = (
+        st.session_state.get("supabase_auth_email")
+        or st.session_state.get("user_email")
+        or st.session_state.get("oidc_email")
+        or ""
+    ).strip().lower()
     auth_user_id = (st.session_state.get("supabase_auth_user_id") or "").strip()
     if not email and not auth_user_id:
         return False
@@ -168,12 +183,20 @@ def restore_supabase_login_from_session(force_refresh: bool = False) -> bool:
 
     app_user = _find_authorized_user(email, auth_user_id)
     if not app_user:
+        # Do not destroy an already-resolved Supabase role during a forced guard
+        # refresh. A transient service-role/RLS/read failure should not behave as
+        # a logout. The guard will still deny admin pages for member/non-admin roles.
+        if st.session_state.get("logged_in") and st.session_state.get("_hm_auth_role_resolved"):
+            st.session_state["auth_error"] = f"{email or 'This Supabase user'} role refresh could not be confirmed. Existing resolved session retained for this request."
+            return False
         st.session_state["logged_in"] = False
         st.session_state["auth_error"] = f"{email or 'This Supabase user'} is authenticated but not authorized in HealthyMe."
         return False
 
-    return _apply_supabase_user_to_session(app_user, email, auth_user_id=auth_user_id)
-
+    ok = _apply_supabase_user_to_session(app_user, email, auth_user_id=auth_user_id)
+    if ok:
+        st.session_state.pop(SUPABASE_LOGIN_JUST_COMPLETED_KEY, None)
+    return ok
 
 def sign_in_with_supabase(email: str, password: str) -> Tuple[bool, str]:
     clean_email = (email or "").strip().lower()
@@ -198,7 +221,10 @@ def sign_in_with_supabase(email: str, password: str) -> Tuple[bool, str]:
             return False, st.session_state["auth_error"]
 
         st.session_state[SUPABASE_SESSION_KEY] = True
+        st.session_state[SUPABASE_LOGIN_JUST_COMPLETED_KEY] = True
         st.session_state["supabase_auth_user_id"] = auth_user_id
+        st.session_state.pop("signed_out", None)
+        st.session_state.pop("logout_requested", None)
         _apply_supabase_user_to_session(app_user, clean_auth_email, auth_user_id=auth_user_id, access_token=access_token)
         return True, "Signed in with Supabase Auth."
     except Exception as exc:
@@ -214,5 +240,5 @@ def sign_in_with_supabase_password(email: str, password: str) -> Tuple[bool, str
 
 
 def clear_supabase_auth_session() -> None:
-    for key in [SUPABASE_SESSION_KEY, "supabase_auth_email", "supabase_auth_user_id", "supabase_access_token"]:
+    for key in [SUPABASE_SESSION_KEY, SUPABASE_LOGIN_JUST_COMPLETED_KEY, "supabase_auth_email", "supabase_auth_user_id", "supabase_access_token"]:
         st.session_state.pop(key, None)

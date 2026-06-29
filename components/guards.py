@@ -42,6 +42,8 @@ def require_admin():
         try:
             restore_supabase_login_from_session(force_refresh=True)
         except Exception:
+            # Do not convert a transient refresh problem into logout.
+            # The final role check below remains the source of truth.
             pass
 
     if not current_user_is_admin():
