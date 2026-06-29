@@ -20,6 +20,41 @@ def _get_secret(name: str, default: str = "") -> str:
         return default
 
 
+
+
+ROLE_SESSION_KEYS = [
+    "logged_in",
+    "user_id",
+    "user_role",
+    "role",
+    "user_name",
+    "user_email",
+    "must_reset_password",
+    "oidc_email",
+    "auth_login_method",
+    "auth_provider",
+    "_hm_auth_role_resolved",
+    "_hm_role_model",
+    "is_admin",
+    "admin_logged_in",
+    "is_member",
+    "auth_error",
+]
+
+
+def clear_stale_app_identity_before_supabase_login() -> None:
+    """Remove stale Auth0/admin/member role state before a Supabase pilot login.
+
+    Streamlit keeps session_state across page navigation. During dual-mode testing,
+    an Auth0 admin session and a Supabase member pilot login can otherwise overlap
+    in the same browser session. Clearing app identity first makes direct admin
+    page guards rely only on the fresh Supabase role resolution.
+    """
+    for key in ROLE_SESSION_KEYS:
+        st.session_state.pop(key, None)
+    st.session_state.pop("signed_out", None)
+    st.session_state.pop("logout_requested", None)
+
 def supabase_auth_configured() -> bool:
     return bool(_get_secret("SUPABASE_URL") and _get_secret("SUPABASE_ANON_KEY"))
 
@@ -111,7 +146,7 @@ def _find_authorized_user(email: str, auth_user_id: str = ""):
     return app_user if ok else None
 
 
-def restore_supabase_login_from_session() -> bool:
+def restore_supabase_login_from_session(force_refresh: bool = False) -> bool:
     if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
         return False
 
@@ -124,7 +159,8 @@ def restore_supabase_login_from_session() -> bool:
         return False
 
     if (
-        st.session_state.get("logged_in")
+        not force_refresh
+        and st.session_state.get("logged_in")
         and st.session_state.get("_hm_auth_role_resolved")
         and (st.session_state.get("supabase_auth_email") == email or auth_user_id)
     ):
@@ -150,6 +186,7 @@ def sign_in_with_supabase(email: str, password: str) -> Tuple[bool, str]:
         return False, "Please enter both email and password."
 
     try:
+        clear_stale_app_identity_before_supabase_login()
         auth_response = _client().auth.sign_in_with_password({"email": clean_email, "password": clean_password})
         clean_auth_email = _extract_email(auth_response) or clean_email
         auth_user_id = _extract_user_id(auth_response)

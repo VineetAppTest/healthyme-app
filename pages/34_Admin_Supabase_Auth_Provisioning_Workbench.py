@@ -1,10 +1,8 @@
 import pandas as pd
 import streamlit as st
-from components.admin_role_model import current_user_is_admin, role_access_summary
+from components.admin_role_model import role_access_summary
+from components.guards import require_admin
 
-from components.auth_mode import supabase_auth_enabled
-from components.auth_session import restore_login_from_token
-from components.supabase_auth_session import restore_supabase_login_from_session
 from components.supabase_provisioning import (
     config_status,
     load_audit_rows,
@@ -35,28 +33,7 @@ inject_global_styles()
 apply_luxe_theme()
 
 
-if not st.session_state.get("logged_in"):
-    try:
-        if supabase_auth_enabled():
-            restore_supabase_login_from_session()
-    except Exception:
-        pass
-
-if not st.session_state.get("logged_in"):
-    try:
-        restore_login_from_token()
-    except Exception:
-        pass
-
-if not st.session_state.get("logged_in"):
-    st.info("Please sign in as an admin to view Supabase Auth provisioning.")
-    st.stop()
-
-if not current_user_is_admin():
-    st.warning("Admin access required")
-    st.caption(role_access_summary().get("access", "No admin access"))
-    st.stop()
-
+require_admin()
 utility_logout_bar()
 topbar(
     "Supabase Auth Provisioning",

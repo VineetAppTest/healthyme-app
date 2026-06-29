@@ -7,7 +7,14 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 
 
 def restore_any_login():
+    # Prefer an already-resolved HealthyMe app session, but do not let a
+    # Supabase pilot member/admin role silently fall back to a stale Auth0 role.
     if st.session_state.get("logged_in") and st.session_state.get("_hm_auth_role_resolved"):
+        if st.session_state.get("auth_login_method") == "supabase" or st.session_state.get("auth_provider") == "supabase":
+            try:
+                return bool(restore_supabase_login_from_session(force_refresh=True))
+            except Exception:
+                return False
         return True
 
     restored = False
@@ -28,6 +35,15 @@ def require_admin():
     restore_any_login()
     if not st.session_state.get("logged_in"):
         st.switch_page("pages/01_Login.py")
+
+    # Strict direct-link guard: when the current session is Supabase, refresh
+    # the role from hm_users by auth_user_id/email before allowing admin pages.
+    if st.session_state.get("auth_login_method") == "supabase" or st.session_state.get("auth_provider") == "supabase":
+        try:
+            restore_supabase_login_from_session(force_refresh=True)
+        except Exception:
+            pass
+
     if not current_user_is_admin():
         st.warning("Admin access required")
         st.stop()
@@ -39,6 +55,13 @@ def require_member():
     restore_any_login()
     if not st.session_state.get("logged_in"):
         st.switch_page("pages/01_Login.py")
+
+    if st.session_state.get("auth_login_method") == "supabase" or st.session_state.get("auth_provider") == "supabase":
+        try:
+            restore_supabase_login_from_session(force_refresh=True)
+        except Exception:
+            pass
+
     if not current_user_is_member():
         st.warning("Member access required")
         st.stop()
