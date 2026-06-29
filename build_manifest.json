@@ -1,25 +1,19 @@
 {
-  "build_name": "HealthyMe_v102_4_RECOMMENDATIONS_SHARE_TODAYS_JOURNEY_FULL_BUILD",
-  "version": "v102.4",
-  "updated_on": "2026-06-19T11:34:51.271155Z",
-  "base_build": "HealthyMe_v102_3A_SUPPLEMENT_FREQ_ENDDATE_ALIGNMENT_FULL_BUILD.zip",
+  "build_name": "HealthyMe_Streamlit_Admin_Sprint2A_2B_2C_Supabase_Auth_Provisioning_FULL_BUILD",
+  "version": "v102.4B15S2",
+  "updated_on": "2026-06-29T10:14:21Z",
+  "base_build": "healthyme-app-main (4).zip",
   "scope": [
-    "Admin Recommendations Share shell/foundation",
-    "One 7-day source of truth for Nutritionist Report, Today\u2019s Journey, Meal Plan, Exercise Plan and Supplements",
-    "Member Today\u2019s Journey date-filtered snapshot from published Recommendations Share",
-    "Recipe-1 UX merged into working Recipe Repository",
-    "Exercise-1 UX merged into working Exercise Repository",
-    "Recipe-1/Exercise-1 testing buttons and active test routes removed",
-    "Rollback copies retained outside active Streamlit pages"
+    "Supabase Auth single member provisioning",
+    "Supabase Auth batch existing member provisioning",
+    "hm_users.auth_user_id linking/backfill support",
+    "Provisioning audit log",
+    "Admin-only service-role Streamlit flow"
   ],
   "excluded": [
-    "No PDF generation",
-    "No download structure",
-    "No AI recommendation generation",
-    "No recommendation scoring"
-  ],
-  "rollback_files": [
-    "rollback_v102_4/08_Recipe_Repository_LEGACY_WORKING.py.disabled",
-    "rollback_v102_4/09_Exercise_Repository_LEGACY_WORKING.py.disabled"
+    "No Streamlit admin Supabase Auth cutover",
+    "No Auth0 removal",
+    "No Flutter service-role key usage",
+    "No admin-role provisioning beyond existing admin session gate"
   ]
 }
