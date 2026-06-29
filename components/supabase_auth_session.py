@@ -3,8 +3,7 @@ from typing import Tuple
 
 import streamlit as st
 
-from components.db import find_user_by_email
-from components.normalized_store import find_user_by_email_fast
+from components.admin_role_model import apply_app_user_to_session, resolve_app_user
 
 
 SUPABASE_SESSION_KEY = "_hm_supabase_auth_session"
@@ -62,31 +61,54 @@ def _extract_email(response) -> str:
         return ""
 
 
-def _apply_supabase_user_to_session(app_user: dict, email: str) -> bool:
-    clean_email = (email or "").strip().lower()
-    st.session_state["logged_in"] = True
-    st.session_state["user_id"] = app_user["id"]
-    st.session_state["user_role"] = app_user["role"]
-    st.session_state["user_name"] = app_user.get("name") or clean_email or "User"
-    st.session_state["must_reset_password"] = False
-    st.session_state["oidc_email"] = clean_email
-    st.session_state["supabase_auth_email"] = clean_email
-    st.session_state["auth_provider"] = "supabase"
-    st.session_state["auth_login_method"] = "supabase"
-    st.session_state["_hm_auth_role_resolved"] = True
-    return True
+def _extract_user_id(response) -> str:
+    user = getattr(response, "user", None)
+    if user is not None:
+        user_id = getattr(user, "id", "") or ""
+        if str(user_id).strip():
+            return str(user_id).strip()
+
+    session = getattr(response, "session", None)
+    session_user = getattr(session, "user", None) if session is not None else None
+    if session_user is not None:
+        user_id = getattr(session_user, "id", "") or ""
+        if str(user_id).strip():
+            return str(user_id).strip()
+
+    try:
+        data = response.model_dump()
+        user_id = (
+            ((data.get("user") or {}).get("id"))
+            or (((data.get("session") or {}).get("user") or {}).get("id"))
+            or ""
+        )
+        return str(user_id).strip()
+    except Exception:
+        return ""
 
 
-def _find_authorized_user(email: str):
-    clean_email = (email or "").strip().lower()
-    if not clean_email:
-        return None
+def _extract_access_token(response) -> str:
+    session = getattr(response, "session", None)
+    token = getattr(session, "access_token", "") if session is not None else ""
+    if str(token).strip():
+        return str(token).strip()
+    try:
+        data = response.model_dump()
+        return str((data.get("session") or {}).get("access_token") or "").strip()
+    except Exception:
+        return ""
 
-    ok, fast_user, _ = find_user_by_email_fast(clean_email)
-    app_user = fast_user if ok and fast_user else None
-    if not app_user:
-        app_user = find_user_by_email(clean_email)
-    return app_user
+
+def _apply_supabase_user_to_session(app_user: dict, email: str, auth_user_id: str = "", access_token: str = "") -> bool:
+    ok = apply_app_user_to_session(app_user, email=email, auth_provider="supabase", auth_user_id=auth_user_id)
+    if access_token:
+        st.session_state["supabase_access_token"] = access_token
+    return ok
+
+
+def _find_authorized_user(email: str, auth_user_id: str = ""):
+    ok, app_user, message = resolve_app_user(email=email, auth_user_id=auth_user_id)
+    return app_user if ok else None
 
 
 def restore_supabase_login_from_session() -> bool:
@@ -97,23 +119,24 @@ def restore_supabase_login_from_session() -> bool:
         return False
 
     email = (st.session_state.get("supabase_auth_email") or "").strip().lower()
-    if not email:
+    auth_user_id = (st.session_state.get("supabase_auth_user_id") or "").strip()
+    if not email and not auth_user_id:
         return False
 
     if (
         st.session_state.get("logged_in")
         and st.session_state.get("_hm_auth_role_resolved")
-        and st.session_state.get("supabase_auth_email") == email
+        and (st.session_state.get("supabase_auth_email") == email or auth_user_id)
     ):
         return True
 
-    app_user = _find_authorized_user(email)
+    app_user = _find_authorized_user(email, auth_user_id)
     if not app_user:
         st.session_state["logged_in"] = False
-        st.session_state["auth_error"] = f"{email or 'This email'} is authenticated but not authorized in HealthyMe."
+        st.session_state["auth_error"] = f"{email or 'This Supabase user'} is authenticated but not authorized in HealthyMe."
         return False
 
-    return _apply_supabase_user_to_session(app_user, email)
+    return _apply_supabase_user_to_session(app_user, email, auth_user_id=auth_user_id)
 
 
 def sign_in_with_supabase(email: str, password: str) -> Tuple[bool, str]:
@@ -129,14 +152,17 @@ def sign_in_with_supabase(email: str, password: str) -> Tuple[bool, str]:
     try:
         auth_response = _client().auth.sign_in_with_password({"email": clean_email, "password": clean_password})
         clean_auth_email = _extract_email(auth_response) or clean_email
+        auth_user_id = _extract_user_id(auth_response)
+        access_token = _extract_access_token(auth_response)
 
-        app_user = _find_authorized_user(clean_auth_email)
+        app_user = _find_authorized_user(clean_auth_email, auth_user_id)
         if not app_user:
-            st.session_state["auth_error"] = f"{clean_auth_email or 'This email'} is authenticated but not authorized in HealthyMe."
+            st.session_state["auth_error"] = f"{clean_auth_email or 'This email'} is authenticated but not authorized in HealthyMe. Confirm hm_users.role and hm_users.auth_user_id/email mapping."
             return False, st.session_state["auth_error"]
 
         st.session_state[SUPABASE_SESSION_KEY] = True
-        _apply_supabase_user_to_session(app_user, clean_auth_email)
+        st.session_state["supabase_auth_user_id"] = auth_user_id
+        _apply_supabase_user_to_session(app_user, clean_auth_email, auth_user_id=auth_user_id, access_token=access_token)
         return True, "Signed in with Supabase Auth."
     except Exception as exc:
         return False, f"Supabase login failed: {exc}"
@@ -151,5 +177,5 @@ def sign_in_with_supabase_password(email: str, password: str) -> Tuple[bool, str
 
 
 def clear_supabase_auth_session() -> None:
-    for key in [SUPABASE_SESSION_KEY, "supabase_auth_email"]:
+    for key in [SUPABASE_SESSION_KEY, "supabase_auth_email", "supabase_auth_user_id", "supabase_access_token"]:
         st.session_state.pop(key, None)

@@ -1,4 +1,5 @@
 import streamlit as st
+from components.admin_role_model import is_admin_role
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12, render_back_to_top
 from components.auth_mode import auth0_enabled, supabase_auth_enabled, auth_mode_label, get_auth_mode
 from components.auth_session import restore_login_from_token, logout_current_user, login_with_supabase_password, pop_secure_logout_feedback
@@ -10,7 +11,7 @@ apply_luxe_theme()
 
 
 def _route_authenticated_user():
-    if st.session_state.get("user_role") == "admin":
+    if is_admin_role(st.session_state.get("user_role")):
         st.switch_page("pages/10_Admin_Dashboard.py")
     else:
         st.switch_page("pages/02_Member_Home.py")

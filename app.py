@@ -1,4 +1,5 @@
 import streamlit as st
+from components.admin_role_model import is_admin_role
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12
 from components.auth_session import restore_login_from_token
 from components.auth_mode import supabase_auth_enabled
@@ -18,7 +19,7 @@ if not restored:
     restored = restore_login_from_token()
 
 if restored:
-    if st.session_state.get("user_role") == "admin":
+    if is_admin_role(st.session_state.get("user_role")):
         st.switch_page("pages/10_Admin_Dashboard.py")
     else:
         st.switch_page("pages/02_Member_Home.py")

@@ -4,8 +4,10 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import pandas as pd
 import streamlit as st
 
+from components.admin_role_model import current_user_is_admin, role_access_summary
 from components.auth_mode import auth0_enabled, get_auth_mode, supabase_auth_enabled
 from components.auth_session import restore_login_from_token
+from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import (
     apply_luxe_theme,
     card_end,
@@ -30,6 +32,13 @@ apply_luxe_theme()
 
 if not st.session_state.get("logged_in"):
     try:
+        if supabase_auth_enabled():
+            restore_supabase_login_from_session()
+    except Exception:
+        pass
+
+if not st.session_state.get("logged_in"):
+    try:
         restore_login_from_token()
     except Exception:
         pass
@@ -38,8 +47,9 @@ if not st.session_state.get("logged_in"):
     st.info("Please sign in as an admin to view Supabase Auth pilot readiness.")
     st.stop()
 
-if st.session_state.get("user_role") != "admin":
+if not current_user_is_admin():
     st.warning("Admin access required")
+    st.caption(role_access_summary().get("access", "No admin access"))
     st.stop()
 
 utility_logout_bar()

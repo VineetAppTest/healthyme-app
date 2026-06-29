@@ -1,6 +1,5 @@
 import streamlit as st
-from components.db import find_user_by_email
-from components.normalized_store import find_user_by_email_fast
+from components.admin_role_model import apply_app_user_to_session, resolve_app_user
 
 
 SECURE_LOGOUT_MESSAGE_KEY = "_hm_secure_logout_feedback"
@@ -43,24 +42,12 @@ def get_oidc_name():
 
 
 def _resolve_app_user_by_email(email):
-    ok, fast_user, _ = find_user_by_email_fast(email)
-    app_user = fast_user if ok and fast_user else None
-    if not app_user:
-        app_user = find_user_by_email(email)
-    return app_user
+    ok, app_user, _ = resolve_app_user(email=email)
+    return app_user if ok else None
 
 
 def _apply_user_to_session(app_user, email, auth_method="auth0"):
-    st.session_state["logged_in"] = True
-    st.session_state["user_id"] = app_user["id"]
-    st.session_state["user_role"] = app_user["role"]
-    st.session_state["user_name"] = app_user.get("name") or get_oidc_name()
-    st.session_state["must_reset_password"] = False
-    st.session_state["oidc_email"] = email
-    st.session_state["auth_login_method"] = auth_method
-    st.session_state["auth_provider"] = "oidc" if auth_method == "auth0" else auth_method
-    st.session_state["_hm_auth_role_resolved"] = True
-    return True
+    return apply_app_user_to_session(app_user, email=email, auth_provider=auth_method)
 
 
 def restore_login_from_token():
@@ -75,10 +62,10 @@ def restore_login_from_token():
         and st.session_state.get("oidc_email") == email
     ):
         return True
-    app_user = _resolve_app_user_by_email(email)
-    if not app_user:
+    ok, app_user, message = resolve_app_user(email=email)
+    if not ok or not app_user:
         st.session_state["logged_in"] = False
-        st.session_state["auth_error"] = f"{email or 'This email'} is authenticated but not authorized in HealthyMe."
+        st.session_state["auth_error"] = f"{email or 'This email'} is authenticated but not authorized in HealthyMe. {message}"
         return False
     return _apply_user_to_session(app_user, email, auth_method="auth0")
 

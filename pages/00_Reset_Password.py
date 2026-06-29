@@ -1,6 +1,7 @@
 from components.ui_common import render_page_nav, render_back_to_top
 
 import streamlit as st
+from components.admin_role_model import is_admin_role
 from components.ui_common import inject_global_styles, apply_luxe_theme, render_build_text_v12, render_back_to_top
 from components.db import change_password
 st.set_page_config(page_title="Reset Password", page_icon="🌿", layout="wide", initial_sidebar_state="collapsed")
@@ -13,7 +14,7 @@ if st.button("Reset Password", type="primary"):
     else:
         change_password(st.session_state["user_id"], p1)
         st.session_state["must_reset_password"]=False
-        if st.session_state["user_role"]=="admin": st.switch_page("pages/10_Admin_Dashboard.py")
+        if is_admin_role(st.session_state.get("user_role")): st.switch_page("pages/10_Admin_Dashboard.py")
         else: st.switch_page("pages/02_Member_Home.py")
 
 # v102.0: canonical global footer navigation
