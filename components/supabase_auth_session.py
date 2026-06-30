@@ -151,10 +151,15 @@ def _find_authorized_user(email: str, auth_user_id: str = ""):
 
 
 def restore_supabase_login_from_session(force_refresh: bool = False) -> bool:
-    # A freshly completed Supabase login must win over a stale logout=1 URL flag.
-    # This prevents the login page from showing "signed out" immediately after
-    # successful pilot admin login when the tester arrived from /Login?logout=1.
-    if st.session_state.get(SUPABASE_LOGIN_JUST_COMPLETED_KEY):
+    # A freshly completed or already-resolved Supabase login must win over a stale
+    # logout=1 URL flag. This prevents a protected page opened by direct URL from
+    # looking like a logout when Streamlit kept the Supabase role in session_state.
+    already_resolved_supabase = (
+        st.session_state.get("logged_in")
+        and st.session_state.get("_hm_auth_role_resolved")
+        and (st.session_state.get("auth_provider") == "supabase" or st.session_state.get("auth_login_method") == "supabase")
+    )
+    if st.session_state.get(SUPABASE_LOGIN_JUST_COMPLETED_KEY) or already_resolved_supabase:
         st.session_state.pop("signed_out", None)
         st.session_state.pop("logout_requested", None)
     elif st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
