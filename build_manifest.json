@@ -1,19 +1,18 @@
 {
-  "build_name": "HealthyMe_Streamlit_Admin_Sprint2A_2B_2C_Supabase_Auth_Provisioning_FULL_BUILD",
-  "version": "v102.4B15S2",
-  "updated_on": "2026-06-29T10:14:21Z",
-  "base_build": "healthyme-app-main (4).zip",
+  "build_name": "HealthyMe_Streamlit_Admin_Sprint3A_3B_H4_R1_Clean_GitHub_RootUpload",
+  "version": "v102.4B15S3H4",
+  "updated_on": "2026-06-30T20:45:00Z",
+  "base_build": "healthyme-app-main (5).zip uploaded by Vineet",
   "scope": [
-    "Supabase Auth single member provisioning",
-    "Supabase Auth batch existing member provisioning",
-    "hm_users.auth_user_id linking/backfill support",
-    "Provisioning audit log",
-    "Admin-only service-role Streamlit flow"
+    "Supabase admin pilot login role model retained",
+    "Direct protected admin page no-logout guard retained",
+    "Admin Dashboard System Tools navigation added for hidden sidebar/menu setup",
+    "Supabase Auth Readiness and Supabase Provisioning buttons added"
   ],
-  "excluded": [
-    "No Streamlit admin Supabase Auth cutover",
-    "No Auth0 removal",
-    "No Flutter service-role key usage",
-    "No admin-role provisioning beyond existing admin session gate"
+  "packaging": [
+    "Clean GitHub upload package under 100 files",
+    "Removed __pycache__ directories and .pyc files",
+    "Removed old docs/checklists/rollback folders from upload ZIP",
+    "Kept runtime app.py, components, pages, config, data, utils, requirements and runtime files"
   ]
 }
