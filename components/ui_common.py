@@ -8,6 +8,7 @@ from components.auth_session import logout_current_user
 # v53: safe shared helpers available for import by all pages
 # --------------------------------------------------------------------
 DEFAULT_APP_TIMEZONE = "Asia/Kolkata"
+APP_BUILD_LABEL = "Supabase Admin Login Role Model 3A-3B H5 Version Label Cleanup"
 
 def format_local_ts(ts_value, timezone_name=None):
     """Format stored ISO timestamp in local display time.
