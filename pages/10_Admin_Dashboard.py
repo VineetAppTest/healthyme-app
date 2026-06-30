@@ -212,12 +212,17 @@ with right:
 st.markdown("<div class='hm-dash-system-wrap'>", unsafe_allow_html=True)
 with st.container(border=True):
     st.markdown("<div class='hm-dash-system-card'>", unsafe_allow_html=True)
-    section_header("System Tools", "Database checks and recalculation utilities.")
+    section_header("System Tools", "Database checks, recalculation utilities and Supabase migration controls.")
     sys_col_1, sys_col_2 = st.columns(2, gap="large")
     with sys_col_1:
         nav_cell("Database", "pages/28_Admin_Database_Status.py", "dash_database_v102_4b4")
     with sys_col_2:
         nav_cell("NSP Recalculate", "pages/34_Admin_NSP_Score_Recalculation.py", "dash_nsp_recalc_v102_4b4")
+    sys_col_3, sys_col_4 = st.columns(2, gap="large")
+    with sys_col_3:
+        nav_cell("Supabase Auth Readiness", "pages/33_Admin_Supabase_Auth_Pilot_Readiness.py", "dash_supabase_auth_readiness_v102_4b15s3h4")
+    with sys_col_4:
+        nav_cell("Supabase Provisioning", "pages/34_Admin_Supabase_Auth_Provisioning_Workbench.py", "dash_supabase_provisioning_v102_4b15s3h4")
     st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -227,3 +232,4 @@ inject_keepalive_guard_v96_11()
 # v102.4: Recipe-1/Exercise-1 testing buttons removed; Recommendations Share added as admin source of truth.
 # v102.4B4: Premium bordered section cards added to Admin Dashboard.
 # v102.4B14B: Communication & Scheduling section swapped with Content & Allocation.
+# v102.4B15S3H4: Added dashboard buttons for Supabase Auth tools because Streamlit sidebar/menu remains intentionally hidden.
