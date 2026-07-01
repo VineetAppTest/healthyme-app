@@ -1,14 +1,17 @@
 import pandas as pd
 import streamlit as st
-from components.admin_role_model import role_access_summary
-from components.guards import require_admin
 
-from components.supabase_provisioning import (
+import components.ui_common as ui_common
+from components.current_build import apply_current_build
+from components.guards import require_admin
+from components.supabase_provisioning_h6 import (
     config_status,
     load_audit_rows,
+    member_review_rows,
     password_reset_redirect_to,
     provision_batch_members,
     provision_single_member,
+    readiness_snapshot,
     service_role_client,
 )
 from components.ui_common import (
@@ -22,6 +25,7 @@ from components.ui_common import (
     utility_logout_bar,
 )
 
+apply_current_build(ui_common)
 
 st.set_page_config(
     page_title="Supabase Auth Provisioning",
@@ -31,13 +35,11 @@ st.set_page_config(
 )
 inject_global_styles()
 apply_luxe_theme()
-
-
 require_admin()
 utility_logout_bar()
 topbar(
     "Supabase Auth Provisioning",
-    "Sprint 2A + 2B + 2C: single member provisioning, batch provisioning and audit log.",
+    "H6 hardening: readiness summary, member review, duplicate prevention, controlled single and batch provisioning.",
     "Admin provisioning bridge",
 )
 
@@ -64,6 +66,7 @@ def _result_dataframe(rows):
         "member_name",
         "member_id",
         "active",
+        "role",
         "auth_status",
         "auth_user_id",
         "hm_link_status",
@@ -77,52 +80,79 @@ def _result_dataframe(rows):
     return df[cols]
 
 
+def _summary_cards(summary: dict) -> None:
+    labels = list(summary.items())
+    for start in range(0, len(labels), 4):
+        cols = st.columns(min(4, len(labels) - start))
+        for col, (label, value) in zip(cols, labels[start : start + 4]):
+            with col:
+                st.metric(label, value)
+
+
 client = service_role_client()
 config = config_status()
+snapshot = readiness_snapshot(client)
 
 st.warning(
-    "This page uses Supabase service-role access from Streamlit secrets. It must remain admin/server-side only. "
-    "The service-role key must never be copied into Flutter."
+    "Admin/server-side only. This page may use the Supabase service-role key from Streamlit secrets. "
+    "Never copy the service-role key into Flutter or member-side code. Auth0 admin login is not retired in this branch."
 )
 
 card_start()
-st.subheader("Configuration check")
-st.dataframe(
-    pd.DataFrame(
-        [
-            {"Config": "SUPABASE_URL", "Configured": _yes_no(config["SUPABASE_URL"])},
-            {"Config": "SUPABASE_ANON_KEY", "Configured": _yes_no(config["SUPABASE_ANON_KEY"])},
-            {"Config": "SUPABASE_SERVICE_ROLE_KEY", "Configured": _yes_no(config["SUPABASE_SERVICE_ROLE_KEY"])},
-            {"Config": "Password reset redirect", "Configured": password_reset_redirect_to()},
-        ]
-    ),
-    use_container_width=True,
-    hide_index=True,
-)
+st.subheader("Configuration and readiness")
+config_rows = [
+    {"Config": "SUPABASE_URL", "Configured": _yes_no(config["SUPABASE_URL"])},
+    {"Config": "SUPABASE_ANON_KEY", "Configured": _yes_no(config["SUPABASE_ANON_KEY"])},
+    {"Config": "SUPABASE_SERVICE_ROLE_KEY", "Configured": _yes_no(config["SUPABASE_SERVICE_ROLE_KEY"])},
+    {"Config": "Password reset redirect", "Configured": password_reset_redirect_to()},
+]
+st.dataframe(pd.DataFrame(config_rows), use_container_width=True, hide_index=True)
 if client is None:
-    st.error("Service-role client is not available. Add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Streamlit secrets before provisioning.")
-st.caption("Before executing provisioning, run RUN_ONCE_SUPABASE_AUTH_PROVISIONING_SPRINT2A_2B_2C.sql in Supabase SQL Editor.")
+    st.error("Supabase service role key is not configured or the admin client could not be created.")
+else:
+    st.success("Service-role admin client initialized for this admin-only page.")
+st.caption("Secret values are never displayed. Only configured/not configured status is shown.")
 card_end()
 
-single_tab, batch_tab, audit_tab, setup_tab = st.tabs(
-    ["2A Single Member", "2B Batch Existing Members", "2C Audit Log", "Setup / UAT"]
+card_start()
+st.subheader("Provisioning summary")
+_summary_cards(snapshot.get("summary", {}))
+st.dataframe(pd.DataFrame(snapshot.get("checks", [])), use_container_width=True, hide_index=True)
+card_end()
+
+review_tab, single_tab, batch_tab, audit_tab, setup_tab = st.tabs(
+    ["Member Review", "Single Member", "Batch Existing Members", "Audit Log", "Setup / UAT"]
 )
+
+with review_tab:
+    card_start()
+    st.subheader("Member provisioning review")
+    st.caption("Review active, inactive, missing-email, duplicate-email, and already-provisioned member records before execution.")
+    rows = member_review_rows(client)
+    df = pd.DataFrame(rows)
+    st.dataframe(df, use_container_width=True, hide_index=True)
+    if not df.empty:
+        st.download_button(
+            "Download member review CSV",
+            data=df.to_csv(index=False).encode("utf-8"),
+            file_name="healthyme_supabase_member_provisioning_review_h6.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+    card_end()
 
 with single_tab:
     card_start()
-    st.subheader("2A — Single member provisioning")
-    st.caption(
-        "Creates a missing Supabase Auth user or links an existing Auth user to hm_users.auth_user_id. "
-        "It does not create a HealthyMe member row."
-    )
-    with st.form("hm_single_supabase_provisioning_form"):
+    st.subheader("Single-member provisioning")
+    st.caption("Use this first for one known test member before any batch execution. Dry run is enabled by default.")
+    with st.form("hm_h6_single_supabase_provisioning_form"):
         email = st.text_input("Member email")
         temp_password = st.text_input(
             "Temporary password for new Auth user",
             type="password",
-            help="Leave blank to generate a strong temporary password. The generated password is shown only in the result table for this run.",
+            help="Admin testing only. Leave blank to generate a strong password that is not displayed or logged. Prefer reset email for rollout.",
         )
-        send_reset = st.checkbox("Also send Supabase password reset email after successful link/create", value=False)
+        send_reset = st.checkbox("Send Supabase password reset email after successful link/create", value=True)
         dry_run = st.checkbox("Dry run only", value=True)
         confirmation = st.text_input("To execute, untick Dry run and type PROVISION")
         submitted = st.form_submit_button("Run single-member provisioning", type="primary", use_container_width=True)
@@ -142,33 +172,28 @@ with single_tab:
             )
             df = _result_dataframe([result])
             st.dataframe(df, use_container_width=True, hide_index=True)
-            if result.get("status") in {"ok", "dry_run"}:
+            status = result.get("status")
+            if status in {"ok", "dry_run"}:
                 st.success(result.get("message") or "Provisioning check completed.")
-            elif result.get("status") == "partial":
+            elif status == "partial":
                 st.warning(result.get("message") or "Provisioning partially completed. Review the result row.")
             else:
                 st.error(result.get("message") or "Provisioning failed or was blocked.")
-            if result.get("temp_password") and result.get("temp_password") != "admin_entered_password":
-                st.warning("Generated temporary password is visible only in the table above. Copy it now if you need to share it securely.")
     card_end()
 
 with batch_tab:
     card_start()
-    st.subheader("2B — Batch existing member provisioning")
-    st.caption(
-        "Scans existing active member-role hm_users records, creates missing Supabase Auth users, links auth_user_id, and writes audit rows. "
-        "Run dry-run first."
-    )
-    with st.form("hm_batch_supabase_provisioning_form"):
+    st.subheader("Batch existing-member provisioning")
+    st.caption("Batch skips inactive, missing-email, invalid-email and duplicate-email records. It continues even if one row fails.")
+    with st.form("hm_h6_batch_supabase_provisioning_form"):
         temp_password = st.text_input(
             "Temporary password for newly created Auth users",
             type="password",
-            help="Optional. Leave blank to generate a unique strong password per newly created user. For large batches, prefer sending reset emails.",
+            help="Admin testing only. Leave blank to generate a unique strong password per created user. Prefer reset emails for rollout.",
         )
-        send_reset = st.checkbox("Send password reset email for successfully linked/created users", value=False)
-        include_inactive = st.checkbox("Include inactive members", value=False, help="Usually keep this off. Inactive members are skipped unless included for review.")
+        send_reset = st.checkbox("Send password reset email for successfully linked/created users", value=True)
         limit = st.number_input("Batch limit", min_value=1, max_value=1000, value=250, step=25)
-        dry_run = st.checkbox("Dry run only", value=True, key="batch_dry_run")
+        dry_run = st.checkbox("Dry run only", value=True, key="h6_batch_dry_run")
         confirmation = st.text_input("To execute batch, untick Dry run and type BATCH PROVISION")
         submitted = st.form_submit_button("Run batch provisioning", type="primary", use_container_width=True)
 
@@ -183,7 +208,7 @@ with batch_tab:
                 send_reset=send_reset,
                 actor_email=_actor_email(),
                 dry_run=dry_run,
-                include_inactive=include_inactive,
+                include_inactive=False,
                 limit=int(limit),
             )
             df = _result_dataframe(rows)
@@ -196,7 +221,7 @@ with batch_tab:
                 st.download_button(
                     "Download batch result CSV",
                     data=df.to_csv(index=False).encode("utf-8"),
-                    file_name="healthyme_supabase_batch_provisioning_result.csv",
+                    file_name="healthyme_supabase_batch_provisioning_result_h6.csv",
                     mime="text/csv",
                     use_container_width=True,
                 )
@@ -208,16 +233,14 @@ with batch_tab:
 
 with audit_tab:
     card_start()
-    st.subheader("2C — Provisioning audit log")
-    st.caption("Shows the latest provisioning actions written to hm_supabase_auth_provisioning_audit.")
+    st.subheader("Provisioning audit log")
+    st.caption("Shows latest rows from hm_supabase_auth_provisioning_audit if the audit table exists.")
     limit = st.slider("Rows to load", min_value=25, max_value=500, value=100, step=25)
-    if st.button("Refresh audit log", use_container_width=True):
-        st.session_state["hm_refresh_supabase_audit"] = True
     ok, rows, message = load_audit_rows(client, limit=limit)
     if ok:
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
     else:
-        st.error(message)
+        st.warning(message)
     card_end()
 
 with setup_tab:
@@ -225,32 +248,25 @@ with setup_tab:
     st.subheader("Setup and smoke test")
     st.markdown(
         """
-**Run once before UAT**
+**Safety rules**
 
-1. Open Supabase Dashboard.
-2. Go to SQL Editor.
-3. Run `RUN_ONCE_SUPABASE_AUTH_PROVISIONING_SPRINT2A_2B_2C.sql` from this build.
-4. Confirm Streamlit secrets contain `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
-5. Keep `SUPABASE_SERVICE_ROLE_KEY` only in Streamlit/server-side secrets.
+- Auth0 Streamlit admin login remains active.
+- This branch provisions member-role users only.
+- Inactive members, missing emails, invalid emails and duplicate member emails are skipped.
+- Supabase service-role key remains server-side only.
+- Prefer dry run first, then single-member execution, then batch dry run, then batch execution.
 
 **Smoke test sequence**
 
 1. Open this page as admin.
-2. Run single-member dry-run for one existing member.
-3. Execute single-member provisioning for that same member.
-4. Confirm `hm_users.auth_user_id` is populated.
-5. Confirm the audit row is visible in the Audit Log tab.
-6. Run batch dry-run.
-7. Execute batch only after dry-run result looks correct.
-8. Confirm Flutter member login still works for the provisioned member.
-
-**Safety rules**
-
-- This sprint provisions member-role users only.
-- Streamlit admin login is not cut over to Supabase Auth in this sprint.
-- Auth0 is not removed in this sprint.
-- Inactive members are skipped by default.
-- Duplicate member emails are blocked.
+2. Confirm readiness summary renders without crash.
+3. Open Member Review and confirm the table renders.
+4. Run single-member dry run for one existing active member.
+5. Execute single-member provisioning only after dry run looks correct.
+6. Re-run same member and confirm duplicate is marked already provisioned / linked.
+7. Run batch dry run.
+8. Execute batch only after dry run result looks correct.
+9. Confirm Auth0 admin login still works.
 """
     )
     card_end()

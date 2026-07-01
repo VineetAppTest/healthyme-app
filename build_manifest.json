@@ -1,20 +1,20 @@
 {
-  "build_name": "HealthyMe_Streamlit_Admin_Sprint3A_3B_H5_Version_Label_Cleanup",
-  "version": "v102.4B15S3H5",
-  "updated_on": "2026-06-30T23:59:00Z",
-  "base_build": "Sprint 3A + 3B H4 R1 clean GitHub root upload",
+  "build_name": "HealthyMe_Streamlit_Admin_H6_Supabase_Auth_Provisioning_Hardening",
+  "version": "v102.4B15S3H6",
+  "updated_on": "2026-07-01T10:00:00Z",
+  "base_build": "v102.4B15S3H5 cleanup/version-label build",
   "scope": [
-    "Preserved Supabase admin pilot login role model",
-    "Preserved direct protected admin page no-logout guard",
-    "Preserved Admin Dashboard System Tools navigation",
-    "Corrected global admin version label",
-    "Removed stale docs, rollback files, and Python cache artifacts"
+    "Hardens Supabase Auth Readiness checks for member provisioning migration",
+    "Hardens Supabase Auth Provisioning Workbench with summary cards, member review table, single-member dry run/execute, batch dry run/execute, duplicate prevention, inactive/missing-email skip handling, and row-level results",
+    "Adds safe helper functions for readiness counts, duplicate email checks, invalid email checks, existing Auth user detection, and human-readable admin outcomes",
+    "Preserves Auth0 Streamlit admin login and current member/admin business flows",
+    "Adds optional SQL readiness file for member-only read RLS review"
   ],
   "excluded": [
     "No Auth0 retirement",
-    "No route guard logic change",
-    "No provisioning logic change",
-    "No database schema change",
-    "No member flow change"
+    "No Flutter UX change",
+    "No LAF/NSP logic change",
+    "No assessment/reporting logic change",
+    "No service-role key exposure to client/member side"
   ]
 }
