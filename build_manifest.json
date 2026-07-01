@@ -1,18 +1,20 @@
 {
-  "build_name": "HealthyMe_Streamlit_Admin_Sprint3A_3B_H4_R1_Clean_GitHub_RootUpload",
-  "version": "v102.4B15S3H4",
-  "updated_on": "2026-06-30T20:45:00Z",
-  "base_build": "healthyme-app-main (5).zip uploaded by Vineet",
+  "build_name": "HealthyMe_Streamlit_Admin_Sprint3A_3B_H5_Version_Label_Cleanup",
+  "version": "v102.4B15S3H5",
+  "updated_on": "2026-06-30T23:59:00Z",
+  "base_build": "Sprint 3A + 3B H4 R1 clean GitHub root upload",
   "scope": [
-    "Supabase admin pilot login role model retained",
-    "Direct protected admin page no-logout guard retained",
-    "Admin Dashboard System Tools navigation added for hidden sidebar/menu setup",
-    "Supabase Auth Readiness and Supabase Provisioning buttons added"
+    "Preserved Supabase admin pilot login role model",
+    "Preserved direct protected admin page no-logout guard",
+    "Preserved Admin Dashboard System Tools navigation",
+    "Corrected global admin version label",
+    "Removed stale docs, rollback files, and Python cache artifacts"
   ],
-  "packaging": [
-    "Clean GitHub upload package under 100 files",
-    "Removed __pycache__ directories and .pyc files",
-    "Removed old docs/checklists/rollback folders from upload ZIP",
-    "Kept runtime app.py, components, pages, config, data, utils, requirements and runtime files"
+  "excluded": [
+    "No Auth0 retirement",
+    "No route guard logic change",
+    "No provisioning logic change",
+    "No database schema change",
+    "No member flow change"
   ]
 }
