@@ -4,6 +4,12 @@ import streamlit as st
 import components.ui_common as ui_common
 from components.current_build import apply_current_build
 from components.guards import require_admin
+from components.supabase_auth_lifecycle_h10 import (
+    lifecycle_audit_rows,
+    lifecycle_summary,
+    orphan_auth_user_rows,
+    send_password_reset_for_member,
+)
 from components.supabase_provisioning_h6 import (
     config_status,
     load_audit_rows,
@@ -39,7 +45,7 @@ require_admin()
 utility_logout_bar()
 topbar(
     "Supabase Auth Provisioning",
-    "H6 hardening: readiness summary, member review, duplicate prevention, controlled single and batch provisioning.",
+    "H10 hardening: lifecycle audit, orphan detection, reset controls, and existing H6 provisioning safeguards.",
     "Admin provisioning bridge",
 )
 
@@ -92,6 +98,7 @@ def _summary_cards(summary: dict) -> None:
 client = service_role_client()
 config = config_status()
 snapshot = readiness_snapshot(client)
+h10_summary = lifecycle_summary(client)
 
 st.warning(
     "Admin/server-side only. This page may use the Supabase service-role key from Streamlit secrets. "
@@ -120,8 +127,22 @@ _summary_cards(snapshot.get("summary", {}))
 st.dataframe(pd.DataFrame(snapshot.get("checks", [])), use_container_width=True, hide_index=True)
 card_end()
 
-review_tab, single_tab, batch_tab, audit_tab, setup_tab = st.tabs(
-    ["Member Review", "Single Member", "Batch Existing Members", "Audit Log", "Setup / UAT"]
+card_start()
+st.subheader("H10 lifecycle summary")
+_summary_cards(h10_summary)
+st.caption("H10 does not change Flutter, LAF/NSP, reports, or Auth0 admin login. It only improves admin visibility and controlled lifecycle actions.")
+card_end()
+
+review_tab, lifecycle_tab, reset_tab, single_tab, batch_tab, audit_tab, setup_tab = st.tabs(
+    [
+        "Member Review",
+        "Lifecycle Audit",
+        "Reset Controls",
+        "Single Member",
+        "Batch Existing Members",
+        "Audit Log",
+        "Setup / UAT",
+    ]
 )
 
 with review_tab:
@@ -135,10 +156,79 @@ with review_tab:
         st.download_button(
             "Download member review CSV",
             data=df.to_csv(index=False).encode("utf-8"),
-            file_name="healthyme_supabase_member_provisioning_review_h6.csv",
+            file_name="healthyme_supabase_member_provisioning_review_h10.csv",
             mime="text/csv",
             use_container_width=True,
         )
+    card_end()
+
+with lifecycle_tab:
+    card_start()
+    st.subheader("H10 member lifecycle audit")
+    st.caption("Shows whether every member is safe for Flutter mobile login, blocked, or needs admin action.")
+    rows = lifecycle_audit_rows(client)
+    df = pd.DataFrame(rows)
+    if not df.empty and "status" in df.columns:
+        statuses = sorted([str(x) for x in df["status"].dropna().unique()])
+        selected_statuses = st.multiselect("Filter by status", statuses, default=statuses)
+        if selected_statuses:
+            df = df[df["status"].isin(selected_statuses)]
+    st.dataframe(df, use_container_width=True, hide_index=True)
+    if not df.empty:
+        st.download_button(
+            "Download lifecycle audit CSV",
+            data=df.to_csv(index=False).encode("utf-8"),
+            file_name="healthyme_supabase_lifecycle_audit_h10.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+    card_end()
+
+    card_start()
+    st.subheader("Auth user orphan / unlinked review")
+    st.caption("Flags Supabase Auth users that do not cleanly map to a HealthyMe member. Do not delete anything blindly from this list.")
+    orphan_df = pd.DataFrame(orphan_auth_user_rows(client))
+    st.dataframe(orphan_df, use_container_width=True, hide_index=True)
+    if not orphan_df.empty:
+        st.download_button(
+            "Download orphan / unlinked Auth review CSV",
+            data=orphan_df.to_csv(index=False).encode("utf-8"),
+            file_name="healthyme_supabase_orphan_auth_review_h10.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+    card_end()
+
+with reset_tab:
+    card_start()
+    st.subheader("Controlled password reset / onboarding email")
+    st.caption("Use only for active, provisioned members. Dry run is enabled by default and execution requires exact confirmation.")
+    with st.form("hm_h10_password_reset_form"):
+        reset_email = st.text_input("Member email for password reset")
+        reset_dry_run = st.checkbox("Dry run only", value=True, key="h10_reset_dry_run")
+        reset_confirmation = st.text_input("To send reset email, untick Dry run and type RESET PASSWORD")
+        reset_submitted = st.form_submit_button("Check / send password reset", type="primary", use_container_width=True)
+
+    if reset_submitted:
+        execute_allowed = reset_dry_run or reset_confirmation.strip() == "RESET PASSWORD"
+        if not execute_allowed:
+            st.error("Password reset not sent. Type RESET PASSWORD exactly, or keep Dry run enabled.")
+        else:
+            result = send_password_reset_for_member(
+                client,
+                email=reset_email,
+                actor_email=_actor_email(),
+                dry_run=reset_dry_run,
+            )
+            df = _result_dataframe([result])
+            st.dataframe(df, use_container_width=True, hide_index=True)
+            status = result.get("status")
+            if status in {"dry_run", "sent"}:
+                st.success(result.get("message") or "Password reset check completed.")
+            elif status == "review":
+                st.warning(result.get("message") or "Review required before sending reset email.")
+            else:
+                st.error(result.get("message") or "Password reset was blocked or failed.")
     card_end()
 
 with single_tab:
@@ -221,7 +311,7 @@ with batch_tab:
                 st.download_button(
                     "Download batch result CSV",
                     data=df.to_csv(index=False).encode("utf-8"),
-                    file_name="healthyme_supabase_batch_provisioning_result_h6.csv",
+                    file_name="healthyme_supabase_batch_provisioning_result_h10.csv",
                     mime="text/csv",
                     use_container_width=True,
                 )
@@ -251,21 +341,23 @@ with setup_tab:
 **Safety rules**
 
 - Auth0 Streamlit admin login remains active.
-- This branch provisions member-role users only.
+- This sprint is admin/workbench hardening only; Flutter H9A APK smoke testing continues independently.
+- This workbench provisions member-role users only.
 - Inactive members, missing emails, invalid emails and duplicate member emails are skipped.
 - Supabase service-role key remains server-side only.
+- Password reset email execution requires exact confirmation.
 - Prefer dry run first, then single-member execution, then batch dry run, then batch execution.
 
-**Smoke test sequence**
+**H10 smoke test sequence**
 
 1. Open this page as admin.
 2. Confirm readiness summary renders without crash.
 3. Open Member Review and confirm the table renders.
-4. Run single-member dry run for one existing active member.
-5. Execute single-member provisioning only after dry run looks correct.
-6. Re-run same member and confirm duplicate is marked already provisioned / linked.
-7. Run batch dry run.
-8. Execute batch only after dry run result looks correct.
+4. Open Lifecycle Audit and confirm member lifecycle rows render.
+5. Confirm orphan / unlinked Auth review renders.
+6. Run password reset dry run for one active provisioned member.
+7. Confirm password reset is not sent unless Dry run is unticked and RESET PASSWORD is typed.
+8. Confirm Single Member and Batch Existing Members tabs still render.
 9. Confirm Auth0 admin login still works.
 """
     )
