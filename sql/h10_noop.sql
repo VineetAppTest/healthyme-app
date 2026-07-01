@@ -1,1 +1,0 @@
--- H10 has no required SQL migration.
