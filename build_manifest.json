@@ -1,18 +1,19 @@
 {
-  "build_name": "HealthyMe_Streamlit_Admin_H6_Supabase_Auth_Provisioning_Hardening",
-  "version": "v102.4B15S3H6",
-  "updated_on": "2026-07-01T10:00:00Z",
-  "base_build": "v102.4B15S3H5 cleanup/version-label build",
+  "build_name": "HealthyMe_Streamlit_Admin_H10_Supabase_Auth_Lifecycle_Audit_Workbench",
+  "version": "v102.4B15S3H10",
+  "updated_on": "2026-07-01T18:35:00Z",
+  "base_build": "v102.4B15S3H6 Supabase Auth Provisioning Hardening",
   "scope": [
-    "Hardens Supabase Auth Readiness checks for member provisioning migration",
-    "Hardens Supabase Auth Provisioning Workbench with summary cards, member review table, single-member dry run/execute, batch dry run/execute, duplicate prevention, inactive/missing-email skip handling, and row-level results",
-    "Adds safe helper functions for readiness counts, duplicate email checks, invalid email checks, existing Auth user detection, and human-readable admin outcomes",
-    "Preserves Auth0 Streamlit admin login and current member/admin business flows",
-    "Adds optional SQL readiness file for member-only read RLS review"
+    "Adds H10 Supabase Auth lifecycle audit helpers for active/inactive, duplicate, stale-link, missing-link, and safe-for-mobile-login visibility",
+    "Adds lifecycle audit and orphan/unlinked Auth review tabs to the existing Supabase Auth Provisioning Workbench",
+    "Adds controlled password reset/onboarding dry-run and execution guardrails requiring exact confirmation",
+    "Preserves existing H6 single-member and batch provisioning workflows",
+    "Preserves Auth0 Streamlit admin login and current member/admin business flows"
   ],
   "excluded": [
     "No Auth0 retirement",
     "No Flutter UX change",
+    "No H9A Recent Saved Days UI change",
     "No LAF/NSP logic change",
     "No assessment/reporting logic change",
     "No service-role key exposure to client/member side"
