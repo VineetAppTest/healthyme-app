@@ -1,1 +1,1 @@
-v102.4B15S3H5 · Supabase Admin Login Role Model 3A-3B H5 Version Label Cleanup
+v102.4B15S3H6 · Supabase Auth Provisioning Hardening
