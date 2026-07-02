@@ -42,10 +42,12 @@ utility_logout_bar()
 st.markdown(
     """
 <style>
-.hm-note-boundary{border:1px solid rgba(6,78,59,.18);background:rgba(236,253,245,.45);border-radius:18px;padding:14px 16px;margin:.15rem 0 .85rem 0;}
-.hm-note-boundary strong{color:#064E3B;}
+.block-container{padding-top:0!important;}
+.utility-bar{margin-top:0!important;}
 .hm-dfjr-no-data-box{background:#E9EEF5;border-radius:10px;padding:16px 18px;color:#334155;margin:.2rem 0 .9rem 0;}
 .hm-full-day-black-row{background:#111827;border-radius:8px;height:12px;margin:.75rem 0 .85rem 0;width:100%;}
+.hm-inline-help{display:flex;align-items:center;min-height:3.2rem;padding-top:1.55rem;color:#6B7280;font-size:.86rem;line-height:1.25;}
+.hm-inline-help b{color:#064E3B;}
 </style>
 """,
     unsafe_allow_html=True,
@@ -243,10 +245,6 @@ card_end()
 
 card_start()
 st.subheader("Add Nutritionist Guidance")
-st.markdown(
-    "<div class='hm-note-boundary'><strong>Guidance composer:</strong> this section is intentionally below the journal review. Select the guidance type first; the date controls below will change immediately.</div>",
-    unsafe_allow_html=True,
-)
 
 note_type_label = st.radio(
     "Guidance Type",
@@ -264,20 +262,18 @@ with st.form("h9a4_daily_report_structured_note", clear_on_submit=True):
             from_date = st.date_input("Note Date", value=selected_date_obj, key="h9a4_single_day_note_date")
         to_date = from_date
         with c2:
-            st.caption("Subject will be saved as Nutritionist Note.")
+            st.markdown("<div class='hm-inline-help'><b>Subject:</b>&nbsp;Nutritionist Note</div>", unsafe_allow_html=True)
     elif note_type == "date_range":
         with c1:
             from_date = st.date_input("From Date", value=selected_date_obj, key="h9a4_range_from_date")
         with c2:
             to_date = st.date_input("To Date", value=selected_date_obj, key="h9a4_range_to_date")
-        st.caption("This guidance will be linked under every saved day in the selected From/To range.")
     else:
         with c1:
             from_date = st.date_input("Guidance Date", value=selected_date_obj, key="h9a4_general_guidance_date")
         to_date = from_date
         with c2:
-            st.caption("Subject will be saved as General Guidance and linked to the guidance date.")
-    st.text_input("Subject", value=subject, disabled=True, key=f"h9a4_subject_{note_type}")
+            st.markdown("<div class='hm-inline-help'><b>Subject:</b>&nbsp;General Guidance</div>", unsafe_allow_html=True)
     note_text = st.text_area("Nutritionist Note / General Guidance", placeholder="Example: Water intake was low across these days. Please increase water before lunch and dinner.", height=120)
     submitted = st.form_submit_button("Publish / Send Guidance", use_container_width=True)
 if submitted:
