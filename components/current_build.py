@@ -8,19 +8,13 @@ from __future__ import annotations
 
 from typing import Any
 
-APP_BUILD_VERSION = "v102.4B15S3H10"
-APP_BUILD_LABEL = "Supabase Auth Lifecycle Audit Workbench"
+APP_BUILD_VERSION = "v102.4B15S3H11"
+APP_BUILD_LABEL = "Supabase Auth Cutover Readiness"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 
 def apply_current_build(ui_common_module: Any | None = None) -> None:
-    """Patch ui_common build globals at runtime for pages that import topbar.
-
-    Streamlit pages import topbar from components.ui_common. topbar reads global
-    APP_BUILD_VERSION / APP_BUILD_LABEL from its defining module at call time,
-    so updating those globals before topbar() is called is sufficient and keeps
-    this build's change small.
-    """
+    """Patch ui_common build globals at runtime for pages that import topbar."""
     if ui_common_module is None:
         import components.ui_common as ui_common_module
     try:
