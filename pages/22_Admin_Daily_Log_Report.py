@@ -42,8 +42,8 @@ utility_logout_bar()
 st.markdown(
     """
 <style>
-.hm-guidance-boundary{border:1px solid rgba(6,78,59,.18);background:rgba(236,253,245,.45);border-radius:18px;padding:14px 16px;margin:.15rem 0 .85rem 0;}
-.hm-guidance-boundary strong{color:#064E3B;}
+.hm-note-boundary{border:1px solid rgba(6,78,59,.18);background:rgba(236,253,245,.45);border-radius:18px;padding:14px 16px;margin:.15rem 0 .85rem 0;}
+.hm-note-boundary strong{color:#064E3B;}
 .hm-dfjr-no-data-box{background:#E9EEF5;border-radius:10px;padding:16px 18px;color:#334155;margin:.2rem 0 .9rem 0;}
 .hm-full-day-black-row{background:#111827;border-radius:8px;height:12px;margin:.75rem 0 .85rem 0;width:100%;}
 </style>
@@ -109,8 +109,9 @@ def _other_fluids_summary(items):
 
 def _row_for_day(member_id, day):
     meals = day.get("meals", {}) or {}
+    log_date = day.get("date", "")
     return {
-        "Date": day.get("date", ""),
+        "Date": log_date,
         "Breakfast": (meals.get("breakfast", {}) or {}).get("food", ""),
         "Lunch": (meals.get("lunch", {}) or {}).get("food", ""),
         "Dinner": (meals.get("dinner", {}) or {}).get("food", ""),
@@ -121,7 +122,7 @@ def _row_for_day(member_id, day):
         "Poop Timings": ", ".join([str(x) for x in (day.get("poop_timings", []) or []) if str(x).strip()]),
         "Feeling After Poop": day.get("feeling_after_poop", ""),
         "Notes": day.get("notes", ""),
-        "Nutritionist Guidance": _structured_notes_text(member_id, day.get("date", "")) or _legacy_notes_text(member_id, day.get("date", "")),
+        "Nutritionist Guidance": _structured_notes_text(member_id, log_date) or _legacy_notes_text(member_id, log_date),
     }
 
 
@@ -164,8 +165,8 @@ options = [f"{m.get('id','')} — {m.get('name','Member')} — {m.get('email',''
 default_member = st.session_state.get("selected_daily_log_member_id") or st.session_state.get("selected_member_id")
 default_index = next((idx for idx, opt in enumerate(options) if default_member and opt.startswith(f"{default_member} —")), 0)
 
-member_selector_col, member_hint_col = st.columns([2, 3])
-with member_selector_col:
+selector_col, date_col = st.columns(2)
+with selector_col:
     selected = st.selectbox("Select member", options, index=default_index)
 member_id = selected.split(" — ")[0]
 member = next(m for m in members if str(m.get("id", "")) == member_id)
@@ -176,63 +177,20 @@ try:
     default_date_obj = date.fromisoformat(default_date_str)
 except Exception:
     default_date_obj = date.today()
-with member_hint_col:
-    st.caption("H9A.4: Nutritionist Guidance below is member-level guidance. It can be linked to one day, multiple days, or the sent date for general guidance.")
-
-card_start()
-st.subheader("Nutritionist Guidance")
-st.markdown(
-    "<div class='hm-guidance-boundary'><strong>Independent guidance block:</strong> this section is not governed by the Food Journal review date below. Choose whether the guidance applies to one date, a date range, or general guidance.</div>",
-    unsafe_allow_html=True,
-)
-with st.form("h9a4_daily_report_structured_note", clear_on_submit=True):
-    note_type_label = st.radio("Guidance Type", ["Single Day", "Date Range", "General Guidance"], horizontal=True)
-    note_type = {"Single Day": "single_day", "Date Range": "date_range", "General Guidance": "general"}[note_type_label]
-    c1, c2 = st.columns(2)
-    from_date = None
-    to_date = None
-    if note_type == "single_day":
-        with c1:
-            from_date = st.date_input("Note Date", value=default_date_obj, key="h9a4_single_day_note_date")
-        to_date = from_date
-        with c2:
-            st.caption("This note will be linked only to the selected note date.")
-    elif note_type == "date_range":
-        with c1:
-            from_date = st.date_input("From Date", value=default_date_obj, key="h9a4_range_from_date")
-        with c2:
-            to_date = st.date_input("To Date", value=default_date_obj, key="h9a4_range_to_date")
-    else:
-        st.caption("General guidance is linked to the sent date and can later appear under that sent-date context.")
-    subject = st.text_input("Subject", value="Nutritionist Note")
-    note_text = st.text_area("Nutritionist Note", placeholder="Example: Water intake was low across these days. Please increase water before lunch and dinner.", height=120)
-    submitted = st.form_submit_button("Publish / Send Nutritionist Guidance", use_container_width=True)
-if submitted:
-    try:
-        note = create_structured_nutritionist_note(member_id=member_id, member_name=member.get("name", ""), note_type=note_type, subject=subject, note_text=note_text, from_date=from_date, to_date=to_date, created_by=st.session_state.get("user_email") or st.session_state.get("oidc_email") or "admin")
-        st.success(f"Published guidance {note.get('id')} with {len(note.get('related_dates', []))} linked date(s).")
-    except Exception as exc:
-        st.error(str(exc))
-card_end()
-
-card_start()
-st.subheader("Food Journal Review")
-review_col_1, review_col_2 = st.columns(2)
-with review_col_1:
+with date_col:
     selected_date_obj = st.date_input("Select food log date for review", value=default_date_obj)
 selected_date = selected_date_obj.isoformat() if hasattr(selected_date_obj, "isoformat") else str(selected_date_obj)
-with review_col_2:
-    st.caption("This date selector controls the journal review below. It does not control whether guidance can be one-day, multi-day, or general.")
+
 selected_day = get_daily_food_journal_day(member_id, selected_date) or next((d for d in days if d.get("date") == selected_date), {"date": selected_date, "meals": {}})
 structured_date_notes = notes_for_journal_date(member_id, selected_date, include_archived=True)
 legacy_date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selected_date)
+
 stat_grid([
     {"label": "Member", "value": member.get("name", ""), "note": "Selected member"},
     {"label": "Saved Days", "value": len(days), "note": "Full-day food logs"},
-    {"label": "Review Date", "value": selected_date, "note": "Journal date below"},
+    {"label": "Review Date", "value": selected_date, "note": "Journal date"},
     {"label": "Linked Guidance", "value": len(structured_date_notes) + len(legacy_date_notes), "note": "For review date"},
 ])
-card_end()
 
 card_start()
 st.subheader("All saved days")
@@ -281,6 +239,51 @@ elif legacy_date_notes:
         st.write(row.get("note", ""))
 else:
     st.caption("No structured guidance is linked to this review date yet.")
+card_end()
+
+card_start()
+st.subheader("Add Nutritionist Guidance")
+st.markdown(
+    "<div class='hm-note-boundary'><strong>Guidance composer:</strong> this section is intentionally below the journal review. Use Single Day for a Nutritionist Note on one date, Date Range for multiple dates, or General Guidance for a guidance note linked to its note date.</div>",
+    unsafe_allow_html=True,
+)
+with st.form("h9a4_daily_report_structured_note", clear_on_submit=True):
+    note_type_label = st.radio("Guidance Type", ["Single Day", "Date Range", "General Guidance"], horizontal=True)
+    note_type = {"Single Day": "single_day", "Date Range": "date_range", "General Guidance": "general"}[note_type_label]
+    c1, c2 = st.columns(2)
+    from_date = None
+    to_date = None
+    if note_type == "single_day":
+        with c1:
+            from_date = st.date_input("Note Date", value=selected_date_obj, key="h9a4_single_day_note_date")
+        to_date = from_date
+        subject = "Nutritionist Note"
+        with c2:
+            st.caption("Subject will be saved as Nutritionist Note.")
+    elif note_type == "date_range":
+        with c1:
+            from_date = st.date_input("From Date", value=selected_date_obj, key="h9a4_range_from_date")
+        with c2:
+            to_date = st.date_input("To Date", value=selected_date_obj, key="h9a4_range_to_date")
+        subject = "Nutritionist Note"
+        st.caption("This guidance will be linked under every saved day in the selected From/To range.")
+    else:
+        with c1:
+            from_date = st.date_input("Guidance Date", value=selected_date_obj, key="h9a4_general_guidance_date")
+        to_date = from_date
+        subject = "General Guidance"
+        with c2:
+            st.caption("Subject will be saved as General Guidance and linked to the guidance date.")
+    st.text_input("Subject", value=subject, disabled=True)
+    note_text = st.text_area("Nutritionist Note / General Guidance", placeholder="Example: Water intake was low across these days. Please increase water before lunch and dinner.", height=120)
+    submitted = st.form_submit_button("Publish / Send Guidance", use_container_width=True)
+if submitted:
+    try:
+        note = create_structured_nutritionist_note(member_id=member_id, member_name=member.get("name", ""), note_type=note_type, subject=subject, note_text=note_text, from_date=from_date, to_date=to_date, created_by=st.session_state.get("user_email") or st.session_state.get("oidc_email") or "admin")
+        st.success(f"Published {subject} {note.get('id')} with {len(note.get('related_dates', []))} linked date(s).")
+    except Exception as exc:
+        st.error(str(exc))
+
 if st.button("Send gentle Daily Log reminder", type="secondary", use_container_width=True):
     queue_daily_log_reminder(member_id)
     st.success("Reminder queued for the member and marked for email notification.")
