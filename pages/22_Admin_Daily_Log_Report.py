@@ -244,20 +244,25 @@ card_end()
 card_start()
 st.subheader("Add Nutritionist Guidance")
 st.markdown(
-    "<div class='hm-note-boundary'><strong>Guidance composer:</strong> this section is intentionally below the journal review. Use Single Day for a Nutritionist Note on one date, Date Range for multiple dates, or General Guidance for a guidance note linked to its note date.</div>",
+    "<div class='hm-note-boundary'><strong>Guidance composer:</strong> this section is intentionally below the journal review. Select the guidance type first; the date controls below will change immediately.</div>",
     unsafe_allow_html=True,
 )
+
+note_type_label = st.radio(
+    "Guidance Type",
+    ["Single Day", "Date Range", "General Guidance"],
+    horizontal=True,
+    key="h9a4_guidance_type_selector",
+)
+note_type = {"Single Day": "single_day", "Date Range": "date_range", "General Guidance": "general"}[note_type_label]
+subject = "General Guidance" if note_type == "general" else "Nutritionist Note"
+
 with st.form("h9a4_daily_report_structured_note", clear_on_submit=True):
-    note_type_label = st.radio("Guidance Type", ["Single Day", "Date Range", "General Guidance"], horizontal=True)
-    note_type = {"Single Day": "single_day", "Date Range": "date_range", "General Guidance": "general"}[note_type_label]
     c1, c2 = st.columns(2)
-    from_date = None
-    to_date = None
     if note_type == "single_day":
         with c1:
             from_date = st.date_input("Note Date", value=selected_date_obj, key="h9a4_single_day_note_date")
         to_date = from_date
-        subject = "Nutritionist Note"
         with c2:
             st.caption("Subject will be saved as Nutritionist Note.")
     elif note_type == "date_range":
@@ -265,16 +270,14 @@ with st.form("h9a4_daily_report_structured_note", clear_on_submit=True):
             from_date = st.date_input("From Date", value=selected_date_obj, key="h9a4_range_from_date")
         with c2:
             to_date = st.date_input("To Date", value=selected_date_obj, key="h9a4_range_to_date")
-        subject = "Nutritionist Note"
         st.caption("This guidance will be linked under every saved day in the selected From/To range.")
     else:
         with c1:
             from_date = st.date_input("Guidance Date", value=selected_date_obj, key="h9a4_general_guidance_date")
         to_date = from_date
-        subject = "General Guidance"
         with c2:
             st.caption("Subject will be saved as General Guidance and linked to the guidance date.")
-    st.text_input("Subject", value=subject, disabled=True)
+    st.text_input("Subject", value=subject, disabled=True, key=f"h9a4_subject_{note_type}")
     note_text = st.text_area("Nutritionist Note / General Guidance", placeholder="Example: Water intake was low across these days. Please increase water before lunch and dinner.", height=120)
     submitted = st.form_submit_button("Publish / Send Guidance", use_container_width=True)
 if submitted:
