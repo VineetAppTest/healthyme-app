@@ -320,33 +320,31 @@ def _render_css():
     )
 
 
-def _render_meal_expander(label, key, prior, date_key):
-    summary = _meal_summary(prior)
-    with st.expander(f"{label} — {summary}", expanded=False):
-        time_value = st.time_input(
-            f"{label} time",
-            value=_parse_time(prior.get("time", "")),
-            key=f"{date_key}_{key}_time",
+def _render_meal_fields(label, key, prior, date_key):
+    time_value = st.time_input(
+        f"{label} time",
+        value=_parse_time(prior.get("time", "")),
+        key=f"{date_key}_{key}_time",
+    )
+    food = st.text_area(
+        f"{label} food",
+        value=_clean(prior.get("food") or prior.get("food_log") or prior.get("name")),
+        key=f"{date_key}_{key}_food",
+        height=78,
+    )
+    c1, c2 = st.columns(2)
+    with c1:
+        portion = st.text_input(
+            f"{label} quantity / portion",
+            value=_clean(prior.get("portion_size") or prior.get("quantity")),
+            key=f"{date_key}_{key}_portion",
         )
-        food = st.text_area(
-            f"{label} food",
-            value=_clean(prior.get("food") or prior.get("food_log") or prior.get("name")),
-            key=f"{date_key}_{key}_food",
-            height=78,
+    with c2:
+        mood = st.text_input(
+            f"Mood / energy after {label.lower()}",
+            value=_clean(prior.get("mood_energy") or prior.get("mood") or prior.get("energy")),
+            key=f"{date_key}_{key}_mood",
         )
-        c1, c2 = st.columns(2)
-        with c1:
-            portion = st.text_input(
-                f"{label} quantity / portion",
-                value=_clean(prior.get("portion_size") or prior.get("quantity")),
-                key=f"{date_key}_{key}_portion",
-            )
-        with c2:
-            mood = st.text_input(
-                f"Mood / energy after {label.lower()}",
-                value=_clean(prior.get("mood_energy") or prior.get("mood") or prior.get("energy")),
-                key=f"{date_key}_{key}_mood",
-            )
     return {
         "label": label,
         "time": _time_text(time_value),
@@ -354,6 +352,12 @@ def _render_meal_expander(label, key, prior, date_key):
         "portion_size": _clean(portion),
         "mood_energy": _clean(mood),
     }
+
+
+def _render_meal_expander(label, key, prior, date_key):
+    summary = _meal_summary(prior)
+    with st.expander(f"{label} — {summary}", expanded=False):
+        return _render_meal_fields(label, key, prior, date_key)
 
 
 st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -448,7 +452,8 @@ with st.container(border=True):
             st.caption("No snacking entry added yet.")
         for idx in range(snack_count):
             prior = existing_snacks[idx] if idx < len(existing_snacks) else {}
-            snack_payload = _render_meal_expander(f"Snacking {idx + 1}", f"snacking_{idx + 1}", prior, date_key)
+            st.markdown(f"<div class='hm-h9a4c-cardline'><b>Snacking {idx + 1}</b></div>", unsafe_allow_html=True)
+            snack_payload = _render_meal_fields(f"Snacking {idx + 1}", f"snacking_{idx + 1}", prior, date_key)
             meals_payload[f"snacking_{idx + 1}"] = snack_payload
 
     meals_payload["dinner"] = _render_meal_expander("Dinner", "dinner", existing_meals.get("dinner", {}), date_key)
@@ -495,63 +500,63 @@ with st.container(border=True):
             st.session_state[fluid_count_key] = len(existing_other_fluids)
         fluid_count = int(st.session_state.get(fluid_count_key, 0) or 0)
 
-        with st.expander(f"Other Fluid Intake — {fluid_count}/9 entries", expanded=False):
-            fc1, fc2 = st.columns(2)
-            with fc1:
-                if st.button("+ Add other fluid", key=f"hm_h9a4c_add_fluid_{date_key}", disabled=fluid_count >= 9, use_container_width=True):
-                    st.session_state[fluid_count_key] = min(9, fluid_count + 1)
-                    st.rerun()
-            with fc2:
-                if st.button("Remove last fluid", key=f"hm_h9a4c_remove_fluid_{date_key}", disabled=fluid_count <= 0, use_container_width=True):
-                    st.session_state[fluid_count_key] = max(0, fluid_count - 1)
-                    st.rerun()
+        st.markdown(f"<div class='hm-h9a4c-cardline'><b>Other Fluid Intake</b><br>{fluid_count}/9 entries</div>", unsafe_allow_html=True)
+        fc1, fc2 = st.columns(2)
+        with fc1:
+            if st.button("+ Add other fluid", key=f"hm_h9a4c_add_fluid_{date_key}", disabled=fluid_count >= 9, use_container_width=True):
+                st.session_state[fluid_count_key] = min(9, fluid_count + 1)
+                st.rerun()
+        with fc2:
+            if st.button("Remove last fluid", key=f"hm_h9a4c_remove_fluid_{date_key}", disabled=fluid_count <= 0, use_container_width=True):
+                st.session_state[fluid_count_key] = max(0, fluid_count - 1)
+                st.rerun()
 
-            fluid_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
-            other_fluids = []
-            if fluid_count == 0:
-                st.caption("No other fluid entry added yet.")
-            for idx in range(fluid_count):
-                prior = existing_other_fluids[idx] if idx < len(existing_other_fluids) else {}
-                st.markdown(f"<div class='hm-h9a4c-cardline'><b>Other Fluid {idx + 1}</b></div>", unsafe_allow_html=True)
-                c1, c2 = st.columns(2)
-                with c1:
-                    prior_type = prior.get("type") or "Select"
-                    fluid_type = st.selectbox(
-                        f"Fluid type {idx + 1}",
-                        fluid_options,
-                        index=fluid_options.index(prior_type) if prior_type in fluid_options else 0,
-                        key=f"hm_h9a4c_fluid_type_{date_key}_{idx}",
-                    )
-                with c2:
-                    fluid_time = st.time_input(
-                        f"Fluid timing {idx + 1}",
-                        value=_parse_time(prior.get("time")),
-                        key=f"hm_h9a4c_fluid_time_{date_key}_{idx}",
-                    )
-                q_col, n_col = st.columns(2)
-                with q_col:
-                    quantity = st.text_input(
-                        f"Quantity {idx + 1}",
-                        value=prior.get("quantity", ""),
-                        placeholder="Example: 200 ml",
-                        key=f"hm_h9a4c_fluid_qty_{date_key}_{idx}",
-                    )
-                with n_col:
-                    notes = st.text_input(
-                        f"Notes {idx + 1}",
-                        value=prior.get("notes", ""),
-                        placeholder="Example: unsweetened",
-                        key=f"hm_h9a4c_fluid_notes_{date_key}_{idx}",
-                    )
+        fluid_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
+        other_fluids = []
+        if fluid_count == 0:
+            st.caption("No other fluid entry added yet.")
+        for idx in range(fluid_count):
+            prior = existing_other_fluids[idx] if idx < len(existing_other_fluids) else {}
+            st.markdown(f"<div class='hm-h9a4c-cardline'><b>Other Fluid {idx + 1}</b></div>", unsafe_allow_html=True)
+            c1, c2 = st.columns(2)
+            with c1:
+                prior_type = prior.get("type") or "Select"
+                fluid_type = st.selectbox(
+                    f"Fluid type {idx + 1}",
+                    fluid_options,
+                    index=fluid_options.index(prior_type) if prior_type in fluid_options else 0,
+                    key=f"hm_h9a4c_fluid_type_{date_key}_{idx}",
+                )
+            with c2:
+                fluid_time = st.time_input(
+                    f"Fluid timing {idx + 1}",
+                    value=_parse_time(prior.get("time")),
+                    key=f"hm_h9a4c_fluid_time_{date_key}_{idx}",
+                )
+            q_col, n_col = st.columns(2)
+            with q_col:
+                quantity = st.text_input(
+                    f"Quantity {idx + 1}",
+                    value=prior.get("quantity", ""),
+                    placeholder="Example: 200 ml",
+                    key=f"hm_h9a4c_fluid_qty_{date_key}_{idx}",
+                )
+            with n_col:
+                notes = st.text_input(
+                    f"Notes {idx + 1}",
+                    value=prior.get("notes", ""),
+                    placeholder="Example: unsweetened",
+                    key=f"hm_h9a4c_fluid_notes_{date_key}_{idx}",
+                )
 
-                fluid_row = {
-                    "type": _clean(fluid_type),
-                    "time": _time_text(fluid_time),
-                    "quantity": _clean(quantity),
-                    "notes": _clean(notes),
-                }
-                if _intake_has_data(fluid_row):
-                    other_fluids.append(fluid_row)
+            fluid_row = {
+                "type": _clean(fluid_type),
+                "time": _time_text(fluid_time),
+                "quantity": _clean(quantity),
+                "notes": _clean(notes),
+            }
+            if _intake_has_data(fluid_row):
+                other_fluids.append(fluid_row)
 
 with st.container(border=True):
     existing_poop_rounds = existing.get("poop_rounds")
