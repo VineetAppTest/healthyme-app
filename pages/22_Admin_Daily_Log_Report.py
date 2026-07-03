@@ -46,8 +46,7 @@ st.markdown(
 .utility-bar{margin-top:0!important;}
 .hm-dfjr-no-data-box{background:#E9EEF5;border-radius:10px;padding:16px 18px;color:#334155;margin:.2rem 0 .9rem 0;}
 .hm-full-day-black-row{background:#111827;border-radius:8px;height:12px;margin:.75rem 0 .85rem 0;width:100%;}
-.hm-inline-help{display:flex;align-items:center;min-height:3.2rem;padding-top:1.55rem;color:#6B7280;font-size:.86rem;line-height:1.25;}
-.hm-inline-help b{color:#064E3B;}
+.hm-guidance-heading{font-size:1.15rem;font-weight:900;color:#064E3B;margin:.35rem 0 .75rem 0;}
 </style>
 """,
     unsafe_allow_html=True,
@@ -254,27 +253,22 @@ note_type_label = st.radio(
 )
 note_type = {"Single Day": "single_day", "Date Range": "date_range", "General Guidance": "general"}[note_type_label]
 subject = "General Guidance" if note_type == "general" else "Nutritionist Note"
+st.markdown(f"<div class='hm-guidance-heading'>{subject}</div>", unsafe_allow_html=True)
 
 with st.form("h9a4_daily_report_structured_note", clear_on_submit=True):
-    c1, c2 = st.columns(2)
     if note_type == "single_day":
-        with c1:
-            from_date = st.date_input("Note Date", value=selected_date_obj, key="h9a4_single_day_note_date")
+        from_date = st.date_input("Note Date", value=selected_date_obj, key="h9a4_single_day_note_date")
         to_date = from_date
-        with c2:
-            st.markdown("<div class='hm-inline-help'><b>Subject:</b>&nbsp;Nutritionist Note</div>", unsafe_allow_html=True)
     elif note_type == "date_range":
+        c1, c2 = st.columns(2)
         with c1:
             from_date = st.date_input("From Date", value=selected_date_obj, key="h9a4_range_from_date")
         with c2:
             to_date = st.date_input("To Date", value=selected_date_obj, key="h9a4_range_to_date")
     else:
-        with c1:
-            from_date = st.date_input("Guidance Date", value=selected_date_obj, key="h9a4_general_guidance_date")
+        from_date = st.date_input("Guidance Date", value=selected_date_obj, key="h9a4_general_guidance_date")
         to_date = from_date
-        with c2:
-            st.markdown("<div class='hm-inline-help'><b>Subject:</b>&nbsp;General Guidance</div>", unsafe_allow_html=True)
-    note_text = st.text_area("Nutritionist Note / General Guidance", placeholder="Example: Water intake was low across these days. Please increase water before lunch and dinner.", height=120)
+    note_text = st.text_area(subject, placeholder="Example: Water intake was low across these days. Please increase water before lunch and dinner.", height=120)
     submitted = st.form_submit_button("Publish / Send Guidance", use_container_width=True)
 if submitted:
     try:
