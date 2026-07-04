@@ -1,21 +1,22 @@
 {
-  "build_name": "HealthyMe_Streamlit_Admin_H10_Supabase_Auth_Lifecycle_Audit_Workbench",
-  "version": "v102.4B15S3H10",
-  "updated_on": "2026-07-01T18:35:00Z",
-  "base_build": "v102.4B15S3H6 Supabase Auth Provisioning Hardening",
+  "build_name": "HealthyMe_Streamlit_Admin_H11_Supabase_Auth_Cutover_Readiness",
+  "version": "v102.4B15S3H11",
+  "updated_on": "2026-07-04T00:55:00Z",
+  "base_build": "v102.4B15S3H10 Supabase Auth Lifecycle Audit Workbench",
   "scope": [
-    "Adds H10 Supabase Auth lifecycle audit helpers for active/inactive, duplicate, stale-link, missing-link, and safe-for-mobile-login visibility",
-    "Adds lifecycle audit and orphan/unlinked Auth review tabs to the existing Supabase Auth Provisioning Workbench",
-    "Adds controlled password reset/onboarding dry-run and execution guardrails requiring exact confirmation",
-    "Preserves existing H6 single-member and batch provisioning workflows",
-    "Preserves Auth0 Streamlit admin login and current member/admin business flows"
+    "Adds admin-only H11 Supabase Auth cutover readiness helper checks",
+    "Adds Supabase Auth Cutover Readiness admin page with PASS/WARN/BLOCKED/INFO status summary",
+    "Adds session guardrail matrix for Flutter APK smoke testing without touching Flutter code",
+    "Adds rollback playbook for member-auth rollout pause without Auth0 admin disruption",
+    "Preserves H10 lifecycle audit, orphan review and reset controls"
   ],
   "excluded": [
-    "No Auth0 retirement",
-    "No Flutter UX change",
-    "No H9A Recent Saved Days UI change",
+    "No Flutter code change",
+    "No Food Journal or Recent Saved Days change",
     "No LAF/NSP logic change",
     "No assessment/reporting logic change",
-    "No service-role key exposure to client/member side"
+    "No Auth0 retirement",
+    "No service-role key exposure to client/member side",
+    "No SQL migration required"
   ]
 }
