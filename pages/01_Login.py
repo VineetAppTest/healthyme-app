@@ -42,7 +42,7 @@ if not st.session_state.get("signed_out") and not st.session_state.get("logout_r
     restored = False
     if supabase_auth_enabled():
         restored = restore_supabase_login_from_session()
-    if not restored:
+    if not restored and auth0_enabled():
         restored = restore_login_from_token()
     if restored:
         _route_authenticated_user()
