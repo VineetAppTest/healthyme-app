@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-APP_BUILD_VERSION = "v102.4B15S3H11"
-APP_BUILD_LABEL = "Supabase Auth Cutover Readiness"
+APP_BUILD_VERSION = "v102.4B15S3H12"
+APP_BUILD_LABEL = "Streamlit Supabase Admin Auth Cutover"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 
