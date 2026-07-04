@@ -1,18 +1,19 @@
 {
   "build_name": "HealthyMe_Streamlit_Admin_H11_Supabase_Auth_Cutover_Readiness",
   "version": "v102.4B15S3H11",
-  "updated_on": "2026-07-04T00:55:00Z",
-  "base_build": "v102.4B15S3H10 Supabase Auth Lifecycle Audit Workbench",
+  "updated_on": "2026-07-04T04:10:00Z",
+  "base_build": "v102.4B15H9A4C Streamlit Food Journal Flutter Alignment",
   "scope": [
     "Adds admin-only H11 Supabase Auth cutover readiness helper checks",
     "Adds Supabase Auth Cutover Readiness admin page with PASS/WARN/BLOCKED/INFO status summary",
     "Adds session guardrail matrix for Flutter APK smoke testing without touching Flutter code",
     "Adds rollback playbook for member-auth rollout pause without Auth0 admin disruption",
-    "Preserves H10 lifecycle audit, orphan review and reset controls"
+    "Preserves H10 lifecycle audit, orphan review and reset controls",
+    "Preserves H9A4C Streamlit Food Journal alignment already merged into main"
   ],
   "excluded": [
     "No Flutter code change",
-    "No Food Journal or Recent Saved Days change",
+    "No Food Journal or Recent Saved Days change in H11",
     "No LAF/NSP logic change",
     "No assessment/reporting logic change",
     "No Auth0 retirement",
