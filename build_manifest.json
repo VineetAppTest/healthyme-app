@@ -1,21 +1,23 @@
 {
-  "build_name": "HealthyMe_Streamlit_H9A4C_Food_Journal_Flutter_Alignment",
-  "version": "v102.4B15H9A4C",
-  "updated_on": "2026-07-03T18:10:00Z",
-  "base_build": "v102.4B15H9A4 Admin-Aligned Nutritionist Notes",
+  "build_name": "HealthyMe_Streamlit_Admin_H11_Supabase_Auth_Cutover_Readiness",
+  "version": "v102.4B15S3H11",
+  "updated_on": "2026-07-04T04:10:00Z",
+  "base_build": "v102.4B15H9A4C Streamlit Food Journal Flutter Alignment",
   "scope": [
-    "Aligns Streamlit member Daily Food Journal UX with accepted Flutter food journal behavior",
-    "Adds parent-level expandable/collapsible Hydration section with Water Intake and Other Fluid Intake grouped inside it",
-    "Keeps Bowel Movement and Physical Activity as clean expandable/collapsible sections",
-    "Changes Meal Section helper text when a saved date is being viewed",
-    "Treats default placeholders such as Select as empty and blocks Save Day unless at least one real entry exists",
-    "Prevents Full Day Report and saved-day summaries from displaying placeholder values such as Water: Select",
-    "Uses Streamlit date_input and time_input controls for date and time capture"
+    "Adds admin-only H11 Supabase Auth cutover readiness helper checks",
+    "Adds Supabase Auth Cutover Readiness admin page with PASS/WARN/BLOCKED/INFO status summary",
+    "Adds session guardrail matrix for Flutter APK smoke testing without touching Flutter code",
+    "Adds rollback playbook for member-auth rollout pause without Auth0 admin disruption",
+    "Preserves H10 lifecycle audit, orphan review and reset controls",
+    "Preserves H9A4C Streamlit Food Journal alignment already merged into main"
   ],
   "excluded": [
+    "No Flutter code change",
+    "No Food Journal or Recent Saved Days change in H11",
     "No LAF/NSP logic change",
-    "No assessment/report generation logic change",
-    "No Supabase/Auth0 authentication flow change",
-    "No admin report data-contract change beyond consuming the same cleaned daily journal payload"
+    "No assessment/reporting logic change",
+    "No Auth0 retirement",
+    "No service-role key exposure to client/member side",
+    "No SQL migration required"
   ]
 }
