@@ -1,13 +1,19 @@
 {
-  "build_name": "HealthyMe_Streamlit_Admin_H12",
+  "build_name": "HealthyMe_Streamlit_Admin_H12_Supabase_Cutover_Mode_Hardening",
   "version": "v102.4B15S3H12",
   "updated_on": "2026-07-04T04:35:00Z",
-  "base_build": "v102.4B15S3H11",
+  "base_build": "v102.4B15S3H11 Supabase Auth Cutover Readiness",
   "scope": [
-    "Updates login restore mode handling",
-    "Updates protected page mode handling"
+    "Makes Supabase mode strict for Streamlit session restore",
+    "Updates protected page guards to respect configured mode",
+    "Updates Login page session restore to respect configured mode",
+    "Keeps earlier readiness and lifecycle controls"
   ],
   "excluded": [
-    "No Flutter code change"
+    "No Flutter code change",
+    "No Food Journal change",
+    "No LAF or NSP logic change",
+    "No reporting logic change",
+    "No SQL migration required"
   ]
 }
