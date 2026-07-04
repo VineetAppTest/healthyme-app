@@ -1,7 +1,7 @@
 import streamlit as st
 
 from components.admin_role_model import current_user_is_admin, current_user_is_member
-from components.auth_mode import supabase_auth_enabled
+from components.auth_mode import auth0_enabled, supabase_auth_enabled
 from components.auth_session import restore_login_from_token
 from components.supabase_auth_session import restore_supabase_login_from_session
 
@@ -28,7 +28,7 @@ def restore_any_login():
             restored = restore_supabase_login_from_session()
         except Exception:
             restored = False
-    if not restored:
+    if not restored and auth0_enabled():
         try:
             restored = restore_login_from_token()
         except Exception:
@@ -41,7 +41,7 @@ def _show_access_required(required_role: str = "Admin") -> None:
     st.caption(
         "Protected pages do not start a login/logout flow. Please sign in from the Login page "
         "with the correct role, then use the in-app navigation to open this page. A full browser "
-        "reload or pasted direct URL can start a fresh Streamlit session during Supabase pilot testing."
+        "reload or pasted direct URL can start a fresh Streamlit session during Supabase testing."
     )
     if st.button("Go to Login", key=f"hm_go_to_login_{required_role.lower()}"):
         try:
