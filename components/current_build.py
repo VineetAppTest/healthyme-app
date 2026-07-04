@@ -1,11 +1,15 @@
-"""HealthyMe current build override helpers."""
+"""HealthyMe current build override helpers.
+
+Small, low-risk helper used by Supabase Auth migration pages to show the current
+build label without rewriting the large shared ui_common history file.
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
-APP_BUILD_VERSION = "v102.4B15H9A4"
-APP_BUILD_LABEL = "Admin-Aligned Nutritionist Notes"
+APP_BUILD_VERSION = "v102.4B15S3H11"
+APP_BUILD_LABEL = "Supabase Auth Cutover Readiness"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 
