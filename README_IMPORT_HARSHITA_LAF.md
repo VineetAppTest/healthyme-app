@@ -29,7 +29,7 @@ Streamlit usually drops the numeric page prefix from the URL slug.
 ## Import details
 
 - Member name: Harshita Sajjanhar
-- Temporary email: Test@gmail.com
+- Email: harshita@gmail.com
 - Temporary password reference: Password@123
 - Member active: Yes
 - LAF form date: 2026-01-24
@@ -52,7 +52,7 @@ Streamlit usually drops the numeric page prefix from the URL slug.
 
 This import does not create an Auth0 user. Auth0 must be created or updated manually.
 
-Because `Test@gmail.com` is temporary, when the real email is received, update both:
+Auth0 and HealthyMe backend should use the same email:
 
 1. Auth0 user email/login
 2. HealthyMe backend/app member email
