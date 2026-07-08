@@ -25,7 +25,7 @@ button[data-baseweb="tab"][aria-selected="true"]{background:linear-gradient(135d
 </style>
 """, unsafe_allow_html=True)
 
-start_date = st.date_input("Plan Start Date", value=dt.date.today())
+start_date = st.date_input("Plan Start Date", value=dt.date.today(), key="v2_plan_start_date")
 RECIPES = ["— Select recipe —", "Moong Chilla", "Paneer Salad", "Fruit + Nuts", "Herbal Tea"]
 EXERCISES = ["— Select exercise —", "Brisk Walking", "Cat-Cow Stretch", "Breathing Exercise", "Mobility Flow"]
 SUPPLEMENTS = ["— Select supplement —", "Magnesium", "Vitamin D", "Omega 3", "Probiotic"]
@@ -101,10 +101,10 @@ with t1:
     st.markdown("<div class='hm-card'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-title'>Recommendation Profile Setup</div><div class='hm-sub'>Reusable profile with cloning, categorisation and assignment context.</div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
-    c1.text_input("Profile Name", value="North India · Adult · Weight Management · Vegetarian")
-    c1.selectbox("Clone From Existing Profile", ["New profile", "Profile A", "Profile B", "Profile C"])
-    c2.text_input("Region / Food Culture", value="North India")
-    c2.selectbox("Cycle Rule", ["Weekly cyclical until replaced or stopped"])
+    c1.text_input("Profile Name", value="North India · Adult · Weight Management · Vegetarian", key="v2_profile_name")
+    c1.selectbox("Clone From Existing Profile", ["New profile", "Profile A", "Profile B", "Profile C"], key="v2_clone_from")
+    c2.text_input("Region / Food Culture", value="North India", key="v2_region")
+    c2.selectbox("Cycle Rule", ["Weekly cyclical until replaced or stopped"], key="v2_cycle_rule")
     st.markdown("</div>", unsafe_allow_html=True)
 
 with t2:
@@ -115,8 +115,8 @@ with t2:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
         meal_rows(day, slot)
     c1, c2 = st.columns(2)
-    c1.button("Copy Day 1 to all days", use_container_width=True)
-    c2.button("Copy previous day", use_container_width=True)
+    c1.button("Copy Day 1 to all days", key=f"meal_copy_all_{day}", use_container_width=True)
+    c2.button("Copy previous day", key=f"meal_copy_previous_{day}", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with t3:
@@ -127,9 +127,9 @@ with t3:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
         exercise_rows(day, slot)
     c1, c2, c3 = st.columns(3)
-    c1.button("Copy Day 1 to all days", use_container_width=True)
-    c2.button("Copy previous day", use_container_width=True)
-    c3.button("Add preferred-time slot", use_container_width=True)
+    c1.button("Copy Day 1 to all days", key=f"exercise_copy_all_{day}", use_container_width=True)
+    c2.button("Copy previous day", key=f"exercise_copy_previous_{day}", use_container_width=True)
+    c3.button("Add preferred-time slot", key=f"exercise_add_preferred_time_{day}", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with t4:
@@ -140,9 +140,9 @@ with t4:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
         supplement_rows(day, slot)
     c1, c2, c3 = st.columns(3)
-    c1.button("Copy active regimen", use_container_width=True)
-    c2.button("Copy Day 1 to all days", use_container_width=True)
-    c3.button("Copy previous day", use_container_width=True)
+    c1.button("Copy active regimen", key=f"supp_copy_active_{day}", use_container_width=True)
+    c2.button("Copy Day 1 to all days", key=f"supp_copy_all_{day}", use_container_width=True)
+    c3.button("Copy previous day", key=f"supp_copy_previous_{day}", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with t5:
