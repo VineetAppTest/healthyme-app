@@ -50,6 +50,7 @@ st.markdown(
 .hm-mini-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:#64748B;font-weight:900;}
 .hm-mini-value{font-size:1.05rem;color:#064E3B;font-weight:950;line-height:1.05;margin-top:.12rem;}
 .hm-slot-caption{font-size:.78rem;color:#72551A;font-weight:870;margin:.55rem 0 .25rem;}
+.hm-row-head{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:#64748B;font-weight:950;margin:.12rem 0 -.12rem;}
 .hm-preview-box{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.7rem .8rem;margin:.35rem 0;color:#475569;font-size:.82rem;font-weight:740;line-height:1.38;}
 @media(max-width:900px){.hm-flow{grid-template-columns:repeat(2,minmax(0,1fr));}.hm-mini-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 </style>
@@ -165,25 +166,26 @@ with profile_tab:
 with meal_tab:
     st.markdown("<div class='hm-mock-section'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-mock-title'>Meal Structure · Day 1 to Day 7</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-mock-sub'>A meal can be one recipe or a combination of recipes. Flexible in-between items capture wake-up drinks, tea, snacks, pre/post workout items or notes without data loss.</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-mini-grid'><div class='hm-mini'><div class='hm-mini-label'>Fixed Slots</div><div class='hm-mini-value'>7</div></div><div class='hm-mini'><div class='hm-mini-label'>Flexible Add-ons</div><div class='hm-mini-value'>Yes</div></div><div class='hm-mini'><div class='hm-mini-label'>Recipe Combination</div><div class='hm-mini-value'>Yes</div></div><div class='hm-mini'><div class='hm-mini-label'>Cycle</div><div class='hm-mini-value'>7 Days</div></div></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-mock-sub'>Each meal slot has a constant row structure: Recipe, Portion and Instruction. More food items can be added to create a meal combination.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-mini-grid'><div class='hm-mini'><div class='hm-mini-label'>Fixed Slots</div><div class='hm-mini-value'>7</div></div><div class='hm-mini'><div class='hm-mini-label'>Flexible Add-ons</div><div class='hm-mini-value'>Timed</div></div><div class='hm-mini'><div class='hm-mini-label'>Food Items</div><div class='hm-mini-value'>Add</div></div><div class='hm-mini'><div class='hm-mini-label'>Cycle</div><div class='hm-mini-value'>7 Days</div></div></div>", unsafe_allow_html=True)
     for day_number in range(1, 8):
         with st.expander(_day_label(start_date, day_number), expanded=(day_number == 1)):
             for slot in MEAL_SLOTS:
                 st.markdown(f"<div class='hm-slot-caption'>{slot}</div>", unsafe_allow_html=True)
-                r1, r2, qty, instr = st.columns([0.30, 0.30, 0.16, 0.24], gap="small")
-                with r1:
-                    st.selectbox("Recipe 1", recipe_options, key=f"meal_{day_number}_{slot}_r1", label_visibility="collapsed")
-                with r2:
-                    st.selectbox("Recipe 2 / combination", recipe_options, key=f"meal_{day_number}_{slot}_r2", label_visibility="collapsed")
-                with qty:
-                    st.text_input("Quantity", value="", placeholder="Portion", key=f"meal_{day_number}_{slot}_qty", label_visibility="collapsed")
-                with instr:
-                    st.text_input("Instruction", value="", placeholder="Instruction", key=f"meal_{day_number}_{slot}_inst", label_visibility="collapsed")
+                st.markdown("<div class='hm-row-head'>Recipe · Portion · Instruction</div>", unsafe_allow_html=True)
+                recipe_col, portion_col, instr_col = st.columns([0.44, 0.20, 0.36], gap="small")
+                with recipe_col:
+                    st.selectbox("Recipe", recipe_options, key=f"meal_{day_number}_{slot}_recipe_1", label_visibility="collapsed")
+                with portion_col:
+                    st.text_input("Portion", value="", placeholder="Portion", key=f"meal_{day_number}_{slot}_portion_1", label_visibility="collapsed")
+                with instr_col:
+                    st.text_input("Instruction", value="", placeholder="Instruction", key=f"meal_{day_number}_{slot}_instruction_1", label_visibility="collapsed")
+                st.button("+ Add food item", key=f"meal_{day_number}_{slot}_add_food", use_container_width=True, disabled=True)
             st.markdown("<div class='hm-slot-caption'>Flexible add-on / in-between item</div>", unsafe_allow_html=True)
-            f1, f2, f3, f4 = st.columns([0.16, 0.24, 0.26, 0.34], gap="small")
+            st.markdown("<div class='hm-row-head'>Time · Item Type · Food / Drink Item · Quantity and Instruction</div>", unsafe_allow_html=True)
+            f1, f2, f3, f4 = st.columns([0.18, 0.22, 0.28, 0.32], gap="small")
             with f1:
-                st.text_input("Time", value="", placeholder="e.g. 4:30 PM", key=f"meal_{day_number}_flex_time", label_visibility="collapsed")
+                st.time_input("Time", value=dt.time(16, 30), key=f"meal_{day_number}_flex_time", label_visibility="collapsed")
             with f2:
                 st.selectbox("Type", ["Snack", "Drink", "Recipe", "Note", "Pre-workout", "Post-workout"], key=f"meal_{day_number}_flex_type", label_visibility="collapsed")
             with f3:
@@ -202,36 +204,36 @@ with meal_tab:
 with exercise_tab:
     st.markdown("<div class='hm-mock-section'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-mock-title'>Exercise Regime · Day 1 to Day 7</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-mock-sub'>Each slot supports multiple exercises. Preferred Time handles personalised exercise windows.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-mock-sub'>Each exercise slot has a constant row structure: Exercise, Time, Intensity and Instruction. More workout items can be added to create a regime.</div>", unsafe_allow_html=True)
     for day_number in range(1, 8):
         with st.expander(_day_label(start_date, day_number), expanded=(day_number == 1)):
             rest_day = st.checkbox("Rest day / mobility-only day", key=f"exercise_rest_{day_number}")
             for slot in EXERCISE_SLOTS:
                 st.markdown(f"<div class='hm-slot-caption'>{slot}</div>", unsafe_allow_html=True)
-                e1, e2, dur, intensity, instr = st.columns([0.25, 0.25, 0.13, 0.14, 0.23], gap="small")
-                with e1:
-                    st.selectbox("Exercise 1", exercise_options, key=f"exercise_{day_number}_{slot}_e1", label_visibility="collapsed", disabled=rest_day)
-                with e2:
-                    st.selectbox("Exercise 2", exercise_options, key=f"exercise_{day_number}_{slot}_e2", label_visibility="collapsed", disabled=rest_day)
-                with dur:
-                    st.text_input("Duration", value="", placeholder="30 min", key=f"exercise_{day_number}_{slot}_dur", label_visibility="collapsed", disabled=rest_day)
-                with intensity:
-                    st.selectbox("Intensity", INTENSITY_OPTIONS, key=f"exercise_{day_number}_{slot}_intensity", label_visibility="collapsed", disabled=rest_day)
-                with instr:
-                    st.text_input("Instruction", value="", placeholder="Instruction", key=f"exercise_{day_number}_{slot}_inst", label_visibility="collapsed", disabled=rest_day)
+                st.markdown("<div class='hm-row-head'>Exercise · Time · Intensity · Instruction</div>", unsafe_allow_html=True)
+                ex_col, time_col, intensity_col, instr_col = st.columns([0.40, 0.18, 0.18, 0.24], gap="small")
+                with ex_col:
+                    st.selectbox("Exercise", exercise_options, key=f"exercise_{day_number}_{slot}_exercise_1", label_visibility="collapsed", disabled=rest_day)
+                with time_col:
+                    st.time_input("Time", value=dt.time(7, 0) if slot == "Morning" else dt.time(18, 0), key=f"exercise_{day_number}_{slot}_time_1", label_visibility="collapsed", disabled=rest_day)
+                with intensity_col:
+                    st.selectbox("Intensity", INTENSITY_OPTIONS, key=f"exercise_{day_number}_{slot}_intensity_1", label_visibility="collapsed", disabled=rest_day)
+                with instr_col:
+                    st.text_input("Instruction", value="", placeholder="Instruction", key=f"exercise_{day_number}_{slot}_instruction_1", label_visibility="collapsed", disabled=rest_day)
+                st.button("+ Add workout item", key=f"exercise_{day_number}_{slot}_add_workout", use_container_width=True, disabled=True)
             b1, b2, b3 = st.columns(3)
             with b1:
                 st.button("Copy Day 1 to all days", key=f"exercise_copy_all_{day_number}", use_container_width=True, disabled=True)
             with b2:
                 st.button("Copy previous day", key=f"exercise_copy_prev_{day_number}", use_container_width=True, disabled=True)
             with b3:
-                st.button("Add exercise row", key=f"exercise_add_row_{day_number}", use_container_width=True, disabled=True)
+                st.button("Add preferred-time slot", key=f"exercise_add_slot_{day_number}", use_container_width=True, disabled=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with supplement_tab:
     st.markdown("<div class='hm-mock-section'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-mock-title'>Supplement Regime · Day 1 to Day 7</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-mock-sub'>Supplements can be pulled from active member regimen and overridden inside this weekly profile/snapshot.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-mock-sub'>Each supplement slot uses the same pattern: Supplement, Time, Dosage/Frequency and Instruction. Active regimen can be pulled and overridden later.</div>", unsafe_allow_html=True)
     active_supps = []
     if member_options:
         active_supps = list_active_member_supplements(member_options.get(selected_member, {}).get("id", ""))
@@ -244,24 +246,28 @@ with supplement_tab:
         with st.expander(_day_label(start_date, day_number), expanded=(day_number == 1)):
             for slot in SUPPLEMENT_SLOTS:
                 st.markdown(f"<div class='hm-slot-caption'>{slot}</div>", unsafe_allow_html=True)
-                s1, dose, freq, timing, instr = st.columns([0.30, 0.15, 0.15, 0.16, 0.24], gap="small")
-                with s1:
-                    st.selectbox("Supplement", supp_options, key=f"supp_{day_number}_{slot}_s1", label_visibility="collapsed")
-                with dose:
-                    st.text_input("Dosage", value="", placeholder="400 mg", key=f"supp_{day_number}_{slot}_dose", label_visibility="collapsed")
-                with freq:
-                    st.selectbox("Frequency", FREQUENCY_OPTIONS, key=f"supp_{day_number}_{slot}_freq", label_visibility="collapsed")
-                with timing:
-                    st.text_input("Timing", value=slot if slot != "Preferred Time" else "", placeholder="Timing", key=f"supp_{day_number}_{slot}_timing", label_visibility="collapsed")
-                with instr:
-                    st.text_input("Instruction", value="", placeholder="With food / after dinner", key=f"supp_{day_number}_{slot}_inst", label_visibility="collapsed")
+                st.markdown("<div class='hm-row-head'>Supplement · Time · Dosage/Frequency · Instruction</div>", unsafe_allow_html=True)
+                supp_col, time_col, dose_freq_col, instr_col = st.columns([0.36, 0.16, 0.24, 0.24], gap="small")
+                with supp_col:
+                    st.selectbox("Supplement", supp_options, key=f"supp_{day_number}_{slot}_supplement_1", label_visibility="collapsed")
+                with time_col:
+                    st.time_input("Time", value=dt.time(8, 0), key=f"supp_{day_number}_{slot}_time_1", label_visibility="collapsed")
+                with dose_freq_col:
+                    dc1, dc2 = st.columns(2, gap="small")
+                    with dc1:
+                        st.text_input("Dosage", value="", placeholder="400 mg", key=f"supp_{day_number}_{slot}_dose_1", label_visibility="collapsed")
+                    with dc2:
+                        st.selectbox("Frequency", FREQUENCY_OPTIONS, key=f"supp_{day_number}_{slot}_freq_1", label_visibility="collapsed")
+                with instr_col:
+                    st.text_input("Instruction", value="", placeholder="With food / after dinner", key=f"supp_{day_number}_{slot}_instruction_1", label_visibility="collapsed")
+                st.button("+ Add supplement item", key=f"supp_{day_number}_{slot}_add_item", use_container_width=True, disabled=True)
             b1, b2, b3 = st.columns(3)
             with b1:
                 st.button("Copy active regimen", key=f"supp_copy_active_{day_number}", use_container_width=True, disabled=True)
             with b2:
                 st.button("Copy Day 1 to all days", key=f"supp_copy_all_{day_number}", use_container_width=True, disabled=True)
             with b3:
-                st.button("Add supplement row", key=f"supp_add_row_{day_number}", use_container_width=True, disabled=True)
+                st.button("Add preferred-time slot", key=f"supp_add_slot_{day_number}", use_container_width=True, disabled=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with preview_tab:
@@ -289,16 +295,18 @@ with preview_tab:
 weekly_meal_structure
   day_1 ... day_7
   fixed_slots + flexible_add_on_slots
-  each meal can contain one recipe or recipe combination
+  meal_items: recipe, portion, instruction
+  add_food_item supports recipe combinations
 
 weekly_exercise_regime
   day_1 ... day_7
   morning/evening/preferred_time
-  multiple exercises allowed
+  workout_items: exercise, time, intensity, instruction
+  multiple workout items allowed
 
 weekly_supplement_regime
   day_1 ... day_7
-  dosage/frequency/timing/instruction
+  supplement_items: supplement, time, dosage, frequency, instruction
   supplement override allowed
 
 member_assignment
@@ -311,9 +319,9 @@ member_consumption
     )
     st.markdown("#### Review checkpoints before final coding")
     st.checkbox("Admin can create/clone Recommendation Profile without overwriting existing profile", key="mock_check_1")
-    st.checkbox("Meal structure captures fixed meals and in-between items without forcing data into wrong slots", key="mock_check_2")
-    st.checkbox("Exercise regime supports multiple exercises and rest-day guidance", key="mock_check_3")
-    st.checkbox("Supplement regime supports active-regimen pull plus weekly override", key="mock_check_4")
+    st.checkbox("Meal structure captures fixed meals and flexible timed in-between items", key="mock_check_2")
+    st.checkbox("Exercise regime uses exercise/time/intensity/instruction and supports multiple workout items", key="mock_check_3")
+    st.checkbox("Supplement regime uses supplement/time/dosage/frequency/instruction with override", key="mock_check_4")
     st.checkbox("Published snapshot can feed both Web Today’s Journey and Flutter My Recommendations", key="mock_check_5")
     st.checkbox("No data loss between admin, web member and Flutter member contracts", key="mock_check_6")
     st.markdown("</div>", unsafe_allow_html=True)
