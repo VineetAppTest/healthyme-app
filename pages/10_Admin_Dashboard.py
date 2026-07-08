@@ -199,6 +199,7 @@ with right:
         nav_cell("Questions", "pages/20_Admin_Question_Manager.py", "dash_questions_v102_4b4")
         nav_cell("Responses", "pages/21_Admin_Response_Editor.py", "dash_responses_v102_4b4")
         nav_cell("Recommendations Share", "pages/35_Admin_Recommendations_Share.py", "dash_recommendations_share_v102_4b4")
+        nav_cell("Unified Recommendations", "pages/36_Admin_Unified_Recommendations.py", "dash_unified_recommendations_h9a5e")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with st.container(border=True):
@@ -233,3 +234,4 @@ inject_keepalive_guard_v96_11()
 # v102.4B4: Premium bordered section cards added to Admin Dashboard.
 # v102.4B14B: Communication & Scheduling section swapped with Content & Allocation.
 # v102.4B15S3H4: Added dashboard buttons for Supabase Auth tools because Streamlit sidebar/menu remains intentionally hidden.
+# H9A.5E: Added Unified Recommendations contract workbench entry point.
