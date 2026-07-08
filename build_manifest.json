@@ -1,19 +1,20 @@
 {
-  "build_name": "HealthyMe_Streamlit_Admin_H12_Supabase_Cutover_Mode_Hardening",
-  "version": "v102.4B15S3H12",
-  "updated_on": "2026-07-04T04:35:00Z",
-  "base_build": "v102.4B15S3H11 Supabase Auth Cutover Readiness",
+  "build_name": "HealthyMe_Streamlit_Admin_H9A5E_Unified_Recommendation_Allocation_Contract",
+  "version": "v102.4B15H9A5E",
+  "updated_on": "2026-07-08T10:00:00Z",
+  "base_build": "v102.4B15S3H12 Supabase Cutover Mode Hardening",
   "scope": [
-    "Makes Supabase mode strict for Streamlit session restore",
-    "Updates protected page guards to respect configured mode",
-    "Updates Login page session restore to respect configured mode",
-    "Keeps earlier readiness and lifecycle controls"
+    "Adds unified recommendation allocation contract helpers",
+    "Adds admin Unified Recommendations workbench",
+    "Mirrors recipe and exercise CSV repositories into app-state keys",
+    "Migrates legacy direct recipe/exercise assignments into canonical member allocation layers",
+    "Publishes recommendation_shares with resolved recipe/exercise IDs and names for member consumption"
   ],
   "excluded": [
     "No Flutter code change",
-    "No Food Journal change",
     "No LAF or NSP logic change",
-    "No reporting logic change",
-    "No SQL migration required"
+    "No Auth0 or Supabase Auth behavior change",
+    "No SQL schema migration required",
+    "No report engine change"
   ]
 }
