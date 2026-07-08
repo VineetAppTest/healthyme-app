@@ -7,4 +7,4 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-st.switch_page("pages/39_Admin_Recommendation_Profile_Builder_Mockup_V3.py")
+st.switch_page("pages/40_Admin_Recommendation_Profile_Builder_Mockup_V4.py")
