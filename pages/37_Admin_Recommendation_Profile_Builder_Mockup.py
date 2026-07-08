@@ -52,6 +52,7 @@ st.markdown(
 .hm-slot-caption{font-size:.78rem;color:#72551A;font-weight:870;margin:.55rem 0 .25rem;}
 .hm-row-head{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:#64748B;font-weight:950;margin:.12rem 0 -.12rem;}
 .hm-preview-box{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.7rem .8rem;margin:.35rem 0;color:#475569;font-size:.82rem;font-weight:740;line-height:1.38;}
+.hm-day-control{border:1px solid #E3C98E;background:#FFFFFF;border-radius:16px;padding:.65rem .75rem;margin:.45rem 0 .8rem;}
 @media(max-width:900px){.hm-flow{grid-template-columns:repeat(2,minmax(0,1fr));}.hm-mini-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 </style>
 """,
@@ -92,7 +93,36 @@ def _resource_label(row, fallback):
 
 def _day_label(start_date, day_number):
     day = start_date + dt.timedelta(days=day_number - 1)
-    return f"Day {day_number} · {day.strftime('%a, %d %b %Y')}"
+    return f"Day {day_number} · {day.strftime('%a, %d %b')}"
+
+
+def _day_options(start_date):
+    return [_day_label(start_date, day_number) for day_number in range(1, 8)]
+
+
+def _selected_day(label, start_date):
+    options = _day_options(start_date)
+    try:
+        return options.index(label) + 1
+    except ValueError:
+        return 1
+
+
+def _count_key(kind, day_number, slot):
+    safe_slot = str(slot).replace(" ", "_").replace("/", "_").replace("-", "_")
+    return f"mock_count_{kind}_{day_number}_{safe_slot}"
+
+
+def _get_count(kind, day_number, slot, default=1):
+    key = _count_key(kind, day_number, slot)
+    if key not in st.session_state:
+        st.session_state[key] = default
+    return int(st.session_state[key])
+
+
+def _add_item(kind, day_number, slot):
+    key = _count_key(kind, day_number, slot)
+    st.session_state[key] = int(st.session_state.get(key, 1)) + 1
 
 
 def _render_flow():
@@ -113,7 +143,7 @@ def _render_flow():
 st.markdown(
     """
 <div class='hm-mock-alert'>
-<b>Mock-up only.</b> This page does not publish or overwrite member recommendation data. It is for structure review before implementation.
+<b>Mock-up only.</b> Buttons now add visible rows in this session so the structure can be tested. This page still does not save, publish or overwrite member recommendation data.
 </div>
 """,
     unsafe_allow_html=True,
@@ -167,67 +197,82 @@ with meal_tab:
     st.markdown("<div class='hm-mock-section'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-mock-title'>Meal Structure · Day 1 to Day 7</div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-mock-sub'>Each meal slot has a constant row structure: Recipe, Portion and Instruction. More food items can be added to create a meal combination.</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-mini-grid'><div class='hm-mini'><div class='hm-mini-label'>Fixed Slots</div><div class='hm-mini-value'>7</div></div><div class='hm-mini'><div class='hm-mini-label'>Flexible Add-ons</div><div class='hm-mini-value'>Timed</div></div><div class='hm-mini'><div class='hm-mini-label'>Food Items</div><div class='hm-mini-value'>Add</div></div><div class='hm-mini'><div class='hm-mini-label'>Cycle</div><div class='hm-mini-value'>7 Days</div></div></div>", unsafe_allow_html=True)
-    for day_number in range(1, 8):
-        with st.expander(_day_label(start_date, day_number), expanded=(day_number == 1)):
-            for slot in MEAL_SLOTS:
-                st.markdown(f"<div class='hm-slot-caption'>{slot}</div>", unsafe_allow_html=True)
-                st.markdown("<div class='hm-row-head'>Recipe · Portion · Instruction</div>", unsafe_allow_html=True)
-                recipe_col, portion_col, instr_col = st.columns([0.44, 0.20, 0.36], gap="small")
-                with recipe_col:
-                    st.selectbox("Recipe", recipe_options, key=f"meal_{day_number}_{slot}_recipe_1", label_visibility="collapsed")
-                with portion_col:
-                    st.text_input("Portion", value="", placeholder="Portion", key=f"meal_{day_number}_{slot}_portion_1", label_visibility="collapsed")
-                with instr_col:
-                    st.text_input("Instruction", value="", placeholder="Instruction", key=f"meal_{day_number}_{slot}_instruction_1", label_visibility="collapsed")
-                st.button("+ Add food item", key=f"meal_{day_number}_{slot}_add_food", use_container_width=True, disabled=True)
-            st.markdown("<div class='hm-slot-caption'>Flexible add-on / in-between item</div>", unsafe_allow_html=True)
-            st.markdown("<div class='hm-row-head'>Time · Item Type · Food / Drink Item · Quantity and Instruction</div>", unsafe_allow_html=True)
-            f1, f2, f3, f4 = st.columns([0.18, 0.22, 0.28, 0.32], gap="small")
-            with f1:
-                st.time_input("Time", value=dt.time(16, 30), key=f"meal_{day_number}_flex_time", label_visibility="collapsed")
-            with f2:
-                st.selectbox("Type", ["Snack", "Drink", "Recipe", "Note", "Pre-workout", "Post-workout"], key=f"meal_{day_number}_flex_type", label_visibility="collapsed")
-            with f3:
-                st.text_input("Item", value="", placeholder="Tea / fruit / nuts / recipe", key=f"meal_{day_number}_flex_item", label_visibility="collapsed")
-            with f4:
-                st.text_input("Instruction", value="", placeholder="Quantity and instruction", key=f"meal_{day_number}_flex_inst", label_visibility="collapsed")
-            b1, b2, b3 = st.columns(3)
-            with b1:
-                st.button("Copy Day 1 to all days", key=f"meal_copy_all_{day_number}", use_container_width=True, disabled=True)
-            with b2:
-                st.button("Copy previous day", key=f"meal_copy_prev_{day_number}", use_container_width=True, disabled=True)
-            with b3:
-                st.button("Add another flexible item", key=f"meal_add_flex_{day_number}", use_container_width=True, disabled=True)
+    st.markdown("<div class='hm-mini-grid'><div class='hm-mini'><div class='hm-mini-label'>Fixed Slots</div><div class='hm-mini-value'>7</div></div><div class='hm-mini'><div class='hm-mini-label'>Flexible Add-ons</div><div class='hm-mini-value'>Timed</div></div><div class='hm-mini'><div class='hm-mini-label'>Food Items</div><div class='hm-mini-value'>Active</div></div><div class='hm-mini'><div class='hm-mini-label'>Cycle</div><div class='hm-mini-value'>7 Days</div></div></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-day-control'><b>Select day to edit</b><br><span style='color:#64748B;font-size:.8rem;font-weight:720;'>This replaces unclear expand/collapse behaviour. Implementation will still store all seven days.</span></div>", unsafe_allow_html=True)
+    meal_day_label = st.radio("Meal day", _day_options(start_date), horizontal=True, key="meal_day_selector", label_visibility="collapsed")
+    day_number = _selected_day(meal_day_label, start_date)
+    st.markdown(f"#### {_day_label(start_date, day_number)}")
+    for slot in MEAL_SLOTS:
+        st.markdown(f"<div class='hm-slot-caption'>{slot}</div>", unsafe_allow_html=True)
+        item_count = _get_count("meal", day_number, slot)
+        for item_index in range(1, item_count + 1):
+            st.markdown("<div class='hm-row-head'>Recipe · Portion · Instruction</div>", unsafe_allow_html=True)
+            recipe_col, portion_col, instr_col = st.columns([0.44, 0.20, 0.36], gap="small")
+            with recipe_col:
+                st.selectbox("Recipe", recipe_options, key=f"meal_{day_number}_{slot}_recipe_{item_index}", label_visibility="collapsed")
+            with portion_col:
+                st.text_input("Portion", value="", placeholder="Portion", key=f"meal_{day_number}_{slot}_portion_{item_index}", label_visibility="collapsed")
+            with instr_col:
+                st.text_input("Instruction", value="", placeholder="Instruction", key=f"meal_{day_number}_{slot}_instruction_{item_index}", label_visibility="collapsed")
+        if st.button("+ Add food item", key=f"meal_{day_number}_{slot}_add_food", use_container_width=True):
+            _add_item("meal", day_number, slot)
+            st.rerun()
+    st.markdown("<div class='hm-slot-caption'>Flexible add-on / in-between item</div>", unsafe_allow_html=True)
+    flex_count = _get_count("meal_flex", day_number, "flexible_item")
+    for item_index in range(1, flex_count + 1):
+        st.markdown("<div class='hm-row-head'>Time · Item Type · Food / Drink Item · Quantity and Instruction</div>", unsafe_allow_html=True)
+        f1, f2, f3, f4 = st.columns([0.18, 0.22, 0.28, 0.32], gap="small")
+        with f1:
+            st.time_input("Time", value=dt.time(16, 30), key=f"meal_{day_number}_flex_time_{item_index}", label_visibility="collapsed")
+        with f2:
+            st.selectbox("Type", ["Snack", "Drink", "Recipe", "Note", "Pre-workout", "Post-workout"], key=f"meal_{day_number}_flex_type_{item_index}", label_visibility="collapsed")
+        with f3:
+            st.text_input("Item", value="", placeholder="Tea / fruit / nuts / recipe", key=f"meal_{day_number}_flex_item_{item_index}", label_visibility="collapsed")
+        with f4:
+            st.text_input("Instruction", value="", placeholder="Quantity and instruction", key=f"meal_{day_number}_flex_inst_{item_index}", label_visibility="collapsed")
+    if st.button("+ Add another flexible item", key=f"meal_add_flex_{day_number}", use_container_width=True):
+        _add_item("meal_flex", day_number, "flexible_item")
+        st.rerun()
+    b1, b2 = st.columns(2)
+    with b1:
+        st.button("Copy Day 1 to all days", key=f"meal_copy_all_{day_number}", use_container_width=True, disabled=True)
+    with b2:
+        st.button("Copy previous day", key=f"meal_copy_prev_{day_number}", use_container_width=True, disabled=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with exercise_tab:
     st.markdown("<div class='hm-mock-section'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-mock-title'>Exercise Regime · Day 1 to Day 7</div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-mock-sub'>Each exercise slot has a constant row structure: Exercise, Time, Intensity and Instruction. More workout items can be added to create a regime.</div>", unsafe_allow_html=True)
-    for day_number in range(1, 8):
-        with st.expander(_day_label(start_date, day_number), expanded=(day_number == 1)):
-            rest_day = st.checkbox("Rest day / mobility-only day", key=f"exercise_rest_{day_number}")
-            for slot in EXERCISE_SLOTS:
-                st.markdown(f"<div class='hm-slot-caption'>{slot}</div>", unsafe_allow_html=True)
-                st.markdown("<div class='hm-row-head'>Exercise · Time · Intensity · Instruction</div>", unsafe_allow_html=True)
-                ex_col, time_col, intensity_col, instr_col = st.columns([0.40, 0.18, 0.18, 0.24], gap="small")
-                with ex_col:
-                    st.selectbox("Exercise", exercise_options, key=f"exercise_{day_number}_{slot}_exercise_1", label_visibility="collapsed", disabled=rest_day)
-                with time_col:
-                    st.time_input("Time", value=dt.time(7, 0) if slot == "Morning" else dt.time(18, 0), key=f"exercise_{day_number}_{slot}_time_1", label_visibility="collapsed", disabled=rest_day)
-                with intensity_col:
-                    st.selectbox("Intensity", INTENSITY_OPTIONS, key=f"exercise_{day_number}_{slot}_intensity_1", label_visibility="collapsed", disabled=rest_day)
-                with instr_col:
-                    st.text_input("Instruction", value="", placeholder="Instruction", key=f"exercise_{day_number}_{slot}_instruction_1", label_visibility="collapsed", disabled=rest_day)
-                st.button("+ Add workout item", key=f"exercise_{day_number}_{slot}_add_workout", use_container_width=True, disabled=True)
-            b1, b2, b3 = st.columns(3)
-            with b1:
-                st.button("Copy Day 1 to all days", key=f"exercise_copy_all_{day_number}", use_container_width=True, disabled=True)
-            with b2:
-                st.button("Copy previous day", key=f"exercise_copy_prev_{day_number}", use_container_width=True, disabled=True)
-            with b3:
-                st.button("Add preferred-time slot", key=f"exercise_add_slot_{day_number}", use_container_width=True, disabled=True)
+    st.markdown("<div class='hm-day-control'><b>Select day to edit</b><br><span style='color:#64748B;font-size:.8rem;font-weight:720;'>Clear day buttons replace hidden expander arrows.</span></div>", unsafe_allow_html=True)
+    exercise_day_label = st.radio("Exercise day", _day_options(start_date), horizontal=True, key="exercise_day_selector", label_visibility="collapsed")
+    day_number = _selected_day(exercise_day_label, start_date)
+    st.markdown(f"#### {_day_label(start_date, day_number)}")
+    rest_day = st.checkbox("Rest day / mobility-only day", key=f"exercise_rest_{day_number}")
+    for slot in EXERCISE_SLOTS:
+        st.markdown(f"<div class='hm-slot-caption'>{slot}</div>", unsafe_allow_html=True)
+        item_count = _get_count("exercise", day_number, slot)
+        for item_index in range(1, item_count + 1):
+            st.markdown("<div class='hm-row-head'>Exercise · Time · Intensity · Instruction</div>", unsafe_allow_html=True)
+            ex_col, time_col, intensity_col, instr_col = st.columns([0.40, 0.18, 0.18, 0.24], gap="small")
+            with ex_col:
+                st.selectbox("Exercise", exercise_options, key=f"exercise_{day_number}_{slot}_exercise_{item_index}", label_visibility="collapsed", disabled=rest_day)
+            with time_col:
+                st.time_input("Time", value=dt.time(7, 0) if slot == "Morning" else dt.time(18, 0), key=f"exercise_{day_number}_{slot}_time_{item_index}", label_visibility="collapsed", disabled=rest_day)
+            with intensity_col:
+                st.selectbox("Intensity", INTENSITY_OPTIONS, key=f"exercise_{day_number}_{slot}_intensity_{item_index}", label_visibility="collapsed", disabled=rest_day)
+            with instr_col:
+                st.text_input("Instruction", value="", placeholder="Instruction", key=f"exercise_{day_number}_{slot}_instruction_{item_index}", label_visibility="collapsed", disabled=rest_day)
+        if st.button("+ Add workout item", key=f"exercise_{day_number}_{slot}_add_workout", use_container_width=True, disabled=rest_day):
+            _add_item("exercise", day_number, slot)
+            st.rerun()
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        st.button("Copy Day 1 to all days", key=f"exercise_copy_all_{day_number}", use_container_width=True, disabled=True)
+    with b2:
+        st.button("Copy previous day", key=f"exercise_copy_prev_{day_number}", use_container_width=True, disabled=True)
+    with b3:
+        st.button("Add preferred-time slot", key=f"exercise_add_slot_{day_number}", use_container_width=True, disabled=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with supplement_tab:
@@ -242,38 +287,53 @@ with supplement_tab:
     ]
     if not active_supps:
         st.info("No active member supplements found. Mock-up still shows the override structure below.")
-    for day_number in range(1, 8):
-        with st.expander(_day_label(start_date, day_number), expanded=(day_number == 1)):
-            for slot in SUPPLEMENT_SLOTS:
-                st.markdown(f"<div class='hm-slot-caption'>{slot}</div>", unsafe_allow_html=True)
-                st.markdown("<div class='hm-row-head'>Supplement · Time · Dosage/Frequency · Instruction</div>", unsafe_allow_html=True)
-                supp_col, time_col, dose_freq_col, instr_col = st.columns([0.36, 0.16, 0.24, 0.24], gap="small")
-                with supp_col:
-                    st.selectbox("Supplement", supp_options, key=f"supp_{day_number}_{slot}_supplement_1", label_visibility="collapsed")
-                with time_col:
-                    st.time_input("Time", value=dt.time(8, 0), key=f"supp_{day_number}_{slot}_time_1", label_visibility="collapsed")
-                with dose_freq_col:
-                    dc1, dc2 = st.columns(2, gap="small")
-                    with dc1:
-                        st.text_input("Dosage", value="", placeholder="400 mg", key=f"supp_{day_number}_{slot}_dose_1", label_visibility="collapsed")
-                    with dc2:
-                        st.selectbox("Frequency", FREQUENCY_OPTIONS, key=f"supp_{day_number}_{slot}_freq_1", label_visibility="collapsed")
-                with instr_col:
-                    st.text_input("Instruction", value="", placeholder="With food / after dinner", key=f"supp_{day_number}_{slot}_instruction_1", label_visibility="collapsed")
-                st.button("+ Add supplement item", key=f"supp_{day_number}_{slot}_add_item", use_container_width=True, disabled=True)
-            b1, b2, b3 = st.columns(3)
-            with b1:
-                st.button("Copy active regimen", key=f"supp_copy_active_{day_number}", use_container_width=True, disabled=True)
-            with b2:
-                st.button("Copy Day 1 to all days", key=f"supp_copy_all_{day_number}", use_container_width=True, disabled=True)
-            with b3:
-                st.button("Add preferred-time slot", key=f"supp_add_slot_{day_number}", use_container_width=True, disabled=True)
+    st.markdown("<div class='hm-day-control'><b>Select day to edit</b><br><span style='color:#64748B;font-size:.8rem;font-weight:720;'>Clear day buttons replace hidden expander arrows.</span></div>", unsafe_allow_html=True)
+    supplement_day_label = st.radio("Supplement day", _day_options(start_date), horizontal=True, key="supplement_day_selector", label_visibility="collapsed")
+    day_number = _selected_day(supplement_day_label, start_date)
+    st.markdown(f"#### {_day_label(start_date, day_number)}")
+    for slot in SUPPLEMENT_SLOTS:
+        st.markdown(f"<div class='hm-slot-caption'>{slot}</div>", unsafe_allow_html=True)
+        item_count = _get_count("supplement", day_number, slot)
+        for item_index in range(1, item_count + 1):
+            st.markdown("<div class='hm-row-head'>Supplement · Time · Dosage/Frequency · Instruction</div>", unsafe_allow_html=True)
+            supp_col, time_col, dose_freq_col, instr_col = st.columns([0.36, 0.16, 0.24, 0.24], gap="small")
+            with supp_col:
+                st.selectbox("Supplement", supp_options, key=f"supp_{day_number}_{slot}_supplement_{item_index}", label_visibility="collapsed")
+            with time_col:
+                st.time_input("Time", value=dt.time(8, 0), key=f"supp_{day_number}_{slot}_time_{item_index}", label_visibility="collapsed")
+            with dose_freq_col:
+                dc1, dc2 = st.columns(2, gap="small")
+                with dc1:
+                    st.text_input("Dosage", value="", placeholder="400 mg", key=f"supp_{day_number}_{slot}_dose_{item_index}", label_visibility="collapsed")
+                with dc2:
+                    st.selectbox("Frequency", FREQUENCY_OPTIONS, key=f"supp_{day_number}_{slot}_freq_{item_index}", label_visibility="collapsed")
+            with instr_col:
+                st.text_input("Instruction", value="", placeholder="With food / after dinner", key=f"supp_{day_number}_{slot}_instruction_{item_index}", label_visibility="collapsed")
+        if st.button("+ Add supplement item", key=f"supp_{day_number}_{slot}_add_item", use_container_width=True):
+            _add_item("supplement", day_number, slot)
+            st.rerun()
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        st.button("Copy active regimen", key=f"supp_copy_active_{day_number}", use_container_width=True, disabled=True)
+    with b2:
+        st.button("Copy Day 1 to all days", key=f"supp_copy_all_{day_number}", use_container_width=True, disabled=True)
+    with b3:
+        st.button("Add preferred-time slot", key=f"supp_add_slot_{day_number}", use_container_width=True, disabled=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with preview_tab:
     st.markdown("<div class='hm-mock-section'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-mock-title'>Preview & End-to-End Flow Review</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-mock-sub'>Before implementation, this section is used to verify that admin, web member and Flutter member will read the same contract without data loss.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-mock-sub'>Objective: freeze the data contract before implementation so Admin, Web Member and Flutter Member use the same weekly recommendation profile without loose ends or data loss.</div>", unsafe_allow_html=True)
+    st.markdown(
+        """
+<div class='hm-preview-box'>
+<b>This is not a member-facing screen.</b><br>
+It is a review gate. It confirms what will be saved, what will be published, and how the same active weekly cycle will be consumed by Web Today’s Journey and Flutter My Recommendations.
+</div>
+""",
+        unsafe_allow_html=True,
+    )
     st.markdown(
         f"""
 <div class='hm-preview-box'>
