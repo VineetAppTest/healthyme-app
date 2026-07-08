@@ -1,3 +1,10 @@
+# v100.19 - LAF Member UX Navigation + Performance Hotfix
+
+- Reworked LAF bottom navigation: Previous left, Next/Submit right, Back to Home centered below.
+- Tightened member page shell spacing above signed-in/logout row and standardized gap to hero banner.
+- Reduced LAF next/previous delay by avoiding duplicate autosave/profile-sync writes and replacing the heavy multi-timeout scroll script.
+- Disabled visible button transform/ghosting on LAF navigation during rerun.
+
 # HealthyMe v97.10 - Daily Log Header Gap / Recent Filter Hard Fix
 
 - Removed accumulated empty CSS/style blocks between the page header and Food Journal Date row.
@@ -419,3 +426,12 @@
 - Made dependent-field validation ignore removed/stale LAF questions, preventing old fields such as avoid_foods_why from blocking submission when not present in the active LAF config.
 - Improved dependent validation messages to show page, section, and question label where available.
 - Spaced the bottom Previous/Next/Submit action row so primary actions sit cleanly at opposite sides.
+
+
+## v100.20 - LAF Member Web Navigation + Spacing Repatch
+
+- Re-applied the LAF bottom navigation as a two-row structure: Previous/Next or Submit on first row, Back to Home centered on second row.
+- Added hard page-level and global CSS overrides to reduce the top blank space above the signed-in/logout row and keep the hero spacing tight.
+- Disabled hover transform/transition behavior on Streamlit buttons to avoid shadow ghosting during reruns.
+- Reduced LAF navigation autosave overhead by avoiding profile sync on every Next/Previous click; full workflow update still occurs on final LAF submission.
+- Web/Streamlit only: no Flutter files touched.

@@ -1,4 +1,5 @@
 import re
+import json
 import streamlit as st, pathlib, re
 import streamlit.components.v1 as components
 from collections import OrderedDict
@@ -22,6 +23,55 @@ def load_laf_questions_cached():
 
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
+# v100.20: LAF page-specific spacing, bottom navigation, and no-ghost performance polish.
+st.markdown(
+    """
+    <style>
+      /* Hard LAF page shell override: reduce top whitespace above signed-in row */
+      section.main > div.block-container,
+      .main .block-container,
+      [data-testid="stMainBlockContainer"],
+      [data-testid="stAppViewBlockContainer"],
+      .block-container {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+      }
+      div[data-testid="stVerticalBlock"]:first-child { margin-top: 0 !important; padding-top: 0 !important; }
+      .utility-bar {
+        margin-top: 0 !important;
+        margin-bottom: .45rem !important;
+        min-height: 2.58rem !important;
+        height: auto !important;
+        padding: .34rem .68rem !important;
+      }
+      .hero-shell, .hm-compact-page-section {
+        margin-top: 0 !important;
+        margin-bottom: .58rem !important;
+      }
+      /* Remove hover animation/shadow ghosting during Streamlit reruns */
+      div[data-testid="stButton"] > button, .stButton > button,
+      div[data-testid="stButton"] > button:hover, .stButton > button:hover,
+      div[data-testid="stButton"] > button:focus, .stButton > button:focus,
+      div[data-testid="stButton"] > button:active, .stButton > button:active {
+        transition: none !important;
+        transform: none !important;
+        animation: none !important;
+      }
+      .hm-laf-bottom-note {
+        margin:.75rem 0 .55rem 0;
+        color:#4B5A57;
+        font-size:.86rem;
+        font-weight:760;
+      }
+      .hm-laf-bottom-home-spacer {
+        height:.72rem;
+        margin:0;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 questions = load_laf_questions_cached()
 questions = [q for q in questions if not q.get("deleted")]
 existing = get_form_response("laf_responses", st.session_state["user_id"])
@@ -30,55 +80,23 @@ user_id = st.session_state["user_id"]
 should_scroll_top = st.session_state.pop(f"laf_scroll_top_{user_id}", False)
 
 if should_scroll_top:
+    # v100.20: lightweight scroll reset only. The older multi-timeout scroll script
+    # caused visible button ghosting/freeze on slower Streamlit reruns.
     components.html(
         """
         <script>
         (function(){
-            function scrollAllTheWayTop(){
-                try { window.parent.scrollTo(0, 0); } catch(e) {}
+            function scrollTopOnce(){
+                try { window.parent.scrollTo({top: 0, left: 0, behavior: 'auto'}); } catch(e) {}
                 try { window.parent.document.documentElement.scrollTop = 0; } catch(e) {}
                 try { window.parent.document.body.scrollTop = 0; } catch(e) {}
-
                 try {
-                    const doc = window.parent.document;
-                    const selectors = [
-                        'html',
-                        'body',
-                        'main',
-                        'section',
-                        'div',
-                        '[data-testid="stAppViewContainer"]',
-                        '[data-testid="stMain"]',
-                        '[data-testid="stMainBlockContainer"]',
-                        '[data-testid="stVerticalBlock"]',
-                        '.main',
-                        '.block-container'
-                    ];
-
-                    const nodes = new Set();
-                    selectors.forEach((selector) => {
-                        try { doc.querySelectorAll(selector).forEach((el) => nodes.add(el)); } catch(e) {}
-                    });
-
-                    nodes.forEach((el) => {
-                        try {
-                            if (el && el.scrollHeight && el.scrollHeight > el.clientHeight) {
-                                el.scrollTop = 0;
-                                el.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-                            }
-                        } catch(e) {}
-                    });
+                    const main = window.parent.document.querySelector('[data-testid="stAppViewContainer"], [data-testid="stMain"], .main, .block-container');
+                    if (main) main.scrollTop = 0;
                 } catch(e) {}
             }
-
-            scrollAllTheWayTop();
-            window.requestAnimationFrame(scrollAllTheWayTop);
-            setTimeout(scrollAllTheWayTop, 20);
-            setTimeout(scrollAllTheWayTop, 75);
-            setTimeout(scrollAllTheWayTop, 150);
-            setTimeout(scrollAllTheWayTop, 300);
-            setTimeout(scrollAllTheWayTop, 600);
-            setTimeout(scrollAllTheWayTop, 1000);
+            scrollTopOnce();
+            window.requestAnimationFrame(scrollTopOnce);
         })();
         </script>
         """,
@@ -89,6 +107,39 @@ if should_scroll_top:
 db = load_db()
 current_user = next((u for u in db.get("users", []) if u.get("id") == user_id), {})
 login_email = current_user.get("email", "")
+
+PROFILE_SYNC_CODES = {
+    "full_name", "gender", "age", "height_cm", "weight_kg",
+    "country", "city", "client_city", "mobile_number", "phone",
+    "mobile_phone", "home_phone", "work_phone", "occupation", "email_id",
+}
+
+def _stable_laf_hash(data):
+    try:
+        return json.dumps(data or {}, sort_keys=True, default=str, ensure_ascii=False)
+    except Exception:
+        return str(data)
+
+def save_laf_snapshot_if_changed(data, sync_profile=True):
+    """Persist LAF only when the answer snapshot changed.
+
+    This keeps autosave but avoids repeated Supabase writes on every navigation
+    rerun, which was causing the visible freeze/button-shadow delay.
+    """
+    data = dict(data or {})
+    full_hash = _stable_laf_hash(data)
+    save_key = f"laf_last_saved_hash_{user_id}"
+    profile_key = f"laf_last_profile_hash_{user_id}"
+
+    if st.session_state.get(save_key) != full_hash:
+        save_form_response("laf_responses", user_id, data)
+        st.session_state[save_key] = full_hash
+
+    if sync_profile:
+        profile_hash = _stable_laf_hash({k: data.get(k, "") for k in PROFILE_SYNC_CODES})
+        if st.session_state.get(profile_key) != profile_hash:
+            sync_profile_from_laf(user_id)
+            st.session_state[profile_key] = profile_hash
 
 DEPENDENCIES = {
     "smoke_tobacco_details": ("smoke_tobacco", ["Yes"]),
@@ -233,19 +284,12 @@ def init_laf_state(page_names):
     return visited_key, current_key
 
 def go_to_laf_page(new_idx):
-    """Navigate LAF page and trigger best-effort scroll reset."""
+    """Navigate LAF page and trigger a lightweight scroll reset."""
     new_idx = max(0, min(new_idx, len(page_names) - 1))
-    save_form_response("laf_responses", user_id, get_current_answers())
-    sync_profile_from_laf(user_id)
+    save_laf_snapshot_if_changed(get_current_answers(), sync_profile=False)
     st.session_state[current_key] = new_idx
     st.session_state[visited_key].add(page_names[new_idx])
     st.session_state[f"laf_scroll_top_{user_id}"] = True
-    st.session_state[f"laf_nav_nonce_{user_id}"] = st.session_state.get(f"laf_nav_nonce_{user_id}", 0) + 1
-    try:
-        st.query_params["laf_page"] = str(new_idx + 1)
-        st.query_params["laf_nav"] = str(st.session_state[f"laf_nav_nonce_{user_id}"])
-    except Exception:
-        pass
     st.rerun()
 
 def identity_mode(answers):
@@ -614,26 +658,25 @@ if validation_errors:
             st.write(f"- {err}")
 
 
-# Auto-save current LAF state on every interaction/rerun.
-save_form_response("laf_responses", user_id, merged_answers)
-sync_profile_from_laf(user_id)
-st.markdown("<div class='autosave-note'>Auto-saved. You can also use the Previous/Next navigation at the top of the page.</div>", unsafe_allow_html=True)
+# Auto-save current LAF state only when answers changed.
+save_laf_snapshot_if_changed(merged_answers, sync_profile=False)
+st.markdown("<div class='hm-laf-bottom-note'>Auto-saved. Use Previous/Next below or the page navigation at the top.</div>", unsafe_allow_html=True)
 
-bottom_back, bottom_prev, bottom_spacer, bottom_next = st.columns([1.1, 1.1, 2.2, 1.35], gap="large")
-with bottom_back:
-    if st.button("Back to Home", use_container_width=True):
-        st.switch_page("pages/02_Member_Home.py")
+# Bottom navigation mirrors the top navigation structure:
+# Row 1 = Previous on the left and Next/Submit on the right.
+# Row 2 = Back to Home centered below.
+bottom_prev, bottom_center_gap, bottom_next = st.columns([1.15, 3.25, 1.15], gap="large")
 with bottom_prev:
-    if st.button("Previous Page", use_container_width=True, disabled=current_idx == 0):
+    if st.button("Previous Page", key="laf_bottom_previous", use_container_width=True, disabled=current_idx == 0):
         go_to_laf_page(current_idx - 1)
-with bottom_spacer:
-    st.markdown("&nbsp;", unsafe_allow_html=True)
+with bottom_center_gap:
+    st.empty()
 with bottom_next:
     if current_idx < len(page_names) - 1:
-        if st.button("Next Page", use_container_width=True):
+        if st.button("Next Page", key="laf_bottom_next", use_container_width=True):
             go_to_laf_page(current_idx + 1)
     else:
-        if st.button("Submit LAF and Continue", type="primary", use_container_width=True):
+        if st.button("Submit LAF and Continue", key="laf_bottom_submit", type="primary", use_container_width=True):
             if missing_pages:
                 set_system_message("Please visit all LAF pages before continuing: " + ", ".join(missing_pages), "error"); st.rerun()
             elif validation_errors:
@@ -641,8 +684,14 @@ with bottom_next:
             elif meaningful_count(merged_answers) == 0:
                 set_system_message("Please provide at least some LAF information before continuing.", "error"); st.rerun()
             else:
-                save_form_response("laf_responses", user_id, merged_answers)
-                sync_profile_from_laf(user_id)
+                save_laf_snapshot_if_changed(merged_answers)
                 update_workflow(user_id, laf_completed=True)
                 set_system_message("LAF submitted successfully. Please continue with NSP Page 1.", "success", celebrate=True)
                 st.switch_page("pages/04_NSP_Page1.py")
+
+st.markdown("<div class='hm-laf-bottom-home-spacer'></div>", unsafe_allow_html=True)
+home_left, home_mid, home_right = st.columns([2.1, 1.15, 2.1], gap="large")
+with home_mid:
+    if st.button("Back to Home", key="laf_bottom_back_home", use_container_width=True):
+        save_laf_snapshot_if_changed(get_current_answers(), sync_profile=False)
+        st.switch_page("pages/02_Member_Home.py")

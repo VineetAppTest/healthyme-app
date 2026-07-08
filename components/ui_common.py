@@ -8,7 +8,6 @@ from components.auth_session import logout_current_user
 # v53: safe shared helpers available for import by all pages
 # --------------------------------------------------------------------
 DEFAULT_APP_TIMEZONE = "Asia/Kolkata"
-APP_BUILD_LABEL = "Supabase Admin Login Role Model 3A-3B H5 Version Label Cleanup"
 
 def format_local_ts(ts_value, timezone_name=None):
     """Format stored ISO timestamp in local display time.
@@ -37,9 +36,7 @@ LUXE_CSS = """
 #MainMenu {visibility:hidden !important;}
 header[data-testid="stHeader"] {visibility:hidden !important; height:0 !important;}
 [data-testid="stToolbar"] {display:none !important;}
-[data-testid="stSidebar"], [data-testid="collapsedControl"], section[data-testid="stSidebar"] {display:none !important; width:0!important; min-width:0!important;}
-[data-testid="stAppViewContainer"] > .main {margin-left:0!important;}
-*{scroll-behavior:auto!important;}
+[data-testid="stSidebar"], [data-testid="collapsedControl"], section[data-testid="stSidebar"] {display:none !important;}
 :root{--hm-emerald:#064E3B;--hm-emerald-2:#0F766E;--hm-gold:#D8A84E;--hm-gold-deep:#8A5F10;--hm-gold-soft:#F5E7C8;--hm-ivory:#FFF8EE;--hm-text:#17211F;--hm-heading:#063F32;--hm-muted:#4B5A57;--hm-border:#E9DFCC;--hm-shadow:0 14px 34px rgba(25,36,31,.08);}
 html, body, [data-testid="stAppViewContainer"]{background:radial-gradient(circle at top right, rgba(216,168,78,.18), transparent 25%),radial-gradient(circle at top left, rgba(6,78,59,.10), transparent 30%),linear-gradient(180deg,var(--hm-ivory) 0%,#FFFDF8 100%) !important;color:var(--hm-text)!important;}
 .block-container{padding-top:.75rem!important;padding-bottom:1.1rem!important;max-width:1180px!important;}
@@ -48,7 +45,7 @@ h1,h2,h3{letter-spacing:-.035em;color:var(--hm-heading)!important;}
 h2{font-size:1.85rem!important;font-weight:880!important;}
 h3{font-size:1.28rem!important;font-weight:820!important;}
 p,label,.stCaption,.small-note{color:var(--hm-muted)!important;}
-.stButton button,.stButton button:hover,.stButton button:active,.stButton button:focus{background:#fff!important;color:#063F32!important;border:1.5px solid #CDBB8F!important;border-radius:14px!important;font-weight:500!important;box-shadow:0 4px 12px rgba(25,36,31,.06)!important;outline:none!important;}
+.stButton button,.stButton button:hover,.stButton button:active,.stButton button:focus{background:#fff!important;color:#063F32!important;border:1.5px solid #CDBB8F!important;border-radius:14px!important;font-weight:820!important;box-shadow:0 4px 12px rgba(25,36,31,.06)!important;outline:none!important;}
 .stButton button[kind="primary"],button[kind="primary"],.stButton button[kind="primary"]:hover,.stButton button[kind="primary"]:active,.stButton button[kind="primary"]:focus{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#fff!important;border-color:#064E3B!important;}
 .stButton button[kind="primary"] *{color:#fff!important;}
 .stButton button:disabled{background:#F4F1EA!important;color:#777E7A!important;border-color:#E2D7C2!important;opacity:1!important;}
@@ -1618,8 +1615,8 @@ details summary{
 .hm-v15-build-text{color:#94A3B8;font-size:.66rem;font-weight:700;margin:.05rem 0 .25rem 0;}
 div[data-testid="stPageLink"] a{flex-wrap:nowrap!important;white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;min-height:2.55rem!important;}
 div[data-testid="stPageLink"] a *{white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;}
-div[data-testid="stFormSubmitButton"] button,div[data-testid="stFormSubmitButton"] button[kind="primary"],button[kind="primaryFormSubmit"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border:1px solid #064E3B!important;font-weight:500!important;}
-div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] *{color:#FFFFFF!important;font-weight:500!important;}
+div[data-testid="stFormSubmitButton"] button,div[data-testid="stFormSubmitButton"] button[kind="primary"],button[kind="primaryFormSubmit"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border:1px solid #064E3B!important;font-weight:900!important;}
+div[data-testid="stFormSubmitButton"] button *,button[kind="primaryFormSubmit"] *{color:#FFFFFF!important;font-weight:900!important;}
 .hm-v15-action-emphasis div[data-testid="stButton"] > button{min-height:2.9rem!important;font-weight:900!important;}
 .hm-v15-action-emphasis .stButton button[kind="primary"],.hm-v15-action-emphasis div[data-testid="stButton"] > button[kind="primary"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border-color:#064E3B!important;}
 .hm-v15-action-emphasis .stButton button[kind="primary"] *,.hm-v15-action-emphasis div[data-testid="stButton"] > button[kind="primary"] *{color:#FFFFFF!important;}
@@ -2977,264 +2974,10 @@ div[data-testid="stButton"] > button{
   margin-bottom:.72rem!important;
 }
 
-
-/* v101.5 global header, hero, version and button polish */
-section.main > div.block-container,
-.main .block-container,
-[data-testid="stAppViewBlockContainer"],
-.stMainBlockContainer,
-.block-container{
-  padding-top:.72rem!important;
-}
-
-.utility-bar{
-  min-height:2.84rem!important;
-  height:2.84rem!important;
-  padding:.42rem .72rem!important;
-  margin-top:0!important;
-  margin-bottom:.72rem!important;
-  display:flex!important;
-  align-items:center!important;
-  box-sizing:border-box!important;
-}
-
-.hero-shell{
-  margin-top:0!important;
-  margin-bottom:.72rem!important;
-}
-
-.hm-admin-version-inline{
-  display:inline-flex!important;
-  align-items:center!important;
-  margin-left:.72rem!important;
-  padding:.14rem .44rem!important;
-  border-radius:999px!important;
-  border:1px solid #E3C98E!important;
-  background:#FFF7E6!important;
-  color:#475569!important;
-  font-size:.72rem!important;
-  font-weight:850!important;
-  letter-spacing:.01em!important;
-  vertical-align:middle!important;
-}
-
-/* App-wide button normalization: remove black/default buttons */
-div[data-testid="stButton"] > button,
-button[kind="secondary"],
-button[kind="primary"],
-.stButton > button{
-  min-height:2.72rem!important;
-  border-radius:14px!important;
-  border:1.25px solid #D9C28F!important;
-  background:#FFFDF8!important;
-  color:#064E3B!important;
-  font-weight:850!important;
-  box-shadow:none!important;
-}
-
-div[data-testid="stButton"] > button:hover,
-button[kind="secondary"]:hover,
-button[kind="primary"]:hover,
-.stButton > button:hover{
-  border-color:#B89345!important;
-  background:#FFF7E6!important;
-  color:#003C36!important;
-  box-shadow:0 6px 16px rgba(15,23,42,.06)!important;
-}
-
-div[data-testid="stButton"] > button:focus,
-button[kind="secondary"]:focus,
-button[kind="primary"]:focus,
-.stButton > button:focus{
-  outline:2px solid rgba(217,194,143,.42)!important;
-  outline-offset:2px!important;
-}
-
-/* Form controls use the HealthyMe rounded system */
-div[data-testid="stTextInput"] input,
-div[data-testid="stNumberInput"] input,
-div[data-testid="stTextArea"] textarea,
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-div[data-testid="stDateInput"] input,
-div[data-testid="stTimeInput"] input{
-  border-radius:12px!important;
-}
-
-
-
-/* --- v102.4B3 Global Premium Expander Control --- */
-/* Collapsed: green circular + only. Expanded: green circular − only. Hide Streamlit's default glyph/caret everywhere. */
-div[data-testid="stExpander"] details > summary{
-  display:flex!important;
-  align-items:center!important;
-  gap:.45rem!important;
-  list-style:none!important;
-  border:1.5px solid var(--hm-gold, #D8A84E)!important;
-  background:linear-gradient(135deg,#FFFDF8 0%,#FFF4DE 100%)!important;
-  border-radius:999px!important;
-  padding:.48rem .85rem!important;
-  min-height:2.45rem!important;
-  box-shadow:0 8px 20px rgba(138,95,16,.08)!important;
-}
-div[data-testid="stExpander"] details > summary::-webkit-details-marker{display:none!important;}
-div[data-testid="stExpander"] details > summary::marker{font-size:0!important;content:""!important;}
-div[data-testid="stExpander"] details > summary > svg,
-div[data-testid="stExpander"] details > summary svg,
-div[data-testid="stExpander"] details > summary [data-testid="stExpanderToggleIcon"],
-div[data-testid="stExpander"] details > summary [data-testid="stIconMaterial"],
-div[data-testid="stExpander"] details > summary > span:first-child{
-  display:none!important;
-  visibility:hidden!important;
-  width:0!important;
-  min-width:0!important;
-  max-width:0!important;
-  height:0!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:hidden!important;
-}
-div[data-testid="stExpander"] details > summary::before{
-  content:"+";
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  flex:0 0 1.35rem!important;
-  width:1.35rem!important;
-  height:1.35rem!important;
-  margin-right:.28rem!important;
-  border-radius:999px!important;
-  background:#064E3B!important;
-  color:#FFFDF8!important;
-  font-weight:950!important;
-  font-size:.86rem!important;
-  line-height:1!important;
-}
-div[data-testid="stExpander"] details[open] > summary::before{content:"−";}
-div[data-testid="stExpander"] details > summary p,
-div[data-testid="stExpander"] details > summary div,
-div[data-testid="stExpander"] details > summary span{
-  display:inline!important;
-  color:#064E3B!important;
-  font-weight:950!important;
-  font-size:.84rem!important;
-  line-height:1.18!important;
-  white-space:normal!important;
-  overflow-wrap:anywhere!important;
-  padding:0!important;
-  margin:0!important;
-}
-div[data-testid="stExpander"] details > summary:hover{
-  border-color:#064E3B!important;
-  box-shadow:0 10px 24px rgba(6,78,59,.10)!important;
-}
-
-/* v102.4B11: global button text should not render bold. */
-div[data-testid="stButton"]>button,div[data-testid="stButton"]>button *,button[kind="secondary"],button[kind="secondary"] *,button[kind="primary"],button[kind="primary"] *,div[data-testid="stFormSubmitButton"] button,div[data-testid="stFormSubmitButton"] button *,div[data-testid="stPageLink"] a,div[data-testid="stPageLink"] a *{font-weight:500!important;}
-
-/* v102.4B11: high-specificity final override for non-bold button text. */
-html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] button,
-html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] button *,
-html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] button,
-html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] button *,
-html body div[data-testid="stAppViewContainer"] div[data-testid="stPageLink"] a,
-html body div[data-testid="stAppViewContainer"] div[data-testid="stPageLink"] a *,
-html body div[data-testid="stAppViewContainer"] button[kind="primary"],
-html body div[data-testid="stAppViewContainer"] button[kind="primary"] *,
-html body div[data-testid="stAppViewContainer"] button[kind="secondary"],
-html body div[data-testid="stAppViewContainer"] button[kind="secondary"] *{font-weight:500!important;}
 </style>
 """
 
-
-HM_GLOBAL_BUTTON_POLISH_V102_4B9 = """
-<style>
-/* v102.4B9 global button standard: match Back/Dashboard premium button language everywhere. */
-div[data-testid="stButton"] > button,
-.stButton > button,
-button[data-testid="baseButton-secondary"],
-div[data-testid="stDownloadButton"] > button,
-.stDownloadButton > button,
-div[data-testid="stPageLink"] a {
-  background:#FFFFFF !important;
-  color:#064E3B !important;
-  border:1.5px solid #D8A84E !important;
-  border-radius:16px !important;
-  min-height:2.65rem !important;
-  font-size:.92rem !important;
-  font-weight:950 !important;
-  letter-spacing:-.01em !important;
-  box-shadow:0 6px 16px rgba(6,78,59,.055) !important;
-  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease !important;
-}
-div[data-testid="stButton"] > button *,
-.stButton > button *,
-button[data-testid="baseButton-secondary"] *,
-div[data-testid="stDownloadButton"] > button *,
-.stDownloadButton > button *,
-div[data-testid="stPageLink"] a * {
-  color:#064E3B !important;
-  font-weight:950 !important;
-}
-div[data-testid="stButton"] > button:hover,
-.stButton > button:hover,
-div[data-testid="stDownloadButton"] > button:hover,
-.stDownloadButton > button:hover,
-div[data-testid="stPageLink"] a:hover {
-  transform:translateY(-1px) !important;
-  border-color:#B8892C !important;
-  box-shadow:0 10px 24px rgba(6,78,59,.12) !important;
-}
-button[data-testid="baseButton-primary"],
-div[data-testid="stButton"] > button[kind="primary"],
-.stButton > button[kind="primary"],
-button[kind="primary"] {
-  background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%) !important;
-  color:#FFFFFF !important;
-  border-color:#064E3B !important;
-  box-shadow:0 12px 28px rgba(6,78,59,.20) !important;
-}
-button[data-testid="baseButton-primary"] *,
-div[data-testid="stButton"] > button[kind="primary"] *,
-.stButton > button[kind="primary"] *,
-button[kind="primary"] * {
-  color:#FFFFFF !important;
-  font-weight:950 !important;
-}
-div[data-testid="stButton"] > button:disabled,
-.stButton > button:disabled,
-div[data-testid="stFormSubmitButton"] > button:disabled,
-button[kind="primary"]:disabled,
-button[data-testid="baseButton-primary"]:disabled,
-button[data-testid="baseButton-secondary"]:disabled {
-  background:#FAF7F1 !important;
-  color:#8A6A14 !important;
-  -webkit-text-fill-color:#8A6A14 !important;
-  border-color:#D8A84E !important;
-  box-shadow:none !important;
-  transform:none !important;
-  opacity:1 !important;
-}
-div[data-testid="stButton"] > button:disabled *,
-.stButton > button:disabled *,
-div[data-testid="stFormSubmitButton"] > button:disabled *,
-button[kind="primary"]:disabled *,
-button[data-testid="baseButton-primary"]:disabled *,
-button[data-testid="baseButton-secondary"]:disabled * {
-  color:#8A6A14 !important;
-  -webkit-text-fill-color:#8A6A14 !important;
-  opacity:1 !important;
-}
-</style>
-"""
-
-def inject_global_styles():
-    st.markdown(LUXE_CSS, unsafe_allow_html=True)
-    st.markdown(HM_GLOBAL_BUTTON_POLISH_V102_4B9, unsafe_allow_html=True)
-    try:
-        st.markdown(HM_GLOBAL_HEADER_FOOTER_SPACING_V102_4B14H3, unsafe_allow_html=True)
-    except NameError:
-        pass
-    st.markdown(globals().get("HM_B14F_BUTTON_CONTRAST_CSS", ""), unsafe_allow_html=True)
+def inject_global_styles(): st.markdown(LUXE_CSS, unsafe_allow_html=True)
 def apply_luxe_theme():
     return None
 def apply_mobile_first_premium_theme():
@@ -3351,8 +3094,8 @@ def build_marker_v9():
     st.markdown("<div class='hm-build-marker'>✅ Build v9 active · Compact tooltip layout loaded</div>", unsafe_allow_html=True)
 
 
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v95.7"
+APP_BUILD_LABEL = "Admin Version + Button Template Fix"
 
 def render_build_text_v11():
     """Small non-intrusive build text. Not a visual tag."""
@@ -3365,8 +3108,8 @@ def build_marker_v11():
 # --------------------------------------------------------------------
 # v12: Single source of truth for visible build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v12"
+APP_BUILD_LABEL = "Consistent build + header card patch"
 
 def render_current_build(compact=True):
     """Single current build marker used across all pages."""
@@ -3407,8 +3150,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v13: single current build text
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v13"
+APP_BUILD_LABEL = "Client-safe dashboard redesign"
 
 def render_current_build(compact=True):
     st.markdown(
@@ -3448,8 +3191,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v14: current build text
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v14"
+APP_BUILD_LABEL = "Native cards + dashboard flow fix"
 
 def render_current_build(compact=True):
     st.markdown(
@@ -3492,8 +3235,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v15: current build text + cleaner page nav labels
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = 'v15'
+APP_BUILD_LABEL = 'Navigation + action consistency patch'
 
 def render_current_build(compact=True):
     st.markdown(f"<div class='hm-v15-build-text'>HealthyMe {APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>", unsafe_allow_html=True)
@@ -3552,8 +3295,8 @@ def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_A
 # --------------------------------------------------------------------
 # v23: version display + logout polish
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v23"
+APP_BUILD_LABEL = "Stability + Visibility Fix"
 
 def render_build_text_v23():
     st.markdown(
@@ -3632,8 +3375,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v24: brand version placement
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v24"
+APP_BUILD_LABEL = "Body-Mind + Version Placement Fix"
 
 def render_build_text_v24():
     st.markdown(
@@ -3700,8 +3443,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v25: current build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v25"
+APP_BUILD_LABEL = "Body-Mind State Sync Fix"
 
 def render_build_text_v25():
     st.markdown(
@@ -3755,8 +3498,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v26: current build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v26"
+APP_BUILD_LABEL = "Finalization Lock + Body-Mind Sync"
 
 def render_build_text_v26():
     st.markdown(
@@ -3811,8 +3554,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v27: current build marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v27"
+APP_BUILD_LABEL = "Final Report NSP Data Integrity + Body-Mind Carry Forward"
 
 def render_build_text_v27():
     st.markdown(
@@ -3869,8 +3612,8 @@ def render_version_tag():
 # --------------------------------------------------------------------
 # v28: Body-Mind final unlock + version cleanup
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v28"
+APP_BUILD_LABEL = "Body-Mind Final Unlock + Version Cleanup"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -3918,8 +3661,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v29: Manual Body-Mind unlock + version cleanup
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v29"
+APP_BUILD_LABEL = "Manual Body-Mind Unlock"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -3968,8 +3711,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v30: Manual Body-Mind unlock control
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v30"
+APP_BUILD_LABEL = "Manual Body-Mind Unlock Control"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4019,8 +3762,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v31: Workflow + assessment instance sync
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v31"
+APP_BUILD_LABEL = "Workflow + Body-Mind Sync"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4071,8 +3814,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v32: Manual Body-Mind hard sync
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v32"
+APP_BUILD_LABEL = "Manual Body-Mind Hard Sync"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4141,8 +3884,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v33: Body-Mind explicit access marker
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v33"
+APP_BUILD_LABEL = "Body-Mind Explicit Access"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4220,8 +3963,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v34: Body-Mind NameError + logout fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v34"
+APP_BUILD_LABEL = "Body-Mind NameError + Logout Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4298,8 +4041,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v35: Body-Mind page guard fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v35"
+APP_BUILD_LABEL = "Body-Mind Page Guard Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4354,8 +4097,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v36: Body-Mind text removal + autosave check
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v36"
+APP_BUILD_LABEL = "Body-Mind Admin State + Autosave Check"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4411,8 +4154,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v37: Remove Body-Mind activation checkbox
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v37"
+APP_BUILD_LABEL = "Remove Body-Mind Activation Checkbox"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4469,8 +4212,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v38: Body-Mind disabled button UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v38"
+APP_BUILD_LABEL = "Body-Mind Disabled Button UI"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4528,8 +4271,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v39: Admin 5 Pages autosave
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v39"
+APP_BUILD_LABEL = "Admin Autosave"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4588,8 +4331,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v40: Body-Mind status sync
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v40"
+APP_BUILD_LABEL = "Body-Mind Status Sync"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4649,8 +4392,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v41: Daily Log Flow
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v41"
+APP_BUILD_LABEL = "Daily Log Flow"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4711,8 +4454,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v42: Day-based Daily Log
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v42"
+APP_BUILD_LABEL = "Day-based Daily Log"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4774,8 +4517,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v43: Progressive Daily Log + Repository
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v43"
+APP_BUILD_LABEL = "Progressive Daily Log + Repository"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4838,8 +4581,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v44: Daily Log one-section mode + Other slots
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v44"
+APP_BUILD_LABEL = "Daily Log One-Section + Other Slots"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4903,8 +4646,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v45: Daily Log compact Other fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v45"
+APP_BUILD_LABEL = "Daily Log Compact Other Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -4969,8 +4712,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v46: Admin info cleanup + Daily Log selector layout
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v46"
+APP_BUILD_LABEL = "Admin Info Cleanup + Daily Log Layout"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5055,8 +4798,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v47: Logout + Daily Log Backcompat + Reference Toggle
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v47"
+APP_BUILD_LABEL = "Logout + Daily Log Backcompat"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5123,8 +4866,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v48: Nutritionist Message Archive
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v48"
+APP_BUILD_LABEL = "Nutritionist Message Archive"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5198,12 +4941,13 @@ def utility_logout_bar():
     if not st.session_state.get("logged_in"):
         return
 
-    version_pill = ""  # Version is intentionally not shown in the signed-in/logout utility bar.
+
+
 
     left, right = st.columns([5, 1])
     with left:
         st.markdown(
-            f"<div class='utility-bar'><div class='utility-user'>Signed in as <b>{name}</b><span class='utility-role'>{role.title()}</span>{version_pill}</div></div>",
+            f"<div class='utility-bar'><div class='utility-user'>Signed in as <b>{name}</b><span class='utility-role'>{role.title()}</span></div></div>",
             unsafe_allow_html=True,
         )
     with right:
@@ -5227,8 +4971,8 @@ def utility_logout_bar():
 # --------------------------------------------------------------------
 # v49: Logout Session Hardening
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v49"
+APP_BUILD_LABEL = "Logout Session Hardening"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5297,8 +5041,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v50: Member Home Message + Journey Compact
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v50"
+APP_BUILD_LABEL = "Member Home Message + Journey Compact"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5370,8 +5114,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v51: Timezone + Notes Archive + Back to Top
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v51"
+APP_BUILD_LABEL = "Timezone + Notes Archive + Back to Top"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5442,8 +5186,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v52: Login Logout Block Bottom
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v52"
+APP_BUILD_LABEL = "Login Logout Block Bottom"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5515,8 +5259,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v53: ImportError UI helper fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v53"
+APP_BUILD_LABEL = "UI Helper Import Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5589,8 +5333,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v54: Nutritionist Read Archive Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v54"
+APP_BUILD_LABEL = "Nutritionist Read Archive Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5664,8 +5408,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v55: Admin Dashboard Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v55"
+APP_BUILD_LABEL = "Admin Dashboard Import Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5740,8 +5484,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v56: Daily Log Nutritionist Notification
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v56"
+APP_BUILD_LABEL = "Daily Log Nutritionist Notification"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5817,8 +5561,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v57: Daily Log + LAF Restructure
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v57"
+APP_BUILD_LABEL = "Daily Log + LAF Restructure"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5895,8 +5639,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v58: LAF Restructure Correction
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v58"
+APP_BUILD_LABEL = "LAF Restructure Correction"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -5974,8 +5718,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v59: Structured Poop Rounds
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v59"
+APP_BUILD_LABEL = "Structured Poop Rounds"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6054,8 +5798,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v60: Poop Layout Refinement
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v60"
+APP_BUILD_LABEL = "Poop Layout Refinement"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6135,8 +5879,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v61: Stability + Premium UX Cleanup
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v61"
+APP_BUILD_LABEL = "Stability + Premium UX Cleanup"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6234,8 +5978,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v62: Recent Saved Days Premium Layout
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v62"
+APP_BUILD_LABEL = "Recent Saved Days Premium Layout"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6333,8 +6077,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v63: Recent Saved Days Borders + Toggle
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v63"
+APP_BUILD_LABEL = "Recent Saved Days Borders + Toggle"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6433,8 +6177,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v64: Recent Saved Days Refinement
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v64"
+APP_BUILD_LABEL = "Recent Saved Days Refinement"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6534,8 +6278,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v65: Daily Log + Admin UI Fixes
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v65"
+APP_BUILD_LABEL = "Daily Log + Admin UI Fixes"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6636,8 +6380,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v66: Nutritionist Message Dedupe
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v66"
+APP_BUILD_LABEL = "Nutritionist Message Dedupe"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6739,8 +6483,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v67: View History Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v67"
+APP_BUILD_LABEL = "View History Alignment Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6843,8 +6587,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v68: View History Micro Alignment
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v68"
+APP_BUILD_LABEL = "View History Micro Alignment"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -6948,8 +6692,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v69: Inline History Button Alignment
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v69"
+APP_BUILD_LABEL = "Inline History Button Alignment"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7054,8 +6798,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v70: Streamlit Native Recent Saved Days
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v70"
+APP_BUILD_LABEL = "Streamlit Native Recent Saved Days"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7161,8 +6905,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v71: Compact Nutritionist History Block
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v71"
+APP_BUILD_LABEL = "Compact Nutritionist History Block"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7269,8 +7013,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v72: Final Report Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v72"
+APP_BUILD_LABEL = "Final Report Import Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7378,8 +7122,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v73: Guard Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v73"
+APP_BUILD_LABEL = "Guard Import Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7488,8 +7232,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v74: Final Report JSON Import Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v74"
+APP_BUILD_LABEL = "Final Report JSON Import Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7599,8 +7343,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v75: Final Report Diagnostics UI
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v75"
+APP_BUILD_LABEL = "Final Report Diagnostics UI"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7711,8 +7455,8 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v76: Mobile Daily Log Timing Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v76"
+APP_BUILD_LABEL = "Mobile Daily Log Timing Fix"
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
     st.markdown(
@@ -7824,21 +7568,22 @@ def render_version_tag(): return None
 # --------------------------------------------------------------------
 # v77: Meal Timing + Daily Log UI Alignment Fix
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
+APP_BUILD_VERSION = "v100.15"
+APP_BUILD_LABEL = "Profile Button + Member Divider Hotfix"
 
 
 def admin_version_line_v98_1():
-    """Admin-only inline build label beside HealthyMe brand.
-
-    v101.5 rule:
-    - Admin pages: show latest version adjacent to HealthyMe only.
-    - Member pages/login: no visible version marker.
-    """
-    role = str(st.session_state.get("user_role", "") or "").strip().lower()
-    if role not in {"admin", "super_admin"}:
-        return ""
-    return f"<span class='hm-admin-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
+    """Admin-only version marker shown adjacent to HealthyMe brand."""
+    try:
+        if st.session_state.get("user_role") == "admin":
+            return (
+                "<span class='hm-admin-version-inline'>"
+                f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
+                "</span>"
+            )
+    except Exception:
+        pass
+    return ""
 
 
 def topbar(title, subtitle="", kicker="HealthyMe premium"):
@@ -8146,650 +7891,81 @@ def inject_keepalive_guard_v96_11():
 
 
 # --------------------------------------------------------------------
-# v101.6: Canonical Header/Nav/Button Polish Final Override
+# v100.19: final member-shell spacing override
 # --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
-
-def _hm_v1016_is_admin_context():
-    """Robust admin detection for version display.
-
-    Member pages/login must not show version. Admin-side sessions should show
-    the current version beside HealthyMe even if role casing differs.
-    """
-    role = str(st.session_state.get("user_role", "") or st.session_state.get("role", "") or "").strip().lower()
-    if "member" in role:
-        return False
-    if "admin" in role or "nutrition" in role:
-        return True
-    if st.session_state.get("is_admin") or st.session_state.get("admin_logged_in"):
-        return True
-    return False
-
-def admin_version_line_v98_1():
-    if not _hm_v1016_is_admin_context():
-        return ""
-    return f"<span class='hm-admin-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
-
-def _hm_v1016_final_polish_css():
-    st.markdown(
-        """
-        <style>
-        /* v101.6 final DOM-level polish override */
-        section.main > div.block-container,
-        .main .block-container,
-        [data-testid="stAppViewBlockContainer"],
-        .stMainBlockContainer,
-        .block-container{
-          padding-top:.72rem!important;
-        }
-
-        .utility-bar{
-          min-height:2.84rem!important;
-          height:2.84rem!important;
-          padding:.42rem .72rem!important;
-          margin-top:0!important;
-          margin-bottom:.72rem!important;
-          display:flex!important;
-          align-items:center!important;
-          box-sizing:border-box!important;
-        }
-
-        .hero-shell{
-          margin-top:0!important;
-          margin-bottom:.72rem!important;
-        }
-
-        .hm-v1016-brand-row{
-          display:flex!important;
-          align-items:center!important;
-          gap:.62rem!important;
-          flex-wrap:wrap!important;
-        }
-
-        .hm-v1016-brand{
-          color:#064E3B!important;
-          font-size:.82rem!important;
-          font-weight:950!important;
-          letter-spacing:.10em!important;
-          text-transform:uppercase!important;
-        }
-
-        .hm-admin-version-inline{
-          display:inline-flex!important;
-          align-items:center!important;
-          padding:.14rem .46rem!important;
-          border-radius:999px!important;
-          border:1px solid #E3C98E!important;
-          background:#FFF7E6!important;
-          color:#475569!important;
-          font-size:.72rem!important;
-          font-weight:850!important;
-          letter-spacing:.01em!important;
-          vertical-align:middle!important;
-        }
-
-        .hm-native-nav-shell,
-        .hm-bottom-nav-shell{
-          border:0!important;
-          background:transparent!important;
-          box-shadow:none!important;
-          padding:0!important;
-          margin:1rem 0 .90rem 0!important;
-        }
-
-        div[data-testid="stButton"] > button,
-        button[kind="secondary"],
-        button[kind="primary"],
-        .stButton > button,
-        div[data-testid="stPageLink"] a{
-          min-height:2.72rem!important;
-          border-radius:14px!important;
-          border:1.25px solid #D9C28F!important;
-          background:#FFFDF8!important;
-          color:#064E3B!important;
-          font-weight:850!important;
-          box-shadow:none!important;
-          display:flex!important;
-          align-items:center!important;
-          justify-content:center!important;
-          text-decoration:none!important;
-        }
-
-        div[data-testid="stButton"] > button:hover,
-        button[kind="secondary"]:hover,
-        button[kind="primary"]:hover,
-        .stButton > button:hover,
-        div[data-testid="stPageLink"] a:hover{
-          border-color:#B89345!important;
-          background:#FFF7E6!important;
-          color:#003C36!important;
-          box-shadow:0 6px 16px rgba(15,23,42,.06)!important;
-        }
-
-        div[data-testid="stTextInput"] input,
-        div[data-testid="stNumberInput"] input,
-        div[data-testid="stTextArea"] textarea,
-        div[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-        div[data-testid="stDateInput"] input,
-        div[data-testid="stTimeInput"] input{
-          border-radius:12px!important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-def topbar(title, subtitle="", kicker="HealthyMe premium"):
-    _hm_v1016_final_polish_css()
-    st.markdown(
-        f"""
-        <div class='hero-shell'>
-          <div class='hm-v1016-brand-row'>
-            <span class='hm-v1016-brand'>HealthyMe</span>
-            {admin_version_line_v98_1()}
-          </div>
-          <div class='hero-kicker'>{kicker}</div>
-          <div class='hero-title'>{title}</div>
-          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
-          <div><span class='meta-pill'>Guided wellness workflow</span></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-def compact_topbar(title, subtitle="", kicker="HealthyMe"):
-    _hm_v1016_final_polish_css()
-    st.markdown(
-        f"""
-        <div class='hero-shell hm-compact-page-section'>
-          <div class='hm-v1016-brand-row'>
-            <span class='hm-v1016-brand'>HealthyMe</span>
-            {admin_version_line_v98_1()}
-          </div>
-          <div class='hero-kicker'>{kicker}</div>
-          <div class='hero-title'>{title}</div>
-          {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_Admin_Dashboard.py', evaluation_page='pages/11_Evaluation_Status.py', *, location='top', show_dashboard=True, show_evaluation=True):
-    """v101.6 canonical navigation.
-
-    Top navigation intentionally renders nothing so Back/Dashboard buttons never
-    appear between Signed in/Logout and Hero Banner. Bottom navigation remains
-    the standard Back/Dashboard action row.
-    """
-    if location == 'top':
-        return
-
-    _hm_v1016_final_polish_css()
-    st.markdown("<div class='hm-bottom-nav-shell hm-native-nav-shell'>", unsafe_allow_html=True)
-
-    visible_cols = []
-    if back_page:
-        visible_cols.append("back")
-    if show_dashboard:
-        visible_cols.append("dashboard")
-
-    if not visible_cols:
-        st.markdown("</div>", unsafe_allow_html=True)
-        return
-
-    cols = st.columns(len(visible_cols), gap="large")
-    for idx, item in enumerate(visible_cols):
-        with cols[idx]:
-            if item == "back":
-                _safe_page_link(back_page, "← Back")
-            elif item == "dashboard":
-                _safe_page_link(dashboard_page, "Dashboard")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-def render_back_to_top():
-    # Inject final CSS late in the page lifecycle as a defensive override against old page-level button CSS.
-    _hm_v1016_final_polish_css()
-    st.markdown("<a id='top'></a><a class='hm-back-to-top' href='#top'>↑ Back to Top</a>", unsafe_allow_html=True)
-
-def render_build_text_v101_6(): return None
-def render_version_tag(): return None
-
-
-# --------------------------------------------------------------------
-# v101.8: Final admin header/nav override
-# --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
-
-def admin_version_line_v98_1():
-    role = str(st.session_state.get("user_role", "") or st.session_state.get("role", "") or "").strip().lower()
-    if "member" in role:
-        return ""
-    if "admin" in role or "nutrition" in role or st.session_state.get("is_admin") or st.session_state.get("admin_logged_in"):
-        return f"<span class='hm-admin-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
-    return ""
-
-def _hm_v1018_css():
-    st.markdown("""
-    <style>
-    section.main > div.block-container,.main .block-container,[data-testid="stAppViewBlockContainer"],.stMainBlockContainer,.block-container{padding-top:.72rem!important;}
-    .utility-bar{min-height:2.84rem!important;height:2.84rem!important;padding:.42rem .72rem!important;margin-top:0!important;margin-bottom:.72rem!important;display:flex!important;align-items:center!important;box-sizing:border-box!important;}
-    .hero-shell{margin-top:0!important;margin-bottom:.72rem!important;}
-    .hm-v1018-brand-row{display:flex!important;align-items:center!important;gap:.62rem!important;flex-wrap:wrap!important;}
-    .hm-v1018-brand{color:#064E3B!important;font-size:.82rem!important;font-weight:950!important;letter-spacing:.10em!important;text-transform:uppercase!important;}
-    .hm-admin-version-inline{display:inline-flex!important;align-items:center!important;padding:.14rem .46rem!important;border-radius:999px!important;border:1px solid #E3C98E!important;background:#FFF7E6!important;color:#475569!important;font-size:.72rem!important;font-weight:850!important;letter-spacing:.01em!important;vertical-align:middle!important;}
-    .hm-bottom-nav-shell,.hm-native-nav-shell{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;margin:1rem 0 .90rem 0!important;}
-    div[data-testid="stButton"]>button,button[kind="secondary"],button[kind="primary"],.stButton>button,div[data-testid="stPageLink"] a{min-height:2.72rem!important;border-radius:14px!important;border:1.25px solid #D9C28F!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:500!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;text-decoration:none!important;}
-    div[data-testid="stButton"]>button:hover,button[kind="secondary"]:hover,button[kind="primary"]:hover,.stButton>button:hover,div[data-testid="stPageLink"] a:hover{border-color:#B89345!important;background:#FFF7E6!important;color:#003C36!important;box-shadow:0 6px 16px rgba(15,23,42,.06)!important;}
-    div[data-testid="stTextInput"] input,div[data-testid="stNumberInput"] input,div[data-testid="stTextArea"] textarea,div[data-testid="stSelectbox"] [data-baseweb="select"]>div,div[data-testid="stDateInput"] input,div[data-testid="stTimeInput"] input{border-radius:12px!important;}
-    /* v102.4B11: buttons should keep the premium shape without bold text. */
-    div[data-testid="stButton"]>button,div[data-testid="stButton"]>button *,button[kind="secondary"],button[kind="secondary"] *,button[kind="primary"],button[kind="primary"] *,div[data-testid="stFormSubmitButton"] button,div[data-testid="stFormSubmitButton"] button *,div[data-testid="stPageLink"] a,div[data-testid="stPageLink"] a *{font-weight:500!important;}
-    </style>
-    """, unsafe_allow_html=True)
-
-def topbar(title, subtitle="", kicker="HealthyMe premium"):
-    _hm_v1018_css()
-    st.markdown(f"""
-    <div class='hero-shell'>
-      <div class='hm-v1018-brand-row'><span class='hm-v1018-brand'>HealthyMe</span>{admin_version_line_v98_1()}</div>
-      <div class='hero-kicker'>{kicker}</div>
-      <div class='hero-title'>{title}</div>
-      {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
-      <div><span class='meta-pill'>Guided wellness workflow</span></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def compact_topbar(title, subtitle="", kicker="HealthyMe"):
-    _hm_v1018_css()
-    topbar(title, subtitle, kicker)
-
-def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_Admin_Dashboard.py', evaluation_page='pages/11_Evaluation_Status.py', *, location='top', show_dashboard=True, show_evaluation=True):
-    if location == 'top':
-        return
-    _hm_v1018_css()
-    st.markdown("<div class='hm-bottom-nav-shell hm-native-nav-shell'>", unsafe_allow_html=True)
-    items = []
-    if back_page:
-        items.append(("← Back", back_page))
-    if show_evaluation:
-        items.append(("Evaluation Status", evaluation_page))
-    if show_dashboard:
-        items.append(("Dashboard", dashboard_page))
-    if not items:
-        st.markdown("</div>", unsafe_allow_html=True)
-        return
-    cols = st.columns(len(items), gap="large")
-    for i, (label, page) in enumerate(items):
-        with cols[i]:
-            _safe_page_link(page, label)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-def render_back_to_top():
-    _hm_v1018_css()
-    st.markdown("<a id='top'></a><a class='hm-back-to-top' href='#top'>↑ Back to Top</a>", unsafe_allow_html=True)
-
-# --------------------------------------------------------------------
-# v102.0: Global Header/Footer Mechanism
-# --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
-
-def _hm_v102_is_admin_context():
-    role = str(st.session_state.get("user_role", "") or st.session_state.get("role", "") or "").strip().lower()
-    if "member" in role:
-        return False
-    return bool("admin" in role or "nutrition" in role or st.session_state.get("is_admin") or st.session_state.get("admin_logged_in"))
-
-def admin_version_line_v98_1():
-    if not _hm_v102_is_admin_context():
-        return ""
-    return f"<span class='hm-admin-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
-
-def _hm_v102_global_css():
-    st.markdown("""
-    <style>
-    section.main > div.block-container,.main .block-container,[data-testid="stAppViewBlockContainer"],.stMainBlockContainer,.block-container{padding-top:.72rem!important;padding-bottom:1.25rem!important;}
-    .utility-bar{min-height:2.84rem!important;height:2.84rem!important;padding:.42rem .72rem!important;margin-top:0!important;margin-bottom:.72rem!important;display:flex!important;align-items:center!important;box-sizing:border-box!important;}
-    .hero-shell{margin-top:0!important;margin-bottom:.72rem!important;}
-    .hm-v102-brand-row{display:flex!important;align-items:center!important;gap:.62rem!important;flex-wrap:wrap!important;}
-    .hm-v102-brand{color:#064E3B!important;font-size:.82rem!important;font-weight:950!important;letter-spacing:.10em!important;text-transform:uppercase!important;}
-    .hm-admin-version-inline{display:inline-flex!important;align-items:center!important;padding:.14rem .46rem!important;border-radius:999px!important;border:1px solid #E3C98E!important;background:#FFF7E6!important;color:#475569!important;font-size:.72rem!important;font-weight:850!important;letter-spacing:.01em!important;vertical-align:middle!important;}
-    .hm-bottom-nav-shell,.hm-native-nav-shell{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;margin:1.05rem 0 .95rem 0!important;}
-    div[data-testid="stButton"]>button,button[kind="secondary"],button[kind="primary"],.stButton>button,div[data-testid="stPageLink"] a{min-height:2.72rem!important;border-radius:14px!important;border:1.25px solid #D9C28F!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:500!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;text-decoration:none!important;}
-    div[data-testid="stButton"]>button:hover,button[kind="secondary"]:hover,button[kind="primary"]:hover,.stButton>button:hover,div[data-testid="stPageLink"] a:hover{border-color:#B89345!important;background:#FFF7E6!important;color:#003C36!important;box-shadow:0 6px 16px rgba(15,23,42,.06)!important;}
-    div[data-testid="stTextInput"] input,div[data-testid="stNumberInput"] input,div[data-testid="stTextArea"] textarea,div[data-testid="stSelectbox"] [data-baseweb="select"]>div,div[data-testid="stDateInput"] input,div[data-testid="stTimeInput"] input{border-radius:12px!important;}
-
-    /* v102.4B11: high-specificity final override for non-bold button text. */
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] button,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] button *,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] button,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] button *,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stPageLink"] a,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stPageLink"] a *,
-    html body div[data-testid="stAppViewContainer"] button[kind="primary"],
-    html body div[data-testid="stAppViewContainer"] button[kind="primary"] *,
-    html body div[data-testid="stAppViewContainer"] button[kind="secondary"],
-    html body div[data-testid="stAppViewContainer"] button[kind="secondary"] *{font-weight:500!important;}
-    /* v102.4B15S2: final contrast override after all button rules */
-    html body div[data-testid="stAppViewContainer"] button[data-testid="baseButton-primary"]:not(:disabled),
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] > button[kind="primary"]:not(:disabled),
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] > button:not(:disabled),
-    html body div[data-testid="stAppViewContainer"] button[kind="primary"]:not(:disabled),
-    html body div[data-testid="stAppViewContainer"] button[kind="primaryFormSubmit"]:not(:disabled){background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important;border-color:#064E3B!important;}
-    html body div[data-testid="stAppViewContainer"] button[data-testid="baseButton-primary"]:not(:disabled) *,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] > button[kind="primary"]:not(:disabled) *,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] > button:not(:disabled) *,
-    html body div[data-testid="stAppViewContainer"] button[kind="primary"]:not(:disabled) *,
-    html body div[data-testid="stAppViewContainer"] button[kind="primaryFormSubmit"]:not(:disabled) *{color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important;font-weight:500!important;}
-    html body div[data-testid="stAppViewContainer"] button:disabled,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] > button:disabled,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] > button:disabled{background:#FAF7F1!important;color:#72551A!important;-webkit-text-fill-color:#72551A!important;border-color:#D8A84E!important;opacity:1!important;}
-    html body div[data-testid="stAppViewContainer"] button:disabled *,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] > button:disabled *,
-    html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] > button:disabled *{color:#72551A!important;-webkit-text-fill-color:#72551A!important;font-weight:500!important;opacity:1!important;}
-    </style>
-    """, unsafe_allow_html=True)
-
-def topbar(title, subtitle="", kicker="HealthyMe premium"):
-    _hm_v102_global_css()
-    st.markdown(f"""
-    <div class='hero-shell'>
-      <div class='hm-v102-brand-row'><span class='hm-v102-brand'>HealthyMe</span>{admin_version_line_v98_1()}</div>
-      <div class='hero-kicker'>{kicker}</div>
-      <div class='hero-title'>{title}</div>
-      {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
-      <div><span class='meta-pill'>Guided wellness workflow</span></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def compact_topbar(title, subtitle="", kicker="HealthyMe"):
-    topbar(title, subtitle, kicker)
-
-def render_page_nav(current_label='', back_page=None, dashboard_page='pages/10_Admin_Dashboard.py', evaluation_page='pages/11_Evaluation_Status.py', *, location='top', show_dashboard=True, show_evaluation=True):
-    if location == 'top':
-        return
-    _hm_v102_global_css()
-    st.markdown("<div class='hm-bottom-nav-shell hm-native-nav-shell'>", unsafe_allow_html=True)
-    items=[]
-    if back_page: items.append(("← Back", back_page))
-    if show_evaluation: items.append(("Evaluation Status", evaluation_page))
-    if show_dashboard: items.append(("Dashboard", dashboard_page))
-    if not items:
-        st.markdown("</div>", unsafe_allow_html=True); return
-    cols=st.columns(len(items), gap="large")
-    for idx,(label,page) in enumerate(items):
-        with cols[idx]: _safe_page_link(page, label)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-def render_global_header(title, subtitle="", kicker="HealthyMe premium"):
-    inject_global_styles(); apply_luxe_theme(); utility_logout_bar(); topbar(title, subtitle, kicker)
-
-def render_global_footer(current_label='', back_page=None, dashboard_page='pages/10_Admin_Dashboard.py', show_dashboard=True, show_evaluation=False):
-    render_page_nav(current_label, back_page=back_page, dashboard_page=dashboard_page, show_dashboard=show_dashboard, show_evaluation=show_evaluation, location='bottom')
-    render_back_to_top()
-
-def render_back_to_top():
-    _hm_v102_global_css()
-    st.markdown("<a id='top'></a><a class='hm-back-to-top' href='#top'>↑ Back to Top</a>", unsafe_allow_html=True)
-
-def render_build_text_v102_0(): return None
-def render_version_tag(): return None
-
-
-
-# --------------------------------------------------------------------
-# v102.4B14A: Definitive admin version display override
-# --------------------------------------------------------------------
-APP_BUILD_VERSION = "v102.4B15S3H5"
-
-
-
-def _hm_v102_is_admin_context():
-    """Detect admin context reliably while keeping member pages version-free."""
-    role = str(st.session_state.get("user_role", "") or st.session_state.get("role", "") or "").strip().lower()
-    if "member" in role:
-        return False
-    if (
-        "admin" in role
-        or "nutrition" in role
-        or st.session_state.get("is_admin")
-        or st.session_state.get("admin_logged_in")
-    ):
-        return True
-    try:
-        import inspect, os
-        caller_files = " ".join(os.path.basename(str(frame.filename)).lower() for frame in inspect.stack()[:8])
-        if "admin_" in caller_files or "_admin" in caller_files or "admin" in caller_files:
-            return True
-    except Exception:
-        pass
-    return False
-
-
-def _hm_v102_should_show_admin_version(title="", kicker=""):
-    marker = f"{title} {kicker}".lower()
-    if _hm_v102_is_admin_context():
-        return True
-    # Some admin pages hydrate the role after the header is already rendered.
-    # Use the page's admin kicker/title as a safe fallback while still avoiding member pages.
-    if "member" in marker and "admin" not in marker:
-        return False
-    return any(token in marker for token in ["admin", "scheduling", "packages", "evaluation status", "database", "recommendations share"])
-
-
-def admin_version_line_v98_1(title="", kicker=""):
-    if not _hm_v102_should_show_admin_version(title, kicker):
-        return ""
-    return f"<span class='hm-admin-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>"
-
-
-def render_current_build(compact=True):
-    if not _hm_v102_should_show_admin_version():
-        return
-    cls = "hm-current-build-text" if compact else "hm-current-build-badge"
-    st.markdown(
-        f"<div class='{cls}'>HealthyMe {APP_BUILD_VERSION} · {APP_BUILD_LABEL}</div>",
-        unsafe_allow_html=True,
-    )
-
-
-def topbar(title, subtitle="", kicker="HealthyMe premium"):
-    _hm_v102_global_css()
-    version_html = admin_version_line_v98_1(title, kicker)
-    st.markdown(f"""
-    <div class='hero-shell'>
-      <div class='hm-v102-brand-row'><span class='hm-v102-brand'>HealthyMe</span>{version_html}</div>
-      <div class='hero-kicker'>{kicker}</div>
-      <div class='hero-title'>{title}</div>
-      {f"<div class='hero-subtitle'>{subtitle}</div>" if subtitle else ""}
-      <div><span class='meta-pill'>Guided wellness workflow</span></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-def compact_topbar(title, subtitle="", kicker="HealthyMe"):
-    topbar(title, subtitle, kicker)
-
-
-def render_build_text_v12():
-    render_current_build(compact=True)
-
-
-def render_build_text_v11():
-    render_current_build(compact=True)
-
-
-def render_build_text_v14():
-    render_current_build(compact=True)
-
-
-def render_build_text_v15():
-    render_current_build(compact=True)
-
-
-def render_build_text_v102_0():
-    render_current_build(compact=True)
-
-
-def build_marker_v11():
-    render_current_build(compact=True)
-
-
-def build_marker_v10():
-    render_current_build(compact=True)
-
-
-def build_marker_v9():
-    render_current_build(compact=True)
-
-
-def build_marker_v8():
-    render_current_build(compact=True)
-
-
-def build_marker_v7():
-    render_current_build(compact=True)
-
-
-def render_version_tag():
-    render_current_build(compact=True)
-
-
-# --------------------------------------------------------------------
-# v102.4B15S2: Mobile supplement HTML cleanup + admin version fix
-# --------------------------------------------------------------------
-HM_B14F_BUTTON_CONTRAST_CSS = """
-<style>
-/* Primary action buttons: always readable on green */
-html body div[data-testid="stAppViewContainer"] button[data-testid="baseButton-primary"]:not(:disabled),
-html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] > button[kind="primary"]:not(:disabled),
-html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] > button:not(:disabled),
-html body div[data-testid="stAppViewContainer"] button[kind="primary"]:not(:disabled),
-html body div[data-testid="stAppViewContainer"] button[kind="primaryFormSubmit"]:not(:disabled){
-  background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
-  color:#FFFFFF!important;
-  -webkit-text-fill-color:#FFFFFF!important;
-  border:1.25px solid #064E3B!important;
-  font-weight:500!important;
-  opacity:1!important;
-}
-html body div[data-testid="stAppViewContainer"] button[data-testid="baseButton-primary"]:not(:disabled) *,
-html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] > button[kind="primary"]:not(:disabled) *,
-html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] > button:not(:disabled) *,
-html body div[data-testid="stAppViewContainer"] button[kind="primary"]:not(:disabled) *,
-html body div[data-testid="stAppViewContainer"] button[kind="primaryFormSubmit"]:not(:disabled) *{
-  color:#FFFFFF!important;
-  -webkit-text-fill-color:#FFFFFF!important;
-  font-weight:500!important;
-  opacity:1!important;
-}
-/* Disabled buttons: visible, not washed out */
-html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] > button:disabled,
-html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] > button:disabled,
-html body div[data-testid="stAppViewContainer"] button:disabled{
-  background:#FAF7F1!important;
-  color:#72551A!important;
-  -webkit-text-fill-color:#72551A!important;
-  border:1.25px solid #D8A84E!important;
-  opacity:1!important;
-  box-shadow:none!important;
-}
-html body div[data-testid="stAppViewContainer"] div[data-testid="stButton"] > button:disabled *,
-html body div[data-testid="stAppViewContainer"] div[data-testid="stFormSubmitButton"] > button:disabled *,
-html body div[data-testid="stAppViewContainer"] button:disabled *{
-  color:#72551A!important;
-  -webkit-text-fill-color:#72551A!important;
-  opacity:1!important;
-  font-weight:500!important;
-}
-</style>
-"""
-
-
-HM_GLOBAL_HEADER_FOOTER_SPACING_V102_4B14H3 = '''
-<style>
-
-/* --- v102.4B14H3 · Global Header Footer Spacing Fix: Global header/footer spacing consistency --- */
-.hm-v1024b14h3-spacing-guard {
-  display:none;
-}
-
-/* Reduce excessive top whitespace before signed-in/logout row */
+# Keep the signed-in/logout row close to the top and keep hero spacing
+# consistent after Streamlit Cloud rerenders. Applied after older CSS blocks.
+LUXE_CSS = LUXE_CSS.replace("</style>", """
+/* v100.19 member shell spacing */
 section.main > div.block-container,
 .main .block-container,
-[data-testid="stAppViewBlockContainer"],
+[data-testid="stMainBlockContainer"],
 .stMainBlockContainer,
-.block-container {
-  padding-top: .45rem !important;
+.block-container{
+  padding-top:.18rem!important;
 }
-
-/* Utility signed-in/logout row: compact and consistent */
-.utility-bar {
-  margin: .15rem 0 .55rem 0 !important;
-  min-height: 2.65rem !important;
-  padding: .34rem .58rem !important;
-  align-items: center !important;
+.utility-bar{
+  margin-top:0!important;
+  margin-bottom:.72rem!important;
 }
-
-/* Reduce gap between utility row and hero banner */
-.utility-bar + .hero-shell,
-.utility-bar + div + .hero-shell,
-div:has(> .utility-bar) + div:has(.hero-shell) {
-  margin-top: .35rem !important;
+.hero-shell{
+  margin-top:0!important;
+  margin-bottom:.72rem!important;
 }
-
-/* Compact hero banner globally without changing branding */
-.hero-shell {
-  margin-top: .40rem !important;
-  margin-bottom: .70rem !important;
-  padding: 1.05rem 1.25rem !important;
-  border-radius: 19px !important;
-}
-
-/* Reduce bottom spacing under hero before first field/section */
-.hero-shell + div,
-.hero-shell + [data-testid="stVerticalBlock"],
-div:has(> .hero-shell) + div {
-  margin-top: .25rem !important;
-  padding-top: .15rem !important;
-}
-
-/* Headings/controls immediately after hero should sit closer */
-.hero-shell ~ div [data-testid="stSelectbox"]:first-child,
-.hero-shell ~ div [data-testid="stTextInput"]:first-child,
-.hero-shell ~ div [data-testid="stDateInput"]:first-child {
-  margin-top: .15rem !important;
-}
-
-/* Bottom navigation/footer controls should not float too far from content */
-.hm-page-nav,
-.hm-footer-nav,
-div[data-testid="stHorizontalBlock"]:has(button) {
-  margin-top: .70rem !important;
-  margin-bottom: .40rem !important;
-}
-
-/* Mobile: preserve compactness on phone layouts */
-@media (max-width: 768px) {
-  section.main > div.block-container,
-  .main .block-container,
-  [data-testid="stAppViewBlockContainer"],
-  .stMainBlockContainer,
-  .block-container {
-    padding-top: .28rem !important;
-  }
-  .utility-bar {
-    margin: .05rem 0 .42rem 0 !important;
-    min-height: 2.35rem !important;
-  }
-  .hero-shell {
-    margin-top: .25rem !important;
-    margin-bottom: .55rem !important;
-    padding: .95rem 1rem !important;
-  }
-}
-
 </style>
-'''
+""")
+
+
+# --------------------------------------------------------------------
+# v100.20: hard web/member shell spacing + no-ghost button override
+# --------------------------------------------------------------------
+# This is deliberately appended after older CSS replacement blocks so it wins
+# over historic v8/v14/v15 button and block-container rules.
+LUXE_CSS = LUXE_CSS.replace("</style>", """
+/* v100.20 hard Streamlit member shell override */
+section.main > div.block-container,
+.main .block-container,
+[data-testid="stMainBlockContainer"],
+[data-testid="stAppViewBlockContainer"],
+.block-container{
+  padding-top:0!important;
+  margin-top:0!important;
+}
+.utility-bar{
+  margin-top:0!important;
+  margin-bottom:.45rem!important;
+  min-height:2.58rem!important;
+  height:auto!important;
+  padding:.34rem .68rem!important;
+}
+.hero-shell,
+.hm-compact-page-section{
+  margin-top:0!important;
+  margin-bottom:.58rem!important;
+}
+div[data-testid="stButton"] > button,
+.stButton > button,
+div[data-testid="stDownloadButton"] > button{
+  transition:none!important;
+  transform:none!important;
+  animation:none!important;
+}
+div[data-testid="stButton"] > button:hover,
+.stButton > button:hover,
+div[data-testid="stButton"] > button:focus,
+.stButton > button:focus,
+div[data-testid="stButton"] > button:active,
+.stButton > button:active{
+  transition:none!important;
+  transform:none!important;
+  animation:none!important;
+}
+.hm-laf-bottom-note{
+  margin:.75rem 0 .55rem 0!important;
+}
+.hm-laf-bottom-home-spacer{
+  height:.72rem!important;
+  margin:0!important;
+}
+</style>
+""")
