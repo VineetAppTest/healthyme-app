@@ -1,27 +1,29 @@
-from components.ui_common import render_page_nav, render_back_to_top
 import re
+import json
+import pathlib
 import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12, render_back_to_top
 from components.db import get_profile_with_laf_fallback, update_profile, sync_profile_from_laf
 
 st.set_page_config(page_title="My Profile", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
 user_id = st.session_state["user_id"]
 sync_profile_from_laf(user_id)
 p = get_profile_with_laf_fallback(user_id)
 
-COUNTRY_OPTIONS = [
-    "India",
-    "United States",
-    "Canada",
-    "United Kingdom",
-    "Australia",
-    "United Arab Emirates",
-    "Singapore",
-    "Other",
-]
+def load_country_options():
+    config_path = pathlib.Path(__file__).resolve().parents[1] / "config" / "laf_questions.json"
+    try:
+        laf_questions = json.loads(config_path.read_text(encoding="utf-8"))
+        country_question = next((q for q in laf_questions if q.get("code") == "country"), None)
+        options = country_question.get("options", []) if country_question else []
+        return options or ["India", "Other"]
+    except Exception:
+        return ["India", "Other"]
+
+COUNTRY_OPTIONS = load_country_options()
 GENDER_OPTIONS = ["Female", "Male", "Non-binary", "Prefer not to say", "Other"]
 
 def int_value(v, default, min_v, max_v):
@@ -147,9 +149,6 @@ with save_col_v10015:
             st.success("Profile saved.")
 
 with back_col_v10015:
-    pass  # v102.0 legacy direct navigation removed; use canonical footer
+    if st.button("Back to Home", use_container_width=True):
+        st.switch_page("pages/02_Member_Home.py")
 card_end()
-
-# v102.0: canonical global footer navigation
-render_page_nav("My Profile", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
-render_back_to_top()

@@ -1,4 +1,3 @@
-from components.ui_common import render_page_nav, render_back_to_top
 import re
 import streamlit as st, pathlib, re
 import streamlit.components.v1 as components
@@ -21,7 +20,7 @@ def load_laf_questions_cached():
     config_path = pathlib.Path(__file__).resolve().parents[1] / "config" / "laf_questions.json"
     return json.loads(config_path.read_text(encoding="utf-8"))
 
-inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar()
+inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
 questions = load_laf_questions_cached()
 questions = [q for q in questions if not q.get("deleted")]
@@ -192,6 +191,18 @@ def normalize(v):
 
 def is_blank(v):
     return normalize(v) in ("", "Select", "Not applicable", "None")
+
+def active_question_codes():
+    return {q.get("code") for q in questions if q.get("code")}
+
+def question_context(code):
+    q = next((x for x in questions if x.get("code") == code), None)
+    if not q:
+        return code.replace("_", " ").title()
+    label = q.get("label") or code.replace("_", " ").title()
+    page = q.get("page", "LAF")
+    section = q.get("section", "General")
+    return f"{page} → {section} → {label}"
 
 def get_current_answers():
     answers = dict(existing)
@@ -433,7 +444,9 @@ def validate_laf(answers):
 
     mobile = normalize(answers.get("mobile_number", answers.get("phone", "")))
     country = normalize(answers.get("country", ""))
-    if mobile and mobile != "Not applicable":
+    # Country is already validated as a required field. Avoid showing the same
+    # "Country is mandatory" message twice through mobile-number validation.
+    if mobile and mobile != "Not applicable" and not is_blank(country):
         mobile_ok, mobile_error = validate_mobile_number_by_country(mobile, country)
         if not mobile_ok:
             errors.append(mobile_error)
@@ -452,7 +465,12 @@ def validate_laf(answers):
             except Exception:
                 errors.append(f"{label} should be numeric.")
 
+    active_codes = active_question_codes()
     for child, (parent, valid_values) in DEPENDENCIES.items():
+        # Do not validate stale/removed questions. This prevents removed fields
+        # such as older dietary follow-ups from blocking member submission.
+        if child not in active_codes or parent not in active_codes:
+            continue
         # Skip disabled due to gender/pronoun
         q = next((x for x in questions if x.get("code") == child), None)
         if q:
@@ -462,7 +480,7 @@ def validate_laf(answers):
         parent_value = normalize(answers.get(parent, ""))
         child_value = normalize(answers.get(child, ""))
         if parent_value in valid_values and is_blank(child_value):
-            errors.append(f"Please complete the dependent field: {child.replace('_', ' ').title()}.")
+            errors.append(f"Please complete: {question_context(child)}.")
 
     return errors
 
@@ -591,7 +609,7 @@ stat_grid([
 ])
 
 if validation_errors:
-    with st.expander("Validation items to review", expanded=False):
+    with st.expander("Validation items to review — page and section shown where available", expanded=False):
         for err in validation_errors:
             st.write(f"- {err}")
 
@@ -601,13 +619,16 @@ save_form_response("laf_responses", user_id, merged_answers)
 sync_profile_from_laf(user_id)
 st.markdown("<div class='autosave-note'>Auto-saved. You can also use the Previous/Next navigation at the top of the page.</div>", unsafe_allow_html=True)
 
-c1, c2, c3 = st.columns(3)
-with c1:
-    pass  # v102.0 legacy direct navigation removed; use canonical footer
-with c2:
+bottom_back, bottom_prev, bottom_spacer, bottom_next = st.columns([1.1, 1.1, 2.2, 1.35], gap="large")
+with bottom_back:
+    if st.button("Back to Home", use_container_width=True):
+        st.switch_page("pages/02_Member_Home.py")
+with bottom_prev:
     if st.button("Previous Page", use_container_width=True, disabled=current_idx == 0):
         go_to_laf_page(current_idx - 1)
-with c3:
+with bottom_spacer:
+    st.markdown("&nbsp;", unsafe_allow_html=True)
+with bottom_next:
     if current_idx < len(page_names) - 1:
         if st.button("Next Page", use_container_width=True):
             go_to_laf_page(current_idx + 1)
@@ -625,7 +646,3 @@ with c3:
                 update_workflow(user_id, laf_completed=True)
                 set_system_message("LAF submitted successfully. Please continue with NSP Page 1.", "success", celebrate=True)
                 st.switch_page("pages/04_NSP_Page1.py")
-
-# v102.0: canonical global footer navigation
-render_page_nav("LAF", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
-render_back_to_top()
