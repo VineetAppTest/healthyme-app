@@ -13,8 +13,8 @@ from components.recommendation_profile_store import (
 )
 from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, render_page_nav, render_back_to_top
 
-APP_BUILD_VERSION = "v100.20"
-APP_BUILD_LABEL = "Profile Builder Cross-section Save Hotfix"
+APP_BUILD_VERSION = "v100.21"
+APP_BUILD_LABEL = "Profile Builder Action Message Hotfix"
 
 st.set_page_config(page_title="Recommendation Profile Builder Sprint 1", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
@@ -330,10 +330,6 @@ else:
     if st.button("Refresh Backend Status", use_container_width=True):
         clear_pb_cache(); st.rerun()
 
-flash = st.session_state.pop("v4_flash_success", "")
-if flash:
-    st.success(flash)
-
 section = st.session_state["v4_active_section"]
 
 if section == "Profile Setup":
@@ -365,13 +361,17 @@ if section == "Profile Setup":
         ok, profile_payload, item_payload, message = load_profile(draft_label_to_id.get(selected_draft_label, ""))
         if ok:
             apply_profile_to_session(profile_payload, item_payload)
-            st.session_state["v4_flash_success"] = message
+            st.session_state["v4_profile_action_message"] = message
             st.rerun()
-        st.error(message)
+        else:
+            st.error(message)
     if load_cols[2].button("New Draft", use_container_width=True):
         reset_new_draft()
-        st.session_state["v4_flash_success"] = "New blank draft started."
+        st.session_state["v4_profile_action_message"] = "New blank draft started."
         st.rerun()
+    profile_action_message = st.session_state.pop("v4_profile_action_message", "")
+    if profile_action_message:
+        st.success(profile_action_message)
     if not ok_drafts and STORE_STATUS.get("ok"):
         st.caption(draft_msg)
     if p.get("id"):
@@ -400,14 +400,16 @@ if section == "Profile Setup":
         st.date_input("Plan Start Date", key=profile_widget_key("start_date"), on_change=sync_profile_field, args=("start_date",))
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True)
         st.text_input("Implementation Status", value="Sprint 1: draft save/load only. Publish not enabled.", disabled=True)
-    if st.button("Save Draft Profile", type="primary", use_container_width=True, disabled=not STORE_STATUS.get("ok")):
+    save_clicked = st.button("Save Draft Profile", type="primary", use_container_width=True, disabled=not STORE_STATUS.get("ok"))
+    save_feedback = st.empty()
+    if save_clicked:
         ok, profile_id, message = save_draft_profile(current_profile_payload(member_label_to_id, clone_label_to_id), collect_items())
         if ok:
             st.session_state["pb_profile"]["id"] = profile_id
             cached_drafts.clear(); cached_profile_sources.clear()
-            st.session_state["v4_flash_success"] = message
-            st.rerun()
-        st.error(message)
+            save_feedback.success(message)
+        else:
+            save_feedback.error(message)
 
 elif section == "Meal Structure":
     day = day_picker("v4_meal_day")
