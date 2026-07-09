@@ -21,9 +21,9 @@ from components.ui_common import (
     utility_logout_bar,
 )
 
-APP_BUILD_VERSION = "v100.27"
-APP_BUILD_LABEL = "Profile Builder Direct Schedule Fix"
-SCHEDULE_SCHEMA_VERSION = "h9a7d_v100_27"
+APP_BUILD_VERSION = "v100.28"
+APP_BUILD_LABEL = "Profile Builder Regime Time Field Removal"
+SCHEDULE_SCHEMA_VERSION = "h9a7e_v100_28"
 
 MEAL_SLOTS = [
     "Wake-up / Early Morning",
@@ -142,7 +142,7 @@ st.markdown(
       </div>
       <div class='hero-kicker'>Admin recommendations</div>
       <div class='hero-title'>Recommendation Profile Builder V2</div>
-      <div class='hero-subtitle'>Direct implementation page. Exercise and supplement schedules are fixed to the approved structures without a fallback route.</div>
+      <div class='hero-subtitle'>Direct implementation page. Regime slots are the timing structure, so separate time fields are removed from Exercise and Supplement rows.</div>
       <div><span class='meta-pill'>Guided wellness workflow</span></div>
     </div>
     """,
@@ -270,25 +270,6 @@ def clean_date(value):
         return dt.date.today()
 
 
-def parse_time_value(value):
-    if isinstance(value, dt.time):
-        return value
-    value = str(value or "").strip()
-    if not value:
-        return None
-    try:
-        hour, minute = value[:5].split(":")
-        return dt.time(int(hour), int(minute))
-    except Exception:
-        return None
-
-
-def time_to_text(value):
-    if isinstance(value, dt.time):
-        return value.strftime("%H:%M")
-    return str(value or "").strip()
-
-
 def set_section(section_name):
     st.session_state["v4_active_section"] = section_name
 
@@ -322,8 +303,7 @@ def item_value(kind, day, slot, idx, field, default=""):
 
 def sync_item_field(kind, day, slot, idx, field):
     key = item_widget_key(kind, day, slot, idx, field)
-    value = st.session_state.get(key, "")
-    st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = time_to_text(value) if field == "time" else value
+    st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = st.session_state.get(key, "")
 
 
 def row_count(kind, day, slot):
@@ -381,20 +361,17 @@ def item_row(kind, day, slot):
             fields = [("recipe", "Recipe", RECIPES, SELECT_RECIPE, "select"), ("portion", "Portion", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
             cols = st.columns([0.44, 0.20, 0.36])
         elif kind == "exercise":
-            fields = [("exercise", "Exercise", EXERCISES, SELECT_EXERCISE, "select"), ("time", "Time", None, "", "time"), ("intensity", "Intensity", INTENSITY_OPTIONS, SELECT_INTENSITY, "select"), ("instruction", "Instruction", None, "", "text")]
-            cols = st.columns([0.40, 0.18, 0.18, 0.24])
+            fields = [("exercise", "Exercise", EXERCISES, SELECT_EXERCISE, "select"), ("intensity", "Intensity", INTENSITY_OPTIONS, SELECT_INTENSITY, "select"), ("instruction", "Instruction", None, "", "text")]
+            cols = st.columns([0.44, 0.20, 0.36])
         else:
-            fields = [("supplement", "Supplement", SUPPLEMENTS, SELECT_SUPPLEMENT, "select"), ("time", "Time", None, "", "time"), ("dose", "Dosage/Frequency", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
-            cols = st.columns([0.36, 0.16, 0.24, 0.24])
+            fields = [("supplement", "Supplement", SUPPLEMENTS, SELECT_SUPPLEMENT, "select"), ("dose", "Dosage/Frequency", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
+            cols = st.columns([0.40, 0.24, 0.36])
 
         for col, (field, label, options, default, field_type) in zip(cols, fields):
             key = item_widget_key(kind, day, slot, idx, field)
-            raw_value = item_value(kind, day, slot, idx, field, default)
-            set_widget_default(key, parse_time_value(raw_value) if field_type == "time" else raw_value)
+            set_widget_default(key, item_value(kind, day, slot, idx, field, default))
             if field_type == "select":
                 col.selectbox(label, ensure_options(options, st.session_state[key]), key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
-            elif field_type == "time":
-                col.time_input(label, value=st.session_state[key], key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
             else:
                 col.text_input(label, key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
 
@@ -413,9 +390,9 @@ def collect_items(include_unsupported=True):
                     if kind == "meal":
                         row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "recipe")), "portion": item_value(kind, day, slot, idx, "portion"), "instruction": item_value(kind, day, slot, idx, "instruction")}
                     elif kind == "exercise":
-                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "exercise")), "scheduled_time": item_value(kind, day, slot, idx, "time"), "intensity": clean_choice(item_value(kind, day, slot, idx, "intensity")), "instruction": item_value(kind, day, slot, idx, "instruction")}
+                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "exercise")), "intensity": clean_choice(item_value(kind, day, slot, idx, "intensity")), "instruction": item_value(kind, day, slot, idx, "instruction")}
                     else:
-                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "supplement")), "scheduled_time": item_value(kind, day, slot, idx, "time"), "dosage_frequency": item_value(kind, day, slot, idx, "dose"), "instruction": item_value(kind, day, slot, idx, "instruction")}
+                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "supplement")), "dosage_frequency": item_value(kind, day, slot, idx, "dose"), "instruction": item_value(kind, day, slot, idx, "instruction")}
                     rows.append(row)
     if include_unsupported:
         rows.extend(st.session_state.get("pb_unsupported_items", []))
@@ -423,7 +400,7 @@ def collect_items(include_unsupported=True):
 
 
 def item_has_content(row):
-    return any(str(row.get(field, "")).strip() for field in ("reference_label", "portion", "instruction", "scheduled_time", "intensity", "dosage_frequency"))
+    return any(str(row.get(field, "")).strip() for field in ("reference_label", "portion", "instruction", "intensity", "dosage_frequency", "scheduled_time"))
 
 
 def active_rows(rows=None):
@@ -498,7 +475,6 @@ def preview_table(rows, selected_day):
             "Slot": row.get("slot_name"),
             "Item": row.get("reference_label") or "NA",
             "Portion/Dose": row.get("portion") or row.get("dosage_frequency") or "NA",
-            "Time": row.get("scheduled_time") or "NA",
             "Intensity": row.get("intensity") or "NA",
             "Instruction": row.get("instruction") or "NA",
         })
@@ -537,9 +513,9 @@ def apply_profile_to_session(profile, items):
         if kind == "meal":
             values = {"recipe": row.get("reference_label") or SELECT_RECIPE, "portion": row.get("portion") or "", "instruction": row.get("instruction") or ""}
         elif kind == "exercise":
-            values = {"exercise": row.get("reference_label") or SELECT_EXERCISE, "time": row.get("scheduled_time") or "", "intensity": row.get("intensity") or SELECT_INTENSITY, "instruction": row.get("instruction") or ""}
+            values = {"exercise": row.get("reference_label") or SELECT_EXERCISE, "intensity": row.get("intensity") or SELECT_INTENSITY, "instruction": row.get("instruction") or ""}
         else:
-            values = {"supplement": row.get("reference_label") or SELECT_SUPPLEMENT, "time": row.get("scheduled_time") or "", "dose": row.get("dosage_frequency") or "", "instruction": row.get("instruction") or ""}
+            values = {"supplement": row.get("reference_label") or SELECT_SUPPLEMENT, "dose": row.get("dosage_frequency") or "", "instruction": row.get("instruction") or ""}
         for field, value in values.items():
             st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = value
     st.session_state["pb_unsupported_items"] = unsupported
@@ -684,7 +660,7 @@ if section == "Profile Setup":
     with a2:
         st.date_input("Plan Start Date", key=profile_widget_key("start_date"), on_change=sync_profile_field, args=("start_date",))
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True)
-        st.text_input("Implementation Status", value="Direct V2 implementation. No fallback route. Publish not enabled.", disabled=True)
+        st.text_input("Implementation Status", value="Direct V2 implementation. No fallback route. Time field removed from Exercise and Supplement.", disabled=True)
 
     save_clicked = st.button("Save Draft Profile", type="primary", use_container_width=True, disabled=not STORE_STATUS.get("ok"))
     save_feedback = st.container()
