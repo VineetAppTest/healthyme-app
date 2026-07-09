@@ -228,6 +228,11 @@ with st.container(border=True):
         nav_cell("Legacy Recommendations Share", "pages/35_Admin_Recommendations_Share.py", "dash_legacy_recommendations_share_h9a8c")
     with legacy_col_2:
         nav_cell("Unified Recommendations Diagnostics", "pages/36_Admin_Unified_Recommendations.py", "dash_unified_recommendations_diagnostics_h9a8c")
+    diagnostic_col_1, diagnostic_col_2 = st.columns(2, gap="large")
+    with diagnostic_col_1:
+        nav_cell("Active Profile Contract Diagnostics", "pages/45_Admin_Active_Profile_Contract_Diagnostics.py", "dash_active_profile_contract_diagnostics_h9a9a")
+    with diagnostic_col_2:
+        st.empty()
     st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -241,3 +246,4 @@ inject_keepalive_guard_v96_11()
 # H9A.5E: Added Unified Recommendations contract workbench entry point.
 # H9A.8B: Added final Recommendation Profile Builder entry point and removed mockup route dependency.
 # H9A.8C: Moved legacy Recommendations Share and Unified Recommendations out of main workflow into System Tools.
+# H9A.9A: Added Active Profile Contract Diagnostics under System Tools.
