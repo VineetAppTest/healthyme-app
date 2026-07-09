@@ -24,6 +24,9 @@ button[data-baseweb="tab"] p{font-size:.87rem!important;font-weight:930!importan
 button[data-baseweb="tab"][aria-selected="true"]{background:linear-gradient(135deg,#FFF3D6,#FFFFFF)!important;border:1.5px solid #B89345!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
 .hm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:.55rem 0}.hm-mini{border:1px solid #E3C98E;background:#fff;border-radius:16px;padding:.75rem .85rem}.hm-mini b{color:#064E3B}
+.hm-readiness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin:.55rem 0 0}.hm-readiness-item{background:#fff;border:1px solid #E3C98E;border-radius:14px;padding:.58rem .68rem;line-height:1.35}
+.hm-pill{display:inline-block;border-radius:999px;padding:.13rem .5rem;margin:.15rem .2rem .15rem 0;font-size:.7rem;font-weight:950}.hm-ok{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}.hm-pending{background:#FFF7ED;color:#B45309;border:1px solid #FED7AA}.hm-info{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
+.hm-member-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:.55rem 0}.hm-member-card{border:1px solid #E3C98E;background:#fff;border-radius:16px;padding:.8rem .9rem;min-height:8rem}.hm-member-card b{display:block;color:#064E3B;font-size:.92rem;margin-bottom:.32rem}.hm-member-card span{color:#475569;font-size:.82rem;font-weight:740;line-height:1.45}
 </style>
 """, unsafe_allow_html=True)
 
@@ -152,6 +155,10 @@ with supplement:
     st.markdown("</div>", unsafe_allow_html=True)
 
 with preview:
+    member_ready = assigned_member != "Select member"
+    member_pill = "hm-ok" if member_ready else "hm-pending"
+    member_status = "Complete" if member_ready else "Pending"
+
     st.markdown("<div class='hm-card'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-title'>Preview & End-to-End Flow Review</div><div class='hm-sub'>This is the contract review page before implementation. It checks what Admin creates, what gets published, and what Web Member and Flutter Member consume.</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-preview'><b>Profile Summary</b><br><b>Profile:</b> {profile_name}<br><b>Clone Source:</b> {clone_from}<br><b>Status:</b> {profile_status}<br><b>Assigned Member:</b> {assigned_member}<br><b>Start Date:</b> {plan_start.isoformat()}<br><b>Cycle:</b> Weekly cyclical until replaced or stopped<br><b>Tags:</b> {region} - {age_band} - {diet_type} - {', '.join(concerns) if concerns else 'No health concern selected'}<br><b>Change Note:</b> {change_note or 'NA'}<br><b>Profile Note:</b> {profile_note or 'NA'}</div>", unsafe_allow_html=True)
@@ -161,6 +168,41 @@ with preview:
   <div class='hm-mini'><b>2. Admin Publishes</b><br>One active member recommendation profile with start date, weekly cycle rule and profile metadata.</div>
   <div class='hm-mini'><b>3. Member Web Reads</b><br>Today's Journey calculates the correct current-day slice from the active weekly cycle.</div>
   <div class='hm-mini'><b>4. Flutter Reads</b><br>My Recommendations shows the full active weekly profile and the same current cycle details.</div>
+</div>
+""", unsafe_allow_html=True)
+    st.markdown(f"""
+<div class='hm-preview'>
+<b>Publish Readiness Checklist</b><br>
+This checklist should remain on the admin side as the final gate before publish. It is useful because it prevents assigning an incomplete weekly profile to a member.
+<div class='hm-readiness'>
+  <div class='hm-readiness-item'><span class='hm-pill hm-ok'>Complete</span><br><b>Profile name added</b><br>Reusable profile identity is available.</div>
+  <div class='hm-readiness-item'><span class='hm-pill hm-info'>Ready</span><br><b>Clone / source context captured</b><br>Admin can trace whether this is new or cloned.</div>
+  <div class='hm-readiness-item'><span class='hm-pill {member_pill}'>{member_status}</span><br><b>Member assigned</b><br>Publishing must stay blocked until a member is selected.</div>
+  <div class='hm-readiness-item'><span class='hm-pill hm-ok'>Complete</span><br><b>Start date selected</b><br>Start date drives the day-slice calculation.</div>
+  <div class='hm-readiness-item'><span class='hm-pill hm-ok'>Complete</span><br><b>Weekly cycle rule present</b><br>Cycle continues until replaced or stopped.</div>
+  <div class='hm-readiness-item'><span class='hm-pill hm-info'>Review</span><br><b>Profile-level note reviewed</b><br>Nutritionist/practitioner note should be checked before publish.</div>
+  <div class='hm-readiness-item'><span class='hm-pill hm-info'>Review</span><br><b>Meal, exercise and supplement tabs reviewed</b><br>Admin confirms Day 1 to Day 7 content is ready.</div>
+  <div class='hm-readiness-item'><span class='hm-pill hm-info'>Review</span><br><b>Preview checked</b><br>Admin confirms web and Flutter consumption logic before implementation.</div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+    st.markdown("""
+<div class='hm-preview'>
+<b>How this profile will appear to the member</b><br>
+<div class='hm-member-flow'>
+  <div class='hm-member-card'>
+    <b>My Recommendations</b>
+    <span>Shows the member's full active weekly recommendation profile. This is the master 7-day view, including meal guidance, exercise guidance, supplement guidance, profile-level notes and active practitioner/admin instructions.</span>
+  </div>
+  <div class='hm-member-card'>
+    <b>Today's Journey</b>
+    <span>Shows only the current day's slice from the active weekly cycle. The day is calculated from the profile start date; for example, if today maps to Day 3, the member sees only Day 3 guidance.</span>
+  </div>
+  <div class='hm-member-card'>
+    <b>Cycle Rule</b>
+    <span>The same weekly cycle repeats until an admin replaces or stops the profile. This keeps the member experience simple without losing the complete weekly recommendation structure.</span>
+  </div>
+</div>
 </div>
 """, unsafe_allow_html=True)
     st.markdown("""
@@ -186,7 +228,6 @@ member_consumption: My Recommendations shows the full profile; Today's Journey s
 [ ] Replacing or stopping a profile does not delete historical recommendations.
 </div>
 """, unsafe_allow_html=True)
-    st.code("My Recommendations = full active weekly profile\nToday's Journey = current day slice from the active weekly cycle\nWeekly cycle remains active until replaced or stopped", language="text")
     st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("Recommendation Profile Builder Mock-up V4", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
