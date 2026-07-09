@@ -13,8 +13,8 @@ from components.recommendation_profile_store import (
 )
 from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, render_page_nav, render_back_to_top
 
-APP_BUILD_VERSION = "v100.21"
-APP_BUILD_LABEL = "Profile Builder Action Message Hotfix"
+APP_BUILD_VERSION = "v100.22"
+APP_BUILD_LABEL = "Profile Builder Time Selector Hotfix"
 
 st.set_page_config(page_title="Recommendation Profile Builder Sprint 1", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
@@ -155,6 +155,25 @@ def clean_date(value):
         return dt.date.today()
 
 
+def parse_time_value(value):
+    if isinstance(value, dt.time):
+        return value
+    value = str(value or "").strip()
+    if not value:
+        return None
+    try:
+        hour, minute = value[:5].split(":")
+        return dt.time(int(hour), int(minute))
+    except Exception:
+        return None
+
+
+def time_to_text(value):
+    if isinstance(value, dt.time):
+        return value.strftime("%H:%M")
+    return str(value or "").strip()
+
+
 def set_section(section_name):
     st.session_state["v4_active_section"] = section_name
 
@@ -188,7 +207,8 @@ def item_value(kind, day, slot, idx, field, default=""):
 
 def sync_item_field(kind, day, slot, idx, field):
     key = item_widget_key(kind, day, slot, idx, field)
-    st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = st.session_state.get(key, "")
+    value = st.session_state.get(key, "")
+    st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = time_to_text(value) if field == "time" else value
 
 
 def sync_visible_item_widgets():
@@ -198,7 +218,8 @@ def sync_visible_item_widgets():
         parts = str(key)[4:].rsplit("_", 4)
         if len(parts) == 5:
             kind, day, slot, idx, field = parts
-            st.session_state["pb_items"][item_key(kind, int(day), slot, int(idx), field)] = value
+            stored_value = time_to_text(value) if field == "time" else value
+            st.session_state["pb_items"][item_key(kind, int(day), slot, int(idx), field)] = stored_value
 
 
 def row_count(kind, day, slot):
@@ -249,19 +270,21 @@ def item_row(kind, day, slot):
             fields = [("recipe", "Recipe", RECIPES, "-- Select recipe --", "select"), ("portion", "Portion", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
             cols = st.columns([.44, .20, .36])
         elif kind == "exercise":
-            fields = [("exercise", "Exercise", EXERCISES, "-- Select exercise --", "select"), ("time", "Time", None, "", "text"), ("intensity", "Intensity", INTENSITY_OPTIONS, SELECT_INTENSITY, "select"), ("instruction", "Instruction", None, "", "text")]
+            fields = [("exercise", "Exercise", EXERCISES, "-- Select exercise --", "select"), ("time", "Time", None, "", "time"), ("intensity", "Intensity", INTENSITY_OPTIONS, SELECT_INTENSITY, "select"), ("instruction", "Instruction", None, "", "text")]
             cols = st.columns([.40, .18, .18, .24])
         else:
-            fields = [("supplement", "Supplement", SUPPLEMENTS, "-- Select supplement --", "select"), ("time", "Time", None, "", "text"), ("dose", "Dosage/Frequency", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
+            fields = [("supplement", "Supplement", SUPPLEMENTS, "-- Select supplement --", "select"), ("time", "Time", None, "", "time"), ("dose", "Dosage/Frequency", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
             cols = st.columns([.36, .16, .24, .24])
         for col, (field, label, options, default, field_type) in zip(cols, fields):
             key = item_widget_key(kind, day, slot, idx, field)
-            set_widget_default(key, item_value(kind, day, slot, idx, field, default))
+            raw_value = item_value(kind, day, slot, idx, field, default)
+            set_widget_default(key, parse_time_value(raw_value) if field_type == "time" else raw_value)
             if field_type == "select":
                 col.selectbox(label, ensure_options(options, st.session_state[key]), key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
+            elif field_type == "time":
+                col.time_input(label, value=st.session_state[key], key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
             else:
-                placeholder = "HH:MM" if field == "time" else None
-                col.text_input(label, key=key, placeholder=placeholder, on_change=sync_item_field, args=(kind, day, slot, idx, field))
+                col.text_input(label, key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
     label = {"meal": "Add food item", "exercise": "Add workout item", "supplement": "Add supplement item"}[kind]
     if st.button(label, key=f"add_{kind}_{day}_{slot}", use_container_width=True):
         sync_visible_item_widgets()
