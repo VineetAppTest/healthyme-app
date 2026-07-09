@@ -13,8 +13,8 @@ from components.recommendation_profile_store import (
 )
 from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, render_page_nav, render_back_to_top
 
-APP_BUILD_VERSION = "v100.23"
-APP_BUILD_LABEL = "Profile Builder Sprint 2 Clone Preview Validation"
+APP_BUILD_VERSION = "v100.24"
+APP_BUILD_LABEL = "Profile Builder Schedule Alignment Hotfix"
 
 st.set_page_config(page_title="Recommendation Profile Builder Sprint 2", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
@@ -61,13 +61,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 MEAL_SLOTS = ["Wake-up / Early Morning", "Breakfast", "Mid-morning Snack", "Lunch", "Evening Snack / Tea", "Dinner", "Bedtime"]
-EXERCISE_SLOTS = ["Morning", "Evening", "Preferred Time"]
-SUPPLEMENT_SLOTS = ["Morning", "Afternoon", "Evening", "Before Bed", "Preferred Time"]
+EXERCISE_SLOTS = ["Morning", "Afternoon", "Evening", "Night / As advised"]
+SUPPLEMENT_SLOTS = ["Before Breakfast", "After Breakfast", "Before Lunch", "After Lunch", "Before Dinner", "After Dinner", "Before Bed"]
 SECTIONS = ["Profile Setup", "Meal Structure", "Exercise Regime", "Supplement Regime", "Preview & End-to-End Flow"]
 NAV_LABELS = {"Profile Setup": "Profile Setup", "Meal Structure": "Meal Structure", "Exercise Regime": "Exercise Regime", "Supplement Regime": "Supplement Regime", "Preview & End-to-End Flow": "Preview & Flow"}
 SELECT_AGE = "-- Select age band --"
 SELECT_DIET = "-- Select diet type --"
 SELECT_INTENSITY = "-- Select intensity --"
+
+LEGACY_SLOT_MAP = {
+    "exercise": {"Preferred Time": "Night / As advised", "Night": "Night / As advised", "Morning": "Morning", "Afternoon": "Afternoon", "Evening": "Evening"},
+    "supplement": {"Morning": "Before Breakfast", "Afternoon": "After Lunch", "Evening": "After Dinner", "Preferred Time": "Before Bed", "Before Bed": "Before Bed", "Before Breakfast": "Before Breakfast", "After Breakfast": "After Breakfast", "Before Lunch": "Before Lunch", "After Lunch": "After Lunch", "Before Dinner": "Before Dinner", "After Dinner": "After Dinner"},
+}
 
 @st.cache_data(ttl=180, show_spinner=False)
 def cached_store_status():
@@ -121,20 +126,16 @@ def ensure_state():
     st.session_state.setdefault("pb_row_counts", {})
     st.session_state.setdefault("v4_active_section", "Profile Setup")
 
-
 def is_select(value):
     value = str(value or "").strip()
     return not value or value.startswith("-- Select") or value == "Select member"
-
 
 def clean_choice(value):
     value = str(value or "").strip()
     return "" if is_select(value) else value
 
-
 def display_choice(value):
     return clean_choice(value) or "NA"
-
 
 def ensure_options(options, selected=None):
     values = list(options or [])
@@ -146,7 +147,6 @@ def ensure_options(options, selected=None):
         values.append(selected)
     return values
 
-
 def clean_date(value):
     if isinstance(value, dt.date):
         return value
@@ -154,7 +154,6 @@ def clean_date(value):
         return dt.date.fromisoformat(str(value)[:10])
     except Exception:
         return dt.date.today()
-
 
 def parse_time_value(value):
     if isinstance(value, dt.time):
@@ -168,24 +167,23 @@ def parse_time_value(value):
     except Exception:
         return None
 
-
 def time_to_text(value):
     if isinstance(value, dt.time):
         return value.strftime("%H:%M")
     return str(value or "").strip()
 
+def normalize_slot(kind, slot):
+    slot = str(slot or "").strip()
+    return LEGACY_SLOT_MAP.get(kind, {}).get(slot, slot)
 
 def set_section(section_name):
     st.session_state["v4_active_section"] = section_name
 
-
 def profile_widget_key(field):
     return f"pbw_profile_{field}"
 
-
 def sync_profile_field(field):
     st.session_state["pb_profile"][field] = st.session_state.get(profile_widget_key(field), PROFILE_DEFAULTS.get(field, ""))
-
 
 def sync_profile_all():
     for field in PROFILE_DEFAULTS:
@@ -193,24 +191,19 @@ def sync_profile_all():
         if key in st.session_state:
             st.session_state["pb_profile"][field] = st.session_state[key]
 
-
 def item_key(kind, day, slot, idx, field):
     return f"{kind}|{day}|{slot}|{idx}|{field}"
-
 
 def item_widget_key(kind, day, slot, idx, field):
     return f"pbw_{kind}_{day}_{slot}_{idx}_{field}"
 
-
 def item_value(kind, day, slot, idx, field, default=""):
     return st.session_state["pb_items"].get(item_key(kind, day, slot, idx, field), default)
-
 
 def sync_item_field(kind, day, slot, idx, field):
     key = item_widget_key(kind, day, slot, idx, field)
     value = st.session_state.get(key, "")
     st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = time_to_text(value) if field == "time" else value
-
 
 def sync_visible_item_widgets():
     for key, value in list(st.session_state.items()):
@@ -222,17 +215,14 @@ def sync_visible_item_widgets():
             stored_value = time_to_text(value) if field == "time" else value
             st.session_state["pb_items"][item_key(kind, int(day), slot, int(idx), field)] = stored_value
 
-
 def row_count(kind, day, slot):
     key = f"{kind}|{day}|{slot}"
     st.session_state["pb_row_counts"].setdefault(key, 1)
     return int(st.session_state["pb_row_counts"][key])
 
-
 def add_row(kind, day, slot):
     key = f"{kind}|{day}|{slot}"
     st.session_state["pb_row_counts"][key] = row_count(kind, day, slot) + 1
-
 
 def reset_new_draft():
     for key in list(st.session_state.keys()):
@@ -243,11 +233,9 @@ def reset_new_draft():
     st.session_state["pb_row_counts"] = {}
     st.session_state["v4_active_section"] = "Profile Setup"
 
-
 def day_label(day):
     start = st.session_state["pb_profile"].get("start_date", dt.date.today())
     return f"Day {day} - {(start + dt.timedelta(days=day-1)).strftime('%a, %d %b')}"
-
 
 def day_picker(key):
     st.session_state.setdefault(key, 1)
@@ -259,11 +247,9 @@ def day_picker(key):
                 st.button(day_label(day), key=f"{key}_{day}", type=("primary" if st.session_state[key] == day else "secondary"), use_container_width=True, on_click=lambda d=day: st.session_state.update({key: d}))
     return st.session_state[key]
 
-
 def set_widget_default(widget_key, value):
     if widget_key not in st.session_state:
         st.session_state[widget_key] = value
-
 
 def item_row(kind, day, slot):
     for idx in range(row_count(kind, day, slot)):
@@ -292,7 +278,6 @@ def item_row(kind, day, slot):
         add_row(kind, day, slot)
         st.rerun()
 
-
 def collect_items():
     sync_visible_item_widgets()
     rows = []
@@ -308,26 +293,19 @@ def collect_items():
                         rows.append({"item_type": "supplement", "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "supplement")), "scheduled_time": item_value(kind, day, slot, idx, "time"), "dosage_frequency": item_value(kind, day, slot, idx, "dose"), "instruction": item_value(kind, day, slot, idx, "instruction")})
     return rows
 
-
 def item_has_content(row):
     fields = ["reference_label", "portion", "instruction", "scheduled_time", "intensity", "dosage_frequency"]
     return any(str(row.get(field, "")).strip() for field in fields)
-
 
 def active_rows(rows=None):
     rows = rows if rows is not None else collect_items()
     return [row for row in rows if item_has_content(row)]
 
-
 def validation_summary(rows=None):
     sync_profile_all()
     p = st.session_state["pb_profile"]
     rows = active_rows(rows)
-    counts = {
-        "meal": len([row for row in rows if row.get("item_type") == "meal"]),
-        "exercise": len([row for row in rows if row.get("item_type") == "exercise"]),
-        "supplement": len([row for row in rows if row.get("item_type") == "supplement"]),
-    }
+    counts = {"meal": len([row for row in rows if row.get("item_type") == "meal"]), "exercise": len([row for row in rows if row.get("item_type") == "exercise"]), "supplement": len([row for row in rows if row.get("item_type") == "supplement"])}
     errors = []
     guidance = []
     if not str(p.get("profile_name", "")).strip():
@@ -346,20 +324,15 @@ def validation_summary(rows=None):
         guidance.append("Add at least one Supplement Regime row before publish readiness.")
     return {"errors": errors, "guidance": guidance, "counts": counts, "rows": rows}
 
-
 def render_validation_box(summary, heading="Sprint 2 Validation"):
     counts = summary["counts"]
     if summary["errors"]:
-        status_class = "hm-error"
-        status = "Draft save needs attention"
+        status_class = "hm-error"; status = "Draft save needs attention"
     elif summary["guidance"]:
-        status_class = "hm-pending"
-        status = "Draft can be saved; publish readiness pending"
+        status_class = "hm-pending"; status = "Draft can be saved; publish readiness pending"
     else:
-        status_class = "hm-ok"
-        status = "Draft is complete for Sprint 2 preview"
-    st.markdown(
-        f"""
+        status_class = "hm-ok"; status = "Draft is complete for Sprint 2 preview"
+    st.markdown(f"""
 <div class='hm-preview'>
 <b>{heading}</b><br>
 <span class='hm-pill {status_class}'>{status}</span>
@@ -370,32 +343,19 @@ def render_validation_box(summary, heading="Sprint 2 Validation"):
   <div class='hm-count-card'><b>{len(summary['rows'])}</b><span>Total recommendation rows</span></div>
 </div>
 </div>
-""",
-        unsafe_allow_html=True,
-    )
+""", unsafe_allow_html=True)
     if summary["errors"]:
         st.error(" ".join(summary["errors"]))
     if summary["guidance"]:
         st.warning(" ".join(summary["guidance"]))
-
 
 def preview_table(rows, selected_day):
     table = []
     for row in rows:
         if int(row.get("day_number") or 0) != selected_day:
             continue
-        table.append({
-            "Type": str(row.get("item_type", "")).title(),
-            "Day": row.get("day_number"),
-            "Slot": row.get("slot_name"),
-            "Item": row.get("reference_label") or "NA",
-            "Portion/Dose": row.get("portion") or row.get("dosage_frequency") or "NA",
-            "Time": row.get("scheduled_time") or "NA",
-            "Intensity": row.get("intensity") or "NA",
-            "Instruction": row.get("instruction") or "NA",
-        })
+        table.append({"Type": str(row.get("item_type", "")).title(), "Day": row.get("day_number"), "Slot": row.get("slot_name"), "Item": row.get("reference_label") or "NA", "Portion/Dose": row.get("portion") or row.get("dosage_frequency") or "NA", "Time": row.get("scheduled_time") or "NA", "Intensity": row.get("intensity") or "NA", "Instruction": row.get("instruction") or "NA"})
     return table
-
 
 def apply_profile_to_session(profile, items):
     reset_new_draft()
@@ -403,7 +363,7 @@ def apply_profile_to_session(profile, items):
     for row in items:
         kind = row.get("item_type")
         day = int(row.get("day_number") or 0)
-        slot = row.get("slot_name") or ""
+        slot = normalize_slot(kind, row.get("slot_name") or "")
         idx = int(row.get("item_order") or 1) - 1
         if kind not in {"meal", "exercise", "supplement"} or not slot:
             continue
@@ -416,7 +376,6 @@ def apply_profile_to_session(profile, items):
             values = {"supplement": row.get("reference_label") or "-- Select supplement --", "time": row.get("scheduled_time") or "", "dose": row.get("dosage_frequency") or "", "instruction": row.get("instruction") or ""}
         for field, value in values.items():
             st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = value
-
 
 def current_profile_payload(member_label_to_id, clone_label_to_id):
     sync_profile_all()
@@ -497,8 +456,8 @@ if section == "Profile Setup":
     with c1:
         st.text_input("Profile Name", key=profile_widget_key("profile_name"), on_change=sync_profile_field, args=("profile_name",))
         clone_cols = st.columns([.68, .32], gap="small")
-        clone_cols[0].selectbox("Clone From Existing Profile", ensure_options(clone_options, p.get("clone_from")), key=profile_widget_key("clone_from"), on_change=sync_profile_field, args=("clone_from",))
-        selected_clone = st.session_state.get(profile_widget_key("clone_from"), p.get("clone_from", "New profile"))
+        selected_clone = clone_cols[0].selectbox("Clone From Existing Profile", ensure_options(clone_options, p.get("clone_from")), key=profile_widget_key("clone_from"), on_change=sync_profile_field, args=("clone_from",))
+        clone_cols[1].markdown("<div style='height:1.72rem'></div>", unsafe_allow_html=True)
         if clone_cols[1].button("Clone Selected", use_container_width=True, disabled=not bool(clone_label_to_id.get(selected_clone))):
             ok, profile_payload, item_payload, message = load_profile(clone_label_to_id.get(selected_clone, ""))
             if ok:
@@ -560,16 +519,18 @@ elif section == "Meal Structure":
 
 elif section == "Exercise Regime":
     day = day_picker("v4_exercise_day")
+    st.caption("Exercise rows are grouped by period of day to stay aligned with the Exercise Regime module.")
     for slot in EXERCISE_SLOTS:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
         item_row("exercise", day, slot)
     x, y, z = st.columns(3)
     x.button("Copy Day 1 to all days", key=f"v4_ex_copy_all_{day}", use_container_width=True)
     y.button("Copy previous day", key=f"v4_ex_copy_prev_{day}", use_container_width=True)
-    z.button("Add preferred-time slot", key=f"v4_ex_add_pref_{day}", use_container_width=True)
+    z.button("Add advised-time slot", key=f"v4_ex_add_pref_{day}", use_container_width=True)
 
 elif section == "Supplement Regime":
     day = day_picker("v4_supp_day")
+    st.caption("Supplement rows are grouped by before/after meal frequency to stay aligned with the Supplement Regime module.")
     for slot in SUPPLEMENT_SLOTS:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
         item_row("supplement", day, slot)
@@ -591,9 +552,7 @@ else:
     concerns = p.get("concerns", [])
     st.markdown("<div class='hm-title'>Preview & End-to-End Flow Review</div><div class='hm-sub'>Sprint 2 preview reads from the current durable draft buffer and saved draft data. Publish and member consumption remain disabled.</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-preview'><b>Profile Summary</b><br><b>Draft ID:</b> {p.get('id') or 'Not saved yet'}<br><b>Profile:</b> {p.get('profile_name') or 'Not entered yet'}<br><b>Status:</b> Draft<br><b>Assigned Member:</b> {display_choice(assigned_member)}<br><b>Start Date:</b> {plan_start.isoformat() if isinstance(plan_start, dt.date) else plan_start}<br><b>Tags:</b> {p.get('region') or 'NA'} - {display_choice(p.get('age_band'))} - {display_choice(p.get('diet_type'))} - {', '.join(concerns) if concerns else 'No health concern selected'}<br><b>Profile Note:</b> {p.get('note') or 'NA'}</div>", unsafe_allow_html=True)
-
     render_validation_box(summary, "Sprint 2 Preview Validation")
-
     day_options = list(range(1, 8))
     selected_preview_day = st.selectbox("Preview Day", day_options, format_func=lambda d: day_label(d), key="v4_preview_day")
     rows_for_day = preview_table(summary["rows"], selected_preview_day)
@@ -601,7 +560,6 @@ else:
         st.dataframe(rows_for_day, use_container_width=True, hide_index=True)
     else:
         st.info("No recommendation rows have been added for this day yet.")
-
     st.markdown(f"""
 <div class='hm-preview'>
 <b>Publish Readiness Checklist</b><br>
