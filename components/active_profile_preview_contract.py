@@ -250,10 +250,16 @@ def render_profile_summary(profile: dict, summary: dict) -> None:
 """, unsafe_allow_html=True)
 
 
-def render_active_profile_preview_contract() -> None:
+def render_active_profile_preview_contract(show_raw_payload: bool = False, diagnostic_mode: bool = False) -> None:
+    title = "Active Profile Contract Diagnostics" if diagnostic_mode else "Active Profile Member Preview Contract"
+    subtitle = (
+        "System Tools diagnostic view with the raw active profile contract payload for backend troubleshooting."
+        if diagnostic_mode
+        else "Admin-only preview of the active profile exactly as the member-facing layer should consume it. No Flutter/member display is changed in this sprint."
+    )
     st.markdown(
-        "<div class='hm-title'>Active Profile Member Preview Contract</div>"
-        "<div class='hm-sub'>Admin-only preview of the active profile exactly as the member-facing layer should consume it. No Flutter/member display is changed in this sprint.</div>",
+        f"<div class='hm-title'>{title}</div>"
+        f"<div class='hm-sub'>{subtitle}</div>",
         unsafe_allow_html=True,
     )
     ok_members, members, member_message = load_members_for_preview()
@@ -298,5 +304,6 @@ def render_active_profile_preview_contract() -> None:
             else:
                 st.info("No recommendation rows found for this day.")
 
-    with st.expander("Raw active profile contract payload", expanded=False):
-        st.json({"profile": profile, "items": summary["items"]})
+    if show_raw_payload:
+        with st.expander("Raw active profile contract payload", expanded=False):
+            st.json({"profile": profile, "items": summary["items"]})
