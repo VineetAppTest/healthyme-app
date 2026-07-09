@@ -23,8 +23,8 @@ from components.ui_common import (
     utility_logout_bar,
 )
 
-APP_BUILD_VERSION = "v100.33"
-APP_BUILD_LABEL = "Active Profile Member Preview Contract"
+APP_BUILD_VERSION = "v100.34"
+APP_BUILD_LABEL = "Profile Builder Alignment Polish"
 SCHEDULE_SCHEMA_VERSION = "h9a9a_v100_33"
 
 MEAL_SLOTS = [
@@ -171,16 +171,16 @@ st.markdown(
 .hm-pb-version{color:#72551A;font-size:.72rem;font-weight:900;background:#F5E7C8;border-radius:999px;padding:.22rem .55rem;}
 .hm-title{color:#064E3B;font-size:1.04rem;font-weight:950;margin:0 0 .25rem}.hm-sub{color:#64748B;font-size:.82rem;font-weight:720;margin:0 0 .7rem}
 .hm-section-nav{margin:.35rem 0 .55rem 0;}.hm-section-rule{height:1px;background:linear-gradient(90deg,transparent,rgba(216,168,78,.8),transparent);margin:.3rem 0 .72rem 0;}
-.hm-section-nav [data-testid="stButton"]>button{min-height:2.7rem!important;border-radius:15px!important;font-weight:930!important;border:1.15px solid rgba(216,180,98,.72)!important;background:#fff!important;color:#064E3B!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;white-space:normal!important;line-height:1.15!important;padding:.55rem .5rem!important;}
+.hm-section-nav [data-testid="stButton"]>button{width:100%!important;min-height:3.05rem!important;height:3.05rem!important;border-radius:15px!important;font-weight:930!important;border:1.15px solid rgba(216,180,98,.72)!important;background:#fff!important;color:#064E3B!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;white-space:normal!important;line-height:1.12!important;padding:.52rem .45rem!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;}
 .hm-section-nav [data-testid="stButton"]>button[kind="primary"]{background:linear-gradient(135deg,#FFF3D6,#FFFFFF)!important;border:1.5px solid #B89345!important;color:#064E3B!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
 .hm-readiness-strip{border-radius:15px;padding:.62rem .78rem;margin:.25rem 0 1rem 0;font-size:.84rem;font-weight:780;line-height:1.35;box-shadow:0 5px 12px rgba(15,23,42,.035)}.hm-readiness-strip b{color:#064E3B!important;}
 .hm-ready-ok{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;}.hm-ready-warn{background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;}
 .hm-store-box{border:1px solid #E3C98E;background:#FFFDF8;border-radius:16px;padding:.85rem .9rem;margin:.35rem 0 1rem;box-shadow:0 6px 14px rgba(15,23,42,.035)}
-.hm-load-label{font-size:.86rem;font-weight:760;color:#334155;margin:0 0 .28rem .05rem;}.hm-slot{font-size:.78rem;color:#72551A;font-weight:880;margin:.75rem 0 .25rem}
+.hm-load-label{font-size:.86rem;font-weight:760;color:#334155;margin:0 0 .28rem .05rem;min-height:1.22rem;}.hm-slot{font-size:.78rem;color:#72551A;font-weight:880;margin:.75rem 0 .25rem}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
 .hm-count-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem;margin:.55rem 0 1rem}.hm-count-card{background:#fff;border:1px solid #E3C98E;border-radius:15px;padding:.7rem .8rem}.hm-count-card b{display:block;color:#064E3B;font-size:.95rem}.hm-count-card span{color:#64748B;font-size:.78rem;font-weight:780}
 .hm-pill{display:inline-block;border-radius:999px;padding:.13rem .5rem;margin:.15rem .2rem .15rem 0;font-size:.7rem;font-weight:950}.hm-ok{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}.hm-pending{background:#FFF7ED;color:#B45309;border:1px solid #FED7AA}.hm-error{background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA}.hm-info{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
-@media(max-width:900px){.hm-count-grid{grid-template-columns:1fr}.hm-section-nav [data-testid="stButton"]>button{min-height:2.45rem!important;}}
+@media(max-width:900px){.hm-count-grid{grid-template-columns:1fr}.hm-section-nav [data-testid="stButton"]>button{height:auto!important;min-height:2.65rem!important;}}
 </style>
 """,
     unsafe_allow_html=True,
@@ -565,7 +565,7 @@ def current_profile_payload(member_label_to_id, clone_label_to_id):
 ensure_state()
 
 st.markdown("<div class='hm-section-nav'>", unsafe_allow_html=True)
-nav_cols = st.columns([1, 1, 1, 1, 0.9, 0.95, 0.95], gap="small")
+nav_cols = st.columns(len(SECTIONS), gap="small")
 for col, section_name in zip(nav_cols, SECTIONS):
     with col:
         st.button(NAV_LABELS[section_name], key=f"profile_nav_{safe_key(section_name)}", type=("primary" if st.session_state["v4_active_section"] == section_name else "secondary"), use_container_width=True, on_click=set_section, args=(section_name,))
@@ -603,7 +603,6 @@ if section == "Profile Setup":
     profile["clone_from"] = profile.get("clone_from") if profile.get("clone_from") in clone_options else "New profile"
     profile["member"] = profile.get("member") if profile.get("member") in member_label_to_id else SELECT_MEMBER
     st.markdown("<div class='hm-title'>Recommendation Profile Setup</div><div class='hm-sub'>Reusable profile with clone-from-existing, draft save/load, member assignment and validation review.</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-store-box'>", unsafe_allow_html=True)
     st.caption(f"Dropdown source: {SOURCE_MESSAGE} Member source: {member_message}")
     ok_drafts, drafts, draft_msg = cached_drafts()
     draft_label_to_id = {SELECT_DRAFT: ""}
@@ -612,6 +611,7 @@ if section == "Profile Setup":
             draft_label_to_id[f"{draft.get('profile_name', 'Untitled draft')} · {str(draft.get('updated_at', ''))[:16]}"] = draft.get("id", "")
     load_cols = st.columns([0.58, 0.21, 0.21], gap="medium")
     selected_draft_label = load_cols[0].selectbox("Load saved draft", list(draft_label_to_id.keys()), key="profile_load_draft_choice")
+    load_cols[1].markdown("<div class='hm-load-label'>&nbsp;</div>", unsafe_allow_html=True)
     if load_cols[1].button("Load Draft", use_container_width=True, disabled=not bool(draft_label_to_id.get(selected_draft_label))):
         ok, profile_payload, item_payload, message = load_profile(draft_label_to_id.get(selected_draft_label, ""))
         if ok:
@@ -620,6 +620,7 @@ if section == "Profile Setup":
             st.rerun()
         else:
             st.error(message)
+    load_cols[2].markdown("<div class='hm-load-label'>&nbsp;</div>", unsafe_allow_html=True)
     if load_cols[2].button("New Draft", use_container_width=True):
         reset_new_draft()
         st.session_state["profile_action_message"] = "New blank draft started."
@@ -631,7 +632,6 @@ if section == "Profile Setup":
         st.caption(draft_msg)
     if profile.get("id"):
         st.caption(f"Current draft id: {profile.get('id')}")
-    st.markdown("</div>", unsafe_allow_html=True)
 
     for field in PROFILE_DEFAULTS:
         set_widget_default(profile_widget_key(field), profile.get(field, PROFILE_DEFAULTS[field]))
@@ -641,6 +641,7 @@ if section == "Profile Setup":
         st.text_input("Profile Name", key=profile_widget_key("profile_name"), on_change=sync_profile_field, args=("profile_name",))
         clone_cols = st.columns([0.68, 0.32], gap="small")
         selected_clone = clone_cols[0].selectbox("Clone From Existing Profile", ensure_options(clone_options, profile.get("clone_from")), key=profile_widget_key("clone_from"), on_change=sync_profile_field, args=("clone_from",))
+        clone_cols[1].markdown("<div class='hm-load-label'>&nbsp;</div>", unsafe_allow_html=True)
         if clone_cols[1].button("Clone Selected", use_container_width=True, disabled=not bool(clone_label_to_id.get(selected_clone))):
             ok, profile_payload, item_payload, message = load_profile(clone_label_to_id.get(selected_clone, ""))
             if ok:
