@@ -17,13 +17,10 @@ st.markdown("""
 .hm-title{color:#064E3B;font-size:1.04rem;font-weight:950;margin:0 0 .25rem}.hm-sub{color:#64748B;font-size:.82rem;font-weight:720;margin:0 0 .7rem}
 .hm-slot{font-size:.78rem;color:#72551A;font-weight:880;margin:.75rem 0 .25rem}.hm-head{font-size:.68rem;text-transform:uppercase;color:#64748B;font-weight:950;margin:.12rem 0 -.12rem}
 .hm-day{border:1px solid #E3C98E;background:white;border-radius:16px;padding:.7rem .8rem;margin:.45rem 0 .85rem}.hm-day [data-testid="stButton"]>button{min-height:2.35rem!important;border-radius:14px!important;font-weight:900!important}
-div[data-testid="stRadio"]{margin:.4rem 0 1rem!important;}
-div[data-testid="stRadio"] > label{display:none!important;}
-div[data-testid="stRadio"] [role="radiogroup"]{display:flex!important;flex-wrap:wrap!important;gap:.55rem!important;border:1px solid #E3C98E!important;background:linear-gradient(135deg,#FFFDF8,#FFF6E4)!important;border-radius:20px!important;padding:.5rem!important;box-shadow:0 9px 20px rgba(15,23,42,.055)!important;}
-div[data-testid="stRadio"] [role="radiogroup"] label{background:#fff!important;border:1.15px solid rgba(216,180,98,.72)!important;border-radius:15px!important;min-height:2.55rem!important;padding:.48rem .86rem!important;font-weight:900!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;color:#064E3B!important;display:flex!important;align-items:center!important;}
-div[data-testid="stRadio"] [role="radiogroup"] label p{font-size:.87rem!important;font-weight:930!important;color:#064E3B!important;}
-div[data-testid="stRadio"] [role="radiogroup"] label:has(input:checked){background:linear-gradient(135deg,#FFF3D6,#FFFFFF)!important;border:1.5px solid #B89345!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
-div[data-testid="stRadio"] [role="radiogroup"] input{display:none!important;}
+.hm-section-nav{margin:.35rem 0 .8rem 0;}
+.hm-section-nav [data-testid="stButton"]>button{min-height:2.55rem!important;border-radius:15px!important;font-weight:930!important;border:1.15px solid rgba(216,180,98,.72)!important;background:#fff!important;color:#064E3B!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;}
+.hm-section-nav [data-testid="stButton"]>button[kind="primary"]{background:linear-gradient(135deg,#FFF3D6,#FFFFFF)!important;border:1.5px solid #B89345!important;color:#064E3B!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
+.hm-section-nav [data-testid="stButton"]>button[kind="primary"] *{color:#064E3B!important;}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
 .hm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:.55rem 0}.hm-mini{border:1px solid #E3C98E;background:#fff;border-radius:16px;padding:.75rem .85rem}.hm-mini b{color:#064E3B}
 .hm-readiness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin:.55rem 0 0}.hm-readiness-item{background:#fff;border:1px solid #E3C98E;border-radius:14px;padding:.58rem .68rem;line-height:1.35}
@@ -96,7 +93,16 @@ def item_row(kind, day, slot):
         add_row(key)
         st.rerun()
 
-section = st.radio("Profile builder section", SECTIONS, horizontal=True, label_visibility="collapsed", key="v4_active_section")
+st.session_state.setdefault("v4_active_section", "Profile Setup")
+st.markdown("<div class='hm-section-nav'>", unsafe_allow_html=True)
+nav_cols = st.columns(len(SECTIONS), gap="small")
+for col, section_name in zip(nav_cols, SECTIONS):
+    with col:
+        if st.button(section_name, key=f"v4_nav_{section_name}", type=("primary" if st.session_state["v4_active_section"] == section_name else "secondary"), use_container_width=True):
+            st.session_state["v4_active_section"] = section_name
+            st.rerun()
+st.markdown("</div>", unsafe_allow_html=True)
+section = st.session_state["v4_active_section"]
 
 profile_name = st.session_state.get("v4_profile_name", "North India - Adult - Weight Management - Vegetarian")
 clone_from = st.session_state.get("v4_clone_from", "New profile")
