@@ -13,8 +13,8 @@ from components.recommendation_profile_store import (
 )
 from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, render_page_nav, render_back_to_top
 
-APP_BUILD_VERSION = "v100.18"
-APP_BUILD_LABEL = "Profile Builder Save + Navigation Hotfix"
+APP_BUILD_VERSION = "v100.19"
+APP_BUILD_LABEL = "Profile Builder Default Values Hotfix"
 
 st.set_page_config(page_title="Recommendation Profile Builder Sprint 1", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
@@ -46,7 +46,6 @@ st.markdown("""
 .hm-title{color:#064E3B;font-size:1.04rem;font-weight:950;margin:0 0 .25rem}.hm-sub{color:#64748B;font-size:.82rem;font-weight:720;margin:0 0 .7rem}
 .hm-section-nav{margin:.35rem 0 .55rem 0;}
 .hm-section-nav [data-testid="stButton"]>button{min-height:2.7rem!important;border-radius:15px!important;font-weight:930!important;border:1.15px solid rgba(216,180,98,.72)!important;background:#fff!important;color:#064E3B!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.15!important;padding:.55rem .5rem!important;}
-.hm-section-nav [data-testid="stButton"]>button *{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.15!important;}
 .hm-section-nav [data-testid="stButton"]>button[kind="primary"]{background:linear-gradient(135deg,#FFF3D6,#FFFFFF)!important;border:1.5px solid #B89345!important;color:#064E3B!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
 .hm-section-nav [data-testid="stButton"]>button[kind="primary"] *{color:#064E3B!important;}
 .hm-section-rule{height:1px;background:linear-gradient(90deg,transparent,rgba(216,168,78,.8),transparent);margin:.3rem 0 .72rem 0;}
@@ -56,11 +55,9 @@ st.markdown("""
 .hm-load-label{font-size:.86rem;font-weight:760;color:#334155;margin:0 0 .28rem .05rem;}
 .hm-slot{font-size:.78rem;color:#72551A;font-weight:880;margin:.75rem 0 .25rem}.hm-day{border:1px solid #E3C98E;background:white;border-radius:16px;padding:.7rem .8rem;margin:.45rem 0 .85rem}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
-.hm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:.55rem 0}.hm-mini{border:1px solid #E3C98E;background:#fff;border-radius:16px;padding:.75rem .85rem}.hm-mini b{color:#064E3B}
 .hm-readiness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin:.55rem 0 0}.hm-readiness-item{background:#fff;border:1px solid #E3C98E;border-radius:14px;padding:.58rem .68rem;line-height:1.35}
 .hm-pill{display:inline-block;border-radius:999px;padding:.13rem .5rem;margin:.15rem .2rem .15rem 0;font-size:.7rem;font-weight:950}.hm-ok{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}.hm-pending{background:#FFF7ED;color:#B45309;border:1px solid #FED7AA}.hm-info{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
-.hm-member-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:.55rem 0}.hm-member-card{border:1px solid #E3C98E;background:#fff;border-radius:16px;padding:.8rem .9rem;min-height:8rem}.hm-member-card b{display:block;color:#064E3B;font-size:.92rem;margin-bottom:.32rem}.hm-member-card span{color:#475569;font-size:.82rem;font-weight:740;line-height:1.45}
-@media(max-width:900px){.hm-member-flow,.hm-grid,.hm-readiness{grid-template-columns:1fr}.hm-section-nav [data-testid="stButton"]>button{min-height:2.45rem!important;}}
+@media(max-width:900px){.hm-readiness{grid-template-columns:1fr}.hm-section-nav [data-testid="stButton"]>button{min-height:2.45rem!important;}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -69,6 +66,9 @@ EXERCISE_SLOTS = ["Morning", "Evening", "Preferred Time"]
 SUPPLEMENT_SLOTS = ["Morning", "Afternoon", "Evening", "Before Bed", "Preferred Time"]
 SECTIONS = ["Profile Setup", "Meal Structure", "Exercise Regime", "Supplement Regime", "Preview & End-to-End Flow"]
 NAV_LABELS = {"Profile Setup": "Profile Setup", "Meal Structure": "Meal Structure", "Exercise Regime": "Exercise Regime", "Supplement Regime": "Supplement Regime", "Preview & End-to-End Flow": "Preview & Flow"}
+SELECT_AGE = "-- Select age band --"
+SELECT_DIET = "-- Select diet type --"
+SELECT_INTENSITY = "-- Select intensity --"
 
 @st.cache_data(ttl=180, show_spinner=False)
 def cached_store_status():
@@ -95,16 +95,37 @@ def clear_pb_cache():
 
 STORE_STATUS = cached_store_status()
 SOURCES, SOURCE_MESSAGE = cached_sources()
-RECIPES = SOURCES.get("recipe", ["-- Select recipe --"])
-EXERCISES = SOURCES.get("exercise", ["-- Select exercise --"])
-SUPPLEMENTS = SOURCES.get("supplement", ["-- Select supplement --"])
-AGE_BANDS = SOURCES.get("age_band", ["31-45"])
-HEALTH_CONCERNS = SOURCES.get("health_concern", ["Weight Management"])
-DIET_TYPES = SOURCES.get("diet_type", ["Vegetarian"])
+
+def with_select(options, placeholder):
+    clean = []
+    for value in list(options or []):
+        value = str(value).strip()
+        if not value or value.startswith("-- Select") or value == placeholder:
+            continue
+        clean.append(value)
+    return [placeholder] + clean
+
+RECIPES = with_select(SOURCES.get("recipe", []), "-- Select recipe --")
+EXERCISES = with_select(SOURCES.get("exercise", []), "-- Select exercise --")
+SUPPLEMENTS = with_select(SOURCES.get("supplement", []), "-- Select supplement --")
+AGE_BANDS = with_select(SOURCES.get("age_band", []), SELECT_AGE)
+HEALTH_CONCERNS = list(SOURCES.get("health_concern", []))
+DIET_TYPES = with_select(SOURCES.get("diet_type", []), SELECT_DIET)
+INTENSITY_OPTIONS = [SELECT_INTENSITY, "Low", "Moderate", "High", "As tolerated"]
 
 
-def first_or_blank(options, fallback=""):
-    return options[0] if options else fallback
+def is_select(value):
+    value = str(value or "").strip()
+    return not value or value.startswith("-- Select") or value == "Select member"
+
+
+def clean_choice(value):
+    value = str(value or "").strip()
+    return "" if is_select(value) else value
+
+
+def display_choice(value):
+    return clean_choice(value) or "NA"
 
 
 def ensure_options(options, selected=None):
@@ -127,20 +148,6 @@ def clean_date(value):
         return dt.date.today()
 
 
-def parse_time(value, default_time):
-    if isinstance(value, dt.time):
-        return value
-    try:
-        h, m = str(value)[:5].split(":")
-        return dt.time(int(h), int(m))
-    except Exception:
-        return default_time
-
-
-def time_to_text(value):
-    return value.strftime("%H:%M") if isinstance(value, dt.time) else str(value or "").strip()
-
-
 def count(key):
     st.session_state.setdefault(key, 1)
     return st.session_state[key]
@@ -157,9 +164,9 @@ def init_defaults():
     st.session_state.setdefault("v4_change_note", "")
     st.session_state.setdefault("v4_profile_status", "Draft")
     st.session_state.setdefault("v4_region", "")
-    st.session_state.setdefault("v4_age_band", first_or_blank(AGE_BANDS, ""))
+    st.session_state.setdefault("v4_age_band", SELECT_AGE)
     st.session_state.setdefault("v4_concerns", [])
-    st.session_state.setdefault("v4_diet_type", first_or_blank(DIET_TYPES, ""))
+    st.session_state.setdefault("v4_diet_type", SELECT_DIET)
     st.session_state.setdefault("v4_member", "Select member")
     st.session_state.setdefault("v4_note", "")
     st.session_state.setdefault("v4_start_date", dt.date.today())
@@ -206,13 +213,13 @@ def item_row(kind, day, slot):
         elif kind == "exercise":
             a, b, c, d = st.columns([.40, .18, .18, .24])
             a.selectbox("Exercise", ensure_options(EXERCISES, st.session_state.get(f"{key}_exercise_{idx}")), key=f"{key}_exercise_{idx}")
-            b.time_input("Time", value=st.session_state.get(f"{key}_time_{idx}", dt.time(7, 0)), key=f"{key}_time_{idx}")
-            c.selectbox("Intensity", ensure_options(["Low", "Moderate", "High", "As tolerated"], st.session_state.get(f"{key}_intensity_{idx}")), key=f"{key}_intensity_{idx}")
+            b.text_input("Time", key=f"{key}_time_{idx}", placeholder="HH:MM")
+            c.selectbox("Intensity", ensure_options(INTENSITY_OPTIONS, st.session_state.get(f"{key}_intensity_{idx}")), key=f"{key}_intensity_{idx}")
             d.text_input("Instruction", key=f"{key}_instruction_{idx}")
         else:
             a, b, c, d = st.columns([.36, .16, .24, .24])
             a.selectbox("Supplement", ensure_options(SUPPLEMENTS, st.session_state.get(f"{key}_supplement_{idx}")), key=f"{key}_supplement_{idx}")
-            b.time_input("Time", value=st.session_state.get(f"{key}_time_{idx}", dt.time(8, 0)), key=f"{key}_time_{idx}")
+            b.text_input("Time", key=f"{key}_time_{idx}", placeholder="HH:MM")
             c.text_input("Dosage/Frequency", key=f"{key}_dose_{idx}")
             d.text_input("Instruction", key=f"{key}_instruction_{idx}")
     label = {"meal": "Add food item", "exercise": "Add workout item", "supplement": "Add supplement item"}[kind]
@@ -229,11 +236,11 @@ def collect_items():
                 key = f"{kind}_{day}_{slot}"
                 for idx in range(int(st.session_state.get(key, 0) or 0)):
                     if kind == "meal":
-                        rows.append({"item_type": "meal", "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": st.session_state.get(f"{key}_recipe_{idx}", ""), "portion": st.session_state.get(f"{key}_portion_{idx}", ""), "instruction": st.session_state.get(f"{key}_instruction_{idx}", "")})
+                        rows.append({"item_type": "meal", "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(st.session_state.get(f"{key}_recipe_{idx}", "")), "portion": st.session_state.get(f"{key}_portion_{idx}", ""), "instruction": st.session_state.get(f"{key}_instruction_{idx}", "")})
                     elif kind == "exercise":
-                        rows.append({"item_type": "exercise", "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": st.session_state.get(f"{key}_exercise_{idx}", ""), "scheduled_time": time_to_text(st.session_state.get(f"{key}_time_{idx}")), "intensity": st.session_state.get(f"{key}_intensity_{idx}", ""), "instruction": st.session_state.get(f"{key}_instruction_{idx}", "")})
+                        rows.append({"item_type": "exercise", "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(st.session_state.get(f"{key}_exercise_{idx}", "")), "scheduled_time": st.session_state.get(f"{key}_time_{idx}", ""), "intensity": clean_choice(st.session_state.get(f"{key}_intensity_{idx}", "")), "instruction": st.session_state.get(f"{key}_instruction_{idx}", "")})
                     else:
-                        rows.append({"item_type": "supplement", "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": st.session_state.get(f"{key}_supplement_{idx}", ""), "scheduled_time": time_to_text(st.session_state.get(f"{key}_time_{idx}")), "dosage_frequency": st.session_state.get(f"{key}_dose_{idx}", ""), "instruction": st.session_state.get(f"{key}_instruction_{idx}", "")})
+                        rows.append({"item_type": "supplement", "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(st.session_state.get(f"{key}_supplement_{idx}", "")), "scheduled_time": st.session_state.get(f"{key}_time_{idx}", ""), "dosage_frequency": st.session_state.get(f"{key}_dose_{idx}", ""), "instruction": st.session_state.get(f"{key}_instruction_{idx}", "")})
     return rows
 
 
@@ -244,9 +251,9 @@ def apply_profile_to_session(profile, items):
     st.session_state["v4_change_note"] = profile.get("change_note") or ""
     st.session_state["v4_profile_status"] = "Draft"
     st.session_state["v4_region"] = profile.get("region") or ""
-    st.session_state["v4_age_band"] = profile.get("age_band") or first_or_blank(AGE_BANDS, "")
+    st.session_state["v4_age_band"] = profile.get("age_band") or SELECT_AGE
     st.session_state["v4_concerns"] = list(profile.get("health_concerns") or [])
-    st.session_state["v4_diet_type"] = profile.get("diet_type") or first_or_blank(DIET_TYPES, "")
+    st.session_state["v4_diet_type"] = profile.get("diet_type") or SELECT_DIET
     st.session_state["v4_member"] = profile.get("assigned_member_label") or "Select member"
     st.session_state["v4_note"] = profile.get("profile_note") or ""
     st.session_state["v4_start_date"] = clean_date(profile.get("start_date"))
@@ -261,17 +268,17 @@ def apply_profile_to_session(profile, items):
         idx = int(row.get("item_order") or 1) - 1
         st.session_state[base] = max(int(st.session_state.get(base, 0) or 0), idx + 1)
         if kind == "meal":
-            st.session_state[f"{base}_recipe_{idx}"] = row.get("reference_label") or first_or_blank(RECIPES, "")
+            st.session_state[f"{base}_recipe_{idx}"] = row.get("reference_label") or "-- Select recipe --"
             st.session_state[f"{base}_portion_{idx}"] = row.get("portion") or ""
             st.session_state[f"{base}_instruction_{idx}"] = row.get("instruction") or ""
         elif kind == "exercise":
-            st.session_state[f"{base}_exercise_{idx}"] = row.get("reference_label") or first_or_blank(EXERCISES, "")
-            st.session_state[f"{base}_time_{idx}"] = parse_time(row.get("scheduled_time"), dt.time(7, 0))
-            st.session_state[f"{base}_intensity_{idx}"] = row.get("intensity") or "Low"
+            st.session_state[f"{base}_exercise_{idx}"] = row.get("reference_label") or "-- Select exercise --"
+            st.session_state[f"{base}_time_{idx}"] = row.get("scheduled_time") or ""
+            st.session_state[f"{base}_intensity_{idx}"] = row.get("intensity") or SELECT_INTENSITY
             st.session_state[f"{base}_instruction_{idx}"] = row.get("instruction") or ""
         else:
-            st.session_state[f"{base}_supplement_{idx}"] = row.get("reference_label") or first_or_blank(SUPPLEMENTS, "")
-            st.session_state[f"{base}_time_{idx}"] = parse_time(row.get("scheduled_time"), dt.time(8, 0))
+            st.session_state[f"{base}_supplement_{idx}"] = row.get("reference_label") or "-- Select supplement --"
+            st.session_state[f"{base}_time_{idx}"] = row.get("scheduled_time") or ""
             st.session_state[f"{base}_dose_{idx}"] = row.get("dosage_frequency") or ""
             st.session_state[f"{base}_instruction_{idx}"] = row.get("instruction") or ""
 
@@ -283,18 +290,19 @@ def member_sources():
 
 def current_profile_payload(member_label_to_id, clone_label_to_id):
     start_date = st.session_state.get("v4_start_date", dt.date.today())
+    member_label = st.session_state.get("v4_member", "Select member")
     return {
         "id": st.session_state.get("v4_profile_id", ""),
         "profile_name": st.session_state.get("v4_profile_name", ""),
         "region": st.session_state.get("v4_region", ""),
-        "age_band": st.session_state.get("v4_age_band", ""),
-        "diet_type": st.session_state.get("v4_diet_type", ""),
+        "age_band": clean_choice(st.session_state.get("v4_age_band", "")),
+        "diet_type": clean_choice(st.session_state.get("v4_diet_type", "")),
         "health_concerns": st.session_state.get("v4_concerns", []),
         "profile_note": st.session_state.get("v4_note", ""),
         "change_note": st.session_state.get("v4_change_note", ""),
         "cycle_rule": "Weekly cyclical until replaced or stopped",
-        "assigned_member_id": member_label_to_id.get(st.session_state.get("v4_member", "Select member"), ""),
-        "assigned_member_label": st.session_state.get("v4_member", "Select member"),
+        "assigned_member_id": member_label_to_id.get(member_label, "") if not is_select(member_label) else "",
+        "assigned_member_label": member_label if not is_select(member_label) else "",
         "start_date": start_date.isoformat() if isinstance(start_date, dt.date) else str(start_date or ""),
         "clone_source_profile_id": clone_label_to_id.get(st.session_state.get("v4_clone_from", ""), ""),
         "clone_source_label": st.session_state.get("v4_clone_from", "New profile"),
@@ -428,11 +436,10 @@ else:
     member_ready = assigned_member != "Select member"
     member_pill = "hm-ok" if member_ready else "hm-pending"
     member_status = "Complete" if member_ready else "Pending"
-    profile_note = st.session_state.get("v4_note", "")
     plan_start = st.session_state.get("v4_start_date", dt.date.today())
     concerns = st.session_state.get("v4_concerns", [])
     st.markdown("<div class='hm-title'>Preview & End-to-End Flow Review</div><div class='hm-sub'>Sprint 1 is draft-only. Publish and member consumption remain disabled.</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='hm-preview'><b>Profile Summary</b><br><b>Draft ID:</b> {st.session_state.get('v4_profile_id') or 'Not saved yet'}<br><b>Profile:</b> {st.session_state.get('v4_profile_name', '') or 'Not entered yet'}<br><b>Status:</b> {st.session_state.get('v4_profile_status', 'Draft')}<br><b>Assigned Member:</b> {assigned_member}<br><b>Start Date:</b> {plan_start.isoformat() if isinstance(plan_start, dt.date) else plan_start}<br><b>Tags:</b> {st.session_state.get('v4_region', '') or 'NA'} - {st.session_state.get('v4_age_band', '') or 'NA'} - {st.session_state.get('v4_diet_type', '') or 'NA'} - {', '.join(concerns) if concerns else 'No health concern selected'}<br><b>Profile Note:</b> {profile_note or 'NA'}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='hm-preview'><b>Profile Summary</b><br><b>Draft ID:</b> {st.session_state.get('v4_profile_id') or 'Not saved yet'}<br><b>Profile:</b> {st.session_state.get('v4_profile_name', '') or 'Not entered yet'}<br><b>Status:</b> {st.session_state.get('v4_profile_status', 'Draft')}<br><b>Assigned Member:</b> {display_choice(assigned_member)}<br><b>Start Date:</b> {plan_start.isoformat() if isinstance(plan_start, dt.date) else plan_start}<br><b>Tags:</b> {st.session_state.get('v4_region', '') or 'NA'} - {display_choice(st.session_state.get('v4_age_band', ''))} - {display_choice(st.session_state.get('v4_diet_type', ''))} - {', '.join(concerns) if concerns else 'No health concern selected'}<br><b>Profile Note:</b> {st.session_state.get('v4_note', '') or 'NA'}</div>", unsafe_allow_html=True)
     st.markdown(f"""
 <div class='hm-preview'>
 <b>Publish Readiness Checklist</b><br>
