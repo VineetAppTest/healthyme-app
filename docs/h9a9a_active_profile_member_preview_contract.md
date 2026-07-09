@@ -23,7 +23,14 @@ Scope:
   - row counts by meal/exercise/supplement
   - missing day coverage
   - supplement frequency vs timeline count
-- Provides raw active profile contract payload behind an expander for diagnostics.
+
+Diagnostic placement:
+
+- Raw active profile contract payload is removed from the normal Active Preview tab.
+- Raw payload is available only in System Tools via:
+  - `/Admin_Active_Profile_Contract_Diagnostics`
+- Admin Dashboard now exposes this under System Tools as:
+  - `Active Profile Contract Diagnostics`
 
 Impact:
 
@@ -44,5 +51,8 @@ Smoke test:
 7. Confirm row counts for Meal, Exercise, Supplement and Total rows.
 8. Confirm Day 1 to Day 7 tabs render.
 9. Confirm meal, exercise and supplement rows display exactly from the active profile.
-10. Confirm a member without active profile shows a clear empty-state message.
-11. Confirm no Flutter/member-facing page is changed.
+10. Confirm raw contract payload is not shown in normal Active Preview.
+11. Open Admin Dashboard > System Tools > Active Profile Contract Diagnostics.
+12. Confirm raw contract payload is available only there.
+13. Confirm a member without active profile shows a clear empty-state message.
+14. Confirm no Flutter/member-facing page is changed.
