@@ -204,10 +204,11 @@ with right:
 
     with st.container(border=True):
         st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
-        section_header("Content & Allocation", "Manage recipes, exercises and supplement regimens.")
+        section_header("Content & Allocation", "Manage recipes, exercises, supplements and recommendation profiles.")
         nav_cell("Recipes", "pages/15_Admin_Recipe_Manager.py", "dash_recipes_v102_4b4")
         nav_cell("Exercises", "pages/16_Admin_Exercise_Manager.py", "dash_exercises_v102_4b4")
         nav_cell("Supplements", "pages/39_Admin_Supplement_Manager.py", "dash_supplements_v102_4b4")
+        nav_cell("Recommendation Profile Builder", "pages/38_Admin_Recommendation_Profile_Builder.py", "dash_profile_builder_h9a8b")
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<div class='hm-dash-system-wrap'>", unsafe_allow_html=True)
@@ -235,3 +236,4 @@ inject_keepalive_guard_v96_11()
 # v102.4B14B: Communication & Scheduling section swapped with Content & Allocation.
 # v102.4B15S3H4: Added dashboard buttons for Supabase Auth tools because Streamlit sidebar/menu remains intentionally hidden.
 # H9A.5E: Added Unified Recommendations contract workbench entry point.
+# H9A.8B: Added final Recommendation Profile Builder entry point and removed mockup route dependency.
