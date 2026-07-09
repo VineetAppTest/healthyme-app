@@ -21,9 +21,9 @@ from components.ui_common import (
     utility_logout_bar,
 )
 
-APP_BUILD_VERSION = "v100.28"
-APP_BUILD_LABEL = "Profile Builder Regime Time Field Removal"
-SCHEDULE_SCHEMA_VERSION = "h9a7e_v100_28"
+APP_BUILD_VERSION = "v100.30"
+APP_BUILD_LABEL = "Profile Builder V2 Row-Based Regime"
+SCHEDULE_SCHEMA_VERSION = "h9a7g_v100_30"
 
 MEAL_SLOTS = [
     "Wake-up / Early Morning",
@@ -34,8 +34,8 @@ MEAL_SLOTS = [
     "Dinner",
     "Bedtime",
 ]
-EXERCISE_SLOTS = ["Morning", "Afternoon", "Evening", "Night / As advised"]
-SUPPLEMENT_SLOTS = [
+EXERCISE_TIME_OF_DAY = ["Morning", "Afternoon", "Evening", "Night / As advised"]
+SUPPLEMENT_TIMELINE = [
     "Before Breakfast",
     "After Breakfast",
     "Before Lunch",
@@ -44,10 +44,12 @@ SUPPLEMENT_SLOTS = [
     "After Dinner",
     "Before Bed",
 ]
+EXERCISE_ROW_SLOT = "Exercise Regime"
+SUPPLEMENT_ROW_SLOT = "Supplement Regime"
 SLOTS_BY_KIND = {
     "meal": MEAL_SLOTS,
-    "exercise": EXERCISE_SLOTS,
-    "supplement": SUPPLEMENT_SLOTS,
+    "exercise": [EXERCISE_ROW_SLOT],
+    "supplement": [SUPPLEMENT_ROW_SLOT],
 }
 
 SECTIONS = [
@@ -121,6 +123,32 @@ def clear_schedule_state(force: bool = False) -> None:
     st.session_state["v4_active_section"] = "Profile Setup"
 
 
+def encode_dosage_frequency(frequency, dosage) -> str:
+    frequency_value = int(frequency or 0)
+    dosage_value = str(dosage or "").strip()
+    if not frequency_value and not dosage_value:
+        return ""
+    return f"Frequency: {frequency_value}; Dosage: {dosage_value}"
+
+
+def parse_dosage_frequency(value) -> tuple[int, str]:
+    raw = str(value or "").strip()
+    if not raw:
+        return 0, ""
+    match = re.match(r"^Frequency:\s*(\d+)\s*;\s*Dosage:\s*(.*)$", raw)
+    if match:
+        return int(match.group(1) or 0), (match.group(2) or "").strip()
+    return 0, raw
+
+
+def parse_timeline(value) -> list[str]:
+    raw = str(value or "").strip()
+    if not raw:
+        return []
+    parts = [part.strip() for part in raw.split(",") if part.strip()]
+    return [part for part in parts if part in SUPPLEMENT_TIMELINE]
+
+
 st.set_page_config(
     page_title="Recommendation Profile Builder V2",
     page_icon="💚",
@@ -142,7 +170,7 @@ st.markdown(
       </div>
       <div class='hero-kicker'>Admin recommendations</div>
       <div class='hero-title'>Recommendation Profile Builder V2</div>
-      <div class='hero-subtitle'>Direct implementation page. Regime slots are the timing structure, so separate time fields are removed from Exercise and Supplement rows.</div>
+      <div class='hero-subtitle'>Default Profile Builder with row-based Exercise and Supplement Regime inputs.</div>
       <div><span class='meta-pill'>Guided wellness workflow</span></div>
     </div>
     """,
@@ -361,19 +389,48 @@ def item_row(kind, day, slot):
             fields = [("recipe", "Recipe", RECIPES, SELECT_RECIPE, "select"), ("portion", "Portion", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
             cols = st.columns([0.44, 0.20, 0.36])
         elif kind == "exercise":
-            fields = [("exercise", "Exercise", EXERCISES, SELECT_EXERCISE, "select"), ("intensity", "Intensity", INTENSITY_OPTIONS, SELECT_INTENSITY, "select"), ("instruction", "Instruction", None, "", "text")]
-            cols = st.columns([0.44, 0.20, 0.36])
+            fields = [
+                ("exercise", "Exercise", EXERCISES, SELECT_EXERCISE, "select"),
+                ("time_of_day", "Time of Day", EXERCISE_TIME_OF_DAY, "Morning", "select"),
+                ("intensity", "Intensity", INTENSITY_OPTIONS, SELECT_INTENSITY, "select"),
+                ("instruction", "Instruction", None, "", "text"),
+            ]
+            cols = st.columns([0.30, 0.22, 0.18, 0.30])
         else:
-            fields = [("supplement", "Supplement", SUPPLEMENTS, SELECT_SUPPLEMENT, "select"), ("dose", "Dosage/Frequency", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
-            cols = st.columns([0.40, 0.24, 0.36])
+            fields = [
+                ("supplement", "Supplement", SUPPLEMENTS, SELECT_SUPPLEMENT, "select"),
+                ("frequency", "Frequency", None, 0, "number"),
+                ("timeline", "Timeline", SUPPLEMENT_TIMELINE, [], "multiselect"),
+                ("dose", "Dosage", None, "", "text"),
+                ("instruction", "Instruction", None, "", "text"),
+            ]
+            cols = st.columns([0.24, 0.14, 0.26, 0.16, 0.20])
 
         for col, (field, label, options, default, field_type) in zip(cols, fields):
             key = item_widget_key(kind, day, slot, idx, field)
-            set_widget_default(key, item_value(kind, day, slot, idx, field, default))
+            value = item_value(kind, day, slot, idx, field, default)
+            set_widget_default(key, value)
             if field_type == "select":
                 col.selectbox(label, ensure_options(options, st.session_state[key]), key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
+            elif field_type == "multiselect":
+                selected = st.session_state[key] if isinstance(st.session_state[key], list) else parse_timeline(st.session_state[key])
+                st.session_state[key] = selected
+                col.multiselect(label, options, key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
+            elif field_type == "number":
+                try:
+                    number_value = int(st.session_state[key] or 0)
+                except Exception:
+                    number_value = 0
+                st.session_state[key] = number_value
+                col.number_input(label, min_value=0, max_value=7, step=1, key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
             else:
                 col.text_input(label, key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
+
+        if kind == "supplement":
+            frequency_value = int(st.session_state.get(item_widget_key(kind, day, slot, idx, "frequency"), 0) or 0)
+            timeline_value = st.session_state.get(item_widget_key(kind, day, slot, idx, "timeline"), []) or []
+            if frequency_value and len(timeline_value) != frequency_value:
+                st.caption(f"Timeline validation: Frequency is {frequency_value}, so select exactly {frequency_value} timeline option(s).")
 
     label = {"meal": "Add food item", "exercise": "Add workout item", "supplement": "Add supplement item"}[kind]
     if st.button(label, key=f"add_{kind}_{day}_{safe_key(slot)}", use_container_width=True):
@@ -390,9 +447,19 @@ def collect_items(include_unsupported=True):
                     if kind == "meal":
                         row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "recipe")), "portion": item_value(kind, day, slot, idx, "portion"), "instruction": item_value(kind, day, slot, idx, "instruction")}
                     elif kind == "exercise":
-                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "exercise")), "intensity": clean_choice(item_value(kind, day, slot, idx, "intensity")), "instruction": item_value(kind, day, slot, idx, "instruction")}
+                        exercise = clean_choice(item_value(kind, day, slot, idx, "exercise"))
+                        intensity = clean_choice(item_value(kind, day, slot, idx, "intensity"))
+                        instruction = item_value(kind, day, slot, idx, "instruction")
+                        time_of_day = item_value(kind, day, slot, idx, "time_of_day", "Morning")
+                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": exercise, "scheduled_time": time_of_day if any([exercise, intensity, instruction]) else "", "intensity": intensity, "instruction": instruction}
                     else:
-                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "supplement")), "dosage_frequency": item_value(kind, day, slot, idx, "dose"), "instruction": item_value(kind, day, slot, idx, "instruction")}
+                        supplement = clean_choice(item_value(kind, day, slot, idx, "supplement"))
+                        frequency = int(item_value(kind, day, slot, idx, "frequency", 0) or 0)
+                        timeline = item_value(kind, day, slot, idx, "timeline", []) or []
+                        dosage = item_value(kind, day, slot, idx, "dose")
+                        instruction = item_value(kind, day, slot, idx, "instruction")
+                        timeline_text = ", ".join(timeline) if isinstance(timeline, list) else str(timeline or "")
+                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": supplement, "scheduled_time": timeline_text if any([supplement, frequency, dosage, instruction]) else "", "dosage_frequency": encode_dosage_frequency(frequency, dosage), "instruction": instruction}
                     rows.append(row)
     if include_unsupported:
         rows.extend(st.session_state.get("pb_unsupported_items", []))
@@ -418,6 +485,12 @@ def validation_summary(rows=None):
     }
     errors = []
     guidance = []
+    for row in rows:
+        if row.get("item_type") == "supplement":
+            frequency, _ = parse_dosage_frequency(row.get("dosage_frequency"))
+            timeline_count = len(parse_timeline(row.get("scheduled_time")))
+            if frequency and timeline_count != frequency:
+                guidance.append(f"Supplement timeline validation: one row has frequency {frequency} but {timeline_count} timeline selection(s).")
     if not str(profile.get("profile_name", "")).strip():
         errors.append("Profile Name is required before saving a draft.")
     if is_select(profile.get("age_band")):
@@ -469,15 +542,46 @@ def preview_table(rows, selected_day):
     for row in rows:
         if int(row.get("day_number") or 0) != selected_day:
             continue
-        table.append({
-            "Type": str(row.get("item_type", "")).title(),
-            "Day": row.get("day_number"),
-            "Slot": row.get("slot_name"),
-            "Item": row.get("reference_label") or "NA",
-            "Portion/Dose": row.get("portion") or row.get("dosage_frequency") or "NA",
-            "Intensity": row.get("intensity") or "NA",
-            "Instruction": row.get("instruction") or "NA",
-        })
+        if row.get("item_type") == "exercise":
+            table.append({
+                "Type": "Exercise",
+                "Day": row.get("day_number"),
+                "Exercise": row.get("reference_label") or "NA",
+                "Time of Day": row.get("scheduled_time") or "NA",
+                "Intensity": row.get("intensity") or "NA",
+                "Supplement": "NA",
+                "Frequency": "NA",
+                "Timeline": "NA",
+                "Dosage": "NA",
+                "Instruction": row.get("instruction") or "NA",
+            })
+        elif row.get("item_type") == "supplement":
+            frequency, dosage = parse_dosage_frequency(row.get("dosage_frequency"))
+            table.append({
+                "Type": "Supplement",
+                "Day": row.get("day_number"),
+                "Exercise": "NA",
+                "Time of Day": "NA",
+                "Intensity": "NA",
+                "Supplement": row.get("reference_label") or "NA",
+                "Frequency": frequency or "NA",
+                "Timeline": row.get("scheduled_time") or "NA",
+                "Dosage": dosage or "NA",
+                "Instruction": row.get("instruction") or "NA",
+            })
+        else:
+            table.append({
+                "Type": "Meal",
+                "Day": row.get("day_number"),
+                "Exercise": "NA",
+                "Time of Day": row.get("slot_name") or "NA",
+                "Intensity": "NA",
+                "Supplement": row.get("reference_label") or "NA",
+                "Frequency": "NA",
+                "Timeline": "NA",
+                "Dosage": row.get("portion") or "NA",
+                "Instruction": row.get("instruction") or "NA",
+            })
     return table
 
 
@@ -501,21 +605,26 @@ def apply_profile_to_session(profile, items):
     for row in items:
         kind = row.get("item_type")
         day = int(row.get("day_number") or 0)
-        slot = str(row.get("slot_name") or "").strip()
         idx = int(row.get("item_order") or 1) - 1
-        if kind not in SLOTS_BY_KIND or day < 1 or day > 7:
-            unsupported.append(row)
-            continue
-        if slot not in SLOTS_BY_KIND[kind]:
-            unsupported.append(row)
-            continue
-        st.session_state["pb_row_counts"][f"{kind}|{day}|{slot}"] = max(row_count(kind, day, slot), idx + 1)
-        if kind == "meal":
+        if kind == "exercise":
+            slot = EXERCISE_ROW_SLOT
+            st.session_state["pb_row_counts"][f"{kind}|{day}|{slot}"] = max(row_count(kind, day, slot), idx + 1)
+            values = {"exercise": row.get("reference_label") or SELECT_EXERCISE, "time_of_day": row.get("scheduled_time") or "Morning", "intensity": row.get("intensity") or SELECT_INTENSITY, "instruction": row.get("instruction") or ""}
+        elif kind == "supplement":
+            slot = SUPPLEMENT_ROW_SLOT
+            frequency, dosage = parse_dosage_frequency(row.get("dosage_frequency"))
+            st.session_state["pb_row_counts"][f"{kind}|{day}|{slot}"] = max(row_count(kind, day, slot), idx + 1)
+            values = {"supplement": row.get("reference_label") or SELECT_SUPPLEMENT, "frequency": frequency, "timeline": parse_timeline(row.get("scheduled_time")), "dose": dosage, "instruction": row.get("instruction") or ""}
+        elif kind == "meal":
+            slot = str(row.get("slot_name") or "").strip()
+            if slot not in MEAL_SLOTS or day < 1 or day > 7:
+                unsupported.append(row)
+                continue
+            st.session_state["pb_row_counts"][f"{kind}|{day}|{slot}"] = max(row_count(kind, day, slot), idx + 1)
             values = {"recipe": row.get("reference_label") or SELECT_RECIPE, "portion": row.get("portion") or "", "instruction": row.get("instruction") or ""}
-        elif kind == "exercise":
-            values = {"exercise": row.get("reference_label") or SELECT_EXERCISE, "intensity": row.get("intensity") or SELECT_INTENSITY, "instruction": row.get("instruction") or ""}
         else:
-            values = {"supplement": row.get("reference_label") or SELECT_SUPPLEMENT, "dose": row.get("dosage_frequency") or "", "instruction": row.get("instruction") or ""}
+            unsupported.append(row)
+            continue
         for field, value in values.items():
             st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = value
     st.session_state["pb_unsupported_items"] = unsupported
@@ -557,7 +666,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("<div class='hm-section-rule'></div>", unsafe_allow_html=True)
 
 if STORE_STATUS.get("ok"):
-    st.markdown("<div class='hm-readiness-strip hm-ready-ok'><b>Draft store is ready.</b> This V2 page is now the direct implementation. No fallback route is used.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-readiness-strip hm-ready-ok'><b>Draft store is ready.</b> Default V2 now uses row-based Exercise and Supplement Regime fields.</div>", unsafe_allow_html=True)
 else:
     st.markdown(f"<div class='hm-readiness-strip hm-ready-warn'><b>Draft store is not ready.</b> {STORE_STATUS.get('message', 'Run the Sprint 1 SQL script, then refresh this page.')}</div>", unsafe_allow_html=True)
     if st.button("Refresh Backend Status", use_container_width=True):
@@ -565,7 +674,7 @@ else:
         st.rerun()
 
 if st.session_state.get("pb_unsupported_items"):
-    st.warning("Some loaded rows use older slot names. They are preserved for save/load but are not silently mapped into the new Exercise/Supplement schedule.")
+    st.warning("Some loaded rows use older unsupported slot names. They are preserved for save/load review but not silently mapped into the new row-based structure.")
 
 section = st.session_state["v4_active_section"]
 
@@ -660,7 +769,7 @@ if section == "Profile Setup":
     with a2:
         st.date_input("Plan Start Date", key=profile_widget_key("start_date"), on_change=sync_profile_field, args=("start_date",))
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True)
-        st.text_input("Implementation Status", value="Direct V2 implementation. No fallback route. Time field removed from Exercise and Supplement.", disabled=True)
+        st.text_input("Implementation Status", value="Default V2 row-based regime. Additional B4 page removed.", disabled=True)
 
     save_clicked = st.button("Save Draft Profile", type="primary", use_container_width=True, disabled=not STORE_STATUS.get("ok"))
     save_feedback = st.container()
@@ -694,18 +803,20 @@ elif section == "Meal Structure":
 
 elif section == "Exercise Regime":
     day = day_picker("v4_exercise_day")
-    for slot in EXERCISE_SLOTS:
-        st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
-        item_row("exercise", day, slot)
+    st.markdown("<div class='hm-title'>Exercise Regime</div><div class='hm-sub'>Fields: Exercise | Time of Day | Intensity | Instruction</div>", unsafe_allow_html=True)
+    for slot in SLOTS_BY_KIND["exercise"]:
+        for _ in [slot]:
+            item_row("exercise", day, slot)
     x, y = st.columns(2)
     x.button("Copy Day 1 to all days", key=f"v2_ex_copy_all_{day}", use_container_width=True)
     y.button("Copy previous day", key=f"v2_ex_copy_prev_{day}", use_container_width=True)
 
 elif section == "Supplement Regime":
     day = day_picker("v4_supp_day")
-    for slot in SUPPLEMENT_SLOTS:
-        st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
-        item_row("supplement", day, slot)
+    st.markdown("<div class='hm-title'>Supplement Regime</div><div class='hm-sub'>Fields: Supplement | Frequency | Timeline | Dosage | Instruction. Timeline count is validated against Frequency.</div>", unsafe_allow_html=True)
+    for slot in SLOTS_BY_KIND["supplement"]:
+        for _ in [slot]:
+            item_row("supplement", day, slot)
     x, y, z = st.columns(3)
     x.button("Copy active regimen", key=f"v2_supp_active_{day}", use_container_width=True)
     y.button("Copy Day 1 to all days", key=f"v2_supp_all_{day}", use_container_width=True)
