@@ -13,10 +13,10 @@ from components.recommendation_profile_store import (
 )
 from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, render_page_nav, render_back_to_top
 
-APP_BUILD_VERSION = "v100.22"
-APP_BUILD_LABEL = "Profile Builder Time Selector Hotfix"
+APP_BUILD_VERSION = "v100.23"
+APP_BUILD_LABEL = "Profile Builder Sprint 2 Clone Preview Validation"
 
-st.set_page_config(page_title="Recommendation Profile Builder Sprint 1", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Recommendation Profile Builder Sprint 2", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
 require_admin()
@@ -30,8 +30,8 @@ st.markdown(
         <span class='hm-pb-version'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
       </div>
       <div class='hero-kicker'>Admin recommendations</div>
-      <div class='hero-title'>Recommendation Profile Builder Sprint 1</div>
-      <div class='hero-subtitle'>Backend foundation with safe draft save/load. Publish and member-facing flows are intentionally disabled in this sprint.</div>
+      <div class='hero-title'>Recommendation Profile Builder Sprint 2</div>
+      <div class='hero-subtitle'>Clone saved profiles, preview draft data and review admin-side validation. Publish and member-facing flows remain disabled.</div>
       <div><span class='meta-pill'>Guided wellness workflow</span></div>
     </div>
     """,
@@ -54,8 +54,9 @@ st.markdown("""
 .hm-load-label{font-size:.86rem;font-weight:760;color:#334155;margin:0 0 .28rem .05rem;}.hm-slot{font-size:.78rem;color:#72551A;font-weight:880;margin:.75rem 0 .25rem}
 .hm-day{border:1px solid #E3C98E;background:white;border-radius:16px;padding:.7rem .8rem;margin:.45rem 0 .85rem}.hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
 .hm-readiness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin:.55rem 0 0}.hm-readiness-item{background:#fff;border:1px solid #E3C98E;border-radius:14px;padding:.58rem .68rem;line-height:1.35}
-.hm-pill{display:inline-block;border-radius:999px;padding:.13rem .5rem;margin:.15rem .2rem .15rem 0;font-size:.7rem;font-weight:950}.hm-ok{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}.hm-pending{background:#FFF7ED;color:#B45309;border:1px solid #FED7AA}.hm-info{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
-@media(max-width:900px){.hm-readiness{grid-template-columns:1fr}.hm-section-nav [data-testid="stButton"]>button{min-height:2.45rem!important;}}
+.hm-pill{display:inline-block;border-radius:999px;padding:.13rem .5rem;margin:.15rem .2rem .15rem 0;font-size:.7rem;font-weight:950}.hm-ok{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}.hm-pending{background:#FFF7ED;color:#B45309;border:1px solid #FED7AA}.hm-info{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}.hm-error{background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA}
+.hm-count-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem;margin:.55rem 0 1rem}.hm-count-card{background:#fff;border:1px solid #E3C98E;border-radius:15px;padding:.7rem .8rem}.hm-count-card b{display:block;color:#064E3B;font-size:.95rem}.hm-count-card span{color:#64748B;font-size:.78rem;font-weight:780}
+@media(max-width:900px){.hm-readiness,.hm-count-grid{grid-template-columns:1fr}.hm-section-nav [data-testid="stButton"]>button{min-height:2.45rem!important;}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -308,6 +309,94 @@ def collect_items():
     return rows
 
 
+def item_has_content(row):
+    fields = ["reference_label", "portion", "instruction", "scheduled_time", "intensity", "dosage_frequency"]
+    return any(str(row.get(field, "")).strip() for field in fields)
+
+
+def active_rows(rows=None):
+    rows = rows if rows is not None else collect_items()
+    return [row for row in rows if item_has_content(row)]
+
+
+def validation_summary(rows=None):
+    sync_profile_all()
+    p = st.session_state["pb_profile"]
+    rows = active_rows(rows)
+    counts = {
+        "meal": len([row for row in rows if row.get("item_type") == "meal"]),
+        "exercise": len([row for row in rows if row.get("item_type") == "exercise"]),
+        "supplement": len([row for row in rows if row.get("item_type") == "supplement"]),
+    }
+    errors = []
+    guidance = []
+    if not str(p.get("profile_name", "")).strip():
+        errors.append("Profile Name is required before saving a draft.")
+    if is_select(p.get("age_band")):
+        guidance.append("Select Age Band before final publish readiness.")
+    if is_select(p.get("diet_type")):
+        guidance.append("Select Diet Type before final publish readiness.")
+    if is_select(p.get("member")):
+        guidance.append("Assign a member before publish. Draft save can continue without member assignment.")
+    if counts["meal"] == 0:
+        guidance.append("Add at least one Meal Structure row before publish readiness.")
+    if counts["exercise"] == 0:
+        guidance.append("Add at least one Exercise Regime row before publish readiness.")
+    if counts["supplement"] == 0:
+        guidance.append("Add at least one Supplement Regime row before publish readiness.")
+    return {"errors": errors, "guidance": guidance, "counts": counts, "rows": rows}
+
+
+def render_validation_box(summary, heading="Sprint 2 Validation"):
+    counts = summary["counts"]
+    if summary["errors"]:
+        status_class = "hm-error"
+        status = "Draft save needs attention"
+    elif summary["guidance"]:
+        status_class = "hm-pending"
+        status = "Draft can be saved; publish readiness pending"
+    else:
+        status_class = "hm-ok"
+        status = "Draft is complete for Sprint 2 preview"
+    st.markdown(
+        f"""
+<div class='hm-preview'>
+<b>{heading}</b><br>
+<span class='hm-pill {status_class}'>{status}</span>
+<div class='hm-count-grid'>
+  <div class='hm-count-card'><b>{counts['meal']}</b><span>Meal rows</span></div>
+  <div class='hm-count-card'><b>{counts['exercise']}</b><span>Exercise rows</span></div>
+  <div class='hm-count-card'><b>{counts['supplement']}</b><span>Supplement rows</span></div>
+  <div class='hm-count-card'><b>{len(summary['rows'])}</b><span>Total recommendation rows</span></div>
+</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+    if summary["errors"]:
+        st.error(" ".join(summary["errors"]))
+    if summary["guidance"]:
+        st.warning(" ".join(summary["guidance"]))
+
+
+def preview_table(rows, selected_day):
+    table = []
+    for row in rows:
+        if int(row.get("day_number") or 0) != selected_day:
+            continue
+        table.append({
+            "Type": str(row.get("item_type", "")).title(),
+            "Day": row.get("day_number"),
+            "Slot": row.get("slot_name"),
+            "Item": row.get("reference_label") or "NA",
+            "Portion/Dose": row.get("portion") or row.get("dosage_frequency") or "NA",
+            "Time": row.get("scheduled_time") or "NA",
+            "Intensity": row.get("intensity") or "NA",
+            "Instruction": row.get("instruction") or "NA",
+        })
+    return table
+
+
 def apply_profile_to_session(profile, items):
     reset_new_draft()
     st.session_state["pb_profile"] = {"id": profile.get("id", ""), "profile_name": profile.get("profile_name", ""), "clone_from": profile.get("clone_source_label") or "New profile", "change_note": profile.get("change_note") or "", "status": "Draft", "region": profile.get("region") or "", "age_band": profile.get("age_band") or SELECT_AGE, "concerns": list(profile.get("health_concerns") or []), "diet_type": profile.get("diet_type") or SELECT_DIET, "member": profile.get("assigned_member_label") or "Select member", "note": profile.get("profile_note") or "", "start_date": clean_date(profile.get("start_date"))}
@@ -347,9 +436,9 @@ st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("<div class='hm-section-rule'></div>", unsafe_allow_html=True)
 
 if STORE_STATUS.get("ok"):
-    st.markdown("<div class='hm-readiness-strip hm-ready-ok'><b>Sprint 1 draft store is ready.</b> Draft save/load is enabled.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-readiness-strip hm-ready-ok'><b>Sprint 2 draft store is ready.</b> Clone, preview and validation use the Sprint 1 draft tables.</div>", unsafe_allow_html=True)
 else:
-    st.markdown(f"<div class='hm-readiness-strip hm-ready-warn'><b>Sprint 1 draft store is not ready.</b> {STORE_STATUS.get('message', 'Run the Sprint 1 SQL script, then refresh this page.')}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='hm-readiness-strip hm-ready-warn'><b>Sprint 2 draft store is not ready.</b> {STORE_STATUS.get('message', 'Run the Sprint 1 SQL script, then refresh this page.')}</div>", unsafe_allow_html=True)
     if st.button("Refresh Backend Status", use_container_width=True):
         clear_pb_cache(); st.rerun()
 
@@ -369,7 +458,7 @@ if section == "Profile Setup":
     p["clone_from"] = p.get("clone_from") if p.get("clone_from") in clone_options else "New profile"
     p["member"] = p.get("member") if p.get("member") in member_label_to_id else "Select member"
 
-    st.markdown("<div class='hm-title'>Recommendation Profile Setup</div><div class='hm-sub'>Reusable profile with cloning, categorisation, member assignment and cycle context.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-title'>Recommendation Profile Setup</div><div class='hm-sub'>Reusable profile with clone-from-existing, draft save/load and validation review.</div>", unsafe_allow_html=True)
     st.markdown("<div class='hm-store-box'>", unsafe_allow_html=True)
     st.caption(f"Dropdown source: {SOURCE_MESSAGE} Member source: {member_message}")
     ok_drafts, drafts, draft_msg = cached_drafts()
@@ -407,7 +496,24 @@ if section == "Profile Setup":
     c1, c2 = st.columns(2, gap="large")
     with c1:
         st.text_input("Profile Name", key=profile_widget_key("profile_name"), on_change=sync_profile_field, args=("profile_name",))
-        st.selectbox("Clone From Existing Profile", ensure_options(clone_options, p.get("clone_from")), key=profile_widget_key("clone_from"), on_change=sync_profile_field, args=("clone_from",))
+        clone_cols = st.columns([.68, .32], gap="small")
+        clone_cols[0].selectbox("Clone From Existing Profile", ensure_options(clone_options, p.get("clone_from")), key=profile_widget_key("clone_from"), on_change=sync_profile_field, args=("clone_from",))
+        selected_clone = st.session_state.get(profile_widget_key("clone_from"), p.get("clone_from", "New profile"))
+        if clone_cols[1].button("Clone Selected", use_container_width=True, disabled=not bool(clone_label_to_id.get(selected_clone))):
+            ok, profile_payload, item_payload, message = load_profile(clone_label_to_id.get(selected_clone, ""))
+            if ok:
+                source_name = profile_payload.get("profile_name", "Selected profile")
+                apply_profile_to_session(profile_payload, item_payload)
+                st.session_state["pb_profile"]["id"] = ""
+                st.session_state["pb_profile"]["profile_name"] = f"Copy of {source_name}"
+                st.session_state["pb_profile"]["clone_from"] = selected_clone
+                st.session_state["v4_clone_action_message"] = f"Cloned {source_name} into a new unsaved draft. Review, edit and save."
+                st.rerun()
+            else:
+                st.error(message)
+        clone_msg = st.session_state.pop("v4_clone_action_message", "")
+        if clone_msg:
+            st.success(clone_msg)
         st.text_input("Change Note", key=profile_widget_key("change_note"), on_change=sync_profile_field, args=("change_note",))
         st.text_input("Profile Status", value="Draft", disabled=True)
     with c2:
@@ -422,17 +528,26 @@ if section == "Profile Setup":
     with a2:
         st.date_input("Plan Start Date", key=profile_widget_key("start_date"), on_change=sync_profile_field, args=("start_date",))
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True)
-        st.text_input("Implementation Status", value="Sprint 1: draft save/load only. Publish not enabled.", disabled=True)
+        st.text_input("Implementation Status", value="Sprint 2: clone, preview and validation only. Publish not enabled.", disabled=True)
     save_clicked = st.button("Save Draft Profile", type="primary", use_container_width=True, disabled=not STORE_STATUS.get("ok"))
-    save_feedback = st.empty()
+    save_feedback = st.container()
     if save_clicked:
-        ok, profile_id, message = save_draft_profile(current_profile_payload(member_label_to_id, clone_label_to_id), collect_items())
-        if ok:
-            st.session_state["pb_profile"]["id"] = profile_id
-            cached_drafts.clear(); cached_profile_sources.clear()
-            save_feedback.success(message)
+        rows_for_save = collect_items()
+        summary_for_save = validation_summary(rows_for_save)
+        if summary_for_save["errors"]:
+            save_feedback.error(" ".join(summary_for_save["errors"]))
         else:
-            save_feedback.error(message)
+            ok, profile_id, message = save_draft_profile(current_profile_payload(member_label_to_id, clone_label_to_id), rows_for_save)
+            if ok:
+                st.session_state["pb_profile"]["id"] = profile_id
+                cached_drafts.clear(); cached_profile_sources.clear()
+                save_feedback.success(message)
+                if summary_for_save["guidance"]:
+                    save_feedback.warning("Draft saved. Publish readiness still needs: " + " ".join(summary_for_save["guidance"]))
+            else:
+                save_feedback.error(message)
+
+    render_validation_box(validation_summary(), "Sprint 2 Draft Validation")
 
 elif section == "Meal Structure":
     day = day_picker("v4_meal_day")
@@ -465,6 +580,8 @@ elif section == "Supplement Regime":
 
 else:
     sync_profile_all()
+    all_rows = collect_items()
+    summary = validation_summary(all_rows)
     p = st.session_state["pb_profile"]
     assigned_member = p.get("member", "Select member")
     member_ready = assigned_member != "Select member"
@@ -472,16 +589,27 @@ else:
     member_status = "Complete" if member_ready else "Pending"
     plan_start = p.get("start_date", dt.date.today())
     concerns = p.get("concerns", [])
-    st.markdown("<div class='hm-title'>Preview & End-to-End Flow Review</div><div class='hm-sub'>Sprint 1 is draft-only. Publish and member consumption remain disabled.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-title'>Preview & End-to-End Flow Review</div><div class='hm-sub'>Sprint 2 preview reads from the current durable draft buffer and saved draft data. Publish and member consumption remain disabled.</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-preview'><b>Profile Summary</b><br><b>Draft ID:</b> {p.get('id') or 'Not saved yet'}<br><b>Profile:</b> {p.get('profile_name') or 'Not entered yet'}<br><b>Status:</b> Draft<br><b>Assigned Member:</b> {display_choice(assigned_member)}<br><b>Start Date:</b> {plan_start.isoformat() if isinstance(plan_start, dt.date) else plan_start}<br><b>Tags:</b> {p.get('region') or 'NA'} - {display_choice(p.get('age_band'))} - {display_choice(p.get('diet_type'))} - {', '.join(concerns) if concerns else 'No health concern selected'}<br><b>Profile Note:</b> {p.get('note') or 'NA'}</div>", unsafe_allow_html=True)
+
+    render_validation_box(summary, "Sprint 2 Preview Validation")
+
+    day_options = list(range(1, 8))
+    selected_preview_day = st.selectbox("Preview Day", day_options, format_func=lambda d: day_label(d), key="v4_preview_day")
+    rows_for_day = preview_table(summary["rows"], selected_preview_day)
+    if rows_for_day:
+        st.dataframe(rows_for_day, use_container_width=True, hide_index=True)
+    else:
+        st.info("No recommendation rows have been added for this day yet.")
+
     st.markdown(f"""
 <div class='hm-preview'>
 <b>Publish Readiness Checklist</b><br>
-This checklist remains admin-side as the final gate before publish. In Sprint 1, it is informational only.
+This checklist remains admin-side as the final gate before publish. In Sprint 2, it is still informational only.
 <div class='hm-readiness'>
-  <div class='hm-readiness-item'><span class='hm-pill hm-info'>Sprint 1</span><br><b>Draft save/load enabled</b><br>Publish and member consumption are deliberately not enabled yet.</div>
+  <div class='hm-readiness-item'><span class='hm-pill hm-info'>Sprint 2</span><br><b>Clone / Preview / Validation</b><br>Draft clone and preview are enabled. Publish is deliberately not enabled yet.</div>
   <div class='hm-readiness-item'><span class='hm-pill {member_pill}'>{member_status}</span><br><b>Member assigned</b><br>Publishing must stay blocked until a member is selected.</div>
-  <div class='hm-readiness-item'><span class='hm-pill hm-info'>Future Sprint</span><br><b>Publish disabled</b><br>Active profile replacement is not part of Sprint 1.</div>
+  <div class='hm-readiness-item'><span class='hm-pill hm-info'>Future Sprint</span><br><b>Publish disabled</b><br>Active profile replacement is not part of Sprint 2.</div>
   <div class='hm-readiness-item'><span class='hm-pill hm-ok'>Safe</span><br><b>Member side untouched</b><br>No My Recommendations or Today's Journey wiring yet.</div>
 </div>
 </div>
