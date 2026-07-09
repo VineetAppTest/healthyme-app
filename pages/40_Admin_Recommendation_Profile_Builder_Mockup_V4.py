@@ -11,31 +11,58 @@ from components.recommendation_profile_store import (
     load_profile_builder_sources,
     save_draft_profile,
 )
-from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, topbar, render_page_nav, render_back_to_top
+from components.ui_common import inject_global_styles, apply_luxe_theme, utility_logout_bar, render_page_nav, render_back_to_top
 
-st.set_page_config(page_title="Recommendation Profile Builder Mock-up V4", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+APP_BUILD_VERSION = "v100.16"
+APP_BUILD_LABEL = "Profile Builder Sprint 1 Draft UX"
+
+st.set_page_config(page_title="Recommendation Profile Builder Sprint 1", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
 require_admin()
 utility_logout_bar()
 
-topbar("Recommendation Profile Builder", "Sprint 1 implementation: backend foundation with safe draft save/load.", "Admin recommendations")
+st.markdown(
+    f"""
+    <div class='hero-shell'>
+      <div class='hm-v10016-brand-row'>
+        <span class='hm-v10016-brand'>HealthyMe</span>
+        <span class='hm-v10016-version-inline'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span>
+      </div>
+      <div class='hero-kicker'>Admin recommendations</div>
+      <div class='hero-title'>Recommendation Profile Builder Sprint 1</div>
+      <div class='hero-subtitle'>Backend foundation with safe draft save/load. Publish and member-facing flows are intentionally disabled in this sprint.</div>
+      <div><span class='meta-pill'>Guided wellness workflow</span></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown("""
 <style>
+.hm-v10016-brand-row{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.35rem;}
+.hm-v10016-brand{color:#064E3B;font-size:.82rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;}
+.hm-v10016-version-inline{color:#72551A;font-size:.72rem;font-weight:900;background:#F5E7C8;border-radius:999px;padding:.22rem .55rem;}
 .hm-title{color:#064E3B;font-size:1.04rem;font-weight:950;margin:0 0 .25rem}.hm-sub{color:#64748B;font-size:.82rem;font-weight:720;margin:0 0 .7rem}
 .hm-slot{font-size:.78rem;color:#72551A;font-weight:880;margin:.75rem 0 .25rem}.hm-head{font-size:.68rem;text-transform:uppercase;color:#64748B;font-weight:950;margin:.12rem 0 -.12rem}
 .hm-day{border:1px solid #E3C98E;background:white;border-radius:16px;padding:.7rem .8rem;margin:.45rem 0 .85rem}.hm-day [data-testid="stButton"]>button{min-height:2.35rem!important;border-radius:14px!important;font-weight:900!important}
-.hm-section-nav{margin:.35rem 0 .8rem 0;}
-.hm-section-nav [data-testid="stButton"]>button{min-height:2.55rem!important;border-radius:15px!important;font-weight:930!important;border:1.15px solid rgba(216,180,98,.72)!important;background:#fff!important;color:#064E3B!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;}
+.hm-section-nav{margin:.35rem 0 .55rem 0;}
+.hm-section-nav [data-testid="stButton"]>button{min-height:2.7rem!important;border-radius:15px!important;font-weight:930!important;border:1.15px solid rgba(216,180,98,.72)!important;background:#fff!important;color:#064E3B!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.15!important;padding:.55rem .5rem!important;}
+.hm-section-nav [data-testid="stButton"]>button *{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.15!important;}
 .hm-section-nav [data-testid="stButton"]>button[kind="primary"]{background:linear-gradient(135deg,#FFF3D6,#FFFFFF)!important;border:1.5px solid #B89345!important;color:#064E3B!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
 .hm-section-nav [data-testid="stButton"]>button[kind="primary"] *{color:#064E3B!important;}
+.hm-section-rule{height:1px;background:linear-gradient(90deg,transparent,rgba(216,168,78,.8),transparent);margin:.3rem 0 .72rem 0;}
+.hm-readiness-strip{border-radius:15px;padding:.62rem .78rem;margin:.25rem 0 1rem 0;font-size:.84rem;font-weight:780;line-height:1.35;box-shadow:0 5px 12px rgba(15,23,42,.035)}
+.hm-readiness-strip b{color:#064E3B!important;}
+.hm-ready-ok{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;}
+.hm-ready-warn{background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
 .hm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:.55rem 0}.hm-mini{border:1px solid #E3C98E;background:#fff;border-radius:16px;padding:.75rem .85rem}.hm-mini b{color:#064E3B}
 .hm-readiness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin:.55rem 0 0}.hm-readiness-item{background:#fff;border:1px solid #E3C98E;border-radius:14px;padding:.58rem .68rem;line-height:1.35}
 .hm-pill{display:inline-block;border-radius:999px;padding:.13rem .5rem;margin:.15rem .2rem .15rem 0;font-size:.7rem;font-weight:950}.hm-ok{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}.hm-pending{background:#FFF7ED;color:#B45309;border:1px solid #FED7AA}.hm-info{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
 .hm-member-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:.55rem 0}.hm-member-card{border:1px solid #E3C98E;background:#fff;border-radius:16px;padding:.8rem .9rem;min-height:8rem}.hm-member-card b{display:block;color:#064E3B;font-size:.92rem;margin-bottom:.32rem}.hm-member-card span{color:#475569;font-size:.82rem;font-weight:740;line-height:1.45}
 .hm-store-box{border:1px solid #E3C98E;background:#FFFDF8;border-radius:16px;padding:.85rem .9rem;margin:.35rem 0 1rem;box-shadow:0 6px 14px rgba(15,23,42,.035)}
+@media(max-width:900px){.hm-member-flow,.hm-grid,.hm-readiness{grid-template-columns:1fr}.hm-section-nav [data-testid="stButton"]>button{min-height:2.45rem!important;}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -43,6 +70,13 @@ MEAL_SLOTS = ["Wake-up / Early Morning", "Breakfast", "Mid-morning Snack", "Lunc
 EXERCISE_SLOTS = ["Morning", "Evening", "Preferred Time"]
 SUPPLEMENT_SLOTS = ["Morning", "Afternoon", "Evening", "Before Bed", "Preferred Time"]
 SECTIONS = ["Profile Setup", "Meal Structure", "Exercise Regime", "Supplement Regime", "Preview & End-to-End Flow"]
+NAV_LABELS = {
+    "Profile Setup": "Profile Setup",
+    "Meal Structure": "Meal Structure",
+    "Exercise Regime": "Exercise Regime",
+    "Supplement Regime": "Supplement Regime",
+    "Preview & End-to-End Flow": "Preview & Flow",
+}
 
 STORE_STATUS = check_profile_builder_store()
 SOURCES, SOURCE_MESSAGE = load_profile_builder_sources()
@@ -125,7 +159,6 @@ def day_picker(key):
             with col:
                 if st.button(day_label(day), key=f"{key}_{day}", type=("primary" if st.session_state[key] == day else "secondary"), use_container_width=True):
                     st.session_state[key] = day
-                    st.rerun()
     return st.session_state[key]
 
 
@@ -298,13 +331,22 @@ def initialise_defaults():
 initialise_defaults()
 
 st.markdown("<div class='hm-section-nav'>", unsafe_allow_html=True)
-nav_cols = st.columns(len(SECTIONS), gap="small")
+nav_cols = st.columns([1, 1, 1, 1, .9], gap="small")
 for col, section_name in zip(nav_cols, SECTIONS):
     with col:
-        if st.button(section_name, key=f"v4_nav_{section_name}", type=("primary" if st.session_state["v4_active_section"] == section_name else "secondary"), use_container_width=True):
+        if st.button(NAV_LABELS[section_name], key=f"v4_nav_{section_name}", type=("primary" if st.session_state["v4_active_section"] == section_name else "secondary"), use_container_width=True):
             st.session_state["v4_active_section"] = section_name
-            st.rerun()
 st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("<div class='hm-section-rule'></div>", unsafe_allow_html=True)
+
+if STORE_STATUS.get("ok"):
+    readiness_class = "hm-ready-ok"
+    readiness_text = "<b>Sprint 1 draft store is ready.</b> Draft save/load is enabled. This message appears directly below the section buttons."
+else:
+    readiness_class = "hm-ready-warn"
+    readiness_text = f"<b>Sprint 1 draft store is not ready.</b> {STORE_STATUS.get('message', 'Run the Sprint 1 SQL script, then refresh this page.')}"
+st.markdown(f"<div class='hm-readiness-strip {readiness_class}'>{readiness_text}</div>", unsafe_allow_html=True)
+
 section = st.session_state["v4_active_section"]
 
 ok_sources, source_profiles, _source_msg = list_profile_sources()
@@ -323,11 +365,6 @@ if section == "Profile Setup":
     st.markdown("<div class='hm-title'>Recommendation Profile Setup</div><div class='hm-sub'>Reusable profile with cloning, categorisation, member assignment and cycle context.</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='hm-store-box'>", unsafe_allow_html=True)
-    if STORE_STATUS.get("ok"):
-        st.success("Sprint 1 draft store is ready. Draft save/load is enabled.")
-    else:
-        st.warning(STORE_STATUS.get("message", "Profile Builder draft store is not ready."))
-        st.caption("Run sql/20260709_profile_builder_sprint1.sql in Supabase SQL Editor before testing draft save/load.")
     st.caption(f"Dropdown source: {SOURCE_MESSAGE} Member source: {MEMBER_MESSAGE}")
 
     ok_drafts, draft_profiles, draft_message = list_draft_profiles()
