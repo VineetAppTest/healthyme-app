@@ -47,6 +47,21 @@ def _clean(value: object, default: str = "") -> str:
     return str(value).strip()
 
 
+def _none_if_blank(value: object):
+    cleaned = _clean(value)
+    return cleaned or None
+
+
+def _optional_uuid(value: object):
+    cleaned = _clean(value)
+    if not cleaned:
+        return None
+    try:
+        return str(uuid.UUID(cleaned))
+    except Exception:
+        return None
+
+
 def _get_secret(name: str, default: str = "") -> str:
     value = os.environ.get(name)
     if value:
@@ -249,8 +264,8 @@ def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> 
         "cycle_rule": _clean(profile.get("cycle_rule"), "Weekly cyclical until replaced or stopped"),
         "assigned_member_id": _clean(profile.get("assigned_member_id")),
         "assigned_member_label": _clean(profile.get("assigned_member_label")),
-        "start_date": _clean(profile.get("start_date")),
-        "clone_source_profile_id": _clean(profile.get("clone_source_profile_id")),
+        "start_date": _none_if_blank(profile.get("start_date")),
+        "clone_source_profile_id": _optional_uuid(profile.get("clone_source_profile_id")),
         "clone_source_label": _clean(profile.get("clone_source_label")),
         "updated_at": now,
         "created_by_user_id": _clean(profile.get("created_by_user_id")),
@@ -266,6 +281,8 @@ def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> 
         instruction = _clean(item.get("instruction"))
         if item_type not in {"meal", "exercise", "supplement"} or not (1 <= day_number <= 7) or not slot_name:
             continue
+        if reference_label.startswith("-- Select"):
+            reference_label = ""
         if not any([
             reference_label,
             _clean(item.get("portion")),
