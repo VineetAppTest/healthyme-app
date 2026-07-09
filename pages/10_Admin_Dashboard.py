@@ -194,12 +194,10 @@ with left:
 with right:
     with st.container(border=True):
         st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
-        section_header("Reports & Logs", "Review logs, questions, responses and member recommendation shares.")
+        section_header("Reports & Logs", "Review logs, questions and response content.")
         nav_cell("Daily Logs", "pages/22_Admin_Daily_Log_Report.py", "dash_daily_logs_v102_4b4")
         nav_cell("Questions", "pages/20_Admin_Question_Manager.py", "dash_questions_v102_4b4")
         nav_cell("Responses", "pages/21_Admin_Response_Editor.py", "dash_responses_v102_4b4")
-        nav_cell("Recommendations Share", "pages/35_Admin_Recommendations_Share.py", "dash_recommendations_share_v102_4b4")
-        nav_cell("Unified Recommendations", "pages/36_Admin_Unified_Recommendations.py", "dash_unified_recommendations_h9a5e")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with st.container(border=True):
@@ -214,7 +212,7 @@ with right:
 st.markdown("<div class='hm-dash-system-wrap'>", unsafe_allow_html=True)
 with st.container(border=True):
     st.markdown("<div class='hm-dash-system-card'>", unsafe_allow_html=True)
-    section_header("System Tools", "Database checks, recalculation utilities and Supabase migration controls.")
+    section_header("System Tools", "Database checks, recalculation utilities, legacy fallbacks and diagnostic controls.")
     sys_col_1, sys_col_2 = st.columns(2, gap="large")
     with sys_col_1:
         nav_cell("Database", "pages/28_Admin_Database_Status.py", "dash_database_v102_4b4")
@@ -225,6 +223,11 @@ with st.container(border=True):
         nav_cell("Supabase Auth Readiness", "pages/33_Admin_Supabase_Auth_Pilot_Readiness.py", "dash_supabase_auth_readiness_v102_4b15s3h4")
     with sys_col_4:
         nav_cell("Supabase Provisioning", "pages/34_Admin_Supabase_Auth_Provisioning_Workbench.py", "dash_supabase_provisioning_v102_4b15s3h4")
+    legacy_col_1, legacy_col_2 = st.columns(2, gap="large")
+    with legacy_col_1:
+        nav_cell("Legacy Recommendations Share", "pages/35_Admin_Recommendations_Share.py", "dash_legacy_recommendations_share_h9a8b")
+    with legacy_col_2:
+        nav_cell("Unified Recommendations Diagnostics", "pages/36_Admin_Unified_Recommendations.py", "dash_unified_recommendations_diagnostics_h9a8b")
     st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -237,3 +240,4 @@ inject_keepalive_guard_v96_11()
 # v102.4B15S3H4: Added dashboard buttons for Supabase Auth tools because Streamlit sidebar/menu remains intentionally hidden.
 # H9A.5E: Added Unified Recommendations contract workbench entry point.
 # H9A.8B: Added final Recommendation Profile Builder entry point and removed mockup route dependency.
+# H9A.8B cleanup: Moved legacy Recommendations Share and Unified Recommendations out of main workflow into System Tools.
