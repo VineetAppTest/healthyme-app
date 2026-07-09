@@ -14,16 +14,16 @@ topbar("Recommendation Profile Builder Mock-up V4", "Full profile setup, weekly 
 
 st.markdown("""
 <style>
-.hm-card{border:1px solid #E3C98E;background:#FFFDF8;border-radius:18px;padding:1rem;margin:.65rem 0 1rem;box-shadow:0 8px 18px rgba(15,23,42,.04)}
 .hm-title{color:#064E3B;font-size:1.04rem;font-weight:950;margin:0 0 .25rem}.hm-sub{color:#64748B;font-size:.82rem;font-weight:720;margin:0 0 .7rem}
 .hm-slot{font-size:.78rem;color:#72551A;font-weight:880;margin:.75rem 0 .25rem}.hm-head{font-size:.68rem;text-transform:uppercase;color:#64748B;font-weight:950;margin:.12rem 0 -.12rem}
 .hm-day{border:1px solid #E3C98E;background:white;border-radius:16px;padding:.7rem .8rem;margin:.45rem 0 .85rem}.hm-day [data-testid="stButton"]>button{min-height:2.35rem!important;border-radius:14px!important;font-weight:900!important}
-div[data-baseweb="tab-list"]{gap:.55rem!important;border:1px solid #E3C98E!important;background:linear-gradient(135deg,#FFFDF8,#FFF6E4)!important;border-radius:20px!important;padding:.5rem!important;box-shadow:0 9px 20px rgba(15,23,42,.055)!important;margin:.4rem 0 1rem!important;}
-button[data-baseweb="tab"]{background:#fff!important;border:1.15px solid rgba(216,180,98,.72)!important;border-radius:15px!important;min-height:2.55rem!important;padding:.48rem .86rem!important;font-weight:900!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;}
-button[data-baseweb="tab"] p{font-size:.87rem!important;font-weight:930!important;color:#064E3B!important;}
-button[data-baseweb="tab"][aria-selected="true"]{background:linear-gradient(135deg,#FFF3D6,#FFFFFF)!important;border:1.5px solid #B89345!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
-div[data-baseweb="tab-highlight"],div[data-baseweb="tab-border"]{display:none!important;}
-div[data-baseweb="tab-panel"]{border-top:0!important;padding-top:.15rem!important;}
+div[data-testid="stRadio"]{margin:.4rem 0 1rem!important;}
+div[data-testid="stRadio"] > label{display:none!important;}
+div[data-testid="stRadio"] [role="radiogroup"]{display:flex!important;flex-wrap:wrap!important;gap:.55rem!important;border:1px solid #E3C98E!important;background:linear-gradient(135deg,#FFFDF8,#FFF6E4)!important;border-radius:20px!important;padding:.5rem!important;box-shadow:0 9px 20px rgba(15,23,42,.055)!important;}
+div[data-testid="stRadio"] [role="radiogroup"] label{background:#fff!important;border:1.15px solid rgba(216,180,98,.72)!important;border-radius:15px!important;min-height:2.55rem!important;padding:.48rem .86rem!important;font-weight:900!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;color:#064E3B!important;display:flex!important;align-items:center!important;}
+div[data-testid="stRadio"] [role="radiogroup"] label p{font-size:.87rem!important;font-weight:930!important;color:#064E3B!important;}
+div[data-testid="stRadio"] [role="radiogroup"] label:has(input:checked){background:linear-gradient(135deg,#FFF3D6,#FFFFFF)!important;border:1.5px solid #B89345!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
+div[data-testid="stRadio"] [role="radiogroup"] input{display:none!important;}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
 .hm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:.55rem 0}.hm-mini{border:1px solid #E3C98E;background:#fff;border-radius:16px;padding:.75rem .85rem}.hm-mini b{color:#064E3B}
 .hm-readiness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin:.55rem 0 0}.hm-readiness-item{background:#fff;border:1px solid #E3C98E;border-radius:14px;padding:.58rem .68rem;line-height:1.35}
@@ -35,6 +35,7 @@ div[data-baseweb="tab-panel"]{border-top:0!important;padding-top:.15rem!importan
 RECIPES = ["-- Select recipe --", "Moong Chilla", "Paneer Salad", "Fruit + Nuts", "Herbal Tea"]
 EXERCISES = ["-- Select exercise --", "Brisk Walking", "Cat-Cow Stretch", "Breathing Exercise", "Mobility Flow"]
 SUPPLEMENTS = ["-- Select supplement --", "Magnesium", "Vitamin D", "Omega 3", "Probiotic"]
+SECTIONS = ["Profile Setup", "Meal Structure", "Exercise Regime", "Supplement Regime", "Preview & End-to-End Flow"]
 
 
 def base_date():
@@ -95,31 +96,43 @@ def item_row(kind, day, slot):
         add_row(key)
         st.rerun()
 
-profile, meal, exercise, supplement, preview = st.tabs(["Profile Setup", "Meal Structure", "Exercise Regime", "Supplement Regime", "Preview & End-to-End Flow"])
+section = st.radio("Profile builder section", SECTIONS, horizontal=True, label_visibility="collapsed", key="v4_active_section")
 
-with profile:
+profile_name = st.session_state.get("v4_profile_name", "North India - Adult - Weight Management - Vegetarian")
+clone_from = st.session_state.get("v4_clone_from", "New profile")
+change_note = st.session_state.get("v4_change_note", "Cloned and adjusted for member preference / region / concern")
+profile_status = st.session_state.get("v4_profile_status", "Draft")
+region = st.session_state.get("v4_region", "North India")
+age_band = st.session_state.get("v4_age_band", "31-45")
+concerns = st.session_state.get("v4_concerns", ["Weight Management"])
+diet_type = st.session_state.get("v4_diet_type", "Vegetarian")
+assigned_member = st.session_state.get("v4_member", "Select member")
+plan_start = st.session_state.get("v4_start_date", dt.date.today())
+profile_note = st.session_state.get("v4_note", "")
+
+if section == "Profile Setup":
     st.markdown("<div class='hm-title'>Recommendation Profile Setup</div><div class='hm-sub'>Reusable profile with cloning, categorisation, member assignment and cycle context.</div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2, gap="large")
     with c1:
-        profile_name = st.text_input("Profile Name", value="North India - Adult - Weight Management - Vegetarian", key="v4_profile_name")
+        profile_name = st.text_input("Profile Name", value=profile_name, key="v4_profile_name")
         clone_from = st.selectbox("Clone From Existing Profile", ["New profile", "Profile A - Gut Reset", "Profile B - Weight Management", "Profile C - Senior Wellness"], key="v4_clone_from")
-        change_note = st.text_input("Change Note", value="Cloned and adjusted for member preference / region / concern", key="v4_change_note")
+        change_note = st.text_input("Change Note", value=change_note, key="v4_change_note")
         profile_status = st.selectbox("Profile Status", ["Draft", "Active", "Archived"], key="v4_profile_status")
     with c2:
-        region = st.text_input("Region / Food Culture", value="North India", key="v4_region")
+        region = st.text_input("Region / Food Culture", value=region, key="v4_region")
         age_band = st.selectbox("Age Band", ["Teen", "18-30", "31-45", "46-60", "60+"], index=2, key="v4_age_band")
-        concerns = st.multiselect("Health Concerns", ["Weight Management", "Gut Health", "Diabetes Support", "Energy", "Inflammation", "Sleep", "General Wellness"], default=["Weight Management"], key="v4_concerns")
+        concerns = st.multiselect("Health Concerns", ["Weight Management", "Gut Health", "Diabetes Support", "Energy", "Inflammation", "Sleep", "General Wellness"], default=concerns, key="v4_concerns")
         diet_type = st.selectbox("Diet Type", ["Vegetarian", "Non-vegetarian", "Vegan", "Eggetarian", "Jain", "Custom"], key="v4_diet_type")
     a1, a2 = st.columns(2, gap="large")
     with a1:
         assigned_member = st.selectbox("Example Member Assignment", ["Select member", "Example member"], key="v4_member")
-        profile_note = st.text_area("Profile-level Nutritionist Note", value="", height=150, key="v4_note")
+        profile_note = st.text_area("Profile-level Nutritionist Note", value=profile_note, height=150, key="v4_note")
     with a2:
-        plan_start = st.date_input("Plan Start Date", value=dt.date.today(), key="v4_start_date")
+        plan_start = st.date_input("Plan Start Date", value=plan_start, key="v4_start_date")
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True, key="v4_cycle")
         st.text_input("Implementation Status", value="Mock-up only: no save or publish yet", disabled=True, key="v4_status")
 
-with meal:
+elif section == "Meal Structure":
     day = day_picker("v4_meal_day")
     for slot in ["Wake-up / Early Morning", "Breakfast", "Mid-morning Snack", "Lunch", "Evening Snack / Tea", "Dinner", "Bedtime"]:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
@@ -128,7 +141,7 @@ with meal:
     x.button("Copy Day 1 to all days", key=f"v4_meal_copy_all_{day}", use_container_width=True)
     y.button("Copy previous day", key=f"v4_meal_copy_prev_{day}", use_container_width=True)
 
-with exercise:
+elif section == "Exercise Regime":
     day = day_picker("v4_exercise_day")
     for slot in ["Morning", "Evening", "Preferred Time"]:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
@@ -138,7 +151,7 @@ with exercise:
     y.button("Copy previous day", key=f"v4_ex_copy_prev_{day}", use_container_width=True)
     z.button("Add preferred-time slot", key=f"v4_ex_add_pref_{day}", use_container_width=True)
 
-with supplement:
+elif section == "Supplement Regime":
     day = day_picker("v4_supp_day")
     for slot in ["Morning", "Afternoon", "Evening", "Before Bed", "Preferred Time"]:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
@@ -148,7 +161,7 @@ with supplement:
     y.button("Copy Day 1 to all days", key=f"v4_supp_all_{day}", use_container_width=True)
     z.button("Copy previous day", key=f"v4_supp_prev_{day}", use_container_width=True)
 
-with preview:
+else:
     member_ready = assigned_member != "Select member"
     member_pill = "hm-ok" if member_ready else "hm-pending"
     member_status = "Complete" if member_ready else "Pending"
