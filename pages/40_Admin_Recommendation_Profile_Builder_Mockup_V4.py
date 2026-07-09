@@ -22,6 +22,8 @@ div[data-baseweb="tab-list"]{gap:.55rem!important;border:1px solid #E3C98E!impor
 button[data-baseweb="tab"]{background:#fff!important;border:1.15px solid rgba(216,180,98,.72)!important;border-radius:15px!important;min-height:2.55rem!important;padding:.48rem .86rem!important;font-weight:900!important;box-shadow:0 4px 10px rgba(15,23,42,.035)!important;}
 button[data-baseweb="tab"] p{font-size:.87rem!important;font-weight:930!important;color:#064E3B!important;}
 button[data-baseweb="tab"][aria-selected="true"]{background:linear-gradient(135deg,#FFF3D6,#FFFFFF)!important;border:1.5px solid #B89345!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
+div[data-baseweb="tab-highlight"],div[data-baseweb="tab-border"]{display:none!important;}
+div[data-baseweb="tab-panel"]{border-top:0!important;padding-top:.15rem!important;}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
 .hm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:.55rem 0}.hm-mini{border:1px solid #E3C98E;background:#fff;border-radius:16px;padding:.75rem .85rem}.hm-mini b{color:#064E3B}
 .hm-readiness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin:.55rem 0 0}.hm-readiness-item{background:#fff;border:1px solid #E3C98E;border-radius:14px;padding:.58rem .68rem;line-height:1.35}
@@ -96,7 +98,6 @@ def item_row(kind, day, slot):
 profile, meal, exercise, supplement, preview = st.tabs(["Profile Setup", "Meal Structure", "Exercise Regime", "Supplement Regime", "Preview & End-to-End Flow"])
 
 with profile:
-    st.markdown("<div class='hm-card'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-title'>Recommendation Profile Setup</div><div class='hm-sub'>Reusable profile with cloning, categorisation, member assignment and cycle context.</div>", unsafe_allow_html=True)
     c1, c2 = st.columns(2, gap="large")
     with c1:
@@ -117,10 +118,8 @@ with profile:
         plan_start = st.date_input("Plan Start Date", value=dt.date.today(), key="v4_start_date")
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True, key="v4_cycle")
         st.text_input("Implementation Status", value="Mock-up only: no save or publish yet", disabled=True, key="v4_status")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 with meal:
-    st.markdown("<div class='hm-card'>", unsafe_allow_html=True)
     day = day_picker("v4_meal_day")
     for slot in ["Wake-up / Early Morning", "Breakfast", "Mid-morning Snack", "Lunch", "Evening Snack / Tea", "Dinner", "Bedtime"]:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
@@ -128,10 +127,8 @@ with meal:
     x, y = st.columns(2)
     x.button("Copy Day 1 to all days", key=f"v4_meal_copy_all_{day}", use_container_width=True)
     y.button("Copy previous day", key=f"v4_meal_copy_prev_{day}", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 with exercise:
-    st.markdown("<div class='hm-card'>", unsafe_allow_html=True)
     day = day_picker("v4_exercise_day")
     for slot in ["Morning", "Evening", "Preferred Time"]:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
@@ -140,10 +137,8 @@ with exercise:
     x.button("Copy Day 1 to all days", key=f"v4_ex_copy_all_{day}", use_container_width=True)
     y.button("Copy previous day", key=f"v4_ex_copy_prev_{day}", use_container_width=True)
     z.button("Add preferred-time slot", key=f"v4_ex_add_pref_{day}", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 with supplement:
-    st.markdown("<div class='hm-card'>", unsafe_allow_html=True)
     day = day_picker("v4_supp_day")
     for slot in ["Morning", "Afternoon", "Evening", "Before Bed", "Preferred Time"]:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
@@ -152,14 +147,12 @@ with supplement:
     x.button("Copy active regimen", key=f"v4_supp_active_{day}", use_container_width=True)
     y.button("Copy Day 1 to all days", key=f"v4_supp_all_{day}", use_container_width=True)
     z.button("Copy previous day", key=f"v4_supp_prev_{day}", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 with preview:
     member_ready = assigned_member != "Select member"
     member_pill = "hm-ok" if member_ready else "hm-pending"
     member_status = "Complete" if member_ready else "Pending"
 
-    st.markdown("<div class='hm-card'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-title'>Preview & End-to-End Flow Review</div><div class='hm-sub'>This is the contract review page before implementation. It checks what Admin creates, what gets published, and what Web Member and Flutter Member consume.</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='hm-preview'><b>Profile Summary</b><br><b>Profile:</b> {profile_name}<br><b>Clone Source:</b> {clone_from}<br><b>Status:</b> {profile_status}<br><b>Assigned Member:</b> {assigned_member}<br><b>Start Date:</b> {plan_start.isoformat()}<br><b>Cycle:</b> Weekly cyclical until replaced or stopped<br><b>Tags:</b> {region} - {age_band} - {diet_type} - {', '.join(concerns) if concerns else 'No health concern selected'}<br><b>Change Note:</b> {change_note or 'NA'}<br><b>Profile Note:</b> {profile_note or 'NA'}</div>", unsafe_allow_html=True)
     st.markdown("""
@@ -228,7 +221,6 @@ member_consumption: My Recommendations shows the full profile; Today's Journey s
 [ ] Replacing or stopping a profile does not delete historical recommendations.
 </div>
 """, unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 render_page_nav("Recommendation Profile Builder Mock-up V4", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
