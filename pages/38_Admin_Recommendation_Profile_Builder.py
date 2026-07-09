@@ -3,6 +3,7 @@ import re
 
 import streamlit as st
 
+from components.active_profile_preview_contract import render_active_profile_preview_contract
 from components.guards import require_admin
 from components.profile_publish_control import render_profile_publish_control
 from components.recommendation_profile_store import (
@@ -22,9 +23,9 @@ from components.ui_common import (
     utility_logout_bar,
 )
 
-APP_BUILD_VERSION = "v100.32"
-APP_BUILD_LABEL = "Profile Builder Final Publish Tab"
-SCHEDULE_SCHEMA_VERSION = "h9a8b_v100_32"
+APP_BUILD_VERSION = "v100.33"
+APP_BUILD_LABEL = "Active Profile Member Preview Contract"
+SCHEDULE_SCHEMA_VERSION = "h9a9a_v100_33"
 
 MEAL_SLOTS = [
     "Wake-up / Early Morning",
@@ -60,6 +61,7 @@ SECTIONS = [
     "Supplement Regime",
     "Preview & End-to-End Flow",
     "Publish Control",
+    "Active Profile Preview",
 ]
 NAV_LABELS = {
     "Profile Setup": "Profile Setup",
@@ -68,6 +70,7 @@ NAV_LABELS = {
     "Supplement Regime": "Supplement Regime",
     "Preview & End-to-End Flow": "Preview & Flow",
     "Publish Control": "Publish Control",
+    "Active Profile Preview": "Active Preview",
 }
 
 SELECT_AGE = "-- Select age band --"
@@ -153,7 +156,7 @@ st.markdown(
       </div>
       <div class='hero-kicker'>Admin recommendations</div>
       <div class='hero-title'>Recommendation Profile Builder</div>
-      <div class='hero-subtitle'>Final admin profile builder with profile setup, meal structure, exercise, supplement, preview and publish control in one flow.</div>
+      <div class='hero-subtitle'>Final admin profile builder with draft, publish control, and admin-side active member preview contract in one flow.</div>
       <div><span class='meta-pill'>Accepted Profile Beta Structure</span></div>
     </div>
     """,
@@ -562,7 +565,7 @@ def current_profile_payload(member_label_to_id, clone_label_to_id):
 ensure_state()
 
 st.markdown("<div class='hm-section-nav'>", unsafe_allow_html=True)
-nav_cols = st.columns([1, 1, 1, 1, 0.9, 0.95], gap="small")
+nav_cols = st.columns([1, 1, 1, 1, 0.9, 0.95, 0.95], gap="small")
 for col, section_name in zip(nav_cols, SECTIONS):
     with col:
         st.button(NAV_LABELS[section_name], key=f"profile_nav_{safe_key(section_name)}", type=("primary" if st.session_state["v4_active_section"] == section_name else "secondary"), use_container_width=True, on_click=set_section, args=(section_name,))
@@ -570,7 +573,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("<div class='hm-section-rule'></div>", unsafe_allow_html=True)
 
 if STORE_STATUS.get("ok"):
-    st.markdown("<div class='hm-readiness-strip hm-ready-ok'><b>Draft store is ready.</b> Profile Builder and Publish Control are now part of one final admin page.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-readiness-strip hm-ready-ok'><b>Draft store is ready.</b> Profile Builder, Publish Control and Active Profile Preview are part of one final admin page.</div>", unsafe_allow_html=True)
 else:
     st.markdown(f"<div class='hm-readiness-strip hm-ready-warn'><b>Draft store is not ready.</b> {STORE_STATUS.get('message', 'Run the Sprint 1 SQL script, then refresh this page.')}</div>", unsafe_allow_html=True)
     if st.button("Refresh Backend Status", use_container_width=True):
@@ -667,7 +670,7 @@ if section == "Profile Setup":
     with a2:
         st.date_input("Plan Start Date", key=profile_widget_key("start_date"), on_change=sync_profile_field, args=("start_date",))
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True)
-        st.text_input("Implementation Status", value="Final Profile Builder page with Publish Control tab.", disabled=True)
+        st.text_input("Implementation Status", value="Final Profile Builder page with Publish and Active Preview tabs.", disabled=True)
 
     save_clicked = st.button("Save Draft Profile", type="primary", use_container_width=True, disabled=not STORE_STATUS.get("ok"))
     save_feedback = st.container()
@@ -718,6 +721,9 @@ elif section == "Supplement Regime":
 elif section == "Publish Control":
     render_profile_publish_control()
 
+elif section == "Active Profile Preview":
+    render_active_profile_preview_contract()
+
 else:
     sync_profile_all()
     all_rows = collect_items()
@@ -734,7 +740,7 @@ else:
         st.dataframe(rows_for_day, use_container_width=True, hide_index=True)
     else:
         st.info("No recommendation rows have been added for this day yet.")
-    st.markdown("<div class='hm-preview'><b>Publish Readiness Checklist</b><br>Use the Publish Control tab after saving the draft with member assignment and recommendation rows.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-preview'><b>Publish Readiness Checklist</b><br>Use the Publish Control tab after saving the draft with member assignment and recommendation rows. Use Active Preview after activation to validate the member-facing contract.</div>", unsafe_allow_html=True)
 
 render_page_nav("Recommendation Profile Builder", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
