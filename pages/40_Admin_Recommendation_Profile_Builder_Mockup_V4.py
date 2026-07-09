@@ -112,7 +112,7 @@ with profile:
     a1, a2 = st.columns(2, gap="large")
     with a1:
         assigned_member = st.selectbox("Example Member Assignment", ["Select member", "Example member"], key="v4_member")
-        profile_note = st.text_area("Profile-level Nutritionist Note", value="", height=90, key="v4_note")
+        profile_note = st.text_area("Profile-level Nutritionist Note", value="", height=120, key="v4_note")
     with a2:
         plan_start = st.date_input("Plan Start Date", value=dt.date.today(), key="v4_start_date")
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True, key="v4_cycle")
