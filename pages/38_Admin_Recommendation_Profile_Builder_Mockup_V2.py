@@ -1,6 +1,6 @@
 import streamlit as st
 
-PB_SCHEDULE_SCHEMA_VERSION = "v100.25"
+PB_SCHEDULE_SCHEMA_VERSION = "v100.26"
 
 st.set_page_config(
     page_title="Recommendation Profile Builder Mock-up V2",
@@ -36,5 +36,6 @@ if st.session_state.get("pb_schedule_schema_version") != PB_SCHEDULE_SCHEMA_VERS
             st.session_state.pop(key, None)
     st.session_state["v4_active_section"] = "Profile Setup"
     st.session_state["pb_schedule_schema_version"] = PB_SCHEDULE_SCHEMA_VERSION
+    st.session_state["pb_force_schedule_reset"] = True
 
-st.switch_page("pages/40_Admin_Recommendation_Profile_Builder_Mockup_V4.py")
+st.switch_page("pages/41_Admin_Recommendation_Profile_Builder_Mockup_V5.py")
