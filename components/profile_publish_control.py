@@ -3,6 +3,7 @@ import os
 import uuid
 from typing import Any, Dict, List, Tuple
 
+import pandas as pd
 import streamlit as st
 
 PROFILE_TABLE = "hm_recommendation_profiles"
@@ -15,6 +16,32 @@ def _clean(value: object, default: str = "") -> str:
     if value is None:
         return default
     return str(value).strip()
+
+
+def _display(value: object, default: str = "NA") -> str:
+    text = _clean(value)
+    return text if text else default
+
+
+def _safe_int(value: object, default: int = 0) -> int:
+    try:
+        return int(value or default)
+    except Exception:
+        return default
+
+
+def _safe_dataframe(rows: List[Dict[str, Any]], empty_message: str = "No rows found.") -> None:
+    """Render Streamlit tables using string-normalised values.
+
+    Streamlit/PyArrow can hard-fail the whole app when a list-of-dicts has mixed
+    value types in the same column. Publish Control should never crash the page
+    just because one draft row has an unexpected numeric/null/object shape.
+    """
+    if not rows:
+        st.info(empty_message)
+        return
+    cleaned_rows = [{key: _display(value) for key, value in row.items()} for row in rows]
+    st.dataframe(pd.DataFrame(cleaned_rows), use_container_width=True, hide_index=True)
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -188,7 +215,34 @@ def activate_profile(profile: Dict[str, Any], confirm_text: str) -> Tuple[bool, 
     return True, f"Profile activated for {assigned_member_label}. Replaced {len(replaced_ids)} previous active profile(s)."
 
 
-def render_profile_publish_control() -> None:
+def _active_profile_rows(active_profiles: List[dict]) -> List[Dict[str, Any]]:
+    return [
+        {
+            "Member": row.get("assigned_member_label") or "NA",
+            "Active Profile": row.get("profile_name") or "NA",
+            "Start Date": row.get("start_date") or "NA",
+            "Updated": str(row.get("updated_at") or "")[:19],
+        }
+        for row in active_profiles
+    ]
+
+
+def _review_rows(items: List[dict]) -> List[Dict[str, Any]]:
+    rows = []
+    for row in items:
+        rows.append({
+            "Type": row.get("item_type"),
+            "Day": _safe_int(row.get("day_number")),
+            "Slot / Timing": row.get("slot_name") or row.get("scheduled_time") or "NA",
+            "Item": row.get("reference_label") or "NA",
+            "Dose / Portion": row.get("dosage_frequency") or row.get("portion") or "NA",
+            "Intensity": row.get("intensity") or "NA",
+            "Instruction": row.get("instruction") or "NA",
+        })
+    return rows
+
+
+def _render_profile_publish_control_inner() -> None:
     ok_drafts, drafts, draft_message = load_publish_candidates()
     ok_active, active_profiles, active_message = load_active_profiles()
 
@@ -203,15 +257,7 @@ def render_profile_publish_control() -> None:
 
     st.markdown("<div class='hm-title'>Current Active Profiles</div>", unsafe_allow_html=True)
     if active_profiles:
-        st.dataframe([
-            {
-                "Member": row.get("assigned_member_label") or "NA",
-                "Active Profile": row.get("profile_name") or "NA",
-                "Start Date": row.get("start_date") or "NA",
-                "Updated": str(row.get("updated_at") or "")[:19],
-            }
-            for row in active_profiles
-        ], use_container_width=True, hide_index=True)
+        _safe_dataframe(_active_profile_rows(active_profiles), "No active recommendation profiles found yet.")
     else:
         st.info("No active recommendation profiles found yet.")
 
@@ -245,10 +291,10 @@ def render_profile_publish_control() -> None:
 <div class='hm-preview'>
 <b>Selected Draft Review</b><br>
 <span class='hm-pill {'hm-ok' if can_activate else 'hm-pending'}'>{'Ready for activation' if can_activate else 'Needs attention before activation'}</span><br>
-<b>Profile:</b> {profile.get('profile_name') or 'NA'}<br>
-<b>Member:</b> {profile.get('assigned_member_label') or 'No member assigned'}<br>
-<b>Status:</b> {profile.get('status') or 'NA'}<br>
-<b>Start Date:</b> {profile.get('start_date') or 'NA'}
+<b>Profile:</b> {_display(profile.get('profile_name'))}<br>
+<b>Member:</b> {_display(profile.get('assigned_member_label'), 'No member assigned')}<br>
+<b>Status:</b> {_display(profile.get('status'))}<br>
+<b>Start Date:</b> {_display(profile.get('start_date'))}
 </div>
 """, unsafe_allow_html=True)
     st.markdown(f"""
@@ -269,18 +315,7 @@ def render_profile_publish_control() -> None:
 
     if items:
         with st.expander("Review recommendation rows before activation", expanded=False):
-            st.dataframe([
-                {
-                    "Type": row.get("item_type"),
-                    "Day": row.get("day_number"),
-                    "Slot / Timing": row.get("slot_name") or row.get("scheduled_time") or "NA",
-                    "Item": row.get("reference_label") or "NA",
-                    "Dose / Portion": row.get("dosage_frequency") or row.get("portion") or "NA",
-                    "Intensity": row.get("intensity") or "NA",
-                    "Instruction": row.get("instruction") or "NA",
-                }
-                for row in items
-            ], use_container_width=True, hide_index=True)
+            _safe_dataframe(_review_rows(items), "No recommendation rows found for this draft.")
 
     st.markdown("<div class='hm-preview'><b>Activation Confirmation</b><br>This will make this profile active for the selected member and mark any previous active profile for the same member as replaced. Member-facing display is not wired in this sprint.</div>", unsafe_allow_html=True)
     confirm_text = st.text_input("Type ACTIVATE to confirm", key="publish_confirm_text")
@@ -295,3 +330,11 @@ def render_profile_publish_control() -> None:
                 st.error(message)
         except Exception as exc:
             st.error(f"Could not activate profile: {exc}")
+
+
+def render_profile_publish_control() -> None:
+    try:
+        _render_profile_publish_control_inner()
+    except Exception as exc:
+        st.error(f"Publish Control could not complete this action: {exc}")
+        st.caption("Use Refresh Publish Control once. If this repeats, share the displayed message instead of the generic Streamlit error page.")
