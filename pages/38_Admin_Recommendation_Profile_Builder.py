@@ -23,9 +23,9 @@ from components.ui_common import (
     utility_logout_bar,
 )
 
-APP_BUILD_VERSION = "v100.35"
-APP_BUILD_LABEL = "Profile Builder Tab Stability Polish"
-SCHEDULE_SCHEMA_VERSION = "h9a9d_v100_35"
+APP_BUILD_VERSION = "v100.36"
+APP_BUILD_LABEL = "Profile Builder Reset Stability Polish"
+SCHEDULE_SCHEMA_VERSION = "h9a9e_v100_36"
 
 MEAL_SLOTS = [
     "Wake-up / Early Morning",
@@ -339,9 +339,10 @@ def set_widget_default(widget_key, value):
         st.session_state[widget_key] = value
 
 
-def reset_new_draft():
+def reset_new_draft(clear_messages: bool = False):
     for key in list(st.session_state.keys()):
-        if str(key).startswith("pbw_"):
+        key_text = str(key)
+        if key_text.startswith("pbw_") or key_text.startswith("profile_load_") or key_text.startswith("profile_clone_"):
             st.session_state.pop(key, None)
     st.session_state["pb_profile"] = dict(PROFILE_DEFAULTS)
     st.session_state["pb_items"] = {}
@@ -349,6 +350,44 @@ def reset_new_draft():
     st.session_state["pb_unsupported_items"] = []
     st.session_state["v4_active_section"] = "Profile Setup"
     st.session_state["pb_schedule_schema_version"] = SCHEDULE_SCHEMA_VERSION
+    st.session_state["profile_load_draft_choice"] = SELECT_DRAFT
+    st.session_state[profile_widget_key("clone_from")] = "New profile"
+    if clear_messages:
+        st.session_state.pop("profile_action_message", None)
+        st.session_state.pop("profile_error_message", None)
+
+
+def start_new_draft_action():
+    reset_new_draft(clear_messages=True)
+    st.session_state["profile_action_message"] = "New blank draft started."
+
+
+def load_draft_action(profile_id: str):
+    if not profile_id:
+        return
+    ok, profile_payload, item_payload, message = load_profile(profile_id)
+    if ok:
+        apply_profile_to_session(profile_payload, item_payload)
+        st.session_state["profile_action_message"] = message
+    else:
+        st.session_state["profile_error_message"] = message
+
+
+def clone_profile_action(profile_id: str, selected_clone: str):
+    if not profile_id:
+        return
+    ok, profile_payload, item_payload, message = load_profile(profile_id)
+    if ok:
+        source_name = profile_payload.get("profile_name", "Selected profile")
+        apply_profile_to_session(profile_payload, item_payload)
+        st.session_state["pb_profile"]["id"] = ""
+        st.session_state["pb_profile"]["profile_name"] = f"Copy of {source_name}"
+        st.session_state["pb_profile"]["clone_from"] = selected_clone
+        st.session_state[profile_widget_key("profile_name")] = f"Copy of {source_name}"
+        st.session_state[profile_widget_key("clone_from")] = selected_clone
+        st.session_state["profile_action_message"] = f"Cloned {source_name} into a new unsaved draft. Review, edit and save."
+    else:
+        st.session_state["profile_error_message"] = message
 
 
 def day_label(day):
@@ -362,7 +401,13 @@ def day_picker(key):
         cols = st.columns(len(row), gap="small")
         for col, day in zip(cols, row):
             with col:
-                st.button(day_label(day), key=f"{key}_{day}", type=("primary" if st.session_state[key] == day else "secondary"), use_container_width=True, on_click=lambda d=day: st.session_state.update({key: d}))
+                st.button(
+                    day_label(day),
+                    key=f"{key}_{day}",
+                    type=("primary" if st.session_state[key] == day else "secondary"),
+                    use_container_width=True,
+                    on_click=lambda d=day: st.session_state.update({key: d}),
+                )
     return st.session_state[key]
 
 
@@ -403,8 +448,7 @@ def item_row(kind, day, slot):
                 st.caption(f"Timeline validation: Frequency is {frequency_value}, so select exactly {frequency_value} timeline option(s).")
 
     label = {"meal": "Add food item", "exercise": "Add workout item", "supplement": "Add supplement item"}[kind]
-    if st.button(label, key=f"add_{kind}_{day}_{safe_key(slot)}", use_container_width=True):
-        add_row(kind, day, slot)
+    st.button(label, key=f"add_{kind}_{day}_{safe_key(slot)}", use_container_width=True, on_click=add_row, args=(kind, day, slot))
 
 
 def collect_items(include_unsupported=True):
@@ -518,7 +562,7 @@ def preview_table(rows, selected_day):
 
 
 def apply_profile_to_session(profile, items):
-    reset_new_draft()
+    reset_new_draft(clear_messages=True)
     st.session_state["pb_profile"] = {"id": profile.get("id", ""), "profile_name": profile.get("profile_name", ""), "clone_from": profile.get("clone_source_label") or "New profile", "change_note": profile.get("change_note") or "", "status": "Draft", "region": profile.get("region") or "", "age_band": profile.get("age_band") or SELECT_AGE, "concerns": list(profile.get("health_concerns") or []), "diet_type": profile.get("diet_type") or SELECT_DIET, "member": profile.get("assigned_member_label") or SELECT_MEMBER, "note": profile.get("profile_note") or "", "start_date": clean_date(profile.get("start_date"))}
     unsupported = []
     for row in items:
@@ -574,8 +618,7 @@ if STORE_STATUS.get("ok"):
     st.markdown("<div class='hm-readiness-strip hm-ready-ok'><b>Draft store is ready.</b> Profile Builder, Publish Control and Active Profile Preview are part of one final admin page.</div>", unsafe_allow_html=True)
 else:
     st.markdown(f"<div class='hm-readiness-strip hm-ready-warn'><b>Draft store is not ready.</b> {STORE_STATUS.get('message', 'Run the Sprint 1 SQL script, then refresh this page.')}</div>", unsafe_allow_html=True)
-    if st.button("Refresh Backend Status", use_container_width=True):
-        clear_pb_cache()
+    st.button("Refresh Backend Status", use_container_width=True, on_click=clear_pb_cache)
 
 if st.session_state.get("pb_unsupported_items"):
     st.warning("Some loaded rows use older unsupported slot names. They are preserved for save/load review but not silently mapped into the final row-based structure.")
@@ -607,23 +650,21 @@ if section == "Profile Setup":
     if ok_drafts:
         for draft in drafts:
             draft_label_to_id[f"{draft.get('profile_name', 'Untitled draft')} · {str(draft.get('updated_at', ''))[:16]}"] = draft.get("id", "")
+
+    set_widget_default("profile_load_draft_choice", SELECT_DRAFT)
     load_cols = st.columns([0.58, 0.21, 0.21], gap="medium")
     selected_draft_label = load_cols[0].selectbox("Load saved draft", list(draft_label_to_id.keys()), key="profile_load_draft_choice")
     load_cols[1].markdown("<div class='hm-load-label'>&nbsp;</div>", unsafe_allow_html=True)
-    if load_cols[1].button("Load Draft", use_container_width=True, disabled=not bool(draft_label_to_id.get(selected_draft_label))):
-        ok, profile_payload, item_payload, message = load_profile(draft_label_to_id.get(selected_draft_label, ""))
-        if ok:
-            apply_profile_to_session(profile_payload, item_payload)
-            st.session_state["profile_action_message"] = message
-        else:
-            st.error(message)
+    load_cols[1].button("Load Draft", use_container_width=True, disabled=not bool(draft_label_to_id.get(selected_draft_label)), on_click=load_draft_action, args=(draft_label_to_id.get(selected_draft_label, ""),))
     load_cols[2].markdown("<div class='hm-load-label'>&nbsp;</div>", unsafe_allow_html=True)
-    if load_cols[2].button("New Draft", use_container_width=True):
-        reset_new_draft()
-        st.session_state["profile_action_message"] = "New blank draft started."
-    profile_action_message = st.session_state.pop("profile_action_message", "")
-    if profile_action_message:
-        st.success(profile_action_message)
+    load_cols[2].button("New Draft", use_container_width=True, on_click=start_new_draft_action)
+
+    action_message = st.session_state.pop("profile_action_message", "")
+    error_message = st.session_state.pop("profile_error_message", "")
+    if action_message:
+        st.success(action_message)
+    if error_message:
+        st.error(error_message)
     if not ok_drafts and STORE_STATUS.get("ok"):
         st.caption(draft_msg)
     if st.session_state["pb_profile"].get("id"):
@@ -639,20 +680,7 @@ if section == "Profile Setup":
         clone_cols = st.columns([0.68, 0.32], gap="small")
         selected_clone = clone_cols[0].selectbox("Clone From Existing Profile", ensure_options(clone_options, profile.get("clone_from")), key=profile_widget_key("clone_from"), on_change=sync_profile_field, args=("clone_from",))
         clone_cols[1].markdown("<div class='hm-load-label'>&nbsp;</div>", unsafe_allow_html=True)
-        if clone_cols[1].button("Clone Selected", use_container_width=True, disabled=not bool(clone_label_to_id.get(selected_clone))):
-            ok, profile_payload, item_payload, message = load_profile(clone_label_to_id.get(selected_clone, ""))
-            if ok:
-                source_name = profile_payload.get("profile_name", "Selected profile")
-                apply_profile_to_session(profile_payload, item_payload)
-                st.session_state["pb_profile"]["id"] = ""
-                st.session_state["pb_profile"]["profile_name"] = f"Copy of {source_name}"
-                st.session_state["pb_profile"]["clone_from"] = selected_clone
-                st.session_state["profile_clone_action_message"] = f"Cloned {source_name} into a new unsaved draft. Review, edit and save."
-            else:
-                st.error(message)
-        clone_msg = st.session_state.pop("profile_clone_action_message", "")
-        if clone_msg:
-            st.success(clone_msg)
+        clone_cols[1].button("Clone Selected", use_container_width=True, disabled=not bool(clone_label_to_id.get(selected_clone)), on_click=clone_profile_action, args=(clone_label_to_id.get(selected_clone, ""), selected_clone))
         st.text_input("Change Note", key=profile_widget_key("change_note"), on_change=sync_profile_field, args=("change_note",))
         st.text_input("Profile Status", value="Draft", disabled=True)
     with c2:
