@@ -24,9 +24,9 @@ from components.ui_common import (
     utility_logout_bar,
 )
 
-APP_BUILD_VERSION = "v100.37"
-APP_BUILD_LABEL = "Editable Source Detail Fields"
-SCHEDULE_SCHEMA_VERSION = "h9a10c3_v100_37"
+APP_BUILD_VERSION = "v100.38"
+APP_BUILD_LABEL = "Source Field De-duplication and Auto-fill"
+SCHEDULE_SCHEMA_VERSION = "h9a10c5_v100_38"
 
 MEAL_SLOTS = [
     "Wake-up / Early Morning",
@@ -76,7 +76,6 @@ NAV_LABELS = {
 
 SELECT_AGE = "-- Select age band --"
 SELECT_DIET = "-- Select diet type --"
-SELECT_INTENSITY = "-- Select intensity --"
 SELECT_RECIPE = "-- Select recipe --"
 SELECT_EXERCISE = "-- Select exercise --"
 SELECT_SUPPLEMENT = "-- Select supplement --"
@@ -98,13 +97,18 @@ PROFILE_DEFAULTS = {
     "start_date": dt.date.today(),
 }
 
+SOURCE_FIELD_BY_KIND = {
+    "meal": "recipe",
+    "exercise": "exercise",
+    "supplement": "supplement",
+}
+
 SOURCE_DETAIL_FIELDS = {
     "meal": [
         ("meal_type", "Meal Type", "text"),
         ("diet_type", "Diet Type", "text"),
         ("prep_time", "Prep Time", "text"),
         ("calories", "Calories", "text"),
-        ("portion_size", "Source Portion", "text"),
         ("ingredients", "Ingredients", "area"),
         ("steps", "Steps", "area"),
         ("image_reference", "Image Reference", "text"),
@@ -119,11 +123,8 @@ SOURCE_DETAIL_FIELDS = {
         ("image_reference", "Image Reference", "text"),
     ],
     "supplement": [
-        ("dosage", "Source Dosage", "text"),
-        ("frequency", "Source Frequency", "text"),
         ("timing", "Source Timing", "text"),
-        ("start_date", "Start Date", "text"),
-        ("end_date", "End Date", "text"),
+        ("instructions", "Source Instructions", "area"),
         ("admin_notes", "Admin Notes", "area"),
     ],
 }
@@ -156,6 +157,41 @@ def parse_timeline(value) -> list[str]:
     if not raw:
         return []
     return [part.strip() for part in raw.split(",") if part.strip() in SUPPLEMENT_TIMELINE]
+
+
+def frequency_from_source(value) -> int:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return 0
+    word_map = {"once": 1, "one": 1, "daily": 1, "twice": 2, "two": 2, "thrice": 3, "three": 3}
+    for word, count in word_map.items():
+        if word in raw:
+            return count
+    match = re.search(r"\d+", raw)
+    if match:
+        return max(0, min(7, int(match.group(0))))
+    return 0
+
+
+def timeline_from_source(value) -> list[str]:
+    raw = str(value or "").strip()
+    if not raw:
+        return []
+    direct = parse_timeline(raw)
+    if direct:
+        return direct
+    lowered = raw.lower()
+    mapped = []
+    checks = [
+        (("breakfast", "morning"), "After Breakfast"),
+        (("lunch", "afternoon"), "After Lunch"),
+        (("dinner", "evening"), "After Dinner"),
+        (("bed", "night", "sleep"), "Before Bed"),
+    ]
+    for keywords, option in checks:
+        if any(keyword in lowered for keyword in keywords) and option not in mapped:
+            mapped.append(option)
+    return mapped
 
 
 def clean_date(value):
@@ -212,7 +248,13 @@ def image_reference_text(snapshot: dict) -> str:
         value = str(image.get(field) or "").strip()
         if value:
             parts.append(value)
-    return " | ".join(parts)
+    return " | ".join(parts) or "No image reference"
+
+
+def source_detail_defaults(kind: str, snapshot: dict) -> dict:
+    defaults = dict(snapshot or {})
+    defaults["image_reference"] = image_reference_text(snapshot or {})
+    return defaults
 
 
 def source_detail_widget_key(kind, day, slot, idx, field):
@@ -223,11 +265,52 @@ def source_detail_value(kind, day, slot, idx, field, default=""):
     return st.session_state["pb_items"].get(item_key(kind, day, slot, idx, f"source_{field}"), default)
 
 
-def collect_source_overrides(kind, day, slot, idx):
+def selected_source_label(kind, day, slot, idx):
+    source_field = SOURCE_FIELD_BY_KIND[kind]
+    return st.session_state.get(item_widget_key(kind, day, slot, idx, source_field), "")
+
+
+def set_row_value(kind, day, slot, idx, field, value):
+    st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = value
+    st.session_state[item_widget_key(kind, day, slot, idx, field)] = value
+
+
+def apply_source_defaults_to_row(kind, day, slot, idx, selected_label):
+    if not selected_label or is_select(selected_label):
+        return
+    snapshot = source_snapshot_for_label(source_lookup_kind(kind), selected_label)
+    if not snapshot:
+        return
+    marker_key = item_key(kind, day, slot, idx, "source_selected_label")
+    if st.session_state["pb_items"].get(marker_key) == selected_label:
+        return
+    if kind == "meal":
+        source_portion = str(snapshot.get("portion_size") or "").strip()
+        if source_portion:
+            set_row_value(kind, day, slot, idx, "portion", source_portion)
+    elif kind == "supplement":
+        source_frequency = frequency_from_source(snapshot.get("frequency"))
+        source_dosage = str(snapshot.get("dosage") or "").strip()
+        source_timeline = timeline_from_source(snapshot.get("timing"))
+        if source_frequency:
+            set_row_value(kind, day, slot, idx, "frequency", source_frequency)
+        if source_timeline:
+            set_row_value(kind, day, slot, idx, "timeline", source_timeline)
+        if source_dosage:
+            set_row_value(kind, day, slot, idx, "dose", source_dosage)
+    st.session_state["pb_items"][marker_key] = selected_label
+
+
+def collect_source_overrides(kind, day, slot, idx, selected_label=""):
     overrides = {}
+    snapshot = source_snapshot_for_label(source_lookup_kind(kind), selected_label) if selected_label else {}
+    defaults = source_detail_defaults(kind, snapshot)
     for field, _label, _field_type in SOURCE_DETAIL_FIELDS.get(kind, []):
+        if field == "image_reference":
+            continue
         value = str(st.session_state.get(source_detail_widget_key(kind, day, slot, idx, field), "") or "").strip()
-        if value:
+        default_value = str(defaults.get(field, "") or "").strip()
+        if value and value != default_value:
             overrides[field] = value
     return overrides
 
@@ -241,36 +324,39 @@ def register_source_overrides(kind, selected_label, overrides):
     source_type = str(snapshot.get("source_type") or source_lookup_kind(kind)).strip()
     source_label = str(snapshot.get("title") or snapshot.get("supplement_name") or selected_label).strip()
     st.session_state.setdefault("pb_source_override_map", {})
-    st.session_state["pb_source_override_map"][f"{source_type}:{source_label}"] = overrides
+    st.session_state["pb_source_override_map"][f"{source_type}:{source_label}"] = dict(overrides or {})
+
+
+def render_source_context(kind, snapshot):
+    if kind != "supplement":
+        return
+    start_date = str(snapshot.get("start_date") or "").strip() or "NA"
+    end_date = str(snapshot.get("end_date") or "").strip() or "NA"
+    st.caption(f"Source regimen context: Active since {start_date} | End Date: {end_date}. These are reference dates and are not editable recommendation fields.")
 
 
 def render_source_details(kind, day, slot, idx, selected_label):
     if not selected_label or is_select(selected_label):
         return
-
     snapshot = source_snapshot_for_label(source_lookup_kind(kind), selected_label)
     if not snapshot:
         st.caption("Pulled Source Details: no repository/regimen details were found for this selection.")
         return
-
     st.markdown(
         "<div class='hm-source-box'><b>Pulled Source Details</b> "
-        "<span>Editable baseline from repository/regimen. First-row fields remain admin overrides.</span></div>",
+        "<span>Editable non-duplicate source context. First-row fields are populated from source where applicable.</span></div>",
         unsafe_allow_html=True,
     )
-
-    defaults = dict(snapshot)
-    defaults["image_reference"] = image_reference_text(snapshot)
+    render_source_context(kind, snapshot)
+    defaults = source_detail_defaults(kind, snapshot)
     fields = SOURCE_DETAIL_FIELDS.get(kind, [])
-    top_fields = fields[:5]
-    bottom_fields = fields[5:]
-
+    top_fields = fields[:4] if kind != "supplement" else fields[:1]
+    bottom_fields = fields[4:] if kind != "supplement" else fields[1:]
     cols = st.columns(len(top_fields), gap="small") if top_fields else []
     for col, (field, label, _field_type) in zip(cols, top_fields):
         key = source_detail_widget_key(kind, day, slot, idx, field)
         set_widget_default(key, source_detail_value(kind, day, slot, idx, field, defaults.get(field, "")))
-        col.text_input(label, key=key)
-
+        col.text_input(label, key=key, disabled=(field == "image_reference"))
     if bottom_fields:
         cols = st.columns(len(bottom_fields), gap="small")
         for col, (field, label, field_type) in zip(cols, bottom_fields):
@@ -279,20 +365,14 @@ def render_source_details(kind, day, slot, idx, selected_label):
             if field_type == "area":
                 col.text_area(label, height=80, key=key)
             else:
-                col.text_input(label, key=key)
-
-    overrides = collect_source_overrides(kind, day, slot, idx)
+                col.text_input(label, key=key, disabled=(field == "image_reference"))
+    overrides = collect_source_overrides(kind, day, slot, idx, selected_label)
     for field, value in overrides.items():
         st.session_state["pb_items"][item_key(kind, day, slot, idx, f"source_{field}")] = value
     register_source_overrides(kind, selected_label, overrides)
 
 
-st.set_page_config(
-    page_title="Recommendation Profile Builder",
-    page_icon="💚",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+st.set_page_config(page_title="Recommendation Profile Builder", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
 require_admin()
@@ -307,7 +387,7 @@ st.markdown(
       </div>
       <div class='hero-kicker'>Admin recommendations</div>
       <div class='hero-title'>Recommendation Profile Builder</div>
-      <div class='hero-subtitle'>Final admin profile builder with draft, publish control, active preview and editable pulled source details.</div>
+      <div class='hero-subtitle'>Final admin profile builder with source-backed auto-fill, compact overrides, publish control and active preview.</div>
       <div><span class='meta-pill'>Accepted Profile Beta Structure</span></div>
     </div>
     """,
@@ -326,7 +406,7 @@ st.markdown(
 .hm-tab-nav [data-testid="stButton"]>button *{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;line-height:1!important;color:inherit!important;}
 .hm-tab-nav [data-testid="stButton"]>button[kind="primary"]{background:linear-gradient(135deg,#064E3B,#0F766E)!important;border:1.5px solid #064E3B!important;color:#FFFFFF!important;box-shadow:0 8px 18px rgba(15,23,42,.08)!important;}
 .hm-tab-nav [data-testid="stButton"]>button[kind="primary"] *{color:#FFFFFF!important;}
-.hm-readiness-strip{border-radius:15px;padding:.62rem .78rem;margin:.25rem 0 1rem 0;font-size:.84rem;font-weight:780;line-height:1.35;box-shadow:0 5px 12px rgba(15,23,42,.035)}.hm-readiness-strip b{color:#064E3B!important;}
+.hm-readiness-strip{border-radius:15px;padding:.62rem .78rem;margin:.25rem 0 1rem 0;font-size:.84rem;font-weight:780;line-height:1.35}
 .hm-ready-ok{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;}.hm-ready-warn{background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;}
 .hm-load-label{font-size:.86rem;font-weight:760;color:#334155;margin:0 0 .28rem .05rem;min-height:1.22rem;}.hm-slot{font-size:.78rem;color:#72551A;font-weight:880;margin:.75rem 0 .25rem}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
@@ -381,21 +461,12 @@ SUPPLEMENTS = with_select(SOURCES.get("supplement", []), SELECT_SUPPLEMENT)
 AGE_BANDS = with_select(SOURCES.get("age_band", []), SELECT_AGE)
 HEALTH_CONCERNS = list(SOURCES.get("health_concern", []))
 DIET_TYPES = with_select(SOURCES.get("diet_type", []), SELECT_DIET)
-INTENSITY_OPTIONS = [SELECT_INTENSITY, "Low", "Moderate", "High", "As tolerated"]
 
 
 def clear_schedule_state(force: bool = False) -> None:
     if not force and st.session_state.get("pb_schedule_schema_version") == SCHEDULE_SCHEMA_VERSION:
         return
-    stale_prefixes = (
-        "pbw_meal_",
-        "pbw_exercise_",
-        "pbw_supplement_",
-        "pbw_source_",
-        "add_meal_",
-        "add_exercise_",
-        "add_supplement_",
-    )
+    stale_prefixes = ("pbw_meal_", "pbw_exercise_", "pbw_supplement_", "pbw_source_", "add_meal_", "add_exercise_", "add_supplement_")
     stale_keys = {"pb_items", "pb_row_counts", "pb_unsupported_items", "pb_source_override_map", "v4_meal_day", "v4_exercise_day", "v4_supp_day", "v4_preview_day"}
     for key in list(st.session_state.keys()):
         if key in stale_keys or str(key).startswith(stale_prefixes):
@@ -529,13 +600,7 @@ def day_picker(key):
         cols = st.columns(len(row), gap="small")
         for col, day in zip(cols, row):
             with col:
-                st.button(
-                    day_label(day),
-                    key=f"{key}_{day}",
-                    type=("primary" if st.session_state[key] == day else "secondary"),
-                    use_container_width=True,
-                    on_click=lambda d=day: st.session_state.update({key: d}),
-                )
+                st.button(day_label(day), key=f"{key}_{day}", type=("primary" if st.session_state[key] == day else "secondary"), use_container_width=True, on_click=lambda d=day: st.session_state.update({key: d}))
     return st.session_state[key]
 
 
@@ -545,19 +610,21 @@ def item_row(kind, day, slot):
             fields = [("recipe", "Recipe", RECIPES, SELECT_RECIPE, "select"), ("portion", "Portion", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
             cols = st.columns([0.44, 0.20, 0.36])
         elif kind == "exercise":
-            fields = [("exercise", "Exercise", EXERCISES, SELECT_EXERCISE, "select"), ("time_of_day", "Time of Day", EXERCISE_TIME_OF_DAY, "Morning", "select"), ("intensity", "Intensity", INTENSITY_OPTIONS, SELECT_INTENSITY, "select"), ("instruction", "Instruction", None, "", "text")]
-            cols = st.columns([0.30, 0.22, 0.18, 0.30])
+            fields = [("exercise", "Exercise", EXERCISES, SELECT_EXERCISE, "select"), ("time_of_day", "Time of Day", EXERCISE_TIME_OF_DAY, "Morning", "select"), ("instruction", "Instruction", None, "", "text")]
+            cols = st.columns([0.38, 0.24, 0.38])
         else:
             fields = [("supplement", "Supplement", SUPPLEMENTS, SELECT_SUPPLEMENT, "select"), ("frequency", "Frequency", None, 0, "number"), ("timeline", "Timeline", SUPPLEMENT_TIMELINE, [], "multiselect"), ("dose", "Dosage", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
             cols = st.columns([0.24, 0.14, 0.26, 0.16, 0.20])
-
         selected_label = ""
+        source_field = SOURCE_FIELD_BY_KIND[kind]
         for col, (field, label, options, default, field_type) in zip(cols, fields):
             key = item_widget_key(kind, day, slot, idx, field)
             set_widget_default(key, item_value(kind, day, slot, idx, field, default))
             if field_type == "select":
                 col.selectbox(label, ensure_options(options, st.session_state[key]), key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
-                selected_label = st.session_state.get(key, "")
+                if field == source_field:
+                    selected_label = st.session_state.get(key, "")
+                    apply_source_defaults_to_row(kind, day, slot, idx, selected_label)
             elif field_type == "multiselect":
                 if not isinstance(st.session_state[key], list):
                     st.session_state[key] = parse_timeline(st.session_state[key])
@@ -570,15 +637,12 @@ def item_row(kind, day, slot):
                 col.number_input(label, min_value=0, max_value=7, step=1, key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
             else:
                 col.text_input(label, key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
-
         render_source_details(kind, day, slot, idx, selected_label)
-
         if kind == "supplement":
             frequency_value = int(st.session_state.get(item_widget_key(kind, day, slot, idx, "frequency"), 0) or 0)
             timeline_value = st.session_state.get(item_widget_key(kind, day, slot, idx, "timeline"), []) or []
             if frequency_value and len(timeline_value) != frequency_value:
                 st.caption(f"Timeline validation: Frequency is {frequency_value}, so select exactly {frequency_value} timeline option(s).")
-
     label = {"meal": "Add food item", "exercise": "Add workout item", "supplement": "Add supplement item"}[kind]
     st.button(label, key=f"add_{kind}_{day}_{safe_key(slot)}", use_container_width=True, on_click=add_row, args=(kind, day, slot))
 
@@ -589,17 +653,17 @@ def collect_items(include_unsupported=True):
         for day in range(1, 8):
             for slot in slots:
                 for idx in range(row_count(kind, day, slot)):
-                    overrides = collect_source_overrides(kind, day, slot, idx)
+                    selected_label = clean_choice(item_value(kind, day, slot, idx, SOURCE_FIELD_BY_KIND[kind]))
+                    overrides = collect_source_overrides(kind, day, slot, idx, selected_label)
                     if kind == "meal":
-                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "recipe")), "portion": item_value(kind, day, slot, idx, "portion"), "instruction": item_value(kind, day, slot, idx, "instruction"), "source_admin_overrides": overrides}
+                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": selected_label, "portion": item_value(kind, day, slot, idx, "portion"), "instruction": item_value(kind, day, slot, idx, "instruction"), "source_admin_overrides": overrides}
                     elif kind == "exercise":
-                        exercise = clean_choice(item_value(kind, day, slot, idx, "exercise"))
-                        intensity = clean_choice(item_value(kind, day, slot, idx, "intensity"))
+                        exercise = selected_label
                         instruction = item_value(kind, day, slot, idx, "instruction")
                         time_of_day = item_value(kind, day, slot, idx, "time_of_day", "Morning")
-                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": exercise, "scheduled_time": time_of_day if any([exercise, intensity, instruction]) else "", "intensity": intensity, "instruction": instruction, "source_admin_overrides": overrides}
+                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": exercise, "scheduled_time": time_of_day if any([exercise, instruction]) else "", "intensity": "", "instruction": instruction, "source_admin_overrides": overrides}
                     else:
-                        supplement = clean_choice(item_value(kind, day, slot, idx, "supplement"))
+                        supplement = selected_label
                         frequency = int(item_value(kind, day, slot, idx, "frequency", 0) or 0)
                         timeline = item_value(kind, day, slot, idx, "timeline", []) or []
                         dosage = item_value(kind, day, slot, idx, "dose")
@@ -613,7 +677,7 @@ def collect_items(include_unsupported=True):
 
 
 def item_has_content(row):
-    return any(str(row.get(field, "")).strip() for field in ("reference_label", "portion", "instruction", "intensity", "dosage_frequency", "scheduled_time"))
+    return any(str(row.get(field, "")).strip() for field in ("reference_label", "portion", "instruction", "dosage_frequency", "scheduled_time"))
 
 
 def active_rows(rows=None):
@@ -679,18 +743,26 @@ def render_validation_box(summary, heading="Validation"):
         st.warning(" ".join(summary["guidance"]))
 
 
+def row_source_field(row, kind, field):
+    overrides = row.get("source_admin_overrides") or {}
+    if overrides.get(field):
+        return overrides.get(field)
+    snapshot = source_snapshot_for_label(source_lookup_kind(kind), row.get("reference_label") or "")
+    return str(snapshot.get(field) or "").strip()
+
+
 def preview_table(rows, selected_day):
     table = []
     for row in rows:
         if int(row.get("day_number") or 0) != selected_day:
             continue
         if row.get("item_type") == "exercise":
-            table.append({"Type": "Exercise", "Day": row.get("day_number"), "Exercise": row.get("reference_label") or "NA", "Time of Day": row.get("scheduled_time") or "NA", "Intensity": row.get("intensity") or "NA", "Supplement": "NA", "Frequency": "NA", "Timeline": "NA", "Dosage": "NA", "Instruction": row.get("instruction") or "NA"})
+            table.append({"Type": "Exercise", "Day": row.get("day_number"), "Exercise": row.get("reference_label") or "NA", "Time of Day": row.get("scheduled_time") or "NA", "Difficulty": row_source_field(row, "exercise", "difficulty") or "NA", "Supplement": "NA", "Frequency": "NA", "Timeline": "NA", "Dosage": "NA", "Instruction": row.get("instruction") or "NA"})
         elif row.get("item_type") == "supplement":
             frequency, dosage = parse_dosage_frequency(row.get("dosage_frequency"))
-            table.append({"Type": "Supplement", "Day": row.get("day_number"), "Exercise": "NA", "Time of Day": "NA", "Intensity": "NA", "Supplement": row.get("reference_label") or "NA", "Frequency": frequency or "NA", "Timeline": row.get("scheduled_time") or "NA", "Dosage": dosage or "NA", "Instruction": row.get("instruction") or "NA"})
+            table.append({"Type": "Supplement", "Day": row.get("day_number"), "Exercise": "NA", "Time of Day": "NA", "Difficulty": "NA", "Supplement": row.get("reference_label") or "NA", "Frequency": frequency or "NA", "Timeline": row.get("scheduled_time") or "NA", "Dosage": dosage or "NA", "Instruction": row.get("instruction") or "NA"})
         else:
-            table.append({"Type": "Meal", "Day": row.get("day_number"), "Exercise": "NA", "Time of Day": row.get("slot_name") or "NA", "Intensity": "NA", "Supplement": row.get("reference_label") or "NA", "Frequency": "NA", "Timeline": "NA", "Dosage": row.get("portion") or "NA", "Instruction": row.get("instruction") or "NA"})
+            table.append({"Type": "Meal", "Day": row.get("day_number"), "Exercise": "NA", "Time of Day": row.get("slot_name") or "NA", "Difficulty": "NA", "Supplement": row.get("reference_label") or "NA", "Frequency": "NA", "Timeline": "NA", "Dosage": row.get("portion") or "NA", "Instruction": row.get("instruction") or "NA"})
     return table
 
 
@@ -710,7 +782,7 @@ def apply_profile_to_session(profile, items):
         if kind == "exercise":
             slot = EXERCISE_ROW_SLOT
             time_value = row.get("scheduled_time") if row.get("scheduled_time") in EXERCISE_TIME_OF_DAY else (row.get("slot_name") if row.get("slot_name") in EXERCISE_TIME_OF_DAY else "Morning")
-            values = {"exercise": row.get("reference_label") or SELECT_EXERCISE, "time_of_day": time_value, "intensity": row.get("intensity") or SELECT_INTENSITY, "instruction": row.get("instruction") or ""}
+            values = {"exercise": row.get("reference_label") or SELECT_EXERCISE, "time_of_day": time_value, "instruction": row.get("instruction") or ""}
         elif kind == "supplement":
             slot = SUPPLEMENT_ROW_SLOT
             frequency, dosage = parse_dosage_frequency(row.get("dosage_frequency"))
@@ -775,19 +847,16 @@ if section == "Profile Setup":
             label = f"{source_profile.get('profile_name', 'Untitled')} [{source_profile.get('status', 'draft')}]"
             clone_options.append(label)
             clone_label_to_id[label] = source_profile.get("id", "")
-
     profile = st.session_state["pb_profile"]
     profile["clone_from"] = profile.get("clone_from") if profile.get("clone_from") in clone_options else "New profile"
     profile["member"] = profile.get("member") if profile.get("member") in member_label_to_id else SELECT_MEMBER
     st.markdown("<div class='hm-title'>Recommendation Profile Setup</div><div class='hm-sub'>Reusable profile with clone-from-existing, draft save/load, member assignment and validation review.</div>", unsafe_allow_html=True)
     st.caption(f"Dropdown source: {SOURCE_MESSAGE} Member source: {member_message}")
-
     ok_drafts, drafts, draft_msg = cached_drafts()
     draft_label_to_id = {SELECT_DRAFT: ""}
     if ok_drafts:
         for draft in drafts:
             draft_label_to_id[f"{draft.get('profile_name', 'Untitled draft')} · {str(draft.get('updated_at', ''))[:16]}"] = draft.get("id", "")
-
     set_widget_default("profile_load_draft_choice", SELECT_DRAFT)
     load_cols = st.columns([0.58, 0.21, 0.21], gap="medium")
     selected_draft_label = load_cols[0].selectbox("Load saved draft", list(draft_label_to_id.keys()), key="profile_load_draft_choice")
@@ -795,7 +864,6 @@ if section == "Profile Setup":
     load_cols[1].button("Load Draft", use_container_width=True, disabled=not bool(draft_label_to_id.get(selected_draft_label)), on_click=load_draft_action, args=(draft_label_to_id.get(selected_draft_label, ""),))
     load_cols[2].markdown("<div class='hm-load-label'>&nbsp;</div>", unsafe_allow_html=True)
     load_cols[2].button("New Draft", use_container_width=True, on_click=start_new_draft_action)
-
     action_message = st.session_state.pop("profile_action_message", "")
     error_message = st.session_state.pop("profile_error_message", "")
     if action_message:
@@ -806,11 +874,9 @@ if section == "Profile Setup":
         st.caption(draft_msg)
     if st.session_state["pb_profile"].get("id"):
         st.caption(f"Current draft id: {st.session_state['pb_profile'].get('id')}")
-
     profile = st.session_state["pb_profile"]
     for field in PROFILE_DEFAULTS:
         set_widget_default(profile_widget_key(field), profile.get(field, PROFILE_DEFAULTS[field]))
-
     c1, c2 = st.columns(2, gap="large")
     with c1:
         st.text_input("Profile Name", key=profile_widget_key("profile_name"), on_change=sync_profile_field, args=("profile_name",))
@@ -832,8 +898,7 @@ if section == "Profile Setup":
     with a2:
         st.date_input("Plan Start Date", key=profile_widget_key("start_date"), on_change=sync_profile_field, args=("start_date",))
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True)
-        st.text_input("Implementation Status", value="Source detail rows render below selected repository/regimen items.", disabled=True)
-
+        st.text_input("Implementation Status", value="Source-backed fields de-duplicated; source values auto-fill matching admin fields.", disabled=True)
     save_clicked = st.button("Save Draft Profile", type="primary", use_container_width=True, disabled=not STORE_STATUS.get("ok"))
     save_feedback = st.container()
     if save_clicked:
@@ -853,7 +918,6 @@ if section == "Profile Setup":
             else:
                 save_feedback.error(message)
     render_validation_box(validation_summary(), "Draft Validation")
-
 elif section == "Meal Structure":
     day = day_picker("v4_meal_day")
     for slot in MEAL_SLOTS:
@@ -862,30 +926,25 @@ elif section == "Meal Structure":
     x, y = st.columns(2)
     x.button("Copy Day 1 to all days", key=f"profile_meal_copy_all_{day}", use_container_width=True)
     y.button("Copy previous day", key=f"profile_meal_copy_prev_{day}", use_container_width=True)
-
 elif section == "Exercise Regime":
     day = day_picker("v4_exercise_day")
-    st.markdown("<div class='hm-title'>Exercise Regime</div><div class='hm-sub'>Fields: Exercise | Time of Day | Intensity | Instruction</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-title'>Exercise Regime</div><div class='hm-sub'>Fields: Exercise | Time of Day | Instruction. Difficulty is pulled from the exercise repository and remains editable below.</div>", unsafe_allow_html=True)
     item_row("exercise", day, EXERCISE_ROW_SLOT)
     x, y = st.columns(2)
     x.button("Copy Day 1 to all days", key=f"profile_ex_copy_all_{day}", use_container_width=True)
     y.button("Copy previous day", key=f"profile_ex_copy_prev_{day}", use_container_width=True)
-
 elif section == "Supplement Regime":
     day = day_picker("v4_supp_day")
-    st.markdown("<div class='hm-title'>Supplement Regime</div><div class='hm-sub'>Fields: Supplement | Frequency | Timeline | Dosage | Instruction. Timeline count is validated against Frequency.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-title'>Supplement Regime</div><div class='hm-sub'>Fields: Supplement | Frequency | Timeline | Dosage | Instruction. Source frequency, timing and dosage auto-fill the matching fields where available.</div>", unsafe_allow_html=True)
     item_row("supplement", day, SUPPLEMENT_ROW_SLOT)
     x, y, z = st.columns(3)
     x.button("Copy active regimen", key=f"profile_supp_active_{day}", use_container_width=True)
     y.button("Copy Day 1 to all days", key=f"profile_supp_all_{day}", use_container_width=True)
     z.button("Copy previous day", key=f"profile_supp_prev_{day}", use_container_width=True)
-
 elif section == "Publish Control":
     render_profile_publish_control()
-
 elif section == "Active Profile Preview":
     render_active_profile_preview_contract()
-
 else:
     sync_profile_all()
     all_rows = collect_items()
