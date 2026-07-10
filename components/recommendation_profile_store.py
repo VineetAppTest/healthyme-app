@@ -1,9 +1,8 @@
 """Supabase-backed draft store for HealthyMe recommendation profiles.
 
-Sprint 1 scope:
-- backend foundation for Profile Builder drafts
-- safe draft save/load helpers for Streamlit admin only
-- no publish, replacement, or member-consumption logic yet
+H9A.10C adds optional source snapshot persistence for Recipe / Exercise /
+Supplement selections. The app remains backward-compatible before the SQL is run:
+if the new columns are missing, drafts still save using the legacy slim row fields.
 """
 
 from __future__ import annotations
@@ -40,6 +39,16 @@ DEFAULT_SOURCES = {
 
 SECRET_SECTIONS = ("auth", "auth0", "authentication", "healthyme", "supabase")
 SOURCE_BACKED_GROUPS = {"recipe", "exercise", "supplement"}
+SOURCE_SNAPSHOT_COLUMNS = [
+    "source_type",
+    "source_id",
+    "source_label",
+    "source_snapshot",
+    "source_image_url",
+    "source_image_bucket",
+    "source_image_path",
+    "source_image_access_type",
+]
 
 
 def _clean(value: object, default: str = "") -> str:
@@ -115,12 +124,7 @@ def _rows(response) -> List[dict]:
 
 
 def _merge_source_backed_options(sources: Dict[str, List[str]]) -> Tuple[Dict[str, List[str]], str]:
-    """Overlay real repository/regimen sources onto Profile Builder dropdown groups.
-
-    Recipe and Exercise should come from the repositories. Supplements should come
-    from active supplement regimen names. This stops label-only duplication while
-    keeping age/concern/diet master-data behaviour unchanged.
-    """
+    """Overlay real repository/regimen sources onto Profile Builder dropdown groups."""
     try:
         from components.profile_builder_source_contract import build_profile_builder_source_contract
 
@@ -159,6 +163,18 @@ def check_profile_builder_store() -> Dict[str, Any]:
         return {"ok": False, "message": f"Could not check Profile Builder store: {exc}"}
 
 
+def profile_source_snapshot_columns_ready() -> bool:
+    """Check whether H9A.10C optional source snapshot columns exist."""
+    if not check_profile_builder_store().get("ok"):
+        return False
+    try:
+        c = _client()
+        c.table(ITEM_TABLE).select(",".join(["id"] + SOURCE_SNAPSHOT_COLUMNS)).limit(1).execute()
+        return True
+    except Exception:
+        return False
+
+
 def load_profile_builder_sources() -> Tuple[Dict[str, List[str]], str]:
     """Load Profile Builder options with repository-backed recipe/exercise/supplement groups."""
     sources = {key: list(values) for key, values in DEFAULT_SOURCES.items()}
@@ -189,7 +205,8 @@ def load_profile_builder_sources() -> Tuple[Dict[str, List[str]], str]:
             if group in SOURCE_BACKED_GROUPS and sources.get(group):
                 continue
             sources[group] = values
-        return sources, "Loaded master data plus source-backed Recipe/Exercise/Supplement options. " + source_contract_message
+        snapshot_status = "Snapshot schema ready." if profile_source_snapshot_columns_ready() else "Run H9A.10C SQL to persist full source snapshots."
+        return sources, "Loaded master data plus source-backed Recipe/Exercise/Supplement options. " + source_contract_message + " " + snapshot_status
     except Exception as exc:
         return sources, f"Using source-backed/fallback values because master data could not be loaded: {exc}. {source_contract_message}"
 
@@ -262,11 +279,21 @@ def _now_iso() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat()
 
 
-def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> Tuple[bool, str, str]:
-    """Upsert one draft profile and replace its draft items.
+def _source_payload_for_item(item_type: str, reference_label: str) -> Dict[str, Any]:
+    try:
+        from components.profile_builder_source_contract import source_storage_payload
 
-    This intentionally does not publish or activate anything.
-    """
+        return source_storage_payload(item_type, reference_label)
+    except Exception:
+        return {}
+
+
+def _item_type_for_source_lookup(item_type: str) -> str:
+    return "recipe" if item_type == "meal" else item_type
+
+
+def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> Tuple[bool, str, str]:
+    """Upsert one draft profile and replace its draft items."""
     status = check_profile_builder_store()
     if not status.get("ok"):
         return False, "", status.get("message", "Profile Builder tables are not ready.")
@@ -275,6 +302,7 @@ def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> 
     if not profile_name:
         return False, "", "Profile Name is required before saving a draft."
 
+    snapshot_columns_ready = profile_source_snapshot_columns_ready()
     profile_id = _clean(profile.get("id")) or str(uuid.uuid4())
     now = _now_iso()
     row = {
@@ -299,6 +327,7 @@ def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> 
     }
 
     item_rows = []
+    snapshot_count = 0
     for item in items:
         item_type = _clean(item.get("item_type"))
         day_number = int(item.get("day_number") or 0)
@@ -318,7 +347,7 @@ def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> 
             _clean(item.get("dosage_frequency")),
         ]):
             continue
-        item_rows.append({
+        item_row = {
             "id": str(uuid.uuid4()),
             "profile_id": profile_id,
             "item_type": item_type,
@@ -332,7 +361,13 @@ def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> 
             "intensity": _clean(item.get("intensity")),
             "dosage_frequency": _clean(item.get("dosage_frequency")),
             "updated_at": now,
-        })
+        }
+        if snapshot_columns_ready and reference_label:
+            source_payload = _source_payload_for_item(_item_type_for_source_lookup(item_type), reference_label)
+            if source_payload:
+                item_row.update(source_payload)
+                snapshot_count += 1
+        item_rows.append(item_row)
 
     try:
         c = _client()
@@ -344,12 +379,17 @@ def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> 
             "id": str(uuid.uuid4()),
             "profile_id": profile_id,
             "event_type": "draft_saved",
-            "event_note": f"Draft saved with {len(item_rows)} item rows.",
+            "event_note": f"Draft saved with {len(item_rows)} item rows and {snapshot_count} source snapshot(s).",
             "created_by_user_id": row.get("created_by_user_id"),
             "created_by_email": row.get("created_by_email"),
             "created_at": now,
         }).execute()
-        return True, profile_id, f"Draft saved successfully with {len(item_rows)} recommendation rows."
+        suffix = ""
+        if snapshot_columns_ready:
+            suffix = f" Source snapshots preserved for {snapshot_count} row(s)."
+        else:
+            suffix = " Run H9A.10C SQL to preserve full source snapshots."
+        return True, profile_id, f"Draft saved successfully with {len(item_rows)} recommendation rows." + suffix
     except Exception as exc:
         return False, profile_id, f"Could not save draft profile: {exc}"
 
