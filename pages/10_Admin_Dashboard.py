@@ -232,7 +232,7 @@ with st.container(border=True):
     with diagnostic_col_1:
         nav_cell("Active Profile Contract Diagnostics", "pages/45_Admin_Active_Profile_Contract_Diagnostics.py", "dash_active_profile_contract_diagnostics_h9a9b")
     with diagnostic_col_2:
-        st.empty()
+        nav_cell("Profile Source Alignment", "pages/46_Admin_Profile_Source_Alignment.py", "dash_profile_source_alignment_h9a10a")
     st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -247,3 +247,4 @@ inject_keepalive_guard_v96_11()
 # H9A.8B: Added final Recommendation Profile Builder entry point and removed mockup route dependency.
 # H9A.8C: Moved legacy Recommendations Share and Unified Recommendations out of main workflow into System Tools.
 # H9A.9B: Added Active Profile Contract Diagnostics under System Tools.
+# H9A.10A: Added Profile Source Alignment diagnostic under System Tools.
