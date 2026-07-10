@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import copy
+import inspect
 from typing import Any, Dict, List, Tuple
 
 from components.db import list_member_supplements
 from components.recommendation_contract import list_repository_items
 
 _SOURCE_INSTRUCTION_FIELD_PATCHED = False
+_PROFILE_BUILDER_LAYOUT_PATCHED = False
 
 
 def _clean(value: object) -> str:
@@ -39,6 +41,143 @@ def _image_reference(row: Dict[str, Any]) -> Dict[str, str]:
 def _has_image_reference(row: Dict[str, Any]) -> bool:
     image = _image_reference(row)
     return any(image.get(field) for field in ("image_url", "image_bucket", "image_path"))
+
+
+def patch_profile_builder_source_detail_layout() -> None:
+    """Patch the Profile Builder source-detail layout once page globals exist.
+
+    This keeps the visible source-detail area compact without changing the existing
+    H9A.10C source snapshot storage contract.
+    """
+    global _PROFILE_BUILDER_LAYOUT_PATCHED
+    if _PROFILE_BUILDER_LAYOUT_PATCHED:
+        return
+
+    try:
+        import streamlit as st
+    except Exception:
+        return
+
+    target_globals = None
+    for frame_info in inspect.stack():
+        globals_map = frame_info.frame.f_globals
+        page_file = str(globals_map.get("__file__", ""))
+        if (
+            "38_Admin_Recommendation_Profile_Builder" in page_file
+            and "SOURCE_DETAIL_FIELDS" in globals_map
+            and "render_source_details" in globals_map
+            and "apply_source_defaults_to_row" in globals_map
+        ):
+            target_globals = globals_map
+            break
+
+    if not target_globals:
+        return
+
+    g = target_globals
+    g["SOURCE_DETAIL_FIELDS"]["exercise"] = [
+        ("category", "Category", "text"),
+        ("difficulty", "Difficulty", "text"),
+        ("duration_or_reps", "Duration/Reps", "text"),
+        ("equipment", "Equipment", "text"),
+        ("benefits", "Benefits", "area"),
+        ("image_reference", "Image Reference", "text"),
+    ]
+    g["SOURCE_DETAIL_FIELDS"]["supplement"] = [
+        ("timing", "Source Timing", "text"),
+        ("admin_notes", "Admin Notes", "area"),
+    ]
+
+    def _set_if_blank(kind, day, slot, idx, field, value):
+        value_text = _clean(value)
+        if not value_text:
+            return
+        widget_key = g["item_widget_key"](kind, day, slot, idx, field)
+        existing = _clean(st.session_state.get(widget_key) or g["item_value"](kind, day, slot, idx, field, ""))
+        if existing:
+            return
+        g["set_row_value"](kind, day, slot, idx, field, value_text)
+
+    def _patched_apply_source_defaults_to_row(kind, day, slot, idx, selected_label):
+        if not selected_label or g["is_select"](selected_label):
+            return
+        snapshot = source_snapshot_for_label(g["source_lookup_kind"](kind), selected_label)
+        if not snapshot:
+            return
+
+        marker_key = g["item_key"](kind, day, slot, idx, "source_selected_label")
+        already_selected = st.session_state["pb_items"].get(marker_key) == selected_label
+
+        if kind == "meal" and not already_selected:
+            source_portion = _clean(snapshot.get("portion_size"))
+            if source_portion:
+                g["set_row_value"](kind, day, slot, idx, "portion", source_portion)
+        elif kind == "supplement" and not already_selected:
+            source_frequency = g["frequency_from_source"](snapshot.get("frequency"))
+            source_dosage = _clean(snapshot.get("dosage"))
+            source_timeline = g["timeline_from_source"](snapshot.get("timing"))
+            if source_frequency:
+                g["set_row_value"](kind, day, slot, idx, "frequency", source_frequency)
+            if source_timeline:
+                g["set_row_value"](kind, day, slot, idx, "timeline", source_timeline)
+            if source_dosage:
+                g["set_row_value"](kind, day, slot, idx, "dose", source_dosage)
+
+        if kind in {"exercise", "supplement"}:
+            _set_if_blank(kind, day, slot, idx, "instruction", snapshot.get("instructions"))
+
+        st.session_state["pb_items"][marker_key] = selected_label
+
+    def _render_field(col, kind, day, slot, idx, field, label, field_type, defaults):
+        key = g["source_detail_widget_key"](kind, day, slot, idx, field)
+        g["set_widget_default"](
+            key,
+            g["source_detail_value"](kind, day, slot, idx, field, defaults.get(field, "")),
+        )
+        if field_type == "area":
+            col.text_area(label, height=80, key=key)
+        else:
+            col.text_input(label, key=key, disabled=(field == "image_reference"))
+
+    def _patched_render_source_details(kind, day, slot, idx, selected_label):
+        if not selected_label or g["is_select"](selected_label):
+            return
+        snapshot = source_snapshot_for_label(g["source_lookup_kind"](kind), selected_label)
+        if not snapshot:
+            st.caption("Pulled Source Details: no repository/regimen details were found for this selection.")
+            return
+
+        st.markdown(
+            "<div class='hm-source-box'><b>Pulled Source Details</b> "
+            "<span>Editable non-duplicate source context. First-row fields are populated from source where applicable.</span></div>",
+            unsafe_allow_html=True,
+        )
+        g["render_source_context"](kind, snapshot)
+        defaults = g["source_detail_defaults"](kind, snapshot)
+        fields = g["SOURCE_DETAIL_FIELDS"].get(kind, [])
+
+        if kind == "exercise":
+            rows = [fields[:3], fields[3:6]]
+        elif kind == "supplement":
+            rows = [fields]
+        else:
+            rows = [fields[:4], fields[4:]]
+
+        for row_fields in rows:
+            if not row_fields:
+                continue
+            cols = st.columns(len(row_fields), gap="small")
+            for col, (field, label, field_type) in zip(cols, row_fields):
+                _render_field(col, kind, day, slot, idx, field, label, field_type, defaults)
+
+        overrides = g["collect_source_overrides"](kind, day, slot, idx, selected_label)
+        for field, value in overrides.items():
+            st.session_state["pb_items"][g["item_key"](kind, day, slot, idx, f"source_{field}")] = value
+        g["register_source_overrides"](kind, selected_label, overrides)
+
+    g["apply_source_defaults_to_row"] = _patched_apply_source_defaults_to_row
+    g["render_source_details"] = _patched_render_source_details
+    _PROFILE_BUILDER_LAYOUT_PATCHED = True
 
 
 def recipe_snapshot(row: Dict[str, Any]) -> Dict[str, Any]:
@@ -180,6 +319,7 @@ def build_profile_builder_source_contract() -> Tuple[Dict[str, List[str]], Dict[
         messages.append(f"Supplement source unavailable: {exc}")
 
     patch_streamlit_source_instruction_fields()
+    patch_profile_builder_source_detail_layout()
     return sources, snapshots, " ".join(messages)
 
 
@@ -264,6 +404,7 @@ def _autofill_first_row_instruction(kind: str, selected_label: str, snapshot: Di
 
 
 def source_snapshot_for_label(item_type: str, label: str) -> Dict[str, Any]:
+    patch_profile_builder_source_detail_layout()
     _, snapshots, _ = build_profile_builder_source_contract()
     kind = _clean(item_type).lower()
     clean_label = _clean(label)
