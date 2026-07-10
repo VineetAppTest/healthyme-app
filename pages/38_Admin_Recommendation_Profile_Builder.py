@@ -5,6 +5,7 @@ import streamlit as st
 
 from components.active_profile_preview_contract import render_active_profile_preview_contract
 from components.guards import require_admin
+from components.profile_builder_source_contract import source_snapshot_for_label
 from components.profile_publish_control import render_profile_publish_control
 from components.recommendation_profile_store import (
     check_profile_builder_store,
@@ -23,9 +24,9 @@ from components.ui_common import (
     utility_logout_bar,
 )
 
-APP_BUILD_VERSION = "v100.36"
-APP_BUILD_LABEL = "Profile Builder Reset Stability Polish"
-SCHEDULE_SCHEMA_VERSION = "h9a9e_v100_36"
+APP_BUILD_VERSION = "v100.37"
+APP_BUILD_LABEL = "Editable Source Detail Fields"
+SCHEDULE_SCHEMA_VERSION = "h9a10c3_v100_37"
 
 MEAL_SLOTS = [
     "Wake-up / Early Morning",
@@ -95,6 +96,36 @@ PROFILE_DEFAULTS = {
     "member": SELECT_MEMBER,
     "note": "",
     "start_date": dt.date.today(),
+}
+
+SOURCE_DETAIL_FIELDS = {
+    "meal": [
+        ("meal_type", "Meal Type", "text"),
+        ("diet_type", "Diet Type", "text"),
+        ("prep_time", "Prep Time", "text"),
+        ("calories", "Calories", "text"),
+        ("portion_size", "Source Portion", "text"),
+        ("ingredients", "Ingredients", "area"),
+        ("steps", "Steps", "area"),
+        ("image_reference", "Image Reference", "text"),
+    ],
+    "exercise": [
+        ("category", "Category", "text"),
+        ("difficulty", "Difficulty", "text"),
+        ("duration_or_reps", "Duration/Reps", "text"),
+        ("equipment", "Equipment", "text"),
+        ("instructions", "Source Instructions", "area"),
+        ("benefits", "Benefits", "area"),
+        ("image_reference", "Image Reference", "text"),
+    ],
+    "supplement": [
+        ("dosage", "Source Dosage", "text"),
+        ("frequency", "Source Frequency", "text"),
+        ("timing", "Source Timing", "text"),
+        ("start_date", "Start Date", "text"),
+        ("end_date", "End Date", "text"),
+        ("admin_notes", "Admin Notes", "area"),
+    ],
 }
 
 
@@ -170,6 +201,92 @@ def ensure_options(options, selected=None):
     return values
 
 
+def source_lookup_kind(kind: str) -> str:
+    return "recipe" if kind == "meal" else kind
+
+
+def image_reference_text(snapshot: dict) -> str:
+    image = snapshot.get("image") or {}
+    parts = []
+    for field in ("image_url", "image_bucket", "image_path"):
+        value = str(image.get(field) or "").strip()
+        if value:
+            parts.append(value)
+    return " | ".join(parts)
+
+
+def source_detail_widget_key(kind, day, slot, idx, field):
+    return f"pbw_source_{kind}_{day}_{safe_key(slot)}_{idx}_{field}"
+
+
+def source_detail_value(kind, day, slot, idx, field, default=""):
+    return st.session_state["pb_items"].get(item_key(kind, day, slot, idx, f"source_{field}"), default)
+
+
+def collect_source_overrides(kind, day, slot, idx):
+    overrides = {}
+    for field, _label, _field_type in SOURCE_DETAIL_FIELDS.get(kind, []):
+        value = str(st.session_state.get(source_detail_widget_key(kind, day, slot, idx, field), "") or "").strip()
+        if value:
+            overrides[field] = value
+    return overrides
+
+
+def register_source_overrides(kind, selected_label, overrides):
+    if not selected_label or is_select(selected_label):
+        return
+    snapshot = source_snapshot_for_label(source_lookup_kind(kind), selected_label)
+    if not snapshot:
+        return
+    source_type = str(snapshot.get("source_type") or source_lookup_kind(kind)).strip()
+    source_label = str(snapshot.get("title") or snapshot.get("supplement_name") or selected_label).strip()
+    st.session_state.setdefault("pb_source_override_map", {})
+    st.session_state["pb_source_override_map"][f"{source_type}:{source_label}"] = overrides
+
+
+def render_source_details(kind, day, slot, idx, selected_label):
+    if not selected_label or is_select(selected_label):
+        return
+
+    snapshot = source_snapshot_for_label(source_lookup_kind(kind), selected_label)
+    if not snapshot:
+        st.caption("Pulled Source Details: no repository/regimen details were found for this selection.")
+        return
+
+    st.markdown(
+        "<div class='hm-source-box'><b>Pulled Source Details</b> "
+        "<span>Editable baseline from repository/regimen. First-row fields remain admin overrides.</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    defaults = dict(snapshot)
+    defaults["image_reference"] = image_reference_text(snapshot)
+    fields = SOURCE_DETAIL_FIELDS.get(kind, [])
+    top_fields = fields[:5]
+    bottom_fields = fields[5:]
+
+    cols = st.columns(len(top_fields), gap="small") if top_fields else []
+    for col, (field, label, _field_type) in zip(cols, top_fields):
+        key = source_detail_widget_key(kind, day, slot, idx, field)
+        set_widget_default(key, source_detail_value(kind, day, slot, idx, field, defaults.get(field, "")))
+        col.text_input(label, key=key)
+
+    if bottom_fields:
+        cols = st.columns(len(bottom_fields), gap="small")
+        for col, (field, label, field_type) in zip(cols, bottom_fields):
+            key = source_detail_widget_key(kind, day, slot, idx, field)
+            set_widget_default(key, source_detail_value(kind, day, slot, idx, field, defaults.get(field, "")))
+            if field_type == "area":
+                col.text_area(label, height=80, key=key)
+            else:
+                col.text_input(label, key=key)
+
+    overrides = collect_source_overrides(kind, day, slot, idx)
+    for field, value in overrides.items():
+        st.session_state["pb_items"][item_key(kind, day, slot, idx, f"source_{field}")] = value
+    register_source_overrides(kind, selected_label, overrides)
+
+
 st.set_page_config(
     page_title="Recommendation Profile Builder",
     page_icon="💚",
@@ -190,7 +307,7 @@ st.markdown(
       </div>
       <div class='hero-kicker'>Admin recommendations</div>
       <div class='hero-title'>Recommendation Profile Builder</div>
-      <div class='hero-subtitle'>Final admin profile builder with draft, publish control, and active member preview contract in one flow.</div>
+      <div class='hero-subtitle'>Final admin profile builder with draft, publish control, active preview and editable pulled source details.</div>
       <div><span class='meta-pill'>Accepted Profile Beta Structure</span></div>
     </div>
     """,
@@ -213,6 +330,7 @@ st.markdown(
 .hm-ready-ok{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;}.hm-ready-warn{background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;}
 .hm-load-label{font-size:.86rem;font-weight:760;color:#334155;margin:0 0 .28rem .05rem;min-height:1.22rem;}.hm-slot{font-size:.78rem;color:#72551A;font-weight:880;margin:.75rem 0 .25rem}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.35rem 0;color:#475569;font-size:.83rem;font-weight:740;line-height:1.45}
+.hm-source-box{border:1px solid #D8A84E;background:#FFFDF7;border-radius:12px;padding:.48rem .65rem;margin:.35rem 0 .35rem 0;color:#475569;font-size:.78rem;line-height:1.25}.hm-source-box b{color:#064E3B;margin-right:.35rem}.hm-source-box span{color:#64748B;font-weight:720}
 .hm-count-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem;margin:.55rem 0 1rem}.hm-count-card{background:#fff;border:1px solid #E3C98E;border-radius:15px;padding:.7rem .8rem}.hm-count-card b{display:block;color:#064E3B;font-size:.95rem}.hm-count-card span{color:#64748B;font-size:.78rem;font-weight:780}
 .hm-pill{display:inline-block;border-radius:999px;padding:.13rem .5rem;margin:.15rem .2rem .15rem 0;font-size:.7rem;font-weight:950}.hm-ok{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}.hm-pending{background:#FFF7ED;color:#B45309;border:1px solid #FED7AA}.hm-error{background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA}.hm-info{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
 @media(max-width:900px){.hm-count-grid{grid-template-columns:1fr}.hm-tab-nav [data-testid="stButton"]>button{height:2.55rem!important;min-height:2.55rem!important;max-height:2.55rem!important;font-size:.78rem!important;}}
@@ -269,8 +387,16 @@ INTENSITY_OPTIONS = [SELECT_INTENSITY, "Low", "Moderate", "High", "As tolerated"
 def clear_schedule_state(force: bool = False) -> None:
     if not force and st.session_state.get("pb_schedule_schema_version") == SCHEDULE_SCHEMA_VERSION:
         return
-    stale_prefixes = ("pbw_meal_", "pbw_exercise_", "pbw_supplement_", "add_meal_", "add_exercise_", "add_supplement_")
-    stale_keys = {"pb_items", "pb_row_counts", "pb_unsupported_items", "v4_meal_day", "v4_exercise_day", "v4_supp_day", "v4_preview_day"}
+    stale_prefixes = (
+        "pbw_meal_",
+        "pbw_exercise_",
+        "pbw_supplement_",
+        "pbw_source_",
+        "add_meal_",
+        "add_exercise_",
+        "add_supplement_",
+    )
+    stale_keys = {"pb_items", "pb_row_counts", "pb_unsupported_items", "pb_source_override_map", "v4_meal_day", "v4_exercise_day", "v4_supp_day", "v4_preview_day"}
     for key in list(st.session_state.keys()):
         if key in stale_keys or str(key).startswith(stale_prefixes):
             st.session_state.pop(key, None)
@@ -284,6 +410,7 @@ def ensure_state():
     st.session_state.setdefault("pb_items", {})
     st.session_state.setdefault("pb_row_counts", {})
     st.session_state.setdefault("pb_unsupported_items", [])
+    st.session_state.setdefault("pb_source_override_map", {})
     st.session_state.setdefault("v4_active_section", "Profile Setup")
 
 
@@ -348,6 +475,7 @@ def reset_new_draft(clear_messages: bool = False):
     st.session_state["pb_items"] = {}
     st.session_state["pb_row_counts"] = {}
     st.session_state["pb_unsupported_items"] = []
+    st.session_state["pb_source_override_map"] = {}
     st.session_state["v4_active_section"] = "Profile Setup"
     st.session_state["pb_schedule_schema_version"] = SCHEDULE_SCHEMA_VERSION
     st.session_state["profile_load_draft_choice"] = SELECT_DRAFT
@@ -423,11 +551,13 @@ def item_row(kind, day, slot):
             fields = [("supplement", "Supplement", SUPPLEMENTS, SELECT_SUPPLEMENT, "select"), ("frequency", "Frequency", None, 0, "number"), ("timeline", "Timeline", SUPPLEMENT_TIMELINE, [], "multiselect"), ("dose", "Dosage", None, "", "text"), ("instruction", "Instruction", None, "", "text")]
             cols = st.columns([0.24, 0.14, 0.26, 0.16, 0.20])
 
+        selected_label = ""
         for col, (field, label, options, default, field_type) in zip(cols, fields):
             key = item_widget_key(kind, day, slot, idx, field)
             set_widget_default(key, item_value(kind, day, slot, idx, field, default))
             if field_type == "select":
                 col.selectbox(label, ensure_options(options, st.session_state[key]), key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
+                selected_label = st.session_state.get(key, "")
             elif field_type == "multiselect":
                 if not isinstance(st.session_state[key], list):
                     st.session_state[key] = parse_timeline(st.session_state[key])
@@ -440,6 +570,8 @@ def item_row(kind, day, slot):
                 col.number_input(label, min_value=0, max_value=7, step=1, key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
             else:
                 col.text_input(label, key=key, on_change=sync_item_field, args=(kind, day, slot, idx, field))
+
+        render_source_details(kind, day, slot, idx, selected_label)
 
         if kind == "supplement":
             frequency_value = int(st.session_state.get(item_widget_key(kind, day, slot, idx, "frequency"), 0) or 0)
@@ -457,14 +589,15 @@ def collect_items(include_unsupported=True):
         for day in range(1, 8):
             for slot in slots:
                 for idx in range(row_count(kind, day, slot)):
+                    overrides = collect_source_overrides(kind, day, slot, idx)
                     if kind == "meal":
-                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "recipe")), "portion": item_value(kind, day, slot, idx, "portion"), "instruction": item_value(kind, day, slot, idx, "instruction")}
+                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": clean_choice(item_value(kind, day, slot, idx, "recipe")), "portion": item_value(kind, day, slot, idx, "portion"), "instruction": item_value(kind, day, slot, idx, "instruction"), "source_admin_overrides": overrides}
                     elif kind == "exercise":
                         exercise = clean_choice(item_value(kind, day, slot, idx, "exercise"))
                         intensity = clean_choice(item_value(kind, day, slot, idx, "intensity"))
                         instruction = item_value(kind, day, slot, idx, "instruction")
                         time_of_day = item_value(kind, day, slot, idx, "time_of_day", "Morning")
-                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": exercise, "scheduled_time": time_of_day if any([exercise, intensity, instruction]) else "", "intensity": intensity, "instruction": instruction}
+                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": exercise, "scheduled_time": time_of_day if any([exercise, intensity, instruction]) else "", "intensity": intensity, "instruction": instruction, "source_admin_overrides": overrides}
                     else:
                         supplement = clean_choice(item_value(kind, day, slot, idx, "supplement"))
                         frequency = int(item_value(kind, day, slot, idx, "frequency", 0) or 0)
@@ -472,7 +605,7 @@ def collect_items(include_unsupported=True):
                         dosage = item_value(kind, day, slot, idx, "dose")
                         instruction = item_value(kind, day, slot, idx, "instruction")
                         timeline_text = ", ".join(timeline) if isinstance(timeline, list) else str(timeline or "")
-                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": supplement, "scheduled_time": timeline_text if any([supplement, frequency, dosage, instruction]) else "", "dosage_frequency": encode_dosage_frequency(frequency, dosage), "instruction": instruction}
+                        row = {"item_type": kind, "day_number": day, "slot_name": slot, "item_order": idx + 1, "reference_label": supplement, "scheduled_time": timeline_text if any([supplement, frequency, dosage, instruction]) else "", "dosage_frequency": encode_dosage_frequency(frequency, dosage), "instruction": instruction, "source_admin_overrides": overrides}
                     rows.append(row)
     if include_unsupported:
         rows.extend(st.session_state.get("pb_unsupported_items", []))
@@ -572,6 +705,8 @@ def apply_profile_to_session(profile, items):
         if day < 1 or day > 7:
             unsupported.append(row)
             continue
+        snapshot = row.get("source_snapshot") or {}
+        overrides = snapshot.get("admin_source_overrides") or {}
         if kind == "exercise":
             slot = EXERCISE_ROW_SLOT
             time_value = row.get("scheduled_time") if row.get("scheduled_time") in EXERCISE_TIME_OF_DAY else (row.get("slot_name") if row.get("slot_name") in EXERCISE_TIME_OF_DAY else "Morning")
@@ -593,6 +728,8 @@ def apply_profile_to_session(profile, items):
         st.session_state["pb_row_counts"][f"{kind}|{day}|{slot}"] = max(row_count(kind, day, slot), idx + 1)
         for field, value in values.items():
             st.session_state["pb_items"][item_key(kind, day, slot, idx, field)] = value
+        for field, value in overrides.items():
+            st.session_state["pb_items"][item_key(kind, day, slot, idx, f"source_{field}")] = value
     st.session_state["pb_unsupported_items"] = unsupported
 
 
@@ -695,7 +832,7 @@ if section == "Profile Setup":
     with a2:
         st.date_input("Plan Start Date", key=profile_widget_key("start_date"), on_change=sync_profile_field, args=("start_date",))
         st.text_input("Cycle Rule", value="Weekly cyclical until replaced or stopped", disabled=True)
-        st.text_input("Implementation Status", value="Final Profile Builder page with Publish and Active Preview tabs.", disabled=True)
+        st.text_input("Implementation Status", value="Source detail rows render below selected repository/regimen items.", disabled=True)
 
     save_clicked = st.button("Save Draft Profile", type="primary", use_container_width=True, disabled=not STORE_STATUS.get("ok"))
     save_feedback = st.container()
