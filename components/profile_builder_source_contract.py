@@ -141,13 +141,13 @@ def _find_profile_builder_page_globals() -> Dict[str, Any]:
 
 
 def _source_field_uses_area_height(kind: str, field: str, field_type: str) -> bool:
-    if field_type == "area":
-        return True
-    if kind == "exercise" and field in {"equipment", "image_reference"}:
-        return True
-    if kind == "supplement" and field in {"timing", "admin_notes"}:
-        return True
-    return False
+    """Only meal long-form fields stay tall.
+
+    Exercise and supplement source-detail fields must visually match the first-row
+    compact controls, so even values like Benefits/Admin Notes render as single-height
+    text inputs in this admin builder view.
+    """
+    return field_type == "area" and kind not in {"exercise", "supplement"}
 
 
 def patch_profile_builder_source_detail_layout() -> None:
@@ -182,7 +182,7 @@ def patch_profile_builder_source_detail_layout() -> None:
     ]
 
     current_render = g.get("render_source_details")
-    if getattr(current_render, "_hm_equal_height_source_layout_render", False):
+    if getattr(current_render, "_hm_compact_height_source_layout_render", False):
         _PROFILE_BUILDER_LAYOUT_PATCHED = True
         return
 
@@ -273,8 +273,8 @@ def patch_profile_builder_source_detail_layout() -> None:
             st.session_state["pb_items"][g["item_key"](kind, day, slot, idx, f"source_{field}")] = value
         g["register_source_overrides"](kind, selected_label, overrides)
 
-    _patched_render_source_details._hm_equal_height_source_layout_render = True
-    _patched_apply_source_defaults_to_row._hm_equal_height_source_layout_render = True
+    _patched_render_source_details._hm_compact_height_source_layout_render = True
+    _patched_apply_source_defaults_to_row._hm_compact_height_source_layout_render = True
     g["apply_source_defaults_to_row"] = _patched_apply_source_defaults_to_row
     g["render_source_details"] = _patched_render_source_details
     _PROFILE_BUILDER_LAYOUT_PATCHED = True
