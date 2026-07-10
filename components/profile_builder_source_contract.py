@@ -24,13 +24,6 @@ def _dedupe(values: List[str]) -> List[str]:
     return sorted(out, key=str.lower)
 
 
-def _short(value: object, limit: int = 72) -> str:
-    text = _clean(value)
-    if len(text) <= limit:
-        return text
-    return text[: limit - 1].rstrip() + "…"
-
-
 def _image_reference(row: Dict[str, Any]) -> Dict[str, str]:
     return {
         "image_url": _clean(row.get("image_url")),
@@ -41,7 +34,9 @@ def _image_reference(row: Dict[str, Any]) -> Dict[str, str]:
 
 
 def _has_image_reference(row: Dict[str, Any]) -> bool:
-    return any(_image_reference(row).values())
+    image = _image_reference(row)
+    # Access type alone is not an image. Treat only URL/bucket/path as an actual image reference.
+    return any(image.get(field) for field in ("image_url", "image_bucket", "image_path"))
 
 
 def recipe_snapshot(row: Dict[str, Any]) -> Dict[str, Any]:
@@ -109,44 +104,21 @@ def supplement_snapshot(row: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def recipe_display_label(snapshot: Dict[str, Any]) -> str:
-    parts = [_clean(snapshot.get("title"))]
-    meta = []
-    for field in ("meal_type", "portion_size", "prep_time"):
-        value = _clean(snapshot.get(field))
-        if value:
-            meta.append(value)
-    calories = _clean(snapshot.get("calories"))
-    if calories:
-        meta.append(f"{calories} kcal")
-    if snapshot.get("has_image_reference"):
-        meta.append("image ref")
-    return _short(f"{parts[0]} — {' | '.join(meta)}" if meta else parts[0], 110)
+    # UI dropdown should stay clean. Full details live in source_snapshot and editable fields.
+    return _clean(snapshot.get("title"))
 
 
 def exercise_display_label(snapshot: Dict[str, Any]) -> str:
-    title = _clean(snapshot.get("title"))
-    meta = []
-    for field in ("category", "difficulty", "duration_or_reps", "equipment"):
-        value = _clean(snapshot.get(field))
-        if value:
-            meta.append(value)
-    if snapshot.get("has_image_reference"):
-        meta.append("image ref")
-    return _short(f"{title} — {' | '.join(meta)}" if meta else title, 110)
+    # UI dropdown should stay clean. Full details live in source_snapshot and editable fields.
+    return _clean(snapshot.get("title"))
 
 
 def supplement_display_label(snapshot: Dict[str, Any]) -> str:
-    title = _clean(snapshot.get("title") or snapshot.get("supplement_name"))
-    meta = []
-    for field in ("dosage", "frequency", "timing"):
-        value = _clean(snapshot.get(field))
-        if value:
-            meta.append(value)
-    return _short(f"{title} — {' | '.join(meta)}" if meta else title, 110)
+    # UI dropdown should stay clean. Full details live in source_snapshot and editable fields.
+    return _clean(snapshot.get("title") or snapshot.get("supplement_name"))
 
 
 def _index_snapshot(snapshots: Dict[str, Dict[str, Any]], display_label: str, title: str, snapshot: Dict[str, Any]) -> None:
-    # Store both the rich display label and the base title so older saved drafts can still resolve.
     if display_label:
         snapshots[display_label] = snapshot
     if title and title not in snapshots:
@@ -156,9 +128,10 @@ def _index_snapshot(snapshots: Dict[str, Dict[str, Any]], display_label: str, ti
 def build_profile_builder_source_contract() -> Tuple[Dict[str, List[str]], Dict[str, Dict[str, Any]], str]:
     """Return source-backed Profile Builder dropdown options and immutable source snapshots.
 
-    H9A.10C expands H9A.10B: the dropdown label now carries lightweight source
-    detail, while full details and image references remain in a snapshot for storage.
-    Images are referenced only; they are not loaded in normal admin editing.
+    H9A.10C.1 corrects the UX gap after H9A.10C: dropdowns must not carry
+    multiple pieces of source data in one label. Dropdowns remain clean names;
+    full source details and image references remain in snapshots for storage and
+    are meant to be surfaced as separate editable fields in the Profile Builder UI.
     """
     sources: Dict[str, List[str]] = {"recipe": [], "exercise": [], "supplement": []}
     snapshots: Dict[str, Dict[str, Any]] = {"recipe": {}, "exercise": {}, "supplement": {}}
@@ -175,7 +148,7 @@ def build_profile_builder_source_contract() -> Tuple[Dict[str, List[str]], Dict[
                 recipe_labels.append(label)
                 _index_snapshot(snapshots["recipe"], label, title, snap)
         sources["recipe"] = _dedupe(recipe_labels)
-        messages.append(f"Recipe source: {len(sources['recipe'])} active repository item(s) with detail labels.")
+        messages.append(f"Recipe source: {len(sources['recipe'])} active repository item(s) with clean labels and full snapshots.")
     except Exception as exc:
         messages.append(f"Recipe source unavailable: {exc}")
 
@@ -190,7 +163,7 @@ def build_profile_builder_source_contract() -> Tuple[Dict[str, List[str]], Dict[
                 exercise_labels.append(label)
                 _index_snapshot(snapshots["exercise"], label, title, snap)
         sources["exercise"] = _dedupe(exercise_labels)
-        messages.append(f"Exercise source: {len(sources['exercise'])} active repository item(s) with detail labels.")
+        messages.append(f"Exercise source: {len(sources['exercise'])} active repository item(s) with clean labels and full snapshots.")
     except Exception as exc:
         messages.append(f"Exercise source unavailable: {exc}")
 
@@ -205,7 +178,7 @@ def build_profile_builder_source_contract() -> Tuple[Dict[str, List[str]], Dict[
                 supplement_labels.append(label)
                 _index_snapshot(snapshots["supplement"], label, name, snap)
         sources["supplement"] = _dedupe(supplement_labels)
-        messages.append(f"Supplement source: {len(sources['supplement'])} active regimen name(s) with detail labels.")
+        messages.append(f"Supplement source: {len(sources['supplement'])} active regimen name(s) with clean labels and full snapshots.")
     except Exception as exc:
         messages.append(f"Supplement source unavailable: {exc}")
 
