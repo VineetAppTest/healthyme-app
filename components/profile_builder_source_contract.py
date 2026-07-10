@@ -24,6 +24,13 @@ def _dedupe(values: List[str]) -> List[str]:
     return sorted(out, key=str.lower)
 
 
+def _short(value: object, limit: int = 72) -> str:
+    text = _clean(value)
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "…"
+
+
 def _image_reference(row: Dict[str, Any]) -> Dict[str, str]:
     return {
         "image_url": _clean(row.get("image_url")),
@@ -101,12 +108,57 @@ def supplement_snapshot(row: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def recipe_display_label(snapshot: Dict[str, Any]) -> str:
+    parts = [_clean(snapshot.get("title"))]
+    meta = []
+    for field in ("meal_type", "portion_size", "prep_time"):
+        value = _clean(snapshot.get(field))
+        if value:
+            meta.append(value)
+    calories = _clean(snapshot.get("calories"))
+    if calories:
+        meta.append(f"{calories} kcal")
+    if snapshot.get("has_image_reference"):
+        meta.append("image ref")
+    return _short(f"{parts[0]} — {' | '.join(meta)}" if meta else parts[0], 110)
+
+
+def exercise_display_label(snapshot: Dict[str, Any]) -> str:
+    title = _clean(snapshot.get("title"))
+    meta = []
+    for field in ("category", "difficulty", "duration_or_reps", "equipment"):
+        value = _clean(snapshot.get(field))
+        if value:
+            meta.append(value)
+    if snapshot.get("has_image_reference"):
+        meta.append("image ref")
+    return _short(f"{title} — {' | '.join(meta)}" if meta else title, 110)
+
+
+def supplement_display_label(snapshot: Dict[str, Any]) -> str:
+    title = _clean(snapshot.get("title") or snapshot.get("supplement_name"))
+    meta = []
+    for field in ("dosage", "frequency", "timing"):
+        value = _clean(snapshot.get(field))
+        if value:
+            meta.append(value)
+    return _short(f"{title} — {' | '.join(meta)}" if meta else title, 110)
+
+
+def _index_snapshot(snapshots: Dict[str, Dict[str, Any]], display_label: str, title: str, snapshot: Dict[str, Any]) -> None:
+    # Store both the rich display label and the base title so older saved drafts can still resolve.
+    if display_label:
+        snapshots[display_label] = snapshot
+    if title and title not in snapshots:
+        snapshots[title] = snapshot
+
+
 def build_profile_builder_source_contract() -> Tuple[Dict[str, List[str]], Dict[str, Dict[str, Any]], str]:
     """Return source-backed Profile Builder dropdown options and immutable source snapshots.
 
-    This is the H9A.10B bridge. It keeps Profile Builder selection source-backed while
-    preserving admin override fields separately. Images are preserved as references in
-    snapshots, not loaded in normal admin editing.
+    H9A.10C expands H9A.10B: the dropdown label now carries lightweight source
+    detail, while full details and image references remain in a snapshot for storage.
+    Images are referenced only; they are not loaded in normal admin editing.
     """
     sources: Dict[str, List[str]] = {"recipe": [], "exercise": [], "supplement": []}
     snapshots: Dict[str, Dict[str, Any]] = {"recipe": {}, "exercise": {}, "supplement": {}}
@@ -114,35 +166,46 @@ def build_profile_builder_source_contract() -> Tuple[Dict[str, List[str]], Dict[
 
     try:
         recipe_rows = list_repository_items("recipes", active_only=True)
-        sources["recipe"] = _dedupe([_clean(row.get("title")) for row in recipe_rows])
+        recipe_labels = []
         for row in recipe_rows:
-            title = _clean(row.get("title"))
+            snap = recipe_snapshot(row)
+            title = _clean(snap.get("title"))
+            label = recipe_display_label(snap)
             if title:
-                snapshots["recipe"][title] = recipe_snapshot(row)
-        messages.append(f"Recipe source: {len(sources['recipe'])} active repository item(s).")
+                recipe_labels.append(label)
+                _index_snapshot(snapshots["recipe"], label, title, snap)
+        sources["recipe"] = _dedupe(recipe_labels)
+        messages.append(f"Recipe source: {len(sources['recipe'])} active repository item(s) with detail labels.")
     except Exception as exc:
         messages.append(f"Recipe source unavailable: {exc}")
 
     try:
         exercise_rows = list_repository_items("exercises", active_only=True)
-        sources["exercise"] = _dedupe([_clean(row.get("title")) for row in exercise_rows])
+        exercise_labels = []
         for row in exercise_rows:
-            title = _clean(row.get("title"))
+            snap = exercise_snapshot(row)
+            title = _clean(snap.get("title"))
+            label = exercise_display_label(snap)
             if title:
-                snapshots["exercise"][title] = exercise_snapshot(row)
-        messages.append(f"Exercise source: {len(sources['exercise'])} active repository item(s).")
+                exercise_labels.append(label)
+                _index_snapshot(snapshots["exercise"], label, title, snap)
+        sources["exercise"] = _dedupe(exercise_labels)
+        messages.append(f"Exercise source: {len(sources['exercise'])} active repository item(s) with detail labels.")
     except Exception as exc:
         messages.append(f"Exercise source unavailable: {exc}")
 
     try:
         supplement_rows = list_member_supplements(status="Active")
-        names = _dedupe([_clean(row.get("supplement_name")) for row in supplement_rows])
-        sources["supplement"] = names
+        supplement_labels = []
         for row in supplement_rows:
-            name = _clean(row.get("supplement_name"))
-            if name and name not in snapshots["supplement"]:
-                snapshots["supplement"][name] = supplement_snapshot(row)
-        messages.append(f"Supplement source: {len(sources['supplement'])} active regimen name(s).")
+            snap = supplement_snapshot(row)
+            name = _clean(snap.get("supplement_name"))
+            label = supplement_display_label(snap)
+            if name:
+                supplement_labels.append(label)
+                _index_snapshot(snapshots["supplement"], label, name, snap)
+        sources["supplement"] = _dedupe(supplement_labels)
+        messages.append(f"Supplement source: {len(sources['supplement'])} active regimen name(s) with detail labels.")
     except Exception as exc:
         messages.append(f"Supplement source unavailable: {exc}")
 
@@ -159,3 +222,20 @@ def source_snapshot_for_label(item_type: str, label: str) -> Dict[str, Any]:
     if kind == "supplement":
         return snapshots.get("supplement", {}).get(_clean(label), {})
     return {}
+
+
+def source_storage_payload(item_type: str, label: str) -> Dict[str, Any]:
+    snapshot = source_snapshot_for_label(item_type, label)
+    if not snapshot:
+        return {}
+    image = snapshot.get("image") or {}
+    return {
+        "source_type": _clean(snapshot.get("source_type")),
+        "source_id": _clean(snapshot.get("source_id")),
+        "source_label": _clean(snapshot.get("title") or snapshot.get("supplement_name") or label),
+        "source_snapshot": snapshot,
+        "source_image_url": _clean(image.get("image_url")),
+        "source_image_bucket": _clean(image.get("image_bucket")),
+        "source_image_path": _clean(image.get("image_path")),
+        "source_image_access_type": _clean(image.get("image_access_type")),
+    }
