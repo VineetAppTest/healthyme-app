@@ -2,12 +2,21 @@
 
 Scope:
 
-- Fixes Profile Builder top tab buttons so all tab buttons use equal column width and consistent height.
+- Fixes Profile Builder top tab buttons by using short single-line tab labels and fixed-height styling.
+- Keeps all final tabs accessible:
+  - Setup
+  - Meals
+  - Exercise
+  - Supplements
+  - Preview
+  - Publish
+  - Active
 - Fixes Load Draft and New Draft button alignment beside the saved draft dropdown.
 - Fixes Clone Selected button alignment beside Clone From Existing Profile dropdown.
 - Removes the empty bordered strip that appeared above draft loading on Profile Setup.
+- Removes extra immediate rerun calls from New Draft / Load Draft / Clone Selected / Add Row interactions to reduce the visible two-second freeze effect.
 - Updates Profile Builder visible version to:
-  - `v100.34 · Profile Builder Alignment Polish`
+  - `v100.35 · Profile Builder Tab Stability Polish`
 
 Route:
 
@@ -25,10 +34,12 @@ Impact:
 Smoke test:
 
 1. Open `/Admin_Recommendation_Profile_Builder`.
-2. Confirm version `v100.34 · Profile Builder Alignment Polish`.
-3. Confirm top tab buttons are equal width and height.
-4. Confirm Profile Setup, Meal Structure, Exercise Regime, Supplement Regime, Preview & Flow, Publish Control and Active Preview remain accessible.
-5. Confirm Load Draft and New Draft buttons align with the saved draft dropdown.
-6. Confirm Clone Selected aligns with Clone From Existing Profile dropdown.
-7. Confirm no empty bordered strip appears above draft loading.
-8. Confirm Save Draft, Publish Control and Active Preview still work as before.
+2. Confirm version `v100.35 · Profile Builder Tab Stability Polish`.
+3. Confirm top navigation buttons are equal width and equal height.
+4. Confirm top navigation labels remain single-line and do not create taller/shorter buttons.
+5. Confirm all seven tabs open: Setup, Meals, Exercise, Supplements, Preview, Publish and Active.
+6. Confirm Load Draft and New Draft align with the saved draft dropdown.
+7. Confirm Clone Selected aligns with Clone From Existing Profile dropdown.
+8. Click New Draft and confirm the page does not visibly double-freeze or stall beyond the normal Streamlit refresh.
+9. Confirm no empty bordered strip appears above draft loading.
+10. Confirm Save Draft, Publish Control and Active Preview still work as before.
