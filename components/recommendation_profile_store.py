@@ -39,6 +39,7 @@ DEFAULT_SOURCES = {
 }
 
 SECRET_SECTIONS = ("auth", "auth0", "authentication", "healthyme", "supabase")
+SOURCE_BACKED_GROUPS = {"recipe", "exercise", "supplement"}
 
 
 def _clean(value: object, default: str = "") -> str:
@@ -113,6 +114,26 @@ def _rows(response) -> List[dict]:
     return list(getattr(response, "data", None) or [])
 
 
+def _merge_source_backed_options(sources: Dict[str, List[str]]) -> Tuple[Dict[str, List[str]], str]:
+    """Overlay real repository/regimen sources onto Profile Builder dropdown groups.
+
+    Recipe and Exercise should come from the repositories. Supplements should come
+    from active supplement regimen names. This stops label-only duplication while
+    keeping age/concern/diet master-data behaviour unchanged.
+    """
+    try:
+        from components.profile_builder_source_contract import build_profile_builder_source_contract
+
+        source_options, _source_snapshots, source_message = build_profile_builder_source_contract()
+        for group in SOURCE_BACKED_GROUPS:
+            values = list(source_options.get(group) or [])
+            if values:
+                sources[group] = values
+        return sources, source_message
+    except Exception as exc:
+        return sources, f"Source-backed repository options could not be loaded: {exc}"
+
+
 def check_profile_builder_store() -> Dict[str, Any]:
     """Return readiness of Sprint 1 profile-builder tables."""
     if not profile_store_configured():
@@ -139,10 +160,12 @@ def check_profile_builder_store() -> Dict[str, Any]:
 
 
 def load_profile_builder_sources() -> Tuple[Dict[str, List[str]], str]:
-    """Load dropdown/master-data options, with safe mock fallback."""
+    """Load Profile Builder options with repository-backed recipe/exercise/supplement groups."""
     sources = {key: list(values) for key, values in DEFAULT_SOURCES.items()}
+    sources, source_contract_message = _merge_source_backed_options(sources)
+
     if not check_profile_builder_store().get("ok"):
-        return sources, "Using mock fallback values until Sprint 1 SQL tables are available."
+        return sources, "Using source-backed Recipe/Exercise/Supplement values where available; Profile Builder master data is not ready yet. " + source_contract_message
 
     try:
         c = _client()
@@ -161,11 +184,14 @@ def load_profile_builder_sources() -> Tuple[Dict[str, List[str]], str]:
             if group and value:
                 grouped.setdefault(group, []).append(value)
         for group, values in grouped.items():
-            if values:
-                sources[group] = values
-        return sources, "Loaded dropdown values from Profile Builder master data."
+            if not values:
+                continue
+            if group in SOURCE_BACKED_GROUPS and sources.get(group):
+                continue
+            sources[group] = values
+        return sources, "Loaded master data plus source-backed Recipe/Exercise/Supplement options. " + source_contract_message
     except Exception as exc:
-        return sources, f"Using mock fallback values because master data could not be loaded: {exc}"
+        return sources, f"Using source-backed/fallback values because master data could not be loaded: {exc}. {source_contract_message}"
 
 
 def load_member_options() -> Tuple[List[Dict[str, str]], str]:
