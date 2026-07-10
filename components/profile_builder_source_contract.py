@@ -140,13 +140,22 @@ def _find_profile_builder_page_globals() -> Dict[str, Any]:
     return {}
 
 
+def _source_field_uses_area_height(kind: str, field: str, field_type: str) -> bool:
+    if field_type == "area":
+        return True
+    if kind == "exercise" and field in {"equipment", "image_reference"}:
+        return True
+    if kind == "supplement" and field in {"timing", "admin_notes"}:
+        return True
+    return False
+
+
 def patch_profile_builder_source_detail_layout() -> None:
     """Apply the Profile Builder source-detail layout directly to page globals.
 
     Streamlit reruns the page and recreates page-level functions on every interaction.
-    Earlier PRs patched only once, so the page could revert to the original layout on
-    later reruns. This patch checks the current page function identity and reapplies
-    the direct render override whenever the page has been recreated.
+    The patch checks the current page function identity and reapplies the direct
+    renderer whenever the page has been recreated.
     """
     global _PROFILE_BUILDER_LAYOUT_PATCHED
 
@@ -159,7 +168,6 @@ def patch_profile_builder_source_detail_layout() -> None:
     if not g:
         return
 
-    # Keep the source-detail contract non-duplicative at the page level.
     g["SOURCE_DETAIL_FIELDS"]["exercise"] = [
         ("category", "Category", "text"),
         ("difficulty", "Difficulty", "text"),
@@ -174,7 +182,7 @@ def patch_profile_builder_source_detail_layout() -> None:
     ]
 
     current_render = g.get("render_source_details")
-    if getattr(current_render, "_hm_direct_source_layout_render", False):
+    if getattr(current_render, "_hm_equal_height_source_layout_render", False):
         _PROFILE_BUILDER_LAYOUT_PATCHED = True
         return
 
@@ -224,8 +232,8 @@ def patch_profile_builder_source_detail_layout() -> None:
             key,
             g["source_detail_value"](kind, day, slot, idx, field, defaults.get(field, "")),
         )
-        if field_type == "area":
-            col.text_area(label, height=80, key=key)
+        if _source_field_uses_area_height(kind, field, field_type):
+            col.text_area(label, height=80, key=key, disabled=(field == "image_reference"))
         else:
             col.text_input(label, key=key, disabled=(field == "image_reference"))
 
@@ -265,8 +273,8 @@ def patch_profile_builder_source_detail_layout() -> None:
             st.session_state["pb_items"][g["item_key"](kind, day, slot, idx, f"source_{field}")] = value
         g["register_source_overrides"](kind, selected_label, overrides)
 
-    _patched_render_source_details._hm_direct_source_layout_render = True
-    _patched_apply_source_defaults_to_row._hm_direct_source_layout_render = True
+    _patched_render_source_details._hm_equal_height_source_layout_render = True
+    _patched_apply_source_defaults_to_row._hm_equal_height_source_layout_render = True
     g["apply_source_defaults_to_row"] = _patched_apply_source_defaults_to_row
     g["render_source_details"] = _patched_render_source_details
     _PROFILE_BUILDER_LAYOUT_PATCHED = True
