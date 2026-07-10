@@ -1,9 +1,10 @@
 """Supabase-backed draft store for HealthyMe recommendation profiles.
 
-Sprint 1 scope:
-- backend foundation for Profile Builder drafts
-- safe draft save/load helpers for Streamlit admin only
-- no publish, replacement, or member-consumption logic yet
+H9A.10B source-selection update:
+- Recipe dropdown values come from the active Recipe repository when available.
+- Exercise dropdown values come from the active Exercise repository when available.
+- Supplement dropdown values are augmented from active supplement regimen names when available.
+- Existing Supabase draft/profile persistence remains backward compatible.
 """
 
 from __future__ import annotations
@@ -66,17 +67,14 @@ def _get_secret(name: str, default: str = "") -> str:
     value = os.environ.get(name)
     if value:
         return _clean(value, default)
-
     try:
         value = st.secrets.get(name)
         if value is not None:
             return _clean(value, default)
-
         lower_name = name.lower()
         value = st.secrets.get(lower_name)
         if value is not None:
             return _clean(value, default)
-
         for section in SECRET_SECTIONS:
             section_values = st.secrets.get(section)
             if not section_values:
@@ -91,7 +89,6 @@ def _get_secret(name: str, default: str = "") -> str:
                 continue
     except Exception:
         pass
-
     return default
 
 
@@ -113,11 +110,60 @@ def _rows(response) -> List[dict]:
     return list(getattr(response, "data", None) or [])
 
 
+def _unique(values: List[str]) -> List[str]:
+    seen = set()
+    out = []
+    for value in values or []:
+        text = _clean(value)
+        if not text or text.startswith("-- Select"):
+            continue
+        key = text.lower()
+        if key not in seen:
+            seen.add(key)
+            out.append(text)
+    return out
+
+
+def _repository_labels() -> Tuple[Dict[str, List[str]], List[str]]:
+    """Return source-backed labels without making Profile Builder depend on SQL changes."""
+    labels: Dict[str, List[str]] = {}
+    notes: List[str] = []
+
+    try:
+        from components.recommendation_contract import list_repository_items
+
+        recipes = list_repository_items("recipes", active_only=True)
+        recipe_labels = _unique([row.get("title", "") for row in recipes])
+        if recipe_labels:
+            labels["recipe"] = recipe_labels
+            notes.append(f"recipes={len(recipe_labels)} from Recipe Repository")
+
+        exercises = list_repository_items("exercises", active_only=True)
+        exercise_labels = _unique([row.get("title", "") for row in exercises])
+        if exercise_labels:
+            labels["exercise"] = exercise_labels
+            notes.append(f"exercises={len(exercise_labels)} from Exercise Repository")
+    except Exception as exc:
+        notes.append(f"repository labels unavailable: {exc}")
+
+    try:
+        from components.db import list_member_supplements
+
+        supplements = list_member_supplements(status="Active")
+        supplement_labels = _unique([row.get("supplement_name", "") for row in supplements])
+        if supplement_labels:
+            labels["supplement"] = supplement_labels
+            notes.append(f"supplements={len(supplement_labels)} from active Supplement Regimen")
+    except Exception as exc:
+        notes.append(f"supplement regimen labels unavailable: {exc}")
+
+    return labels, notes
+
+
 def check_profile_builder_store() -> Dict[str, Any]:
-    """Return readiness of Sprint 1 profile-builder tables."""
+    """Return readiness of Profile Builder tables."""
     if not profile_store_configured():
         return {"ok": False, "message": "Supabase secrets are not configured for this app."}
-
     status: Dict[str, Any] = {"ok": True, "message": "Profile Builder draft store is ready."}
     try:
         c = _client()
@@ -139,41 +185,53 @@ def check_profile_builder_store() -> Dict[str, Any]:
 
 
 def load_profile_builder_sources() -> Tuple[Dict[str, List[str]], str]:
-    """Load dropdown/master-data options, with safe mock fallback."""
-    sources = {key: list(values) for key, values in DEFAULT_SOURCES.items()}
-    if not check_profile_builder_store().get("ok"):
-        return sources, "Using mock fallback values until Sprint 1 SQL tables are available."
+    """Load dropdown values.
 
-    try:
-        c = _client()
-        result = (
-            c.table(MASTER_TABLE)
-            .select("option_group,option_value,sort_order,is_active")
-            .eq("is_active", True)
-            .order("option_group")
-            .order("sort_order")
-            .execute()
-        )
-        grouped: Dict[str, List[str]] = {}
-        for row in _rows(result):
-            group = _clean(row.get("option_group"))
-            value = _clean(row.get("option_value"))
-            if group and value:
-                grouped.setdefault(group, []).append(value)
-        for group, values in grouped.items():
-            if values:
-                sources[group] = values
-        return sources, "Loaded dropdown values from Profile Builder master data."
-    except Exception as exc:
-        return sources, f"Using mock fallback values because master data could not be loaded: {exc}"
+    Demographic/profile values still come from Profile Builder master data.
+    Recommendation item values now prefer the real source repositories/regimens.
+    """
+    sources = {key: list(values) for key, values in DEFAULT_SOURCES.items()}
+    messages: List[str] = []
+
+    if check_profile_builder_store().get("ok"):
+        try:
+            c = _client()
+            result = (
+                c.table(MASTER_TABLE)
+                .select("option_group,option_value,sort_order,is_active")
+                .eq("is_active", True)
+                .order("option_group")
+                .order("sort_order")
+                .execute()
+            )
+            grouped: Dict[str, List[str]] = {}
+            for row in _rows(result):
+                group = _clean(row.get("option_group"))
+                value = _clean(row.get("option_value"))
+                if group and value:
+                    grouped.setdefault(group, []).append(value)
+            for group, values in grouped.items():
+                if values:
+                    sources[group] = values
+            messages.append("Loaded profile/demographic dropdown values from Profile Builder master data")
+        except Exception as exc:
+            messages.append(f"Profile Builder master data fallback used: {exc}")
+    else:
+        messages.append("Using fallback profile/demographic values until Profile Builder SQL tables are available")
+
+    source_labels, source_notes = _repository_labels()
+    for group, labels in source_labels.items():
+        if labels:
+            sources[group] = labels
+    messages.extend(source_notes)
+
+    return sources, "; ".join(messages) or "Loaded Profile Builder dropdown values."
 
 
 def load_member_options() -> Tuple[List[Dict[str, str]], str]:
-    """Load active member assignment options from hm_users."""
     fallback = [{"id": "", "label": "Select member"}, {"id": "example-member", "label": "Example member"}]
     if not profile_store_configured():
         return fallback, "Using mock member values because Supabase is not configured."
-
     try:
         c = _client()
         result = (
@@ -200,9 +258,8 @@ def list_draft_profiles(limit: int = 50) -> Tuple[bool, List[dict], str]:
     if not check_profile_builder_store().get("ok"):
         return False, [], "Profile Builder tables are not ready."
     try:
-        c = _client()
         result = (
-            c.table(PROFILE_TABLE)
+            _client().table(PROFILE_TABLE)
             .select("id,profile_name,status,assigned_member_label,updated_at")
             .eq("status", "draft")
             .order("updated_at", desc=True)
@@ -218,9 +275,8 @@ def list_profile_sources(limit: int = 50) -> Tuple[bool, List[dict], str]:
     if not check_profile_builder_store().get("ok"):
         return False, [], "Profile Builder tables are not ready."
     try:
-        c = _client()
         result = (
-            c.table(PROFILE_TABLE)
+            _client().table(PROFILE_TABLE)
             .select("id,profile_name,status,updated_at")
             .in_("status", ["draft", "active", "archived"])
             .order("updated_at", desc=True)
@@ -236,42 +292,7 @@ def _now_iso() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat()
 
 
-def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> Tuple[bool, str, str]:
-    """Upsert one draft profile and replace its draft items.
-
-    This intentionally does not publish or activate anything.
-    """
-    status = check_profile_builder_store()
-    if not status.get("ok"):
-        return False, "", status.get("message", "Profile Builder tables are not ready.")
-
-    profile_name = _clean(profile.get("profile_name"))
-    if not profile_name:
-        return False, "", "Profile Name is required before saving a draft."
-
-    profile_id = _clean(profile.get("id")) or str(uuid.uuid4())
-    now = _now_iso()
-    row = {
-        "id": profile_id,
-        "profile_name": profile_name,
-        "status": "draft",
-        "region": _clean(profile.get("region")),
-        "age_band": _clean(profile.get("age_band")),
-        "diet_type": _clean(profile.get("diet_type")),
-        "health_concerns": list(profile.get("health_concerns") or []),
-        "profile_note": _clean(profile.get("profile_note")),
-        "change_note": _clean(profile.get("change_note")),
-        "cycle_rule": _clean(profile.get("cycle_rule"), "Weekly cyclical until replaced or stopped"),
-        "assigned_member_id": _clean(profile.get("assigned_member_id")),
-        "assigned_member_label": _clean(profile.get("assigned_member_label")),
-        "start_date": _none_if_blank(profile.get("start_date")),
-        "clone_source_profile_id": _optional_uuid(profile.get("clone_source_profile_id")),
-        "clone_source_label": _clean(profile.get("clone_source_label")),
-        "updated_at": now,
-        "created_by_user_id": _clean(profile.get("created_by_user_id")),
-        "created_by_email": _clean(profile.get("created_by_email")),
-    }
-
+def _build_item_rows(profile_id: str, items: List[Dict[str, Any]], now: str) -> List[dict]:
     item_rows = []
     for item in items:
         item_type = _clean(item.get("item_type"))
@@ -307,6 +328,40 @@ def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> 
             "dosage_frequency": _clean(item.get("dosage_frequency")),
             "updated_at": now,
         })
+    return item_rows
+
+
+def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> Tuple[bool, str, str]:
+    status = check_profile_builder_store()
+    if not status.get("ok"):
+        return False, "", status.get("message", "Profile Builder tables are not ready.")
+    profile_name = _clean(profile.get("profile_name"))
+    if not profile_name:
+        return False, "", "Profile Name is required before saving a draft."
+
+    profile_id = _clean(profile.get("id")) or str(uuid.uuid4())
+    now = _now_iso()
+    row = {
+        "id": profile_id,
+        "profile_name": profile_name,
+        "status": "draft",
+        "region": _clean(profile.get("region")),
+        "age_band": _clean(profile.get("age_band")),
+        "diet_type": _clean(profile.get("diet_type")),
+        "health_concerns": list(profile.get("health_concerns") or []),
+        "profile_note": _clean(profile.get("profile_note")),
+        "change_note": _clean(profile.get("change_note")),
+        "cycle_rule": _clean(profile.get("cycle_rule"), "Weekly cyclical until replaced or stopped"),
+        "assigned_member_id": _clean(profile.get("assigned_member_id")),
+        "assigned_member_label": _clean(profile.get("assigned_member_label")),
+        "start_date": _none_if_blank(profile.get("start_date")),
+        "clone_source_profile_id": _optional_uuid(profile.get("clone_source_profile_id")),
+        "clone_source_label": _clean(profile.get("clone_source_label")),
+        "updated_at": now,
+        "created_by_user_id": _clean(profile.get("created_by_user_id")),
+        "created_by_email": _clean(profile.get("created_by_email")),
+    }
+    item_rows = _build_item_rows(profile_id, items, now)
 
     try:
         c = _client()
@@ -318,12 +373,12 @@ def save_draft_profile(profile: Dict[str, Any], items: List[Dict[str, Any]]) -> 
             "id": str(uuid.uuid4()),
             "profile_id": profile_id,
             "event_type": "draft_saved",
-            "event_note": f"Draft saved with {len(item_rows)} item rows.",
+            "event_note": f"Draft saved with {len(item_rows)} item rows. Source dropdowns were repository-backed where available.",
             "created_by_user_id": row.get("created_by_user_id"),
             "created_by_email": row.get("created_by_email"),
             "created_at": now,
         }).execute()
-        return True, profile_id, f"Draft saved successfully with {len(item_rows)} recommendation rows."
+        return True, profile_id, f"Draft saved successfully with {len(item_rows)} recommendation rows. Source-backed dropdowns used where available."
     except Exception as exc:
         return False, profile_id, f"Could not save draft profile: {exc}"
 
@@ -334,7 +389,6 @@ def load_profile(profile_id: str) -> Tuple[bool, Dict[str, Any], List[Dict[str, 
         return False, {}, [], "Select a saved draft first."
     if not check_profile_builder_store().get("ok"):
         return False, {}, [], "Profile Builder tables are not ready."
-
     try:
         c = _client()
         profile_result = c.table(PROFILE_TABLE).select("*").eq("id", clean_id).limit(1).execute()
