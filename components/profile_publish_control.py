@@ -1,9 +1,9 @@
 import datetime as dt
+import html
 import os
 import uuid
 from typing import Any, Dict, List, Tuple
 
-import pandas as pd
 import streamlit as st
 
 PROFILE_TABLE = "hm_recommendation_profiles"
@@ -23,6 +23,10 @@ def _display(value: object, default: str = "NA") -> str:
     return text if text else default
 
 
+def _escape(value: object, default: str = "NA") -> str:
+    return html.escape(_display(value, default))
+
+
 def _safe_int(value: object, default: int = 0) -> int:
     try:
         return int(value or default)
@@ -30,18 +34,46 @@ def _safe_int(value: object, default: int = 0) -> int:
         return default
 
 
-def _safe_dataframe(rows: List[Dict[str, Any]], empty_message: str = "No rows found.") -> None:
-    """Render Streamlit tables using string-normalised values.
+def _safe_table(rows: List[Dict[str, Any]], empty_message: str = "No rows found.") -> None:
+    """Render a plain HTML table without Streamlit dataframe/PyArrow.
 
-    Streamlit/PyArrow can hard-fail the whole app when a list-of-dicts has mixed
-    value types in the same column. Publish Control should never crash the page
-    just because one draft row has an unexpected numeric/null/object shape.
+    PR #99 still produced a generic Streamlit failure for a specific draft.
+    The safest Publish Control path is to avoid st.dataframe entirely and render
+    string-only HTML tables, so mixed/null/object row values cannot crash the app.
     """
     if not rows:
         st.info(empty_message)
         return
-    cleaned_rows = [{key: _display(value) for key, value in row.items()} for row in rows]
-    st.dataframe(pd.DataFrame(cleaned_rows), use_container_width=True, hide_index=True)
+    columns = list(rows[0].keys())
+    header = "".join(f"<th>{html.escape(str(col))}</th>" for col in columns)
+    body_rows = []
+    for row in rows:
+        body_rows.append(
+            "<tr>"
+            + "".join(f"<td>{_escape(row.get(col))}</td>" for col in columns)
+            + "</tr>"
+        )
+    st.markdown(
+        """
+<style>
+.hm-safe-table-wrap{overflow-x:auto;border:1px solid #E3C98E;border-radius:14px;background:#fff;margin:.35rem 0 .65rem 0;}
+.hm-safe-table{width:100%;border-collapse:collapse;font-size:.78rem;line-height:1.3;}
+.hm-safe-table th{background:#FFF9EC;color:#064E3B;font-weight:900;text-align:left;padding:.52rem .58rem;border-bottom:1px solid #E3C98E;white-space:nowrap;}
+.hm-safe-table td{color:#475569;font-weight:700;padding:.5rem .58rem;border-bottom:1px solid #F1E2BD;vertical-align:top;}
+.hm-safe-table tr:last-child td{border-bottom:none;}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div class='hm-safe-table-wrap'><table class='hm-safe-table'><thead><tr>{header}</tr></thead><tbody>{''.join(body_rows)}</tbody></table></div>",
+        unsafe_allow_html=True,
+    )
+
+
+# Backward-compatible helper name retained for older call sites.
+def _safe_dataframe(rows: List[Dict[str, Any]], empty_message: str = "No rows found.") -> None:
+    _safe_table(rows, empty_message)
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -257,7 +289,7 @@ def _render_profile_publish_control_inner() -> None:
 
     st.markdown("<div class='hm-title'>Current Active Profiles</div>", unsafe_allow_html=True)
     if active_profiles:
-        _safe_dataframe(_active_profile_rows(active_profiles), "No active recommendation profiles found yet.")
+        _safe_table(_active_profile_rows(active_profiles), "No active recommendation profiles found yet.")
     else:
         st.info("No active recommendation profiles found yet.")
 
@@ -286,15 +318,17 @@ def _render_profile_publish_control_inner() -> None:
     status_ready = _clean(profile.get("status")) == "draft"
     rows_ready = bool(items)
     can_activate = member_ready and status_ready and rows_ready
+    status_pill = "hm-ok" if can_activate else "hm-pending"
+    status_text = "Ready for activation" if can_activate else "Needs attention before activation"
 
     st.markdown(f"""
 <div class='hm-preview'>
 <b>Selected Draft Review</b><br>
-<span class='hm-pill {'hm-ok' if can_activate else 'hm-pending'}'>{'Ready for activation' if can_activate else 'Needs attention before activation'}</span><br>
-<b>Profile:</b> {_display(profile.get('profile_name'))}<br>
-<b>Member:</b> {_display(profile.get('assigned_member_label'), 'No member assigned')}<br>
-<b>Status:</b> {_display(profile.get('status'))}<br>
-<b>Start Date:</b> {_display(profile.get('start_date'))}
+<span class='hm-pill {status_pill}'>{status_text}</span><br>
+<b>Profile:</b> {_escape(profile.get('profile_name'))}<br>
+<b>Member:</b> {_escape(profile.get('assigned_member_label'), 'No member assigned')}<br>
+<b>Status:</b> {_escape(profile.get('status'))}<br>
+<b>Start Date:</b> {_escape(profile.get('start_date'))}
 </div>
 """, unsafe_allow_html=True)
     st.markdown(f"""
@@ -315,7 +349,7 @@ def _render_profile_publish_control_inner() -> None:
 
     if items:
         with st.expander("Review recommendation rows before activation", expanded=False):
-            _safe_dataframe(_review_rows(items), "No recommendation rows found for this draft.")
+            _safe_table(_review_rows(items), "No recommendation rows found for this draft.")
 
     st.markdown("<div class='hm-preview'><b>Activation Confirmation</b><br>This will make this profile active for the selected member and mark any previous active profile for the same member as replaced. Member-facing display is not wired in this sprint.</div>", unsafe_allow_html=True)
     confirm_text = st.text_input("Type ACTIVATE to confirm", key="publish_confirm_text")
@@ -335,6 +369,8 @@ def _render_profile_publish_control_inner() -> None:
 def render_profile_publish_control() -> None:
     try:
         _render_profile_publish_control_inner()
-    except Exception as exc:
+    except BaseException as exc:
+        if exc.__class__.__name__ in {"RerunException", "StopException"}:
+            raise
         st.error(f"Publish Control could not complete this action: {exc}")
-        st.caption("Use Refresh Publish Control once. If this repeats, share the displayed message instead of the generic Streamlit error page.")
+        st.caption("This error has been caught inside Publish Control. Use Refresh Publish Control once. If it repeats, share this displayed message.")
