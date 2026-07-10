@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Tuple
 from components.db import list_member_supplements
 from components.recommendation_contract import list_repository_items
 
+_SOURCE_INSTRUCTION_FIELD_PATCHED = False
+
 
 def _clean(value: object) -> str:
     return str(value or "").strip()
@@ -177,6 +179,7 @@ def build_profile_builder_source_contract() -> Tuple[Dict[str, List[str]], Dict[
     except Exception as exc:
         messages.append(f"Supplement source unavailable: {exc}")
 
+    patch_streamlit_source_instruction_fields()
     return sources, snapshots, " ".join(messages)
 
 
@@ -207,6 +210,59 @@ def _current_selected_source_label(kind: str) -> str:
     return ""
 
 
+def _slot_from_safe_key(value: str) -> str:
+    known = {
+        "Exercise_Regime": "Exercise Regime",
+        "Supplement_Regime": "Supplement Regime",
+    }
+    return known.get(value, value.replace("_", " "))
+
+
+def _autofill_first_row_instruction(kind: str, selected_label: str, snapshot: Dict[str, Any]) -> None:
+    """Use source instructions as the editable first-row member instruction.
+
+    The Profile Builder page already has a first-row Instruction field for Exercise
+    and Supplement. Source Instructions should feed that field when it is blank,
+    not appear again as a duplicate editable source-detail field.
+    """
+    if kind not in {"exercise", "supplement"}:
+        return
+    source_instruction = _clean(snapshot.get("instructions"))
+    if not source_instruction or not selected_label:
+        return
+
+    try:
+        import streamlit as st
+    except Exception:
+        return
+
+    source_field = kind
+    source_suffix = f"_{source_field}"
+    prefix = f"pbw_{kind}_"
+    for key, value in list(st.session_state.items()):
+        key_text = str(key)
+        if not key_text.startswith(prefix) or not key_text.endswith(source_suffix):
+            continue
+        if _clean(value) != selected_label:
+            continue
+
+        base = key_text[: -len(source_suffix)]
+        instruction_widget_key = f"{base}_instruction"
+        if _clean(st.session_state.get(instruction_widget_key)):
+            continue
+
+        st.session_state[instruction_widget_key] = source_instruction
+
+        remainder = base[len(prefix):]
+        parts = remainder.split("_")
+        if len(parts) >= 3:
+            day = parts[0]
+            idx = parts[-1]
+            slot = _slot_from_safe_key("_".join(parts[1:-1]))
+            st.session_state.setdefault("pb_items", {})
+            st.session_state["pb_items"][f"{kind}|{day}|{slot}|{idx}|instruction"] = source_instruction
+
+
 def source_snapshot_for_label(item_type: str, label: str) -> Dict[str, Any]:
     _, snapshots, _ = build_profile_builder_source_contract()
     kind = _clean(item_type).lower()
@@ -216,11 +272,18 @@ def source_snapshot_for_label(item_type: str, label: str) -> Dict[str, Any]:
     if kind in {"exercise", "workout"}:
         exact = snapshots.get("exercise", {}).get(clean_label, {})
         if exact:
+            _autofill_first_row_instruction("exercise", clean_label, exact)
             return exact
         recovered_label = _current_selected_source_label("exercise")
-        return snapshots.get("exercise", {}).get(recovered_label, {})
+        recovered = snapshots.get("exercise", {}).get(recovered_label, {})
+        if recovered:
+            _autofill_first_row_instruction("exercise", recovered_label, recovered)
+        return recovered
     if kind == "supplement":
-        return snapshots.get("supplement", {}).get(clean_label, {})
+        snapshot = snapshots.get("supplement", {}).get(clean_label, {})
+        if snapshot:
+            _autofill_first_row_instruction("supplement", clean_label, snapshot)
+        return snapshot
     return {}
 
 
@@ -239,7 +302,7 @@ def _effective_snapshot_with_overrides(label: str, snapshot: Dict[str, Any]) -> 
     overrides = _session_overrides_for_snapshot(snapshot, label)
     effective = copy.deepcopy(snapshot)
     for field, value in overrides.items():
-        if field == "image_reference":
+        if field in {"image_reference", "instructions"}:
             continue
         effective[field] = value
     effective["source_original_snapshot"] = original
@@ -263,3 +326,34 @@ def source_storage_payload(item_type: str, label: str) -> Dict[str, Any]:
         "source_image_path": _clean(image.get("image_path")),
         "source_image_access_type": _clean(image.get("image_access_type")),
     }
+
+
+def patch_streamlit_source_instruction_fields() -> None:
+    """Hide duplicate Source Instructions fields from the second source-detail row."""
+    global _SOURCE_INSTRUCTION_FIELD_PATCHED
+    if _SOURCE_INSTRUCTION_FIELD_PATCHED:
+        return
+    try:
+        from streamlit.delta_generator import DeltaGenerator
+    except Exception:
+        return
+
+    original_text_area = DeltaGenerator.text_area
+
+    def source_instruction_aware_text_area(self, label, *args, **kwargs):
+        if _clean(label) == "Source Instructions":
+            key = kwargs.get("key")
+            try:
+                import streamlit as st
+                if key and key not in st.session_state:
+                    st.session_state[key] = ""
+            except Exception:
+                pass
+            return ""
+        return original_text_area(self, label, *args, **kwargs)
+
+    DeltaGenerator.text_area = source_instruction_aware_text_area
+    _SOURCE_INSTRUCTION_FIELD_PATCHED = True
+
+
+patch_streamlit_source_instruction_fields()
