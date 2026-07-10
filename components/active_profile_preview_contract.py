@@ -1,9 +1,9 @@
 import datetime as dt
+import html
 import os
 import re
 from typing import Any, Dict, List, Tuple
 
-import pandas as pd
 import streamlit as st
 
 from components.recommendation_profile_store import load_member_options
@@ -38,6 +38,58 @@ def _clean(value: object, default: str = "") -> str:
     if value is None:
         return default
     return str(value).strip()
+
+
+def _display(value: object, default: str = "NA") -> str:
+    text = _clean(value)
+    return text if text else default
+
+
+def _html(value: object, default: str = "NA") -> str:
+    return html.escape(_display(value, default), quote=True)
+
+
+def _safe_int(value: object, default: int = 0) -> int:
+    try:
+        return int(value or default)
+    except Exception:
+        return default
+
+
+def _render_html_table(rows: List[Dict[str, Any]], empty_message: str = "No rows found.") -> None:
+    """Render string-only HTML tables instead of Streamlit dataframes.
+
+    Streamlit/PyArrow dataframe rendering can hard-fail the app when a Supabase row
+    contains mixed/null/object-like values. Active Preview must never crash when a
+    member is selected, so this table path converts every value to escaped text.
+    """
+    if not rows:
+        st.info(empty_message)
+        return
+    columns: List[str] = []
+    for row in rows:
+        for key in row.keys():
+            if key not in columns:
+                columns.append(key)
+    header = "".join(f"<th>{_html(column)}</th>" for column in columns)
+    body_rows = []
+    for row in rows:
+        cells = "".join(f"<td>{_html(row.get(column))}</td>" for column in columns)
+        body_rows.append(f"<tr>{cells}</tr>")
+    st.markdown(
+        "<div style='overflow-x:auto;margin:.35rem 0 1rem 0;'>"
+        "<table style='width:100%;border-collapse:collapse;font-size:.8rem;'>"
+        f"<thead><tr>{header}</tr></thead>"
+        f"<tbody>{''.join(body_rows)}</tbody>"
+        "</table>"
+        "</div>"
+        "<style>"
+        "table th{background:#FFF7ED;color:#064E3B;text-align:left;font-weight:900;}"
+        "table th,table td{border:1px solid #E3C98E;padding:.42rem .5rem;vertical-align:top;}"
+        "table td{background:#FFFFFF;color:#475569;font-weight:650;}"
+        "</style>",
+        unsafe_allow_html=True,
+    )
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -93,7 +145,7 @@ def parse_dosage_frequency(value: object) -> Tuple[int, str]:
         return 0, ""
     match = re.match(r"^Frequency:\s*(\d+)\s*;\s*Dosage:\s*(.*)$", raw)
     if match:
-        return int(match.group(1) or 0), _clean(match.group(2))
+        return _safe_int(match.group(1)), _clean(match.group(2))
     return 0, raw
 
 
@@ -247,9 +299,9 @@ def member_contract_item(row: dict) -> Dict[str, Any]:
     frequency, dosage = parse_dosage_frequency(row.get("dosage_frequency"))
     base = {
         "type": item_type,
-        "day_number": int(row.get("day_number") or 0),
+        "day_number": _safe_int(row.get("day_number")),
         "slot_name": row.get("slot_name") or "",
-        "item_order": int(row.get("item_order") or 0),
+        "item_order": _safe_int(row.get("item_order")),
         "name": row.get("reference_label") or "",
         "instruction": row.get("instruction") or "",
         "source": {
@@ -298,7 +350,7 @@ def build_member_consumption_contract(profile: dict, items: List[dict]) -> Dict[
     active_items = [row for row in items if row_has_content(row)]
     days = []
     for day in range(1, 8):
-        day_items = [member_contract_item(row) for row in active_items if int(row.get("day_number") or 0) == day]
+        day_items = [member_contract_item(row) for row in active_items if _safe_int(row.get("day_number")) == day]
         days.append({
             "day_number": day,
             "day_label": date_label(profile.get("start_date"), day),
@@ -349,7 +401,7 @@ def contract_summary(profile: dict, items: List[dict]) -> Dict[str, Any]:
         guidance.append("No exercise rows found in active profile.")
     if profile and counts["supplement"] == 0:
         guidance.append("No supplement rows found in active profile.")
-    day_numbers = {int(row.get("day_number") or 0) for row in active_items if int(row.get("day_number") or 0) in range(1, 8)}
+    day_numbers = {_safe_int(row.get("day_number")) for row in active_items if _safe_int(row.get("day_number")) in range(1, 8)}
     missing_days = [day for day in range(1, 8) if day not in day_numbers]
     if profile and missing_days:
         guidance.append(f"No rows found for Day(s): {', '.join(str(day) for day in missing_days)}.")
@@ -367,7 +419,7 @@ def contract_summary(profile: dict, items: List[dict]) -> Dict[str, Any]:
 def display_rows_for_day(items: List[dict], day: int) -> List[dict]:
     rows = []
     for row in items:
-        if int(row.get("day_number") or 0) != day:
+        if _safe_int(row.get("day_number")) != day:
             continue
         item_type = row.get("item_type")
         if item_type == "meal":
@@ -414,13 +466,13 @@ def render_profile_summary(profile: dict, summary: dict) -> None:
     st.markdown(f"""
 <div class='hm-preview'>
 <b>Active Profile Summary</b><br>
-<span class='hm-pill {status_class}'>{status_label}</span><br>
-<b>Profile:</b> {profile.get('profile_name') or 'NA'}<br>
-<b>Member:</b> {profile.get('assigned_member_label') or 'NA'}<br>
-<b>Status:</b> {profile.get('status') or 'NA'}<br>
-<b>Start Date:</b> {profile.get('start_date') or 'NA'}<br>
-<b>Tags:</b> {profile.get('region') or 'NA'} · {profile.get('age_band') or 'NA'} · {profile.get('diet_type') or 'NA'}<br>
-<b>Profile Note:</b> {profile.get('profile_note') or 'NA'}
+<span class='hm-pill {status_class}'>{_html(status_label)}</span><br>
+<b>Profile:</b> {_html(profile.get('profile_name'))}<br>
+<b>Member:</b> {_html(profile.get('assigned_member_label'))}<br>
+<b>Status:</b> {_html(profile.get('status'))}<br>
+<b>Start Date:</b> {_html(profile.get('start_date'))}<br>
+<b>Tags:</b> {_html(profile.get('region'))} · {_html(profile.get('age_band'))} · {_html(profile.get('diet_type'))}<br>
+<b>Profile Note:</b> {_html(profile.get('profile_note'))}
 </div>
 """, unsafe_allow_html=True)
     st.markdown(f"""
@@ -433,7 +485,7 @@ def render_profile_summary(profile: dict, summary: dict) -> None:
 """, unsafe_allow_html=True)
 
 
-def render_active_profile_preview_contract(show_raw_payload: bool = False, diagnostic_mode: bool = False) -> None:
+def _render_active_profile_preview_contract_inner(show_raw_payload: bool = False, diagnostic_mode: bool = False) -> None:
     title = "Active Profile Contract Diagnostics" if diagnostic_mode else "Active Profile Member Consumption Contract"
     subtitle = (
         "System Tools diagnostic view with the raw active profile contract payload for backend troubleshooting."
@@ -441,8 +493,8 @@ def render_active_profile_preview_contract(show_raw_payload: bool = False, diagn
         else "Admin-only preview of the active profile as the member-facing layer should consume it, including source snapshots, admin overrides and image references. No Flutter/member display is changed in this sprint."
     )
     st.markdown(
-        f"<div class='hm-title'>{title}</div>"
-        f"<div class='hm-sub'>{subtitle}</div>",
+        f"<div class='hm-title'>{_html(title)}</div>"
+        f"<div class='hm-sub'>{_html(subtitle)}</div>",
         unsafe_allow_html=True,
     )
     ok_members, members, member_message = load_members_for_preview()
@@ -470,7 +522,6 @@ def render_active_profile_preview_contract(show_raw_payload: bool = False, diagn
         return
 
     summary = contract_summary(profile, items)
-    member_contract = build_member_consumption_contract(profile, summary["items"])
     render_profile_summary(profile, summary)
     for issue in summary["issues"]:
         st.error(issue)
@@ -482,13 +533,21 @@ def render_active_profile_preview_contract(show_raw_payload: bool = False, diagn
     day_tabs = st.tabs([f"Day {day}" for day in range(1, 8)])
     for day, tab in zip(range(1, 8), day_tabs):
         with tab:
-            st.markdown(f"<div class='hm-slot'>{date_label(profile.get('start_date'), day)}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='hm-slot'>{_html(date_label(profile.get('start_date'), day))}</div>", unsafe_allow_html=True)
             rows = display_rows_for_day(summary["items"], day)
-            if rows:
-                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-            else:
-                st.info("No recommendation rows found for this day.")
+            _render_html_table(rows, "No recommendation rows found for this day.")
 
     if show_raw_payload:
         with st.expander("Raw active member consumption contract payload", expanded=False):
-            st.json(member_contract)
+            try:
+                st.json(build_member_consumption_contract(profile, summary["items"]))
+            except Exception as exc:
+                st.warning(f"Raw payload preview could not be rendered safely: {exc}")
+
+
+def render_active_profile_preview_contract(show_raw_payload: bool = False, diagnostic_mode: bool = False) -> None:
+    try:
+        _render_active_profile_preview_contract_inner(show_raw_payload=show_raw_payload, diagnostic_mode=diagnostic_mode)
+    except Exception as exc:
+        st.error(f"Active Profile Preview could not complete this action: {exc}")
+        st.caption("Use Refresh Active Profile Preview once. If this repeats, share the displayed message instead of the generic Streamlit error page.")
