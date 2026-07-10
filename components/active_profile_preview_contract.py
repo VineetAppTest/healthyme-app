@@ -20,6 +20,18 @@ SUPPLEMENT_TIMELINE = [
     "After Dinner",
     "Before Bed",
 ]
+ITEM_SELECT_LEGACY = "item_type,day_number,slot_name,item_order,reference_label,portion,instruction,scheduled_time,intensity,dosage_frequency"
+SOURCE_COLUMNS = [
+    "source_type",
+    "source_id",
+    "source_label",
+    "source_snapshot",
+    "source_image_url",
+    "source_image_bucket",
+    "source_image_path",
+    "source_image_access_type",
+]
+ITEM_SELECT_WITH_SOURCE = ITEM_SELECT_LEGACY + "," + ",".join(SOURCE_COLUMNS)
 
 
 def _clean(value: object, default: str = "") -> str:
@@ -69,6 +81,10 @@ def _client():
 
 def _rows(response) -> List[dict]:
     return list(getattr(response, "data", None) or [])
+
+
+def _as_dict(value: object) -> Dict[str, Any]:
+    return value if isinstance(value, dict) else {}
 
 
 def parse_dosage_frequency(value: object) -> Tuple[int, str]:
@@ -125,16 +141,28 @@ def load_active_profile_for_member(member_id: str) -> Tuple[bool, Dict[str, Any]
         if not profiles:
             return True, {}, [], "No active recommendation profile found for this member."
         profile = profiles[0]
-        item_result = (
-            c.table(ITEM_TABLE)
-            .select("item_type,day_number,slot_name,item_order,reference_label,portion,instruction,scheduled_time,intensity,dosage_frequency")
-            .eq("profile_id", profile.get("id"))
-            .order("day_number")
-            .order("item_type")
-            .order("item_order")
-            .execute()
-        )
-        return True, profile, _rows(item_result), "Loaded active profile preview contract."
+        try:
+            item_result = (
+                c.table(ITEM_TABLE)
+                .select(ITEM_SELECT_WITH_SOURCE)
+                .eq("profile_id", profile.get("id"))
+                .order("day_number")
+                .order("item_type")
+                .order("item_order")
+                .execute()
+            )
+            return True, profile, _rows(item_result), "Loaded active profile with source-backed member consumption contract."
+        except Exception:
+            item_result = (
+                c.table(ITEM_TABLE)
+                .select(ITEM_SELECT_LEGACY)
+                .eq("profile_id", profile.get("id"))
+                .order("day_number")
+                .order("item_type")
+                .order("item_order")
+                .execute()
+            )
+            return True, profile, _rows(item_result), "Loaded active profile using legacy item fields. Run/confirm H9A.10C SQL for full source-backed member contract."
     except Exception as exc:
         return False, {}, [], f"Could not load active profile preview: {exc}"
 
@@ -148,6 +176,152 @@ def row_has_content(row: dict) -> bool:
     return any(_clean(row.get(field)) for field in ("reference_label", "portion", "instruction", "scheduled_time", "intensity", "dosage_frequency"))
 
 
+def source_snapshot(row: dict) -> Dict[str, Any]:
+    return _as_dict(row.get("source_snapshot"))
+
+
+def source_original_snapshot(row: dict) -> Dict[str, Any]:
+    snapshot = source_snapshot(row)
+    original = _as_dict(snapshot.get("source_original_snapshot"))
+    return original or snapshot
+
+
+def source_overrides(row: dict) -> Dict[str, Any]:
+    return _as_dict(source_snapshot(row).get("admin_source_overrides"))
+
+
+def source_value(row: dict, field: str, default: str = "") -> str:
+    snapshot = source_snapshot(row)
+    original = source_original_snapshot(row)
+    return _clean(snapshot.get(field) or original.get(field), default)
+
+
+def image_reference_text(row: dict) -> str:
+    parts = []
+    for field in ("source_image_url", "source_image_bucket", "source_image_path"):
+        value = _clean(row.get(field))
+        if value:
+            parts.append(value)
+    if parts:
+        return " | ".join(parts)
+    image = _as_dict(source_original_snapshot(row).get("image"))
+    for field in ("image_url", "image_bucket", "image_path"):
+        value = _clean(image.get(field))
+        if value:
+            parts.append(value)
+    return " | ".join(parts) or "No image reference"
+
+
+def source_context_text(row: dict) -> str:
+    item_type = row.get("item_type")
+    if item_type == "meal":
+        parts = [
+            source_value(row, "meal_type"),
+            source_value(row, "diet_type"),
+            source_value(row, "prep_time"),
+            source_value(row, "calories"),
+        ]
+    elif item_type == "exercise":
+        parts = [
+            source_value(row, "category"),
+            source_value(row, "difficulty"),
+            source_value(row, "duration_or_reps"),
+            source_value(row, "equipment"),
+        ]
+    elif item_type == "supplement":
+        parts = [
+            source_value(row, "timing"),
+            source_value(row, "admin_notes"),
+        ]
+    else:
+        parts = []
+    return " | ".join([part for part in parts if part]) or "NA"
+
+
+def source_snapshot_count(items: List[dict]) -> int:
+    return len([row for row in items if source_snapshot(row)])
+
+
+def member_contract_item(row: dict) -> Dict[str, Any]:
+    item_type = row.get("item_type")
+    frequency, dosage = parse_dosage_frequency(row.get("dosage_frequency"))
+    base = {
+        "type": item_type,
+        "day_number": int(row.get("day_number") or 0),
+        "slot_name": row.get("slot_name") or "",
+        "item_order": int(row.get("item_order") or 0),
+        "name": row.get("reference_label") or "",
+        "instruction": row.get("instruction") or "",
+        "source": {
+            "source_type": row.get("source_type") or "",
+            "source_id": row.get("source_id") or "",
+            "source_label": row.get("source_label") or row.get("reference_label") or "",
+            "image_reference": image_reference_text(row),
+            "admin_source_overrides": source_overrides(row),
+            "original_snapshot": source_original_snapshot(row),
+        },
+    }
+    if item_type == "meal":
+        base.update({
+            "timing_or_slot": row.get("slot_name") or "",
+            "portion": row.get("portion") or "",
+            "meal_type": source_value(row, "meal_type"),
+            "diet_type": source_value(row, "diet_type"),
+            "prep_time": source_value(row, "prep_time"),
+            "calories": source_value(row, "calories"),
+            "ingredients": source_value(row, "ingredients"),
+            "steps": source_value(row, "steps"),
+        })
+    elif item_type == "exercise":
+        base.update({
+            "timing_or_slot": row.get("scheduled_time") or row.get("slot_name") or "",
+            "category": source_value(row, "category"),
+            "difficulty": source_value(row, "difficulty") or row.get("intensity") or "",
+            "duration_or_reps": source_value(row, "duration_or_reps"),
+            "equipment": source_value(row, "equipment"),
+            "benefits": source_value(row, "benefits"),
+        })
+    elif item_type == "supplement":
+        base.update({
+            "timing_or_slot": row.get("scheduled_time") or row.get("slot_name") or "",
+            "frequency": frequency,
+            "dosage": dosage,
+            "source_timing": source_value(row, "timing"),
+            "admin_notes": source_value(row, "admin_notes"),
+            "source_start_date": source_value(row, "start_date"),
+            "source_end_date": source_value(row, "end_date"),
+        })
+    return base
+
+
+def build_member_consumption_contract(profile: dict, items: List[dict]) -> Dict[str, Any]:
+    active_items = [row for row in items if row_has_content(row)]
+    days = []
+    for day in range(1, 8):
+        day_items = [member_contract_item(row) for row in active_items if int(row.get("day_number") or 0) == day]
+        days.append({
+            "day_number": day,
+            "day_label": date_label(profile.get("start_date"), day),
+            "items": day_items,
+        })
+    return {
+        "profile": {
+            "id": profile.get("id") or "",
+            "profile_name": profile.get("profile_name") or "",
+            "assigned_member_id": profile.get("assigned_member_id") or "",
+            "assigned_member_label": profile.get("assigned_member_label") or "",
+            "start_date": profile.get("start_date") or "",
+            "cycle_rule": profile.get("cycle_rule") or "Weekly cyclical until replaced or stopped",
+            "profile_note": profile.get("profile_note") or "",
+            "region": profile.get("region") or "",
+            "age_band": profile.get("age_band") or "",
+            "diet_type": profile.get("diet_type") or "",
+            "health_concerns": profile.get("health_concerns") or [],
+        },
+        "days": days,
+    }
+
+
 def contract_summary(profile: dict, items: List[dict]) -> Dict[str, Any]:
     active_items = [row for row in items if row_has_content(row)]
     counts = {
@@ -155,6 +329,7 @@ def contract_summary(profile: dict, items: List[dict]) -> Dict[str, Any]:
         "exercise": len([row for row in active_items if row.get("item_type") == "exercise"]),
         "supplement": len([row for row in active_items if row.get("item_type") == "supplement"]),
         "total": len(active_items),
+        "source_snapshots": source_snapshot_count(active_items),
     }
     issues = []
     guidance = []
@@ -166,6 +341,8 @@ def contract_summary(profile: dict, items: List[dict]) -> Dict[str, Any]:
         issues.append("Active profile has no assigned member id.")
     if profile and not active_items:
         issues.append("Active profile has no recommendation rows.")
+    if profile and counts["source_snapshots"] < counts["total"]:
+        guidance.append(f"Source-backed contract coverage: {counts['source_snapshots']} of {counts['total']} active row(s) include source snapshots.")
     if profile and counts["meal"] == 0:
         guidance.append("No meal rows found in active profile.")
     if profile and counts["exercise"] == 0:
@@ -199,17 +376,21 @@ def display_rows_for_day(items: List[dict], day: int) -> List[dict]:
                 "Timing / Slot": row.get("slot_name") or "NA",
                 "Item": row.get("reference_label") or "NA",
                 "Portion / Dosage": row.get("portion") or "NA",
-                "Intensity / Frequency": "NA",
+                "Difficulty / Frequency": "NA",
                 "Instruction": row.get("instruction") or "NA",
+                "Source Context": source_context_text(row),
+                "Image Reference": image_reference_text(row),
             })
         elif item_type == "exercise":
             rows.append({
                 "Type": "Exercise",
                 "Timing / Slot": row.get("scheduled_time") or row.get("slot_name") or "NA",
                 "Item": row.get("reference_label") or "NA",
-                "Portion / Dosage": "NA",
-                "Intensity / Frequency": row.get("intensity") or "NA",
+                "Portion / Dosage": source_value(row, "duration_or_reps") or "NA",
+                "Difficulty / Frequency": source_value(row, "difficulty") or row.get("intensity") or "NA",
                 "Instruction": row.get("instruction") or "NA",
+                "Source Context": source_context_text(row),
+                "Image Reference": image_reference_text(row),
             })
         elif item_type == "supplement":
             frequency, dosage = parse_dosage_frequency(row.get("dosage_frequency"))
@@ -218,8 +399,10 @@ def display_rows_for_day(items: List[dict], day: int) -> List[dict]:
                 "Timing / Slot": row.get("scheduled_time") or row.get("slot_name") or "NA",
                 "Item": row.get("reference_label") or "NA",
                 "Portion / Dosage": dosage or "NA",
-                "Intensity / Frequency": frequency or "NA",
+                "Difficulty / Frequency": frequency or "NA",
                 "Instruction": row.get("instruction") or "NA",
+                "Source Context": source_context_text(row),
+                "Image Reference": image_reference_text(row),
             })
     return rows
 
@@ -245,17 +428,17 @@ def render_profile_summary(profile: dict, summary: dict) -> None:
   <div class='hm-count-card'><b>{counts['meal']}</b><span>Meal rows</span></div>
   <div class='hm-count-card'><b>{counts['exercise']}</b><span>Exercise rows</span></div>
   <div class='hm-count-card'><b>{counts['supplement']}</b><span>Supplement rows</span></div>
-  <div class='hm-count-card'><b>{counts['total']}</b><span>Total rows</span></div>
+  <div class='hm-count-card'><b>{counts['source_snapshots']}/{counts['total']}</b><span>Source-backed rows</span></div>
 </div>
 """, unsafe_allow_html=True)
 
 
 def render_active_profile_preview_contract(show_raw_payload: bool = False, diagnostic_mode: bool = False) -> None:
-    title = "Active Profile Contract Diagnostics" if diagnostic_mode else "Active Profile Member Preview Contract"
+    title = "Active Profile Contract Diagnostics" if diagnostic_mode else "Active Profile Member Consumption Contract"
     subtitle = (
         "System Tools diagnostic view with the raw active profile contract payload for backend troubleshooting."
         if diagnostic_mode
-        else "Admin-only preview of the active profile exactly as the member-facing layer should consume it. No Flutter/member display is changed in this sprint."
+        else "Admin-only preview of the active profile as the member-facing layer should consume it, including source snapshots, admin overrides and image references. No Flutter/member display is changed in this sprint."
     )
     st.markdown(
         f"<div class='hm-title'>{title}</div>"
@@ -287,13 +470,15 @@ def render_active_profile_preview_contract(show_raw_payload: bool = False, diagn
         return
 
     summary = contract_summary(profile, items)
+    member_contract = build_member_consumption_contract(profile, summary["items"])
     render_profile_summary(profile, summary)
     for issue in summary["issues"]:
         st.error(issue)
     for guidance in summary["guidance"][:10]:
         st.warning(guidance)
 
-    st.markdown("<div class='hm-title'>Day-wise Member Preview</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-title'>Day-wise Member Consumption Preview</div>", unsafe_allow_html=True)
+    st.caption("This table shows the member-ready contract: final admin-facing row values plus source-backed context. Image fields are references only; images are not loaded here.")
     day_tabs = st.tabs([f"Day {day}" for day in range(1, 8)])
     for day, tab in zip(range(1, 8), day_tabs):
         with tab:
@@ -305,5 +490,5 @@ def render_active_profile_preview_contract(show_raw_payload: bool = False, diagn
                 st.info("No recommendation rows found for this day.")
 
     if show_raw_payload:
-        with st.expander("Raw active profile contract payload", expanded=False):
-            st.json({"profile": profile, "items": summary["items"]})
+        with st.expander("Raw active member consumption contract payload", expanded=False):
+            st.json(member_contract)
