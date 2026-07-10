@@ -180,15 +180,47 @@ def build_profile_builder_source_contract() -> Tuple[Dict[str, List[str]], Dict[
     return sources, snapshots, " ".join(messages)
 
 
+def _current_selected_source_label(kind: str) -> str:
+    """Recover the real selected source label when the page passes a later select field.
+
+    In the Exercise row, Time of Day and Intensity are also selectboxes. The page
+    rendered the source details using the last selectbox value, so Exercise details
+    were looked up with values like Morning or -- Select intensity. This fallback
+    scans the active Streamlit row state and returns the selected Exercise title.
+    """
+    try:
+        import streamlit as st
+    except Exception:
+        return ""
+
+    field_name = "recipe" if kind in {"meal", "recipe"} else kind
+    prefix_kind = "meal" if kind in {"meal", "recipe"} else kind
+    prefix = f"pbw_{prefix_kind}_"
+    suffix = f"_{field_name}"
+    for key, value in st.session_state.items():
+        key_text = str(key)
+        selected = _clean(value)
+        if not key_text.startswith(prefix) or not key_text.endswith(suffix):
+            continue
+        if selected and not selected.startswith("-- Select"):
+            return selected
+    return ""
+
+
 def source_snapshot_for_label(item_type: str, label: str) -> Dict[str, Any]:
     _, snapshots, _ = build_profile_builder_source_contract()
     kind = _clean(item_type).lower()
+    clean_label = _clean(label)
     if kind in {"meal", "recipe"}:
-        return snapshots.get("recipe", {}).get(_clean(label), {})
+        return snapshots.get("recipe", {}).get(clean_label, {})
     if kind in {"exercise", "workout"}:
-        return snapshots.get("exercise", {}).get(_clean(label), {})
+        exact = snapshots.get("exercise", {}).get(clean_label, {})
+        if exact:
+            return exact
+        recovered_label = _current_selected_source_label("exercise")
+        return snapshots.get("exercise", {}).get(recovered_label, {})
     if kind == "supplement":
-        return snapshots.get("supplement", {}).get(_clean(label), {})
+        return snapshots.get("supplement", {}).get(clean_label, {})
     return {}
 
 
