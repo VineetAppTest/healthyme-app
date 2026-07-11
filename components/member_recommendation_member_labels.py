@@ -108,6 +108,11 @@ def _render_todays_plan_body(profile: dict, items: list[dict]) -> None:
         _render_section("Exercises", items_for_day(items, today_day, "exercise"), "No exercise recommendation added for today.", compact=True)
     _render_member_guidance(profile, items, day=today_day, title="Nutrition Guidance")
 
+    st.divider()
+    if st.button("Log today's activity", key="hm_todays_plan_log_activity", use_container_width=True):
+        st.session_state["hm_daily_log_target_tab"] = "Food Journal"
+        st.switch_page("pages/18_Daily_Log.py")
+
 
 def _render_weekly_plan_body(profile: dict, items: list[dict]) -> None:
     meal_tab, supplement_tab, exercise_tab, guidance_tab = st.tabs(["Meals", "Supplements", "Exercises", "Nutrition Guidance"])

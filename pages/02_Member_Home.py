@@ -3,6 +3,7 @@ import html
 import streamlit as st
 
 from components.assessment_instances import get_current_assessment_instance
+from components.auth_session import logout_current_user
 from components.db import (
     auto_archive_expired_nutritionist_messages,
     get_member_messages,
@@ -25,7 +26,6 @@ from components.ui_common import (
     inject_keepalive_guard_v96_11,
     stat_grid,
     topbar,
-    utility_logout_bar,
 )
 
 
@@ -79,6 +79,31 @@ def task_status_done_v96_2(instance, wf_state, task_key):
     if task_key == "body_mind":
         return bool(instance.get("body_mind_completed")) or bool(wf_state.get("body_mind_completed"))
     return False
+
+
+def _member_email():
+    return (
+        st.session_state.get("user_email")
+        or st.session_state.get("oidc_email")
+        or st.session_state.get("email")
+        or st.session_state.get("username")
+        or "member"
+    )
+
+
+def _render_member_utility_bar():
+    signed_col, profile_col, role_col, logout_col = st.columns([3.2, 0.95, 1.05, 0.85], gap="small")
+    with signed_col:
+        st.markdown(f"<div class='hm-member-top-text'>Signed in as: <b>{_esc(_member_email())}</b></div>", unsafe_allow_html=True)
+    with profile_col:
+        if st.button("My Profile", key="hm_top_my_profile", use_container_width=True):
+            st.switch_page("pages/07_My_Profile.py")
+    with role_col:
+        st.markdown("<div class='hm-member-role-pill'>Active member</div>", unsafe_allow_html=True)
+    with logout_col:
+        if st.button("Logout", key="hm_top_logout", use_container_width=True):
+            logout_current_user()
+            st.rerun()
 
 
 def _render_messages(user_id):
@@ -209,6 +234,12 @@ def _render_task_progress(current_instance, wf, requested_pages):
                 st.switch_page("pages/19_Body_Mind_Connection.py")
 
 
+def _muted_action(label: str, page: str, key: str, disabled: bool = False):
+    st.markdown("<div class='hm-muted-action-anchor'></div>", unsafe_allow_html=True)
+    if st.button(label, key=key, use_container_width=True, disabled=disabled):
+        st.switch_page(page)
+
+
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id) or {}
 if _workflow_finalized(wf) and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
@@ -221,12 +252,14 @@ requested_pages = _normalised_requested_pages(current_instance)
 for _repo_detail_key in ["hm_recipe_selected_id", "hm_recipe_detail_mode", "hm_exercise_selected_id", "hm_exercise_detail_mode"]:
     st.session_state.pop(_repo_detail_key, None)
 
-utility_logout_bar()
+_render_member_utility_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 
 st.markdown(
     """
 <style>
+.hm-member-top-text{min-height:2.84rem;display:flex;align-items:center;color:#64748B;font-size:.82rem;font-weight:760;background:rgba(255,255,255,.66);border:1px solid #E9DFCC;border-radius:999px;padding:.42rem .72rem;}
+.hm-member-role-pill{min-height:2.84rem;display:flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.76rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.42rem .64rem;}
 .hm-b13-message-shell{border:1px solid #E3C98E;background:#FFFDF8;border-radius:20px;padding:.85rem .95rem;margin:.60rem 0 1rem 0;box-shadow:0 8px 22px rgba(15,23,42,.045);}
 .hm-b13-message-title{color:#064E3B;font-size:1.05rem;font-weight:760;margin-bottom:.50rem;}
 .hm-b13-message-card{border:1px solid #EAD9AA;background:#FFF9EC;border-radius:16px;padding:.75rem .82rem;margin:.45rem 0;}
@@ -246,6 +279,10 @@ st.markdown(
 .hm-v990-task-chip.pending{color:#7A5A16;background:#FFF7E6;}
 .hm-v990-task-chip.done{color:#065F46;background:#ECFDF5;}
 .hm-v990-submit-note{color:#64748B;font-size:.80rem;font-weight:720;margin:.36rem 0 .58rem 0;}
+.hm-muted-action-anchor + div [data-testid="stButton"] > button,
+.hm-muted-action-anchor + div .stButton > button{background:#F4F1EA!important;color:#64748B!important;border-color:#D8D0C0!important;box-shadow:none!important;}
+.hm-muted-action-anchor + div [data-testid="stButton"] > button *,
+.hm-muted-action-anchor + div .stButton > button *{color:#64748B!important;}
 section.main > div.block-container,.main .block-container,[data-testid="stAppViewBlockContainer"],.stMainBlockContainer,.block-container{padding-top:.72rem!important;}
 div[data-testid="stButton"] > button{min-height:2.84rem;height:auto!important;white-space:normal!important;overflow:visible!important;line-height:1.32!important;padding:.58rem .78rem!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 div[data-testid="stButton"] > button p{white-space:normal!important;overflow:visible!important;line-height:1.32!important;margin:0!important;}
@@ -304,30 +341,21 @@ with right:
     card_start()
     st.subheader("Personalized content")
 
-    if st.button("My Profile", use_container_width=True):
-        st.switch_page("pages/07_My_Profile.py")
+    plans_ready = _workflow_finalized(wf)
+    if st.button("Today's Plan", use_container_width=True, disabled=not plans_ready):
+        st.switch_page("pages/36_Todays_Journey.py")
     if st.button("Daily Log", use_container_width=True):
         st.switch_page("pages/18_Daily_Log.py")
     if st.button("My Schedule", use_container_width=True):
         st.switch_page("pages/33_My_Schedule.py")
 
-    if not _workflow_finalized(wf):
-        st.markdown("<div class='lock-card'><b>Recipes, exercises and plans are locked until expert review is complete.</b></div>", unsafe_allow_html=True)
-    else:
-        if st.button("Today's Plan", use_container_width=True):
-            st.switch_page("pages/36_Todays_Journey.py")
-        if st.button("My Weekly Plan", use_container_width=True):
-            st.switch_page("pages/37_Member_Plan.py")
-        if st.button("Recipe Repository", use_container_width=True):
-            st.session_state.pop("hm_recipe_selected_id", None)
-            st.session_state.pop("hm_recipe_detail_mode", None)
-            st.switch_page("pages/08_Recipe_Repository.py")
-        if st.button("Exercise Repository", use_container_width=True):
-            st.session_state.pop("hm_exercise_selected_id", None)
-            st.session_state.pop("hm_exercise_detail_mode", None)
-            st.switch_page("pages/09_Exercise_Repository.py")
-        if st.button("Supplements", use_container_width=True):
-            st.switch_page("pages/40_Member_Supplements.py")
+    if not plans_ready:
+        st.markdown("<div class='lock-card'><b>Weekly plan, recipes, exercises and supplements unlock after expert review is complete.</b></div>", unsafe_allow_html=True)
+
+    _muted_action("My Weekly Plan", "pages/37_Member_Plan.py", "hm_home_weekly_plan_muted", disabled=not plans_ready)
+    _muted_action("Recipe Repository", "pages/08_Recipe_Repository.py", "hm_home_recipe_repo_muted", disabled=not plans_ready)
+    _muted_action("Exercise Repository", "pages/09_Exercise_Repository.py", "hm_home_exercise_repo_muted", disabled=not plans_ready)
+    _muted_action("Supplements", "pages/40_Member_Supplements.py", "hm_home_supplements_muted", disabled=not plans_ready)
 
     card_end()
 
