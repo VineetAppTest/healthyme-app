@@ -24,7 +24,7 @@ from components.db import (
 from components.flash import set_system_message, render_system_message
 
 
-BUILD_NOTE = "v102.4B17H9A10E · Daily Log UX Polish"
+BUILD_NOTE = "v102.4B18H9A10E · Daily Log Regal Expanders"
 
 
 def _text(value):
@@ -267,13 +267,18 @@ def _render_css():
         .hm-h9a4c-warning{border:1px solid #F0C9C9;background:#FFF7F7;color:#9A3412;border-radius:14px;padding:.68rem .78rem;font-weight:800;margin:.5rem 0 .6rem 0;}
         .hm-h9a4c-cardline{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:.75rem .85rem;margin:.45rem 0;}
         .hm-exercise-placeholder{border:1px dashed #D8C18B;background:#FFFDF8;border-radius:16px;padding:1rem;margin:.5rem 0;color:#334155;}
-        div[data-testid="stTabs"] [role="tablist"]{gap:.55rem;margin:.25rem 0 .9rem 0;}
-        div[data-testid="stTabs"] button[role="tab"]{border:1.4px solid #D8A84E!important;border-radius:999px!important;background:#FFFFFF!important;color:#064E3B!important;font-weight:900!important;padding:.56rem 1.05rem!important;box-shadow:0 6px 14px rgba(6,78,59,.06)!important;}
-        div[data-testid="stTabs"] button[aria-selected="true"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border-color:#064E3B!important;box-shadow:0 10px 20px rgba(6,78,59,.14)!important;}
+        div[data-testid="stTabs"] [role="tablist"]{gap:.55rem;margin:.15rem 0 1rem 0;border-bottom:1px solid #E3D4BA;padding-bottom:.45rem;}
+        div[data-testid="stTabs"] button[role="tab"]{border:1.4px solid #D8A84E!important;border-radius:999px!important;background:#FFFFFF!important;color:#064E3B!important;font-weight:950!important;padding:.62rem 1.18rem!important;box-shadow:0 7px 16px rgba(6,78,59,.07)!important;min-height:2.65rem!important;}
+        div[data-testid="stTabs"] button[aria-selected="true"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border-color:#064E3B!important;box-shadow:0 12px 22px rgba(6,78,59,.18)!important;}
         div[data-testid="stTabs"] button[aria-selected="true"] *{color:#FFFFFF!important;}
-        div[data-testid="stExpander"] details{border:1.4px solid #D8A84E!important;border-radius:18px!important;background:#FFFDF8!important;box-shadow:0 8px 18px rgba(15,23,42,.045)!important;overflow:hidden!important;}
-        div[data-testid="stExpander"] summary{min-height:3.05rem!important;background:linear-gradient(180deg,#FFFDF8 0%,#FFF6E5 100%)!important;padding:.68rem .82rem!important;border-radius:16px!important;}
-        div[data-testid="stExpander"] summary p{font-weight:950!important;color:#064E3B!important;font-size:.92rem!important;line-height:1.22!important;}
+        [data-testid="stExpander"]{margin:.58rem 0 .86rem 0!important;}
+        [data-testid="stExpander"] details{border:1.5px solid #D8A84E!important;border-radius:18px!important;background:#FFFDF8!important;box-shadow:0 10px 22px rgba(15,23,42,.055)!important;overflow:hidden!important;}
+        [data-testid="stExpander"] summary{min-height:3.0rem!important;display:flex!important;align-items:center!important;background:linear-gradient(135deg,#FFFDF8 0%,#FFF6E5 100%)!important;padding:.64rem .86rem!important;border-radius:16px!important;white-space:nowrap!important;}
+        [data-testid="stExpander"] summary svg{width:18px!important;height:18px!important;min-width:18px!important;color:#064E3B!important;margin-right:.50rem!important;}
+        [data-testid="stExpander"] summary p,
+        [data-testid="stExpander"] summary span,
+        [data-testid="stExpander"] summary div{font-weight:950!important;color:#064E3B!important;font-size:.93rem!important;line-height:1.16!important;white-space:nowrap!important;overflow-wrap:normal!important;word-break:keep-all!important;}
+        [data-testid="stExpander"] summary:hover{background:linear-gradient(135deg,#FFF8E8 0%,#F7E6BE 100%)!important;}
         div[data-testid="stDateInput"] input, div[data-testid="stTimeInput"] input, div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea, div[data-testid="stSelectbox"] [data-baseweb="select"] > div{border-radius:13px!important;border:1.2px solid #DCC690!important;background:#FFFFFF!important;}
         </style>
         """,
