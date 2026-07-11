@@ -1,50 +1,45 @@
-from components.ui_common import render_page_nav, render_back_to_top
+import html
+
 import streamlit as st
-from components.guards import require_member
-from components.ui_common import inject_keepalive_guard_v96_11, inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, stat_grid, utility_logout_bar, render_build_text_v12, format_local_ts, render_back_to_top
-from components.db import get_workflow, get_member_messages, sync_body_mind_after_admin_completion, hard_sync_body_mind_if_requested, has_explicit_body_mind_access, mark_member_message_read, mark_member_message_read, auto_archive_expired_nutritionist_messages, list_upcoming_member_schedules, schedule_display_status_label_v104b11, queue_schedule_acknowledgement_reminders_v104b11, schedule_acknowledgement_notice_v104b11
-from components.assessment_instances import get_current_assessment_instance, task_progress_summary_v99, task_progress_text_v99
+
+from components.assessment_instances import get_current_assessment_instance
+from components.db import (
+    auto_archive_expired_nutritionist_messages,
+    get_member_messages,
+    get_workflow,
+    hard_sync_body_mind_if_requested,
+    list_upcoming_member_schedules,
+    mark_member_message_read,
+    queue_schedule_acknowledgement_reminders_v104b11,
+    schedule_acknowledgement_notice_v104b11,
+    schedule_display_status_label_v104b11,
+)
 from components.flash import render_system_message, set_system_message
+from components.guards import require_member
+from components.ui_common import (
+    apply_luxe_theme,
+    card_end,
+    card_start,
+    format_local_ts,
+    inject_global_styles,
+    inject_keepalive_guard_v96_11,
+    stat_grid,
+    topbar,
+    utility_logout_bar,
+)
+
 
 st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-
-
+inject_global_styles()
+apply_luxe_theme()
 require_member()
 
 
-
-
-
-
-user_id = st.session_state["user_id"]
-wf = get_workflow(user_id)
-# v32 hard sync:
-# If finalization is complete and manual activation request exists, repair body_mind_unlocked.
-if (wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflow_status") == "finalized") and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
-    hard_sync_body_mind_if_requested(user_id)
-    wf = get_workflow(user_id)
-
-current_instance = get_current_assessment_instance(user_id)
-
-# v102.4B8: Member Home is the clean re-entry point for repositories.
-# Clear any persisted detail view so Repository buttons always open the landing grid.
-for _repo_detail_key in [
-    "hm_recipe_selected_id", "hm_recipe_detail_mode",
-    "hm_exercise_selected_id", "hm_exercise_detail_mode",
-]:
-    st.session_state.pop(_repo_detail_key, None)
-
-
+def _esc(value):
+    return html.escape(str(value or ""))
 
 
 def should_show_body_mind_next_step_v96_6(wf_state, current_inst):
-    """Body-Mind remains a member next-step until completed.
-
-    It should be visible under Your next steps if:
-    - it is explicitly requested in the active task instance, OR
-    - it is unlocked/activated for the member, OR
-    - admin/final review is complete and Body-Mind is still not completed.
-    """
     if bool(wf_state.get("body_mind_completed")) or bool(current_inst.get("body_mind_completed")):
         return False
     requested = current_inst.get("requested_pages", []) or []
@@ -54,12 +49,14 @@ def should_show_body_mind_next_step_v96_6(wf_state, current_inst):
         return True
     return False
 
+
 def task_title_v96_2(task_key):
     return {
         "nsp1": "NSP Page 1",
         "nsp2": "NSP Page 2",
         "body_mind": "Body-Mind Connection",
     }.get(str(task_key), str(task_key))
+
 
 def task_status_done_v96_2(instance, wf_state, task_key):
     if task_key == "nsp1":
@@ -70,55 +67,80 @@ def task_status_done_v96_2(instance, wf_state, task_key):
         return bool(instance.get("body_mind_completed")) or bool(wf_state.get("body_mind_completed"))
     return False
 
-# v31: workflow finalization overrides stale instance review status.
-workflow_finalized = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready")) or wf.get("workflow_status") == "finalized"
-requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
-is_task_instance = current_instance.get("instance_type") in ["Task Request", "Reassessment"] and not current_instance.get("submitted_for_review")
-is_reassessment = is_task_instance
+
+def _workflow_finalized(wf_state):
+    return bool(wf_state.get("admin_completed")) or bool(wf_state.get("final_report_ready")) or wf_state.get("workflow_status") == "finalized"
 
 
+def _render_plan_tile(title, subtitle, chip, button_label, page, button_key):
+    st.markdown(
+        f"""
+        <div class='hm-home-plan-tile'>
+          <div class='hm-home-plan-chip'>{_esc(chip)}</div>
+          <div class='hm-home-plan-title'>{_esc(title)}</div>
+          <div class='hm-home-plan-sub'>{_esc(subtitle)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button(button_label, key=button_key, use_container_width=True):
+        st.switch_page(page)
 
 
+user_id = st.session_state["user_id"]
+wf = get_workflow(user_id) or {}
 
+if _workflow_finalized(wf) and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
+    hard_sync_body_mind_if_requested(user_id)
+    wf = get_workflow(user_id) or {}
 
+current_instance = get_current_assessment_instance(user_id) or {}
 
-
-
-
-
-
+for _repo_detail_key in [
+    "hm_recipe_selected_id",
+    "hm_recipe_detail_mode",
+    "hm_exercise_selected_id",
+    "hm_exercise_detail_mode",
+]:
+    st.session_state.pop(_repo_detail_key, None)
 
 utility_logout_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 
-st.markdown("""
+st.markdown(
+    """
 <style>
-/* v102.4B11 schedule lifecycle notice styling */
-.hm-v104b11-ack-note{
-  border:1px solid #E3C98E;
-  background:#FFF7E6;
-  color:#7A5A16!important;
-  border-radius:12px;
-  padding:.55rem .70rem;
-  margin-top:.45rem!important;
-  font-weight:560!important;
-}
 .hm-b13-message-shell{border:1px solid #E3C98E;background:#FFFDF8;border-radius:20px;padding:.85rem .95rem;margin:.60rem 0 1rem 0;box-shadow:0 8px 22px rgba(15,23,42,.045);}
 .hm-b13-message-title{color:#064E3B;font-size:1.05rem;font-weight:760;margin-bottom:.50rem;}
 .hm-b13-message-card{border:1px solid #EAD9AA;background:#FFF9EC;border-radius:16px;padding:.75rem .82rem;margin:.45rem 0;}
 .hm-b13-message-subject{color:#064E3B;font-weight:700;margin-bottom:.15rem;}
 .hm-b13-message-date{color:#64748B;font-size:.78rem;margin-bottom:.35rem;}
 .hm-b13-message-body{color:#334155!important;font-size:.88rem;line-height:1.45;margin:0;}
+.hm-home-plan-grid-note{color:#64748B;font-size:.82rem;font-weight:720;margin:.25rem 0 .65rem;}
+.hm-home-plan-tile{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:18px;padding:.86rem .92rem;margin:.45rem 0 .48rem 0;box-shadow:0 8px 20px rgba(15,23,42,.045);min-height:7.4rem;}
+.hm-home-plan-chip{display:inline-flex;border:1px solid #D9C28F;background:#FFF7E6;color:#7A5A16;border-radius:999px;padding:.16rem .48rem;font-size:.70rem;font-weight:850;margin-bottom:.36rem;}
+.hm-home-plan-title{color:#064E3B;font-size:1.02rem;font-weight:950;margin-bottom:.18rem;}
+.hm-home-plan-sub{color:#334155;font-size:.82rem;font-weight:720;line-height:1.38;}
+.hm-v101-schedule-card{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:18px;padding:.80rem .95rem;margin:.48rem 0 .72rem 0;box-shadow:0 8px 20px rgba(15,23,42,.045);}
+.hm-v101-schedule-title{color:#064E3B;font-size:.96rem;font-weight:950;margin-bottom:.18rem;}
+.hm-v101-schedule-line{color:#334155;font-size:.82rem;font-weight:720;margin:.08rem 0;}
+.hm-v101-schedule-pill{display:inline-flex;padding:.16rem .44rem;border-radius:999px;border:1px solid #D9C28F;background:#FFF7E6;color:#7A5A16;font-size:.70rem;font-weight:850;margin-left:.22rem;}
+.hm-v104b11-ack-note{border:1px solid #E3C98E;background:#FFF7E6;color:#7A5A16!important;border-radius:12px;padding:.55rem .70rem;margin-top:.45rem!important;font-weight:560!important;}
+.hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:.62rem .72rem;margin:.52rem 0 .62rem 0;}
+.hm-v990-progress-title{color:#064E3B;font-size:.88rem;font-weight:920;margin:0 0 .38rem 0;}
+.hm-v990-progress-line{height:8px;border-radius:999px;background:#EFE7D6;overflow:hidden;margin:.28rem 0 .42rem 0;}
+.hm-v990-progress-fill{height:8px;border-radius:999px;background:#0F766E;}
+.hm-v990-task-chip{display:inline-flex;align-items:center;gap:.25rem;margin:.12rem .22rem .12rem 0;padding:.22rem .48rem;border-radius:999px;border:1px solid #D9C28F;color:#064E3B;background:#FAF8F1;font-size:.74rem;font-weight:850;}
+.hm-v990-task-chip.pending{color:#7A5A16;background:#FFF7E6;}
+.hm-v990-task-chip.done{color:#065F46;background:#ECFDF5;}
+.hm-v990-submit-note{color:#64748B;font-size:.80rem;font-weight:720;margin:.36rem 0 .58rem 0;}
+section.main > div.block-container,.main .block-container,[data-testid="stAppViewBlockContainer"],.stMainBlockContainer,.block-container{padding-top:.72rem!important;}
+div[data-testid="stButton"] > button{min-height:2.84rem;height:auto!important;white-space:normal!important;overflow:visible!important;line-height:1.32!important;padding:.58rem .78rem!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+div[data-testid="stButton"] > button p{white-space:normal!important;overflow:visible!important;line-height:1.32!important;margin:0!important;}
 </style>
-""", unsafe_allow_html=True)
-
-
-
-
-
-
-
-
+""",
+    unsafe_allow_html=True,
+)
 
 render_system_message()
 auto_archive_expired_nutritionist_messages(user_id)
@@ -128,19 +150,18 @@ messages = get_member_messages(user_id, limit=3)
 if messages:
     st.markdown("<div class='hm-b13-message-shell'>", unsafe_allow_html=True)
     st.markdown("<div class='hm-b13-message-title'>Messages from Nutritionist</div>", unsafe_allow_html=True)
-
-    v66_seen_msg_keys = set()
+    seen_msg_keys = set()
     for msg in messages:
-        v66_key = f"{msg.get('member_id','')}|{msg.get('log_date','')}|{' '.join(str(msg.get('message','')).strip().split()).lower()}"
-        if v66_key in v66_seen_msg_keys:
+        msg_key = f"{msg.get('member_id','')}|{msg.get('log_date','')}|{' '.join(str(msg.get('message','')).strip().split()).lower()}"
+        if msg_key in seen_msg_keys:
             continue
-        v66_seen_msg_keys.add(v66_key)
+        seen_msg_keys.add(msg_key)
         st.markdown(
             f"""
             <div class='hm-b13-message-card'>
-              <div class='hm-b13-message-subject'>{msg.get('subject','Message')}</div>
-              <div class='hm-b13-message-date'>{format_local_ts(msg.get('ts',''))}</div>
-              <p class='hm-b13-message-body'>{msg.get('message','')}</p>
+              <div class='hm-b13-message-subject'>{_esc(msg.get('subject','Message'))}</div>
+              <div class='hm-b13-message-date'>{_esc(format_local_ts(msg.get('ts','')))}</div>
+              <p class='hm-b13-message-body'>{_esc(msg.get('message',''))}</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -152,47 +173,47 @@ if messages:
             else:
                 set_system_message("Message could not be archived. Please refresh and try again.", "error")
             st.rerun()
-
     st.markdown("</div>", unsafe_allow_html=True)
 
-
-upcoming_schedules_v101 = list_upcoming_member_schedules(user_id, limit=5)
-if upcoming_schedules_v101:
+upcoming_schedules = list_upcoming_member_schedules(user_id, limit=5)
+if upcoming_schedules:
     st.markdown("<div class='hm-nutritionist-message-shell'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-nutritionist-message-title'>Upcoming Schedule</div>", unsafe_allow_html=True)
-    for schedule_v101 in upcoming_schedules_v101:
-        time_text_v101 = schedule_v101.get("start_time", "")
-        if schedule_v101.get("end_time"):
-            time_text_v101 += f" - {schedule_v101.get('end_time')}"
-        notice_v104b11 = schedule_acknowledgement_notice_v104b11(schedule_v101)
-        notice_html_v104b11 = f"<div class='hm-v101-schedule-line hm-v104b11-ack-note'>{notice_v104b11}</div>" if notice_v104b11 else ""
+    st.markdown("<div class='hm-b13-message-title'>Upcoming Schedule</div>", unsafe_allow_html=True)
+    for schedule in upcoming_schedules:
+        time_text = schedule.get("start_time", "")
+        if schedule.get("end_time"):
+            time_text += f" - {schedule.get('end_time')}"
+        notice = schedule_acknowledgement_notice_v104b11(schedule)
+        notice_html = f"<div class='hm-v101-schedule-line hm-v104b11-ack-note'>{_esc(notice)}</div>" if notice else ""
         st.markdown(
             f"""
             <div class='hm-v101-schedule-card'>
-              <div class='hm-v101-schedule-title'>{schedule_v101.get('title','Scheduled session')}<span class='hm-v101-schedule-pill'>{schedule_display_status_label_v104b11(schedule_v101)}</span></div>
-              <div class='hm-v101-schedule-line'>{schedule_v101.get('schedule_date','')} · {time_text_v101}</div>
-              <div class='hm-v101-schedule-line'>Mode: {schedule_v101.get('mode','-')} · Link/location: {schedule_v101.get('location_or_link') or '-'}</div>
-              {notice_html_v104b11}
+              <div class='hm-v101-schedule-title'>{_esc(schedule.get('title','Scheduled session'))}<span class='hm-v101-schedule-pill'>{_esc(schedule_display_status_label_v104b11(schedule))}</span></div>
+              <div class='hm-v101-schedule-line'>{_esc(schedule.get('schedule_date',''))} · {_esc(time_text)}</div>
+              <div class='hm-v101-schedule-line'>Mode: {_esc(schedule.get('mode','-'))} · Link/location: {_esc(schedule.get('location_or_link') or '-')}</div>
+              {notice_html}
             </div>
             """,
             unsafe_allow_html=True,
         )
     st.markdown("</div>", unsafe_allow_html=True)
 
+requested_pages = current_instance.get("requested_pages", ["nsp1", "nsp2"])
+instance_status = str(current_instance.get("status") or wf.get("workflow_status") or "not_started").replace("_", " ").title()
 stat_grid([
     {"label": "LAF", "value": "Completed" if wf.get("laf_completed") else "Pending", "note": "Lifestyle intake"},
-    {"label": "Current Instance", "value": current_instance.get("instance_number"), "note": current_instance.get("instance_type")},
+    {"label": "Current Instance", "value": current_instance.get("instance_number", "-"), "note": current_instance.get("instance_type", "-")},
     {"label": "Requested Tasks", "value": ", ".join([task_title_v96_2(p) for p in requested_pages]), "note": "Current requirement"},
-    {"label": "Status", "value": current_instance.get("status", wf.get("workflow_status")).replace("_", " ").title(), "note": "Current stage"},
+    {"label": "Status", "value": instance_status, "note": "Current stage"},
 ])
 
-
-# v96.3: Redundant task-request card removed; details now live under Your next steps.
 left, right = st.columns([1.15, .85], gap="large")
 
 with left:
     card_start()
     st.subheader("Your next steps")
+
+    is_task_instance = current_instance.get("instance_type") in ["Task Request", "Reassessment"] and not current_instance.get("submitted_for_review")
 
     if is_task_instance:
         visible_tasks = [p for p in requested_pages if p in ["nsp1", "nsp2", "body_mind"]]
@@ -202,58 +223,50 @@ with left:
             f"""
             <div class='info-banner'>
               <b>Nutritionist has allocated a Task.</b><br>
-              Task allocation date: <b>{current_instance.get('created_date') or '-'}</b><br>
-              Please complete: <b>{', '.join([task_title_v96_2(p) for p in visible_tasks])}</b><br>
-              Due date: <b>{current_instance.get('due_date') or 'Not set'}</b><br>
-              Note: {current_instance.get('admin_note') or '-'}<br><br>
+              Task allocation date: <b>{_esc(current_instance.get('created_date') or '-')}</b><br>
+              Please complete: <b>{_esc(', '.join([task_title_v96_2(p) for p in visible_tasks]))}</b><br>
+              Due date: <b>{_esc(current_instance.get('due_date') or 'Not set')}</b><br>
+              Note: {_esc(current_instance.get('admin_note') or '-')}<br><br>
               LAF is already completed from the original assessment and is not required again.
             </div>
             """,
             unsafe_allow_html=True,
         )
-
-        progress_total_v1003 = len(visible_tasks)
-        progress_done_v1003 = sum(1 for p in visible_tasks if task_status_done_v96_2(current_instance, wf, p))
-        progress_width_v99 = int(round((progress_done_v1003 / progress_total_v1003) * 100)) if progress_total_v1003 else 100
-        task_chips_v99 = []
+        progress_total = len(visible_tasks)
+        progress_done = sum(1 for p in visible_tasks if task_status_done_v96_2(current_instance, wf, p))
+        progress_width = int(round((progress_done / progress_total) * 100)) if progress_total else 100
+        task_chips = []
         for p in visible_tasks:
-            done_v99 = task_status_done_v96_2(current_instance, wf, p)
-            chip_class_v99 = "done" if done_v99 else "pending"
-            chip_label_v99 = "Done" if done_v99 else "Pending"
-            task_chips_v99.append(
-                f"<span class='hm-v990-task-chip {chip_class_v99}'>{task_title_v96_2(p)} · {chip_label_v99}</span>"
-            )
+            done = task_status_done_v96_2(current_instance, wf, p)
+            chip_class = "done" if done else "pending"
+            chip_label = "Done" if done else "Pending"
+            task_chips.append(f"<span class='hm-v990-task-chip {chip_class}'>{_esc(task_title_v96_2(p))} · {chip_label}</span>")
         st.markdown(
             f"""
             <div class='hm-v990-task-progress'>
-              <div class='hm-v990-progress-title'>Task progress: {progress_done_v1003} of {progress_total_v1003} completed</div>
-              <div class='hm-v990-progress-line'><div class='hm-v990-progress-fill' style='width:{progress_width_v99}%;'></div></div>
-              <div>{''.join(task_chips_v99)}</div>
+              <div class='hm-v990-progress-title'>Task progress: {progress_done} of {progress_total} completed</div>
+              <div class='hm-v990-progress-line'><div class='hm-v990-progress-fill' style='width:{progress_width}%;'></div></div>
+              <div>{''.join(task_chips)}</div>
               <div class='hm-v990-submit-note'>Use Submit / Status after completing all requested tasks to send this to admin for review.</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-
         if not visible_tasks:
             st.warning("No active task is selected for this request.")
         else:
-            st.markdown("<div class='hm-v981-task-actions-anchor'></div>", unsafe_allow_html=True)
             task_cols = st.columns(max(1, min(3, len(visible_tasks))))
             col_index = 0
-
             if "nsp1" in visible_tasks:
                 with task_cols[col_index]:
                     if st.button("Start NSP Page 1", use_container_width=True):
                         st.switch_page("pages/04_NSP_Page1.py")
                 col_index += 1
-
             if "nsp2" in visible_tasks:
                 with task_cols[col_index]:
                     if st.button("Start NSP Page 2", use_container_width=True):
                         st.switch_page("pages/05_NSP_Page2.py")
                 col_index += 1
-
             if "body_mind" in visible_tasks:
                 with task_cols[col_index]:
                     body_done = task_status_done_v96_2(current_instance, wf, "body_mind")
@@ -264,10 +277,8 @@ with left:
     elif not wf.get("laf_completed"):
         if st.button("1. Fill LAF", type="primary", use_container_width=True):
             st.switch_page("pages/03_LAF_Form.py")
-
     elif current_instance.get("submitted_for_review"):
         st.info("Your latest evaluation has been submitted and is under review.")
-
     else:
         b1, b2, b3 = st.columns(3)
         with b1:
@@ -279,7 +290,6 @@ with left:
         with b3:
             if st.button("3. Fill NSP Pg 2", use_container_width=True, disabled=("nsp2" not in requested_pages)):
                 st.switch_page("pages/05_NSP_Page2.py")
-
         if should_show_body_mind_next_step_v96_6(wf, current_instance):
             if st.button("Start Body-Mind Connection", use_container_width=True):
                 st.switch_page("pages/19_Body_Mind_Connection.py")
@@ -287,32 +297,44 @@ with left:
     st.divider()
     if st.button("Submit / Status — Send completed tasks for admin review", use_container_width=True):
         st.switch_page("pages/06_Submit_Status.py")
-
     card_end()
 
 with right:
     card_start()
     st.subheader("Personalized content")
 
-    admin_completed = bool(wf.get("admin_completed"))
-
     if st.button("My Profile", use_container_width=True):
         st.switch_page("pages/07_My_Profile.py")
-
     if st.button("Daily Log", use_container_width=True):
         st.switch_page("pages/18_Daily_Log.py")
-
     if st.button("My Schedule", use_container_width=True):
         st.switch_page("pages/33_My_Schedule.py")
 
-    if not admin_completed:
-        st.markdown(
-            "<div class='lock-card'><b>Recipes and exercises are locked until expert review is complete.</b></div>",
-            unsafe_allow_html=True,
-        )
+    if not _workflow_finalized(wf):
+        st.markdown("<div class='lock-card'><b>Recipes, exercises and plan tiles are locked until expert review is complete.</b></div>", unsafe_allow_html=True)
     else:
-        if st.button("Today's Journey", use_container_width=True):
-            st.switch_page("pages/36_Todays_Journey.py")
+        st.markdown("<div class='hm-home-plan-grid-note'>Your plan is split into today's actions and the complete weekly view.</div>", unsafe_allow_html=True)
+        plan_col_1, plan_col_2 = st.columns(2, gap="small")
+        with plan_col_1:
+            _render_plan_tile(
+                "Today's Plan",
+                "Only today's meals, supplements, exercises and guidance.",
+                "Today",
+                "Open Today's Plan",
+                "pages/36_Todays_Journey.py",
+                "hm_home_todays_plan",
+            )
+        with plan_col_2:
+            _render_plan_tile(
+                "My Weekly Plan",
+                "Full seven-day plan organised by meal, supplement, exercise and guidance.",
+                "7 days",
+                "Open My Weekly Plan",
+                "pages/37_Member_Plan.py",
+                "hm_home_weekly_plan",
+            )
+
+        st.divider()
         if st.button("Recipe Repository", use_container_width=True):
             st.session_state.pop("hm_recipe_selected_id", None)
             st.session_state.pop("hm_recipe_detail_mode", None)
@@ -326,573 +348,4 @@ with right:
 
     card_end()
 
-# v96.3: Progress/status summary block removed from Member Home because it duplicated member-facing task/action information.
-# v96.3: Body-Mind Connection removed from Personalized Content; it appears under Your next steps only when requested.
-
-st.markdown("""
-<style>
-/* --- v94.4 Body-Mind button normalization --- */
-.hm-bodymind-btn-anchor + div [data-testid="stButton"] > button,
-.hm-bodymind-btn-anchor + div .stButton > button{
-  background:#FFFFFF!important;
-  color:#064E3B!important;
-  border:1.5px solid #CDBB8F!important;
-  border-radius:14px!important;
-  box-shadow:0 4px 12px rgba(25,36,31,.06)!important;
-}
-.hm-bodymind-btn-anchor + div [data-testid="stButton"] > button *,
-.hm-bodymind-btn-anchor + div .stButton > button *{
-  color:#064E3B!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-
-# v98.4: Deferred style-only injections to avoid top/hero spacing gaps.
-inject_global_styles()
-apply_luxe_theme()
 inject_keepalive_guard_v96_11()
-
-st.markdown("""
-<style>
-/* v98.4 Member Home utility style defer fix */
-/* Broad top-padding reset for current and newer Streamlit containers. */
-section.main > div.block-container,
-.main .block-container,
-[data-testid="stAppViewContainer"] section.main > div.block-container,
-[data-testid="stAppViewBlockContainer"],
-.stMainBlockContainer,
-.block-container{
-  padding-top:.72rem!important;
-}
-
-/* Utility row and hero spacing. */
-.utility-bar{
-  margin-top:0!important;
-  margin-bottom:.04rem!important;
-  padding:.30rem .58rem!important;
-}
-.hero-shell{
-  margin-top:.08rem!important;
-}
-div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
-  margin-top:.08rem!important;
-  padding-top:.08rem!important;
-}
-
-/* Collapse any remaining hidden/style-only markdown containers if browser supports :has. */
-div[data-testid="stElementContainer"]:has(style),
-div[data-testid="stElementContainer"]:has(script),
-.element-container:has(style),
-.element-container:has(script),
-div[data-testid="stMarkdownContainer"]:has(style),
-div[data-testid="stMarkdownContainer"]:has(script){
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:visible!important;
-}
-
-/* Keep task buttons tight. */
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-top:-.35rem!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# v100.13 deferred Member Home CSS to avoid post-hero gap
-
-
-st.markdown("""
-<style>
-/* v100.12 Member Home hero and divider closure */
-.hero-shell{
-  margin-bottom:.10rem!important;
-  padding-bottom:.90rem!important;
-}
-div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
-  margin-bottom:.10rem!important;
-  padding-bottom:.10rem!important;
-}
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.42rem!important;
-  margin-bottom:.42rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.18rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.36rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.92rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  padding:.66rem .84rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v99.0 Member task baseline clarity */
-.hm-v990-task-progress{
-  border:1px solid #E5D2A9;
-  background:#FFFDF8;
-  border-radius:14px;
-  padding:.62rem .72rem;
-  margin:.52rem 0 .62rem 0;
-}
-.hm-v990-progress-title{
-  color:#064E3B;
-  font-size:.88rem;
-  font-weight:920;
-  margin:0 0 .38rem 0;
-}
-.hm-v990-progress-line{
-  height:8px;
-  border-radius:999px;
-  background:#EFE7D6;
-  overflow:hidden;
-  margin:.28rem 0 .42rem 0;
-}
-.hm-v990-progress-fill{
-  height:8px;
-  border-radius:999px;
-  background:#0F766E;
-}
-.hm-v990-task-chip{
-  display:inline-flex;
-  align-items:center;
-  gap:.25rem;
-  margin:.12rem .22rem .12rem 0;
-  padding:.22rem .48rem;
-  border-radius:999px;
-  border:1px solid #D9C28F;
-  color:#064E3B;
-  background:#FAF8F1;
-  font-size:.74rem;
-  font-weight:850;
-}
-.hm-v990-task-chip.pending{
-  color:#7A5A16;
-  background:#FFF7E6;
-}
-.hm-v990-task-chip.done{
-  color:#065F46;
-  background:#ECFDF5;
-}
-.hm-v990-submit-note{
-  color:#64748B;
-  font-size:.80rem;
-  font-weight:720;
-  margin:.36rem 0 .58rem 0;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-
-st.markdown("""
-<style>
-/* v100.6 Member Home spacing/button polish */
-hr{
-  margin-top:.42rem!important;
-  margin-bottom:.42rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.18rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.34rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.52rem!important;
-  white-space:normal!important;
-  line-height:1.25!important;
-  padding:.50rem .72rem!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-
-st.markdown("""
-<style>
-/* v100.7 Member Home divider/button final polish */
-/* Make spacing above and below divider visually equal */
-hr{
-  margin-top:.34rem!important;
-  margin-bottom:.34rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.10rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.28rem!important;
-}
-.hm-v990-task-progress + div{
-  margin-top:.28rem!important;
-}
-/* Personalized Content buttons: taller and stable for full text visibility */
-div[data-testid="stButton"] > button{
-  min-height:2.82rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.32!important;
-  padding:.62rem .80rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.32!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-
-st.markdown("""
-<style>
-/* v100.8 Member Home equal divider spacing hard fix */
-hr{
-  margin-top:.30rem!important;
-  margin-bottom:.30rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.10rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.30rem!important;
-}
-.hm-v990-task-progress + div,
-.hm-v990-task-progress + div hr{
-  margin-top:.30rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.86rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  padding:.64rem .82rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-
-st.markdown("""
-<style>
-/* v100.9 Member Home equal divider spacing final */
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.26rem!important;
-  margin-bottom:.26rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.08rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.26rem!important;
-}
-.hm-v990-task-progress + div{
-  margin-top:.26rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.92rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  padding:.66rem .84rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-
-st.markdown("""
-<style>
-/* v100.10 Member Home submit divider spacing */
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.32rem!important;
-  margin-bottom:.72rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.22rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.46rem!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-
-
-st.markdown("""
-<style>
-/* v100.11 Member Home top-row collapse and divider balance */
-section.main > div.block-container,
-.main .block-container,
-[data-testid="stAppViewBlockContainer"],
-.stMainBlockContainer,
-.block-container{
-  padding-top:.72rem!important;
-  margin-top:0!important;
-}
-div[data-testid="stElementContainer"]:has(style),
-div[data-testid="stElementContainer"]:has(script),
-.element-container:has(style),
-.element-container:has(script),
-div[data-testid="stMarkdownContainer"]:has(style),
-div[data-testid="stMarkdownContainer"]:has(script){
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:visible!important;
-}
-.utility-bar{
-  margin-top:0!important;
-}
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.46rem!important;
-  margin-bottom:.46rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-bottom:.24rem!important;
-}
-.hm-v990-task-progress{
-  margin-bottom:.40rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.92rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  padding:.66rem .84rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<style>
-/* v100.13 Member Home post-hero and divider closure */
-.hero-shell{
-  margin-bottom:.06rem!important;
-  padding-bottom:.82rem!important;
-}
-div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
-  margin-bottom:.04rem!important;
-  padding-bottom:.04rem!important;
-}
-.hm-v990-task-progress{
-  margin-top:.36rem!important;
-  margin-bottom:.40rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-top:.38rem!important;
-  margin-bottom:.38rem!important;
-}
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.46rem!important;
-  margin-bottom:.46rem!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.92rem!important;
-  height:auto!important;
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  padding:.66rem .84rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-div[data-testid="stButton"] > button p{
-  white-space:normal!important;
-  overflow:visible!important;
-  line-height:1.34!important;
-  margin:0!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# v100.14 deferred Member Home signed-row and hero spacing CSS
-
-st.markdown("""
-<style>
-/* v100.14 Member Home signed-row size and hero spacing fix */
-section.main > div.block-container,
-.main .block-container,
-[data-testid="stAppViewBlockContainer"],
-.stMainBlockContainer,
-.block-container{
-  padding-top:.72rem!important;
-}
-.utility-bar{
-  min-height:2.84rem!important;
-  height:2.84rem!important;
-  padding:.42rem .72rem!important;
-  margin-top:0!important;
-  margin-bottom:.72rem!important;
-  display:flex!important;
-  align-items:center!important;
-  box-sizing:border-box!important;
-}
-div[data-testid="stButton"] > button{
-  min-height:2.84rem!important;
-  height:2.84rem!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  padding:.42rem .72rem!important;
-  box-sizing:border-box!important;
-}
-.hero-shell{
-  margin-top:0!important;
-  margin-bottom:.72rem!important;
-}
-div[data-testid="stVerticalBlock"] > div:has(.hero-shell){
-  margin-top:0!important;
-  margin-bottom:.72rem!important;
-  padding-top:0!important;
-  padding-bottom:0!important;
-}
-.hm-v990-task-progress{
-  margin-top:.36rem!important;
-  margin-bottom:.40rem!important;
-}
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-top:.38rem!important;
-  margin-bottom:.38rem!important;
-}
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.46rem!important;
-  margin-bottom:.46rem!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# v100.15 deferred exact divider balance CSS
-
-st.markdown("""
-<style>
-/* v100.15 Member Home exact divider balance */
-.hm-v981-task-actions-anchor + div[data-testid="stHorizontalBlock"]{
-  margin-top:.44rem!important;
-  margin-bottom:.44rem!important;
-}
-hr,
-div[data-testid="stMarkdownContainer"] hr{
-  margin-top:.44rem!important;
-  margin-bottom:.44rem!important;
-}
-.hm-v990-task-progress{
-  margin-top:.44rem!important;
-  margin-bottom:.44rem!important;
-}
-.hm-v990-task-progress + div{
-  margin-top:.44rem!important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# v101.0 deferred Member Home schedule CSS
-
-st.markdown("""
-<style>
-/* v101.0 Member Home schedule card */
-.hm-v101-schedule-card{
-  border:1px solid #E3C98E;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);
-  border-radius:18px;
-  padding:.80rem .95rem;
-  margin:.48rem 0 .72rem 0;
-  box-shadow:0 8px 20px rgba(15,23,42,.045);
-}
-.hm-v101-schedule-title{
-  color:#064E3B;
-  font-size:.96rem;
-  font-weight:950;
-  margin-bottom:.18rem;
-}
-.hm-v101-schedule-line{
-  color:#334155;
-  font-size:.82rem;
-  font-weight:720;
-  margin:.08rem 0;
-}
-.hm-v101-schedule-pill{
-  display:inline-flex;
-  padding:.16rem .44rem;
-  border-radius:999px;
-  border:1px solid #D9C28F;
-  background:#FFF7E6;
-  color:#7A5A16;
-  font-size:.70rem;
-  font-weight:850;
-  margin-left:.22rem;
-}
-</style>
-""", unsafe_allow_html=True)
-# v102.3A: Supplements entry is now placed in Personalized Content under Exercise Repository.
-
-# v102.4: Today's Journey added; Recipe-1/Exercise-1 test routes remain disconnected from member navigation.
