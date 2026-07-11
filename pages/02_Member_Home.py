@@ -92,7 +92,7 @@ def _member_email():
 
 
 def _render_member_utility_bar():
-    identity_col, profile_col, logout_col = st.columns([4.8, 0.85, 0.95], gap="small")
+    identity_col, profile_col, logout_col = st.columns([5.4, 0.72, 1.05], gap="small")
     with identity_col:
         st.markdown(
             f"""
@@ -105,7 +105,7 @@ def _render_member_utility_bar():
         )
     with profile_col:
         st.markdown("<div class='hm-profile-button-anchor'></div>", unsafe_allow_html=True)
-        if st.button("👤", key="hm_top_my_profile", use_container_width=True, help="My Profile"):
+        if st.button("👤 Profile", key="hm_top_my_profile", use_container_width=True, help="My Profile"):
             st.switch_page("pages/07_My_Profile.py")
     with logout_col:
         if st.button("Logout", key="hm_top_logout", use_container_width=True):
@@ -236,7 +236,7 @@ def _render_task_progress(current_instance, wf, requested_pages):
     if "body_mind" in visible_tasks:
         with task_cols[col_index]:
             body_done = task_status_done_v96_2(current_instance, wf, "body_mind")
-            body_label = "Start Body-Mind Connection" if not body_done else "Body-Mind Completed"
+            body_label = "Body Mind Connection" if not body_done else "Body Mind Completed"
             if st.button(body_label, use_container_width=True, disabled=body_done):
                 st.switch_page("pages/19_Body_Mind_Connection.py")
 
@@ -265,12 +265,12 @@ topbar("Member Home", "Continue your wellness assessment and access your tools."
 st.markdown(
     """
 <style>
-.hm-member-identity-pill{min-height:2.42rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.70);border:1px solid #E9DFCC;border-radius:999px;padding:.32rem .64rem;}
+.hm-member-identity-pill{min-height:2.36rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.70);border:1px solid #E9DFCC;border-radius:999px;padding:.30rem .64rem;}
 .hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;}
 .hm-profile-button-anchor + div [data-testid="stButton"] > button,
-.hm-profile-button-anchor + div .stButton > button{min-height:2.42rem!important;border-radius:999px!important;padding:.30rem .44rem!important;font-size:1rem!important;background:#FFFFFF!important;color:#064E3B!important;border-color:#D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.045)!important;}
+.hm-profile-button-anchor + div .stButton > button{min-height:2.18rem!important;max-height:2.18rem!important;border-radius:999px!important;padding:.22rem .52rem!important;font-size:.78rem!important;background:#FFFFFF!important;color:#064E3B!important;border-color:#D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.045)!important;line-height:1.05!important;}
 .hm-profile-button-anchor + div [data-testid="stButton"] > button *,
-.hm-profile-button-anchor + div .stButton > button *{color:#064E3B!important;}
+.hm-profile-button-anchor + div .stButton > button *{color:#064E3B!important;font-size:.78rem!important;font-weight:900!important;line-height:1.05!important;}
 .hm-b13-message-shell{border:1px solid #E3C98E;background:#FFFDF8;border-radius:20px;padding:.85rem .95rem;margin:.60rem 0 1rem 0;box-shadow:0 8px 22px rgba(15,23,42,.045);}
 .hm-b13-message-title{color:#064E3B;font-size:1.05rem;font-weight:760;margin-bottom:.50rem;}
 .hm-b13-message-card{border:1px solid #EAD9AA;background:#FFF9EC;border-radius:16px;padding:.75rem .82rem;margin:.45rem 0;}
@@ -290,10 +290,13 @@ st.markdown(
 .hm-v990-task-chip.pending{color:#7A5A16;background:#FFF7E6;}
 .hm-v990-task-chip.done{color:#065F46;background:#ECFDF5;}
 .hm-v990-submit-note{color:#64748B;font-size:.80rem;font-weight:720;margin:.36rem 0 .58rem 0;}
+.hm-home-group-title{color:#064E3B;font-size:.84rem;font-weight:950;text-transform:uppercase;letter-spacing:.03em;margin:.32rem 0 .42rem 0;}
+.hm-home-reference-title{margin-top:.88rem;color:#64748B;}
 .hm-muted-action-anchor + div [data-testid="stButton"] > button,
 .hm-muted-action-anchor + div .stButton > button{background:#F4F1EA!important;color:#64748B!important;border-color:#D8D0C0!important;box-shadow:none!important;}
 .hm-muted-action-anchor + div [data-testid="stButton"] > button *,
 .hm-muted-action-anchor + div .stButton > button *{color:#64748B!important;}
+.hm-home-soft-separator{height:1px;background:#E3D4BA;margin:1.05rem 0 .88rem 0;}
 section.main > div.block-container,.main .block-container,[data-testid="stAppViewBlockContainer"],.stMainBlockContainer,.block-container{padding-top:.72rem!important;}
 div[data-testid="stButton"] > button{min-height:2.84rem;height:auto!important;white-space:normal!important;overflow:visible!important;line-height:1.32!important;padding:.58rem .78rem!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 div[data-testid="stButton"] > button p{white-space:normal!important;overflow:visible!important;line-height:1.32!important;margin:0!important;}
@@ -340,10 +343,10 @@ with left:
             if st.button("3. Fill NSP Pg 2", use_container_width=True, disabled=("nsp2" not in requested_pages)):
                 st.switch_page("pages/05_NSP_Page2.py")
         if should_show_body_mind_next_step_v96_6(wf, current_instance):
-            if st.button("Start Body-Mind Connection", use_container_width=True):
+            if st.button("Body Mind Connection", use_container_width=True):
                 st.switch_page("pages/19_Body_Mind_Connection.py")
 
-    st.divider()
+    st.markdown("<div class='hm-home-soft-separator'></div>", unsafe_allow_html=True)
     if st.button("Submit / Status — Send completed tasks for admin review", use_container_width=True):
         st.switch_page("pages/06_Submit_Status.py")
     card_end()
@@ -353,17 +356,20 @@ with right:
     st.subheader("Personalized content")
 
     plans_ready = _workflow_finalized(wf)
+    st.markdown("<div class='hm-home-group-title'>Daily tools</div>", unsafe_allow_html=True)
     if st.button("Today's Plan", use_container_width=True, disabled=not plans_ready):
         st.switch_page("pages/36_Todays_Journey.py")
     if st.button("Daily Log", use_container_width=True):
         st.switch_page("pages/18_Daily_Log.py")
     if st.button("My Schedule", use_container_width=True):
         st.switch_page("pages/33_My_Schedule.py")
+    if st.button("My Weekly Plan", use_container_width=True, disabled=not plans_ready):
+        st.switch_page("pages/37_Member_Plan.py")
 
     if not plans_ready:
         st.markdown("<div class='lock-card'><b>Weekly plan, recipes, exercises and supplements unlock after expert review is complete.</b></div>", unsafe_allow_html=True)
 
-    _muted_action("My Weekly Plan", "pages/37_Member_Plan.py", "hm_home_weekly_plan_muted", disabled=not plans_ready)
+    st.markdown("<div class='hm-home-group-title hm-home-reference-title'>Reference library</div>", unsafe_allow_html=True)
     _muted_action("Recipe Repository", "pages/08_Recipe_Repository.py", "hm_home_recipe_repo_muted", disabled=not plans_ready)
     _muted_action("Exercise Repository", "pages/09_Exercise_Repository.py", "hm_home_exercise_repo_muted", disabled=not plans_ready)
     _muted_action("Supplements", "pages/40_Member_Supplements.py", "hm_home_supplements_muted", disabled=not plans_ready)

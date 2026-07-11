@@ -24,7 +24,7 @@ from components.db import (
 from components.flash import set_system_message, render_system_message
 
 
-BUILD_NOTE = "v102.4B16H9A10E · Daily Log Food/Exercise Tabs"
+BUILD_NOTE = "v102.4B17H9A10E · Daily Log UX Polish"
 
 
 def _text(value):
@@ -267,7 +267,13 @@ def _render_css():
         .hm-h9a4c-warning{border:1px solid #F0C9C9;background:#FFF7F7;color:#9A3412;border-radius:14px;padding:.68rem .78rem;font-weight:800;margin:.5rem 0 .6rem 0;}
         .hm-h9a4c-cardline{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:.75rem .85rem;margin:.45rem 0;}
         .hm-exercise-placeholder{border:1px dashed #D8C18B;background:#FFFDF8;border-radius:16px;padding:1rem;margin:.5rem 0;color:#334155;}
-        div[data-testid="stExpander"] details{border-color:#E7D8BE!important;border-radius:18px!important;background:#FFFDF8!important;}
+        div[data-testid="stTabs"] [role="tablist"]{gap:.55rem;margin:.25rem 0 .9rem 0;}
+        div[data-testid="stTabs"] button[role="tab"]{border:1.4px solid #D8A84E!important;border-radius:999px!important;background:#FFFFFF!important;color:#064E3B!important;font-weight:900!important;padding:.56rem 1.05rem!important;box-shadow:0 6px 14px rgba(6,78,59,.06)!important;}
+        div[data-testid="stTabs"] button[aria-selected="true"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border-color:#064E3B!important;box-shadow:0 10px 20px rgba(6,78,59,.14)!important;}
+        div[data-testid="stTabs"] button[aria-selected="true"] *{color:#FFFFFF!important;}
+        div[data-testid="stExpander"] details{border:1.4px solid #D8A84E!important;border-radius:18px!important;background:#FFFDF8!important;box-shadow:0 8px 18px rgba(15,23,42,.045)!important;overflow:hidden!important;}
+        div[data-testid="stExpander"] summary{min-height:3.05rem!important;background:linear-gradient(180deg,#FFFDF8 0%,#FFF6E5 100%)!important;padding:.68rem .82rem!important;border-radius:16px!important;}
+        div[data-testid="stExpander"] summary p{font-weight:950!important;color:#064E3B!important;font-size:.92rem!important;line-height:1.22!important;}
         div[data-testid="stDateInput"] input, div[data-testid="stTimeInput"] input, div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea, div[data-testid="stSelectbox"] [data-baseweb="select"] > div{border-radius:13px!important;border:1.2px solid #DCC690!important;background:#FFFFFF!important;}
         </style>
         """,
