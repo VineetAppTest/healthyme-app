@@ -66,12 +66,37 @@ def _safe_members():
     ]
 
 
+def _meal_label(key, meal):
+    fallback = str(key or "meal").replace("_", " ").title()
+    if isinstance(meal, dict):
+        label = str(meal.get("label", "") or "").strip()
+        return label or fallback
+    return fallback
+
+
+def _meal_dict(meal):
+    """Normalise older/newer meal payload shapes before report rendering.
+
+    Older Daily Log rows may store a meal as a plain string/list instead of a
+    dict. The report should keep rendering instead of calling `.get()` on a
+    non-dict value and falling into Streamlit's generic error page.
+    """
+    if isinstance(meal, dict):
+        return meal
+    if isinstance(meal, str):
+        return {"food": meal}
+    return {}
+
+
 def _meal_keys_for_day(day):
     keys = [(r["key"], r["label"]) for r in get_meal_type_repository()]
     known = {k for k, _label in keys}
-    for key, meal in (day.get("meals", {}) or {}).items():
+    meals = day.get("meals", {}) or {}
+    if not isinstance(meals, dict):
+        return keys
+    for key, meal in meals.items():
         if key not in known:
-            keys.append((key, meal.get("label", key.replace("_", " ").title())))
+            keys.append((key, _meal_label(key, meal)))
     return keys
 
 
@@ -110,12 +135,17 @@ def _other_fluids_summary(items):
 
 def _row_for_day(member_id, day):
     meals = day.get("meals", {}) or {}
+    if not isinstance(meals, dict):
+        meals = {}
+    breakfast = _meal_dict(meals.get("breakfast", {}))
+    lunch = _meal_dict(meals.get("lunch", {}))
+    dinner = _meal_dict(meals.get("dinner", {}))
     log_date = day.get("date", "")
     return {
         "Date": log_date,
-        "Breakfast": (meals.get("breakfast", {}) or {}).get("food", ""),
-        "Lunch": (meals.get("lunch", {}) or {}).get("food", ""),
-        "Dinner": (meals.get("dinner", {}) or {}).get("food", ""),
+        "Breakfast": breakfast.get("food", ""),
+        "Lunch": lunch.get("food", ""),
+        "Dinner": dinner.get("food", ""),
         "Water": day.get("water_litres", ""),
         "Other Fluids": _other_fluids_summary(day.get("other_fluids", [])),
         "Activity": day.get("physical_activity", ""),
@@ -209,8 +239,11 @@ if not selected_day or not selected_day.get("meals"):
     st.markdown("<div class='hm-dfjr-no-data-box'>No food journal available for this date.</div>", unsafe_allow_html=True)
 else:
     meal_rows = []
+    selected_meals = selected_day.get("meals", {}) or {}
+    if not isinstance(selected_meals, dict):
+        selected_meals = {}
     for key, label in _meal_keys_for_day(selected_day):
-        meal = (selected_day.get("meals", {}) or {}).get(key, {}) or {}
+        meal = _meal_dict(selected_meals.get(key, {}))
         meal_rows.append({"Meal Type": label, "Time": meal.get("time", ""), "Food": meal.get("food", ""), "Portion Size": meal.get("portion_size", ""), "Mood/Energy": meal.get("mood_energy", "")})
     st.dataframe(pd.DataFrame(meal_rows), use_container_width=True, hide_index=True)
     st.markdown("#### Full-day details")
