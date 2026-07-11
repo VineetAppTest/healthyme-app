@@ -91,8 +91,54 @@ def _member_email():
     )
 
 
+def _render_member_home_css():
+    st.markdown(
+        """
+<style>
+.hm-member-identity-pill{height:2.34rem;min-height:2.34rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.76);border:1px solid #E9DFCC;border-radius:999px;padding:.24rem .64rem;margin:0!important;}
+.hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;}
+.hm-top-profile-anchor + div,.hm-top-logout-anchor + div{display:flex!important;align-items:center!important;justify-content:center!important;height:2.34rem!important;min-height:2.34rem!important;margin:0!important;padding:0!important;}
+.hm-top-profile-anchor + div [data-testid="stButton"] > button,.hm-top-profile-anchor + div .stButton > button{width:2.26rem!important;min-width:2.26rem!important;max-width:2.26rem!important;height:2.26rem!important;min-height:2.26rem!important;max-height:2.26rem!important;border-radius:999px!important;padding:0!important;font-size:.92rem!important;background:#FFFFFF!important;color:#064E3B!important;border:1.4px solid #D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.055)!important;margin:0 auto!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.hm-top-profile-anchor + div [data-testid="stButton"] > button *,.hm-top-profile-anchor + div .stButton > button *{color:#064E3B!important;font-size:.92rem!important;line-height:1!important;}
+.hm-top-logout-anchor + div [data-testid="stButton"] > button,.hm-top-logout-anchor + div .stButton > button{height:2.34rem!important;min-height:2.34rem!important;max-height:2.34rem!important;border-radius:12px!important;padding:.36rem .78rem!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.hm-b13-message-shell{border:1px solid #E3C98E;background:#FFFDF8;border-radius:20px;padding:.85rem .95rem;margin:.60rem 0 1rem 0;box-shadow:0 8px 22px rgba(15,23,42,.045);}
+.hm-b13-message-title{color:#064E3B;font-size:1.05rem;font-weight:760;margin-bottom:.50rem;}
+.hm-b13-message-card{border:1px solid #EAD9AA;background:#FFF9EC;border-radius:16px;padding:.75rem .82rem;margin:.45rem 0;}
+.hm-b13-message-subject{color:#064E3B;font-weight:700;margin-bottom:.15rem;}
+.hm-b13-message-date{color:#64748B;font-size:.78rem;margin-bottom:.35rem;}
+.hm-b13-message-body{color:#334155!important;font-size:.88rem;line-height:1.45;margin:0;}
+.hm-v101-schedule-card{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:18px;padding:.80rem .95rem;margin:.48rem 0 .72rem 0;box-shadow:0 8px 20px rgba(15,23,42,.045);}
+.hm-v101-schedule-title{color:#064E3B;font-size:.96rem;font-weight:950;margin-bottom:.18rem;}
+.hm-v101-schedule-line{color:#334155;font-size:.82rem;font-weight:720;margin:.08rem 0;}
+.hm-v101-schedule-pill{display:inline-flex;padding:.16rem .44rem;border-radius:999px;border:1px solid #D9C28F;background:#FFF7E6;color:#7A5A16;font-size:.70rem;font-weight:850;margin-left:.22rem;}
+.hm-v104b11-ack-note{border:1px solid #E3C98E;background:#FFF7E6;color:#7A5A16!important;border-radius:12px;padding:.55rem .70rem;margin-top:.45rem!important;font-weight:560!important;}
+.hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:.62rem .72rem;margin:.52rem 0 .62rem 0;}
+.hm-v990-progress-title{color:#064E3B;font-size:.88rem;font-weight:920;margin:0 0 .38rem 0;}
+.hm-v990-progress-line{height:8px;border-radius:999px;background:#EFE7D6;overflow:hidden;margin:.28rem 0 .42rem 0;}
+.hm-v990-progress-fill{height:8px;border-radius:999px;background:#0F766E;}
+.hm-v990-task-chip{display:inline-flex;align-items:center;gap:.25rem;margin:.12rem .22rem .12rem 0;padding:.22rem .48rem;border-radius:999px;border:1px solid #D9C28F;color:#064E3B;background:#FAF8F1;font-size:.74rem;font-weight:850;}
+.hm-v990-task-chip.pending{color:#7A5A16;background:#FFF7E6;}
+.hm-v990-task-chip.done{color:#065F46;background:#ECFDF5;}
+.hm-v990-submit-note{color:#64748B;font-size:.80rem;font-weight:720;margin:.36rem 0 .58rem 0;}
+.hm-task-action-anchor + div [data-testid="stButton"] > button,.hm-task-action-anchor + div .stButton > button{min-height:2.56rem!important;height:2.56rem!important;padding:.48rem .62rem!important;white-space:nowrap!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.hm-task-action-anchor + div [data-testid="stButton"] > button *,.hm-task-action-anchor + div .stButton > button *{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;font-size:.84rem!important;line-height:1.1!important;}
+.hm-home-group-title{color:#064E3B;font-size:.82rem;font-weight:950;text-transform:uppercase;letter-spacing:.03em;margin:.34rem 0 .30rem 0;}
+.hm-home-reference-title{margin-top:.52rem;color:#64748B;}
+.hm-home-action-anchor + div [data-testid="stButton"] > button,.hm-home-action-anchor + div .stButton > button{width:82%!important;min-height:2.30rem!important;margin:.08rem auto .30rem auto!important;padding:.42rem .64rem!important;border-radius:12px!important;box-shadow:0 4px 10px rgba(6,78,59,.045)!important;}
+.hm-home-action-anchor + div [data-testid="stButton"] > button *,.hm-home-action-anchor + div .stButton > button *{font-size:.82rem!important;line-height:1.18!important;}
+.hm-home-muted-anchor + div [data-testid="stButton"] > button,.hm-home-muted-anchor + div .stButton > button{background:#F4F1EA!important;color:#64748B!important;border-color:#D8D0C0!important;box-shadow:none!important;margin-bottom:.30rem!important;}
+.hm-home-muted-anchor + div [data-testid="stButton"] > button *,.hm-home-muted-anchor + div .stButton > button *{color:#64748B!important;}
+.hm-home-soft-separator{height:1px;background:#E3D4BA;margin:.70rem 0 .70rem 0;}
+section.main > div.block-container,.main .block-container,[data-testid="stAppViewBlockContainer"],.stMainBlockContainer,.block-container{padding-top:.72rem!important;}
+div[data-testid="stButton"] > button{height:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+
 def _render_member_utility_bar():
-    identity_col, profile_col, logout_col = st.columns([6.8, 0.42, 1.05], gap="small")
+    identity_col, profile_col, logout_col = st.columns([6.7, 0.44, 1.0], gap="small")
     with identity_col:
         st.markdown(
             f"""
@@ -104,10 +150,11 @@ def _render_member_utility_bar():
             unsafe_allow_html=True,
         )
     with profile_col:
-        st.markdown("<div class='hm-profile-button-anchor'></div>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-top-profile-anchor'></div>", unsafe_allow_html=True)
         if st.button("👤", key="hm_top_my_profile", use_container_width=True, help="My Profile"):
             st.switch_page("pages/07_My_Profile.py")
     with logout_col:
+        st.markdown("<div class='hm-top-logout-anchor'></div>", unsafe_allow_html=True)
         if st.button("Logout", key="hm_top_logout", use_container_width=True):
             logout_current_user()
             st.rerun()
@@ -224,17 +271,20 @@ def _render_task_progress(current_instance, wf, requested_pages):
     task_cols = st.columns(3, gap="medium")
     with task_cols[0]:
         if "nsp1" in visible_tasks:
+            st.markdown("<div class='hm-task-action-anchor'></div>", unsafe_allow_html=True)
             if st.button("Start NSP Page 1", use_container_width=True):
                 st.switch_page("pages/04_NSP_Page1.py")
     with task_cols[1]:
         if "nsp2" in visible_tasks:
+            st.markdown("<div class='hm-task-action-anchor'></div>", unsafe_allow_html=True)
             if st.button("Start NSP Page 2", use_container_width=True):
                 st.switch_page("pages/05_NSP_Page2.py")
     with task_cols[2]:
         if "body_mind" in visible_tasks:
             body_done = task_status_done_v96_2(current_instance, wf, "body_mind")
-            st.markdown("<div class='hm-bodymind-button-anchor'></div>", unsafe_allow_html=True)
-            if st.button("Body Mind Connection", use_container_width=True, disabled=body_done):
+            st.markdown("<div class='hm-task-action-anchor'></div>", unsafe_allow_html=True)
+            body_label = "Body Mind Completed" if body_done else "Body Mind Connection"
+            if st.button(body_label, use_container_width=True, disabled=body_done):
                 st.switch_page("pages/19_Body_Mind_Connection.py")
 
 
@@ -257,59 +307,9 @@ requested_pages = _normalised_requested_pages(current_instance)
 for _repo_detail_key in ["hm_recipe_selected_id", "hm_recipe_detail_mode", "hm_exercise_selected_id", "hm_exercise_detail_mode"]:
     st.session_state.pop(_repo_detail_key, None)
 
+_render_member_home_css()
 _render_member_utility_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
-
-st.markdown(
-    """
-<style>
-.hm-member-identity-pill{min-height:2.30rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.74);border:1px solid #E9DFCC;border-radius:999px;padding:.26rem .64rem;margin-top:.04rem;}
-.hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;}
-.hm-profile-button-anchor + div{display:flex!important;align-items:center!important;justify-content:center!important;min-height:2.30rem!important;}
-.hm-profile-button-anchor + div [data-testid="stButton"] > button,
-.hm-profile-button-anchor + div .stButton > button{width:2.28rem!important;min-width:2.28rem!important;max-width:2.28rem!important;height:2.28rem!important;min-height:2.28rem!important;max-height:2.28rem!important;border-radius:999px!important;padding:0!important;font-size:.92rem!important;background:#FFFFFF!important;color:#064E3B!important;border:1.4px solid #D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.055)!important;margin:0 auto!important;line-height:1!important;}
-.hm-profile-button-anchor + div [data-testid="stButton"] > button *,
-.hm-profile-button-anchor + div .stButton > button *{color:#064E3B!important;font-size:.92rem!important;line-height:1!important;}
-.hm-b13-message-shell{border:1px solid #E3C98E;background:#FFFDF8;border-radius:20px;padding:.85rem .95rem;margin:.60rem 0 1rem 0;box-shadow:0 8px 22px rgba(15,23,42,.045);}
-.hm-b13-message-title{color:#064E3B;font-size:1.05rem;font-weight:760;margin-bottom:.50rem;}
-.hm-b13-message-card{border:1px solid #EAD9AA;background:#FFF9EC;border-radius:16px;padding:.75rem .82rem;margin:.45rem 0;}
-.hm-b13-message-subject{color:#064E3B;font-weight:700;margin-bottom:.15rem;}
-.hm-b13-message-date{color:#64748B;font-size:.78rem;margin-bottom:.35rem;}
-.hm-b13-message-body{color:#334155!important;font-size:.88rem;line-height:1.45;margin:0;}
-.hm-v101-schedule-card{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:18px;padding:.80rem .95rem;margin:.48rem 0 .72rem 0;box-shadow:0 8px 20px rgba(15,23,42,.045);}
-.hm-v101-schedule-title{color:#064E3B;font-size:.96rem;font-weight:950;margin-bottom:.18rem;}
-.hm-v101-schedule-line{color:#334155;font-size:.82rem;font-weight:720;margin:.08rem 0;}
-.hm-v101-schedule-pill{display:inline-flex;padding:.16rem .44rem;border-radius:999px;border:1px solid #D9C28F;background:#FFF7E6;color:#7A5A16;font-size:.70rem;font-weight:850;margin-left:.22rem;}
-.hm-v104b11-ack-note{border:1px solid #E3C98E;background:#FFF7E6;color:#7A5A16!important;border-radius:12px;padding:.55rem .70rem;margin-top:.45rem!important;font-weight:560!important;}
-.hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:.62rem .72rem;margin:.52rem 0 .62rem 0;}
-.hm-v990-progress-title{color:#064E3B;font-size:.88rem;font-weight:920;margin:0 0 .38rem 0;}
-.hm-v990-progress-line{height:8px;border-radius:999px;background:#EFE7D6;overflow:hidden;margin:.28rem 0 .42rem 0;}
-.hm-v990-progress-fill{height:8px;border-radius:999px;background:#0F766E;}
-.hm-v990-task-chip{display:inline-flex;align-items:center;gap:.25rem;margin:.12rem .22rem .12rem 0;padding:.22rem .48rem;border-radius:999px;border:1px solid #D9C28F;color:#064E3B;background:#FAF8F1;font-size:.74rem;font-weight:850;}
-.hm-v990-task-chip.pending{color:#7A5A16;background:#FFF7E6;}
-.hm-v990-task-chip.done{color:#065F46;background:#ECFDF5;}
-.hm-v990-submit-note{color:#64748B;font-size:.80rem;font-weight:720;margin:.36rem 0 .58rem 0;}
-.hm-bodymind-button-anchor + div [data-testid="stButton"] > button,
-.hm-bodymind-button-anchor + div .stButton > button{white-space:nowrap!important;min-height:2.58rem!important;padding:.50rem .62rem!important;}
-.hm-bodymind-button-anchor + div [data-testid="stButton"] > button *,
-.hm-bodymind-button-anchor + div .stButton > button *{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;font-size:.84rem!important;}
-.hm-home-group-title{color:#064E3B;font-size:.82rem;font-weight:950;text-transform:uppercase;letter-spacing:.03em;margin:.34rem 0 .30rem 0;}
-.hm-home-reference-title{margin-top:.52rem;color:#64748B;}
-.hm-home-action-anchor + div [data-testid="stButton"] > button,
-.hm-home-action-anchor + div .stButton > button{width:86%!important;min-height:2.32rem!important;margin:.10rem auto .34rem auto!important;padding:.44rem .68rem!important;border-radius:12px!important;box-shadow:0 4px 10px rgba(6,78,59,.045)!important;}
-.hm-home-action-anchor + div [data-testid="stButton"] > button *,
-.hm-home-action-anchor + div .stButton > button *{font-size:.82rem!important;line-height:1.18!important;}
-.hm-home-muted-anchor + div [data-testid="stButton"] > button,
-.hm-home-muted-anchor + div .stButton > button{background:#F4F1EA!important;color:#64748B!important;border-color:#D8D0C0!important;box-shadow:none!important;margin-bottom:.34rem!important;}
-.hm-home-muted-anchor + div [data-testid="stButton"] > button *,
-.hm-home-muted-anchor + div .stButton > button *{color:#64748B!important;}
-.hm-home-soft-separator{height:1px;background:#E3D4BA;margin:.70rem 0 .70rem 0;}
-section.main > div.block-container,.main .block-container,[data-testid="stAppViewBlockContainer"],.stMainBlockContainer,.block-container{padding-top:.72rem!important;}
-div[data-testid="stButton"] > button{height:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;}
-</style>
-""",
-    unsafe_allow_html=True,
-)
 
 render_system_message()
 _render_messages(user_id)
@@ -333,6 +333,7 @@ with left:
     if is_task_instance:
         _render_task_progress(current_instance, wf, requested_pages)
     elif not wf.get("laf_completed"):
+        st.markdown("<div class='hm-task-action-anchor'></div>", unsafe_allow_html=True)
         if st.button("1. Fill LAF", type="primary", use_container_width=True):
             st.switch_page("pages/03_LAF_Form.py")
     elif current_instance.get("submitted_for_review"):
@@ -340,14 +341,16 @@ with left:
     else:
         action_cols = st.columns(3, gap="medium")
         with action_cols[0]:
+            st.markdown("<div class='hm-task-action-anchor'></div>", unsafe_allow_html=True)
             if st.button("Start NSP Page 1", use_container_width=True, disabled=("nsp1" not in requested_pages)):
                 st.switch_page("pages/04_NSP_Page1.py")
         with action_cols[1]:
+            st.markdown("<div class='hm-task-action-anchor'></div>", unsafe_allow_html=True)
             if st.button("Start NSP Page 2", use_container_width=True, disabled=("nsp2" not in requested_pages)):
                 st.switch_page("pages/05_NSP_Page2.py")
         with action_cols[2]:
             if should_show_body_mind_next_step_v96_6(wf, current_instance):
-                st.markdown("<div class='hm-bodymind-button-anchor'></div>", unsafe_allow_html=True)
+                st.markdown("<div class='hm-task-action-anchor'></div>", unsafe_allow_html=True)
                 if st.button("Body Mind Connection", use_container_width=True):
                     st.switch_page("pages/19_Body_Mind_Connection.py")
 
