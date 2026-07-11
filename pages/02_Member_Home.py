@@ -92,14 +92,21 @@ def _member_email():
 
 
 def _render_member_utility_bar():
-    signed_col, profile_col, role_col, logout_col = st.columns([3.2, 0.95, 1.05, 0.85], gap="small")
-    with signed_col:
-        st.markdown(f"<div class='hm-member-top-text'>Signed in as: <b>{_esc(_member_email())}</b></div>", unsafe_allow_html=True)
+    identity_col, profile_col, logout_col = st.columns([4.8, 0.85, 0.95], gap="small")
+    with identity_col:
+        st.markdown(
+            f"""
+            <div class='hm-member-identity-pill'>
+              <span>Signed in as: <b>{_esc(_member_email())}</b></span>
+              <span class='hm-member-role-inline'>Active member</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     with profile_col:
-        if st.button("My Profile", key="hm_top_my_profile", use_container_width=True):
+        st.markdown("<div class='hm-profile-button-anchor'></div>", unsafe_allow_html=True)
+        if st.button("👤", key="hm_top_my_profile", use_container_width=True, help="My Profile"):
             st.switch_page("pages/07_My_Profile.py")
-    with role_col:
-        st.markdown("<div class='hm-member-role-pill'>Active member</div>", unsafe_allow_html=True)
     with logout_col:
         if st.button("Logout", key="hm_top_logout", use_container_width=True):
             logout_current_user()
@@ -258,8 +265,12 @@ topbar("Member Home", "Continue your wellness assessment and access your tools."
 st.markdown(
     """
 <style>
-.hm-member-top-text{min-height:2.84rem;display:flex;align-items:center;color:#64748B;font-size:.82rem;font-weight:760;background:rgba(255,255,255,.66);border:1px solid #E9DFCC;border-radius:999px;padding:.42rem .72rem;}
-.hm-member-role-pill{min-height:2.84rem;display:flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.76rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.42rem .64rem;}
+.hm-member-identity-pill{min-height:2.42rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.70);border:1px solid #E9DFCC;border-radius:999px;padding:.32rem .64rem;}
+.hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;}
+.hm-profile-button-anchor + div [data-testid="stButton"] > button,
+.hm-profile-button-anchor + div .stButton > button{min-height:2.42rem!important;border-radius:999px!important;padding:.30rem .44rem!important;font-size:1rem!important;background:#FFFFFF!important;color:#064E3B!important;border-color:#D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.045)!important;}
+.hm-profile-button-anchor + div [data-testid="stButton"] > button *,
+.hm-profile-button-anchor + div .stButton > button *{color:#064E3B!important;}
 .hm-b13-message-shell{border:1px solid #E3C98E;background:#FFFDF8;border-radius:20px;padding:.85rem .95rem;margin:.60rem 0 1rem 0;box-shadow:0 8px 22px rgba(15,23,42,.045);}
 .hm-b13-message-title{color:#064E3B;font-size:1.05rem;font-weight:760;margin-bottom:.50rem;}
 .hm-b13-message-card{border:1px solid #EAD9AA;background:#FFF9EC;border-radius:16px;padding:.75rem .82rem;margin:.45rem 0;}
