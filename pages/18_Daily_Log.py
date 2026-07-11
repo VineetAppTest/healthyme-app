@@ -1,4 +1,4 @@
-from datetime import date, datetime, time
+from datetime import date, datetime
 import html
 import re
 
@@ -24,7 +24,7 @@ from components.db import (
 from components.flash import set_system_message, render_system_message
 
 
-BUILD_NOTE = "v102.4B15H9A4C · Streamlit Food Journal Alignment"
+BUILD_NOTE = "v102.4B16H9A10E · Daily Log Food/Exercise Tabs"
 
 
 def _text(value):
@@ -95,8 +95,12 @@ def _safe_html(value):
     return html.escape(_text(value))
 
 
+def _as_dict(value):
+    return dict(value) if isinstance(value, dict) else {}
+
+
 def _meal_summary(meal):
-    meal = meal or {}
+    meal = _as_dict(meal)
     food = _clean(meal.get("food") or meal.get("food_log") or meal.get("name"))
     qty = _clean(meal.get("portion_size") or meal.get("quantity"))
     time_text = _clean(meal.get("time"))
@@ -106,7 +110,7 @@ def _meal_summary(meal):
 
 
 def _meal_has_data(meal):
-    meal = meal or {}
+    meal = _as_dict(meal)
     return any(
         _has_value(meal.get(key))
         for key in ("time", "food", "food_log", "name", "portion_size", "quantity", "mood_energy", "mood", "energy")
@@ -114,12 +118,12 @@ def _meal_has_data(meal):
 
 
 def _normalise_meals(existing_meals):
-    meals = existing_meals or {}
+    meals = existing_meals if isinstance(existing_meals, dict) else {}
     normalised = {
-        "breakfast": dict(meals.get("breakfast") or {}),
-        "lunch": dict(meals.get("lunch") or {}),
-        "dinner": dict(meals.get("dinner") or {}),
-        "bedtime": dict(meals.get("bedtime") or meals.get("pre_bed") or {}),
+        "breakfast": _as_dict(meals.get("breakfast")),
+        "lunch": _as_dict(meals.get("lunch")),
+        "dinner": _as_dict(meals.get("dinner")),
+        "bedtime": _as_dict(meals.get("bedtime") or meals.get("pre_bed")),
     }
 
     snacks = []
@@ -133,7 +137,7 @@ def _normalise_meals(existing_meals):
 
 
 def _intake_has_data(item):
-    item = item or {}
+    item = item if isinstance(item, dict) else {}
     return any(_has_value(item.get(key)) for key in ("type", "name", "fluid_type", "time", "quantity", "qty", "notes"))
 
 
@@ -158,7 +162,7 @@ def _other_fluids_summary(items):
     if not fluids:
         return "—"
     rows = []
-    for idx, item in enumerate(fluids, start=1):
+    for item in fluids:
         fluid_type = item.get("type") or "Other fluid"
         parts = [item.get("time", ""), item.get("quantity", ""), item.get("notes", "")]
         detail = " · ".join([p for p in parts if p]) or "Recorded"
@@ -177,8 +181,7 @@ def _format_saved_date(day):
 
 
 def _saved_day_date(day):
-    text = _format_saved_date(day)
-    return _parse_date(text)
+    return _parse_date(_format_saved_date(day))
 
 
 def _hydration_summary(water_litres, other_fluids):
@@ -259,61 +262,13 @@ def _render_css():
     st.markdown(
         """
         <style>
-        .hm-h9a4c-note{
-            color:#64748B;
-            font-size:.86rem;
-            line-height:1.35;
-            margin:.10rem 0 .75rem 0;
-        }
-        .hm-h9a4c-status{
-            border:1px solid #CFE3C2;
-            background:#F4FBF1;
-            color:#416B2F;
-            border-radius:14px;
-            padding:.68rem .78rem;
-            font-weight:800;
-            margin:.5rem 0 .6rem 0;
-        }
-        .hm-h9a4c-warning{
-            border:1px solid #F0C9C9;
-            background:#FFF7F7;
-            color:#9A3412;
-            border-radius:14px;
-            padding:.68rem .78rem;
-            font-weight:800;
-            margin:.5rem 0 .6rem 0;
-        }
-        .hm-h9a4c-chip{
-            border:1px solid #E2C98F;
-            background:#FFFDF8;
-            border-radius:999px;
-            padding:.34rem .72rem;
-            color:#064E3B;
-            font-weight:850;
-            display:inline-block;
-            margin:.15rem .25rem .25rem 0;
-        }
-        .hm-h9a4c-cardline{
-            border:1px solid #E7D8BE;
-            background:#FFFDF8;
-            border-radius:16px;
-            padding:.75rem .85rem;
-            margin:.45rem 0;
-        }
-        div[data-testid="stExpander"] details{
-            border-color:#E7D8BE!important;
-            border-radius:18px!important;
-            background:#FFFDF8!important;
-        }
-        div[data-testid="stDateInput"] input,
-        div[data-testid="stTimeInput"] input,
-        div[data-testid="stTextInput"] input,
-        div[data-testid="stTextArea"] textarea,
-        div[data-testid="stSelectbox"] [data-baseweb="select"] > div{
-            border-radius:13px!important;
-            border:1.2px solid #DCC690!important;
-            background:#FFFFFF!important;
-        }
+        .hm-h9a4c-note{color:#64748B;font-size:.86rem;line-height:1.35;margin:.10rem 0 .75rem 0;}
+        .hm-h9a4c-status{border:1px solid #CFE3C2;background:#F4FBF1;color:#416B2F;border-radius:14px;padding:.68rem .78rem;font-weight:800;margin:.5rem 0 .6rem 0;}
+        .hm-h9a4c-warning{border:1px solid #F0C9C9;background:#FFF7F7;color:#9A3412;border-radius:14px;padding:.68rem .78rem;font-weight:800;margin:.5rem 0 .6rem 0;}
+        .hm-h9a4c-cardline{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:.75rem .85rem;margin:.45rem 0;}
+        .hm-exercise-placeholder{border:1px dashed #D8C18B;background:#FFFDF8;border-radius:16px;padding:1rem;margin:.5rem 0;color:#334155;}
+        div[data-testid="stExpander"] details{border-color:#E7D8BE!important;border-radius:18px!important;background:#FFFDF8!important;}
+        div[data-testid="stDateInput"] input, div[data-testid="stTimeInput"] input, div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea, div[data-testid="stSelectbox"] [data-baseweb="select"] > div{border-radius:13px!important;border:1.2px solid #DCC690!important;background:#FFFFFF!important;}
         </style>
         """,
         unsafe_allow_html=True,
@@ -321,6 +276,7 @@ def _render_css():
 
 
 def _render_meal_fields(label, key, prior, date_key):
+    prior = _as_dict(prior)
     time_value = st.time_input(
         f"{label} time",
         value=_parse_time(prior.get("time", "")),
@@ -360,335 +316,357 @@ def _render_meal_expander(label, key, prior, date_key):
         return _render_meal_fields(label, key, prior, date_key)
 
 
-st.set_page_config(page_title="Daily Food Journal", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+def _render_exercise_journal_placeholder():
+    st.markdown("### Exercise Journal")
+    st.markdown(
+        """
+        <div class='hm-exercise-placeholder'>
+          Exercise Journal will be enabled after the exercise logging data contract is finalised.
+          For now, please continue recording any exercise under <b>Food Journal → Physical Activity</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_food_journal(user_id):
+    if "hm_food_journal_date" not in st.session_state:
+        st.session_state["hm_food_journal_date"] = date.today()
+
+    with st.container(border=True):
+        st.markdown("### Food Journal Date")
+        log_date = st.date_input(
+            "Select the date for this food journal entry",
+            key="hm_food_journal_date",
+        )
+        date_key = str(log_date)
+
+    existing = get_daily_food_journal_day(user_id, date_key) or {}
+    existing_meals, existing_snacks = _normalise_meals(existing.get("meals", {}) or {})
+    existing_other_fluids = _normalise_other_fluids(existing.get("other_fluids", []) or [])
+    is_saved_date = bool(existing and _day_has_meaningful_entry(existing))
+
+    with st.container(border=True):
+        st.markdown("### View Saved Days")
+        all_days = get_daily_food_journal_days(user_id) or []
+        parsed_dates = sorted([d for d in [_saved_day_date(day) for day in all_days] if d])
+        default_from = min(parsed_dates) if parsed_dates else date.today()
+        default_to = max(parsed_dates) if parsed_dates else date.today()
+        f_col, t_col = st.columns(2)
+        with f_col:
+            filter_from = st.date_input("From", value=default_from, key="hm_h9a4c_saved_from")
+        with t_col:
+            filter_to = st.date_input("To", value=default_to, key="hm_h9a4c_saved_to")
+
+        filtered_days = []
+        for day in all_days:
+            d = _saved_day_date(day)
+            if d and filter_from <= d <= filter_to:
+                filtered_days.append(day)
+
+        if not filtered_days:
+            st.caption("No saved days found in this range.")
+        else:
+            st.caption(f"Showing {len(filtered_days)} saved day(s) in the selected range.")
+            for row_start in range(0, len(filtered_days), 4):
+                cols = st.columns(4)
+                for col, day in zip(cols, filtered_days[row_start:row_start + 4]):
+                    d_text = _format_saved_date(day)
+                    label_date = _parse_date(d_text)
+                    button_label = label_date.strftime("%d %b") if label_date else d_text
+                    with col:
+                        if st.button(button_label, key=f"hm_h9a4c_load_{d_text}", use_container_width=True):
+                            if label_date:
+                                st.session_state["hm_food_journal_date"] = label_date
+                                st.rerun()
+
+    with st.container(border=True):
+        st.markdown("### Meal Section")
+        if is_saved_date:
+            st.markdown(f"<div class='hm-h9a4c-note'>Viewing saved entries for {log_date.strftime('%d %b')}. Open a section only if you want to edit it.</div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='hm-h9a4c-note'>Open only the meal you want to update.</div>", unsafe_allow_html=True)
+
+        meals_payload = {}
+        meals_payload["breakfast"] = _render_meal_expander("Breakfast", "breakfast", existing_meals.get("breakfast", {}), date_key)
+        meals_payload["lunch"] = _render_meal_expander("Lunch", "lunch", existing_meals.get("lunch", {}), date_key)
+
+        snack_count_key = f"hm_h9a4c_snack_count_{date_key}"
+        if snack_count_key not in st.session_state:
+            st.session_state[snack_count_key] = len(existing_snacks)
+        snack_count = int(st.session_state.get(snack_count_key, 0) or 0)
+
+        with st.expander(f"Snacking — {snack_count}/9 entries", expanded=False):
+            add_col, remove_col = st.columns(2)
+            with add_col:
+                if st.button("+ Add snacking", key=f"hm_h9a4c_add_snack_{date_key}", disabled=snack_count >= 9, use_container_width=True):
+                    st.session_state[snack_count_key] = min(9, snack_count + 1)
+                    st.rerun()
+            with remove_col:
+                if st.button("Remove last snacking", key=f"hm_h9a4c_remove_snack_{date_key}", disabled=snack_count <= 0, use_container_width=True):
+                    st.session_state[snack_count_key] = max(0, snack_count - 1)
+                    st.rerun()
+
+            if snack_count == 0:
+                st.caption("No snacking entry added yet.")
+            for idx in range(snack_count):
+                prior = existing_snacks[idx] if idx < len(existing_snacks) else {}
+                st.markdown(f"<div class='hm-h9a4c-cardline'><b>Snacking {idx + 1}</b></div>", unsafe_allow_html=True)
+                snack_payload = _render_meal_fields(f"Snacking {idx + 1}", f"snacking_{idx + 1}", prior, date_key)
+                meals_payload[f"snacking_{idx + 1}"] = snack_payload
+
+        meals_payload["dinner"] = _render_meal_expander("Dinner", "dinner", existing_meals.get("dinner", {}), date_key)
+        meals_payload["bedtime"] = _render_meal_expander("Bedtime", "bedtime", existing_meals.get("bedtime", {}), date_key)
+
+    water_options = [
+        "Select",
+        "0 Litres",
+        "0.5 Litres",
+        "1 Litre",
+        "1.5 Litres",
+        "2 Litres",
+        "2.5 Litres",
+        "3 Litres",
+        "3.5 Litres",
+        "4 Litres",
+        "4.5 Litres",
+        "5 Litres",
+        "5.5 Litres",
+        "6 Litres",
+        "6.5 Litres",
+        "7 Litres",
+        "7.5 Litres",
+        "8 Litres",
+        "8.5 Litres",
+        "9 Litres",
+        "9.5 Litres",
+        "10 Litres",
+    ]
+    existing_water = _clean(existing.get("water_litres")) or "Select"
+
+    with st.container(border=True):
+        with st.expander(f"Hydration — {_hydration_summary(existing_water, existing_other_fluids)}", expanded=False):
+            st.markdown("<div class='hm-h9a4c-note'>Water and other fluids are grouped together for the full day.</div>", unsafe_allow_html=True)
+            water_litres = st.selectbox(
+                "Water Intake",
+                water_options,
+                index=water_options.index(existing_water) if existing_water in water_options else 0,
+                key=f"hm_h9a4c_water_{date_key}",
+            )
+
+            fluid_count_key = f"hm_h9a4c_fluid_count_{date_key}"
+            if fluid_count_key not in st.session_state:
+                st.session_state[fluid_count_key] = len(existing_other_fluids)
+            fluid_count = int(st.session_state.get(fluid_count_key, 0) or 0)
+
+            st.markdown(f"<div class='hm-h9a4c-cardline'><b>Other Fluid Intake</b><br>{fluid_count}/9 entries</div>", unsafe_allow_html=True)
+            fc1, fc2 = st.columns(2)
+            with fc1:
+                if st.button("+ Add other fluid", key=f"hm_h9a4c_add_fluid_{date_key}", disabled=fluid_count >= 9, use_container_width=True):
+                    st.session_state[fluid_count_key] = min(9, fluid_count + 1)
+                    st.rerun()
+            with fc2:
+                if st.button("Remove last fluid", key=f"hm_h9a4c_remove_fluid_{date_key}", disabled=fluid_count <= 0, use_container_width=True):
+                    st.session_state[fluid_count_key] = max(0, fluid_count - 1)
+                    st.rerun()
+
+            fluid_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
+            other_fluids = []
+            if fluid_count == 0:
+                st.caption("No other fluid entry added yet.")
+            for idx in range(fluid_count):
+                prior = existing_other_fluids[idx] if idx < len(existing_other_fluids) else {}
+                st.markdown(f"<div class='hm-h9a4c-cardline'><b>Other Fluid {idx + 1}</b></div>", unsafe_allow_html=True)
+                c1, c2 = st.columns(2)
+                with c1:
+                    prior_type = prior.get("type") or "Select"
+                    fluid_type = st.selectbox(
+                        f"Fluid type {idx + 1}",
+                        fluid_options,
+                        index=fluid_options.index(prior_type) if prior_type in fluid_options else 0,
+                        key=f"hm_h9a4c_fluid_type_{date_key}_{idx}",
+                    )
+                with c2:
+                    fluid_time = st.time_input(
+                        f"Fluid timing {idx + 1}",
+                        value=_parse_time(prior.get("time")),
+                        key=f"hm_h9a4c_fluid_time_{date_key}_{idx}",
+                    )
+                q_col, n_col = st.columns(2)
+                with q_col:
+                    quantity = st.text_input(
+                        f"Quantity {idx + 1}",
+                        value=prior.get("quantity", ""),
+                        placeholder="Example: 200 ml",
+                        key=f"hm_h9a4c_fluid_qty_{date_key}_{idx}",
+                    )
+                with n_col:
+                    notes = st.text_input(
+                        f"Notes {idx + 1}",
+                        value=prior.get("notes", ""),
+                        placeholder="Example: unsweetened",
+                        key=f"hm_h9a4c_fluid_notes_{date_key}_{idx}",
+                    )
+
+                fluid_row = {
+                    "type": _clean(fluid_type),
+                    "time": _time_text(fluid_time),
+                    "quantity": _clean(quantity),
+                    "notes": _clean(notes),
+                }
+                if _intake_has_data(fluid_row):
+                    other_fluids.append(fluid_row)
+
+    with st.container(border=True):
+        existing_poop_rounds = existing.get("poop_rounds")
+        if _is_default(existing_poop_rounds):
+            existing_poop_rounds = "Select"
+        else:
+            try:
+                existing_poop_rounds = int(existing_poop_rounds)
+            except Exception:
+                existing_poop_rounds = "Select"
+
+        with st.expander(f"Bowel Movement — {_bowel_summary(existing_poop_rounds, existing.get('feeling_after_poop'))}", expanded=False):
+            poop_options = ["Select"] + list(range(10))
+            poop_rounds = st.selectbox(
+                "Poop rounds",
+                poop_options,
+                index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
+                key=f"hm_h9a4c_poop_rounds_{date_key}",
+            )
+            active_poop_count = int(poop_rounds) if isinstance(poop_rounds, int) else 0
+            existing_timings = existing.get("poop_timings", []) or []
+            poop_timings = []
+            if active_poop_count:
+                for idx in range(active_poop_count):
+                    timing = st.time_input(
+                        f"Poop timing {idx + 1}",
+                        value=_parse_time(existing_timings[idx]) if idx < len(existing_timings) else None,
+                        key=f"hm_h9a4c_poop_time_{date_key}_{idx}",
+                    )
+                    poop_timings.append(_time_text(timing))
+            else:
+                st.caption("No timing needed unless poop rounds are greater than 0.")
+
+            feeling_after_poop = st.text_area(
+                "Feeling after poop",
+                value=_clean(existing.get("feeling_after_poop")),
+                placeholder="Example: relieved / constipated / bloated / incomplete",
+                key=f"hm_h9a4c_poop_feeling_{date_key}",
+                height=84,
+            )
+
+    with st.container(border=True):
+        with st.expander(f"Physical Activity — {_clean(existing.get('physical_activity')) or 'No activity entry yet'}", expanded=False):
+            physical_activity = st.text_area(
+                "Physical activity",
+                value=_clean(existing.get("physical_activity")),
+                placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
+                key=f"hm_h9a4c_activity_{date_key}",
+                height=90,
+            )
+
+    with st.container(border=True):
+        st.markdown("### Member Notes")
+        day_notes = st.text_area(
+            "Notes",
+            value=_clean(existing.get("notes")),
+            placeholder="Any cravings, bloating, missed meals, late meals, etc.",
+            key=f"hm_h9a4c_notes_{date_key}",
+            height=90,
+        )
+
+    clean_meals_payload = {key: value for key, value in meals_payload.items() if _meal_has_data(value)}
+    clean_water = _clean(water_litres)
+    clean_poop_rounds = None if _is_default(poop_rounds) else poop_rounds
+    clean_poop_timings = [_clean(x) for x in poop_timings if _has_value(x)]
+    clean_feeling = _clean(feeling_after_poop)
+    clean_activity = _clean(physical_activity)
+    clean_notes = _clean(day_notes)
+    poop_text = ""
+    if clean_poop_rounds is not None:
+        poop_text = f"{clean_poop_rounds} round(s)"
+        if clean_poop_timings:
+            poop_text += f" at {', '.join(clean_poop_timings)}"
+        if clean_feeling:
+            poop_text += f" / {clean_feeling}"
+
+    payload = {
+        "date": date_key,
+        "meals": clean_meals_payload,
+        "physical_activity": clean_activity,
+        "poop_rounds": clean_poop_rounds,
+        "poop_timings": clean_poop_timings,
+        "feeling_after_poop": clean_feeling,
+        "poop": poop_text,
+        "notes": clean_notes,
+        "water_litres": clean_water,
+        "other_fluids": _normalise_other_fluids(other_fluids),
+    }
+
+    with st.container(border=True):
+        st.markdown("### Save Day")
+        if _day_has_meaningful_entry(payload):
+            st.markdown(f"<div class='hm-h9a4c-status'>Entries captured for {log_date.strftime('%d %b')}. You can still edit them.</div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='hm-h9a4c-warning'>No entries captured yet. Please add at least one real entry before saving.</div>", unsafe_allow_html=True)
+
+        if st.button("Save Day", type="primary", use_container_width=True):
+            if not _day_has_meaningful_entry(payload):
+                set_system_message("Please add at least one entry before saving the day.", "error")
+                st.rerun()
+            save_daily_food_journal_day(user_id, date_key, payload)
+            set_system_message(f"Saved food journal for {log_date.strftime('%d %b %Y')}.", "success")
+            st.rerun()
+
+    with st.container(border=True):
+        st.markdown("### Full Day Report")
+        st.caption(log_date.strftime("%a, %d %b %Y"))
+        lines = _report_lines(payload)
+        if not lines:
+            st.caption("Start adding entries or tap a saved day to load the report.")
+        else:
+            for line in lines:
+                st.markdown(f"- {_safe_html(line)}")
+
+    with st.container(border=True):
+        st.markdown(f"### Guidance linked to {log_date.strftime('%d %b')}")
+        latest_note = get_latest_daily_log_note_for_date(user_id, date_key)
+        history = get_daily_log_notes_by_date(user_id, date_key, limit=10)
+        if not latest_note:
+            st.caption("No nutritionist note or general guidance is linked to this date yet.")
+        else:
+            st.markdown(
+                f"<div class='hm-h9a4c-cardline'><b>{_safe_html(format_local_ts(latest_note.get('ts', '')))}</b><br>{_safe_html(latest_note.get('note', ''))}</div>",
+                unsafe_allow_html=True,
+            )
+        if len(history) > 1:
+            with st.expander("View note history", expanded=False):
+                for note in history:
+                    st.markdown(
+                        f"<div class='hm-h9a4c-cardline'><b>{_safe_html(format_local_ts(note.get('ts', '')))}</b><br>{_safe_html(note.get('note', ''))}</div>",
+                        unsafe_allow_html=True,
+                    )
+
+
+st.set_page_config(page_title="Daily Log", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
 require_member()
 utility_logout_bar()
-topbar("Daily Food Journal", "Capture meals, hydration, bowel movement, activity, and notes for one day.", "Member tracker")
+topbar("Daily Log", "Capture food and activity updates for one day.", "Member tracker")
 _render_css()
 render_system_message()
 
 user_id = st.session_state["user_id"]
 
-if "hm_food_journal_date" not in st.session_state:
-    st.session_state["hm_food_journal_date"] = date.today()
+food_tab, exercise_tab = st.tabs(["Food Journal", "Exercise Journal"])
+with food_tab:
+    _render_food_journal(user_id)
 
-with st.container(border=True):
-    st.markdown("### Food Journal Date")
-    log_date = st.date_input(
-        "Select the date for this food journal entry",
-        key="hm_food_journal_date",
-    )
-    date_key = str(log_date)
-
-existing = get_daily_food_journal_day(user_id, date_key) or {}
-existing_meals, existing_snacks = _normalise_meals(existing.get("meals", {}) or {})
-existing_other_fluids = _normalise_other_fluids(existing.get("other_fluids", []) or [])
-is_saved_date = bool(existing and _day_has_meaningful_entry(existing))
-
-with st.container(border=True):
-    st.markdown("### View Saved Days")
-    all_days = get_daily_food_journal_days(user_id) or []
-    parsed_dates = sorted([d for d in [_saved_day_date(day) for day in all_days] if d])
-    default_from = min(parsed_dates) if parsed_dates else date.today()
-    default_to = max(parsed_dates) if parsed_dates else date.today()
-    f_col, t_col = st.columns(2)
-    with f_col:
-        filter_from = st.date_input("From", value=default_from, key="hm_h9a4c_saved_from")
-    with t_col:
-        filter_to = st.date_input("To", value=default_to, key="hm_h9a4c_saved_to")
-
-    filtered_days = []
-    for day in all_days:
-        d = _saved_day_date(day)
-        if d and filter_from <= d <= filter_to:
-            filtered_days.append(day)
-
-    if not filtered_days:
-        st.caption("No saved days found in this range.")
-    else:
-        st.caption(f"Showing {len(filtered_days)} saved day(s) in the selected range.")
-        for row_start in range(0, len(filtered_days), 4):
-            cols = st.columns(4)
-            for col, day in zip(cols, filtered_days[row_start:row_start + 4]):
-                d_text = _format_saved_date(day)
-                label_date = _parse_date(d_text)
-                button_label = label_date.strftime("%d %b") if label_date else d_text
-                with col:
-                    if st.button(button_label, key=f"hm_h9a4c_load_{d_text}", use_container_width=True):
-                        if label_date:
-                            st.session_state["hm_food_journal_date"] = label_date
-                            st.rerun()
-
-with st.container(border=True):
-    st.markdown("### Meal Section")
-    if is_saved_date:
-        st.markdown(f"<div class='hm-h9a4c-note'>Viewing saved entries for {log_date.strftime('%d %b')}. Open a section only if you want to edit it.</div>", unsafe_allow_html=True)
-    else:
-        st.markdown("<div class='hm-h9a4c-note'>Open only the meal you want to update.</div>", unsafe_allow_html=True)
-
-    meals_payload = {}
-    meals_payload["breakfast"] = _render_meal_expander("Breakfast", "breakfast", existing_meals.get("breakfast", {}), date_key)
-    meals_payload["lunch"] = _render_meal_expander("Lunch", "lunch", existing_meals.get("lunch", {}), date_key)
-
-    snack_count_key = f"hm_h9a4c_snack_count_{date_key}"
-    if snack_count_key not in st.session_state:
-        st.session_state[snack_count_key] = len(existing_snacks)
-    snack_count = int(st.session_state.get(snack_count_key, 0) or 0)
-
-    with st.expander(f"Snacking — {snack_count}/9 entries", expanded=False):
-        add_col, remove_col = st.columns(2)
-        with add_col:
-            if st.button("+ Add snacking", key=f"hm_h9a4c_add_snack_{date_key}", disabled=snack_count >= 9, use_container_width=True):
-                st.session_state[snack_count_key] = min(9, snack_count + 1)
-                st.rerun()
-        with remove_col:
-            if st.button("Remove last snacking", key=f"hm_h9a4c_remove_snack_{date_key}", disabled=snack_count <= 0, use_container_width=True):
-                st.session_state[snack_count_key] = max(0, snack_count - 1)
-                st.rerun()
-
-        if snack_count == 0:
-            st.caption("No snacking entry added yet.")
-        for idx in range(snack_count):
-            prior = existing_snacks[idx] if idx < len(existing_snacks) else {}
-            st.markdown(f"<div class='hm-h9a4c-cardline'><b>Snacking {idx + 1}</b></div>", unsafe_allow_html=True)
-            snack_payload = _render_meal_fields(f"Snacking {idx + 1}", f"snacking_{idx + 1}", prior, date_key)
-            meals_payload[f"snacking_{idx + 1}"] = snack_payload
-
-    meals_payload["dinner"] = _render_meal_expander("Dinner", "dinner", existing_meals.get("dinner", {}), date_key)
-    meals_payload["bedtime"] = _render_meal_expander("Bedtime", "bedtime", existing_meals.get("bedtime", {}), date_key)
-
-water_options = [
-    "Select",
-    "0 Litres",
-    "0.5 Litres",
-    "1 Litre",
-    "1.5 Litres",
-    "2 Litres",
-    "2.5 Litres",
-    "3 Litres",
-    "3.5 Litres",
-    "4 Litres",
-    "4.5 Litres",
-    "5 Litres",
-    "5.5 Litres",
-    "6 Litres",
-    "6.5 Litres",
-    "7 Litres",
-    "7.5 Litres",
-    "8 Litres",
-    "8.5 Litres",
-    "9 Litres",
-    "9.5 Litres",
-    "10 Litres",
-]
-existing_water = _clean(existing.get("water_litres")) or "Select"
-
-with st.container(border=True):
-    with st.expander(f"Hydration — {_hydration_summary(existing_water, existing_other_fluids)}", expanded=False):
-        st.markdown("<div class='hm-h9a4c-note'>Water and other fluids are grouped together for the full day.</div>", unsafe_allow_html=True)
-        water_litres = st.selectbox(
-            "Water Intake",
-            water_options,
-            index=water_options.index(existing_water) if existing_water in water_options else 0,
-            key=f"hm_h9a4c_water_{date_key}",
-        )
-
-        fluid_count_key = f"hm_h9a4c_fluid_count_{date_key}"
-        if fluid_count_key not in st.session_state:
-            st.session_state[fluid_count_key] = len(existing_other_fluids)
-        fluid_count = int(st.session_state.get(fluid_count_key, 0) or 0)
-
-        st.markdown(f"<div class='hm-h9a4c-cardline'><b>Other Fluid Intake</b><br>{fluid_count}/9 entries</div>", unsafe_allow_html=True)
-        fc1, fc2 = st.columns(2)
-        with fc1:
-            if st.button("+ Add other fluid", key=f"hm_h9a4c_add_fluid_{date_key}", disabled=fluid_count >= 9, use_container_width=True):
-                st.session_state[fluid_count_key] = min(9, fluid_count + 1)
-                st.rerun()
-        with fc2:
-            if st.button("Remove last fluid", key=f"hm_h9a4c_remove_fluid_{date_key}", disabled=fluid_count <= 0, use_container_width=True):
-                st.session_state[fluid_count_key] = max(0, fluid_count - 1)
-                st.rerun()
-
-        fluid_options = ["Select", "Herbal Tea", "Coconut Water", "Juice", "Cold Drink", "Tea / Coffee", "Buttermilk", "Other"]
-        other_fluids = []
-        if fluid_count == 0:
-            st.caption("No other fluid entry added yet.")
-        for idx in range(fluid_count):
-            prior = existing_other_fluids[idx] if idx < len(existing_other_fluids) else {}
-            st.markdown(f"<div class='hm-h9a4c-cardline'><b>Other Fluid {idx + 1}</b></div>", unsafe_allow_html=True)
-            c1, c2 = st.columns(2)
-            with c1:
-                prior_type = prior.get("type") or "Select"
-                fluid_type = st.selectbox(
-                    f"Fluid type {idx + 1}",
-                    fluid_options,
-                    index=fluid_options.index(prior_type) if prior_type in fluid_options else 0,
-                    key=f"hm_h9a4c_fluid_type_{date_key}_{idx}",
-                )
-            with c2:
-                fluid_time = st.time_input(
-                    f"Fluid timing {idx + 1}",
-                    value=_parse_time(prior.get("time")),
-                    key=f"hm_h9a4c_fluid_time_{date_key}_{idx}",
-                )
-            q_col, n_col = st.columns(2)
-            with q_col:
-                quantity = st.text_input(
-                    f"Quantity {idx + 1}",
-                    value=prior.get("quantity", ""),
-                    placeholder="Example: 200 ml",
-                    key=f"hm_h9a4c_fluid_qty_{date_key}_{idx}",
-                )
-            with n_col:
-                notes = st.text_input(
-                    f"Notes {idx + 1}",
-                    value=prior.get("notes", ""),
-                    placeholder="Example: unsweetened",
-                    key=f"hm_h9a4c_fluid_notes_{date_key}_{idx}",
-                )
-
-            fluid_row = {
-                "type": _clean(fluid_type),
-                "time": _time_text(fluid_time),
-                "quantity": _clean(quantity),
-                "notes": _clean(notes),
-            }
-            if _intake_has_data(fluid_row):
-                other_fluids.append(fluid_row)
-
-with st.container(border=True):
-    existing_poop_rounds = existing.get("poop_rounds")
-    if _is_default(existing_poop_rounds):
-        existing_poop_rounds = "Select"
-    else:
-        try:
-            existing_poop_rounds = int(existing_poop_rounds)
-        except Exception:
-            existing_poop_rounds = "Select"
-
-    with st.expander(f"Bowel Movement — {_bowel_summary(existing_poop_rounds, existing.get('feeling_after_poop'))}", expanded=False):
-        poop_options = ["Select"] + list(range(10))
-        poop_rounds = st.selectbox(
-            "Poop rounds",
-            poop_options,
-            index=poop_options.index(existing_poop_rounds) if existing_poop_rounds in poop_options else 0,
-            key=f"hm_h9a4c_poop_rounds_{date_key}",
-        )
-        active_poop_count = int(poop_rounds) if isinstance(poop_rounds, int) else 0
-        existing_timings = existing.get("poop_timings", []) or []
-        poop_timings = []
-        if active_poop_count:
-            for idx in range(active_poop_count):
-                timing = st.time_input(
-                    f"Poop timing {idx + 1}",
-                    value=_parse_time(existing_timings[idx]) if idx < len(existing_timings) else None,
-                    key=f"hm_h9a4c_poop_time_{date_key}_{idx}",
-                )
-                poop_timings.append(_time_text(timing))
-        else:
-            st.caption("No timing needed unless poop rounds are greater than 0.")
-
-        feeling_after_poop = st.text_area(
-            "Feeling after poop",
-            value=_clean(existing.get("feeling_after_poop")),
-            placeholder="Example: relieved / constipated / bloated / incomplete",
-            key=f"hm_h9a4c_poop_feeling_{date_key}",
-            height=84,
-        )
-
-with st.container(border=True):
-    with st.expander(f"Physical Activity — {_clean(existing.get('physical_activity')) or 'No activity entry yet'}", expanded=False):
-        physical_activity = st.text_area(
-            "Physical activity",
-            value=_clean(existing.get("physical_activity")),
-            placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
-            key=f"hm_h9a4c_activity_{date_key}",
-            height=90,
-        )
-
-with st.container(border=True):
-    st.markdown("### Member Notes")
-    day_notes = st.text_area(
-        "Notes",
-        value=_clean(existing.get("notes")),
-        placeholder="Any cravings, bloating, missed meals, late meals, etc.",
-        key=f"hm_h9a4c_notes_{date_key}",
-        height=90,
-    )
-
-clean_meals_payload = {key: value for key, value in meals_payload.items() if _meal_has_data(value)}
-clean_water = _clean(water_litres)
-clean_poop_rounds = None if _is_default(poop_rounds) else poop_rounds
-clean_poop_timings = [_clean(x) for x in poop_timings if _has_value(x)]
-clean_feeling = _clean(feeling_after_poop)
-clean_activity = _clean(physical_activity)
-clean_notes = _clean(day_notes)
-poop_text = ""
-if clean_poop_rounds is not None:
-    poop_text = f"{clean_poop_rounds} round(s)"
-    if clean_poop_timings:
-        poop_text += f" at {', '.join(clean_poop_timings)}"
-    if clean_feeling:
-        poop_text += f" / {clean_feeling}"
-
-payload = {
-    "date": date_key,
-    "meals": clean_meals_payload,
-    "physical_activity": clean_activity,
-    "poop_rounds": clean_poop_rounds,
-    "poop_timings": clean_poop_timings,
-    "feeling_after_poop": clean_feeling,
-    "poop": poop_text,
-    "notes": clean_notes,
-    "water_litres": clean_water,
-    "other_fluids": _normalise_other_fluids(other_fluids),
-}
-
-with st.container(border=True):
-    st.markdown("### Save Day")
-    if _day_has_meaningful_entry(payload):
-        st.markdown(f"<div class='hm-h9a4c-status'>Entries captured for {log_date.strftime('%d %b')}. You can still edit them.</div>", unsafe_allow_html=True)
-    else:
-        st.markdown("<div class='hm-h9a4c-warning'>No entries captured yet. Please add at least one real entry before saving.</div>", unsafe_allow_html=True)
-
-    if st.button("Save Day", type="primary", use_container_width=True):
-        if not _day_has_meaningful_entry(payload):
-            set_system_message("Please add at least one entry before saving the day.", "error")
-            st.rerun()
-        save_daily_food_journal_day(user_id, date_key, payload)
-        set_system_message(f"Saved food journal for {log_date.strftime('%d %b %Y')}.", "success")
-        st.rerun()
-
-with st.container(border=True):
-    st.markdown("### Full Day Report")
-    st.caption(log_date.strftime("%a, %d %b %Y"))
-    lines = _report_lines(payload)
-    if not lines:
-        st.caption("Start adding entries or tap a saved day to load the report.")
-    else:
-        for line in lines:
-            st.markdown(f"- {_safe_html(line)}")
-
-with st.container(border=True):
-    st.markdown(f"### Guidance linked to {log_date.strftime('%d %b')}")
-    latest_note = get_latest_daily_log_note_for_date(user_id, date_key)
-    history = get_daily_log_notes_by_date(user_id, date_key, limit=10)
-    if not latest_note:
-        st.caption("No nutritionist note or general guidance is linked to this date yet.")
-    else:
-        st.markdown(
-            f"<div class='hm-h9a4c-cardline'><b>{_safe_html(format_local_ts(latest_note.get('ts', '')))}</b><br>{_safe_html(latest_note.get('note', ''))}</div>",
-            unsafe_allow_html=True,
-        )
-    if len(history) > 1:
-        with st.expander("View note history", expanded=False):
-            for note in history:
-                st.markdown(
-                    f"<div class='hm-h9a4c-cardline'><b>{_safe_html(format_local_ts(note.get('ts', '')))}</b><br>{_safe_html(note.get('note', ''))}</div>",
-                    unsafe_allow_html=True,
-                )
+with exercise_tab:
+    _render_exercise_journal_placeholder()
 
 render_page_nav("Daily Log", back_page="pages/02_Member_Home.py", dashboard_page="pages/02_Member_Home.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
