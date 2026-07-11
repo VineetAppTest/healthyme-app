@@ -92,7 +92,7 @@ def _member_email():
 
 
 def _render_member_utility_bar():
-    identity_col, profile_col, logout_col = st.columns([5.4, 0.72, 1.05], gap="small")
+    identity_col, profile_col, logout_col = st.columns([5.65, 0.42, 1.02], gap="small")
     with identity_col:
         st.markdown(
             f"""
@@ -104,10 +104,11 @@ def _render_member_utility_bar():
             unsafe_allow_html=True,
         )
     with profile_col:
-        st.markdown("<div class='hm-profile-button-anchor'></div>", unsafe_allow_html=True)
-        if st.button("👤 Profile", key="hm_top_my_profile", use_container_width=True, help="My Profile"):
+        st.markdown("<span class='hm-profile-button-anchor'></span>", unsafe_allow_html=True)
+        if st.button("👤", key="hm_top_my_profile", use_container_width=True, help="My Profile"):
             st.switch_page("pages/07_My_Profile.py")
     with logout_col:
+        st.markdown("<span class='hm-logout-button-anchor'></span>", unsafe_allow_html=True)
         if st.button("Logout", key="hm_top_logout", use_container_width=True):
             logout_current_user()
             st.rerun()
@@ -221,7 +222,7 @@ def _render_task_progress(current_instance, wf, requested_pages):
         st.warning("No active task is selected for this request.")
         return
 
-    task_cols = st.columns(max(1, min(3, len(visible_tasks))))
+    task_cols = st.columns([1, 1, 1.35] if len(visible_tasks) == 3 else max(1, min(3, len(visible_tasks))))
     col_index = 0
     if "nsp1" in visible_tasks:
         with task_cols[col_index]:
@@ -237,6 +238,7 @@ def _render_task_progress(current_instance, wf, requested_pages):
         with task_cols[col_index]:
             body_done = task_status_done_v96_2(current_instance, wf, "body_mind")
             body_label = "Body Mind Connection" if not body_done else "Body Mind Completed"
+            st.markdown("<span class='hm-bodymind-button-anchor'></span>", unsafe_allow_html=True)
             if st.button(body_label, use_container_width=True, disabled=body_done):
                 st.switch_page("pages/19_Body_Mind_Connection.py")
 
@@ -267,10 +269,13 @@ st.markdown(
 <style>
 .hm-member-identity-pill{min-height:2.36rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.70);border:1px solid #E9DFCC;border-radius:999px;padding:.30rem .64rem;}
 .hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;}
-.hm-profile-button-anchor + div [data-testid="stButton"] > button,
-.hm-profile-button-anchor + div .stButton > button{min-height:2.18rem!important;max-height:2.18rem!important;border-radius:999px!important;padding:.22rem .52rem!important;font-size:.78rem!important;background:#FFFFFF!important;color:#064E3B!important;border-color:#D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.045)!important;line-height:1.05!important;}
-.hm-profile-button-anchor + div [data-testid="stButton"] > button *,
-.hm-profile-button-anchor + div .stButton > button *{color:#064E3B!important;font-size:.78rem!important;font-weight:900!important;line-height:1.05!important;}
+div[data-testid="column"]:has(.hm-profile-button-anchor){display:flex!important;align-items:center!important;justify-content:center!important;}
+div[data-testid="column"]:has(.hm-profile-button-anchor) div[data-testid="stButton"] > button{min-height:2.06rem!important;max-height:2.06rem!important;width:2.35rem!important;min-width:2.35rem!important;border-radius:999px!important;padding:0!important;font-size:.92rem!important;background:#FFFFFF!important;color:#064E3B!important;border:1.25px solid #D8A84E!important;box-shadow:0 3px 8px rgba(6,78,59,.05)!important;line-height:1!important;}
+div[data-testid="column"]:has(.hm-profile-button-anchor) div[data-testid="stButton"] > button *{color:#064E3B!important;font-size:.92rem!important;font-weight:900!important;line-height:1!important;white-space:nowrap!important;}
+div[data-testid="column"]:has(.hm-logout-button-anchor){display:flex!important;align-items:center!important;}
+div[data-testid="column"]:has(.hm-logout-button-anchor) div[data-testid="stButton"] > button{min-height:2.36rem!important;max-height:2.36rem!important;white-space:nowrap!important;}
+div[data-testid="column"]:has(.hm-bodymind-button-anchor) div[data-testid="stButton"] > button{white-space:nowrap!important;min-height:2.52rem!important;padding:.55rem .62rem!important;font-size:.84rem!important;line-height:1.1!important;}
+div[data-testid="column"]:has(.hm-bodymind-button-anchor) div[data-testid="stButton"] > button *{white-space:nowrap!important;overflow-wrap:normal!important;word-break:keep-all!important;line-height:1.1!important;}
 .hm-b13-message-shell{border:1px solid #E3C98E;background:#FFFDF8;border-radius:20px;padding:.85rem .95rem;margin:.60rem 0 1rem 0;box-shadow:0 8px 22px rgba(15,23,42,.045);}
 .hm-b13-message-title{color:#064E3B;font-size:1.05rem;font-weight:760;margin-bottom:.50rem;}
 .hm-b13-message-card{border:1px solid #EAD9AA;background:#FFF9EC;border-radius:16px;padding:.75rem .82rem;margin:.45rem 0;}
@@ -296,7 +301,7 @@ st.markdown(
 .hm-muted-action-anchor + div .stButton > button{background:#F4F1EA!important;color:#64748B!important;border-color:#D8D0C0!important;box-shadow:none!important;}
 .hm-muted-action-anchor + div [data-testid="stButton"] > button *,
 .hm-muted-action-anchor + div .stButton > button *{color:#64748B!important;}
-.hm-home-soft-separator{height:1px;background:#E3D4BA;margin:1.05rem 0 .88rem 0;}
+.hm-home-soft-separator{height:1px;background:#E3D4BA;margin:.72rem 0 .72rem 0;}
 section.main > div.block-container,.main .block-container,[data-testid="stAppViewBlockContainer"],.stMainBlockContainer,.block-container{padding-top:.72rem!important;}
 div[data-testid="stButton"] > button{min-height:2.84rem;height:auto!important;white-space:normal!important;overflow:visible!important;line-height:1.32!important;padding:.58rem .78rem!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 div[data-testid="stButton"] > button p{white-space:normal!important;overflow:visible!important;line-height:1.32!important;margin:0!important;}
@@ -332,7 +337,7 @@ with left:
     elif current_instance.get("submitted_for_review"):
         st.info("Your latest evaluation has been submitted and is under review.")
     else:
-        b1, b2, b3 = st.columns(3)
+        b1, b2, b3 = st.columns([1, 1, 1.35])
         with b1:
             if st.button("1. Fill LAF", use_container_width=True):
                 st.switch_page("pages/03_LAF_Form.py")
@@ -340,11 +345,10 @@ with left:
             if st.button("2. Fill NSP Pg 1", use_container_width=True, disabled=("nsp1" not in requested_pages)):
                 st.switch_page("pages/04_NSP_Page1.py")
         with b3:
-            if st.button("3. Fill NSP Pg 2", use_container_width=True, disabled=("nsp2" not in requested_pages)):
-                st.switch_page("pages/05_NSP_Page2.py")
-        if should_show_body_mind_next_step_v96_6(wf, current_instance):
-            if st.button("Body Mind Connection", use_container_width=True):
-                st.switch_page("pages/19_Body_Mind_Connection.py")
+            if should_show_body_mind_next_step_v96_6(wf, current_instance):
+                st.markdown("<span class='hm-bodymind-button-anchor'></span>", unsafe_allow_html=True)
+                if st.button("Body Mind Connection", use_container_width=True):
+                    st.switch_page("pages/19_Body_Mind_Connection.py")
 
     st.markdown("<div class='hm-home-soft-separator'></div>", unsafe_allow_html=True)
     if st.button("Submit / Status — Send completed tasks for admin review", use_container_width=True):
