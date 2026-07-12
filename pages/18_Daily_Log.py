@@ -24,7 +24,16 @@ from components.db import (
 from components.flash import set_system_message, render_system_message
 
 
-BUILD_NOTE = "v102.4B21H9A10E · Evening Snack and clean field spacing"
+BUILD_NOTE = "v102.4B22H9A10E · Evening Snack structured meal"
+
+
+STRUCTURED_MEAL_ORDER = [
+    ("Breakfast", "breakfast"),
+    ("Lunch", "lunch"),
+    ("Evening Snack", "evening_snack"),
+    ("Dinner", "dinner"),
+    ("Bedtime", "bedtime"),
+]
 
 
 def _text(value):
@@ -98,7 +107,22 @@ def _meal_summary(meal):
 
 def _meal_has_data(meal):
     meal = _as_dict(meal)
-    return any(_has_value(meal.get(key)) for key in ("time", "food", "food_log", "name", "portion_size", "quantity", "mood_energy", "mood", "energy"))
+    return any(
+        _has_value(meal.get(key))
+        for key in ("time", "food", "food_log", "name", "portion_size", "quantity", "mood_energy", "mood", "energy")
+    )
+
+
+def _is_snacking_key(key):
+    key_text = str(key or "").lower()
+    return key_text.startswith("snacking_") or key_text.startswith("snack_") or key_text.startswith("other_snack")
+
+
+def _looks_like_evening_snack(value):
+    if not isinstance(value, dict):
+        return False
+    label_text = str(value.get("label") or "").lower()
+    return "evening" in label_text and "snack" in label_text
 
 
 def _normalise_meals(existing_meals):
@@ -106,16 +130,33 @@ def _normalise_meals(existing_meals):
     normalised = {
         "breakfast": _as_dict(meals.get("breakfast")),
         "lunch": _as_dict(meals.get("lunch")),
+        "evening_snack": _as_dict(meals.get("evening_snack") or meals.get("evening_snacks") or meals.get("evening")),
         "dinner": _as_dict(meals.get("dinner")),
         "bedtime": _as_dict(meals.get("bedtime") or meals.get("pre_bed")),
     }
+
     snacks = []
+    evening_candidates = []
     for key, value in meals.items():
+        if not isinstance(value, dict) or not _meal_has_data(value):
+            continue
         key_text = str(key or "").lower()
-        label_text = str((value or {}).get("label", "")).lower() if isinstance(value, dict) else ""
-        if key_text.startswith("snacking_") or key_text.startswith("other_") or "snack" in key_text or "snack" in label_text or "evening" in label_text:
-            if isinstance(value, dict) and _meal_has_data(value):
+        if key_text in {"breakfast", "lunch", "evening_snack", "evening_snacks", "evening", "dinner", "bedtime", "pre_bed"}:
+            continue
+        if _is_snacking_key(key):
+            if _looks_like_evening_snack(value):
+                evening_candidates.append(dict(value))
+            else:
                 snacks.append(dict(value))
+
+    # Compatibility guard for entries saved during the short regression where Evening Snack was repeatable.
+    # First old Evening Snack entry becomes the structured Evening Snack; any extras remain visible as Snacking.
+    if not _meal_has_data(normalised.get("evening_snack")) and evening_candidates:
+        normalised["evening_snack"] = evening_candidates[0]
+        snacks = evening_candidates[1:] + snacks
+    else:
+        snacks = evening_candidates + snacks
+
     return normalised, snacks[:9]
 
 
@@ -210,16 +251,13 @@ def _day_has_meaningful_entry(payload):
 def _report_lines(payload):
     lines = []
     meals = payload.get("meals") or {}
-    for label, key in [("Breakfast", "breakfast"), ("Lunch", "lunch"), ("Dinner", "dinner")]:
+    for label, key in STRUCTURED_MEAL_ORDER:
         meal = meals.get(key) or {}
         if _meal_has_data(meal):
             lines.append(f"{label}: {_meal_summary(meal)}")
     snack_items = [(key, value) for key, value in meals.items() if str(key).startswith("snacking_") and _meal_has_data(value)]
     for idx, (_key, meal) in enumerate(snack_items, start=1):
-        lines.append(f"Evening Snack {idx}: {_meal_summary(meal)}")
-    bedtime = meals.get("bedtime") or {}
-    if _meal_has_data(bedtime):
-        lines.append(f"Bedtime: {_meal_summary(bedtime)}")
+        lines.append(f"Snacking {idx}: {_meal_summary(meal)}")
     if _has_value(payload.get("water_litres")):
         lines.append(f"Water: {_clean(payload.get('water_litres'))}")
     for idx, fluid in enumerate(_normalise_other_fluids(payload.get("other_fluids", [])), start=1):
@@ -248,6 +286,7 @@ def _render_css():
         .hm-h9a4c-warning{border:1px solid #F0C9C9;background:#FFF7F7;color:#9A3412;border-radius:14px;padding:.68rem .78rem;font-weight:800;margin:.5rem 0 .6rem 0;}
         .hm-h9a4c-cardline{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:.75rem .85rem;margin:.45rem 0;}
         .hm-exercise-placeholder{border:1px dashed #D8C18B;background:#FFFDF8;border-radius:16px;padding:1rem;margin:.5rem 0;color:#334155;}
+        .hm-snacking-subtitle{color:#64748B;font-size:.82rem;font-weight:720;margin:.35rem 0 .15rem 0;}
         div[data-testid="stTabs"] [role="tablist"]{gap:.55rem;margin:.15rem 0 1rem 0;border-bottom:1px solid #E3D4BA;padding-bottom:.45rem;}
         div[data-testid="stTabs"] button[role="tab"]{border:1.4px solid #D8A84E!important;border-radius:999px!important;background:#FFFFFF!important;color:#064E3B!important;font-weight:950!important;padding:.62rem 1.18rem!important;box-shadow:0 7px 16px rgba(6,78,59,.07)!important;min-height:2.65rem!important;}
         div[data-testid="stTabs"] button[aria-selected="true"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border-color:#064E3B!important;box-shadow:0 12px 22px rgba(6,78,59,.18)!important;}
@@ -298,6 +337,38 @@ def _render_meal_toggle(label, key, prior, date_key):
         st.markdown("</div>", unsafe_allow_html=True)
         return payload
     return _as_dict(prior)
+
+
+def _render_snacking_toggle(existing_snacks, date_key):
+    snack_count_key = f"hm_h9a4c_snack_count_{date_key}"
+    if snack_count_key not in st.session_state:
+        st.session_state[snack_count_key] = len(existing_snacks)
+    snack_count = int(st.session_state.get(snack_count_key, 0) or 0)
+    snacking_payload = {}
+
+    st.markdown("<div class='hm-snacking-subtitle'>Optional snacking, separate from structured meals</div>", unsafe_allow_html=True)
+    if _toggle_button(f"Snacking — {snack_count}/9 entries", f"{date_key}_snacking"):
+        st.markdown("<div class='hm-toggle-body'>", unsafe_allow_html=True)
+        add_col, remove_col = st.columns(2)
+        with add_col:
+            if st.button("+ Add snacking", key=f"hm_h9a4c_add_snack_{date_key}", disabled=snack_count >= 9, use_container_width=True):
+                st.session_state[snack_count_key] = min(9, snack_count + 1)
+                st.rerun()
+        with remove_col:
+            if st.button("Remove last snacking", key=f"hm_h9a4c_remove_snack_{date_key}", disabled=snack_count <= 0, use_container_width=True):
+                st.session_state[snack_count_key] = max(0, snack_count - 1)
+                st.rerun()
+        if snack_count == 0:
+            st.caption("No snacking entry added yet.")
+        for idx in range(snack_count):
+            prior = existing_snacks[idx] if idx < len(existing_snacks) else {}
+            st.markdown(f"<div class='hm-h9a4c-cardline'><b>Snacking {idx + 1}</b></div>", unsafe_allow_html=True)
+            snacking_payload[f"snacking_{idx + 1}"] = _render_meal_fields(f"Snacking {idx + 1}", f"snacking_{idx + 1}", prior, date_key)
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        for idx, prior in enumerate(existing_snacks[:snack_count], start=1):
+            snacking_payload[f"snacking_{idx}"] = prior
+    return snacking_payload
 
 
 def _render_exercise_journal_placeholder():
@@ -367,37 +438,9 @@ def _render_food_journal(user_id):
             st.markdown("<div class='hm-h9a4c-note'>Open only the meal you want to update.</div>", unsafe_allow_html=True)
 
         meals_payload = {}
-        meals_payload["breakfast"] = _render_meal_toggle("Breakfast", "breakfast", existing_meals.get("breakfast", {}), date_key)
-        meals_payload["lunch"] = _render_meal_toggle("Lunch", "lunch", existing_meals.get("lunch", {}), date_key)
-        meals_payload["dinner"] = _render_meal_toggle("Dinner", "dinner", existing_meals.get("dinner", {}), date_key)
-
-        snack_count_key = f"hm_h9a4c_snack_count_{date_key}"
-        if snack_count_key not in st.session_state:
-            st.session_state[snack_count_key] = len(existing_snacks)
-        snack_count = int(st.session_state.get(snack_count_key, 0) or 0)
-        if _toggle_button(f"Evening Snack — {snack_count}/9 entries", f"{date_key}_evening_snack"):
-            st.markdown("<div class='hm-toggle-body'>", unsafe_allow_html=True)
-            add_col, remove_col = st.columns(2)
-            with add_col:
-                if st.button("+ Add evening snack", key=f"hm_h9a4c_add_snack_{date_key}", disabled=snack_count >= 9, use_container_width=True):
-                    st.session_state[snack_count_key] = min(9, snack_count + 1)
-                    st.rerun()
-            with remove_col:
-                if st.button("Remove last evening snack", key=f"hm_h9a4c_remove_snack_{date_key}", disabled=snack_count <= 0, use_container_width=True):
-                    st.session_state[snack_count_key] = max(0, snack_count - 1)
-                    st.rerun()
-            if snack_count == 0:
-                st.caption("No evening snack entry added yet.")
-            for idx in range(snack_count):
-                prior = existing_snacks[idx] if idx < len(existing_snacks) else {}
-                st.markdown(f"<div class='hm-h9a4c-cardline'><b>Evening Snack {idx + 1}</b></div>", unsafe_allow_html=True)
-                meals_payload[f"snacking_{idx + 1}"] = _render_meal_fields(f"Evening Snack {idx + 1}", f"snacking_{idx + 1}", prior, date_key)
-            st.markdown("</div>", unsafe_allow_html=True)
-        else:
-            for idx, prior in enumerate(existing_snacks[:snack_count], start=1):
-                meals_payload[f"snacking_{idx}"] = prior
-
-        meals_payload["bedtime"] = _render_meal_toggle("Bedtime", "bedtime", existing_meals.get("bedtime", {}), date_key)
+        for label, key in STRUCTURED_MEAL_ORDER:
+            meals_payload[key] = _render_meal_toggle(label, key, existing_meals.get(key, {}), date_key)
+        meals_payload.update(_render_snacking_toggle(existing_snacks, date_key))
 
     water_options = ["Select", "0 Litres", "0.5 Litres", "1 Litre", "1.5 Litres", "2 Litres", "2.5 Litres", "3 Litres", "3.5 Litres", "4 Litres", "4.5 Litres", "5 Litres", "5.5 Litres", "6 Litres", "6.5 Litres", "7 Litres", "7.5 Litres", "8 Litres", "8.5 Litres", "9 Litres", "9.5 Litres", "10 Litres"]
     existing_water = _clean(existing.get("water_litres")) or "Select"
