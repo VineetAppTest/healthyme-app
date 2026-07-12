@@ -81,6 +81,21 @@ def _apply_member_daily_log_defaults() -> None:
     )
 
 
+def _hide_member_reference_library() -> None:
+    """Temporarily hide the Member Home Reference Library without deleting routes."""
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stVerticalBlock"] > div:has(.hm-home-reference-title),
+        div[data-testid="stVerticalBlock"] > div:has(.hm-home-reference-title) ~ div{
+          display:none!important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def require_admin():
     restore_any_login()
     if not st.session_state.get("logged_in"):
@@ -117,3 +132,4 @@ def require_member():
         _show_access_required("Member")
 
     _apply_member_daily_log_defaults()
+    _hide_member_reference_library()
