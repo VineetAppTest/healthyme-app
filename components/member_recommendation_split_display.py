@@ -12,18 +12,8 @@ import streamlit as st
 PROFILE_TABLE = "hm_recommendation_profiles"
 ITEM_TABLE = "hm_recommendation_profile_items"
 SECRET_SECTIONS = ("auth", "auth0", "authentication", "healthyme", "supabase")
-
 ITEM_SELECT_LEGACY = "item_type,day_number,slot_name,item_order,reference_label,portion,instruction,scheduled_time,intensity,dosage_frequency"
-SOURCE_COLUMNS = [
-    "source_type",
-    "source_id",
-    "source_label",
-    "source_snapshot",
-    "source_image_url",
-    "source_image_bucket",
-    "source_image_path",
-    "source_image_access_type",
-]
+SOURCE_COLUMNS = ["source_type", "source_id", "source_label", "source_snapshot", "source_image_url", "source_image_bucket", "source_image_path", "source_image_access_type"]
 ITEM_SELECT_WITH_SOURCE = ITEM_SELECT_LEGACY + "," + ",".join(SOURCE_COLUMNS)
 
 
@@ -88,9 +78,7 @@ def _get_secret(name: str, default: str = "") -> str:
             if not section_values:
                 continue
             try:
-                value = section_values.get(name)
-                if value is None:
-                    value = section_values.get(lower_name)
+                value = section_values.get(name) or section_values.get(lower_name)
                 if value is not None:
                     return _clean(value, default)
             except Exception:
@@ -146,12 +134,7 @@ def _profile_matches_member(profile: Dict[str, Any], member_id: str, email: str)
     if not tokens:
         return False
     label = _clean(profile.get("assigned_member_label"))
-    profile_values = {
-        _clean(profile.get("assigned_member_id")),
-        _clean(profile.get("assigned_member_id")).lower(),
-        label,
-        label.lower(),
-    }
+    profile_values = {_clean(profile.get("assigned_member_id")), _clean(profile.get("assigned_member_id")).lower(), label, label.lower()}
     for token in tokens:
         if token in profile_values:
             return True
@@ -164,39 +147,16 @@ def _profile_matches_member(profile: Dict[str, Any], member_id: str, email: str)
 def load_active_recommendation_profile(member_id: str, email: str = "") -> Tuple[bool, Dict[str, Any], List[dict], str]:
     try:
         c = _client()
-        profile_result = (
-            c.table(PROFILE_TABLE)
-            .select("*")
-            .eq("status", "active")
-            .order("updated_at", desc=True)
-            .limit(150)
-            .execute()
-        )
+        profile_result = c.table(PROFILE_TABLE).select("*").eq("status", "active").order("updated_at", desc=True).limit(150).execute()
         profiles = [p for p in _rows(profile_result) if _profile_matches_member(p, member_id, email)]
         if not profiles:
             return True, {}, [], "No active recommendation profile found for this member."
         profile = profiles[0]
         try:
-            item_result = (
-                c.table(ITEM_TABLE)
-                .select(ITEM_SELECT_WITH_SOURCE)
-                .eq("profile_id", profile.get("id"))
-                .order("day_number")
-                .order("item_type")
-                .order("item_order")
-                .execute()
-            )
+            item_result = c.table(ITEM_TABLE).select(ITEM_SELECT_WITH_SOURCE).eq("profile_id", profile.get("id")).order("day_number").order("item_type").order("item_order").execute()
             return True, profile, _rows(item_result), "Loaded active recommendation with source-backed fields."
         except Exception:
-            item_result = (
-                c.table(ITEM_TABLE)
-                .select(ITEM_SELECT_LEGACY)
-                .eq("profile_id", profile.get("id"))
-                .order("day_number")
-                .order("item_type")
-                .order("item_order")
-                .execute()
-            )
+            item_result = c.table(ITEM_TABLE).select(ITEM_SELECT_LEGACY).eq("profile_id", profile.get("id")).order("day_number").order("item_type").order("item_order").execute()
             return True, profile, _rows(item_result), "Loaded active recommendation using legacy item fields."
     except Exception as exc:
         return False, {}, [], f"Could not load member recommendation: {exc}"
@@ -311,10 +271,7 @@ def _chip(label: str, value: object = "") -> str:
 def _chips(values: List[Tuple[str, object] | str]) -> str:
     rendered = []
     for value in values:
-        if isinstance(value, tuple):
-            chip = _chip(value[0], value[1])
-        else:
-            chip = _chip(str(value))
+        chip = _chip(value[0], value[1]) if isinstance(value, tuple) else _chip(str(value))
         if chip:
             rendered.append(chip)
     return "".join(rendered)
@@ -328,29 +285,13 @@ def _item_title(row: dict) -> str:
 def _item_chips(row: dict) -> List[Tuple[str, object] | str]:
     item_type = row.get("item_type")
     if item_type == "meal":
-        return [
-            ("Slot", row.get("slot_name") or "As advised"),
-            ("Portion", row.get("portion") or "As advised"),
-            ("Type", source_value(row, "meal_type")),
-            ("Diet", source_value(row, "diet_type")),
-            ("Prep", source_value(row, "prep_time")),
-            ("Calories", source_value(row, "calories")),
-        ]
+        return [("Slot", row.get("slot_name") or "As advised"), ("Portion", row.get("portion") or "As advised"), ("Type", source_value(row, "meal_type")), ("Diet", source_value(row, "diet_type")), ("Prep", source_value(row, "prep_time")), ("Calories", source_value(row, "calories"))]
     if item_type == "exercise":
-        return [
-            ("Time", row.get("scheduled_time") or row.get("slot_name") or "As advised"),
-            ("Difficulty", source_value(row, "difficulty") or row.get("intensity") or "As advised"),
-            ("Duration/Reps", source_value(row, "duration_or_reps")),
-            ("Equipment", source_value(row, "equipment")),
-            ("Category", source_value(row, "category")),
-        ]
+        return [("Time", row.get("scheduled_time") or row.get("slot_name") or "As advised"), ("Difficulty", source_value(row, "difficulty") or row.get("intensity") or "As advised"), ("Duration/Reps", source_value(row, "duration_or_reps")), ("Equipment", source_value(row, "equipment")), ("Category", source_value(row, "category"))]
     if item_type == "supplement":
         frequency, dosage = parse_dosage_frequency(row.get("dosage_frequency"))
         timeline = parse_timeline(row.get("scheduled_time") or row.get("slot_name"))
-        chips: List[Tuple[str, object] | str] = [
-            ("Frequency", frequency or "As advised"),
-            ("Dosage", dosage or "As advised"),
-        ]
+        chips: List[Tuple[str, object] | str] = [("Frequency", frequency or "As advised"), ("Dosage", dosage or "As advised")]
         chips.extend([("Timeline", item) for item in timeline] or [("Timeline", "As advised")])
         chips.append(("Source Timing", source_value(row, "timing")))
         return chips
@@ -368,16 +309,7 @@ def _render_item(row: dict, compact: bool = False) -> None:
         body_parts.append(f"<div class='hm-rec-source'><b>Source context:</b> {_esc(source_context)}</div>")
     if image_ref and not compact:
         body_parts.append(f"<div class='hm-rec-image'><b>Image ref:</b> {_esc(image_ref)}</div>")
-    st.markdown(
-        f"""
-        <div class='hm-rec-card {'compact' if compact else ''}'>
-          <div class='hm-rec-card-title'>{_esc(_item_title(row))}</div>
-          <div class='hm-chip-row'>{_chips(_item_chips(row))}</div>
-          {''.join(body_parts)}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"""<div class='hm-rec-card {'compact' if compact else ''}'><div class='hm-rec-card-title'>{_esc(_item_title(row))}</div><div class='hm-chip-row'>{_chips(_item_chips(row))}</div>{''.join(body_parts)}</div>""", unsafe_allow_html=True)
 
 
 def _render_section(title: str, rows: List[dict], empty: str, compact: bool = False) -> None:
@@ -387,6 +319,19 @@ def _render_section(title: str, rows: List[dict], empty: str, compact: bool = Fa
         return
     for row in rows:
         _render_item(row, compact=compact)
+
+
+def _weekly_toggle(label: str, key: str, default_open: bool = False) -> bool:
+    state_key = f"hm_weekly_toggle_{key}"
+    if state_key not in st.session_state:
+        st.session_state[state_key] = default_open
+    is_open = bool(st.session_state.get(state_key))
+    prefix = "▾" if is_open else "▸"
+    st.markdown("<div class='hm-weekly-toggle-anchor'></div>", unsafe_allow_html=True)
+    if st.button(f"{prefix} {label}", key=f"{state_key}_btn", use_container_width=True):
+        st.session_state[state_key] = not is_open
+        st.rerun()
+    return bool(st.session_state.get(state_key))
 
 
 def _render_today(profile: dict, items: List[dict]) -> None:
@@ -400,54 +345,45 @@ def _render_today(profile: dict, items: List[dict]) -> None:
         _render_section("Supplements", items_for_day(items, today_day, "supplement"), "No supplement recommendation for today.", compact=True)
     with c3:
         _render_section("Exercises", items_for_day(items, today_day, "exercise"), "No exercise recommendation for today.", compact=True)
-    _render_guidance(profile, items, day=today_day, title="Today's Nutrition Guidance")
 
 
 def _render_weekly_type(profile: dict, items: List[dict], item_type: str, title: str, empty: str) -> None:
     st.markdown(f"<div class='hm-rec-section-title'>{_esc(title)}</div>", unsafe_allow_html=True)
+    current_day = today_day_number(profile)
     for day in range(1, 8):
         rows = items_for_day(items, day, item_type)
-        with st.expander(day_label(profile, day), expanded=(day == today_day_number(profile))):
+        if _weekly_toggle(day_label(profile, day), f"{item_type}_{day}", default_open=(day == current_day)):
+            st.markdown("<div class='hm-weekly-toggle-body'>", unsafe_allow_html=True)
             if not rows:
                 st.caption(empty)
             for row in rows:
                 _render_item(row)
+            st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _guidance_items(profile: dict, items: List[dict], day: int | None = None) -> List[Tuple[str, str]]:
     values: List[Tuple[str, str]] = []
-    profile_note = _clean(profile.get("profile_note"))
-    if profile_note:
-        values.append(("Profile guidance", profile_note))
-    diet_type = _clean(profile.get("diet_type"))
-    if diet_type:
-        values.append(("Diet type", diet_type))
-    for concern in _as_list(profile.get("health_concerns")):
-        concern_text = _clean(concern)
-        if concern_text:
-            values.append(("Health concern", concern_text))
+    for field in ("nutrition_guidance", "nutrition_guidance_note", "nutritionist_guidance", "nutritionist_note", "weekly_guidance", "profile_guidance", "profile_level_nutrition_note", "nutrition_note", "member_guidance", "guidance_note", "additional_guidance", "ancillary_guidance"):
+        text = _clean(profile.get(field))
+        if text:
+            values.append(("Guidance", text))
     rows = active_items(items)
     if day is not None:
         rows = [row for row in rows if _safe_int(row.get("day_number")) == day]
     for row in rows:
-        name = _item_title(row)
-        instruction = _clean(row.get("instruction"))
-        context = source_context_text(row)
-        admin_note = source_value(row, "admin_notes")
-        if instruction:
-            values.append((f"{name} instruction", instruction))
-        if context:
-            values.append((f"{name} source", context))
-        if admin_note:
-            values.append((f"{name} note", admin_note))
+        if _clean(row.get("item_type")).lower() not in {"guidance", "nutrition_guidance", "nutrition"}:
+            continue
+        label = _clean(row.get("reference_label"), "Guidance")
+        text = _clean(row.get("instruction") or row.get("portion") or row.get("scheduled_time"))
+        if text:
+            values.append((label, text))
     seen = set()
     unique = []
     for label, value in values:
         marker = (label.lower(), value.lower())
-        if marker in seen:
-            continue
-        seen.add(marker)
-        unique.append((label, value))
+        if marker not in seen:
+            seen.add(marker)
+            unique.append((label, value))
     return unique
 
 
@@ -455,7 +391,7 @@ def _render_guidance(profile: dict, items: List[dict], day: int | None = None, t
     values = _guidance_items(profile, items, day=day)
     st.markdown(f"<div class='hm-rec-section-title'>{_esc(title)}</div>", unsafe_allow_html=True)
     if not values:
-        st.markdown("<div class='hm-rec-empty'>No nutrition guidance has been added yet.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='hm-rec-empty'>No Guidance shared.</div>", unsafe_allow_html=True)
         return
     chips = _chips([(label, value) for label, value in values[:24]])
     st.markdown(f"<div class='hm-guidance-box'><div class='hm-chip-row'>{chips}</div></div>", unsafe_allow_html=True)
@@ -473,57 +409,12 @@ def _render_weekly(profile: dict, items: List[dict]) -> None:
         _render_guidance(profile, items, day=None, title="Weekly Nutrition Guidance")
 
 
-def _render_summary(profile: dict, items: List[dict], message: str, mode: str) -> None:
-    rows = active_items(items)
-    today_day = today_day_number(profile)
-    title = "Today's Journey" if mode == "today" else "Weekly Recommendation"
-    subtitle = "Today's Journey is the current day only, pulled from the weekly recommendation." if mode == "today" else "Weekly Recommendation is the full seven-day plan split into meals, supplements, exercises and nutrition guidance."
-    st.markdown(
-        f"""
-        <div class='hm-rec-hero'>
-          <div class='hm-rec-title'>{_esc(title)}</div>
-          <div class='hm-rec-sub'>{_esc(subtitle)}</div>
-          <div class='hm-rec-sub'><b>Profile:</b> {_esc(profile.get('profile_name') or 'Active Recommendation')} · <b>Start date:</b> {_esc(profile.get('start_date') or 'NA')} · <b>Today maps to:</b> Day {today_day}</div>
-          <div class='hm-rec-source'>{_esc(message)}</div>
-        </div>
-        <div class='hm-rec-count-grid'>
-          <div class='hm-rec-count'><b>{_section_count(rows, 'meal', today_day) if mode == 'today' else _section_count(rows, 'meal')}</b><span>Meal rows</span></div>
-          <div class='hm-rec-count'><b>{_section_count(rows, 'supplement', today_day) if mode == 'today' else _section_count(rows, 'supplement')}</b><span>Supplement rows</span></div>
-          <div class='hm-rec-count'><b>{_section_count(rows, 'exercise', today_day) if mode == 'today' else _section_count(rows, 'exercise')}</b><span>Exercise rows</span></div>
-          <div class='hm-rec-count'><b>{len(_guidance_items(profile, rows, today_day if mode == 'today' else None))}</b><span>Guidance chips</span></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def _inject_styles() -> None:
-    st.markdown(
-        """
+    st.markdown("""
 <style>
-.hm-rec-hero{border:1px solid #E3C98E;background:linear-gradient(135deg,#FFFDF8 0%,#FFF4DA 100%);border-radius:22px;padding:1rem 1.1rem;box-shadow:0 10px 24px rgba(15,23,42,.05);margin:.55rem 0 .85rem;}
-.hm-rec-title{color:#064E3B;font-size:1.32rem;font-weight:950;margin:0 0 .22rem;}
-.hm-rec-sub{color:#475569;font-size:.86rem;font-weight:720;line-height:1.45;margin:.12rem 0;}
-.hm-rec-count-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem;margin:.65rem 0 1rem;}
-.hm-rec-count{border:1px solid #E3C98E;background:#FFFDF8;border-radius:15px;padding:.70rem .80rem;box-shadow:0 5px 15px rgba(15,23,42,.035);}
-.hm-rec-count b{display:block;color:#064E3B;font-size:1rem;font-weight:950;}.hm-rec-count span{color:#64748B;font-size:.76rem;font-weight:780;}
-.hm-rec-day-label{color:#064E3B;font-size:1.02rem;font-weight:950;margin:.80rem 0 .45rem;}
-.hm-rec-section-title{color:#72551A;font-size:.92rem;font-weight:950;margin:.70rem 0 .38rem;}
-.hm-rec-card{border:1px solid #E6D4A8;background:#FFFDF8;border-radius:16px;padding:.72rem .78rem;margin:.42rem 0;box-shadow:0 8px 18px rgba(15,23,42,.04);}
-.hm-rec-card.compact{min-height:9.5rem;}
-.hm-rec-card-title{color:#064E3B;font-size:.91rem;font-weight:950;margin-bottom:.18rem;}
-.hm-rec-line,.hm-rec-source,.hm-rec-image{color:#334155;font-size:.78rem;font-weight:720;line-height:1.38;margin:.18rem 0;}
-.hm-rec-source{color:#64748B;}.hm-rec-image{color:#72551A;word-break:break-word;}
-.hm-rec-empty{border:1px dashed #D9C28F;background:#FFF9EC;border-radius:14px;padding:.72rem;color:#64748B;font-size:.80rem;font-weight:740;line-height:1.4;}
-.hm-chip-row{display:flex;flex-wrap:wrap;gap:.30rem .34rem;margin:.20rem 0;}
-.hm-chip{display:inline-flex;align-items:center;gap:.28rem;border:1px solid #D9C28F;background:#FFF9EC;color:#334155;border-radius:999px;padding:.20rem .46rem;font-size:.72rem;font-weight:760;line-height:1.25;max-width:100%;}
-.hm-chip b{color:#064E3B;font-weight:950;margin-right:.10rem;}
-.hm-guidance-box{border:1px solid #E3C98E;background:#FFFDF8;border-radius:18px;padding:.78rem .86rem;box-shadow:0 8px 18px rgba(15,23,42,.04);}
-@media(max-width:850px){.hm-rec-count-grid{grid-template-columns:1fr}.hm-rec-card.compact{min-height:auto}.hm-rec-day-label{font-size:.96rem}}
+.hm-rec-day-label{color:#064E3B;font-size:1.02rem;font-weight:950;margin:.80rem 0 .45rem;}.hm-rec-sub{color:#475569;font-size:.86rem;font-weight:720;line-height:1.45;margin:.12rem 0;}.hm-rec-section-title{color:#72551A;font-size:.92rem;font-weight:950;margin:.70rem 0 .38rem;}.hm-rec-card{border:1px solid #E6D4A8;background:#FFFDF8;border-radius:16px;padding:.72rem .78rem;margin:.42rem 0;box-shadow:0 8px 18px rgba(15,23,42,.04);}.hm-rec-card.compact{min-height:9.5rem;}.hm-rec-card-title{color:#064E3B;font-size:.91rem;font-weight:950;margin-bottom:.18rem;}.hm-rec-line,.hm-rec-source,.hm-rec-image{color:#334155;font-size:.78rem;font-weight:720;line-height:1.38;margin:.18rem 0;}.hm-rec-source{color:#64748B;}.hm-rec-image{color:#72551A;word-break:break-word;}.hm-rec-empty{border:1px dashed #D9C28F;background:#FFF9EC;border-radius:14px;padding:.72rem;color:#64748B;font-size:.80rem;font-weight:740;line-height:1.4;}.hm-chip-row{display:flex;flex-wrap:wrap;gap:.30rem .34rem;margin:.20rem 0;}.hm-chip{display:inline-flex;align-items:center;gap:.28rem;border:1px solid #D9C28F;background:#FFF9EC;color:#334155;border-radius:999px;padding:.20rem .46rem;font-size:.72rem;font-weight:760;line-height:1.25;max-width:100%;}.hm-chip b{color:#064E3B;font-weight:950;margin-right:.10rem;}.hm-guidance-box{border:1px solid #E3C98E;background:#FFFDF8;border-radius:18px;padding:.78rem .86rem;box-shadow:0 8px 18px rgba(15,23,42,.04);}.hm-weekly-toggle-anchor + div [data-testid="stButton"] > button,.hm-weekly-toggle-anchor + div .stButton > button{justify-content:center!important;text-align:center!important;min-height:3.0rem!important;background:#FFFFFF!important;border:1.45px solid #D8A84E!important;border-radius:16px!important;box-shadow:0 8px 18px rgba(15,23,42,.045)!important;color:#064E3B!important;font-weight:950!important;margin:.55rem 0 .34rem 0!important;padding:.64rem .86rem!important;}.hm-weekly-toggle-anchor + div [data-testid="stButton"] > button *,.hm-weekly-toggle-anchor + div .stButton > button *{color:#064E3B!important;font-size:.92rem!important;font-weight:950!important;line-height:1.22!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;text-align:center!important;}.hm-weekly-toggle-body{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:1rem .96rem;margin:.18rem 0 .75rem 0;}@media(max-width:850px){.hm-rec-card.compact{min-height:auto}.hm-rec-day-label{font-size:.96rem}}
 </style>
-""",
-        unsafe_allow_html=True,
-    )
+""", unsafe_allow_html=True)
 
 
 def _load_for_member() -> Tuple[bool, Dict[str, Any], List[dict], str]:
@@ -533,14 +424,11 @@ def _load_for_member() -> Tuple[bool, Dict[str, Any], List[dict], str]:
 
 
 def _render_refresh() -> None:
-    if st.button("Refresh Recommendation", use_container_width=True):
-        clear_member_recommendation_cache()
-        st.rerun()
+    return None
 
 
 def render_today_journey_view() -> None:
     _inject_styles()
-    _render_refresh()
     ok, profile, items, message = _load_for_member()
     if not ok:
         st.error(message)
@@ -548,15 +436,11 @@ def render_today_journey_view() -> None:
     if not profile:
         st.markdown("<div class='hm-rec-empty'>No active recommendation has been published for you yet. Your nutritionist will publish it when ready.</div>", unsafe_allow_html=True)
         return
-    _render_summary(profile, items, message, mode="today")
-    if st.button("Open Weekly Recommendation", use_container_width=True):
-        st.switch_page("pages/37_Member_Plan.py")
     _render_today(profile, items)
 
 
 def render_weekly_recommendation_view() -> None:
     _inject_styles()
-    _render_refresh()
     ok, profile, items, message = _load_for_member()
     if not ok:
         st.error(message)
@@ -564,7 +448,4 @@ def render_weekly_recommendation_view() -> None:
     if not profile:
         st.markdown("<div class='hm-rec-empty'>No active recommendation has been published for you yet. Your nutritionist will publish it when ready.</div>", unsafe_allow_html=True)
         return
-    _render_summary(profile, items, message, mode="weekly")
-    if st.button("Open Today's Journey", use_container_width=True):
-        st.switch_page("pages/36_Todays_Journey.py")
     _render_weekly(profile, items)
