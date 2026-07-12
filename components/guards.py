@@ -1,3 +1,5 @@
+from datetime import date
+
 import streamlit as st
 
 from components.admin_role_model import current_user_is_admin, current_user_is_member
@@ -51,6 +53,34 @@ def _show_access_required(required_role: str = "Admin") -> None:
     st.stop()
 
 
+def _apply_member_daily_log_defaults() -> None:
+    """Keep Daily Log saved-day filters on today unless the member changes them."""
+    today = date.today()
+    st.session_state.setdefault("hm_h9a4c_saved_from", today)
+    st.session_state.setdefault("hm_h9a4c_saved_to", today)
+
+    # Daily Log renders View Saved Days as the second bordered block in the
+    # Food Journal tab. Reorder only that page's tab panel by scoping to the
+    # existing Daily Log marker class, leaving all other member tabs untouched.
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stTabs"]:has(.hm-h9a4c-note)
+        div[role="tabpanel"] > div[data-testid="stVerticalBlock"]{
+          display:flex!important;
+          flex-direction:column!important;
+        }
+        div[data-testid="stTabs"]:has(.hm-h9a4c-note)
+        div[role="tabpanel"] > div[data-testid="stVerticalBlock"]
+        > div[data-testid="stVerticalBlockBorderWrapper"]:nth-of-type(2){
+          order:90!important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def require_admin():
     restore_any_login()
     if not st.session_state.get("logged_in"):
@@ -85,3 +115,5 @@ def require_member():
 
     if not current_user_is_member():
         _show_access_required("Member")
+
+    _apply_member_daily_log_defaults()

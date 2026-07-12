@@ -25,7 +25,7 @@ topbar(
 st.markdown(
     """
 <style>
-/* v102.4B4 Admin Dashboard premium polish */
+/* v102.4B23 Admin Dashboard placement update */
 section.main > div.block-container,
 .main .block-container,
 [data-testid="stAppViewBlockContainer"],
@@ -58,7 +58,6 @@ section.main > div.block-container,
   font-weight:760!important;
   line-height:1.32!important;
 }
-/* Streamlit bordered containers used as premium section cards on this page */
 div[data-testid="stVerticalBlockBorderWrapper"]{
   border:1.25px solid rgba(216,180,98,.62)!important;
   border-radius:22px!important;
@@ -119,21 +118,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover{
 .hm-dash-system-card [data-testid="stButton"] > button:active{
   transform:translateY(0)!important;
 }
-.hm-dash-system-wrap{
-  margin-top:.16rem!important;
-}
-.hm-dashboard-small-gap [data-testid="stVerticalBlock"]{
-  gap:.28rem!important;
-}
+.hm-dash-system-wrap{margin-top:.16rem!important;}
+.hm-dashboard-small-gap [data-testid="stVerticalBlock"]{gap:.28rem!important;}
+.hm-communication-wrap{max-width:760px;margin:.04rem auto .94rem auto!important;}
 @media(max-width:760px){
   div[data-testid="stVerticalBlockBorderWrapper"]{
     border-radius:18px!important;
     padding:.62rem .58rem!important;
     margin-bottom:.74rem!important;
   }
-  .hm-admin-title-row{
-    border-radius:18px!important;
-  }
+  .hm-admin-title-row{border-radius:18px!important;}
+  .hm-communication-wrap{max-width:100%;}
 }
 </style>
 """,
@@ -184,22 +179,7 @@ with left:
         nav_cell("Packages", "pages/41_Admin_Packages.py", "dash_packages_v102_4b14")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    with st.container(border=True):
-        st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
-        section_header("Communication & Scheduling", "Send messages and manage member scheduling workflows.")
-        nav_cell("Messages", "pages/31_Admin_Member_Communication.py", "dash_messages_v102_4b4")
-        nav_cell("Scheduling", "pages/32_Admin_Scheduling.py", "dash_scheduling_v102_4b4")
-        st.markdown("</div>", unsafe_allow_html=True)
-
 with right:
-    with st.container(border=True):
-        st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
-        section_header("Reports & Logs", "Review logs, questions and response content.")
-        nav_cell("Daily Logs", "pages/22_Admin_Daily_Log_Report.py", "dash_daily_logs_v102_4b4")
-        nav_cell("Questions", "pages/20_Admin_Question_Manager.py", "dash_questions_v102_4b4")
-        nav_cell("Responses", "pages/21_Admin_Response_Editor.py", "dash_responses_v102_4b4")
-        st.markdown("</div>", unsafe_allow_html=True)
-
     with st.container(border=True):
         st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
         section_header("Content & Allocation", "Manage recipes, exercises, supplements and recommendation profiles.")
@@ -208,6 +188,26 @@ with right:
         nav_cell("Supplements", "pages/39_Admin_Supplement_Manager.py", "dash_supplements_v102_4b4")
         nav_cell("Recommendation Profile Builder", "pages/38_Admin_Recommendation_Profile_Builder.py", "dash_profile_builder_h9a8b")
         st.markdown("</div>", unsafe_allow_html=True)
+
+    with st.container(border=True):
+        st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
+        section_header("Reports & Logs", "Review logs, questions and response content.")
+        nav_cell("Daily Logs", "pages/22_Admin_Daily_Log_Report.py", "dash_daily_logs_v102_4b4")
+        nav_cell("Questions", "pages/20_Admin_Question_Manager.py", "dash_questions_v102_4b4")
+        nav_cell("Responses", "pages/21_Admin_Response_Editor.py", "dash_responses_v102_4b4")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown("<div class='hm-communication-wrap'>", unsafe_allow_html=True)
+with st.container(border=True):
+    st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
+    section_header("Communication & Scheduling", "Send messages and manage member scheduling workflows.")
+    message_col, schedule_col = st.columns(2, gap="large")
+    with message_col:
+        nav_cell("Messages", "pages/31_Admin_Member_Communication.py", "dash_messages_v102_4b23")
+    with schedule_col:
+        nav_cell("Scheduling", "pages/32_Admin_Scheduling.py", "dash_scheduling_v102_4b23")
+    st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<div class='hm-dash-system-wrap'>", unsafe_allow_html=True)
 with st.container(border=True):
@@ -248,3 +248,4 @@ inject_keepalive_guard_v96_11()
 # H9A.8C: Moved legacy Recommendations Share and Unified Recommendations out of main workflow into System Tools.
 # H9A.9B: Added Active Profile Contract Diagnostics under System Tools.
 # H9A.10A: Added Repository-to-Profile Builder Source Alignment diagnostics under System Tools.
+# v102.4B23: Swapped Content & Allocation with Reports & Logs and centralized Communication & Scheduling.
