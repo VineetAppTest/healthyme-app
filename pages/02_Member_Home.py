@@ -95,15 +95,18 @@ def _member_email():
 def _render_member_home_css():
     st.markdown(
         """
+<span class='hm-member-home-style-anchor'></span>
 <style>
 /* Local hardening for Member Home after global button CSS. */
 header[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"]{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;}
 [data-testid="stAppViewContainer"],[data-testid="stAppViewContainer"] > .main,[data-testid="stMain"],section.main{padding-top:0!important;margin-top:0!important;}
-[data-testid="stMainBlockContainer"],[data-testid="stAppViewBlockContainer"],section.main > div.block-container,.main .block-container,.stMainBlockContainer,.block-container{padding-top:.15rem!important;margin-top:0!important;}
+[data-testid="stMainBlockContainer"],[data-testid="stAppViewBlockContainer"],section.main > div.block-container,.main .block-container,.stMainBlockContainer,.block-container{padding-top:0!important;margin-top:0!important;}
+.hm-member-home-style-anchor,.hm-member-identity-pill{margin-top:0!important;}
 .hm-member-identity-pill{height:2.46rem;min-height:2.46rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.76);border:1px solid #E9DFCC;border-radius:999px;padding:.24rem .64rem;margin:0!important;}
 .hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;white-space:nowrap;}
-.hm-top-profile-anchor,.hm-top-logout-anchor,.hm-task-action-anchor,.hm-home-action-anchor,.hm-member-home-balanced-card{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){align-items:center!important;gap:.72rem!important;margin:.02rem 0 .52rem 0!important;}
+.hm-member-home-style-anchor,.hm-top-profile-anchor,.hm-top-logout-anchor,.hm-task-action-anchor,.hm-home-action-anchor,.hm-member-home-balanced-card{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
+div[data-testid="stElementContainer"]:has(.hm-member-home-style-anchor),div[data-testid="stElementContainer"]:has(.hm-member-home-balanced-card){display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){align-items:center!important;gap:.72rem!important;margin:0 0 .52rem 0!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"]{display:flex!important;align-items:center!important;min-height:2.46rem!important;}
 .hm-top-profile-anchor + div,.hm-top-logout-anchor + div{display:flex!important;align-items:center!important;justify-content:center!important;height:2.46rem!important;min-height:2.46rem!important;margin:0!important;padding:0!important;}
 .hm-top-profile-anchor + div [data-testid="stButton"] > button,.hm-top-profile-anchor + div .stButton > button{width:2.34rem!important;min-width:2.34rem!important;max-width:2.34rem!important;height:2.34rem!important;min-height:2.34rem!important;max-height:2.34rem!important;border-radius:999px!important;padding:0!important;font-size:.92rem!important;background:#FFFFFF!important;color:#064E3B!important;border:1.4px solid #D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.055)!important;margin:0 auto!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
@@ -142,7 +145,7 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card){align-it
 div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"]{display:flex!important;align-items:stretch!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"] > div[data-testid="stVerticalBlock"]{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card){display:flex!important;flex:1 1 auto!important;height:100%!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card) > div{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card) > div{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;padding-top:.65rem!important;}
 div[data-testid="stButton"] > button{height:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 @media(max-width:900px){div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"]{display:block!important;}}
 </style>
