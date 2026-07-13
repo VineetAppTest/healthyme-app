@@ -153,8 +153,8 @@ def _normalise_12_hour_value(value):
 
 
 def _install_daily_log_time_input_wrapper() -> None:
-    """Render Daily Log times as Hour : Minutes and AM/PM in one row."""
-    wrapper_version = "daily-log-hh-mm-select-v11-stable-row"
+    """Render Daily Log times as HH, MM and AM/PM in one compact row."""
+    wrapper_version = "daily-log-hh-mm-select-v12-no-colon-wider"
     if getattr(st, "_hm_daily_log_time_input_version", "") == wrapper_version:
         return
 
@@ -185,9 +185,9 @@ def _install_daily_log_time_input_wrapper() -> None:
 
         default_hour, default_minute, default_period = _normalise_12_hour_value(value)
         base_key = str(key or f"hm_daily_time_{abs(hash(str(label)))}")
-        hour_key = f"hm_daily_hour_v11_{base_key}"
-        minute_key = f"hm_daily_minute_v11_{base_key}"
-        period_key = f"hm_daily_ampm_v11_{base_key}"
+        hour_key = f"hm_daily_hour_v12_{base_key}"
+        minute_key = f"hm_daily_minute_v12_{base_key}"
+        period_key = f"hm_daily_ampm_v12_{base_key}"
 
         hour_placeholder, minute_placeholder, period_placeholder = "HH", "MM", "AM/PM"
         hour_options = [hour_placeholder] + [f"{hour:02d}" for hour in range(1, 13)]
@@ -201,15 +201,15 @@ def _install_daily_log_time_input_wrapper() -> None:
         st.markdown(
             """
             <div class='hm-daily-time-headings' aria-hidden='true'>
-              <span>Hour</span><span></span><span>Minutes</span><span>AM/PM</span>
+              <span>Hour</span><span>Minutes</span><span>AM/PM</span>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        hour_col, colon_col, minute_col, period_col = st.columns(
-            [1.0, 0.14, 1.0, 1.25],
-            gap=None,
+        hour_col, minute_col, period_col = st.columns(
+            [1.08, 1.08, 1.36],
+            gap="small",
         )
         with hour_col:
             selected_hour = st.selectbox(
@@ -221,8 +221,6 @@ def _install_daily_log_time_input_wrapper() -> None:
                 disabled=disabled,
                 label_visibility="collapsed",
             )
-        with colon_col:
-            st.markdown("<div class='hm-daily-time-colon'>:</div>", unsafe_allow_html=True)
         with minute_col:
             selected_minute = st.selectbox(
                 "",
@@ -271,25 +269,19 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
         <style>
         [class*="st-key-hm_daily_toggle_"] button,[class*="st-key-hm_daily_toggle_"] [data-testid="stButton"]>button,[class*="st-key-hm_daily_toggle_"] .stButton>button{display:flex!important;width:100%!important;justify-content:flex-start!important;align-items:center!important;text-align:left!important;font-weight:950!important;}
         [class*="st-key-hm_daily_toggle_"] button *{width:100%!important;justify-content:flex-start!important;text-align:left!important;font-weight:950!important;}
-        .hm-daily-time-headings{display:grid!important;grid-template-columns:minmax(0,1fr) .28rem minmax(0,1fr) minmax(0,1.25fr)!important;column-gap:.12rem!important;align-items:end!important;width:100%!important;margin:0 0 .28rem 0!important;color:#334155!important;font-size:.86rem!important;line-height:1.2!important;font-weight:650!important;white-space:nowrap!important;}
-        .hm-daily-time-headings span:nth-child(2){visibility:hidden!important;}
-        [class*="st-key-hm_daily_hour_v11_"] [data-testid="stWidgetLabel"],[class*="st-key-hm_daily_minute_v11_"] [data-testid="stWidgetLabel"],[class*="st-key-hm_daily_ampm_v11_"] [data-testid="stWidgetLabel"],[class*="st-key-hm_daily_hour_v11_"] label,[class*="st-key-hm_daily_minute_v11_"] label,[class*="st-key-hm_daily_ampm_v11_"] label{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+        .hm-daily-time-headings{display:grid!important;grid-template-columns:minmax(0,1.08fr) minmax(0,1.08fr) minmax(0,1.36fr)!important;column-gap:.55rem!important;align-items:end!important;width:100%!important;margin:0 0 .28rem 0!important;color:#334155!important;font-size:.86rem!important;line-height:1.2!important;font-weight:650!important;white-space:nowrap!important;}
+        [class*="st-key-hm_daily_hour_v12_"] [data-testid="stWidgetLabel"],[class*="st-key-hm_daily_minute_v12_"] [data-testid="stWidgetLabel"],[class*="st-key-hm_daily_ampm_v12_"] [data-testid="stWidgetLabel"],[class*="st-key-hm_daily_hour_v12_"] label,[class*="st-key-hm_daily_minute_v12_"] label,[class*="st-key-hm_daily_ampm_v12_"] label{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
         html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] [data-baseweb="input"]{border:1.2px solid #DCC690!important;border-radius:13px!important;background:#FFFFFF!important;box-shadow:none!important;overflow:visible!important;box-sizing:border-box!important;min-height:2.70rem!important;}
         html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] input{border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;color:#334155!important;min-height:2.62rem!important;}
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v11_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v11_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v11_"] [data-baseweb="select"]>div{display:flex!important;align-items:center!important;min-height:2.78rem!important;height:2.78rem!important;border:1.2px solid #DCC690!important;border-radius:13px!important;background:#FFFFFF!important;box-shadow:none!important;box-sizing:border-box!important;padding:0 .50rem!important;color:#475569!important;opacity:1!important;}
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v11_"] [data-baseweb="select"] *,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v11_"] [data-baseweb="select"] *,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v11_"] [data-baseweb="select"] *{color:#475569!important;opacity:1!important;visibility:visible!important;font-size:.88rem!important;line-height:1.15!important;}
-        div[data-testid="stHorizontalBlock"]:has(.hm-daily-time-colon){display:grid!important;grid-template-columns:minmax(0,1fr) .28rem minmax(0,1fr) minmax(0,1.25fr)!important;column-gap:.12rem!important;row-gap:0!important;align-items:center!important;width:100%!important;flex-wrap:nowrap!important;}
-        div[data-testid="stHorizontalBlock"]:has(.hm-daily-time-colon)>div[data-testid="column"]{width:auto!important;min-width:0!important;max-width:none!important;flex:none!important;align-self:center!important;margin:0!important;padding:0!important;}
-        div[data-testid="stHorizontalBlock"]:has(.hm-daily-time-colon)>div[data-testid="column"]:nth-child(1){grid-column:1!important;grid-row:1!important;}
-        div[data-testid="stHorizontalBlock"]:has(.hm-daily-time-colon)>div[data-testid="column"]:nth-child(2){grid-column:2!important;grid-row:1!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important;}
-        div[data-testid="stHorizontalBlock"]:has(.hm-daily-time-colon)>div[data-testid="column"]:nth-child(3){grid-column:3!important;grid-row:1!important;}
-        div[data-testid="stHorizontalBlock"]:has(.hm-daily-time-colon)>div[data-testid="column"]:nth-child(4){grid-column:4!important;grid-row:1!important;}
-        .hm-daily-time-colon{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:2.78rem!important;min-height:2.78rem!important;margin:0!important;padding:0!important;color:#334155!important;font-size:1.10rem!important;line-height:1!important;font-weight:900!important;position:relative!important;z-index:2!important;}
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v12_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v12_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v12_"] [data-baseweb="select"]>div{display:flex!important;align-items:center!important;min-height:2.78rem!important;height:2.78rem!important;border:1.2px solid #DCC690!important;border-radius:13px!important;background:#FFFFFF!important;box-shadow:none!important;box-sizing:border-box!important;padding:0 .64rem!important;color:#475569!important;opacity:1!important;}
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v12_"] [data-baseweb="select"] *,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v12_"] [data-baseweb="select"] *,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v12_"] [data-baseweb="select"] *{color:#475569!important;opacity:1!important;visibility:visible!important;font-size:.88rem!important;line-height:1.15!important;}
+        div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v12_"]){display:grid!important;grid-template-columns:minmax(0,1.08fr) minmax(0,1.08fr) minmax(0,1.36fr)!important;column-gap:.55rem!important;row-gap:0!important;align-items:center!important;width:100%!important;flex-wrap:nowrap!important;}
+        div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v12_"])>div[data-testid="column"]{width:auto!important;min-width:0!important;max-width:none!important;flex:none!important;align-self:center!important;margin:0!important;padding:0!important;}
         @media(max-width:640px){
-          .hm-daily-time-headings,div[data-testid="stHorizontalBlock"]:has(.hm-daily-time-colon){grid-template-columns:minmax(0,.88fr) .24rem minmax(0,.88fr) minmax(0,1.18fr)!important;column-gap:.08rem!important;}
+          .hm-daily-time-headings,div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v12_"]){grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.28fr)!important;column-gap:.34rem!important;}
           .hm-daily-time-headings{font-size:.76rem!important;}
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v11_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v11_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v11_"] [data-baseweb="select"]>div{min-width:0!important;width:100%!important;padding:0 .30rem!important;}
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v11_"] [data-baseweb="select"] *{font-size:.72rem!important;}
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v12_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v12_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v12_"] [data-baseweb="select"]>div{min-width:0!important;width:100%!important;padding:0 .42rem!important;}
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v12_"] [data-baseweb="select"] *{font-size:.74rem!important;}
           div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]){row-gap:0!important;margin-bottom:.04rem!important;}
           div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"])>div[data-testid="column"]{margin-bottom:.04rem!important;padding-bottom:0!important;}
           div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]{margin-bottom:.04rem!important;}
