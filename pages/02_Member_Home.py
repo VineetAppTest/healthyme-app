@@ -16,7 +16,7 @@ from components.db import (
     schedule_display_status_label_v104b11,
 )
 from components.flash import render_system_message, set_system_message
-from components.guards import MEMBER_REFERENCE_LIBRARY_ENABLED, require_member
+from components.guards import require_member
 from components.ui_common import (
     apply_luxe_theme,
     format_local_ts,
@@ -108,6 +108,7 @@ def _render_member_home_css():
     st.markdown(
         """
 <style>
+/* Member Home-only layout corrections. */
 html body [data-testid="stAppViewContainer"],
 html body [data-testid="stMain"],
 html body section.main{
@@ -138,7 +139,7 @@ header[data-testid="stHeader"],
 .hm-member-identity-pill{height:2.46rem;min-height:2.46rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.76);border:1px solid #E9DFCC;border-radius:999px;padding:.24rem .64rem;margin:0!important;}
 .hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;white-space:nowrap;}
 .hm-top-profile-anchor,.hm-top-logout-anchor,.hm-task-action-anchor,.hm-home-action-anchor,.hm-home-panel-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){align-items:center!important;gap:.72rem!important;margin:-1.55rem 0 .52rem 0!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){align-items:center!important;gap:.72rem!important;margin:-1.45rem 0 .52rem 0!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"]{display:flex!important;align-items:center!important;min-height:2.46rem!important;}
 .hm-top-profile-anchor + div,.hm-top-logout-anchor + div{display:flex!important;align-items:center!important;justify-content:center!important;height:2.46rem!important;min-height:2.46rem!important;margin:0!important;padding:0!important;}
 .hm-top-profile-anchor + div [data-testid="stButton"] > button,.hm-top-profile-anchor + div .stButton > button{width:2.34rem!important;min-width:2.34rem!important;max-width:2.34rem!important;height:2.34rem!important;min-height:2.34rem!important;max-height:2.34rem!important;border-radius:999px!important;padding:0!important;font-size:.92rem!important;background:#FFFFFF!important;color:#064E3B!important;border:1.4px solid #D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.055)!important;margin:0 auto!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
@@ -155,7 +156,7 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-te
 .hm-v101-schedule-line{color:#334155;font-size:.82rem;font-weight:720;margin:.08rem 0;}
 .hm-v101-schedule-pill{display:inline-flex;padding:.16rem .44rem;border-radius:999px;border:1px solid #D9C28F;background:#FFF7E6;color:#7A5A16;font-size:.70rem;font-weight:850;margin-left:.22rem;}
 .hm-v104b11-ack-note{border:1px solid #E3C98E;background:#FFF7E6;color:#7A5A16!important;border-radius:12px;padding:.55rem .70rem;margin-top:.45rem!important;font-weight:560!important;}
-.hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:.72rem .78rem;margin:.20rem 0 .62rem 0;}
+.hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:.72rem .78rem;margin:.52rem 0 .62rem 0;}
 .hm-v990-progress-head{display:flex;align-items:center;justify-content:space-between;gap:.65rem;flex-wrap:wrap;margin:0 0 .38rem 0;}
 .hm-v990-progress-title{color:#064E3B;font-size:.88rem;font-weight:920;margin:0;}
 .hm-v990-progress-due{color:#7A5A16;font-size:.76rem;font-weight:850;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.18rem .48rem;white-space:nowrap;}
@@ -342,6 +343,21 @@ def _render_task_progress(current_instance, wf, requested_pages):
         and "body_mind" not in visible_tasks
     ):
         visible_tasks.append("body_mind")
+
+    task_names = ", ".join(
+        [task_title_v96_2(page) for page in visible_tasks]
+    ) or "-"
+    st.markdown(
+        f"""
+        <div class='info-banner'>
+          Task allocation date: <b>{_esc(current_instance.get('created_date') or '-')}</b><br>
+          Please complete: <b>{_esc(task_names)}</b><br>
+          Note: {_esc(current_instance.get('admin_note') or '-')}<br><br>
+          LAF is already completed from the original assessment and is not required again.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     progress_total = len(visible_tasks)
     progress_done = sum(
@@ -599,30 +615,6 @@ with right:
             "<div class='lock-card'><b>Weekly plan unlocks after expert "
             "review is complete.</b></div>",
             unsafe_allow_html=True,
-        )
-
-    if MEMBER_REFERENCE_LIBRARY_ENABLED:
-        st.markdown(
-            "<div class='hm-home-group-title'>Reference library</div>",
-            unsafe_allow_html=True,
-        )
-        _home_action(
-            "Recipe Repository",
-            "pages/08_Recipe_Repository.py",
-            "hm_home_recipe_repo",
-            disabled=not plans_ready,
-        )
-        _home_action(
-            "Exercise Repository",
-            "pages/09_Exercise_Repository.py",
-            "hm_home_exercise_repo",
-            disabled=not plans_ready,
-        )
-        _home_action(
-            "Supplements",
-            "pages/40_Member_Supplements.py",
-            "hm_home_supplements",
-            disabled=not plans_ready,
         )
 
 inject_keepalive_guard_v96_11()
