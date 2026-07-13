@@ -21,19 +21,15 @@ MEMBER_REFERENCE_LIBRARY_PAGES = {
 
 
 def restore_any_login(required_role: str = ""):
-    """Restore only authentication providers appropriate for the requested role."""
+    """Restore only the authentication provider appropriate for the requested role."""
     normalized_role = str(required_role or "").strip().lower()
 
-    if st.session_state.get("logged_in") and st.session_state.get("_hm_auth_role_resolved"):
-        if (
-            st.session_state.get("auth_login_method") == "supabase"
-            or st.session_state.get("auth_provider") == "supabase"
-        ):
-            try:
-                restore_supabase_login_from_session(force_refresh=True)
-            except Exception:
-                pass
-            return True
+    # A valid in-memory session should not force-refresh on every Streamlit rerun.
+    # Daily Log fields rerun frequently, and repeated refreshes made the page slow
+    # and could drop the member session during normal data entry.
+    if st.session_state.get("logged_in") and st.session_state.get(
+        "_hm_auth_role_resolved"
+    ):
         return True
 
     restored = False
@@ -59,7 +55,7 @@ def restore_any_login(required_role: str = ""):
 
 
 def _current_page_filename() -> str:
-    """Return the active Streamlit page filename without relying on URL parsing."""
+    """Return the active Streamlit page filename without URL parsing."""
     for frame in inspect.stack():
         filename = str(frame.filename or "").replace("\\", "/")
         if "/pages/" in filename:
@@ -95,7 +91,10 @@ def _show_access_required(required_role: str = "Admin") -> None:
             "Your secure session could not be restored on this page. "
             "Please return to Login and sign in again."
         )
-        if st.button("Go to Login", key=f"hm_go_to_login_{normalized_role or 'user'}"):
+        if st.button(
+            "Go to Login",
+            key=f"hm_go_to_login_{normalized_role or 'user'}",
+        ):
             st.switch_page("pages/01_Login.py")
     st.stop()
 
@@ -113,7 +112,7 @@ def _apply_member_page_defaults(current_page: str) -> None:
 
 
 def _apply_member_feature_visibility(current_page: str) -> None:
-    """Apply Member Home spacing and hide only the disabled library widgets."""
+    """Apply Member Home spacing and hide disabled library widgets."""
     if current_page != "02_Member_Home.py":
         return
 
@@ -146,7 +145,6 @@ def _apply_member_feature_visibility(current_page: str) -> None:
           padding-top:0!important;
           margin-top:0!important;
         }
-
         div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] > style),
         div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] > style){
           height:0!important;
@@ -155,7 +153,6 @@ def _apply_member_feature_visibility(current_page: str) -> None:
           padding:0!important;
           overflow:hidden!important;
         }
-
         .st-key-hm_home_recipe_repo,
         .st-key-hm_home_exercise_repo,
         .st-key-hm_home_supplements{
@@ -166,7 +163,6 @@ def _apply_member_feature_visibility(current_page: str) -> None:
           padding:0!important;
           overflow:hidden!important;
         }
-
         div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] .hm-home-reference-title),
         div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] .hm-home-reference-title),
         div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor),
@@ -214,8 +210,8 @@ def _normalise_12_hour_value(value):
 
 
 def _install_daily_log_time_input_wrapper() -> None:
-    """Render Daily Log times as separate HH and MM blocks plus AM/PM."""
-    wrapper_version = "daily-log-hh-mm-select-v4"
+    """Render Daily Log times as HH : MM plus AM/PM."""
+    wrapper_version = "daily-log-hh-mm-select-v5-stable"
     if getattr(st, "_hm_daily_log_time_input_version", "") == wrapper_version:
         return
 
@@ -229,7 +225,6 @@ def _install_daily_log_time_input_wrapper() -> None:
     def daily_log_time_input(label, *args, **kwargs):
         if _current_page_filename() != "18_Daily_Log.py":
             return original_time_input(label, *args, **kwargs)
-
         if args:
             return original_time_input(label, *args, **kwargs)
 
@@ -238,32 +233,50 @@ def _install_daily_log_time_input_wrapper() -> None:
         help_text = kwargs.pop("help", None)
         disabled = bool(kwargs.pop("disabled", False))
         label_visibility = kwargs.pop("label_visibility", "visible")
-
         kwargs.pop("step", None)
         kwargs.pop("min_value", None)
         kwargs.pop("max_value", None)
         kwargs.pop("format", None)
         kwargs.pop("width", None)
 
-        default_hour, default_minute, default_period = _normalise_12_hour_value(value)
+        default_hour, default_minute, default_period = _normalise_12_hour_value(
+            value
+        )
         base_key = str(key or f"hm_daily_time_{abs(hash(str(label)))}")
-        hour_key = f"hm_daily_hour_v4_{base_key}"
-        minute_key = f"hm_daily_minute_v4_{base_key}"
-        period_key = f"hm_daily_ampm_v4_{base_key}"
+        hour_key = f"hm_daily_hour_v5_{base_key}"
+        minute_key = f"hm_daily_minute_v5_{base_key}"
+        period_key = f"hm_daily_ampm_v5_{base_key}"
 
         hour_placeholder = "HH"
         minute_placeholder = "MM"
         period_placeholder = "Select AM/PM"
-        hour_options = [hour_placeholder] + [f"{hour:02d}" for hour in range(1, 13)]
-        minute_options = [minute_placeholder] + [f"{minute:02d}" for minute in range(60)]
+        hour_options = [hour_placeholder] + [
+            f"{hour:02d}" for hour in range(1, 13)
+        ]
+        minute_options = [minute_placeholder] + [
+            f"{minute:02d}" for minute in range(60)
+        ]
         period_options = [period_placeholder, "AM", "PM"]
 
-        hour_index = hour_options.index(default_hour) if default_hour in hour_options else 0
-        minute_index = minute_options.index(default_minute) if default_minute in minute_options else 0
-        period_index = period_options.index(default_period) if default_period in period_options else 0
+        hour_index = (
+            hour_options.index(default_hour)
+            if default_hour in hour_options
+            else 0
+        )
+        minute_index = (
+            minute_options.index(default_minute)
+            if default_minute in minute_options
+            else 0
+        )
+        period_index = (
+            period_options.index(default_period)
+            if default_period in period_options
+            else 0
+        )
 
         hour_col, colon_col, minute_col, period_col = st.columns(
-            [1.0, 0.12, 1.0, 1.55], gap="small"
+            [1.0, 0.14, 1.0, 1.65],
+            gap="small",
         )
         with hour_col:
             selected_hour = st.selectbox(
@@ -276,7 +289,10 @@ def _install_daily_log_time_input_wrapper() -> None:
                 label_visibility=label_visibility,
             )
         with colon_col:
-            st.markdown("<div class='hm-daily-time-colon'>:</div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div class='hm-daily-time-colon'>:</div>",
+                unsafe_allow_html=True,
+            )
         with minute_col:
             selected_minute = st.selectbox(
                 "Minutes",
@@ -287,7 +303,7 @@ def _install_daily_log_time_input_wrapper() -> None:
                 label_visibility="hidden",
             )
         with period_col:
-            period = st.selectbox(
+            selected_period = st.selectbox(
                 "AM / PM",
                 period_options,
                 index=period_index,
@@ -299,14 +315,14 @@ def _install_daily_log_time_input_wrapper() -> None:
         if (
             selected_hour == hour_placeholder
             or selected_minute == minute_placeholder
-            or period == period_placeholder
+            or selected_period == period_placeholder
         ):
             return None
 
         hour_12 = int(selected_hour)
         minute_value = int(selected_minute)
         hour_24 = hour_12 % 12
-        if period == "PM":
+        if selected_period == "PM":
             hour_24 += 12
         return time(hour=hour_24, minute=minute_value)
 
@@ -316,12 +332,11 @@ def _install_daily_log_time_input_wrapper() -> None:
 
 
 def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
-    """Apply Daily Log-only controls, field borders and debounced autosave."""
+    """Apply lightweight Daily Log controls without DOM-wide autosave scripts."""
     if current_page != "18_Daily_Log.py":
         return
 
     _install_daily_log_time_input_wrapper()
-
     st.markdown(
         """
         <style>
@@ -335,17 +350,12 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           text-align:left!important;
           font-weight:950!important;
         }
-        [class*="st-key-hm_daily_toggle_"] button > div,
-        [class*="st-key-hm_daily_toggle_"] button p,
-        [class*="st-key-hm_daily_toggle_"] button span,
         [class*="st-key-hm_daily_toggle_"] button *{
           width:100%!important;
           justify-content:flex-start!important;
           text-align:left!important;
           font-weight:950!important;
         }
-
-        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTimeInput"] [data-baseweb="input"],
         html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] [data-baseweb="input"]{
           border:1.2px solid #DCC690!important;
           border-radius:13px!important;
@@ -355,33 +365,16 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           box-sizing:border-box!important;
           min-height:2.70rem!important;
         }
-        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTimeInput"] input,
         html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] input{
           border:0!important;
-          border-left:0!important;
-          border-right:0!important;
-          border-top:0!important;
-          border-bottom:0!important;
-          border-radius:0!important;
           outline:0!important;
           box-shadow:none!important;
           background:transparent!important;
-          box-sizing:border-box!important;
           min-height:2.62rem!important;
         }
-        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"],
-        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTimeInput"]{
-          overflow:visible!important;
-          padding-bottom:.18rem!important;
-        }
-        html body #root [data-testid="stAppViewContainer"] div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]){
-          overflow:visible!important;
-          padding-bottom:.26rem!important;
-        }
-
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v4_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v4_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v4_"] [data-baseweb="select"] > div{
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v5_"] [data-baseweb="select"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v5_"] [data-baseweb="select"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v5_"] [data-baseweb="select"] > div{
           display:flex!important;
           align-items:center!important;
           min-height:2.78rem!important;
@@ -392,19 +385,12 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           box-shadow:none!important;
           box-sizing:border-box!important;
           padding:0 .82rem!important;
-          overflow:visible!important;
           color:#475569!important;
           opacity:1!important;
         }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v4_"] [data-baseweb="select"],
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v4_"] [data-baseweb="select"],
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v4_"] [data-baseweb="select"]{
-          width:100%!important;
-          overflow:visible!important;
-        }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v4_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v4_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v4_"] [data-baseweb="select"] *{
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v5_"] [data-baseweb="select"] *,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v5_"] [data-baseweb="select"] *,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v5_"] [data-baseweb="select"] *{
           color:#475569!important;
           opacity:1!important;
           visibility:visible!important;
@@ -426,155 +412,13 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
         unsafe_allow_html=True,
     )
 
-    import streamlit.components.v1 as components
-
-    components.html(
-        r"""
-        <script>
-        (function(){
-          let host;
-          let doc;
-          try {
-            host = window.parent;
-            doc = host.document;
-          } catch (e) {
-            return;
-          }
-
-          if (host.__healthyMeDailyLogAutosaveB31) return;
-          host.__healthyMeDailyLogAutosaveB31 = true;
-
-          let timer = null;
-          let suppressUntil = 0;
-          const hourPrefix = "hm_daily_hour_v4_";
-          const minutePrefix = "hm_daily_minute_v4_";
-          const periodPrefix = "hm_daily_ampm_v4_";
-
-          function widgetKey(target){
-            if (!target || !target.closest) return "";
-            const holder = target.closest('[class*="st-key-"]');
-            if (!holder) return "";
-            const keyClass = Array.from(holder.classList || []).find(function(name){
-              return name.indexOf("st-key-") === 0;
-            });
-            return keyClass ? keyClass.substring(7) : "";
-          }
-
-          function isDailyLogEntryKey(key){
-            if (!key) return false;
-            if (key.indexOf(hourPrefix) === 0) return true;
-            if (key.indexOf(minutePrefix) === 0) return true;
-            if (key.indexOf(periodPrefix) === 0) return true;
-            if (key.endsWith("_ampm")) return true;
-            const mealField = /^\d{4}-\d{2}-\d{2}_(breakfast|lunch|evening_snack|dinner|bedtime|snacking_\d+)_(time|food_\d+|portion_\d+|mood|energy)$/;
-            const dayField = /^hm_h9a4c_(water|fluid_(type|time|qty|notes)|poop_(rounds|time|feeling)|activity|notes)_\d{4}-\d{2}-\d{2}/;
-            return mealField.test(key) || dayField.test(key);
-          }
-
-          function holderValue(holder){
-            if (!holder) return "";
-            const select = holder.querySelector('[data-baseweb="select"]');
-            if (select) return (select.innerText || select.textContent || "").trim();
-            const textarea = holder.querySelector("textarea");
-            if (textarea) return (textarea.value || "").trim();
-            const input = holder.querySelector('input:not([type="hidden"])');
-            if (input) return (input.value || "").trim();
-            return "";
-          }
-
-          function isDefaultValue(value){
-            const normalized = String(value || "")
-              .replace(/\s+/g, " ")
-              .trim()
-              .toLowerCase();
-            return [
-              "", "select", "selected", "please select", "select option",
-              "choose", "choose one", "hh", "mm", "select am/pm", "am / pm"
-            ].indexOf(normalized) >= 0;
-          }
-
-          function dailyEntryHolders(){
-            return Array.from(doc.querySelectorAll('[class*="st-key-"]')).filter(function(holder){
-              return isDailyLogEntryKey(widgetKey(holder));
-            });
-          }
-
-          function hasMeaningfulEntry(){
-            const holders = dailyEntryHolders();
-            const byKey = {};
-            holders.forEach(function(holder){
-              const key = widgetKey(holder);
-              if (key) byKey[key] = holder;
-            });
-
-            for (const key of Object.keys(byKey)) {
-              if (
-                key.indexOf(hourPrefix) === 0
-                || key.indexOf(minutePrefix) === 0
-                || key.indexOf(periodPrefix) === 0
-              ) continue;
-              if (!isDefaultValue(holderValue(byKey[key]))) return true;
-            }
-
-            for (const key of Object.keys(byKey)) {
-              if (key.indexOf(hourPrefix) !== 0) continue;
-              const base = key.substring(hourPrefix.length);
-              const hourValue = holderValue(byKey[key]);
-              const minuteValue = holderValue(byKey[minutePrefix + base]);
-              const periodValue = holderValue(byKey[periodPrefix + base]);
-              if (
-                !isDefaultValue(hourValue)
-                && !isDefaultValue(minuteValue)
-                && !isDefaultValue(periodValue)
-              ) return true;
-            }
-            return false;
-          }
-
-          function findSaveButton(){
-            return Array.from(doc.querySelectorAll('button')).find(function(button){
-              return (button.innerText || button.textContent || "").trim() === "Save Day" && !button.disabled;
-            });
-          }
-
-          function queueAutosave(target){
-            if (Date.now() < suppressUntil) return;
-            const key = widgetKey(target);
-            if (!isDailyLogEntryKey(key)) return;
-            if (timer) host.clearTimeout(timer);
-            timer = host.setTimeout(function(){
-              if (!hasMeaningfulEntry()) return;
-              const saveButton = findSaveButton();
-              if (!saveButton) return;
-              suppressUntil = Date.now() + 4500;
-              saveButton.click();
-            }, 1800);
-          }
-
-          doc.addEventListener("change", function(event){
-            queueAutosave(event.target);
-          }, true);
-          doc.addEventListener("focusout", function(event){
-            queueAutosave(event.target);
-          }, true);
-          doc.addEventListener("click", function(event){
-            const button = event.target && event.target.closest ? event.target.closest("button") : null;
-            if (!button) return;
-            if ((button.innerText || button.textContent || "").trim() === "Save Day") {
-              if (timer) host.clearTimeout(timer);
-              suppressUntil = Date.now() + 4500;
-            }
-          }, true);
-        })();
-        </script>
-        """,
-        height=0,
-    )
-
 
 def _redirect_disabled_reference_page(current_page: str) -> None:
     """Keep hidden member-library URLs away from admin and back to member flow."""
-    if MEMBER_REFERENCE_LIBRARY_ENABLED or current_page not in MEMBER_REFERENCE_LIBRARY_PAGES:
+    if (
+        MEMBER_REFERENCE_LIBRARY_ENABLED
+        or current_page not in MEMBER_REFERENCE_LIBRARY_PAGES
+    ):
         return
 
     st.session_state["_hm_reference_library_unavailable"] = True
@@ -588,7 +432,9 @@ def _redirect_disabled_reference_page(current_page: str) -> None:
         st.switch_page("pages/02_Member_Home.py")
         st.stop()
 
-    st.session_state["_hm_requested_page_after_login"] = "pages/02_Member_Home.py"
+    st.session_state["_hm_requested_page_after_login"] = (
+        "pages/02_Member_Home.py"
+    )
     st.session_state["_hm_access_recovery_message"] = (
         "The Member Reference Library is currently unavailable. "
         "Please sign in with the member account to return to Member Home."
@@ -601,16 +447,6 @@ def require_admin():
     restore_any_login("admin")
     if not st.session_state.get("logged_in"):
         _show_access_required("Admin")
-
-    if (
-        st.session_state.get("auth_login_method") == "supabase"
-        or st.session_state.get("auth_provider") == "supabase"
-    ):
-        try:
-            restore_supabase_login_from_session(force_refresh=True)
-        except Exception:
-            pass
-
     if not current_user_is_admin():
         _show_access_required("Admin")
     st.session_state["is_admin"] = True
@@ -624,16 +460,6 @@ def require_member():
     restore_any_login("member")
     if not st.session_state.get("logged_in"):
         _show_access_required("Member")
-
-    if (
-        st.session_state.get("auth_login_method") == "supabase"
-        or st.session_state.get("auth_provider") == "supabase"
-    ):
-        try:
-            restore_supabase_login_from_session(force_refresh=True)
-        except Exception:
-            pass
-
     if not current_user_is_member():
         _show_access_required("Member")
 
