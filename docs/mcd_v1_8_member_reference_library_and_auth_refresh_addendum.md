@@ -13,9 +13,20 @@
 
 - Refreshing the browser must not intentionally log out an authenticated Supabase member.
 - An already valid Supabase session should be restored silently after an ordinary refresh.
-- The member should be asked to sign in again only when the Supabase session is genuinely missing, expired and non-refreshable, revoked, or invalid.
+- The member should be asked to sign in again only when the Supabase session is genuinely missing, expired and non-refreshable, revoked, invalid, or unavailable after an application process restart.
 - A refresh must not clear member identity, role, or active member context merely because Streamlit reruns the page.
 - Any fallback redirect to Login must preserve the originally requested member destination after successful authentication.
+
+## Streamlit Supabase persistence design
+
+- The browser stores only a random opaque session marker in a Secure, SameSite=Strict cookie.
+- Supabase access and refresh tokens are not stored in the URL, query parameters, browser local storage, or the browser cookie.
+- Supabase tokens remain in a process-local server-side registry and are keyed by the opaque browser marker.
+- On an ordinary browser refresh, the marker is read through Streamlit browser context, the Supabase session is refreshed or re-established server-side, and the HealthyMe role is reapplied.
+- The default server-side marker lifetime is 12 hours and can be adjusted through `SUPABASE_BROWSER_SESSION_TTL_SECONDS`.
+- HealthyMe role revalidation is throttled to avoid repeated heavy checks on every Streamlit rerun. The default interval is five minutes and can be adjusted through `SUPABASE_ROLE_REFRESH_INTERVAL_SECONDS`.
+- Secure logout removes the server-side record, expires the browser marker, and signs out the recoverable Supabase session.
+- A deployment restart clears the process-local token registry. In that case, the opaque marker is invalidated and the member must sign in again. A future multi-instance deployment should move this registry to a dedicated encrypted server-side session store.
 
 ## Governance
 
