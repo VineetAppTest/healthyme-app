@@ -201,10 +201,6 @@ def _extract_access_token(response) -> str:
     return str(_extract_session_payload(response).get("access_token") or "").strip()
 
 
-def _extract_refresh_token(response) -> str:
-    return str(_extract_session_payload(response).get("refresh_token") or "").strip()
-
-
 def _apply_supabase_user_to_session(
     app_user: dict,
     email: str,
