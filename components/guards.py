@@ -189,6 +189,146 @@ def _apply_member_feature_visibility(current_page: str) -> None:
     )
 
 
+def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
+    """Apply Daily Log-only field borders, bold toggles and debounced autosave."""
+    if current_page != "18_Daily_Log.py":
+        return
+
+    st.markdown(
+        """
+        <style>
+        /* Daily Log-only control corrections. High specificity keeps these
+           rules effective after the page's own CSS is rendered. */
+        html body #root [data-testid="stAppViewContainer"] .hm-toggle-anchor + div [data-testid="stButton"] > button,
+        html body #root [data-testid="stAppViewContainer"] .hm-toggle-anchor + div .stButton > button{
+          justify-content:flex-start!important;
+          text-align:left!important;
+          font-weight:900!important;
+        }
+        html body #root [data-testid="stAppViewContainer"] .hm-toggle-anchor + div [data-testid="stButton"] > button *,
+        html body #root [data-testid="stAppViewContainer"] .hm-toggle-anchor + div .stButton > button *{
+          text-align:left!important;
+          font-weight:900!important;
+        }
+
+        /* Put the border on the BaseWeb input shell, not on both the shell
+           and the inner input. This removes the double vertical line. */
+        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTimeInput"] [data-baseweb="input"],
+        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] [data-baseweb="input"]{
+          border:1.2px solid #DCC690!important;
+          border-radius:13px!important;
+          background:#FFFFFF!important;
+          box-shadow:none!important;
+          overflow:visible!important;
+          box-sizing:border-box!important;
+          min-height:2.70rem!important;
+        }
+        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTimeInput"] input,
+        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] input{
+          border:0!important;
+          border-left:0!important;
+          border-right:0!important;
+          border-top:0!important;
+          border-bottom:0!important;
+          border-radius:0!important;
+          outline:0!important;
+          box-shadow:none!important;
+          background:transparent!important;
+          box-sizing:border-box!important;
+          min-height:2.62rem!important;
+        }
+        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"],
+        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTimeInput"]{
+          overflow:visible!important;
+          padding-bottom:.18rem!important;
+        }
+        html body #root [data-testid="stAppViewContainer"] div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]){
+          overflow:visible!important;
+          padding-bottom:.26rem!important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    import streamlit.components.v1 as components
+
+    components.html(
+        """
+        <script>
+        (function(){
+          let host;
+          let doc;
+          try {
+            host = window.parent;
+            doc = host.document;
+          } catch (e) {
+            return;
+          }
+
+          if (host.__healthyMeDailyLogAutosaveB27) return;
+          host.__healthyMeDailyLogAutosaveB27 = true;
+
+          let timer = null;
+          let suppressUntil = 0;
+
+          function widgetKey(target){
+            if (!target || !target.closest) return "";
+            const holder = target.closest('[class*="st-key-"]');
+            if (!holder) return "";
+            const keyClass = Array.from(holder.classList || []).find(function(name){
+              return name.indexOf("st-key-") === 0;
+            });
+            return keyClass ? keyClass.substring(7) : "";
+          }
+
+          function isDailyLogEntryKey(key){
+            if (!key) return false;
+            const mealField = /^\d{4}-\d{2}-\d{2}_(breakfast|lunch|evening_snack|dinner|bedtime|snacking_\d+)_(time|food_\d+|portion_\d+|mood|energy)$/;
+            const dayField = /^hm_h9a4c_(water|fluid_(type|time|qty|notes)|poop_(rounds|time|feeling)|activity|notes)_\d{4}-\d{2}-\d{2}/;
+            return mealField.test(key) || dayField.test(key);
+          }
+
+          function findSaveButton(){
+            return Array.from(doc.querySelectorAll('button')).find(function(button){
+              return (button.innerText || button.textContent || "").trim() === "Save Day" && !button.disabled;
+            });
+          }
+
+          function queueAutosave(target){
+            if (Date.now() < suppressUntil) return;
+            const key = widgetKey(target);
+            if (!isDailyLogEntryKey(key)) return;
+            if (timer) host.clearTimeout(timer);
+            timer = host.setTimeout(function(){
+              const saveButton = findSaveButton();
+              if (!saveButton) return;
+              suppressUntil = Date.now() + 4500;
+              saveButton.click();
+            }, 1800);
+          }
+
+          doc.addEventListener("change", function(event){
+            queueAutosave(event.target);
+          }, true);
+          doc.addEventListener("focusout", function(event){
+            queueAutosave(event.target);
+          }, true);
+          doc.addEventListener("click", function(event){
+            const button = event.target && event.target.closest ? event.target.closest("button") : null;
+            if (!button) return;
+            if ((button.innerText || button.textContent || "").trim() === "Save Day") {
+              if (timer) host.clearTimeout(timer);
+              suppressUntil = Date.now() + 4500;
+            }
+          }, true);
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+
 def _redirect_disabled_reference_page(current_page: str) -> None:
     """Keep hidden member-library URLs away from admin and back to member flow."""
     if MEMBER_REFERENCE_LIBRARY_ENABLED or current_page not in MEMBER_REFERENCE_LIBRARY_PAGES:
@@ -256,3 +396,4 @@ def require_member():
 
     _apply_member_page_defaults(current_page)
     _apply_member_feature_visibility(current_page)
+    _apply_daily_log_ui_and_autosave(current_page)
