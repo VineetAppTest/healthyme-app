@@ -218,7 +218,7 @@ def _normalise_12_hour_value(value):
 
 def _install_daily_log_time_input_wrapper() -> None:
     """Render Daily Log times as a 12-hour selector plus AM/PM selector."""
-    wrapper_version = "daily-log-12h-select-v2"
+    wrapper_version = "daily-log-12h-select-v3"
     if getattr(st, "_hm_daily_log_time_input_version", "") == wrapper_version:
         return
 
@@ -253,8 +253,8 @@ def _install_daily_log_time_input_wrapper() -> None:
 
         display_time, default_period = _normalise_12_hour_value(value)
         base_key = str(key or f"hm_daily_time_{abs(hash(str(label)))}")
-        time_key = f"hm_daily_time12_v2_{base_key}"
-        period_key = f"hm_daily_ampm_v2_{base_key}"
+        time_key = f"hm_daily_time12_v3_{base_key}"
+        period_key = f"hm_daily_ampm_v3_{base_key}"
 
         time_placeholder = "Select time"
         period_placeholder = "Select AM/PM"
@@ -276,7 +276,7 @@ def _install_daily_log_time_input_wrapper() -> None:
             else 0
         )
 
-        time_col, period_col = st.columns([5.0, 1.35], gap="small")
+        time_col, period_col = st.columns([5.0, 1.45], gap="small")
         with time_col:
             selected_time = st.selectbox(
                 label,
@@ -381,26 +381,73 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           padding-bottom:.26rem!important;
         }
 
-        /* The 12-hour time and AM/PM controls use the same visual treatment. */
-        [class*="st-key-hm_daily_time12_v2_"] [data-baseweb="select"] > div,
-        [class*="st-key-hm_daily_ampm_v2_"] [data-baseweb="select"] > div{
-          min-height:2.70rem!important;
-          height:2.70rem!important;
+        /* Keep both 12-hour controls readable despite the page's later generic
+           selectbox padding rules. */
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_time12_v3_"] [data-baseweb="select"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v3_"] [data-baseweb="select"] > div{
+          display:flex!important;
+          align-items:center!important;
+          min-height:2.78rem!important;
+          height:2.78rem!important;
           border:1.2px solid #DCC690!important;
           border-radius:13px!important;
           background:#FFFFFF!important;
           box-shadow:none!important;
           box-sizing:border-box!important;
-          padding-top:0!important;
-          padding-bottom:0!important;
+          padding:0 .82rem!important;
+          overflow:visible!important;
+          color:#475569!important;
+          opacity:1!important;
         }
-        [class*="st-key-hm_daily_time12_v2_"] [data-baseweb="select"],
-        [class*="st-key-hm_daily_ampm_v2_"] [data-baseweb="select"]{
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_time12_v3_"] [data-baseweb="select"],
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v3_"] [data-baseweb="select"]{
           width:100%!important;
+          overflow:visible!important;
         }
-        [class*="st-key-hm_daily_time12_v2_"] [data-baseweb="select"] *,
-        [class*="st-key-hm_daily_ampm_v2_"] [data-baseweb="select"] *{
-          line-height:1.3!important;
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_time12_v3_"] [data-baseweb="select"] > div > div:first-child,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v3_"] [data-baseweb="select"] > div > div:first-child{
+          display:flex!important;
+          align-items:center!important;
+          min-width:0!important;
+          min-height:2.60rem!important;
+          height:2.60rem!important;
+          padding:0!important;
+          margin:0!important;
+          overflow:visible!important;
+        }
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_time12_v3_"] [data-baseweb="select"] div[role="button"],
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v3_"] [data-baseweb="select"] div[role="button"]{
+          display:flex!important;
+          align-items:center!important;
+          min-height:2.60rem!important;
+          height:2.60rem!important;
+          padding:0!important;
+          margin:0!important;
+          overflow:visible!important;
+          color:#475569!important;
+          opacity:1!important;
+        }
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_time12_v3_"] [data-baseweb="select"] div[role="button"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v3_"] [data-baseweb="select"] div[role="button"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_time12_v3_"] [data-baseweb="select"] span,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v3_"] [data-baseweb="select"] span,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_time12_v3_"] [data-baseweb="select"] p,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v3_"] [data-baseweb="select"] p{
+          display:flex!important;
+          align-items:center!important;
+          color:#475569!important;
+          opacity:1!important;
+          visibility:visible!important;
+          font-size:.92rem!important;
+          font-weight:500!important;
+          line-height:1.25!important;
+          min-height:0!important;
+          height:auto!important;
+          padding:0!important;
+          margin:0!important;
+          overflow:visible!important;
+          white-space:nowrap!important;
+          text-overflow:clip!important;
         }
         </style>
         """,
@@ -422,11 +469,13 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
             return;
           }
 
-          if (host.__healthyMeDailyLogAutosaveB29) return;
-          host.__healthyMeDailyLogAutosaveB29 = true;
+          if (host.__healthyMeDailyLogAutosaveB30) return;
+          host.__healthyMeDailyLogAutosaveB30 = true;
 
           let timer = null;
           let suppressUntil = 0;
+          const timePrefix = "hm_daily_time12_v3_";
+          const periodPrefix = "hm_daily_ampm_v3_";
 
           function widgetKey(target){
             if (!target || !target.closest) return "";
@@ -440,12 +489,81 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
 
           function isDailyLogEntryKey(key){
             if (!key) return false;
-            if (key.indexOf("hm_daily_time12_v2_") === 0) return true;
-            if (key.indexOf("hm_daily_ampm_v2_") === 0) return true;
+            if (key.indexOf(timePrefix) === 0) return true;
+            if (key.indexOf(periodPrefix) === 0) return true;
             if (key.endsWith("_ampm")) return true;
             const mealField = /^\d{4}-\d{2}-\d{2}_(breakfast|lunch|evening_snack|dinner|bedtime|snacking_\d+)_(time|food_\d+|portion_\d+|mood|energy)$/;
             const dayField = /^hm_h9a4c_(water|fluid_(type|time|qty|notes)|poop_(rounds|time|feeling)|activity|notes)_\d{4}-\d{2}-\d{2}/;
             return mealField.test(key) || dayField.test(key);
+          }
+
+          function holderValue(holder){
+            if (!holder) return "";
+            const select = holder.querySelector('[data-baseweb="select"]');
+            if (select) {
+              return (select.innerText || select.textContent || "").trim();
+            }
+            const textarea = holder.querySelector("textarea");
+            if (textarea) return (textarea.value || "").trim();
+            const input = holder.querySelector('input:not([type="hidden"])');
+            if (input) return (input.value || "").trim();
+            return "";
+          }
+
+          function isDefaultValue(value){
+            const normalized = String(value || "")
+              .replace(/\s+/g, " ")
+              .trim()
+              .toLowerCase();
+            return [
+              "",
+              "select",
+              "selected",
+              "please select",
+              "select option",
+              "choose",
+              "choose one",
+              "select time",
+              "select am/pm",
+              "am / pm",
+              "hh:mm"
+            ].indexOf(normalized) >= 0;
+          }
+
+          function dailyEntryHolders(){
+            return Array.from(doc.querySelectorAll('[class*="st-key-"]')).filter(function(holder){
+              const key = widgetKey(holder);
+              return isDailyLogEntryKey(key);
+            });
+          }
+
+          function hasMeaningfulEntry(){
+            const holders = dailyEntryHolders();
+            const byKey = {};
+            holders.forEach(function(holder){
+              const key = widgetKey(holder);
+              if (key) byKey[key] = holder;
+            });
+
+            for (const key of Object.keys(byKey)) {
+              if (key.indexOf(timePrefix) === 0 || key.indexOf(periodPrefix) === 0) {
+                continue;
+              }
+              if (!isDefaultValue(holderValue(byKey[key]))) {
+                return true;
+              }
+            }
+
+            for (const key of Object.keys(byKey)) {
+              if (key.indexOf(timePrefix) !== 0) continue;
+              const base = key.substring(timePrefix.length);
+              const timeValue = holderValue(byKey[key]);
+              const periodValue = holderValue(byKey[periodPrefix + base]);
+              if (!isDefaultValue(timeValue) && !isDefaultValue(periodValue)) {
+                return true;
+              }
+            }
+            return false;
           }
 
           function findSaveButton(){
@@ -460,6 +578,7 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
             if (!isDailyLogEntryKey(key)) return;
             if (timer) host.clearTimeout(timer);
             timer = host.setTimeout(function(){
+              if (!hasMeaningfulEntry()) return;
               const saveButton = findSaveButton();
               if (!saveButton) return;
               suppressUntil = Date.now() + 4500;
