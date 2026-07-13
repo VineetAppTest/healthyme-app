@@ -25,7 +25,7 @@ from components.db import (
 from components.flash import set_system_message, render_system_message
 
 
-BUILD_NOTE = "v102.4B25 · Meal item rows, field padding and idle-tab keepalive"
+BUILD_NOTE = "v102.4B26 · Daily Log label alignment and meal spacing cleanup"
 MAX_MEAL_ITEMS = 9
 
 STRUCTURED_MEAL_ORDER = [
@@ -157,20 +157,20 @@ def _meal_summary(meal):
     time_text = _clean(meal.get("time"))
     if items:
         first = " · ".join(
-            [
-                value
-                for value in [
-                    items[0].get("food", ""),
-                    items[0].get("portion_size", ""),
-                ]
-                if value
+            value
+            for value in [
+                items[0].get("food", ""),
+                items[0].get("portion_size", ""),
             ]
+            if value
         )
         if len(items) > 1:
             first = f"{first} + {len(items) - 1} more item(s)"
-        return " · ".join([value for value in [time_text, first] if value])
+        return " · ".join(value for value in [time_text, first] if value)
     if time_text or _has_value(meal.get("mood")) or _has_value(meal.get("energy")):
-        return " · ".join([value for value in [time_text, "Meal details added"] if value])
+        return " · ".join(
+            value for value in [time_text, "Meal details added"] if value
+        )
     return "No entry yet"
 
 
@@ -362,37 +362,31 @@ def _report_lines(payload):
             continue
         items = _normalise_food_items(meal)
         food_text = "; ".join(
-            [
-                " — ".join(
-                    [
-                        value
-                        for value in [
-                            item.get("food", ""),
-                            item.get("portion_size", ""),
-                        ]
-                        if value
-                    ]
-                )
-                for item in items
-            ]
-        )
-        detail = " | ".join(
-            [
+            " — ".join(
                 value
                 for value in [
-                    f"Time: {_clean(meal.get('time'))}"
-                    if _has_value(meal.get("time"))
-                    else "",
-                    f"Food: {food_text}" if food_text else "",
-                    f"Mood: {_clean(meal.get('mood'))}"
-                    if _has_value(meal.get("mood"))
-                    else "",
-                    f"Energy: {_clean(meal.get('energy'))}"
-                    if _has_value(meal.get("energy"))
-                    else "",
+                    item.get("food", ""),
+                    item.get("portion_size", ""),
                 ]
                 if value
+            )
+            for item in items
+        )
+        detail = " | ".join(
+            value
+            for value in [
+                f"Time: {_clean(meal.get('time'))}"
+                if _has_value(meal.get("time"))
+                else "",
+                f"Food: {food_text}" if food_text else "",
+                f"Mood: {_clean(meal.get('mood'))}"
+                if _has_value(meal.get("mood"))
+                else "",
+                f"Energy: {_clean(meal.get('energy'))}"
+                if _has_value(meal.get("energy"))
+                else "",
             ]
+            if value
         )
         lines.append(f"{label}: {detail or 'Recorded'}")
 
@@ -416,7 +410,7 @@ def _report_lines(payload):
             fluid.get("notes", ""),
         ]
         lines.append(
-            f"Other fluid {idx}: {' · '.join([value for value in parts if value])}"
+            f"Other fluid {idx}: {' · '.join(value for value in parts if value)}"
         )
     if payload.get("poop_rounds") is not None and not _is_default(
         payload.get("poop_rounds")
@@ -450,25 +444,24 @@ def _render_css():
         .hm-h9a4c-cardline{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:.75rem .85rem;margin:.45rem 0;}
         .hm-exercise-placeholder{border:1px dashed #D8C18B;background:#FFFDF8;border-radius:16px;padding:1rem;margin:.5rem 0;color:#334155;}
         .hm-snacking-subtitle{color:#64748B;font-size:.82rem;font-weight:720;margin:.35rem 0 .15rem 0;}
-        .hm-meal-items-label{color:#334155;font-size:.84rem;font-weight:850;margin:.12rem 0 .38rem 0;}
-        .hm-meal-item-number{color:#64748B;font-size:.76rem;font-weight:800;margin:.02rem 0 .22rem 0;}
         div[data-testid="stTabs"] [role="tablist"]{gap:.55rem;margin:.15rem 0 1rem 0;border-bottom:1px solid #E3D4BA;padding-bottom:.45rem;}
         div[data-testid="stTabs"] button[role="tab"]{border:1.4px solid #D8A84E!important;border-radius:999px!important;background:#FFFFFF!important;color:#064E3B!important;font-weight:950!important;padding:.62rem 1.18rem!important;box-shadow:0 7px 16px rgba(6,78,59,.07)!important;min-height:2.65rem!important;}
         div[data-testid="stTabs"] button[aria-selected="true"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border-color:#064E3B!important;box-shadow:0 12px 22px rgba(6,78,59,.18)!important;}
         div[data-testid="stTabs"] button[aria-selected="true"] *{color:#FFFFFF!important;}
         .hm-toggle-anchor + div [data-testid="stButton"] > button,
-        .hm-toggle-anchor + div .stButton > button{justify-content:center!important;text-align:center!important;min-height:2.72rem!important;background:linear-gradient(135deg,#FFFDF8 0%,#FFF6E5 100%)!important;border:1.45px solid #D8A84E!important;border-radius:16px!important;box-shadow:0 7px 16px rgba(15,23,42,.045)!important;color:#064E3B!important;font-weight:950!important;margin:.50rem 0 .34rem 0!important;padding:.58rem .78rem!important;}
+        .hm-toggle-anchor + div .stButton > button{justify-content:flex-start!important;text-align:left!important;min-height:2.72rem!important;background:linear-gradient(135deg,#FFFDF8 0%,#FFF6E5 100%)!important;border:1.45px solid #D8A84E!important;border-radius:16px!important;box-shadow:0 7px 16px rgba(15,23,42,.045)!important;color:#064E3B!important;font-weight:950!important;margin:.50rem 0 .34rem 0!important;padding:.58rem .78rem!important;}
         .hm-toggle-anchor + div [data-testid="stButton"] > button *,
-        .hm-toggle-anchor + div .stButton > button *{color:#064E3B!important;font-size:.90rem!important;font-weight:950!important;line-height:1.18!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;text-align:center!important;}
+        .hm-toggle-anchor + div .stButton > button *{color:#064E3B!important;font-size:.90rem!important;font-weight:950!important;line-height:1.18!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;text-align:left!important;}
+        .hm-toggle-body:empty{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;}
         .hm-toggle-body{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:1rem 1rem 1.18rem!important;margin:.16rem 0 .76rem 0;overflow:visible!important;}
         .hm-toggle-body div[data-testid="stHorizontalBlock"]{overflow:visible!important;padding-bottom:.18rem!important;}
         .hm-toggle-body div[data-testid="column"]{overflow:visible!important;padding-bottom:.12rem!important;}
-        div[data-testid="stTextInput"],div[data-testid="stSelectbox"],div[data-testid="stTimeInput"],div[data-testid="stTextArea"]{margin-bottom:.86rem!important;padding-bottom:.12rem!important;overflow:visible!important;}
+        div[data-testid="stTextInput"],div[data-testid="stSelectbox"],div[data-testid="stTimeInput"],div[data-testid="stTextArea"]{margin-bottom:.58rem!important;padding-bottom:.08rem!important;overflow:visible!important;}
         div[data-testid="stTextInput"] label,div[data-testid="stSelectbox"] label,div[data-testid="stTimeInput"] label,div[data-testid="stTextArea"] label{display:block!important;margin-bottom:.34rem!important;padding-bottom:.12rem!important;line-height:1.25!important;color:#334155!important;font-weight:720!important;overflow:visible!important;}
         div[data-testid="stTextInput"] input,div[data-testid="stTimeInput"] input,div[data-testid="stTextArea"] textarea,div[data-testid="stSelectbox"] [data-baseweb="select"] > div{border-radius:13px!important;border:1.2px solid #DCC690!important;background:#FFFFFF!important;min-height:2.70rem!important;line-height:1.3!important;padding-top:.58rem!important;padding-bottom:.58rem!important;overflow:visible!important;}
-        .hm-add-food-anchor + div [data-testid="stButton"] > button{width:auto!important;min-width:12rem!important;margin:.02rem 0 .72rem 0!important;}
+        .hm-add-food-anchor{display:block!important;height:0!important;min-height:0!important;margin:-.30rem 0 0 0!important;padding:0!important;overflow:hidden!important;}
+        .hm-add-food-anchor + div [data-testid="stButton"] > button{width:auto!important;min-width:12rem!important;margin:0 0 .58rem 0!important;}
         @media(max-width:760px){
-          .hm-toggle-body{padding:.86rem .76rem 1rem!important;}
           .hm-add-food-anchor + div [data-testid="stButton"] > button{width:100%!important;}
         }
         </style>
@@ -503,7 +496,7 @@ def _legacy_mood_and_energy(prior):
 def _render_meal_fields(label, key, prior, date_key):
     prior = _as_dict(prior)
     time_value = st.time_input(
-        f"Mealtime — {label}",
+        label,
         value=_parse_time(prior.get("time", "")),
         key=f"{date_key}_{key}_time",
     )
@@ -517,17 +510,9 @@ def _render_meal_fields(label, key, prior, date_key):
         min(MAX_MEAL_ITEMS, int(st.session_state.get(count_key, 1) or 1)),
     )
 
-    st.markdown(
-        "<div class='hm-meal-items-label'>Food item&nbsp;&nbsp;|&nbsp;&nbsp;Portion</div>",
-        unsafe_allow_html=True,
-    )
     food_items = []
     for idx in range(item_count):
         prior_item = existing_items[idx] if idx < len(existing_items) else {}
-        st.markdown(
-            f"<div class='hm-meal-item-number'>Food item {idx + 1}</div>",
-            unsafe_allow_html=True,
-        )
         food_col, portion_col = st.columns([1.45, 1], gap="medium")
         with food_col:
             food = st.text_input(
@@ -578,24 +563,20 @@ def _render_meal_fields(label, key, prior, date_key):
     clean_mood = _clean(mood)
     clean_energy = _clean(energy)
     legacy_food = "; ".join(
-        [item.get("food", "") for item in food_items if item.get("food")]
+        item.get("food", "") for item in food_items if item.get("food")
     )
     legacy_portion = "; ".join(
-        [
-            item.get("portion_size", "")
-            for item in food_items
-            if item.get("portion_size")
-        ]
+        item.get("portion_size", "")
+        for item in food_items
+        if item.get("portion_size")
     )
     combined_mood_energy = " | ".join(
-        [
-            value
-            for value in [
-                f"Mood: {clean_mood}" if clean_mood else "",
-                f"Energy: {clean_energy}" if clean_energy else "",
-            ]
-            if value
+        value
+        for value in [
+            f"Mood: {clean_mood}" if clean_mood else "",
+            f"Energy: {clean_energy}" if clean_energy else "",
         ]
+        if value
     )
 
     return {
@@ -612,10 +593,7 @@ def _render_meal_fields(label, key, prior, date_key):
 
 def _render_meal_toggle(label, key, prior, date_key):
     if _toggle_button(f"{label} — {_meal_summary(prior)}", f"{date_key}_{key}"):
-        st.markdown("<div class='hm-toggle-body'>", unsafe_allow_html=True)
-        payload = _render_meal_fields(label, key, prior, date_key)
-        st.markdown("</div>", unsafe_allow_html=True)
-        return payload
+        return _render_meal_fields(label, key, prior, date_key)
     return _as_dict(prior)
 
 
@@ -631,7 +609,6 @@ def _render_snacking_toggle(existing_snacks, date_key):
         unsafe_allow_html=True,
     )
     if _toggle_button(f"Snacking — {snack_count}/9 entries", f"{date_key}_snacking"):
-        st.markdown("<div class='hm-toggle-body'>", unsafe_allow_html=True)
         add_col, remove_col = st.columns(2)
         with add_col:
             if st.button(
@@ -665,7 +642,6 @@ def _render_snacking_toggle(existing_snacks, date_key):
                 prior,
                 date_key,
             )
-        st.markdown("</div>", unsafe_allow_html=True)
     else:
         for idx, prior in enumerate(existing_snacks[:snack_count], start=1):
             snacking_payload[f"snacking_{idx}"] = prior
