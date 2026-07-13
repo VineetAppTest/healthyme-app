@@ -43,6 +43,7 @@ def restore_any_login(required_role: str = ""):
         except Exception:
             restored = False
 
+    # A member route must never inherit an existing Auth0 admin browser identity.
     if not restored and normalized_role == "member":
         st.session_state["_hm_expected_login_role"] = "member"
         if browser_has_legacy_supabase_marker():
@@ -112,67 +113,105 @@ def _apply_member_page_defaults(current_page: str) -> None:
 
 
 def _apply_member_feature_visibility(current_page: str) -> None:
-    """Hide and block the Member Reference Library until it is re-enabled."""
-    if current_page == "02_Member_Home.py":
-        st.markdown(
-            """
-            <style>
-            header[data-testid="stHeader"],
-            [data-testid="stToolbar"],
-            [data-testid="stDecoration"],
-            [data-testid="stStatusWidget"]{
-              display:none!important;
-              visibility:hidden!important;
-              height:0!important;
-              min-height:0!important;
-              margin:0!important;
-              padding:0!important;
-            }
-            [data-testid="stAppViewContainer"],
-            [data-testid="stMain"],
-            section.main{
-              padding-top:0!important;
-              margin-top:0!important;
-            }
-            [data-testid="stMainBlockContainer"],
-            [data-testid="stAppViewBlockContainer"],
-            section.main > div.block-container,
-            .main .block-container,
-            .stMainBlockContainer,
-            .block-container{
-              padding-top:.12rem!important;
-              margin-top:0!important;
-            }
-
-            div[data-testid="column"]:has(.hm-home-reference-title)
-            div[data-testid="stVerticalBlock"]:has(.hm-home-reference-title)
-            > div:has(.hm-home-reference-title),
-            div[data-testid="column"]:has(.hm-home-reference-title)
-            div[data-testid="stVerticalBlock"]:has(.hm-home-reference-title)
-            > div:has(.hm-home-reference-title) ~ div,
-            div[data-testid="stVerticalBlock"]:has(.hm-home-muted-anchor)
-            > div:has(.hm-home-muted-anchor),
-            div[data-testid="stVerticalBlock"]:has(.hm-home-muted-anchor)
-            > div:has(.hm-home-muted-anchor) ~ div{
-              display:none!important;
-              height:0!important;
-              min-height:0!important;
-              margin:0!important;
-              padding:0!important;
-              overflow:hidden!important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    if MEMBER_REFERENCE_LIBRARY_ENABLED:
+    """Apply Member Home spacing and hide only the disabled library widgets."""
+    if current_page != "02_Member_Home.py":
         return
 
-    if current_page in MEMBER_REFERENCE_LIBRARY_PAGES:
-        st.session_state["_hm_reference_library_unavailable"] = True
+    st.markdown(
+        """
+        <style>
+        header[data-testid="stHeader"],
+        [data-testid="stToolbar"],
+        [data-testid="stDecoration"],
+        [data-testid="stStatusWidget"]{
+          display:none!important;
+          visibility:hidden!important;
+          height:0!important;
+          min-height:0!important;
+          margin:0!important;
+          padding:0!important;
+        }
+        html body [data-testid="stAppViewContainer"],
+        html body [data-testid="stMain"],
+        html body section.main{
+          padding-top:0!important;
+          margin-top:0!important;
+        }
+        html body [data-testid="stMainBlockContainer"],
+        html body [data-testid="stAppViewBlockContainer"],
+        html body section.main > div.block-container,
+        html body .main .block-container,
+        html body .stMainBlockContainer,
+        html body .block-container{
+          padding-top:0!important;
+          margin-top:0!important;
+        }
+
+        /* Collapse style-only Streamlit blocks that otherwise leave a blank band. */
+        div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] > style),
+        div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] > style){
+          height:0!important;
+          min-height:0!important;
+          margin:0!important;
+          padding:0!important;
+          overflow:hidden!important;
+        }
+
+        /* Exact widget-key selectors first; these cannot hide the surrounding columns. */
+        .st-key-hm_home_recipe_repo,
+        .st-key-hm_home_exercise_repo,
+        .st-key-hm_home_supplements{
+          display:none!important;
+          height:0!important;
+          min-height:0!important;
+          margin:0!important;
+          padding:0!important;
+          overflow:hidden!important;
+        }
+
+        /* Fallback selectors target only the marker's own element and next button. */
+        div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] .hm-home-reference-title),
+        div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] .hm-home-reference-title),
+        div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor),
+        div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor),
+        div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor) + div[data-testid="stElementContainer"],
+        div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor) + div[data-testid="stElementContainer"]{
+          display:none!important;
+          height:0!important;
+          min-height:0!important;
+          margin:0!important;
+          padding:0!important;
+          overflow:hidden!important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _redirect_disabled_reference_page(current_page: str) -> None:
+    """Keep hidden member-library URLs away from admin and back to member flow."""
+    if MEMBER_REFERENCE_LIBRARY_ENABLED or current_page not in MEMBER_REFERENCE_LIBRARY_PAGES:
+        return
+
+    st.session_state["_hm_reference_library_unavailable"] = True
+    st.session_state["_hm_expected_login_role"] = "member"
+
+    if (
+        st.session_state.get("logged_in")
+        and st.session_state.get("_hm_auth_role_resolved")
+        and current_user_is_member()
+    ):
         st.switch_page("pages/02_Member_Home.py")
         st.stop()
+
+    st.session_state["_hm_requested_page_after_login"] = "pages/02_Member_Home.py"
+    st.session_state["_hm_access_recovery_message"] = (
+        "The Member Reference Library is currently unavailable. "
+        "Please sign in with the member account to return to Member Home."
+    )
+    st.switch_page("pages/01_Login.py")
+    st.stop()
 
 
 def require_admin():
@@ -197,11 +236,7 @@ def require_admin():
 
 def require_member():
     current_page = _current_page_filename()
-    if not MEMBER_REFERENCE_LIBRARY_ENABLED and current_page in MEMBER_REFERENCE_LIBRARY_PAGES:
-        st.session_state["_hm_reference_library_unavailable"] = True
-        st.session_state["_hm_expected_login_role"] = "member"
-        st.switch_page("pages/02_Member_Home.py")
-        st.stop()
+    _redirect_disabled_reference_page(current_page)
 
     restore_any_login("member")
     if not st.session_state.get("logged_in"):
