@@ -6,7 +6,10 @@ import streamlit as st
 from components.admin_role_model import current_user_is_admin, current_user_is_member
 from components.auth_mode import auth0_enabled, supabase_auth_enabled
 from components.auth_session import restore_login_from_token
-from components.supabase_auth_session import restore_supabase_login_from_session
+from components.supabase_auth_session import (
+    browser_has_legacy_supabase_marker,
+    restore_supabase_login_from_session,
+)
 
 
 MEMBER_REFERENCE_LIBRARY_ENABLED = False
@@ -17,15 +20,15 @@ MEMBER_REFERENCE_LIBRARY_PAGES = {
 }
 
 
-def restore_any_login():
-    # Prefer an already-resolved HealthyMe app session, but do not let a
-    # Supabase pilot member/admin role silently fall back to a stale Auth0 role.
+def restore_any_login(required_role: str = ""):
+    """Restore only authentication providers appropriate for the requested role."""
+    normalized_role = str(required_role or "").strip().lower()
+
     if st.session_state.get("logged_in") and st.session_state.get("_hm_auth_role_resolved"):
-        if st.session_state.get("auth_login_method") == "supabase" or st.session_state.get("auth_provider") == "supabase":
-            # A protected page should never behave like a logout just because a
-            # direct URL was opened or a transient role refresh failed. Keep the
-            # already-resolved Supabase role for this request, then the final
-            # admin/member check below decides access.
+        if (
+            st.session_state.get("auth_login_method") == "supabase"
+            or st.session_state.get("auth_provider") == "supabase"
+        ):
             try:
                 restore_supabase_login_from_session(force_refresh=True)
             except Exception:
@@ -39,6 +42,15 @@ def restore_any_login():
             restored = restore_supabase_login_from_session()
         except Exception:
             restored = False
+
+    # Member routes must not silently inherit a stale Auth0 admin browser identity.
+    # This was the direct cause of the post-reboot redirect to Admin Login/Dashboard.
+    if not restored and normalized_role == "member":
+        st.session_state["_hm_expected_login_role"] = "member"
+        if browser_has_legacy_supabase_marker():
+            st.session_state["_hm_legacy_supabase_marker_detected"] = True
+        return False
+
     if not restored and auth0_enabled():
         try:
             restored = restore_login_from_token()
@@ -57,22 +69,34 @@ def _current_page_filename() -> str:
 
 
 def _show_access_required(required_role: str = "Admin") -> None:
-    """Recover a fresh/expired Streamlit session through the normal login page."""
+    """Recover a missing session through the normal Login page."""
     current_page = _current_page_filename()
     if current_page and current_page != "01_Login.py":
         st.session_state["_hm_requested_page_after_login"] = f"pages/{current_page}"
 
-    st.session_state["_hm_access_recovery_message"] = (
-        "Your secure app session needs to be refreshed. Please sign in again."
-    )
+    normalized_role = str(required_role or "").strip().lower()
+    if normalized_role:
+        st.session_state["_hm_expected_login_role"] = normalized_role
+
+    if normalized_role == "member":
+        st.session_state["_hm_access_recovery_message"] = (
+            "Your member session could not be restored after the app restart. "
+            "Please sign in again with the member account."
+        )
+    else:
+        st.session_state["_hm_access_recovery_message"] = (
+            "Your secure app session needs to be refreshed. Please sign in again."
+        )
+
     try:
         st.switch_page("pages/01_Login.py")
     except Exception:
         st.warning(f"{required_role} access required")
         st.caption(
-            "Your secure session could not be restored on this page. Please return to Login and sign in again."
+            "Your secure session could not be restored on this page. "
+            "Please return to Login and sign in again."
         )
-        if st.button("Go to Login", key=f"hm_go_to_login_{required_role.lower()}"):
+        if st.button("Go to Login", key=f"hm_go_to_login_{normalized_role or 'user'}"):
             st.switch_page("pages/01_Login.py")
     st.stop()
 
@@ -98,7 +122,6 @@ def _apply_member_feature_visibility(current_page: str) -> None:
         st.markdown(
             """
             <style>
-            /* Hide only the Reference Library heading and its three muted actions. */
             .hm-home-reference-title{display:none!important;}
             .hm-home-muted-anchor + div{display:none!important;}
             div[data-testid="stElementContainer"]:has(.hm-home-reference-title),
@@ -115,18 +138,17 @@ def _apply_member_feature_visibility(current_page: str) -> None:
 
 
 def require_admin():
-    restore_any_login()
+    restore_any_login("admin")
     if not st.session_state.get("logged_in"):
         _show_access_required("Admin")
 
-    # Strict direct-link guard: when the current session is Supabase, refresh
-    # the role from hm_users by auth_user_id/email before allowing admin pages.
-    if st.session_state.get("auth_login_method") == "supabase" or st.session_state.get("auth_provider") == "supabase":
+    if (
+        st.session_state.get("auth_login_method") == "supabase"
+        or st.session_state.get("auth_provider") == "supabase"
+    ):
         try:
             restore_supabase_login_from_session(force_refresh=True)
         except Exception:
-            # Do not convert a transient refresh problem into logout.
-            # The final role check below remains the source of truth.
             pass
 
     if not current_user_is_admin():
@@ -136,11 +158,14 @@ def require_admin():
 
 
 def require_member():
-    restore_any_login()
+    restore_any_login("member")
     if not st.session_state.get("logged_in"):
         _show_access_required("Member")
 
-    if st.session_state.get("auth_login_method") == "supabase" or st.session_state.get("auth_provider") == "supabase":
+    if (
+        st.session_state.get("auth_login_method") == "supabase"
+        or st.session_state.get("auth_provider") == "supabase"
+    ):
         try:
             restore_supabase_login_from_session(force_refresh=True)
         except Exception:

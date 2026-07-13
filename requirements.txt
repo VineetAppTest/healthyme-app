@@ -4,4 +4,3 @@ openpyxl
 supabase>=2.0.0
 authlib==1.6.5
 requests>=2.31.0
-extra-streamlit-components==0.1.81
