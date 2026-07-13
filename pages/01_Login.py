@@ -12,17 +12,28 @@ apply_luxe_theme()
 
 def _route_authenticated_user():
     requested_page = str(st.session_state.pop("_hm_requested_page_after_login", "") or "")
+    expected_role = str(st.session_state.pop("_hm_expected_login_role", "") or "").strip().lower()
     is_admin = is_admin_role(st.session_state.get("user_role"))
 
     if requested_page.startswith("pages/") and requested_page != "pages/01_Login.py":
-        # Members may return only to member pages; admin targets remain admin-only.
         requested_is_admin_page = "Admin" in requested_page
-        if is_admin or not requested_is_admin_page:
+        role_matches_page = (
+            (is_admin and requested_is_admin_page)
+            or (not is_admin and not requested_is_admin_page)
+        )
+        if role_matches_page:
             try:
                 st.switch_page(requested_page)
                 return
             except Exception:
                 pass
+
+    if expected_role == "member" and is_admin:
+        st.session_state["auth_error"] = (
+            "An admin identity was detected while a member page was being recovered. "
+            "Use Complete secure logout, then sign in with the member account."
+        )
+        return
 
     if is_admin:
         st.switch_page("pages/10_Admin_Dashboard.py")
@@ -45,6 +56,14 @@ recovery_message = st.session_state.pop("_hm_access_recovery_message", None)
 if recovery_message:
     st.info(recovery_message)
 
+expected_login_role = str(st.session_state.get("_hm_expected_login_role", "") or "").strip().lower()
+legacy_marker_detected = bool(st.session_state.pop("_hm_legacy_supabase_marker_detected", False))
+if legacy_marker_detected:
+    st.caption(
+        "A previous member-session marker was detected after the app restarted. "
+        "It is not being used for authentication; please sign in again as the member."
+    )
+
 logout_param = False
 try:
     logout_param = st.query_params.get("logout") == "1"
@@ -59,8 +78,11 @@ if not st.session_state.get("signed_out") and not st.session_state.get("logout_r
     restored = False
     if supabase_auth_enabled():
         restored = restore_supabase_login_from_session()
-    if not restored and auth0_enabled():
+
+    # A member recovery must never be hijacked by an existing Auth0 admin browser session.
+    if not restored and auth0_enabled() and expected_login_role != "member":
         restored = restore_login_from_token()
+
     if restored:
         _route_authenticated_user()
 
@@ -88,7 +110,10 @@ with login_col:
         if mode == "supabase":
             st.caption("Sign in through Supabase Auth. HealthyMe will allow access only if your email is authorized by the admin.")
         elif mode == "dual":
-            st.caption("Auth0 remains available. Supabase Auth is enabled only for controlled pilot testing.")
+            if expected_login_role == "member":
+                st.caption("Member recovery mode: sign in with the Supabase member account. Auth0 auto-login is paused for this recovery.")
+            else:
+                st.caption("Auth0 remains available. Supabase Auth is enabled only for controlled pilot testing.")
         else:
             st.caption("Sign in through Auth0. HealthyMe will allow access only if your email is authorized by the admin. Auth0 may take a few seconds during secure redirect.")
 
@@ -101,6 +126,8 @@ with login_col:
 
         if auth0_enabled():
             if st.button("Continue with Auth0", type="primary", use_container_width=True):
+                st.session_state.pop("_hm_expected_login_role", None)
+                st.session_state.pop("_hm_requested_page_after_login", None)
                 st.session_state.pop("signed_out", None)
                 st.session_state.pop("logout_requested", None)
                 try:
@@ -112,7 +139,7 @@ with login_col:
         if supabase_auth_enabled():
             if auth0_enabled():
                 st.markdown("---")
-                st.caption("Pilot only: Supabase Auth login")
+                st.caption("Supabase Auth login")
             else:
                 st.caption("Supabase Auth login")
 
@@ -146,7 +173,7 @@ with login_col:
         if mode == "supabase":
             provider_copy = "Supabase confirms who you are. HealthyMe then checks whether your email exists in the app as Admin or Member."
         elif mode == "dual":
-            provider_copy = "Auth0 remains the default path. Supabase login is available only for controlled migration testing. HealthyMe still checks whether your email exists in the app as Admin or Member."
+            provider_copy = "Auth0 remains the admin path. Supabase login is the member migration path. HealthyMe still checks whether your email exists in the app as Admin or Member."
         else:
             provider_copy = "Auth0 confirms who you are. HealthyMe then checks whether your email exists in the app as Admin or Member."
 
@@ -177,7 +204,7 @@ with login_col:
             f"<div class='hm-logout-bottom-copy'>{logout_copy}</div>",
             unsafe_allow_html=True,
         )
-        st.caption("Use Complete Secure Logout before switching between admin and member accounts during Supabase pilot testing.")
+        st.caption("Use Complete Secure Logout before switching between admin and member accounts during Supabase testing.")
         if st.button(logout_button_label, key="complete_secure_logout_bottom", use_container_width=True):
             logout_current_user()
             st.rerun()
