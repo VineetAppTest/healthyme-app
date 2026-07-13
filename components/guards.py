@@ -43,8 +43,6 @@ def restore_any_login(required_role: str = ""):
         except Exception:
             restored = False
 
-    # Member routes must not silently inherit a stale Auth0 admin browser identity.
-    # This was the direct cause of the post-reboot redirect to Admin Login/Dashboard.
     if not restored and normalized_role == "member":
         st.session_state["_hm_expected_login_role"] = "member"
         if browser_has_legacy_supabase_marker():
@@ -119,33 +117,43 @@ def _apply_member_feature_visibility(current_page: str) -> None:
         st.markdown(
             """
             <style>
-            /* Reinstate the compact global header treatment on Member Home. */
-            header[data-testid="stHeader"]{
+            header[data-testid="stHeader"],
+            [data-testid="stToolbar"],
+            [data-testid="stDecoration"],
+            [data-testid="stStatusWidget"]{
               display:none!important;
               visibility:hidden!important;
               height:0!important;
               min-height:0!important;
+              margin:0!important;
+              padding:0!important;
             }
-            [data-testid="stAppViewContainer"] > .main,
+            [data-testid="stAppViewContainer"],
+            [data-testid="stMain"],
             section.main{
               padding-top:0!important;
               margin-top:0!important;
             }
+            [data-testid="stMainBlockContainer"],
+            [data-testid="stAppViewBlockContainer"],
             section.main > div.block-container,
             .main .block-container,
-            [data-testid="stAppViewBlockContainer"],
             .stMainBlockContainer,
             .block-container{
-              padding-top:.18rem!important;
+              padding-top:.12rem!important;
               margin-top:0!important;
             }
 
-            /* Hide the Reference Library structurally in the rendered DOM.
-               The page code, routes and feature flag remain available for reactivation. */
-            div[data-testid="stElementContainer"]:has(.hm-home-reference-title),
-            div[data-testid="stElementContainer"]:has(.hm-home-muted-anchor),
-            div[data-testid="stElementContainer"]:has(.hm-home-muted-anchor)
-              + div[data-testid="stElementContainer"]{
+            div[data-testid="column"]:has(.hm-home-reference-title)
+            div[data-testid="stVerticalBlock"]:has(.hm-home-reference-title)
+            > div:has(.hm-home-reference-title),
+            div[data-testid="column"]:has(.hm-home-reference-title)
+            div[data-testid="stVerticalBlock"]:has(.hm-home-reference-title)
+            > div:has(.hm-home-reference-title) ~ div,
+            div[data-testid="stVerticalBlock"]:has(.hm-home-muted-anchor)
+            > div:has(.hm-home-muted-anchor),
+            div[data-testid="stVerticalBlock"]:has(.hm-home-muted-anchor)
+            > div:has(.hm-home-muted-anchor) ~ div{
               display:none!important;
               height:0!important;
               min-height:0!important;
@@ -188,6 +196,13 @@ def require_admin():
 
 
 def require_member():
+    current_page = _current_page_filename()
+    if not MEMBER_REFERENCE_LIBRARY_ENABLED and current_page in MEMBER_REFERENCE_LIBRARY_PAGES:
+        st.session_state["_hm_reference_library_unavailable"] = True
+        st.session_state["_hm_expected_login_role"] = "member"
+        st.switch_page("pages/02_Member_Home.py")
+        st.stop()
+
     restore_any_login("member")
     if not st.session_state.get("logged_in"):
         _show_access_required("Member")
@@ -204,6 +219,5 @@ def require_member():
     if not current_user_is_member():
         _show_access_required("Member")
 
-    current_page = _current_page_filename()
     _apply_member_page_defaults(current_page)
     _apply_member_feature_visibility(current_page)
