@@ -1,5 +1,6 @@
 from datetime import date, datetime, time
 import inspect
+import time as time_module
 
 import streamlit as st
 
@@ -27,6 +28,7 @@ def restore_any_login(required_role: str = ""):
     if st.session_state.get("logged_in") and st.session_state.get(
         "_hm_auth_role_resolved"
     ):
+        st.session_state.pop("_hm_member_restore_retry", None)
         return True
 
     restored = False
@@ -47,6 +49,8 @@ def restore_any_login(required_role: str = ""):
             restored = restore_login_from_token()
         except Exception:
             restored = False
+    if restored:
+        st.session_state.pop("_hm_member_restore_retry", None)
     return bool(restored)
 
 
@@ -98,12 +102,10 @@ def _show_access_required(required_role: str = "Admin") -> None:
 def _apply_member_page_defaults(current_page: str) -> None:
     """Apply page-specific defaults only when the member enters that page."""
     previous_page = st.session_state.get("_hm_previous_member_page")
-
     if current_page == "18_Daily_Log.py" and previous_page != current_page:
         today = date.today()
         st.session_state["hm_h9a4c_saved_from"] = today
         st.session_state["hm_h9a4c_saved_to"] = today
-
     st.session_state["_hm_previous_member_page"] = current_page
 
 
@@ -111,67 +113,15 @@ def _apply_member_feature_visibility(current_page: str) -> None:
     """Apply Member Home spacing and hide disabled library widgets."""
     if current_page != "02_Member_Home.py":
         return
-
     st.markdown(
         """
         <style>
-        header[data-testid="stHeader"],
-        [data-testid="stToolbar"],
-        [data-testid="stDecoration"],
-        [data-testid="stStatusWidget"]{
-          display:none!important;
-          visibility:hidden!important;
-          height:0!important;
-          min-height:0!important;
-          margin:0!important;
-          padding:0!important;
-        }
-        html body [data-testid="stAppViewContainer"],
-        html body [data-testid="stMain"],
-        html body section.main{
-          padding-top:0!important;
-          margin-top:0!important;
-        }
-        html body [data-testid="stMainBlockContainer"],
-        html body [data-testid="stAppViewBlockContainer"],
-        html body section.main > div.block-container,
-        html body .main .block-container,
-        html body .stMainBlockContainer,
-        html body .block-container{
-          padding-top:0!important;
-          margin-top:0!important;
-        }
-        div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] > style),
-        div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] > style){
-          height:0!important;
-          min-height:0!important;
-          margin:0!important;
-          padding:0!important;
-          overflow:hidden!important;
-        }
-        .st-key-hm_home_recipe_repo,
-        .st-key-hm_home_exercise_repo,
-        .st-key-hm_home_supplements{
-          display:none!important;
-          height:0!important;
-          min-height:0!important;
-          margin:0!important;
-          padding:0!important;
-          overflow:hidden!important;
-        }
-        div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] .hm-home-reference-title),
-        div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] .hm-home-reference-title),
-        div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor),
-        div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor),
-        div[data-testid="stElementContainer"]:has(> div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor) + div[data-testid="stElementContainer"],
-        div[data-testid="stElementContainer"]:has(> div > div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor) + div[data-testid="stElementContainer"]{
-          display:none!important;
-          height:0!important;
-          min-height:0!important;
-          margin:0!important;
-          padding:0!important;
-          overflow:hidden!important;
-        }
+        header[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"]{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;}
+        html body [data-testid="stAppViewContainer"],html body [data-testid="stMain"],html body section.main{padding-top:0!important;margin-top:0!important;}
+        html body [data-testid="stMainBlockContainer"],html body [data-testid="stAppViewBlockContainer"],html body section.main>div.block-container,html body .main .block-container,html body .stMainBlockContainer,html body .block-container{padding-top:0!important;margin-top:0!important;}
+        div[data-testid="stElementContainer"]:has(>div[data-testid="stMarkdownContainer"]>style),div[data-testid="stElementContainer"]:has(>div>div[data-testid="stMarkdownContainer"]>style){height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+        .st-key-hm_home_recipe_repo,.st-key-hm_home_exercise_repo,.st-key-hm_home_supplements{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+        div[data-testid="stElementContainer"]:has(>div[data-testid="stMarkdownContainer"] .hm-home-reference-title),div[data-testid="stElementContainer"]:has(>div>div[data-testid="stMarkdownContainer"] .hm-home-reference-title),div[data-testid="stElementContainer"]:has(>div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor),div[data-testid="stElementContainer"]:has(>div>div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor),div[data-testid="stElementContainer"]:has(>div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor)+div[data-testid="stElementContainer"],div[data-testid="stElementContainer"]:has(>div>div[data-testid="stMarkdownContainer"] .hm-home-muted-anchor)+div[data-testid="stElementContainer"]{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
         </style>
         """,
         unsafe_allow_html=True,
@@ -182,7 +132,6 @@ def _normalise_12_hour_value(value):
     """Return a 12-hour hour, minute and AM/PM period."""
     if value in (None, ""):
         return None, None, None
-
     if value == "now":
         value = datetime.now().time()
     elif isinstance(value, str):
@@ -194,20 +143,18 @@ def _normalise_12_hour_value(value):
             except Exception:
                 pass
         value = parsed
-
     hour = getattr(value, "hour", None)
     minute = getattr(value, "minute", None)
     if hour is None or minute is None:
         return None, None, None
-
     period = "PM" if hour >= 12 else "AM"
     display_hour = hour % 12 or 12
     return f"{display_hour:02d}", f"{minute:02d}", period
 
 
 def _install_daily_log_time_input_wrapper() -> None:
-    """Render Daily Log times as Hour : Minutes and AM/PM in one row."""
-    wrapper_version = "daily-log-hh-mm-select-v10-hidden-native-labels"
+    """Render Daily Log times as HH, MM and AM/PM in one compact row."""
+    wrapper_version = "daily-log-hh-mm-select-v12-no-colon-wider"
     if getattr(st, "_hm_daily_log_time_input_version", "") == wrapper_version:
         return
 
@@ -219,71 +166,49 @@ def _install_daily_log_time_input_wrapper() -> None:
     st._hm_daily_log_original_time_input = original_time_input
 
     def daily_log_time_input(label, *args, **kwargs):
-        if _current_page_filename() != "18_Daily_Log.py":
-            return original_time_input(label, *args, **kwargs)
-        if args:
+        if _current_page_filename() != "18_Daily_Log.py" or args:
             return original_time_input(label, *args, **kwargs)
 
         value = kwargs.pop("value", "now")
         key = kwargs.pop("key", None)
         help_text = kwargs.pop("help", None)
         disabled = bool(kwargs.pop("disabled", False))
-        kwargs.pop("label_visibility", "visible")
-        kwargs.pop("step", None)
-        kwargs.pop("min_value", None)
-        kwargs.pop("max_value", None)
-        kwargs.pop("format", None)
-        kwargs.pop("width", None)
+        for option_name in (
+            "label_visibility",
+            "step",
+            "min_value",
+            "max_value",
+            "format",
+            "width",
+        ):
+            kwargs.pop(option_name, None)
 
-        default_hour, default_minute, default_period = _normalise_12_hour_value(
-            value
-        )
+        default_hour, default_minute, default_period = _normalise_12_hour_value(value)
         base_key = str(key or f"hm_daily_time_{abs(hash(str(label)))}")
-        hour_key = f"hm_daily_hour_v10_{base_key}"
-        minute_key = f"hm_daily_minute_v10_{base_key}"
-        period_key = f"hm_daily_ampm_v10_{base_key}"
+        hour_key = f"hm_daily_hour_v12_{base_key}"
+        minute_key = f"hm_daily_minute_v12_{base_key}"
+        period_key = f"hm_daily_ampm_v12_{base_key}"
 
-        hour_placeholder = "HH"
-        minute_placeholder = "MM"
-        period_placeholder = "AM/PM"
-        hour_options = [hour_placeholder] + [
-            f"{hour:02d}" for hour in range(1, 13)
-        ]
-        minute_options = [minute_placeholder] + [
-            f"{minute:02d}" for minute in range(60)
-        ]
+        hour_placeholder, minute_placeholder, period_placeholder = "HH", "MM", "AM/PM"
+        hour_options = [hour_placeholder] + [f"{hour:02d}" for hour in range(1, 13)]
+        minute_options = [minute_placeholder] + [f"{minute:02d}" for minute in range(60)]
         period_options = [period_placeholder, "AM", "PM"]
 
-        hour_index = (
-            hour_options.index(default_hour)
-            if default_hour in hour_options
-            else 0
-        )
-        minute_index = (
-            minute_options.index(default_minute)
-            if default_minute in minute_options
-            else 0
-        )
-        period_index = (
-            period_options.index(default_period)
-            if default_period in period_options
-            else 0
-        )
+        hour_index = hour_options.index(default_hour) if default_hour in hour_options else 0
+        minute_index = minute_options.index(default_minute) if default_minute in minute_options else 0
+        period_index = period_options.index(default_period) if default_period in period_options else 0
 
         st.markdown(
             """
             <div class='hm-daily-time-headings' aria-hidden='true'>
-              <span>Hour</span>
-              <span></span>
-              <span>Minutes</span>
-              <span>AM/PM</span>
+              <span>Hour</span><span>Minutes</span><span>AM/PM</span>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        hour_col, colon_col, minute_col, period_col = st.columns(
-            [0.92, 0.10, 0.92, 1.16],
+        hour_col, minute_col, period_col = st.columns(
+            [1.08, 1.08, 1.36],
             gap="small",
         )
         with hour_col:
@@ -295,11 +220,6 @@ def _install_daily_log_time_input_wrapper() -> None:
                 help=help_text,
                 disabled=disabled,
                 label_visibility="collapsed",
-            )
-        with colon_col:
-            st.markdown(
-                "<div class='hm-daily-time-colon'>:</div>",
-                unsafe_allow_html=True,
             )
         with minute_col:
             selected_minute = st.selectbox(
@@ -343,160 +263,28 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
     """Apply lightweight Daily Log controls without DOM-wide autosave scripts."""
     if current_page != "18_Daily_Log.py":
         return
-
     _install_daily_log_time_input_wrapper()
     st.markdown(
         """
         <style>
-        [class*="st-key-hm_daily_toggle_"] button,
-        [class*="st-key-hm_daily_toggle_"] [data-testid="stButton"] > button,
-        [class*="st-key-hm_daily_toggle_"] .stButton > button{
-          display:flex!important;
-          width:100%!important;
-          justify-content:flex-start!important;
-          align-items:center!important;
-          text-align:left!important;
-          font-weight:950!important;
-        }
-        [class*="st-key-hm_daily_toggle_"] button *{
-          width:100%!important;
-          justify-content:flex-start!important;
-          text-align:left!important;
-          font-weight:950!important;
-        }
-        .hm-daily-time-headings{
-          display:grid!important;
-          grid-template-columns:minmax(0,.92fr) .36rem minmax(0,.92fr) minmax(0,1.16fr)!important;
-          column-gap:.30rem!important;
-          align-items:end!important;
-          width:100%!important;
-          margin:0 0 .28rem 0!important;
-          color:#334155!important;
-          font-size:.86rem!important;
-          line-height:1.2!important;
-          font-weight:650!important;
-          white-space:nowrap!important;
-        }
-        .hm-daily-time-headings span:nth-child(2){
-          visibility:hidden!important;
-        }
-        [class*="st-key-hm_daily_hour_v10_"] [data-testid="stWidgetLabel"],
-        [class*="st-key-hm_daily_minute_v10_"] [data-testid="stWidgetLabel"],
-        [class*="st-key-hm_daily_ampm_v10_"] [data-testid="stWidgetLabel"],
-        [class*="st-key-hm_daily_hour_v10_"] label,
-        [class*="st-key-hm_daily_minute_v10_"] label,
-        [class*="st-key-hm_daily_ampm_v10_"] label{
-          display:none!important;
-          height:0!important;
-          min-height:0!important;
-          margin:0!important;
-          padding:0!important;
-          overflow:hidden!important;
-        }
-        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] [data-baseweb="input"]{
-          border:1.2px solid #DCC690!important;
-          border-radius:13px!important;
-          background:#FFFFFF!important;
-          box-shadow:none!important;
-          overflow:visible!important;
-          box-sizing:border-box!important;
-          min-height:2.70rem!important;
-        }
-        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] input{
-          border:0!important;
-          outline:0!important;
-          box-shadow:none!important;
-          background:transparent!important;
-          color:#334155!important;
-          min-height:2.62rem!important;
-        }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v10_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v10_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v10_"] [data-baseweb="select"] > div{
-          display:flex!important;
-          align-items:center!important;
-          min-height:2.78rem!important;
-          height:2.78rem!important;
-          border:1.2px solid #DCC690!important;
-          border-radius:13px!important;
-          background:#FFFFFF!important;
-          box-shadow:none!important;
-          box-sizing:border-box!important;
-          padding:0 .58rem!important;
-          color:#475569!important;
-          opacity:1!important;
-        }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v10_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v10_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v10_"] [data-baseweb="select"] *{
-          color:#475569!important;
-          opacity:1!important;
-          visibility:visible!important;
-          font-size:.88rem!important;
-          line-height:1.15!important;
-        }
-        .hm-daily-time-colon{
-          display:flex!important;
-          align-items:center!important;
-          justify-content:center!important;
-          align-self:center!important;
-          height:2.78rem!important;
-          min-height:2.78rem!important;
-          margin:0!important;
-          padding:0!important;
-          color:#334155!important;
-          font-size:1.10rem!important;
-          line-height:1!important;
-          font-weight:900!important;
-        }
-
-        @media (max-width:640px){
-          .hm-daily-time-headings{
-            grid-template-columns:minmax(0,.86fr) .30rem minmax(0,.86fr) minmax(0,1.12fr)!important;
-            column-gap:.22rem!important;
-            font-size:.78rem!important;
-          }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v10_"]){
-            display:grid!important;
-            grid-template-columns:minmax(0,.86fr) .30rem minmax(0,.86fr) minmax(0,1.12fr)!important;
-            column-gap:.22rem!important;
-            row-gap:0!important;
-            align-items:center!important;
-            width:100%!important;
-          }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v10_"]) > div[data-testid="column"]{
-            width:auto!important;
-            min-width:0!important;
-            max-width:none!important;
-            flex:none!important;
-            align-self:center!important;
-          }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v10_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_hour_v10_"]){grid-column:1!important;grid-row:1!important;}
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v10_"]) > div[data-testid="column"]:has(.hm-daily-time-colon){grid-column:2!important;grid-row:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v10_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_minute_v10_"]){grid-column:3!important;grid-row:1!important;}
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v10_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_ampm_v10_"]){grid-column:4!important;grid-row:1!important;}
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v10_"] [data-baseweb="select"] > div,
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v10_"] [data-baseweb="select"] > div,
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v10_"] [data-baseweb="select"] > div{
-            min-width:0!important;
-            width:100%!important;
-            padding:0 .36rem!important;
-          }
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v10_"] [data-baseweb="select"] *{
-            font-size:.74rem!important;
-          }
-
-          div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]){
-            row-gap:0!important;
-            margin-bottom:.04rem!important;
-          }
-          div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]) > div[data-testid="column"]{
-            margin-bottom:.04rem!important;
-            padding-bottom:0!important;
-          }
-          div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]{
-            margin-bottom:.04rem!important;
-          }
+        [class*="st-key-hm_daily_toggle_"] button,[class*="st-key-hm_daily_toggle_"] [data-testid="stButton"]>button,[class*="st-key-hm_daily_toggle_"] .stButton>button{display:flex!important;width:100%!important;justify-content:flex-start!important;align-items:center!important;text-align:left!important;font-weight:950!important;}
+        [class*="st-key-hm_daily_toggle_"] button *{width:100%!important;justify-content:flex-start!important;text-align:left!important;font-weight:950!important;}
+        .hm-daily-time-headings{display:grid!important;grid-template-columns:minmax(0,1.08fr) minmax(0,1.08fr) minmax(0,1.36fr)!important;column-gap:.55rem!important;align-items:end!important;width:100%!important;margin:0 0 .28rem 0!important;color:#334155!important;font-size:.86rem!important;line-height:1.2!important;font-weight:650!important;white-space:nowrap!important;}
+        [class*="st-key-hm_daily_hour_v12_"] [data-testid="stWidgetLabel"],[class*="st-key-hm_daily_minute_v12_"] [data-testid="stWidgetLabel"],[class*="st-key-hm_daily_ampm_v12_"] [data-testid="stWidgetLabel"],[class*="st-key-hm_daily_hour_v12_"] label,[class*="st-key-hm_daily_minute_v12_"] label,[class*="st-key-hm_daily_ampm_v12_"] label{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] [data-baseweb="input"]{border:1.2px solid #DCC690!important;border-radius:13px!important;background:#FFFFFF!important;box-shadow:none!important;overflow:visible!important;box-sizing:border-box!important;min-height:2.70rem!important;}
+        html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] input{border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;color:#334155!important;min-height:2.62rem!important;}
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v12_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v12_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v12_"] [data-baseweb="select"]>div{display:flex!important;align-items:center!important;min-height:2.78rem!important;height:2.78rem!important;border:1.2px solid #DCC690!important;border-radius:13px!important;background:#FFFFFF!important;box-shadow:none!important;box-sizing:border-box!important;padding:0 .64rem!important;color:#475569!important;opacity:1!important;}
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v12_"] [data-baseweb="select"] *,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v12_"] [data-baseweb="select"] *,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v12_"] [data-baseweb="select"] *{color:#475569!important;opacity:1!important;visibility:visible!important;font-size:.88rem!important;line-height:1.15!important;}
+        div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v12_"]){display:grid!important;grid-template-columns:minmax(0,1.08fr) minmax(0,1.08fr) minmax(0,1.36fr)!important;column-gap:.55rem!important;row-gap:0!important;align-items:center!important;width:100%!important;flex-wrap:nowrap!important;}
+        div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v12_"])>div[data-testid="column"]{width:auto!important;min-width:0!important;max-width:none!important;flex:none!important;align-self:center!important;margin:0!important;padding:0!important;}
+        @media(max-width:640px){
+          .hm-daily-time-headings,div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v12_"]){grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.28fr)!important;column-gap:.34rem!important;}
+          .hm-daily-time-headings{font-size:.76rem!important;}
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v12_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v12_"] [data-baseweb="select"]>div,html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v12_"] [data-baseweb="select"]>div{min-width:0!important;width:100%!important;padding:0 .42rem!important;}
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v12_"] [data-baseweb="select"] *{font-size:.74rem!important;}
+          div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]){row-gap:0!important;margin-bottom:.04rem!important;}
+          div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"])>div[data-testid="column"]{margin-bottom:.04rem!important;padding-bottom:0!important;}
+          div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]{margin-bottom:.04rem!important;}
         }
         </style>
         """,
@@ -506,15 +294,10 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
 
 def _redirect_disabled_reference_page(current_page: str) -> None:
     """Keep hidden member-library URLs away from admin and back to member flow."""
-    if (
-        MEMBER_REFERENCE_LIBRARY_ENABLED
-        or current_page not in MEMBER_REFERENCE_LIBRARY_PAGES
-    ):
+    if MEMBER_REFERENCE_LIBRARY_ENABLED or current_page not in MEMBER_REFERENCE_LIBRARY_PAGES:
         return
-
     st.session_state["_hm_reference_library_unavailable"] = True
     st.session_state["_hm_expected_login_role"] = "member"
-
     if (
         st.session_state.get("logged_in")
         and st.session_state.get("_hm_auth_role_resolved")
@@ -522,10 +305,7 @@ def _redirect_disabled_reference_page(current_page: str) -> None:
     ):
         st.switch_page("pages/02_Member_Home.py")
         st.stop()
-
-    st.session_state["_hm_requested_page_after_login"] = (
-        "pages/02_Member_Home.py"
-    )
+    st.session_state["_hm_requested_page_after_login"] = "pages/02_Member_Home.py"
     st.session_state["_hm_access_recovery_message"] = (
         "The Member Reference Library is currently unavailable. "
         "Please sign in with the member account to return to Member Home."
@@ -550,7 +330,13 @@ def require_member():
 
     restore_any_login("member")
     if not st.session_state.get("logged_in"):
+        if not st.session_state.get("_hm_member_restore_retry"):
+            st.session_state["_hm_member_restore_retry"] = True
+            time_module.sleep(0.35)
+            st.rerun()
         _show_access_required("Member")
+    st.session_state.pop("_hm_member_restore_retry", None)
+
     if not current_user_is_member():
         _show_access_required("Member")
 
