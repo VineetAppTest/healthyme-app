@@ -63,9 +63,8 @@ def _current_page_filename() -> str:
     return ""
 
 
-def _apply_member_page_defaults() -> None:
+def _apply_member_page_defaults(current_page: str) -> None:
     """Apply page-specific defaults only when the member enters that page."""
-    current_page = _current_page_filename()
     previous_page = st.session_state.get("_hm_previous_member_page")
 
     if current_page == "18_Daily_Log.py":
@@ -75,9 +74,7 @@ def _apply_member_page_defaults() -> None:
             st.session_state["hm_h9a4c_saved_to"] = today
 
         # Scope the reorder to the Daily Log Food Journal by requiring the
-        # page-specific marker inside the same direct-child container. The prior
-        # selector depended on an unstable Streamlit wrapper hierarchy and did
-        # not move the block reliably.
+        # page-specific marker inside the same direct-child container.
         st.markdown(
             """
             <style>
@@ -97,13 +94,21 @@ def _apply_member_page_defaults() -> None:
     st.session_state["_hm_previous_member_page"] = current_page
 
 
-def _hide_member_reference_library() -> None:
-    """Temporarily hide the Member Home Reference Library without deleting routes."""
+def _hide_member_reference_library(current_page: str) -> None:
+    """Hide only the Member Home Reference Library area, not the surrounding page."""
+    if current_page != "02_Member_Home.py":
+        return
+
     st.markdown(
         """
         <style>
-        div[data-testid="stVerticalBlock"] > div:has(.hm-home-reference-title),
-        div[data-testid="stVerticalBlock"] > div:has(.hm-home-reference-title) ~ div{
+        /* Keep the hide rule inside the Personalized Content column only. */
+        div[data-testid="column"]:has(.hm-home-reference-title)
+        div[data-testid="stVerticalBlock"]:has(.hm-home-reference-title)
+        > div:has(.hm-home-reference-title),
+        div[data-testid="column"]:has(.hm-home-reference-title)
+        div[data-testid="stVerticalBlock"]:has(.hm-home-reference-title)
+        > div:has(.hm-home-reference-title) ~ div{
           display:none!important;
         }
         </style>
@@ -147,5 +152,6 @@ def require_member():
     if not current_user_is_member():
         _show_access_required("Member")
 
-    _apply_member_page_defaults()
-    _hide_member_reference_library()
+    current_page = _current_page_filename()
+    _apply_member_page_defaults(current_page)
+    _hide_member_reference_library(current_page)
