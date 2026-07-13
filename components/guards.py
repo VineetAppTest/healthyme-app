@@ -1,4 +1,5 @@
 from datetime import date
+import inspect
 
 import streamlit as st
 
@@ -53,32 +54,47 @@ def _show_access_required(required_role: str = "Admin") -> None:
     st.stop()
 
 
-def _apply_member_daily_log_defaults() -> None:
-    """Keep Daily Log saved-day filters on today unless the member changes them."""
-    today = date.today()
-    st.session_state.setdefault("hm_h9a4c_saved_from", today)
-    st.session_state.setdefault("hm_h9a4c_saved_to", today)
+def _current_page_filename() -> str:
+    """Return the active Streamlit page filename without relying on URL parsing."""
+    for frame in inspect.stack():
+        filename = str(frame.filename or "").replace("\\", "/")
+        if "/pages/" in filename:
+            return filename.rsplit("/", 1)[-1]
+    return ""
 
-    # Daily Log renders View Saved Days as the second bordered block in the
-    # Food Journal tab. Reorder only that page's tab panel by scoping to the
-    # existing Daily Log marker class, leaving all other member tabs untouched.
-    st.markdown(
-        """
-        <style>
-        div[data-testid="stTabs"]:has(.hm-h9a4c-note)
-        div[role="tabpanel"] > div[data-testid="stVerticalBlock"]{
-          display:flex!important;
-          flex-direction:column!important;
-        }
-        div[data-testid="stTabs"]:has(.hm-h9a4c-note)
-        div[role="tabpanel"] > div[data-testid="stVerticalBlock"]
-        > div[data-testid="stVerticalBlockBorderWrapper"]:nth-of-type(2){
-          order:90!important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+
+def _apply_member_page_defaults() -> None:
+    """Apply page-specific defaults only when the member enters that page."""
+    current_page = _current_page_filename()
+    previous_page = st.session_state.get("_hm_previous_member_page")
+
+    if current_page == "18_Daily_Log.py":
+        if previous_page != current_page:
+            today = date.today()
+            st.session_state["hm_h9a4c_saved_from"] = today
+            st.session_state["hm_h9a4c_saved_to"] = today
+
+        # Scope the reorder to the Daily Log Food Journal by requiring the
+        # page-specific marker inside the same direct-child container. The prior
+        # selector depended on an unstable Streamlit wrapper hierarchy and did
+        # not move the block reliably.
+        st.markdown(
+            """
+            <style>
+            div[data-testid="stVerticalBlock"]:has(> div[data-testid="stVerticalBlockBorderWrapper"] .hm-h9a4c-note){
+              display:flex!important;
+              flex-direction:column!important;
+            }
+            div[data-testid="stVerticalBlock"]:has(> div[data-testid="stVerticalBlockBorderWrapper"] .hm-h9a4c-note)
+            > div[data-testid="stVerticalBlockBorderWrapper"]:nth-of-type(2){
+              order:100!important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.session_state["_hm_previous_member_page"] = current_page
 
 
 def _hide_member_reference_library() -> None:
@@ -131,5 +147,5 @@ def require_member():
     if not current_user_is_member():
         _show_access_required("Member")
 
-    _apply_member_daily_log_defaults()
+    _apply_member_page_defaults()
     _hide_member_reference_library()
