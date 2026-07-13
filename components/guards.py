@@ -189,26 +189,102 @@ def _apply_member_feature_visibility(current_page: str) -> None:
     )
 
 
+def _normalise_12_hour_value(value):
+    """Return a 12-hour display value and its AM/PM period."""
+    if value is None:
+        return None, "AM"
+
+    hour = getattr(value, "hour", None)
+    if hour is None:
+        return value, "AM"
+
+    period = "PM" if hour >= 12 else "AM"
+    display_hour = hour % 12 or 12
+    try:
+        return value.replace(hour=display_hour), period
+    except Exception:
+        return value, period
+
+
+def _install_daily_log_time_input_wrapper() -> None:
+    """Add a separate AM/PM selector beside Daily Log time inputs."""
+    if getattr(st, "_hm_daily_log_time_input_installed", False):
+        return
+
+    original_time_input = st.time_input
+
+    def daily_log_time_input(label, *args, **kwargs):
+        if _current_page_filename() != "18_Daily_Log.py":
+            return original_time_input(label, *args, **kwargs)
+
+        if args:
+            # The Daily Log currently uses keyword arguments. Preserve any future
+            # positional call unchanged rather than guessing its argument mapping.
+            return original_time_input(label, *args, **kwargs)
+
+        value = kwargs.pop("value", "now")
+        key = kwargs.pop("key", None)
+        display_value, default_period = _normalise_12_hour_value(value)
+        period_key = f"{key}_ampm" if key else f"hm_daily_ampm_{abs(hash(label))}"
+
+        time_col, period_col = st.columns([5.0, 1.15], gap="small")
+        with time_col:
+            selected_time = original_time_input(
+                label,
+                value=display_value,
+                key=key,
+                **kwargs,
+            )
+        with period_col:
+            period = st.selectbox(
+                "AM / PM",
+                ["AM", "PM"],
+                index=0 if default_period == "AM" else 1,
+                key=period_key,
+                label_visibility="hidden",
+            )
+
+        if selected_time is None:
+            return None
+
+        hour_12 = selected_time.hour % 12
+        hour_24 = hour_12 + (12 if period == "PM" else 0)
+        return selected_time.replace(hour=hour_24)
+
+    st.time_input = daily_log_time_input
+    st._hm_daily_log_time_input_installed = True
+
+
 def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
-    """Apply Daily Log-only field borders, bold toggles and debounced autosave."""
+    """Apply Daily Log-only controls, field borders and debounced autosave."""
     if current_page != "18_Daily_Log.py":
         return
+
+    _install_daily_log_time_input_wrapper()
 
     st.markdown(
         """
         <style>
-        /* Daily Log-only control corrections. High specificity keeps these
-           rules effective after the page's own CSS is rendered. */
-        html body #root [data-testid="stAppViewContainer"] .hm-toggle-anchor + div [data-testid="stButton"] > button,
-        html body #root [data-testid="stAppViewContainer"] .hm-toggle-anchor + div .stButton > button{
+        /* Use the actual Streamlit widget-key class. Marker-sibling selectors
+           are not reliable because Streamlit wraps each element separately. */
+        [class*="st-key-hm_daily_toggle_"] button,
+        [class*="st-key-hm_daily_toggle_"] [data-testid="stButton"] > button,
+        [class*="st-key-hm_daily_toggle_"] .stButton > button{
+          display:flex!important;
+          width:100%!important;
+          justify-content:flex-start!important;
+          align-items:center!important;
+          text-align:left!important;
+          font-weight:950!important;
+        }
+        [class*="st-key-hm_daily_toggle_"] button > div,
+        [class*="st-key-hm_daily_toggle_"] button p,
+        [class*="st-key-hm_daily_toggle_"] button span,
+        [class*="st-key-hm_daily_toggle_"] button *{
+          width:100%!important;
           justify-content:flex-start!important;
           text-align:left!important;
-          font-weight:900!important;
-        }
-        html body #root [data-testid="stAppViewContainer"] .hm-toggle-anchor + div [data-testid="stButton"] > button *,
-        html body #root [data-testid="stAppViewContainer"] .hm-toggle-anchor + div .stButton > button *{
-          text-align:left!important;
-          font-weight:900!important;
+          font-weight:950!important;
         }
 
         /* Put the border on the BaseWeb input shell, not on both the shell
@@ -246,6 +322,14 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           overflow:visible!important;
           padding-bottom:.26rem!important;
         }
+
+        /* Keep the explicit AM/PM dropdown visually aligned with the time input. */
+        [class*="_ampm"] [data-baseweb="select"] > div{
+          min-height:2.70rem!important;
+          border:1.2px solid #DCC690!important;
+          border-radius:13px!important;
+          background:#FFFFFF!important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -266,8 +350,8 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
             return;
           }
 
-          if (host.__healthyMeDailyLogAutosaveB27) return;
-          host.__healthyMeDailyLogAutosaveB27 = true;
+          if (host.__healthyMeDailyLogAutosaveB28) return;
+          host.__healthyMeDailyLogAutosaveB28 = true;
 
           let timer = null;
           let suppressUntil = 0;
@@ -284,6 +368,7 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
 
           function isDailyLogEntryKey(key){
             if (!key) return false;
+            if (key.endsWith("_ampm")) return true;
             const mealField = /^\d{4}-\d{2}-\d{2}_(breakfast|lunch|evening_snack|dinner|bedtime|snacking_\d+)_(time|food_\d+|portion_\d+|mood|energy)$/;
             const dayField = /^hm_h9a4c_(water|fluid_(type|time|qty|notes)|poop_(rounds|time|feeling)|activity|notes)_\d{4}-\d{2}-\d{2}/;
             return mealField.test(key) || dayField.test(key);
