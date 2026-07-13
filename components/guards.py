@@ -115,21 +115,51 @@ def _apply_member_page_defaults(current_page: str) -> None:
 
 def _apply_member_feature_visibility(current_page: str) -> None:
     """Hide and block the Member Reference Library until it is re-enabled."""
-    if MEMBER_REFERENCE_LIBRARY_ENABLED:
-        return
-
     if current_page == "02_Member_Home.py":
         st.markdown(
             """
             <style>
-            .hm-home-reference-title{display:none!important;}
-            .hm-home-muted-anchor + div{display:none!important;}
+            /* Reinstate the compact global header treatment on Member Home. */
+            header[data-testid="stHeader"]{
+              display:none!important;
+              visibility:hidden!important;
+              height:0!important;
+              min-height:0!important;
+            }
+            [data-testid="stAppViewContainer"] > .main,
+            section.main{
+              padding-top:0!important;
+              margin-top:0!important;
+            }
+            section.main > div.block-container,
+            .main .block-container,
+            [data-testid="stAppViewBlockContainer"],
+            .stMainBlockContainer,
+            .block-container{
+              padding-top:.18rem!important;
+              margin-top:0!important;
+            }
+
+            /* Hide the Reference Library structurally in the rendered DOM.
+               The page code, routes and feature flag remain available for reactivation. */
             div[data-testid="stElementContainer"]:has(.hm-home-reference-title),
-            div[data-testid="stElementContainer"]:has(.hm-home-muted-anchor){display:none!important;}
+            div[data-testid="stElementContainer"]:has(.hm-home-muted-anchor),
+            div[data-testid="stElementContainer"]:has(.hm-home-muted-anchor)
+              + div[data-testid="stElementContainer"]{
+              display:none!important;
+              height:0!important;
+              min-height:0!important;
+              margin:0!important;
+              padding:0!important;
+              overflow:hidden!important;
+            }
             </style>
             """,
             unsafe_allow_html=True,
         )
+
+    if MEMBER_REFERENCE_LIBRARY_ENABLED:
+        return
 
     if current_page in MEMBER_REFERENCE_LIBRARY_PAGES:
         st.session_state["_hm_reference_library_unavailable"] = True
