@@ -95,18 +95,16 @@ def _member_email():
 def _render_member_home_css():
     st.markdown(
         """
-<span class='hm-member-home-style-anchor'></span>
-<style>
-/* Local hardening for Member Home after global button CSS. */
+<style id="hm-member-home-local-style">
+/* Member Home only: rendered last so global/topbar CSS cannot reintroduce headspace. */
+html,body{margin-top:0!important;padding-top:0!important;}
 header[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"]{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;}
-[data-testid="stAppViewContainer"],[data-testid="stAppViewContainer"] > .main,[data-testid="stMain"],section.main{padding-top:0!important;margin-top:0!important;}
-[data-testid="stMainBlockContainer"],[data-testid="stAppViewBlockContainer"],section.main > div.block-container,.main .block-container,.stMainBlockContainer,.block-container{padding-top:0!important;margin-top:0!important;}
-.hm-member-home-style-anchor,.hm-member-identity-pill{margin-top:0!important;}
+html body [data-testid="stAppViewContainer"],html body [data-testid="stAppViewContainer"] > .main,html body [data-testid="stMain"],html body section.main{padding-top:0!important;padding-block-start:0!important;margin-top:0!important;}
+html body [data-testid="stMainBlockContainer"],html body [data-testid="stAppViewBlockContainer"],html body section.main > div.block-container,html body .main .block-container,html body .stMainBlockContainer,html body .block-container{padding-top:.12rem!important;padding-block-start:.12rem!important;margin-top:0!important;}
 .hm-member-identity-pill{height:2.46rem;min-height:2.46rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.76);border:1px solid #E9DFCC;border-radius:999px;padding:.24rem .64rem;margin:0!important;}
 .hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;white-space:nowrap;}
-.hm-member-home-style-anchor,.hm-top-profile-anchor,.hm-top-logout-anchor,.hm-task-action-anchor,.hm-home-action-anchor,.hm-member-home-balanced-card{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
-div[data-testid="stElementContainer"]:has(.hm-member-home-style-anchor),div[data-testid="stElementContainer"]:has(.hm-member-home-balanced-card){display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){align-items:center!important;gap:.72rem!important;margin:0 0 .52rem 0!important;}
+.hm-top-profile-anchor,.hm-top-logout-anchor,.hm-task-action-anchor,.hm-home-action-anchor,.hm-member-home-balanced-card{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){align-items:center!important;gap:.72rem!important;margin:0 0 .52rem 0!important;padding-top:0!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"]{display:flex!important;align-items:center!important;min-height:2.46rem!important;}
 .hm-top-profile-anchor + div,.hm-top-logout-anchor + div{display:flex!important;align-items:center!important;justify-content:center!important;height:2.46rem!important;min-height:2.46rem!important;margin:0!important;padding:0!important;}
 .hm-top-profile-anchor + div [data-testid="stButton"] > button,.hm-top-profile-anchor + div .stButton > button{width:2.34rem!important;min-width:2.34rem!important;max-width:2.34rem!important;height:2.34rem!important;min-height:2.34rem!important;max-height:2.34rem!important;border-radius:999px!important;padding:0!important;font-size:.92rem!important;background:#FFFFFF!important;color:#064E3B!important;border:1.4px solid #D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.055)!important;margin:0 auto!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
@@ -141,11 +139,14 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-te
 .hm-home-action-anchor + div [data-testid="stButton"] > button,.hm-home-action-anchor + div .stButton > button{width:82%!important;min-height:2.30rem!important;margin:.08rem auto .30rem auto!important;padding:.42rem .64rem!important;border-radius:12px!important;box-shadow:0 4px 10px rgba(6,78,59,.045)!important;}
 .hm-home-action-anchor + div [data-testid="stButton"] > button *,.hm-home-action-anchor + div .stButton > button *{font-size:.82rem!important;line-height:1.18!important;}
 .hm-home-soft-separator{height:1px;background:#E3D4BA;margin:.95rem 0 1.12rem 0;}
+.hm-member-panel-heading{color:#064E3B;font-size:1rem;font-weight:900;line-height:1.2;margin:0!important;padding:0!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card){align-items:stretch!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"]{display:flex!important;align-items:stretch!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"] > div[data-testid="stVerticalBlock"]{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card){display:flex!important;flex:1 1 auto!important;height:100%!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card) > div{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;padding-top:.65rem!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card){display:flex!important;flex:1 1 auto!important;height:100%!important;padding:.70rem .85rem .85rem!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card) > div{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;padding:0!important;margin:0!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlock"]{padding-top:0!important;margin-top:0!important;gap:.55rem!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stElementContainer"]:has(.hm-member-panel-heading){margin:0!important;padding:0!important;min-height:0!important;}
 div[data-testid="stButton"] > button{height:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 @media(max-width:900px){div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"]{display:block!important;}}
 </style>
@@ -309,7 +310,6 @@ requested_pages = _normalised_requested_pages(current_instance)
 for _repo_detail_key in ["hm_recipe_selected_id", "hm_recipe_detail_mode", "hm_exercise_selected_id", "hm_exercise_detail_mode"]:
     st.session_state.pop(_repo_detail_key, None)
 
-_render_member_home_css()
 _render_member_utility_bar()
 topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 
@@ -329,8 +329,11 @@ left, right = st.columns([1.15, .85], gap="large")
 
 with left:
     with st.container(border=True):
-        st.markdown("<span class='hm-member-home-balanced-card'></span>", unsafe_allow_html=True)
-        st.subheader("Your next steps")
+        st.markdown(
+            "<span class='hm-member-home-balanced-card'></span>"
+            "<div class='hm-member-panel-heading'>Your next steps</div>",
+            unsafe_allow_html=True,
+        )
         is_task_instance = current_instance.get("instance_type") in ["Task Request", "Reassessment"] and not current_instance.get("submitted_for_review")
         if is_task_instance:
             _render_task_progress(current_instance, wf, requested_pages)
@@ -353,8 +356,11 @@ with left:
 
 with right:
     with st.container(border=True):
-        st.markdown("<span class='hm-member-home-balanced-card'></span>", unsafe_allow_html=True)
-        st.subheader("Personalized content")
+        st.markdown(
+            "<span class='hm-member-home-balanced-card'></span>"
+            "<div class='hm-member-panel-heading'>Personalized content</div>",
+            unsafe_allow_html=True,
+        )
         plans_ready = _workflow_finalized(wf)
         st.markdown("<div class='hm-home-group-title'>Daily tools</div>", unsafe_allow_html=True)
         _home_action("Today's Plan", "pages/36_Todays_Journey.py", "hm_home_today_plan", disabled=not plans_ready)
@@ -370,3 +376,4 @@ with right:
             _home_action("Supplements", "pages/40_Member_Supplements.py", "hm_home_supplements", muted=True, disabled=not plans_ready)
 
 inject_keepalive_guard_v96_11()
+_render_member_home_css()
