@@ -9,6 +9,14 @@ from components.auth_session import restore_login_from_token
 from components.supabase_auth_session import restore_supabase_login_from_session
 
 
+MEMBER_REFERENCE_LIBRARY_ENABLED = False
+MEMBER_REFERENCE_LIBRARY_PAGES = {
+    "08_Recipe_Repository.py",
+    "09_Exercise_Repository.py",
+    "40_Member_Supplements.py",
+}
+
+
 def restore_any_login():
     # Prefer an already-resolved HealthyMe app session, but do not let a
     # Supabase pilot member/admin role silently fall back to a stale Auth0 role.
@@ -39,21 +47,6 @@ def restore_any_login():
     return bool(restored)
 
 
-def _show_access_required(required_role: str = "Admin") -> None:
-    st.warning(f"{required_role} access required")
-    st.caption(
-        "Protected pages do not start a login/logout flow. Please sign in from the Login page "
-        "with the correct role, then use the in-app navigation to open this page. A full browser "
-        "reload or pasted direct URL can start a fresh Streamlit session during Supabase testing."
-    )
-    if st.button("Go to Login", key=f"hm_go_to_login_{required_role.lower()}"):
-        try:
-            st.switch_page("pages/01_Login.py")
-        except Exception:
-            st.info("Open the Login page from the app menu or app root.")
-    st.stop()
-
-
 def _current_page_filename() -> str:
     """Return the active Streamlit page filename without relying on URL parsing."""
     for frame in inspect.stack():
@@ -63,58 +56,62 @@ def _current_page_filename() -> str:
     return ""
 
 
+def _show_access_required(required_role: str = "Admin") -> None:
+    """Recover a fresh/expired Streamlit session through the normal login page."""
+    current_page = _current_page_filename()
+    if current_page and current_page != "01_Login.py":
+        st.session_state["_hm_requested_page_after_login"] = f"pages/{current_page}"
+
+    st.session_state["_hm_access_recovery_message"] = (
+        "Your secure app session needs to be refreshed. Please sign in again."
+    )
+    try:
+        st.switch_page("pages/01_Login.py")
+    except Exception:
+        st.warning(f"{required_role} access required")
+        st.caption(
+            "Your secure session could not be restored on this page. Please return to Login and sign in again."
+        )
+        if st.button("Go to Login", key=f"hm_go_to_login_{required_role.lower()}"):
+            st.switch_page("pages/01_Login.py")
+    st.stop()
+
+
 def _apply_member_page_defaults(current_page: str) -> None:
     """Apply page-specific defaults only when the member enters that page."""
     previous_page = st.session_state.get("_hm_previous_member_page")
 
-    if current_page == "18_Daily_Log.py":
-        if previous_page != current_page:
-            today = date.today()
-            st.session_state["hm_h9a4c_saved_from"] = today
-            st.session_state["hm_h9a4c_saved_to"] = today
+    if current_page == "18_Daily_Log.py" and previous_page != current_page:
+        today = date.today()
+        st.session_state["hm_h9a4c_saved_from"] = today
+        st.session_state["hm_h9a4c_saved_to"] = today
 
-        # Scope the reorder to the Daily Log Food Journal by requiring the
-        # page-specific marker inside the same direct-child container.
+    st.session_state["_hm_previous_member_page"] = current_page
+
+
+def _apply_member_feature_visibility(current_page: str) -> None:
+    """Hide and block the Member Reference Library until it is re-enabled."""
+    if MEMBER_REFERENCE_LIBRARY_ENABLED:
+        return
+
+    if current_page == "02_Member_Home.py":
         st.markdown(
             """
             <style>
-            div[data-testid="stVerticalBlock"]:has(> div[data-testid="stVerticalBlockBorderWrapper"] .hm-h9a4c-note){
-              display:flex!important;
-              flex-direction:column!important;
-            }
-            div[data-testid="stVerticalBlock"]:has(> div[data-testid="stVerticalBlockBorderWrapper"] .hm-h9a4c-note)
-            > div[data-testid="stVerticalBlockBorderWrapper"]:nth-of-type(2){
-              order:100!important;
-            }
+            /* Hide only the Reference Library heading and its three muted actions. */
+            .hm-home-reference-title{display:none!important;}
+            .hm-home-muted-anchor + div{display:none!important;}
+            div[data-testid="stElementContainer"]:has(.hm-home-reference-title),
+            div[data-testid="stElementContainer"]:has(.hm-home-muted-anchor){display:none!important;}
             </style>
             """,
             unsafe_allow_html=True,
         )
 
-    st.session_state["_hm_previous_member_page"] = current_page
-
-
-def _hide_member_reference_library(current_page: str) -> None:
-    """Hide only the Member Home Reference Library area, not the surrounding page."""
-    if current_page != "02_Member_Home.py":
-        return
-
-    st.markdown(
-        """
-        <style>
-        /* Keep the hide rule inside the Personalized Content column only. */
-        div[data-testid="column"]:has(.hm-home-reference-title)
-        div[data-testid="stVerticalBlock"]:has(.hm-home-reference-title)
-        > div:has(.hm-home-reference-title),
-        div[data-testid="column"]:has(.hm-home-reference-title)
-        div[data-testid="stVerticalBlock"]:has(.hm-home-reference-title)
-        > div:has(.hm-home-reference-title) ~ div{
-          display:none!important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    if current_page in MEMBER_REFERENCE_LIBRARY_PAGES:
+        st.session_state["_hm_reference_library_unavailable"] = True
+        st.switch_page("pages/02_Member_Home.py")
+        st.stop()
 
 
 def require_admin():
@@ -154,4 +151,4 @@ def require_member():
 
     current_page = _current_page_filename()
     _apply_member_page_defaults(current_page)
-    _hide_member_reference_library(current_page)
+    _apply_member_feature_visibility(current_page)

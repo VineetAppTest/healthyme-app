@@ -24,7 +24,7 @@ from components.db import (
 from components.flash import set_system_message, render_system_message
 
 
-BUILD_NOTE = "v102.4B22H9A10E · Evening Snack structured meal"
+BUILD_NOTE = "v102.4B24H9A10E · Saved Days order and defaults"
 
 
 STRUCTURED_MEAL_ORDER = [
@@ -384,6 +384,49 @@ def _render_exercise_journal_placeholder():
     )
 
 
+def _render_saved_days(user_id):
+    """Render saved-day filters after Guidance with warning-free today defaults."""
+    today = date.today()
+    st.session_state.setdefault("hm_h9a4c_saved_from", today)
+    st.session_state.setdefault("hm_h9a4c_saved_to", today)
+
+    with st.container(border=True):
+        st.markdown("### View Saved Days")
+        all_days = get_daily_food_journal_days(user_id) or []
+        f_col, t_col = st.columns(2)
+        with f_col:
+            filter_from = st.date_input("From", key="hm_h9a4c_saved_from")
+        with t_col:
+            filter_to = st.date_input("To", key="hm_h9a4c_saved_to")
+
+        if filter_from > filter_to:
+            st.warning("From date cannot be after To date.")
+            return
+
+        filtered_days = []
+        for day in all_days:
+            saved_date = _saved_day_date(day)
+            if saved_date and filter_from <= saved_date <= filter_to:
+                filtered_days.append(day)
+
+        if not filtered_days:
+            st.caption("No saved days found in this range.")
+            return
+
+        st.caption(f"Showing {len(filtered_days)} saved day(s) in the selected range.")
+        for row_start in range(0, len(filtered_days), 4):
+            cols = st.columns(4)
+            for col, day in zip(cols, filtered_days[row_start:row_start + 4]):
+                d_text = _format_saved_date(day)
+                label_date = _parse_date(d_text)
+                button_label = label_date.strftime("%d %b") if label_date else d_text
+                with col:
+                    if st.button(button_label, key=f"hm_h9a4c_load_{d_text}", use_container_width=True):
+                        if label_date:
+                            st.session_state["hm_food_journal_date"] = label_date
+                            st.rerun()
+
+
 def _render_food_journal(user_id):
     if "hm_food_journal_date" not in st.session_state:
         st.session_state["hm_food_journal_date"] = date.today()
@@ -397,38 +440,6 @@ def _render_food_journal(user_id):
     existing_meals, existing_snacks = _normalise_meals(existing.get("meals", {}) or {})
     existing_other_fluids = _normalise_other_fluids(existing.get("other_fluids", []) or [])
     is_saved_date = bool(existing and _day_has_meaningful_entry(existing))
-
-    with st.container(border=True):
-        st.markdown("### View Saved Days")
-        all_days = get_daily_food_journal_days(user_id) or []
-        parsed_dates = sorted([d for d in [_saved_day_date(day) for day in all_days] if d])
-        default_from = min(parsed_dates) if parsed_dates else date.today()
-        default_to = max(parsed_dates) if parsed_dates else date.today()
-        f_col, t_col = st.columns(2)
-        with f_col:
-            filter_from = st.date_input("From", value=default_from, key="hm_h9a4c_saved_from")
-        with t_col:
-            filter_to = st.date_input("To", value=default_to, key="hm_h9a4c_saved_to")
-        filtered_days = []
-        for day in all_days:
-            d = _saved_day_date(day)
-            if d and filter_from <= d <= filter_to:
-                filtered_days.append(day)
-        if not filtered_days:
-            st.caption("No saved days found in this range.")
-        else:
-            st.caption(f"Showing {len(filtered_days)} saved day(s) in the selected range.")
-            for row_start in range(0, len(filtered_days), 4):
-                cols = st.columns(4)
-                for col, day in zip(cols, filtered_days[row_start:row_start + 4]):
-                    d_text = _format_saved_date(day)
-                    label_date = _parse_date(d_text)
-                    button_label = label_date.strftime("%d %b") if label_date else d_text
-                    with col:
-                        if st.button(button_label, key=f"hm_h9a4c_load_{d_text}", use_container_width=True):
-                            if label_date:
-                                st.session_state["hm_food_journal_date"] = label_date
-                                st.rerun()
 
     with st.container(border=True):
         st.markdown("### Meal Section")
@@ -594,6 +605,8 @@ def _render_food_journal(user_id):
             for note in history:
                 st.markdown(f"<div class='hm-h9a4c-cardline'><b>{_safe_html(format_local_ts(note.get('ts', '')))}</b><br>{_safe_html(note.get('note', ''))}</div>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
+
+    _render_saved_days(user_id)
 
 
 st.set_page_config(page_title="Daily Log", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
