@@ -11,7 +11,20 @@ apply_luxe_theme()
 
 
 def _route_authenticated_user():
-    if is_admin_role(st.session_state.get("user_role")):
+    requested_page = str(st.session_state.pop("_hm_requested_page_after_login", "") or "")
+    is_admin = is_admin_role(st.session_state.get("user_role"))
+
+    if requested_page.startswith("pages/") and requested_page != "pages/01_Login.py":
+        # Members may return only to member pages; admin targets remain admin-only.
+        requested_is_admin_page = "Admin" in requested_page
+        if is_admin or not requested_is_admin_page:
+            try:
+                st.switch_page(requested_page)
+                return
+            except Exception:
+                pass
+
+    if is_admin:
         st.switch_page("pages/10_Admin_Dashboard.py")
     else:
         st.switch_page("pages/02_Member_Home.py")
@@ -27,6 +40,10 @@ def _render_secure_logout_feedback(feedback):
     else:
         st.warning(message)
 
+
+recovery_message = st.session_state.pop("_hm_access_recovery_message", None)
+if recovery_message:
+    st.info(recovery_message)
 
 logout_param = False
 try:
