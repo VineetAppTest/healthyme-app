@@ -206,8 +206,8 @@ def _normalise_12_hour_value(value):
 
 
 def _install_daily_log_time_input_wrapper() -> None:
-    """Render Daily Log times as HH : MM and AM/PM in one compact row."""
-    wrapper_version = "daily-log-hh-mm-select-v8-mobile-compact"
+    """Render Daily Log times as Hour : Minutes and AM/PM in one row."""
+    wrapper_version = "daily-log-hh-mm-select-v9-clear-headings"
     if getattr(st, "_hm_daily_log_time_input_version", "") == wrapper_version:
         return
 
@@ -228,7 +228,7 @@ def _install_daily_log_time_input_wrapper() -> None:
         key = kwargs.pop("key", None)
         help_text = kwargs.pop("help", None)
         disabled = bool(kwargs.pop("disabled", False))
-        label_visibility = kwargs.pop("label_visibility", "visible")
+        kwargs.pop("label_visibility", "visible")
         kwargs.pop("step", None)
         kwargs.pop("min_value", None)
         kwargs.pop("max_value", None)
@@ -239,9 +239,9 @@ def _install_daily_log_time_input_wrapper() -> None:
             value
         )
         base_key = str(key or f"hm_daily_time_{abs(hash(str(label)))}")
-        hour_key = f"hm_daily_hour_v8_{base_key}"
-        minute_key = f"hm_daily_minute_v8_{base_key}"
-        period_key = f"hm_daily_ampm_v8_{base_key}"
+        hour_key = f"hm_daily_hour_v9_{base_key}"
+        minute_key = f"hm_daily_minute_v9_{base_key}"
+        period_key = f"hm_daily_ampm_v9_{base_key}"
 
         hour_placeholder = "HH"
         minute_placeholder = "MM"
@@ -270,11 +270,17 @@ def _install_daily_log_time_input_wrapper() -> None:
             else 0
         )
 
-        if label_visibility != "collapsed":
-            st.markdown(
-                f"<div class='hm-daily-time-label'>{label}</div>",
-                unsafe_allow_html=True,
-            )
+        st.markdown(
+            """
+            <div class='hm-daily-time-headings' aria-hidden='true'>
+              <span>Hour</span>
+              <span></span>
+              <span>Minutes</span>
+              <span>AM/PM</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         hour_col, colon_col, minute_col, period_col = st.columns(
             [0.92, 0.10, 0.92, 1.16],
@@ -358,13 +364,21 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           text-align:left!important;
           font-weight:950!important;
         }
-        .hm-daily-time-label{
+        .hm-daily-time-headings{
+          display:grid!important;
+          grid-template-columns:minmax(0,.92fr) .36rem minmax(0,.92fr) minmax(0,1.16fr)!important;
+          column-gap:.30rem!important;
+          align-items:end!important;
+          width:100%!important;
+          margin:0 0 .28rem 0!important;
           color:#334155!important;
-          font-size:.90rem!important;
-          line-height:1.25!important;
-          margin:0 0 .34rem 0!important;
+          font-size:.86rem!important;
+          line-height:1.2!important;
+          font-weight:650!important;
           white-space:nowrap!important;
-          overflow:visible!important;
+        }
+        .hm-daily-time-headings span:nth-child(2){
+          visibility:hidden!important;
         }
         html body #root [data-testid="stAppViewContainer"] div[data-testid="stTextInput"] [data-baseweb="input"]{
           border:1.2px solid #DCC690!important;
@@ -383,9 +397,9 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           color:#334155!important;
           min-height:2.62rem!important;
         }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v8_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v8_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v8_"] [data-baseweb="select"] > div{
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v9_"] [data-baseweb="select"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v9_"] [data-baseweb="select"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v9_"] [data-baseweb="select"] > div{
           display:flex!important;
           align-items:center!important;
           min-height:2.78rem!important;
@@ -395,13 +409,13 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           background:#FFFFFF!important;
           box-shadow:none!important;
           box-sizing:border-box!important;
-          padding:0 .62rem!important;
+          padding:0 .58rem!important;
           color:#475569!important;
           opacity:1!important;
         }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v8_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v8_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v8_"] [data-baseweb="select"] *{
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v9_"] [data-baseweb="select"] *,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v9_"] [data-baseweb="select"] *,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v9_"] [data-baseweb="select"] *{
           color:#475569!important;
           opacity:1!important;
           visibility:visible!important;
@@ -419,47 +433,51 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           font-weight:900!important;
         }
 
-        @media (max-width: 640px){
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v8_"]){
+        @media (max-width:640px){
+          .hm-daily-time-headings{
+            grid-template-columns:minmax(0,.86fr) .30rem minmax(0,.86fr) minmax(0,1.12fr)!important;
+            column-gap:.22rem!important;
+            font-size:.78rem!important;
+          }
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v9_"]){
             display:grid!important;
-            grid-template-columns:minmax(0,.88fr) .42rem minmax(0,.88fr) minmax(0,1.12fr)!important;
-            column-gap:.28rem!important;
+            grid-template-columns:minmax(0,.86fr) .30rem minmax(0,.86fr) minmax(0,1.12fr)!important;
+            column-gap:.22rem!important;
             row-gap:0!important;
             align-items:center!important;
             width:100%!important;
           }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v8_"]) > div[data-testid="column"]{
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v9_"]) > div[data-testid="column"]{
             width:auto!important;
             min-width:0!important;
             max-width:none!important;
             flex:none!important;
           }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v8_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_hour_v8_"]){grid-column:1!important;grid-row:1!important;}
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v8_"]) > div[data-testid="column"]:has(.hm-daily-time-colon){grid-column:2!important;grid-row:1!important;}
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v8_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_minute_v8_"]){grid-column:3!important;grid-row:1!important;}
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v8_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_ampm_v8_"]){grid-column:4!important;grid-row:1!important;}
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v8_"] [data-baseweb="select"] > div,
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v8_"] [data-baseweb="select"] > div,
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v8_"] [data-baseweb="select"] > div{
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v9_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_hour_v9_"]){grid-column:1!important;grid-row:1!important;}
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v9_"]) > div[data-testid="column"]:has(.hm-daily-time-colon){grid-column:2!important;grid-row:1!important;}
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v9_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_minute_v9_"]){grid-column:3!important;grid-row:1!important;}
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v9_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_ampm_v9_"]){grid-column:4!important;grid-row:1!important;}
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v9_"] [data-baseweb="select"] > div,
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v9_"] [data-baseweb="select"] > div,
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v9_"] [data-baseweb="select"] > div{
             min-width:0!important;
             width:100%!important;
-            padding:0 .42rem!important;
+            padding:0 .36rem!important;
           }
-          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v8_"] [data-baseweb="select"] *{
-            font-size:.76rem!important;
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v9_"] [data-baseweb="select"] *{
+            font-size:.74rem!important;
           }
 
-          /* Remove excessive mobile spacing when Food item and Portion stack. */
           div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]){
-            row-gap:.18rem!important;
-            margin-bottom:.20rem!important;
+            row-gap:0!important;
+            margin-bottom:.04rem!important;
           }
           div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]) > div[data-testid="column"]{
-            margin-bottom:.16rem!important;
+            margin-bottom:.04rem!important;
             padding-bottom:0!important;
           }
           div[data-testid="stHorizontalBlock"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]{
-            margin-bottom:.10rem!important;
+            margin-bottom:.04rem!important;
           }
         }
         </style>
