@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, time
 import inspect
 
 import streamlit as st
@@ -190,69 +190,127 @@ def _apply_member_feature_visibility(current_page: str) -> None:
 
 
 def _normalise_12_hour_value(value):
-    """Return a 12-hour display value and its AM/PM period."""
-    if value is None:
-        return None, "AM"
+    """Return a 12-hour HH:MM display value and AM/PM period."""
+    if value in (None, ""):
+        return None, None
+
+    if value == "now":
+        value = datetime.now().time()
+    elif isinstance(value, str):
+        parsed = None
+        for fmt in ("%H:%M", "%I:%M %p", "%I %p"):
+            try:
+                parsed = datetime.strptime(value.strip(), fmt).time()
+                break
+            except Exception:
+                pass
+        value = parsed
 
     hour = getattr(value, "hour", None)
-    if hour is None:
-        return value, "AM"
+    minute = getattr(value, "minute", None)
+    if hour is None or minute is None:
+        return None, None
 
     period = "PM" if hour >= 12 else "AM"
     display_hour = hour % 12 or 12
-    try:
-        return value.replace(hour=display_hour), period
-    except Exception:
-        return value, period
+    return f"{display_hour:02d}:{minute:02d}", period
 
 
 def _install_daily_log_time_input_wrapper() -> None:
-    """Add a separate AM/PM selector beside Daily Log time inputs."""
-    if getattr(st, "_hm_daily_log_time_input_installed", False):
+    """Render Daily Log times as a 12-hour selector plus AM/PM selector."""
+    wrapper_version = "daily-log-12h-select-v2"
+    if getattr(st, "_hm_daily_log_time_input_version", "") == wrapper_version:
         return
 
-    original_time_input = st.time_input
+    original_time_input = getattr(
+        st,
+        "_hm_daily_log_original_time_input",
+        st.time_input,
+    )
+    st._hm_daily_log_original_time_input = original_time_input
 
     def daily_log_time_input(label, *args, **kwargs):
         if _current_page_filename() != "18_Daily_Log.py":
             return original_time_input(label, *args, **kwargs)
 
         if args:
-            # The Daily Log currently uses keyword arguments. Preserve any future
-            # positional call unchanged rather than guessing its argument mapping.
+            # Current Daily Log calls use keyword arguments. Keep any future
+            # positional call on Streamlit's native widget rather than guessing.
             return original_time_input(label, *args, **kwargs)
 
         value = kwargs.pop("value", "now")
         key = kwargs.pop("key", None)
-        display_value, default_period = _normalise_12_hour_value(value)
-        period_key = f"{key}_ampm" if key else f"hm_daily_ampm_{abs(hash(label))}"
+        help_text = kwargs.pop("help", None)
+        disabled = bool(kwargs.pop("disabled", False))
+        label_visibility = kwargs.pop("label_visibility", "visible")
 
-        time_col, period_col = st.columns([5.0, 1.15], gap="small")
+        # Native time-input-only parameters do not apply to the two selectboxes.
+        kwargs.pop("step", None)
+        kwargs.pop("min_value", None)
+        kwargs.pop("max_value", None)
+        kwargs.pop("format", None)
+        kwargs.pop("width", None)
+
+        display_time, default_period = _normalise_12_hour_value(value)
+        base_key = str(key or f"hm_daily_time_{abs(hash(str(label)))}")
+        time_key = f"hm_daily_time12_v2_{base_key}"
+        period_key = f"hm_daily_ampm_v2_{base_key}"
+
+        time_placeholder = "Select time"
+        period_placeholder = "Select AM/PM"
+        time_options = [time_placeholder] + [
+            f"{hour:02d}:{minute:02d}"
+            for hour in range(1, 13)
+            for minute in range(60)
+        ]
+        period_options = [period_placeholder, "AM", "PM"]
+
+        selected_time_index = (
+            time_options.index(display_time)
+            if display_time in time_options
+            else 0
+        )
+        selected_period_index = (
+            period_options.index(default_period)
+            if default_period in period_options
+            else 0
+        )
+
+        time_col, period_col = st.columns([5.0, 1.35], gap="small")
         with time_col:
-            selected_time = original_time_input(
+            selected_time = st.selectbox(
                 label,
-                value=display_value,
-                key=key,
-                **kwargs,
+                time_options,
+                index=selected_time_index,
+                key=time_key,
+                help=help_text,
+                disabled=disabled,
+                label_visibility=label_visibility,
             )
         with period_col:
             period = st.selectbox(
                 "AM / PM",
-                ["AM", "PM"],
-                index=0 if default_period == "AM" else 1,
+                period_options,
+                index=selected_period_index,
                 key=period_key,
+                disabled=disabled,
                 label_visibility="hidden",
             )
 
-        if selected_time is None:
+        if selected_time == time_placeholder or period == period_placeholder:
             return None
 
-        hour_12 = selected_time.hour % 12
-        hour_24 = hour_12 + (12 if period == "PM" else 0)
-        return selected_time.replace(hour=hour_24)
+        hour_12, minute_value = [
+            int(part) for part in selected_time.split(":", 1)
+        ]
+        hour_24 = hour_12 % 12
+        if period == "PM":
+            hour_24 += 12
+        return time(hour=hour_24, minute=minute_value)
 
     st.time_input = daily_log_time_input
     st._hm_daily_log_time_input_installed = True
+    st._hm_daily_log_time_input_version = wrapper_version
 
 
 def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
@@ -323,12 +381,26 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           padding-bottom:.26rem!important;
         }
 
-        /* Keep the explicit AM/PM dropdown visually aligned with the time input. */
-        [class*="_ampm"] [data-baseweb="select"] > div{
+        /* The 12-hour time and AM/PM controls use the same visual treatment. */
+        [class*="st-key-hm_daily_time12_v2_"] [data-baseweb="select"] > div,
+        [class*="st-key-hm_daily_ampm_v2_"] [data-baseweb="select"] > div{
           min-height:2.70rem!important;
+          height:2.70rem!important;
           border:1.2px solid #DCC690!important;
           border-radius:13px!important;
           background:#FFFFFF!important;
+          box-shadow:none!important;
+          box-sizing:border-box!important;
+          padding-top:0!important;
+          padding-bottom:0!important;
+        }
+        [class*="st-key-hm_daily_time12_v2_"] [data-baseweb="select"],
+        [class*="st-key-hm_daily_ampm_v2_"] [data-baseweb="select"]{
+          width:100%!important;
+        }
+        [class*="st-key-hm_daily_time12_v2_"] [data-baseweb="select"] *,
+        [class*="st-key-hm_daily_ampm_v2_"] [data-baseweb="select"] *{
+          line-height:1.3!important;
         }
         </style>
         """,
@@ -338,7 +410,7 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
     import streamlit.components.v1 as components
 
     components.html(
-        """
+        r"""
         <script>
         (function(){
           let host;
@@ -350,8 +422,8 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
             return;
           }
 
-          if (host.__healthyMeDailyLogAutosaveB28) return;
-          host.__healthyMeDailyLogAutosaveB28 = true;
+          if (host.__healthyMeDailyLogAutosaveB29) return;
+          host.__healthyMeDailyLogAutosaveB29 = true;
 
           let timer = null;
           let suppressUntil = 0;
@@ -368,6 +440,8 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
 
           function isDailyLogEntryKey(key){
             if (!key) return false;
+            if (key.indexOf("hm_daily_time12_v2_") === 0) return true;
+            if (key.indexOf("hm_daily_ampm_v2_") === 0) return true;
             if (key.endsWith("_ampm")) return true;
             const mealField = /^\d{4}-\d{2}-\d{2}_(breakfast|lunch|evening_snack|dinner|bedtime|snacking_\d+)_(time|food_\d+|portion_\d+|mood|energy)$/;
             const dayField = /^hm_h9a4c_(water|fluid_(type|time|qty|notes)|poop_(rounds|time|feeling)|activity|notes)_\d{4}-\d{2}-\d{2}/;
