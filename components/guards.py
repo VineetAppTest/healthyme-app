@@ -25,8 +25,6 @@ def restore_any_login(required_role: str = ""):
     normalized_role = str(required_role or "").strip().lower()
 
     # A valid in-memory session should not force-refresh on every Streamlit rerun.
-    # Daily Log fields rerun frequently, and repeated refreshes made the page slow
-    # and could drop the member session during normal data entry.
     if st.session_state.get("logged_in") and st.session_state.get(
         "_hm_auth_role_resolved"
     ):
@@ -211,7 +209,7 @@ def _normalise_12_hour_value(value):
 
 def _install_daily_log_time_input_wrapper() -> None:
     """Render Daily Log times as HH : MM plus AM/PM."""
-    wrapper_version = "daily-log-hh-mm-select-v5-stable"
+    wrapper_version = "daily-log-hh-mm-select-v6-mobile-row"
     if getattr(st, "_hm_daily_log_time_input_version", "") == wrapper_version:
         return
 
@@ -243,9 +241,9 @@ def _install_daily_log_time_input_wrapper() -> None:
             value
         )
         base_key = str(key or f"hm_daily_time_{abs(hash(str(label)))}")
-        hour_key = f"hm_daily_hour_v5_{base_key}"
-        minute_key = f"hm_daily_minute_v5_{base_key}"
-        period_key = f"hm_daily_ampm_v5_{base_key}"
+        hour_key = f"hm_daily_hour_v6_{base_key}"
+        minute_key = f"hm_daily_minute_v6_{base_key}"
+        period_key = f"hm_daily_ampm_v6_{base_key}"
 
         hour_placeholder = "HH"
         minute_placeholder = "MM"
@@ -372,9 +370,9 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           background:transparent!important;
           min-height:2.62rem!important;
         }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v5_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v5_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v5_"] [data-baseweb="select"] > div{
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v6_"] [data-baseweb="select"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v6_"] [data-baseweb="select"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v6_"] [data-baseweb="select"] > div{
           display:flex!important;
           align-items:center!important;
           min-height:2.78rem!important;
@@ -388,9 +386,9 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           color:#475569!important;
           opacity:1!important;
         }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v5_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v5_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v5_"] [data-baseweb="select"] *{
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v6_"] [data-baseweb="select"] *,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v6_"] [data-baseweb="select"] *,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v6_"] [data-baseweb="select"] *{
           color:#475569!important;
           opacity:1!important;
           visibility:visible!important;
@@ -406,6 +404,44 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           color:#334155!important;
           font-size:1.15rem!important;
           font-weight:900!important;
+        }
+
+        /* Mobile correction: keep HH and MM side by side; place AM/PM below. */
+        @media (max-width: 640px){
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]){
+            display:grid!important;
+            grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+            column-gap:.38rem!important;
+            row-gap:.52rem!important;
+            align-items:end!important;
+            width:100%!important;
+          }
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]{
+            width:auto!important;
+            min-width:0!important;
+            max-width:none!important;
+            flex:none!important;
+          }
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_hour_v6_"]){
+            grid-column:1!important;
+            grid-row:1!important;
+          }
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]:has(.hm-daily-time-colon){
+            grid-column:2!important;
+            grid-row:1!important;
+          }
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_minute_v6_"]){
+            grid-column:3!important;
+            grid-row:1!important;
+          }
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_ampm_v6_"]){
+            grid-column:1 / -1!important;
+            grid-row:2!important;
+          }
+          .hm-daily-time-colon{
+            margin-top:1.72rem!important;
+            width:.70rem!important;
+          }
         }
         </style>
         """,
