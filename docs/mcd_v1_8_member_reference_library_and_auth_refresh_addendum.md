@@ -11,24 +11,28 @@
 
 ## Supabase session refresh requirement
 
-- Refreshing the browser must not intentionally log out an authenticated Supabase member.
-- An already valid Supabase session should be restored silently after an ordinary refresh.
-- The member should be asked to sign in again only when the Supabase session is genuinely missing, expired and non-refreshable, revoked, invalid, or unavailable after an application process restart.
-- A refresh must not clear member identity, role, or active member context merely because Streamlit reruns the page.
-- Any fallback redirect to Login must preserve the originally requested member destination after successful authentication.
+- Refreshing the browser must not intentionally route a member into an admin identity or admin dashboard.
+- An already-resolved Supabase member session must remain stable during normal Streamlit reruns and in-app navigation.
+- A missing session must return to the neutral Login page and preserve the originally requested member destination.
+- Member recovery must not automatically fall back to an existing Auth0 admin browser identity.
+- The member should be asked to sign in again only when the Supabase member session cannot be safely restored.
 
-## Streamlit Supabase persistence design
+## PR #128 persistence workaround — withdrawn
 
-- The browser stores only a random opaque session marker in a Secure, SameSite=Strict cookie.
-- Supabase access and refresh tokens are not stored in the URL, query parameters, browser local storage, or the browser cookie.
-- Supabase tokens remain in a process-local server-side registry and are keyed by the opaque browser marker.
-- On an ordinary browser refresh, the marker is read through Streamlit browser context, the Supabase session is refreshed or re-established server-side, and the HealthyMe role is reapplied.
-- The default server-side marker lifetime is 12 hours and can be adjusted through `SUPABASE_BROWSER_SESSION_TTL_SECONDS`.
-- HealthyMe role revalidation is throttled to avoid repeated heavy checks on every Streamlit rerun. The default interval is five minutes and can be adjusted through `SUPABASE_ROLE_REFRESH_INTERVAL_SECONDS`.
-- Secure logout removes the server-side record, expires the browser marker, and signs out the recoverable Supabase session.
-- A deployment restart clears the process-local token registry. In that case, the opaque marker is invalidated and the member must sign in again. A future multi-instance deployment should move this registry to a dedicated encrypted server-side session store.
+- The PR #128 process-local cookie registry is withdrawn from the active implementation.
+- The registry was cleared by an application/Render process restart while the browser marker remained, which produced an invalid recovery path.
+- Rendering the cookie component during protected-page recovery also introduced page flicker and an error risk.
+- The temporary hotfix removes that browser component and restores stable role-separated login handling.
+- The legacy opaque cookie marker is not trusted for authentication; it is detected only to prevent stale Auth0 admin auto-routing during member recovery.
+
+## Durable persistence direction
+
+- No-logout recovery across a full Render/application restart requires a persistent server-side session store rather than process memory.
+- The future design should use an opaque browser marker plus a dedicated encrypted server-side session record with expiry and revocation.
+- Supabase access and refresh tokens must never be placed in the URL, query parameters or browser local storage.
+- That persistent-session design requires a controlled data-contract/SQL sprint and security review before activation.
 
 ## Governance
 
 - Flutter remains the member UX baseline for future parity review.
-- This addendum must be folded into the next consolidated MCD revision.
+- The retained Reference Library decision and the corrected authentication direction must be folded into the next consolidated MCD revision.
