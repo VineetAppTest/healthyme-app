@@ -24,7 +24,6 @@ def restore_any_login(required_role: str = ""):
     """Restore only the authentication provider appropriate for the requested role."""
     normalized_role = str(required_role or "").strip().lower()
 
-    # A valid in-memory session should not force-refresh on every Streamlit rerun.
     if st.session_state.get("logged_in") and st.session_state.get(
         "_hm_auth_role_resolved"
     ):
@@ -37,7 +36,6 @@ def restore_any_login(required_role: str = ""):
         except Exception:
             restored = False
 
-    # A member route must never inherit an existing Auth0 admin browser identity.
     if not restored and normalized_role == "member":
         st.session_state["_hm_expected_login_role"] = "member"
         if browser_has_legacy_supabase_marker():
@@ -208,8 +206,8 @@ def _normalise_12_hour_value(value):
 
 
 def _install_daily_log_time_input_wrapper() -> None:
-    """Render Daily Log times as HH : MM plus AM/PM."""
-    wrapper_version = "daily-log-hh-mm-select-v6-mobile-row"
+    """Render Daily Log times as HH : MM plus AM/PM in one row."""
+    wrapper_version = "daily-log-hh-mm-select-v7-single-row"
     if getattr(st, "_hm_daily_log_time_input_version", "") == wrapper_version:
         return
 
@@ -241,9 +239,9 @@ def _install_daily_log_time_input_wrapper() -> None:
             value
         )
         base_key = str(key or f"hm_daily_time_{abs(hash(str(label)))}")
-        hour_key = f"hm_daily_hour_v6_{base_key}"
-        minute_key = f"hm_daily_minute_v6_{base_key}"
-        period_key = f"hm_daily_ampm_v6_{base_key}"
+        hour_key = f"hm_daily_hour_v7_{base_key}"
+        minute_key = f"hm_daily_minute_v7_{base_key}"
+        period_key = f"hm_daily_ampm_v7_{base_key}"
 
         hour_placeholder = "HH"
         minute_placeholder = "MM"
@@ -273,7 +271,7 @@ def _install_daily_log_time_input_wrapper() -> None:
         )
 
         hour_col, colon_col, minute_col, period_col = st.columns(
-            [1.0, 0.14, 1.0, 1.65],
+            [1.0, 0.12, 1.0, 1.55],
             gap="small",
         )
         with hour_col:
@@ -370,9 +368,9 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           background:transparent!important;
           min-height:2.62rem!important;
         }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v6_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v6_"] [data-baseweb="select"] > div,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v6_"] [data-baseweb="select"] > div{
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v7_"] [data-baseweb="select"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v7_"] [data-baseweb="select"] > div,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v7_"] [data-baseweb="select"] > div{
           display:flex!important;
           align-items:center!important;
           min-height:2.78rem!important;
@@ -382,13 +380,13 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           background:#FFFFFF!important;
           box-shadow:none!important;
           box-sizing:border-box!important;
-          padding:0 .82rem!important;
+          padding:0 .72rem!important;
           color:#475569!important;
           opacity:1!important;
         }
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v6_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v6_"] [data-baseweb="select"] *,
-        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v6_"] [data-baseweb="select"] *{
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v7_"] [data-baseweb="select"] *,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v7_"] [data-baseweb="select"] *,
+        html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v7_"] [data-baseweb="select"] *{
           color:#475569!important;
           opacity:1!important;
           visibility:visible!important;
@@ -406,41 +404,49 @@ def _apply_daily_log_ui_and_autosave(current_page: str) -> None:
           font-weight:900!important;
         }
 
-        /* Mobile correction: keep HH and MM side by side; place AM/PM below. */
+        /* Keep HH : MM and AM/PM in one row on mobile. */
         @media (max-width: 640px){
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]){
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v7_"]){
             display:grid!important;
-            grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
-            column-gap:.38rem!important;
-            row-gap:.52rem!important;
+            grid-template-columns:minmax(0,.8fr) auto minmax(0,.8fr) minmax(0,1.35fr)!important;
+            column-gap:.32rem!important;
+            row-gap:0!important;
             align-items:end!important;
             width:100%!important;
           }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]{
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v7_"]) > div[data-testid="column"]{
             width:auto!important;
             min-width:0!important;
             max-width:none!important;
             flex:none!important;
           }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_hour_v6_"]){
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v7_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_hour_v7_"]){
             grid-column:1!important;
             grid-row:1!important;
           }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]:has(.hm-daily-time-colon){
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v7_"]) > div[data-testid="column"]:has(.hm-daily-time-colon){
             grid-column:2!important;
             grid-row:1!important;
           }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_minute_v6_"]){
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v7_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_minute_v7_"]){
             grid-column:3!important;
             grid-row:1!important;
           }
-          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v6_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_ampm_v6_"]){
-            grid-column:1 / -1!important;
-            grid-row:2!important;
+          div[data-testid="stHorizontalBlock"]:has([class*="st-key-hm_daily_hour_v7_"]) > div[data-testid="column"]:has([class*="st-key-hm_daily_ampm_v7_"]){
+            grid-column:4!important;
+            grid-row:1!important;
           }
           .hm-daily-time-colon{
             margin-top:1.72rem!important;
-            width:.70rem!important;
+            width:.55rem!important;
+          }
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_hour_v7_"] [data-baseweb="select"] > div,
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_minute_v7_"] [data-baseweb="select"] > div,
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v7_"] [data-baseweb="select"] > div{
+            padding:0 .48rem!important;
+          }
+          html body #root [data-testid="stAppViewContainer"] [class*="st-key-hm_daily_ampm_v7_"] [data-baseweb="select"] *{
+            font-size:.82rem!important;
           }
         }
         </style>
