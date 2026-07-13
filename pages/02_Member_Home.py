@@ -68,7 +68,7 @@ def task_title_v96_2(task_key):
     return {
         "nsp1": "NSP Page 1",
         "nsp2": "NSP Page 2",
-        "body_mind": "Body Mind Connection",
+        "body_mind": "Body Mind",
     }.get(str(task_key), str(task_key))
 
 
@@ -287,7 +287,7 @@ def _render_task_progress(current_instance, wf, requested_pages):
     with task_cols[2]:
         if "body_mind" in visible_tasks:
             body_done = task_status_done_v96_2(current_instance, wf, "body_mind")
-            label = "Body Mind Completed" if body_done else "Body Mind Connection"
+            label = "Body Mind Completed" if body_done else "Body Mind"
             _render_task_button(label, "hm_task_body_mind", "pages/19_Body_Mind_Connection.py", disabled=body_done)
 
 
@@ -349,7 +349,7 @@ with left:
                 _render_task_button("Start NSP Page 2", "hm_home_nsp2", "pages/05_NSP_Page2.py", disabled=("nsp2" not in requested_pages))
             with action_cols[2]:
                 if should_show_body_mind_next_step_v96_6(wf, current_instance):
-                    _render_task_button("Body Mind Connection", "hm_home_body_mind", "pages/19_Body_Mind_Connection.py")
+                    _render_task_button("Body Mind", "hm_home_body_mind", "pages/19_Body_Mind_Connection.py")
         st.markdown("<div class='hm-home-soft-separator'></div>", unsafe_allow_html=True)
         if st.button("Submit / Status — Send completed tasks for admin review", use_container_width=True):
             st.switch_page("pages/06_Submit_Status.py")
