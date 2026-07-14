@@ -31,19 +31,25 @@ Member-write fields:
 
 ## Streamlit member flow
 
-Route: `/Member_Exercise`
+Routes:
+
+- `/Daily_Log`
+- `/Member_Exercise`
 
 1. Resolve the logged-in member.
-2. Load the active recommendation profile.
-3. Calculate the current Day 1–7 slice using the profile start date.
-4. Filter active items to `item_type = exercise`.
-5. Render one read-only prescription card per exercise.
-6. Allow only status, completion time and member notes to be edited.
-7. Upsert progress against the immutable profile/day/item identity.
+2. Food Journal captures meals, hydration, bowel movement and member notes only.
+3. Physical Activity is no longer displayed, edited, validated or saved through Daily Log.
+4. Exercise Journal provides a direct action to open `/Member_Exercise`.
+5. Load the active recommendation profile.
+6. Calculate the current Day 1–7 slice using the profile start date.
+7. Filter active items to `item_type = exercise`.
+8. Render one read-only prescription card per exercise.
+9. Allow only status, completion time and member notes to be edited.
+10. Upsert progress against the immutable profile/day/item identity.
 
 ## Admin reporting flow
 
-The Daily Food Journal report no longer reads or exports `physical_activity`.
+The Daily Food and Exercise report no longer reads or exports `physical_activity`.
 
 The report now displays:
 
@@ -90,11 +96,14 @@ MemberExerciseLog
 - Historical completion remains tied to the profile active on the logged date.
 - Food, hydration, bowel movement and nutritionist guidance contracts remain separate.
 - No generic physical-activity free-text field should be reintroduced in Streamlit or Flutter.
+- Historical `physical_activity` values are not deleted by this sprint.
 
 ## Deployment order
 
 1. Run `sql/h9a11_member_exercise_logs.sql` in Supabase SQL Editor.
 2. Deploy the Streamlit build.
-3. Open `/Member_Exercise` with a member who has an active profile containing exercise rows.
-4. Save one completion status and confirm it reloads.
-5. Open `/Admin_Daily_Log_Report` and confirm the Exercise section reflects the recommendation/log data and no Physical Activity field is displayed.
+3. Open Daily Log and confirm Physical Activity is absent.
+4. Open Exercise Journal and select `Open My Exercise`.
+5. Confirm `/Member_Exercise` loads for a member with an active profile containing exercise rows.
+6. Save one completion status and confirm it reloads.
+7. Open `/Admin_Daily_Log_Report` and confirm the Exercise section reflects recommendation/log data and no Physical Activity field is displayed.
