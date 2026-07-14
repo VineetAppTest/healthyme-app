@@ -1,0 +1,75 @@
+name: H9A12 bootstrap feature branch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/h9a12-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: profile-builder-module-saves
+          fetch-depth: 0
+
+      - name: Extract and run feature integration
+        shell: bash
+        run: |
+          awk '
+            /python - <<'"'"'PY'"'"'/ && !started {started=1; capture=1; next}
+            capture && /^          PY$/ {capture=0; exit}
+            capture {sub(/^          /, ""); print}
+          ' .github/workflows/h9a12-profile-builder-module-saves.yml > /tmp/h9a12_apply.py
+          test -s /tmp/h9a12_apply.py
+          python /tmp/h9a12_apply.py
+
+      - name: Validate feature integration
+        shell: bash
+        run: |
+          python -m py_compile \
+            components/recommendation_profile_store.py \
+            pages/38_Admin_Recommendation_Profile_Builder.py
+          python - <<'PY'
+          from pathlib import Path
+          page = Path('pages/38_Admin_Recommendation_Profile_Builder.py').read_text(encoding='utf-8')
+          store = Path('components/recommendation_profile_store.py').read_text(encoding='utf-8')
+          checks = {
+              'Setup shell save': 'save_profile_shell(setup_payload)' in page,
+              'Meals individual save': 'render_module_save("meal"' in page,
+              'Exercise individual save': 'render_module_save("exercise"' in page,
+              'Supplements individual save': 'render_module_save("supplement"' in page,
+              'Member-filtered profiles': 'list_draft_profiles_for_member(selected_member_id)' in page,
+              'Module scoped delete': '.eq("item_type", item_type)' in store,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed:
+              raise SystemExit('Validation failed: ' + ', '.join(failed))
+          print('H9A.12 structural validation passed')
+          PY
+
+      - name: Commit feature branch
+        shell: bash
+        run: |
+          rm .github/workflows/h9a12-profile-builder-module-saves.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/recommendation_profile_store.py pages/38_Admin_Recommendation_Profile_Builder.py docs/h9a12_profile_builder_module_save_workflow.md .github/workflows/h9a12-profile-builder-module-saves.yml
+          git commit -m "Implement Profile Builder module-specific saves [h9a12-integrated]"
+          git push origin HEAD:profile-builder-module-saves
+
+      - name: Remove bootstrap from main
+        shell: bash
+        run: |
+          git fetch origin main
+          git checkout main
+          rm .github/workflows/h9a12-bootstrap.yml
+          git add .github/workflows/h9a12-bootstrap.yml
+          git commit -m "Remove H9A.12 bootstrap workflow"
+          git push origin HEAD:main
