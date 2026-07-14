@@ -1,5 +1,9 @@
+import copy
+import uuid
+
 import streamlit as st
 
+import components.pbm_core as _pbm_core
 import components.pbm_rows as _pbm_rows
 from components.active_profile_preview_contract import render_active_profile_preview_contract
 from components.pbm_core import (
@@ -12,7 +16,50 @@ def _epoch_widget_key(row, field):
     return f"pbm_row_{st.session_state.get('pbm_epoch', 0)}_{row['ui_id']}_{field}"
 
 
+def _meaningful_row(row):
+    kind = row.get("item_type")
+    if kind == "meal":
+        fields = ("reference_label", "portion", "instruction")
+    elif kind == "exercise":
+        fields = ("reference_label", "instruction", "intensity")
+    else:
+        fields = ("reference_label", "instruction", "dosage_frequency", "dosage")
+    return any(str(row.get(field) or "").strip() for field in fields)
+
+
+def _remove_row(ui_id):
+    st.session_state["pbm_items"] = [
+        row for row in st.session_state["pbm_items"] if row.get("ui_id") != ui_id
+    ]
+
+
+def _copy_day(kind, source_day, target_days):
+    source_rows = [
+        row for row in st.session_state["pbm_items"]
+        if row.get("item_type") == kind
+        and int(row.get("day_number") or 0) == source_day
+        and _meaningful_row(row)
+    ]
+    st.session_state["pbm_items"] = [
+        row for row in st.session_state["pbm_items"]
+        if not (
+            row.get("item_type") == kind
+            and int(row.get("day_number") or 0) in target_days
+        )
+    ]
+    for day in target_days:
+        for source in source_rows:
+            cloned = copy.deepcopy(source)
+            cloned["ui_id"] = uuid.uuid4().hex
+            cloned["day_number"] = day
+            st.session_state["pbm_items"].append(cloned)
+
+
+_pbm_core.row_has_content = _meaningful_row
+_pbm_rows.row_has_content = _meaningful_row
 _pbm_rows.widget_key = _epoch_widget_key
+_pbm_rows.remove_row = _remove_row
+_pbm_rows.copy_day = _copy_day
 
 from components.pbm_modules import render_module, render_preview
 from components.pbm_setup import render_setup
