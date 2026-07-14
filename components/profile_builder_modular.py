@@ -1,10 +1,19 @@
 import streamlit as st
 
+import components.pbm_rows as _pbm_rows
 from components.active_profile_preview_contract import render_active_profile_preview_contract
 from components.pbm_core import (
     APP_BUILD_LABEL, APP_BUILD_VERSION, NAV_LABELS, SECTIONS,
     ensure_state, safe, safe_key,
 )
+
+
+def _epoch_widget_key(row, field):
+    return f"pbm_row_{st.session_state.get('pbm_epoch', 0)}_{row['ui_id']}_{field}"
+
+
+_pbm_rows.widget_key = _epoch_widget_key
+
 from components.pbm_modules import render_module, render_preview
 from components.pbm_setup import render_setup
 from components.profile_publish_control import render_profile_publish_control
