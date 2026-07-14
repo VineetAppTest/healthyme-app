@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import datetime as dt
+import html
 import os
 from typing import Any, Dict, List
 
 import streamlit as st
 
+from components.flash import set_system_message
 from components.member_recommendation_display import (
     build_member_recommendation_contract,
     load_active_recommendation_profile,
@@ -13,10 +15,28 @@ from components.member_recommendation_display import (
 
 LOG_TABLE = "hm_member_exercise_logs"
 SECRET_SECTIONS = ("auth", "auth0", "authentication", "healthyme", "supabase")
+BUILD_NOTE = "v102.5B · Inline Member Exercise Journal"
+STATUS_OPTIONS = ["Not Started", "In Progress", "Completed", "Skipped"]
 
 
 def _clean(value: object, default: str = "") -> str:
     return default if value is None else str(value).strip()
+
+
+def _esc(value: object) -> str:
+    return html.escape(_clean(value))
+
+
+def _parse_time(value: object):
+    raw = _clean(value)
+    if not raw:
+        return None
+    for fmt in ("%H:%M:%S", "%H:%M", "%I:%M %p"):
+        try:
+            return dt.datetime.strptime(raw, fmt).time()
+        except Exception:
+            pass
+    return None
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -60,11 +80,26 @@ def _rows(response) -> List[dict]:
 def load_member_exercise_contract(member_id: str, email: str = "") -> Dict[str, Any]:
     ok, profile, items, message = load_active_recommendation_profile(member_id, email)
     if not ok or not profile:
-        return {"ok": ok, "message": message, "profile": {}, "today_day": 1, "exercises": []}
+        return {
+            "ok": ok,
+            "message": message,
+            "profile": {},
+            "today_day": 1,
+            "exercises": [],
+        }
     contract = build_member_recommendation_contract(profile, items)
     today_day = int(contract.get("today_day") or 1)
-    day = next((row for row in contract.get("days", []) if int(row.get("day_number") or 0) == today_day), {})
-    exercises = [item for item in day.get("items", []) if item.get("type") == "exercise"]
+    day = next(
+        (
+            row
+            for row in contract.get("days", [])
+            if int(row.get("day_number") or 0) == today_day
+        ),
+        {},
+    )
+    exercises = [
+        item for item in day.get("items", []) if item.get("type") == "exercise"
+    ]
     return {
         "ok": True,
         "message": message,
@@ -92,8 +127,19 @@ def list_member_exercise_logs(member_id: str, log_date: str) -> List[dict]:
 
 
 def save_member_exercise_log(payload: Dict[str, Any]) -> None:
-    required = ("member_id", "log_date", "profile_id", "day_number", "exercise_name", "item_order")
-    missing = [field for field in required if not _clean(payload.get(field)) and payload.get(field) != 0]
+    required = (
+        "member_id",
+        "log_date",
+        "profile_id",
+        "day_number",
+        "exercise_name",
+        "item_order",
+    )
+    missing = [
+        field
+        for field in required
+        if not _clean(payload.get(field)) and payload.get(field) != 0
+    ]
     if missing:
         raise ValueError(f"Missing exercise log fields: {', '.join(missing)}")
     row = dict(payload)
@@ -110,4 +156,221 @@ def save_member_exercise_log(payload: Dict[str, Any]) -> None:
 
 
 def exercise_log_map(member_id: str, log_date: str) -> Dict[int, dict]:
-    return {int(row.get("item_order") or 0): row for row in list_member_exercise_logs(member_id, log_date)}
+    return {
+        int(row.get("item_order") or 0): row
+        for row in list_member_exercise_logs(member_id, log_date)
+    }
+
+
+def _inject_exercise_styles() -> None:
+    st.markdown(
+        """
+<style>
+.hm-exercise-card{
+  border:1px solid #E3D4BA;
+  background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);
+  border-radius:18px;
+  padding:.9rem 1rem;
+  margin:.65rem 0;
+  box-shadow:0 8px 20px rgba(15,23,42,.045);
+}
+.hm-exercise-title{
+  color:#064E3B;
+  font-size:1.05rem;
+  font-weight:950;
+  margin-bottom:.35rem;
+}
+.hm-exercise-meta{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.45rem;
+  margin:.35rem 0 .65rem 0;
+}
+.hm-exercise-meta div{
+  border:1px solid #E8DDC7;
+  border-radius:12px;
+  background:#FFFFFF;
+  padding:.48rem .58rem;
+  color:#334155;
+  font-size:.82rem;
+}
+.hm-exercise-meta b{
+  display:block;
+  color:#064E3B;
+  font-size:.73rem;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+  margin-bottom:.12rem;
+}
+.hm-exercise-copy{
+  color:#334155;
+  font-size:.88rem;
+  line-height:1.45;
+  margin:.35rem 0;
+}
+.hm-exercise-progress{
+  border:1px solid #D8C18B;
+  background:#FFF7E6;
+  border-radius:14px;
+  padding:.7rem .8rem;
+  margin:.5rem 0 1rem 0;
+  color:#7A5A16;
+  font-weight:850;
+}
+@media(max-width:760px){
+  .hm-exercise-meta{grid-template-columns:1fr;}
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+def render_member_exercise_journal(
+    member_id: str,
+    member_email: str = "",
+    *,
+    heading: str = "Exercise Journal",
+    key_prefix: str = "hm_member_exercise",
+    show_build_note: bool = True,
+) -> None:
+    """Render the complete member exercise experience in-place.
+
+    This renderer is shared by the Daily Log Exercise Journal tab and the
+    standalone My Exercise route so both surfaces stay functionally identical.
+    """
+
+    _inject_exercise_styles()
+    if heading:
+        st.markdown(f"### {_esc(heading)}")
+
+    contract = load_member_exercise_contract(member_id, member_email)
+    if not contract.get("ok"):
+        st.error(
+            contract.get("message")
+            or "Exercise recommendations could not be loaded."
+        )
+        return
+
+    exercises = contract.get("exercises", [])
+    profile = contract.get("profile", {})
+    log_date = dt.date.today().isoformat()
+    existing_logs = exercise_log_map(member_id, log_date)
+    completed_count = sum(
+        1 for row in existing_logs.values() if row.get("status") == "Completed"
+    )
+
+    if show_build_note:
+        st.caption(f"{BUILD_NOTE} · {contract.get('day_label', '')}")
+
+    st.markdown(
+        (
+            "<div class='hm-exercise-progress'>"
+            f"Today's progress: {completed_count} of {len(exercises)} "
+            "exercise(s) completed"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+    if not exercises:
+        st.info(
+            "No exercise has been assigned for today in the active "
+            "recommendation profile."
+        )
+        return
+
+    profile_id = _clean(profile.get("id")) or "profile"
+    for index, exercise in enumerate(exercises, start=1):
+        item_order = int(exercise.get("item_order") or index)
+        prior = existing_logs.get(item_order, {})
+        name = _clean(exercise.get("name")) or f"Exercise {index}"
+        widget_key = (
+            f"{key_prefix}_{profile_id}_{contract.get('today_day')}_{item_order}"
+        )
+
+        st.markdown(
+            f"""
+            <div class='hm-exercise-card'>
+              <div class='hm-exercise-title'>{_esc(name)}</div>
+              <div class='hm-exercise-meta'>
+                <div><b>Time of Day</b>{_esc(exercise.get('timing_or_slot') or '-')}</div>
+                <div><b>Difficulty</b>{_esc(exercise.get('difficulty') or '-')}</div>
+                <div><b>Duration / Repetitions</b>{_esc(exercise.get('duration_or_reps') or '-')}</div>
+                <div><b>Equipment</b>{_esc(exercise.get('equipment') or '-')}</div>
+                <div><b>Category / Source</b>{_esc(exercise.get('source_context') or '-')}</div>
+                <div><b>Image Reference</b>{_esc(exercise.get('image_reference') or '-')}</div>
+              </div>
+              <div class='hm-exercise-copy'><b>Benefits:</b> {_esc(exercise.get('benefits') or '-')}</div>
+              <div class='hm-exercise-copy'><b>Instructions:</b> {_esc(exercise.get('instruction') or '-')}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        status_col, time_col = st.columns(2)
+        with status_col:
+            prior_status = (
+                prior.get("status")
+                if prior.get("status") in STATUS_OPTIONS
+                else "Not Started"
+            )
+            status = st.selectbox(
+                "Status",
+                STATUS_OPTIONS,
+                index=STATUS_OPTIONS.index(prior_status),
+                key=f"{widget_key}_status",
+            )
+        with time_col:
+            completion_time = st.time_input(
+                "Completion time",
+                value=_parse_time(prior.get("completion_time")),
+                key=f"{widget_key}_time",
+            )
+
+        notes = st.text_area(
+            "Member notes",
+            value=_clean(prior.get("member_notes")),
+            placeholder=(
+                "Example: Completed comfortably / slight discomfort / "
+                "reduced pace."
+            ),
+            key=f"{widget_key}_notes",
+            height=88,
+        )
+
+        if st.button(
+            "Save Progress",
+            key=f"{widget_key}_save",
+            use_container_width=True,
+        ):
+            try:
+                save_member_exercise_log(
+                    {
+                        "member_id": member_id,
+                        "log_date": log_date,
+                        "profile_id": profile.get("id"),
+                        "profile_name": profile.get("profile_name"),
+                        "day_number": contract.get("today_day"),
+                        "item_order": item_order,
+                        "exercise_name": name,
+                        "scheduled_time": exercise.get("timing_or_slot"),
+                        "difficulty": exercise.get("difficulty"),
+                        "duration_or_reps": exercise.get("duration_or_reps"),
+                        "equipment": exercise.get("equipment"),
+                        "benefits": exercise.get("benefits"),
+                        "instruction": exercise.get("instruction"),
+                        "image_reference": exercise.get("image_reference"),
+                        "status": status,
+                        "completion_time": (
+                            completion_time.strftime("%H:%M")
+                            if completion_time
+                            else None
+                        ),
+                        "member_notes": notes.strip(),
+                    }
+                )
+                set_system_message(f"Progress saved for {name}.", "success")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Exercise progress could not be saved: {exc}")

@@ -31,21 +31,20 @@ Member-write fields:
 
 ## Streamlit member flow
 
-Routes:
+Primary surface: `Daily Log → Exercise Journal`.
 
-- `/Daily_Log`
-- `/Member_Exercise`
+The Exercise Journal tab renders the full prescribed-exercise experience directly. It must not require a second button or redirect before showing exercise details.
+
+The standalone route `/Member_Exercise` remains available for direct-page compatibility and uses the same shared renderer and data contract.
 
 1. Resolve the logged-in member.
-2. Food Journal captures meals, hydration, bowel movement and member notes only.
-3. Physical Activity is no longer displayed, edited, validated or saved through Daily Log.
-4. Exercise Journal provides a direct action to open `/Member_Exercise`.
-5. Load the active recommendation profile.
-6. Calculate the current Day 1–7 slice using the profile start date.
-7. Filter active items to `item_type = exercise`.
-8. Render one read-only prescription card per exercise.
-9. Allow only status, completion time and member notes to be edited.
-10. Upsert progress against the immutable profile/day/item identity.
+2. Load the active recommendation profile.
+3. Calculate the current Day 1–7 slice using the profile start date.
+4. Filter active items to `item_type = exercise`.
+5. Render one read-only prescription card per exercise directly inside Exercise Journal.
+6. Allow only status, completion time and member notes to be edited.
+7. Upsert progress against the immutable profile/day/item identity.
+8. Reuse the same renderer on the standalone My Exercise route so the two surfaces cannot diverge.
 
 ## Admin reporting flow
 
@@ -62,6 +61,8 @@ Legacy `physical_activity` data may remain in historical database payloads for a
 ## Flutter-ready contract
 
 Flutter must consume the same active recommendation contract and write to the same exercise-log table. No Flutter-only exercise field should be introduced.
+
+The Flutter Exercise Journal should open directly to the exercise details and progress controls, matching the Streamlit tab. It should not introduce an intermediate Open My Exercise screen.
 
 Recommended Flutter model:
 
@@ -97,13 +98,14 @@ MemberExerciseLog
 - Food, hydration, bowel movement and nutritionist guidance contracts remain separate.
 - No generic physical-activity free-text field should be reintroduced in Streamlit or Flutter.
 - Historical `physical_activity` values are not deleted by this sprint.
+- Daily Log Exercise Journal and the direct My Exercise route must use the same shared renderer.
 
 ## Deployment order
 
-1. Run `sql/h9a11_member_exercise_logs.sql` in Supabase SQL Editor.
+1. Confirm `sql/h9a11_member_exercise_logs.sql` has been run in Supabase SQL Editor.
 2. Deploy the Streamlit build.
-3. Open Daily Log and confirm Physical Activity is absent.
-4. Open Exercise Journal and select `Open My Exercise`.
-5. Confirm `/Member_Exercise` loads for a member with an active profile containing exercise rows.
-6. Save one completion status and confirm it reloads.
+3. Open `Daily Log → Exercise Journal` with a member who has an active profile containing exercise rows.
+4. Confirm exercise details appear immediately without a redirect button.
+5. Save one completion status and confirm it reloads.
+6. Open `/Member_Exercise` directly and confirm the same details and saved progress appear.
 7. Open `/Admin_Daily_Log_Report` and confirm the Exercise section reflects recommendation/log data and no Physical Activity field is displayed.

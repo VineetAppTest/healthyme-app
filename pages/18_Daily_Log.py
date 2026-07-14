@@ -5,6 +5,7 @@ import re
 import streamlit as st
 
 from components.guards import require_member
+from components.member_exercise_journal import render_member_exercise_journal
 from components.ui_common import (
     inject_global_styles,
     apply_luxe_theme,
@@ -646,18 +647,18 @@ def _render_snacking_toggle(existing_snacks, date_key):
     return snacking_payload
 
 
-def _render_exercise_journal_placeholder():
-    st.markdown("### Exercise Journal")
-    st.markdown(
-        """
-        <div class='hm-exercise-placeholder'>
-          View today's prescribed exercises and record status, completion time and member notes.
-        </div>
-        """,
-        unsafe_allow_html=True,
+def _render_exercise_journal(user_id):
+    member_email = (
+        st.session_state.get("user_email")
+        or st.session_state.get("email")
+        or ""
     )
-    if st.button("Open My Exercise", type="primary", use_container_width=True, key="hm_open_member_exercise"):
-        st.switch_page("pages/41_Member_Exercise.py")
+    render_member_exercise_journal(
+        user_id,
+        member_email,
+        heading="Exercise Journal",
+        key_prefix="hm_daily_log_exercise",
+    )
 
 
 def _render_saved_days(user_id):
@@ -1055,7 +1056,7 @@ inject_global_styles()
 apply_luxe_theme()
 require_member()
 utility_logout_bar()
-topbar("Daily Log", "Capture food updates and open your prescribed exercise journal.", "Member tracker")
+topbar("Daily Log", "Capture food and exercise updates for one day.", "Member tracker")
 _render_css()
 render_system_message()
 
@@ -1064,7 +1065,7 @@ food_tab, exercise_tab = st.tabs(["Food Journal", "Exercise Journal"])
 with food_tab:
     _render_food_journal(user_id)
 with exercise_tab:
-    _render_exercise_journal_placeholder()
+    _render_exercise_journal(user_id)
 
 render_page_nav(
     "Daily Log",
