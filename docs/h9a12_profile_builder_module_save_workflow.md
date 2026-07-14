@@ -41,3 +41,7 @@ Preview, Publish and Active retain their existing behavior. Preview aggregates t
 - Only Draft profiles are editable through module pages.
 - Existing profile and item tables remain the source of truth; no SQL schema change is required.
 - Authentication, navigation, publishing and active-profile logic remain unchanged.
+
+## Validation
+
+The implementation must pass Python syntax compilation and structural checks confirming that each module saves only its own item type.
