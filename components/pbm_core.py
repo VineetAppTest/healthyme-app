@@ -128,13 +128,16 @@ def clear_widgets(*prefixes: str) -> None:
         if any(str(key).startswith(prefix) for prefix in prefixes): st.session_state.pop(key, None)
 
 def ensure_state() -> None:
-    st.session_state.setdefault("pbm_section", "Profile Setup"); st.session_state.setdefault("pbm_profile", copy.deepcopy(PROFILE_DEFAULTS)); st.session_state.setdefault("pbm_items", []); st.session_state.setdefault("pbm_loaded_profile_id", ""); st.session_state.setdefault("pbm_loaded_member_id", "")
+    st.session_state.setdefault("pbm_section", "Profile Setup"); st.session_state.setdefault("pbm_profile", copy.deepcopy(PROFILE_DEFAULTS)); st.session_state.setdefault("pbm_items", []); st.session_state.setdefault("pbm_loaded_profile_id", ""); st.session_state.setdefault("pbm_loaded_member_id", ""); st.session_state.setdefault("pbm_epoch", 0)
+
+def bump_epoch() -> None:
+    st.session_state["pbm_epoch"] = int(st.session_state.get("pbm_epoch", 0)) + 1
 
 def reset_profile() -> None:
-    clear_widgets("pbm_profile_", "pbm_row_", "pbm_module_"); st.session_state["pbm_profile"] = copy.deepcopy(PROFILE_DEFAULTS); st.session_state["pbm_items"] = []; st.session_state["pbm_loaded_profile_id"] = ""; st.session_state["pbm_loaded_member_id"] = ""
+    st.session_state["pbm_profile"] = copy.deepcopy(PROFILE_DEFAULTS); st.session_state["pbm_items"] = []; st.session_state["pbm_loaded_profile_id"] = ""; st.session_state["pbm_loaded_member_id"] = ""; bump_epoch()
 
 def apply_loaded(profile: Dict[str, Any], items: List[Dict[str, Any]], shell_only: bool = False) -> None:
-    clear_widgets("pbm_profile_", "pbm_row_"); st.session_state["pbm_profile"] = profile_from_db(profile); st.session_state["pbm_items"] = [] if shell_only else [normalise_item(row) for row in items]; st.session_state["pbm_loaded_profile_id"] = clean(profile.get("id")); st.session_state["pbm_loaded_member_id"] = clean(profile.get("assigned_member_id"))
+    st.session_state["pbm_profile"] = profile_from_db(profile); st.session_state["pbm_items"] = [] if shell_only else [normalise_item(row) for row in items]; st.session_state["pbm_loaded_profile_id"] = clean(profile.get("id")); st.session_state["pbm_loaded_member_id"] = clean(profile.get("assigned_member_id")); bump_epoch()
 
 def load_selected(profile_id: str, shell_only: bool = False) -> Tuple[bool, str]:
     ok, profile, items, message = load_profile(profile_id)
