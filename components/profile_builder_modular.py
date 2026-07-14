@@ -14,8 +14,8 @@ from components.pbm_core import (
     safe_key,
 )
 
-APP_BUILD_VERSION = "v100.40"
-APP_BUILD_LABEL = "Source Detail Layout Alignment"
+APP_BUILD_VERSION = "v100.41"
+APP_BUILD_LABEL = "Member-Filtered Setup Editing"
 
 
 def _epoch_widget_key(row, field):
