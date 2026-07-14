@@ -17,6 +17,7 @@ from components.db import (
     queue_daily_log_reminder,
 )
 from components.guards import require_admin
+from components.member_exercise_journal import list_member_exercise_logs, load_member_exercise_contract
 from components.nutritionist_notes_h9a4 import create_structured_nutritionist_note, notes_for_journal_date
 from components.ui_common import (
     apply_luxe_theme,
@@ -33,7 +34,7 @@ from components.ui_common import (
 
 apply_current_build(ui_common)
 
-st.set_page_config(page_title="Daily Food Journal Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Daily Food and Exercise Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles()
 apply_luxe_theme()
 require_admin()
@@ -44,8 +45,8 @@ st.markdown(
 <style>
 .block-container{padding-top:0!important;}
 .utility-bar{margin-top:0!important;}
-.hm-dfjr-no-data-box{background:#E9EEF5;border-radius:10px;padding:16px 18px;color:#334155;margin:.2rem 0 .9rem 0;}
-.hm-full-day-black-row{background:#111827;border-radius:8px;height:12px;margin:.75rem 0 .85rem 0;width:100%;}
+.hm-report-empty{background:#E9EEF5;border-radius:10px;padding:16px 18px;color:#334155;margin:.2rem 0 .9rem 0;}
+.hm-report-divider{background:#111827;border-radius:8px;height:12px;margin:.75rem 0 .85rem 0;width:100%;}
 .hm-guidance-heading{font-size:1.15rem;font-weight:900;color:#064E3B;margin:.35rem 0 .75rem 0;}
 </style>
 """,
@@ -58,29 +59,10 @@ def _safe_members():
     members = [m for m in people if str(m.get("role", "member") or "member").strip().lower() == "member"]
     if members:
         return members
-    return [
-        m
-        for m in people
-        if str(m.get("id", "")).strip().lower() not in {"admin", "admin001"}
-        and str(m.get("email", "")).strip().lower() != "admin@healthyme.local"
-    ]
-
-
-def _meal_label(key, meal):
-    fallback = str(key or "meal").replace("_", " ").title()
-    if isinstance(meal, dict):
-        label = str(meal.get("label", "") or "").strip()
-        return label or fallback
-    return fallback
+    return [m for m in people if str(m.get("id", "")).lower() not in {"admin", "admin001"}]
 
 
 def _meal_dict(meal):
-    """Normalise older/newer meal payload shapes before report rendering.
-
-    Older Daily Log rows may store a meal as a plain string/list instead of a
-    dict. The report should keep rendering instead of calling `.get()` on a
-    non-dict value and falling into Streamlit's generic error page.
-    """
     if isinstance(meal, dict):
         return meal
     if isinstance(meal, str):
@@ -88,26 +70,28 @@ def _meal_dict(meal):
     return {}
 
 
+def _meal_label(key, meal):
+    fallback = str(key or "meal").replace("_", " ").title()
+    return str(_meal_dict(meal).get("label") or fallback)
+
+
 def _meal_keys_for_day(day):
     keys = [(r["key"], r["label"]) for r in get_meal_type_repository()]
-    known = {k for k, _label in keys}
-    meals = day.get("meals", {}) or {}
-    if not isinstance(meals, dict):
-        return keys
-    for key, meal in meals.items():
-        if key not in known:
-            keys.append((key, _meal_label(key, meal)))
+    known = {key for key, _label in keys}
+    meals = day.get("meals", {}) if isinstance(day, dict) else {}
+    if isinstance(meals, dict):
+        for key, meal in meals.items():
+            if key not in known:
+                keys.append((key, _meal_label(key, meal)))
     return keys
 
 
 def _structured_notes_text(member_id, log_date):
     values = []
     for row in notes_for_journal_date(member_id, log_date, include_archived=True):
-        subject = str(row.get("subject", "Nutritionist Note") or "Nutritionist Note").strip()
         note = str(row.get("note_text", "") or "").strip()
-        note_type = str(row.get("note_type", "") or "").replace("_", " ").title()
         if note:
-            values.append(f"{subject} ({note_type}): {note}")
+            values.append(f"{row.get('subject', 'Nutritionist Note')}: {note}")
     return " | ".join(values)
 
 
@@ -116,8 +100,7 @@ def _legacy_notes_text(member_id, log_date):
     for row in get_daily_log_supervision_notes(member_id, limit=20, log_date=log_date):
         note = str(row.get("note", "") or "").strip()
         if note:
-            stamp = format_local_ts(row.get("ts", ""))
-            values.append(f"{stamp} — {note}" if stamp else note)
+            values.append(note)
     return " | ".join(values)
 
 
@@ -126,21 +109,27 @@ def _other_fluids_summary(items):
     for idx, item in enumerate(items or [], start=1):
         if not isinstance(item, dict):
             continue
-        fluid_type = item.get("type") or "Other Liquid"
-        time_text = item.get("time") or ""
-        quantity = item.get("quantity") or ""
-        rows.append(f"{idx}. {fluid_type} | {time_text} | {quantity}")
+        rows.append(f"{idx}. {item.get('type') or 'Other Liquid'} | {item.get('time') or ''} | {item.get('quantity') or ''}")
     return "\n".join(rows) if rows else "—"
 
 
+def _exercise_summary(member_id, log_date):
+    rows = list_member_exercise_logs(member_id, log_date)
+    if not rows:
+        return "—"
+    return "\n".join(
+        f"{row.get('exercise_name','Exercise')} | {row.get('status','Not Started')} | {row.get('completion_time') or '-'} | {row.get('member_notes') or '-'}"
+        for row in rows
+    )
+
+
 def _row_for_day(member_id, day):
-    meals = day.get("meals", {}) or {}
-    if not isinstance(meals, dict):
-        meals = {}
+    meals = day.get("meals", {}) if isinstance(day, dict) else {}
+    meals = meals if isinstance(meals, dict) else {}
+    log_date = day.get("date", "") if isinstance(day, dict) else ""
     breakfast = _meal_dict(meals.get("breakfast", {}))
     lunch = _meal_dict(meals.get("lunch", {}))
     dinner = _meal_dict(meals.get("dinner", {}))
-    log_date = day.get("date", "")
     return {
         "Date": log_date,
         "Breakfast": breakfast.get("food", ""),
@@ -148,9 +137,9 @@ def _row_for_day(member_id, day):
         "Dinner": dinner.get("food", ""),
         "Water": day.get("water_litres", ""),
         "Other Fluids": _other_fluids_summary(day.get("other_fluids", [])),
-        "Activity": day.get("physical_activity", ""),
+        "Exercise": _exercise_summary(member_id, log_date),
         "Poop Rounds": day.get("poop_rounds", ""),
-        "Poop Timings": ", ".join([str(x) for x in (day.get("poop_timings", []) or []) if str(x).strip()]),
+        "Poop Timings": ", ".join(str(x) for x in (day.get("poop_timings", []) or []) if str(x).strip()),
         "Feeling After Poop": day.get("feeling_after_poop", ""),
         "Notes": day.get("notes", ""),
         "Nutritionist Guidance": _structured_notes_text(member_id, log_date) or _legacy_notes_text(member_id, log_date),
@@ -160,24 +149,27 @@ def _row_for_day(member_id, day):
 def _build_excel(member, days):
     wb = Workbook()
     ws = wb.active
-    ws.title = "Daily Food Journal"
+    ws.title = "Daily Food and Exercise"
     ws.append(["Member", member.get("name", ""), "Email", member.get("email", "")])
     ws.append([])
-    rows = [_row_for_day(member.get("id", ""), d) for d in days]
+    rows = [_row_for_day(member.get("id", ""), day) for day in days]
     headers = list(rows[0].keys()) if rows else list(_row_for_day(member.get("id", ""), {}).keys())
     ws.append(headers)
     for row in rows:
-        ws.append([row.get(h, "") for h in headers])
-    header_fill = PatternFill("solid", fgColor="064E3B")
-    header_font = Font(color="FFFFFF", bold=True)
-    border = Border(left=Side(style="thin", color="E9DFCC"), right=Side(style="thin", color="E9DFCC"), top=Side(style="thin", color="E9DFCC"), bottom=Side(style="thin", color="E9DFCC"))
+        ws.append([row.get(header, "") for header in headers])
+    fill = PatternFill("solid", fgColor="064E3B")
+    font = Font(color="FFFFFF", bold=True)
+    border = Border(
+        left=Side(style="thin", color="E9DFCC"), right=Side(style="thin", color="E9DFCC"),
+        top=Side(style="thin", color="E9DFCC"), bottom=Side(style="thin", color="E9DFCC"),
+    )
     for row in ws.iter_rows():
         for cell in row:
             cell.alignment = Alignment(wrap_text=True, vertical="top")
             cell.border = border
             if cell.row == 3:
-                cell.fill = header_fill
-                cell.font = header_font
+                cell.fill = fill
+                cell.font = font
     for col in range(1, ws.max_column + 1):
         ws.column_dimensions[ws.cell(row=3, column=col).column_letter].width = 24
     bio = BytesIO()
@@ -185,8 +177,7 @@ def _build_excel(member, days):
     return bio.getvalue()
 
 
-compact_topbar("Daily Food Journal Report", "", "Admin report")
-
+compact_topbar("Daily Food and Exercise Report", "", "Admin report")
 members = _safe_members()
 if not members:
     st.info("No members available.")
@@ -194,8 +185,7 @@ if not members:
 
 options = [f"{m.get('id','')} — {m.get('name','Member')} — {m.get('email','')}" for m in members]
 default_member = st.session_state.get("selected_daily_log_member_id") or st.session_state.get("selected_member_id")
-default_index = next((idx for idx, opt in enumerate(options) if default_member and opt.startswith(f"{default_member} —")), 0)
-
+default_index = next((idx for idx, option in enumerate(options) if default_member and option.startswith(f"{default_member} —")), 0)
 selector_col, date_col = st.columns(2)
 with selector_col:
     selected = st.selectbox("Select member", options, index=default_index)
@@ -209,53 +199,88 @@ try:
 except Exception:
     default_date_obj = date.today()
 with date_col:
-    selected_date_obj = st.date_input("Select food log date for review", value=default_date_obj)
-selected_date = selected_date_obj.isoformat() if hasattr(selected_date_obj, "isoformat") else str(selected_date_obj)
-
+    selected_date_obj = st.date_input("Select date for review", value=default_date_obj)
+selected_date = selected_date_obj.isoformat()
 selected_day = get_daily_food_journal_day(member_id, selected_date) or next((d for d in days if d.get("date") == selected_date), {"date": selected_date, "meals": {}})
+exercise_contract = load_member_exercise_contract(member_id, member.get("email", ""))
+exercise_logs = list_member_exercise_logs(member_id, selected_date)
 structured_date_notes = notes_for_journal_date(member_id, selected_date, include_archived=True)
 legacy_date_notes = get_daily_log_supervision_notes(member_id, limit=20, log_date=selected_date)
 
 stat_grid([
     {"label": "Member", "value": member.get("name", ""), "note": "Selected member"},
-    {"label": "Saved Days", "value": len(days), "note": "Full-day food logs"},
-    {"label": "Review Date", "value": selected_date, "note": "Journal date"},
-    {"label": "Linked Guidance", "value": len(structured_date_notes) + len(legacy_date_notes), "note": "For review date"},
+    {"label": "Saved Days", "value": len(days), "note": "Food journal days"},
+    {"label": "Assigned Exercises", "value": len(exercise_contract.get("exercises", [])), "note": "Current active profile / today"},
+    {"label": "Exercise Logs", "value": len(exercise_logs), "note": "Selected review date"},
 ])
 
 card_start()
 st.subheader("All saved days")
 if not days:
-    st.markdown("<div class='hm-dfjr-no-data-box'>No daily food logs available.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-report-empty'>No daily food logs available.</div>", unsafe_allow_html=True)
 else:
-    rows = [_row_for_day(member_id, d) for d in days]
+    rows = [_row_for_day(member_id, day) for day in days]
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-    st.download_button("Download Daily Food Journal Excel", data=_build_excel(member, days), file_name=f"{member.get('name','member').replace(' ','_')}_daily_food_journal.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+    st.download_button(
+        "Download Daily Food and Exercise Excel",
+        data=_build_excel(member, days),
+        file_name=f"{member.get('name','member').replace(' ','_')}_daily_food_exercise.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True,
+    )
 card_end()
 
 card_start()
 st.subheader(f"Food journal for {selected_date}")
-if not selected_day or not selected_day.get("meals"):
-    st.markdown("<div class='hm-dfjr-no-data-box'>No food journal available for this date.</div>", unsafe_allow_html=True)
+selected_meals = selected_day.get("meals", {}) or {}
+if not isinstance(selected_meals, dict) or not selected_meals:
+    st.markdown("<div class='hm-report-empty'>No food journal available for this date.</div>", unsafe_allow_html=True)
 else:
     meal_rows = []
-    selected_meals = selected_day.get("meals", {}) or {}
-    if not isinstance(selected_meals, dict):
-        selected_meals = {}
     for key, label in _meal_keys_for_day(selected_day):
         meal = _meal_dict(selected_meals.get(key, {}))
-        meal_rows.append({"Meal Type": label, "Time": meal.get("time", ""), "Food": meal.get("food", ""), "Portion Size": meal.get("portion_size", ""), "Mood/Energy": meal.get("mood_energy", "")})
+        meal_rows.append({
+            "Meal Type": label,
+            "Time": meal.get("time", ""),
+            "Food": meal.get("food", ""),
+            "Portion Size": meal.get("portion_size", ""),
+            "Mood": meal.get("mood", ""),
+            "Energy": meal.get("energy", ""),
+        })
     st.dataframe(pd.DataFrame(meal_rows), use_container_width=True, hide_index=True)
-    st.markdown("#### Full-day details")
     st.markdown(f"**Water Intake:** {selected_day.get('water_litres','') or '-'}")
     st.markdown(f"**Other Fluids:** {_other_fluids_summary(selected_day.get('other_fluids', []))}")
-    st.markdown(f"**Physical Activity:** {selected_day.get('physical_activity','') or '-'}")
     st.markdown(f"**Poop rounds:** {selected_day.get('poop_rounds','') or '-'}")
-    timings = selected_day.get("poop_timings", []) or []
-    st.markdown(f"**Poop timings:** {', '.join([str(x) for x in timings if str(x).strip()]) or '-'}")
     st.markdown(f"**Feeling after poop:** {selected_day.get('feeling_after_poop','') or '-'}")
     st.markdown(f"**Overall Notes:** {selected_day.get('notes','') or '-'}")
-    st.markdown("<div class='hm-full-day-black-row'></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-report-divider'></div>", unsafe_allow_html=True)
+card_end()
+
+card_start()
+st.subheader(f"Exercise for {selected_date}")
+if exercise_logs:
+    st.dataframe(pd.DataFrame([{
+        "Exercise": row.get("exercise_name", ""),
+        "Scheduled": row.get("scheduled_time", ""),
+        "Difficulty": row.get("difficulty", ""),
+        "Duration / Reps": row.get("duration_or_reps", ""),
+        "Status": row.get("status", ""),
+        "Completion Time": row.get("completion_time", ""),
+        "Member Notes": row.get("member_notes", ""),
+    } for row in exercise_logs]), use_container_width=True, hide_index=True)
+elif exercise_contract.get("exercises"):
+    st.caption("No member completion log exists for this date. Showing exercises from the active recommendation profile.")
+    st.dataframe(pd.DataFrame([{
+        "Exercise": row.get("name", ""),
+        "Time of Day": row.get("timing_or_slot", ""),
+        "Difficulty": row.get("difficulty", ""),
+        "Duration / Reps": row.get("duration_or_reps", ""),
+        "Equipment": row.get("equipment", ""),
+        "Benefits": row.get("benefits", ""),
+        "Instruction": row.get("instruction", ""),
+    } for row in exercise_contract.get("exercises", [])]), use_container_width=True, hide_index=True)
+else:
+    st.markdown("<div class='hm-report-empty'>No exercise is available from the active recommendation profile.</div>", unsafe_allow_html=True)
 card_end()
 
 card_start()
@@ -263,11 +288,9 @@ st.subheader(f"Guidance linked to {selected_date}")
 if structured_date_notes:
     for row in structured_date_notes:
         st.markdown(f"**{row.get('subject', 'Nutritionist Note')}**")
-        st.caption(f"Type: {row.get('note_type')} | From: {row.get('from_date')} | To: {row.get('to_date')} | Archived: {bool(row.get('member_archived', False))}")
         st.write(row.get("note_text", ""))
         st.divider()
 elif legacy_date_notes:
-    st.caption("Legacy date-specific notes")
     for row in legacy_date_notes:
         st.markdown(f"**{format_local_ts(row.get('ts',''))}**")
         st.write(row.get("note", ""))
@@ -277,17 +300,10 @@ card_end()
 
 card_start()
 st.subheader("Add Nutritionist Guidance")
-
-note_type_label = st.radio(
-    "Guidance Type",
-    ["Single Day", "Date Range", "General Guidance"],
-    horizontal=True,
-    key="h9a4_guidance_type_selector",
-)
+note_type_label = st.radio("Guidance Type", ["Single Day", "Date Range", "General Guidance"], horizontal=True, key="h9a4_guidance_type_selector")
 note_type = {"Single Day": "single_day", "Date Range": "date_range", "General Guidance": "general"}[note_type_label]
 subject = "General Guidance" if note_type == "general" else "Nutritionist Note"
 st.markdown(f"<div class='hm-guidance-heading'>{subject}</div>", unsafe_allow_html=True)
-
 with st.form("h9a4_daily_report_structured_note", clear_on_submit=True):
     if note_type == "single_day":
         from_date = st.date_input("Note Date", value=selected_date_obj, key="h9a4_single_day_note_date")
@@ -301,12 +317,21 @@ with st.form("h9a4_daily_report_structured_note", clear_on_submit=True):
     else:
         from_date = st.date_input("Guidance Date", value=selected_date_obj, key="h9a4_general_guidance_date")
         to_date = from_date
-    note_text = st.text_area(subject, placeholder="Example: Water intake was low across these days. Please increase water before lunch and dinner.", height=120)
+    note_text = st.text_area(subject, height=120)
     submitted = st.form_submit_button("Publish / Send Guidance", use_container_width=True)
 if submitted:
     try:
-        note = create_structured_nutritionist_note(member_id=member_id, member_name=member.get("name", ""), note_type=note_type, subject=subject, note_text=note_text, from_date=from_date, to_date=to_date, created_by=st.session_state.get("user_email") or st.session_state.get("oidc_email") or "admin")
-        st.success(f"Published {subject} {note.get('id')} with {len(note.get('related_dates', []))} linked date(s).")
+        note = create_structured_nutritionist_note(
+            member_id=member_id,
+            member_name=member.get("name", ""),
+            note_type=note_type,
+            subject=subject,
+            note_text=note_text,
+            from_date=from_date,
+            to_date=to_date,
+            created_by=st.session_state.get("user_email") or st.session_state.get("oidc_email") or "admin",
+        )
+        st.success(f"Published {subject} {note.get('id')}.")
     except Exception as exc:
         st.error(str(exc))
 
@@ -315,5 +340,5 @@ if st.button("Send gentle Daily Log reminder", type="secondary", use_container_w
     st.success("Reminder queued for the member and marked for email notification.")
 card_end()
 
-render_page_nav("Daily Food Journal Report", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_page_nav("Daily Food and Exercise Report", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
 render_back_to_top()
