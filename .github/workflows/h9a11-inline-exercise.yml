@@ -1,0 +1,94 @@
+name: H9A11 inline Exercise Journal
+
+on:
+  push:
+    branches:
+      - member-exercise-journal-contract
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: "!contains(github.event.head_commit.message, '[h9a11-inline-done]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: member-exercise-journal-contract
+          fetch-depth: 0
+
+      - name: Render My Exercise directly inside Exercise Journal tab
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('pages/18_Daily_Log.py')
+          text = path.read_text(encoding='utf-8')
+
+          import_anchor = 'from components.flash import set_system_message, render_system_message\n'
+          import_line = 'from components.member_exercise_view import render_member_exercise_journal\n'
+          if import_line not in text:
+              if import_anchor not in text:
+                  raise SystemExit('Daily Log import anchor not found')
+              text = text.replace(import_anchor, import_anchor + import_line, 1)
+
+          old_function = '''def _render_exercise_journal_placeholder():
+    st.markdown("### Exercise Journal")
+    st.markdown(
+        """
+        <div class='hm-exercise-placeholder'>
+          View today's prescribed exercises and record status, completion time and member notes.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("Open My Exercise", type="primary", use_container_width=True, key="hm_open_member_exercise"):
+        st.switch_page("pages/41_Member_Exercise.py")
+'''
+          new_function = '''def _render_exercise_journal():
+    render_member_exercise_journal(key_prefix="daily_log_exercise")
+'''
+          if old_function not in text:
+              raise SystemExit('Exercise Journal redirect block not found')
+          text = text.replace(old_function, new_function, 1)
+
+          old_call = '    _render_exercise_journal_placeholder()\n'
+          new_call = '    _render_exercise_journal()\n'
+          if old_call not in text:
+              raise SystemExit('Exercise Journal placeholder call not found')
+          text = text.replace(old_call, new_call, 1)
+
+          forbidden = [
+              'Open My Exercise',
+              '_render_exercise_journal_placeholder',
+              'st.switch_page("pages/41_Member_Exercise.py")',
+          ]
+          for token in forbidden:
+              if token in text:
+                  raise SystemExit(f'Redirect implementation remains: {token}')
+          if 'render_member_exercise_journal(key_prefix="daily_log_exercise")' not in text:
+              raise SystemExit('Inline exercise renderer is missing')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate affected Python files
+        run: |
+          python -m py_compile \
+            pages/18_Daily_Log.py \
+            pages/22_Admin_Daily_Log_Report.py \
+            pages/41_Member_Exercise.py \
+            components/member_exercise_journal.py \
+            components/member_exercise_view.py
+
+      - name: Remove one-time workflow and commit
+        shell: bash
+        run: |
+          rm .github/workflows/h9a11-inline-exercise.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pages/18_Daily_Log.py .github/workflows/h9a11-inline-exercise.yml
+          git commit -m "Render Exercise Journal inline [h9a11-inline-done]"
+          git push origin HEAD:member-exercise-journal-contract
