@@ -73,3 +73,5 @@ jobs:
           git add .github/workflows/h9a12-bootstrap.yml
           git commit -m "Remove H9A.12 bootstrap workflow"
           git push origin HEAD:main
+
+# Updated after initial registration so GitHub Actions detects the workflow on main.
