@@ -4,13 +4,16 @@ on:
   push:
     branches:
       - member-exercise-inline-journal
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   integrate:
-    if: "!contains(github.event.head_commit.message, '[h9a11-inline-done]')"
+    if: "github.event_name == 'push' && !contains(github.event.head_commit.message, '[h9a11-inline-done]')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
