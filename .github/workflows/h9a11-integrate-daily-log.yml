@@ -1,0 +1,84 @@
+name: H9A11 integrate Daily Log exercise
+
+on:
+  push:
+    branches:
+      - member-exercise-journal-contract
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: "!contains(github.event.head_commit.message, '[h9a11-integrated]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: member-exercise-journal-contract
+          fetch-depth: 0
+
+      - name: Apply Daily Log integration
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('pages/18_Daily_Log.py')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  'for key in ("feeling_after_poop", "physical_activity", "notes")',
+                  'for key in ("feeling_after_poop", "notes")',
+              ),
+              (
+                  '''    if _has_value(payload.get("physical_activity")):\n        lines.append(f"Physical activity: {_clean(payload.get('physical_activity'))}")\n''',
+                  '',
+              ),
+              (
+                  '''def _render_exercise_journal_placeholder():\n    st.markdown("### Exercise Journal")\n    st.markdown(\n        """\n        <div class='hm-exercise-placeholder'>\n          Exercise Journal will be enabled after the exercise logging data contract is finalised.\n          For now, please continue recording any exercise under <b>Food Journal → Physical Activity</b>.\n        </div>\n        """,\n        unsafe_allow_html=True,\n    )\n''',
+                  '''def _render_exercise_journal_placeholder():\n    st.markdown("### Exercise Journal")\n    st.markdown(\n        """\n        <div class='hm-exercise-placeholder'>\n          View today\'s prescribed exercises and record status, completion time and member notes.\n        </div>\n        """,\n        unsafe_allow_html=True,\n    )\n    if st.button("Open My Exercise", type="primary", use_container_width=True, key="hm_open_member_exercise"):\n        st.switch_page("pages/41_Member_Exercise.py")\n''',
+              ),
+              (
+                  '''    physical_activity = _clean(existing.get("physical_activity"))\n    with st.container(border=True):\n        if _toggle_button(\n            f"Physical Activity — {physical_activity or 'No activity entry yet'}",\n            f"{date_key}_activity",\n        ):\n            st.markdown("<div class='hm-toggle-body'>", unsafe_allow_html=True)\n            physical_activity = st.text_area(\n                "Physical activity",\n                value=physical_activity,\n                placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",\n                key=f"hm_h9a4c_activity_{date_key}",\n                height=90,\n            )\n            st.markdown("</div>", unsafe_allow_html=True)\n\n''',
+                  '',
+              ),
+              ('    clean_activity = _clean(physical_activity)\n', ''),
+              ('        "physical_activity": clean_activity,\n', ''),
+              (
+                  'topbar("Daily Log", "Capture food and activity updates for one day.", "Member tracker")',
+                  'topbar("Daily Log", "Capture food updates and open your prescribed exercise journal.", "Member tracker")',
+              ),
+          ]
+
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'Expected Daily Log block not found:\n{old[:180]}')
+              text = text.replace(old, new, 1)
+
+          if 'physical_activity' in text:
+              raise SystemExit('Active physical_activity references remain in pages/18_Daily_Log.py')
+          if 'pages/41_Member_Exercise.py' not in text:
+              raise SystemExit('Exercise Journal route integration is missing')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate affected Python files
+        run: |
+          python -m py_compile \
+            pages/18_Daily_Log.py \
+            pages/22_Admin_Daily_Log_Report.py \
+            pages/41_Member_Exercise.py \
+            components/member_exercise_journal.py
+
+      - name: Remove one-time workflow and commit integration
+        shell: bash
+        run: |
+          rm .github/workflows/h9a11-integrate-daily-log.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pages/18_Daily_Log.py .github/workflows/h9a11-integrate-daily-log.yml
+          git commit -m "Complete Daily Log exercise integration [h9a11-integrated]"
+          git push origin HEAD:member-exercise-journal-contract
