@@ -7,9 +7,15 @@ import components.pbm_core as _pbm_core
 import components.pbm_rows as _pbm_rows
 from components.active_profile_preview_contract import render_active_profile_preview_contract
 from components.pbm_core import (
-    APP_BUILD_LABEL, APP_BUILD_VERSION, NAV_LABELS, SECTIONS,
-    ensure_state, safe, safe_key,
+    NAV_LABELS,
+    SECTIONS,
+    ensure_state,
+    safe,
+    safe_key,
 )
+
+APP_BUILD_VERSION = "v100.40"
+APP_BUILD_LABEL = "Source Detail Layout Alignment"
 
 
 def _epoch_widget_key(row, field):
@@ -35,13 +41,15 @@ def _remove_row(ui_id):
 
 def _copy_day(kind, source_day, target_days):
     source_rows = [
-        row for row in st.session_state["pbm_items"]
+        row
+        for row in st.session_state["pbm_items"]
         if row.get("item_type") == kind
         and int(row.get("day_number") or 0) == source_day
         and _meaningful_row(row)
     ]
     st.session_state["pbm_items"] = [
-        row for row in st.session_state["pbm_items"]
+        row
+        for row in st.session_state["pbm_items"]
         if not (
             row.get("item_type") == kind
             and int(row.get("day_number") or 0) in target_days
@@ -65,12 +73,14 @@ from components.pbm_modules import render_module, render_preview
 from components.pbm_setup import render_setup
 from components.profile_publish_control import render_profile_publish_control
 from components.recommendation_profile_store import (
-    check_profile_builder_store, load_profile_builder_sources,
+    check_profile_builder_store,
+    load_profile_builder_sources,
 )
 
 
 def _render_css() -> None:
-    st.markdown("""
+    st.markdown(
+        """
 <style>
 .hm-title{color:#064E3B;font-size:1.04rem;font-weight:950;margin:0 0 .25rem}.hm-sub{color:#64748B;font-size:.82rem;font-weight:720;margin:0 0 .7rem}
 .hm-section-rule{height:1px;background:linear-gradient(90deg,transparent,rgba(216,168,78,.8),transparent);margin:.3rem 0 .72rem}
@@ -83,24 +93,69 @@ def _render_css() -> None:
 .hm-count-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem;margin:.55rem 0 1rem}.hm-count-card{background:#fff;border:1px solid #E3C98E;border-radius:15px;padding:.7rem .8rem}.hm-count-card b{display:block;color:#064E3B}.hm-count-card span{color:#64748B;font-size:.78rem;font-weight:780}
 @media(max-width:900px){.hm-count-grid{grid-template-columns:1fr 1fr}.hm-tab-nav [data-testid="stButton"]>button{font-size:.76rem!important}}
 </style>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
 
 def render_modular_profile_builder() -> None:
-    ensure_state(); _render_css(); status = check_profile_builder_store(); sources, source_message = load_profile_builder_sources()
-    options = {"recipe": list(sources.get("recipe") or []), "exercise": list(sources.get("exercise") or []), "supplement": list(sources.get("supplement") or []), "age_band": list(sources.get("age_band") or []), "health_concern": list(sources.get("health_concern") or []), "diet_type": list(sources.get("diet_type") or [])}
-    st.markdown(f"<div class='hero-shell'><div class='hero-kicker'>Admin recommendations</div><div class='hero-title'>Recommendation Profile Builder</div><div class='hero-subtitle'>Profile shell creation with member-filtered, module-specific recommendation saves.</div><div><span class='meta-pill'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span></div></div>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-tab-nav'>", unsafe_allow_html=True); columns = st.columns(len(SECTIONS), gap="small")
+    ensure_state()
+    _render_css()
+    status = check_profile_builder_store()
+    sources, source_message = load_profile_builder_sources()
+    options = {
+        "recipe": list(sources.get("recipe") or []),
+        "exercise": list(sources.get("exercise") or []),
+        "supplement": list(sources.get("supplement") or []),
+        "age_band": list(sources.get("age_band") or []),
+        "health_concern": list(sources.get("health_concern") or []),
+        "diet_type": list(sources.get("diet_type") or []),
+    }
+    st.markdown(
+        f"<div class='hero-shell'><div class='hero-kicker'>Admin recommendations</div>"
+        f"<div class='hero-title'>Recommendation Profile Builder</div>"
+        f"<div class='hero-subtitle'>Profile shell creation with member-filtered, "
+        f"module-specific recommendation saves.</div><div><span class='meta-pill'>"
+        f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span></div></div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div class='hm-tab-nav'>", unsafe_allow_html=True)
+    columns = st.columns(len(SECTIONS), gap="small")
     for column, section in zip(columns, SECTIONS):
-        if column.button(NAV_LABELS[section], key=f"pbm_nav_{safe_key(section)}", type="primary" if st.session_state["pbm_section"] == section else "secondary", use_container_width=True): st.session_state["pbm_section"] = section; st.rerun()
+        if column.button(
+            NAV_LABELS[section],
+            key=f"pbm_nav_{safe_key(section)}",
+            type="primary" if st.session_state["pbm_section"] == section else "secondary",
+            use_container_width=True,
+        ):
+            st.session_state["pbm_section"] = section
+            st.rerun()
     st.markdown("</div><div class='hm-section-rule'></div>", unsafe_allow_html=True)
-    if status.get("ok"): st.markdown("<div class='hm-readiness-strip hm-ready-ok'><b>Profile Builder store is ready.</b> Setup and recommendation modules now save independently.</div>", unsafe_allow_html=True)
-    else: st.markdown(f"<div class='hm-readiness-strip hm-ready-warn'><b>Profile Builder store is not ready.</b> {safe(status.get('message'))}</div>", unsafe_allow_html=True)
-    st.caption(source_message); section = st.session_state["pbm_section"]
-    if section == "Profile Setup": render_setup(options)
-    elif section == "Meal Structure": render_module("meal", options)
-    elif section == "Exercise Regime": render_module("exercise", options)
-    elif section == "Supplement Regime": render_module("supplement", options)
-    elif section == "Preview & End-to-End Flow": render_preview()
-    elif section == "Publish Control": render_profile_publish_control()
-    else: render_active_profile_preview_contract()
+    if status.get("ok"):
+        st.markdown(
+            "<div class='hm-readiness-strip hm-ready-ok'><b>Profile Builder store is ready.</b> "
+            "Setup and recommendation modules now save independently.</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f"<div class='hm-readiness-strip hm-ready-warn'><b>Profile Builder store is not ready.</b> "
+            f"{safe(status.get('message'))}</div>",
+            unsafe_allow_html=True,
+        )
+    st.caption(source_message)
+    section = st.session_state["pbm_section"]
+    if section == "Profile Setup":
+        render_setup(options)
+    elif section == "Meal Structure":
+        render_module("meal", options)
+    elif section == "Exercise Regime":
+        render_module("exercise", options)
+    elif section == "Supplement Regime":
+        render_module("supplement", options)
+    elif section == "Preview & End-to-End Flow":
+        render_preview()
+    elif section == "Publish Control":
+        render_profile_publish_control()
+    else:
+        render_active_profile_preview_contract()
