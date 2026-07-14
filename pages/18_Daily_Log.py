@@ -349,7 +349,7 @@ def _day_has_meaningful_entry(payload):
         return True
     return any(
         _has_value(payload.get(key))
-        for key in ("feeling_after_poop", "physical_activity", "notes")
+        for key in ("feeling_after_poop", "notes")
     )
 
 
@@ -427,8 +427,6 @@ def _report_lines(payload):
         lines.append(
             f"Feeling after poop: {_clean(payload.get('feeling_after_poop'))}"
         )
-    if _has_value(payload.get("physical_activity")):
-        lines.append(f"Physical activity: {_clean(payload.get('physical_activity'))}")
     if _has_value(payload.get("notes")):
         lines.append(f"Notes: {_clean(payload.get('notes'))}")
     return lines
@@ -653,12 +651,13 @@ def _render_exercise_journal_placeholder():
     st.markdown(
         """
         <div class='hm-exercise-placeholder'>
-          Exercise Journal will be enabled after the exercise logging data contract is finalised.
-          For now, please continue recording any exercise under <b>Food Journal → Physical Activity</b>.
+          View today's prescribed exercises and record status, completion time and member notes.
         </div>
         """,
         unsafe_allow_html=True,
     )
+    if st.button("Open My Exercise", type="primary", use_container_width=True, key="hm_open_member_exercise"):
+        st.switch_page("pages/41_Member_Exercise.py")
 
 
 def _render_saved_days(user_id):
@@ -944,22 +943,6 @@ def _render_food_journal(user_id):
             )
             st.markdown("</div>", unsafe_allow_html=True)
 
-    physical_activity = _clean(existing.get("physical_activity"))
-    with st.container(border=True):
-        if _toggle_button(
-            f"Physical Activity — {physical_activity or 'No activity entry yet'}",
-            f"{date_key}_activity",
-        ):
-            st.markdown("<div class='hm-toggle-body'>", unsafe_allow_html=True)
-            physical_activity = st.text_area(
-                "Physical activity",
-                value=physical_activity,
-                placeholder="Example: Walk 30 mins at 7 AM / strength training 1 PM - 2 PM",
-                key=f"hm_h9a4c_activity_{date_key}",
-                height=90,
-            )
-            st.markdown("</div>", unsafe_allow_html=True)
-
     with st.container(border=True):
         st.markdown("### Member Notes")
         day_notes = st.text_area(
@@ -979,7 +962,6 @@ def _render_food_journal(user_id):
         _clean(value) for value in poop_timings if _has_value(value)
     ]
     clean_feeling = _clean(feeling_after_poop)
-    clean_activity = _clean(physical_activity)
     clean_notes = _clean(day_notes)
     poop_text = ""
     if clean_poop_rounds is not None:
@@ -992,7 +974,6 @@ def _render_food_journal(user_id):
     payload = {
         "date": date_key,
         "meals": clean_meals_payload,
-        "physical_activity": clean_activity,
         "poop_rounds": clean_poop_rounds,
         "poop_timings": clean_poop_timings,
         "feeling_after_poop": clean_feeling,
@@ -1074,7 +1055,7 @@ inject_global_styles()
 apply_luxe_theme()
 require_member()
 utility_logout_bar()
-topbar("Daily Log", "Capture food and activity updates for one day.", "Member tracker")
+topbar("Daily Log", "Capture food updates and open your prescribed exercise journal.", "Member tracker")
 _render_css()
 render_system_message()
 
