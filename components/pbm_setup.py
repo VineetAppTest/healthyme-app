@@ -96,6 +96,10 @@ def render_setup(options) -> None:
         disabled=not bool(edit_member_id),
     )
 
+    edit_columns[2].markdown(
+        "<div class='hm-load-label' aria-hidden='true'>&nbsp;</div>",
+        unsafe_allow_html=True,
+    )
     if edit_columns[2].button(
         "Load Setup",
         use_container_width=True,
@@ -119,6 +123,10 @@ def render_setup(options) -> None:
         else:
             st.error(message)
 
+    edit_columns[3].markdown(
+        "<div class='hm-load-label' aria-hidden='true'>&nbsp;</div>",
+        unsafe_allow_html=True,
+    )
     edit_columns[3].button(
         "New Profile",
         use_container_width=True,
