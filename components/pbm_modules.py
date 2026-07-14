@@ -34,7 +34,7 @@ def render_selector(kind: str) -> Tuple[bool, str, str]:
     load_column.markdown("<div class='hm-load-label'>&nbsp;</div>", unsafe_allow_html=True)
     if load_column.button("Load Profile", key=f"pbm_module_load_{kind}", use_container_width=True, disabled=not bool(profile_id)):
         ok, message = load_selected(profile_id)
-        if ok: st.session_state[member_key] = member_label; st.session_state[profile_key] = profile_id; st.success(message); st.rerun()
+        if ok: st.success(message); st.rerun()
         st.error(message)
     st.caption(f"Member source: {member_message} {profile_message}")
     ready = bool(member_id and profile_id and st.session_state.get("pbm_loaded_member_id") == member_id and st.session_state.get("pbm_loaded_profile_id") == profile_id)
