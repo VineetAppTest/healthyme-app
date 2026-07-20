@@ -9,7 +9,7 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13O2-st-navigation-poc-v1"
+ROUTER_BUILD = "H13O2-st-navigation-poc-v2-diagnostics"
 
 
 st.set_page_config(
@@ -85,6 +85,11 @@ native_logout_page = st.Page(
     title="Native Logout",
     url_path="Native_Logout",
 )
+auth_diagnostics_page = st.Page(
+    "pages/00_Auth_Diagnostics.py",
+    title="Auth Diagnostics",
+    url_path="Auth_Diagnostics",
+)
 
 selected_page = st.navigation(
     [
@@ -94,6 +99,7 @@ selected_page = st.navigation(
         member_page,
         consent_page,
         native_logout_page,
+        auth_diagnostics_page,
     ],
     position="hidden",
 )
@@ -129,7 +135,11 @@ st.session_state["_hm_router_restore_ms"] = round(
     1,
 )
 
-technical_pages = (consent_page, native_logout_page)
+technical_pages = (
+    consent_page,
+    native_logout_page,
+    auth_diagnostics_page,
+)
 
 if selected_page not in technical_pages:
     if restored:
