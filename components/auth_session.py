@@ -185,7 +185,13 @@ def clear_app_session_for_logout(
 def logout_current_user():
     provider = st.session_state.get("auth_provider")
     login_method = st.session_state.get("auth_login_method")
-    had_oidc_session = oidc_is_logged_in()
+
+    # Native OIDC logout must be called directly. Streamlit uses an internal
+    # control-flow redirect to delete its identity cookie and create a new session;
+    # wrapping st.logout() in a broad try/except can swallow that redirect and leave
+    # the user signed in.
+    if oidc_is_logged_in():
+        st.logout()
 
     if provider == "supabase" or login_method == "supabase":
         remote_logout_ok = True
@@ -206,18 +212,4 @@ def logout_current_user():
         return remote_logout_ok
 
     clear_app_session_for_logout()
-    if had_oidc_session:
-        try:
-            st.logout()
-        except Exception:
-            st.session_state["_hm_oidc_logout_failed"] = True
-            clear_app_session_for_logout(
-                feedback_level="warning",
-                feedback_message=(
-                    "Your HealthyMe session was cleared, but the browser identity "
-                    "session could not be fully confirmed. Please close this browser tab."
-                ),
-            )
-            st.session_state["_hm_oidc_logout_failed"] = True
-            return False
     return True
