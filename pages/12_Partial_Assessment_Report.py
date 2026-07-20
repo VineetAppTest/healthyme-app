@@ -12,6 +12,7 @@ from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, render_build_text_v12, render_back_to_top, compact_topbar
 from components.db import load_db, get_form_response, get_workflow, get_profile
 from components.systems_rating import calculate_systems_rating
+from components.assessment_report_systems import systems_for_question
 from components.report_engine import prepare_report_db
 
 st.set_page_config(page_title="Partial Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
@@ -79,8 +80,8 @@ def make_excel(member, profile, workflow, laf_rows, nsp1_rows, nsp2_rows, system
 
     for title, headers, rows in [
         ("LAF Responses", ["Section", "Question", "Answer"], laf_rows),
-        ("NSP Page 1", ["No.", "Question", "Answer", "Score"], nsp1_rows),
-        ("NSP Page 2", ["No.", "Question", "Answer", "Score"], nsp2_rows),
+        ("NSP Page 1", ["No.", "Question", "Answer", "Score", "Systems"], nsp1_rows),
+        ("NSP Page 2", ["No.", "Question", "Answer", "Score", "Systems"], nsp2_rows),
     ]:
         ws = wb.create_sheet(title)
         ws.append(headers)
@@ -133,13 +134,25 @@ nsp1_rows = []
 for code, q in nsp1_map.items():
     ans = answer_clean(nsp1.get(code, ""))
     if ans:
-        nsp1_rows.append([q.get("number", ""), q.get("text", code), ans, score(ans)])
+        nsp1_rows.append([
+            q.get("number", ""),
+            q.get("text", code),
+            ans,
+            score(ans),
+            systems_for_question(code),
+        ])
 
 nsp2_rows = []
 for code, q in nsp2_map.items():
     ans = answer_clean(nsp2.get(code, ""))
     if ans:
-        nsp2_rows.append([q.get("number", ""), q.get("text", code), ans, score(ans)])
+        nsp2_rows.append([
+            q.get("number", ""),
+            q.get("text", code),
+            ans,
+            score(ans),
+            systems_for_question(code),
+        ])
 
 systems_rating_rows = calculate_systems_rating(nsp1, nsp2)
 
@@ -221,11 +234,12 @@ with tabs[1]:
         for i in range(0, len(nsp1_rows), 3):
             cols = st.columns(3)
             for j, row in enumerate(nsp1_rows[i:i+3]):
-                no, q, a, s = row
+                no, q, a, s, systems = row
                 with cols[j]:
                     st.markdown(f"**{no}. {q}**")
                     st.write(f"Answer: {a}")
                     st.caption(f"Score: {s}")
+                    st.caption(f"Systems: {systems or 'Not mapped'}")
 
 with tabs[2]:
     if not nsp2_rows:
@@ -234,11 +248,12 @@ with tabs[2]:
         for i in range(0, len(nsp2_rows), 3):
             cols = st.columns(3)
             for j, row in enumerate(nsp2_rows[i:i+3]):
-                no, q, a, s = row
+                no, q, a, s, systems = row
                 with cols[j]:
                     st.markdown(f"**{no}. {q}**")
                     st.write(f"Answer: {a}")
                     st.caption(f"Score: {s}")
+                    st.caption(f"Systems: {systems or 'Not mapped'}")
 with tabs[3]:
     if not body_mind:
         st.info("Body-Mind Connection has not been filled or enabled yet.")
