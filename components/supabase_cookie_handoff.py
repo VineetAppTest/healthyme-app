@@ -1,15 +1,15 @@
-"""Browser-cookie handoff for HealthyMe Streamlit Supabase login.
+"""Reliable browser-cookie handoff for HealthyMe Streamlit Supabase login.
 
-H13D removes the asynchronous CookieManager read-back loop that could leave the
-Login page permanently stuck on “Securing your HealthyMe session…”. A successful
-login now commits the opaque marker in the browser and performs one full browser
-reload. The new Streamlit session then reads the marker from ``st.context.cookies``
-and restores the durable Supabase session.
+H13E keeps the durable Supabase session introduced in H13C, but replaces H13D's
+plain iframe cookie write. The component iframe can reload the parent page, but it
+cannot reliably create an application-domain cookie. H13E therefore uses the
+CookieManager component only to commit the opaque marker, then performs one full
+browser reload. No CookieManager read-back loop is used.
 """
 
 from __future__ import annotations
 
-import json
+import datetime
 import time
 from typing import Literal, Tuple
 
@@ -26,25 +26,39 @@ from components.supabase_auth_session import (
 
 HANDOFF_ARMED_KEY = "_hm_supabase_cookie_handoff_armed"
 HANDOFF_PENDING_KEY = "_hm_supabase_cookie_handoff_pending"
+HANDOFF_PHASE_KEY = "_hm_supabase_cookie_handoff_phase"
 HANDOFF_STARTED_AT_KEY = "_hm_supabase_cookie_handoff_started_at"
-HANDOFF_RENDERED_KEY = "_hm_supabase_cookie_handoff_rendered"
-HANDOFF_TIMEOUT_SECONDS = 20
+HANDOFF_MANAGER_KEY = "_hm_supabase_cookie_manager_v4"
+HANDOFF_TIMEOUT_SECONDS = 30
 
 HandoffStatus = Literal["not_pending", "waiting", "confirmed", "failed"]
+
+
+def _manager():
+    """Create one CookieManager instance for the active Streamlit session."""
+    manager = st.session_state.get(HANDOFF_MANAGER_KEY)
+    if manager is not None:
+        return manager
+
+    import extra_streamlit_components as stx
+
+    manager = stx.CookieManager(key="hm_supabase_cookie_manager_v4")
+    st.session_state[HANDOFF_MANAGER_KEY] = manager
+    return manager
 
 
 def clear_cookie_handoff_state() -> None:
     for key in (
         HANDOFF_ARMED_KEY,
         HANDOFF_PENDING_KEY,
+        HANDOFF_PHASE_KEY,
         HANDOFF_STARTED_AT_KEY,
-        HANDOFF_RENDERED_KEY,
     ):
         st.session_state.pop(key, None)
 
 
 def arm_cookie_handoff() -> None:
-    """Arm before Supabase login so component-triggered reruns cannot lose state."""
+    """Arm before Supabase login so a component rerun cannot lose the handoff."""
     clear_cookie_handoff_state()
     st.session_state[HANDOFF_ARMED_KEY] = True
 
@@ -54,7 +68,7 @@ def cancel_cookie_handoff() -> None:
 
 
 def begin_cookie_handoff() -> bool:
-    """Prepare the opaque browser marker for one browser-level commit/reload."""
+    """Prepare the opaque marker for CookieManager commit and browser reload."""
     marker = str(
         st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or ""
     ).strip()
@@ -63,8 +77,8 @@ def begin_cookie_handoff() -> bool:
 
     st.session_state.pop(HANDOFF_ARMED_KEY, None)
     st.session_state[HANDOFF_PENDING_KEY] = marker
+    st.session_state[HANDOFF_PHASE_KEY] = "commit"
     st.session_state[HANDOFF_STARTED_AT_KEY] = time.time()
-    st.session_state[HANDOFF_RENDERED_KEY] = False
     st.session_state[SUPABASE_BROWSER_COOKIE_WRITE_KEY] = False
     return True
 
@@ -74,7 +88,8 @@ def cookie_handoff_pending() -> bool:
     if pending_marker:
         return True
 
-    # Recover when the login call itself was interrupted by a Streamlit rerun.
+    # CookieManager may rerun the script from inside the login call. Recover the
+    # newly created durable marker instead of returning to the credential form.
     if st.session_state.get(HANDOFF_ARMED_KEY):
         marker = str(
             st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or ""
@@ -84,54 +99,19 @@ def cookie_handoff_pending() -> bool:
     return False
 
 
-def _render_cookie_commit_and_reload(marker: str) -> None:
-    """Set the opaque marker and reload the parent browser after it commits.
-
-    ``st.context.cookies`` is populated only from the initial browser request. A
-    normal Streamlit script rerun is therefore insufficient. The full browser reload
-    is intentional and occurs once immediately after a successful login.
-    """
-    cookie_name = json.dumps(SUPABASE_BROWSER_COOKIE_NAME)
-    cookie_value = json.dumps(marker)
-    ttl_seconds = int(_browser_session_ttl_seconds())
-    secure_attribute = "; Secure" if _browser_cookie_is_secure() else ""
-
+def _render_parent_reload(delay_ms: int) -> None:
+    """Reload the top-level browser so ``st.context.cookies`` sees the marker."""
+    safe_delay = max(int(delay_ms), 500)
     components.html(
         f"""
         <script>
-        (() => {{
-          const cookieName = {cookie_name};
-          const cookieValue = {cookie_value};
-          const attributes = "Path=/; Max-Age={ttl_seconds}; SameSite=Strict{secure_attribute}";
-          const cookieText = `${{cookieName}}=${{encodeURIComponent(cookieValue)}}; ${{attributes}}`;
-
-          document.cookie = cookieText;
+        window.setTimeout(() => {{
           try {{
-            window.parent.document.cookie = cookieText;
+            window.parent.location.reload();
           }} catch (error) {{
-            // The component document is normally same-origin. Its cookie write
-            // remains the fallback when parent-document access is restricted.
+            window.location.reload();
           }}
-
-          let committed = document.cookie
-            .split("; ")
-            .some((row) => row.startsWith(`${{cookieName}}=`));
-          try {{
-            committed = committed || window.parent.document.cookie
-              .split("; ")
-              .some((row) => row.startsWith(`${{cookieName}}=`));
-          }} catch (error) {{
-            // Keep the component-document result.
-          }}
-
-          window.setTimeout(() => {{
-            try {{
-              window.parent.location.reload();
-            }} catch (error) {{
-              window.location.reload();
-            }}
-          }}, committed ? 700 : 1300);
-        }})();
+        }}, {safe_delay});
         </script>
         """,
         height=0,
@@ -140,10 +120,11 @@ def _render_cookie_commit_and_reload(marker: str) -> None:
 
 
 def process_cookie_handoff() -> Tuple[HandoffStatus, str]:
-    """Commit the marker and wait for a full browser reload.
+    """Commit through CookieManager, then force one initial browser request.
 
-    This function deliberately does not use CookieManager ``get_all`` confirmation.
-    That custom-component read-back was the source of the deployed H13C wait loop.
+    The phase is saved before the CookieManager call because that component may
+    trigger a Streamlit rerun. Both the same run and the component-rerun path render
+    a browser reload, so the flow cannot depend on synchronous component return.
     """
     marker = str(st.session_state.get(HANDOFF_PENDING_KEY) or "").strip()
     if not marker:
@@ -161,10 +142,42 @@ def process_cookie_handoff() -> Tuple[HandoffStatus, str]:
         clear_cookie_handoff_state()
         return (
             "failed",
-            "HealthyMe could not complete the secure browser handoff. Please sign in again.",
+            "HealthyMe could not commit the secure browser session. Please sign in again.",
         )
 
-    st.session_state[HANDOFF_RENDERED_KEY] = True
+    phase = str(st.session_state.get(HANDOFF_PHASE_KEY) or "commit")
+
+    if phase == "commit":
+        # Save the next phase first. CookieManager.set can initiate a Streamlit rerun
+        # before this function reaches its next Python statement.
+        st.session_state[HANDOFF_PHASE_KEY] = "reload"
+        try:
+            _manager().set(
+                SUPABASE_BROWSER_COOKIE_NAME,
+                marker,
+                key=f"hm_supabase_h13e_set_{marker[:12]}",
+                path="/",
+                expires_at=datetime.datetime.now() + datetime.timedelta(
+                    seconds=_browser_session_ttl_seconds()
+                ),
+                secure=_browser_cookie_is_secure(),
+                same_site="strict",
+            )
+        except Exception:
+            clear_cookie_handoff_state()
+            return (
+                "failed",
+                "HealthyMe could not write the secure browser marker. Please sign in again.",
+            )
+
+        st.session_state[SUPABASE_BROWSER_COOKIE_WRITE_KEY] = True
+        # This covers the case where CookieManager.set returns without triggering a
+        # rerun. The delay gives the browser component time to commit the cookie.
+        _render_parent_reload(2200)
+        return "waiting", "Securing your HealthyMe session…"
+
+    # This is the expected path when CookieManager.set triggered a component rerun.
+    # At this point the browser has already processed the set request; reload shortly.
     st.session_state[SUPABASE_BROWSER_COOKIE_WRITE_KEY] = True
-    _render_cookie_commit_and_reload(marker)
+    _render_parent_reload(900)
     return "waiting", "Securing your HealthyMe session…"

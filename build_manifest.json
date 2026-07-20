@@ -1,14 +1,14 @@
 {
-  "build_name": "HealthyMe_Streamlit_H13D_Browser_Cookie_Reload_Handoff",
-  "version": "v102.4B15S3H13D",
-  "updated_on": "2026-07-20T12:00:00Z",
-  "base_build": "v102.4B15S3H13C Supabase Durable Refresh Sessions",
+  "build_name": "HealthyMe_Streamlit_H13E_CookieManager_Commit_Reload",
+  "version": "v102.4B15S3H13E",
+  "updated_on": "2026-07-20T13:00:00Z",
+  "base_build": "v102.4B15S3H13D Browser Cookie Reload Handoff",
   "scope": [
-    "Removes the asynchronous CookieManager read-back loop that left the Login page stuck on Securing your HealthyMe session",
-    "Commits the opaque browser marker through one browser script and performs one full browser reload after successful login",
-    "Uses the next initial browser request so Streamlit context receives the committed marker before durable Supabase restoration",
-    "Retains the H13C durable Supabase session table, hashed browser marker, token refresh, role validation and logout revocation",
-    "Keeps the existing Retry secure session fallback only for exceptional browser-script failure"
+    "Fixes the H13D login loop where credentials succeeded but the user returned to Login after the browser reload",
+    "Uses CookieManager only to write the application-domain opaque marker and removes all CookieManager read-back confirmation",
+    "Persists the reload phase before CookieManager.set so component-triggered Streamlit reruns continue safely",
+    "Forces one full parent-browser reload after the marker commit so Streamlit context receives the cookie on the initial request",
+    "Retains the H13C durable Supabase session table, hashed marker, token refresh, role validation and logout revocation"
   ],
   "excluded": [
     "No additional SQL migration",
