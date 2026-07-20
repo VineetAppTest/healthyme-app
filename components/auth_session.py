@@ -1,6 +1,7 @@
 import streamlit as st
 
 from components.admin_role_model import apply_app_user_to_session, resolve_app_user
+from components.auth_mode import supabase_oidc_poc_enabled
 
 
 SECURE_LOGOUT_MESSAGE_KEY = "_hm_secure_logout_feedback"
@@ -40,6 +41,16 @@ def get_oidc_email():
             return ""
 
 
+def get_oidc_subject():
+    try:
+        return str(st.user.get("sub") or "").strip()
+    except Exception:
+        try:
+            return str(getattr(st.user, "sub", "") or "").strip()
+        except Exception:
+            return ""
+
+
 def get_oidc_name():
     for key in ["name", "given_name", "nickname"]:
         try:
@@ -62,11 +73,17 @@ def _resolve_app_user_by_email(email):
     return app_user if ok else None
 
 
-def _apply_user_to_session(app_user, email, auth_method="auth0"):
+def _apply_user_to_session(
+    app_user,
+    email,
+    auth_method="auth0",
+    auth_user_id="",
+):
     ok = apply_app_user_to_session(
         app_user,
         email=email,
         auth_provider=auth_method,
+        auth_user_id=auth_user_id,
     )
     if ok:
         _clear_recovery_flags()
@@ -78,7 +95,11 @@ def restore_login_from_token():
         return False
     if not oidc_is_logged_in():
         return False
+
     email = get_oidc_email()
+    subject = get_oidc_subject()
+    auth_method = "supabase_oidc" if supabase_oidc_poc_enabled() else "auth0"
+
     if (
         st.session_state.get("logged_in")
         and st.session_state.get("_hm_auth_role_resolved")
@@ -86,14 +107,23 @@ def restore_login_from_token():
     ):
         _clear_recovery_flags()
         return True
-    ok, app_user, message = resolve_app_user(email=email)
+
+    ok, app_user, message = resolve_app_user(
+        email=email,
+        auth_user_id=subject if supabase_oidc_poc_enabled() else "",
+    )
     if not ok or not app_user:
         st.session_state["logged_in"] = False
         st.session_state["auth_error"] = (
             f"{email or 'This email'} is authenticated but not authorized in HealthyMe. {message}"
         )
         return False
-    return _apply_user_to_session(app_user, email, auth_method="auth0")
+    return _apply_user_to_session(
+        app_user,
+        email,
+        auth_method=auth_method,
+        auth_user_id=subject,
+    )
 
 
 def login_with_supabase_password(email, password):
@@ -172,8 +202,8 @@ def logout_current_user():
             clear_app_session_for_logout(
                 feedback_level="warning",
                 feedback_message=(
-                    "Your HealthyMe session was cleared, but the Auth0 browser session "
-                    "could not be fully confirmed. Please close this browser tab."
+                    "Your HealthyMe session was cleared, but the browser identity "
+                    "session could not be fully confirmed. Please close this browser tab."
                 ),
             )
             return False
