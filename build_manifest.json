@@ -1,19 +1,19 @@
 {
-  "build_name": "HealthyMe_Streamlit_H13C_Supabase_Durable_Refresh_Sessions",
-  "version": "v102.4B15S3H13C",
-  "updated_on": "2026-07-20T10:00:00Z",
-  "base_build": "v102.4B15S3H13B Supabase Cookie Confirmation Handoff",
+  "build_name": "HealthyMe_Streamlit_H13D_Browser_Cookie_Reload_Handoff",
+  "version": "v102.4B15S3H13D",
+  "updated_on": "2026-07-20T12:00:00Z",
+  "base_build": "v102.4B15S3H13C Supabase Durable Refresh Sessions",
   "scope": [
-    "Replaces the process-local Streamlit session registry with a durable Supabase session table",
-    "Stores only a SHA-256 hash of the opaque browser marker and keeps access/refresh tokens server-side",
-    "Uses a server-only SUPABASE_SERVICE_ROLE_KEY to restore sessions across browser refreshes and Render process changes",
-    "Reads the browser marker through Streamlit context with a controlled CookieManager fallback before protected-page guards redirect",
-    "Refreshes expiring Supabase tokens, revalidates HealthyMe roles, revokes sessions on logout and expires legacy markers"
+    "Removes the asynchronous CookieManager read-back loop that left the Login page stuck on Securing your HealthyMe session",
+    "Commits the opaque browser marker through one browser script and performs one full browser reload after successful login",
+    "Uses the next initial browser request so Streamlit context receives the committed marker before durable Supabase restoration",
+    "Retains the H13C durable Supabase session table, hashed browser marker, token refresh, role validation and logout revocation",
+    "Keeps the existing Retry secure session fallback only for exceptional browser-script failure"
   ],
   "excluded": [
+    "No additional SQL migration",
     "No Flutter or Admin Lite code change",
     "No assessment, report, recommendation, schedule or member-data contract change",
-    "No password, access token or refresh token stored in browser cookies, URLs or local storage",
-    "H13A and H13B process-local session records are intentionally not migrated; users sign in once after H13C deployment"
+    "No password, access token or refresh token stored in browser cookies, URLs or local storage"
   ]
 }
