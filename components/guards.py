@@ -1,16 +1,12 @@
 from datetime import date, datetime, time
 import inspect
-import time as time_module
 
 import streamlit as st
 
 from components.admin_role_model import current_user_is_admin, current_user_is_member
 from components.auth_mode import auth0_enabled, supabase_auth_enabled
 from components.auth_session import restore_login_from_token
-from components.supabase_auth_session import (
-    browser_has_legacy_supabase_marker,
-    restore_supabase_login_from_session,
-)
+from components.supabase_auth_session import restore_supabase_login_from_session
 
 
 MEMBER_REFERENCE_LIBRARY_ENABLED = False
@@ -28,7 +24,6 @@ def restore_any_login(required_role: str = ""):
     if st.session_state.get("logged_in") and st.session_state.get(
         "_hm_auth_role_resolved"
     ):
-        st.session_state.pop("_hm_member_restore_retry", None)
         return True
 
     restored = False
@@ -40,8 +35,6 @@ def restore_any_login(required_role: str = ""):
 
     if not restored and normalized_role == "member":
         st.session_state["_hm_expected_login_role"] = "member"
-        if browser_has_legacy_supabase_marker():
-            st.session_state["_hm_legacy_supabase_marker_detected"] = True
         return False
 
     if not restored and auth0_enabled():
@@ -49,13 +42,11 @@ def restore_any_login(required_role: str = ""):
             restored = restore_login_from_token()
         except Exception:
             restored = False
-    if restored:
-        st.session_state.pop("_hm_member_restore_retry", None)
     return bool(restored)
 
 
 def _current_page_filename() -> str:
-    """Return the active Streamlit page filename without URL parsing."""
+    """Return the active Streamlit page filename without relying on URL parsing."""
     for frame in inspect.stack():
         filename = str(frame.filename or "").replace("\\", "/")
         if "/pages/" in filename:
@@ -75,12 +66,11 @@ def _show_access_required(required_role: str = "Admin") -> None:
 
     if normalized_role == "member":
         st.session_state["_hm_access_recovery_message"] = (
-            "Your member session could not be restored after the app restart. "
-            "Please sign in again with the member account."
+            "Your member session is no longer active. Please sign in again with the member account."
         )
     else:
         st.session_state["_hm_access_recovery_message"] = (
-            "Your secure app session needs to be refreshed. Please sign in again."
+            "Your secure app session is no longer active. Please sign in again."
         )
 
     try:
@@ -330,12 +320,7 @@ def require_member():
 
     restore_any_login("member")
     if not st.session_state.get("logged_in"):
-        if not st.session_state.get("_hm_member_restore_retry"):
-            st.session_state["_hm_member_restore_retry"] = True
-            time_module.sleep(0.35)
-            st.rerun()
         _show_access_required("Member")
-    st.session_state.pop("_hm_member_restore_retry", None)
 
     if not current_user_is_member():
         _show_access_required("Member")
