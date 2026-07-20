@@ -1,19 +1,22 @@
 {
-  "build_name": "HealthyMe_Streamlit_H13E_CookieManager_Commit_Reload",
-  "version": "v102.4B15S3H13E",
-  "updated_on": "2026-07-20T13:00:00Z",
-  "base_build": "v102.4B15S3H13D Browser Cookie Reload Handoff",
+  "build_name": "HealthyMe_Streamlit_H13R1_Restore_Working_Supabase_Login",
+  "version": "v102.4B15S3H13R1",
+  "updated_on": "2026-07-20T14:00:00Z",
+  "base_build": "v102.4B15S3H13E CookieManager Commit Reload",
   "scope": [
-    "Fixes the H13D login loop where credentials succeeded but the user returned to Login after the browser reload",
-    "Uses CookieManager only to write the application-domain opaque marker and removes all CookieManager read-back confirmation",
-    "Persists the reload phase before CookieManager.set so component-triggered Streamlit reruns continue safely",
-    "Forces one full parent-browser reload after the marker commit so Streamlit context receives the cookie on the initial request",
-    "Retains the H13C durable Supabase session table, hashed marker, token refresh, role validation and logout revocation"
+    "Removes the failed secure-session handoff from the active Login page",
+    "Restores direct routing after a valid Supabase password login so Admin and Member access work again",
+    "Retains Supabase-only authentication, HealthyMe role validation, single-step logout and stale role-recovery cleanup",
+    "Treats browser refresh persistence as unresolved rather than blocking login",
+    "Stops further iframe and CookieManager persistence patches pending a standards-based OIDC implementation"
+  ],
+  "known_limitations": [
+    "A full browser refresh may require a fresh login until the Supabase OIDC replacement is implemented",
+    "The H13C durable session table remains in Supabase but is not accepted as the active browser-persistence mechanism"
   ],
   "excluded": [
     "No additional SQL migration",
     "No Flutter or Admin Lite code change",
-    "No assessment, report, recommendation, schedule or member-data contract change",
-    "No password, access token or refresh token stored in browser cookies, URLs or local storage"
+    "No assessment, report, recommendation, schedule or member-data contract change"
   ]
 }

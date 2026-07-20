@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-APP_BUILD_VERSION = "v102.4B15S3H13E"
-APP_BUILD_LABEL = "CookieManager Commit Reload"
+APP_BUILD_VERSION = "v102.4B15S3H13R1"
+APP_BUILD_LABEL = "Restore Working Supabase Login"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 

@@ -19,13 +19,6 @@ from components.supabase_auth_session import (
     restore_supabase_login_from_session,
     supabase_auth_configured,
 )
-from components.supabase_cookie_handoff import (
-    arm_cookie_handoff,
-    begin_cookie_handoff,
-    cancel_cookie_handoff,
-    cookie_handoff_pending,
-    process_cookie_handoff,
-)
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
@@ -109,38 +102,6 @@ def _clear_login_request_flags() -> None:
         st.query_params.clear()
     except Exception:
         pass
-
-
-# A successful Supabase password check is not enough to leave this page. The
-# browser must first confirm that the opaque refresh marker was committed.
-if cookie_handoff_pending():
-    handoff_status, handoff_message = process_cookie_handoff()
-    if handoff_status == "confirmed":
-        _route_authenticated_user()
-
-    if handoff_status == "failed":
-        failure_message = handoff_message
-        logout_current_user()
-        st.session_state["auth_error"] = failure_message
-        st.rerun()
-
-    st.markdown(
-        """
-        <div class="login-brand-row">
-          <div>
-            <div class="login-brand-name">HealthyMe</div>
-            <div class="login-brand-sub">Guided wellness assessment platform</div>
-          </div>
-          <div class="login-secure-pill">Supabase secure access</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.info(handoff_message or "Securing your HealthyMe session…")
-    st.caption("Please keep this page open. This normally takes only a moment.")
-    if st.button("Retry secure session", use_container_width=True):
-        st.rerun()
-    st.stop()
 
 
 mode = get_auth_mode()
@@ -276,24 +237,12 @@ with login_col:
                 if submitted:
                     _clear_login_request_flags()
                     st.session_state.pop("auth_error", None)
-                    # Arm before calling Supabase because the older cookie component
-                    # can trigger a rerun inside the login function itself.
-                    arm_cookie_handoff()
                     if login_with_supabase_password(email, password):
-                        if begin_cookie_handoff():
-                            st.rerun()
-                        cancel_cookie_handoff()
-                        login_status_message = (
-                            "HealthyMe could not prepare the secure browser session. "
-                            "Please sign in again."
-                        )
-                        login_status_level = "error"
-                    else:
-                        cancel_cookie_handoff()
-                        login_status_message = str(
-                            st.session_state.pop("auth_error", "Supabase login failed.")
-                        )
-                        login_status_level = "error"
+                        _route_authenticated_user()
+                    login_status_message = str(
+                        st.session_state.pop("auth_error", "Supabase login failed.")
+                    )
+                    login_status_level = "error"
 
         st.markdown(
             _notice_html(login_status_message, login_status_level, inline=True),
