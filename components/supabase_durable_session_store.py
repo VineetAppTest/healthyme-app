@@ -15,6 +15,7 @@ from typing import Any, Dict, Optional
 import streamlit as st
 
 SESSION_TABLE = "hm_streamlit_auth_sessions"
+SECRET_SECTIONS = ("auth", "auth0", "authentication", "healthyme", "supabase")
 
 
 class DurableSessionStoreError(RuntimeError):
@@ -24,12 +25,33 @@ class DurableSessionStoreError(RuntimeError):
 def _get_secret(name: str, default: str = "") -> str:
     value = os.environ.get(name)
     if value:
-        return str(value)
+        return str(value).strip()
+
     try:
-        value = st.secrets.get(name, default)
-        return str(value) if value is not None else default
+        value = st.secrets.get(name)
+        if value is not None:
+            return str(value).strip()
+
+        lower_name = name.lower()
+        value = st.secrets.get(lower_name)
+        if value is not None:
+            return str(value).strip()
+
+        for section in SECRET_SECTIONS:
+            section_values = st.secrets.get(section)
+            if not section_values:
+                continue
+            try:
+                value = section_values.get(name)
+                if value is None:
+                    value = section_values.get(lower_name)
+                if value is not None:
+                    return str(value).strip()
+            except Exception:
+                continue
     except Exception:
-        return default
+        pass
+    return default
 
 
 def durable_session_store_configured() -> bool:
@@ -114,7 +136,7 @@ def create_session(
     token_expires_at: Any,
     ttl_seconds: int,
 ) -> Dict[str, Any]:
-    """Create one durable session row and revoke older active rows for the user."""
+    """Create one durable session row and preserve other device sessions."""
     clean_email = str(user_email or "").strip().lower()
     clean_access_token = str(access_token or "").strip()
     clean_refresh_token = str(refresh_token or "").strip()
@@ -146,16 +168,8 @@ def create_session(
 
     client = _service_client()
     try:
-        # One active browser session per HealthyMe email. This also retires stale
-        # H13C markers when the same person explicitly signs in again.
-        client.table(SESSION_TABLE).update(
-            {
-                "revoked_at": _iso(now),
-                "access_token": None,
-                "refresh_token": None,
-            }
-        ).eq("user_email", clean_email).is_("revoked_at", "null").execute()
-
+        # Marker rotation for the same browser is handled by the auth layer. Do not
+        # revoke sessions on other devices merely because the email is the same.
         response = client.table(SESSION_TABLE).insert(row).execute()
         data = _response_data(response) or []
         if isinstance(data, list) and data:
