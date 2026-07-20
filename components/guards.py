@@ -33,15 +33,18 @@ def restore_any_login(required_role: str = ""):
         except Exception:
             restored = False
 
-    if not restored and normalized_role == "member":
-        st.session_state["_hm_expected_login_role"] = "member"
-        return False
-
+    # Native OIDC must be checked before the member-specific recovery fallback.
+    # Otherwise a valid Streamlit identity cookie is ignored on Member page refresh.
     if not restored and auth0_enabled():
         try:
             restored = restore_login_from_token()
         except Exception:
             restored = False
+
+    if not restored and normalized_role == "member":
+        st.session_state["_hm_expected_login_role"] = "member"
+        return False
+
     return bool(restored)
 
 
