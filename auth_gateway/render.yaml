@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: healthyme-auth-gateway-poc
+    runtime: docker
+    dockerfilePath: ./auth_gateway/Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeploy: false
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GATEWAY_SIGNING_SECRET
+        generateValue: true
+      - key: STREAMLIT_RETURN_URL
+        sync: false
+      - key: SESSION_COOKIE_DOMAIN
+        value: .healthyme.in
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SESSION_TTL_SECONDS
+        value: "43200"
