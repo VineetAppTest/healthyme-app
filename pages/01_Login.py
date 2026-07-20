@@ -20,7 +20,9 @@ from components.supabase_auth_session import (
     supabase_auth_configured,
 )
 from components.supabase_cookie_handoff import (
+    arm_cookie_handoff,
     begin_cookie_handoff,
+    cancel_cookie_handoff,
     cookie_handoff_pending,
     process_cookie_handoff,
 )
@@ -274,15 +276,20 @@ with login_col:
                 if submitted:
                     _clear_login_request_flags()
                     st.session_state.pop("auth_error", None)
+                    # Arm before calling Supabase because the older cookie component
+                    # can trigger a rerun inside the login function itself.
+                    arm_cookie_handoff()
                     if login_with_supabase_password(email, password):
                         if begin_cookie_handoff():
                             st.rerun()
+                        cancel_cookie_handoff()
                         login_status_message = (
                             "HealthyMe could not prepare the secure browser session. "
                             "Please sign in again."
                         )
                         login_status_level = "error"
                     else:
+                        cancel_cookie_handoff()
                         login_status_message = str(
                             st.session_state.pop("auth_error", "Supabase login failed.")
                         )
