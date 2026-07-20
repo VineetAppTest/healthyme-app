@@ -1,10 +1,14 @@
 import streamlit as st
+
 from components.admin_role_model import apply_app_user_to_session, resolve_app_user
 
 
 SECURE_LOGOUT_MESSAGE_KEY = "_hm_secure_logout_feedback"
-SECURE_LOGOUT_SUCCESS_MESSAGE = "Complete secure logout successful. Please open a fresh login session before switching users."
-SECURE_LOGOUT_WARNING_MESSAGE = "Complete secure logout could not be fully confirmed. Please close this browser/incognito window before switching users."
+SECURE_LOGOUT_SUCCESS_MESSAGE = "You have been signed out securely."
+SECURE_LOGOUT_WARNING_MESSAGE = (
+    "Your HealthyMe session was cleared, but Supabase could not confirm remote sign-out. "
+    "Please close this browser tab before switching users."
+)
 
 
 def oidc_is_logged_in():
@@ -65,13 +69,17 @@ def restore_login_from_token():
     ok, app_user, message = resolve_app_user(email=email)
     if not ok or not app_user:
         st.session_state["logged_in"] = False
-        st.session_state["auth_error"] = f"{email or 'This email'} is authenticated but not authorized in HealthyMe. {message}"
+        st.session_state["auth_error"] = (
+            f"{email or 'This email'} is authenticated but not authorized in HealthyMe. {message}"
+        )
         return False
     return _apply_user_to_session(app_user, email, auth_method="auth0")
 
 
 def login_with_supabase_password(email, password):
     from components.supabase_auth_session import sign_in_with_supabase
+
+    st.session_state.pop("auth_error", None)
     ok, message = sign_in_with_supabase(email, password)
     if not ok:
         st.session_state["logged_in"] = False
@@ -94,10 +102,13 @@ def pop_secure_logout_feedback():
     return None
 
 
-def clear_app_session_for_logout(feedback_level="success", feedback_message=SECURE_LOGOUT_SUCCESS_MESSAGE):
-    for k in list(st.session_state.keys()):
+def clear_app_session_for_logout(
+    feedback_level="success",
+    feedback_message=SECURE_LOGOUT_SUCCESS_MESSAGE,
+):
+    for key in list(st.session_state.keys()):
         try:
-            del st.session_state[k]
+            del st.session_state[key]
         except Exception:
             pass
     st.session_state["signed_out"] = True
@@ -109,19 +120,25 @@ def logout_current_user():
     provider = st.session_state.get("auth_provider")
     login_method = st.session_state.get("auth_login_method")
     had_oidc_session = oidc_is_logged_in()
-    logout_warning = False
 
     if provider == "supabase" or login_method == "supabase":
+        remote_logout_ok = True
         try:
             from components.supabase_auth_session import clear_supabase_auth_session
-            clear_supabase_auth_session()
+
+            remote_logout_ok = bool(clear_supabase_auth_session())
         except Exception:
-            logout_warning = True
+            remote_logout_ok = False
+
         clear_app_session_for_logout(
-            feedback_level="warning" if logout_warning else "success",
-            feedback_message=SECURE_LOGOUT_WARNING_MESSAGE if logout_warning else SECURE_LOGOUT_SUCCESS_MESSAGE,
+            feedback_level="success" if remote_logout_ok else "warning",
+            feedback_message=(
+                SECURE_LOGOUT_SUCCESS_MESSAGE
+                if remote_logout_ok
+                else SECURE_LOGOUT_WARNING_MESSAGE
+            ),
         )
-        return
+        return remote_logout_ok
 
     clear_app_session_for_logout()
     if had_oidc_session:
@@ -130,5 +147,10 @@ def logout_current_user():
         except Exception:
             clear_app_session_for_logout(
                 feedback_level="warning",
-                feedback_message=SECURE_LOGOUT_WARNING_MESSAGE,
+                feedback_message=(
+                    "Your HealthyMe session was cleared, but the Auth0 browser session "
+                    "could not be fully confirmed. Please close this browser tab."
+                ),
             )
+            return False
+    return True
