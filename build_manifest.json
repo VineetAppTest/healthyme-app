@@ -1,20 +1,20 @@
 {
-  "build_name": "HealthyMe_Streamlit_H13_Supabase_Auth_Stability",
-  "version": "v102.4B15S3H13",
-  "updated_on": "2026-07-20T07:30:00Z",
-  "base_build": "v102.4B15S3H12 Streamlit Supabase Admin Auth Cutover",
+  "build_name": "HealthyMe_Streamlit_H13A_Supabase_Refresh_Persistence_Role_Switch_Fix",
+  "version": "v102.4B15S3H13A",
+  "updated_on": "2026-07-20T08:00:00Z",
+  "base_build": "v102.4B15S3H13 Supabase Auth Stability",
   "scope": [
-    "Keeps Streamlit authentication on the configured Supabase-only path without restoring stale Auth0 identity from the root route",
-    "Stores the active Supabase refresh session in Streamlit session state and refreshes expiring access tokens",
-    "Attempts Supabase remote sign-out before clearing all local HealthyMe identity and role state",
-    "Reworks login and logout feedback into reserved layout slots so the adjacent journey panel does not shift after submission",
-    "Removes the redundant second Supabase clear-session action from the login page"
+    "Persists Supabase login across normal browser refresh using a random opaque SameSite cookie marker backed by a server-side session registry",
+    "Keeps Supabase access and refresh tokens server-side and refreshes expiring access tokens without exposing credentials in URL or browser local storage",
+    "Clears stale member-recovery hints so an explicit later Admin login routes by the authenticated HealthyMe role",
+    "Retains the stable login-layout slots and single-step logout flow from H13",
+    "Removes the retired v1 browser marker during logout and stale-session recovery"
   ],
   "excluded": [
     "No Flutter or Admin Lite code change",
     "No Supabase SQL or schema migration",
     "No assessment, report, recommendation, or member-data logic change",
-    "No browser token or credential stored in URL or local storage",
-    "No promise of session recovery after a Render process restart; a fresh sign-in remains required"
+    "No password, access token, or refresh token stored in browser cookies or local storage",
+    "A Render process restart still requires a fresh sign-in because the secure token registry is process-local"
   ]
 }
