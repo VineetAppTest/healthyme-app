@@ -91,9 +91,21 @@ def _apply_user_to_session(
 
 
 def restore_login_from_token():
-    if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
+    has_native_identity = oidc_is_logged_in()
+
+    # Streamlit can retain signed_out/logout_requested in an existing tab even after
+    # a fresh native OIDC identity cookie has been issued. A new tab has clean
+    # session_state, which is why it restored while a refresh of the original tab did
+    # not. Treat a valid native identity as the source of truth unless a prior native
+    # logout explicitly failed.
+    if has_native_identity:
+        if st.session_state.get("_hm_oidc_logout_failed"):
+            return False
+        st.session_state.pop("signed_out", None)
+        st.session_state.pop("logout_requested", None)
+    elif st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
         return False
-    if not oidc_is_logged_in():
+    else:
         return False
 
     email = get_oidc_email()
@@ -183,7 +195,6 @@ def logout_current_user():
             remote_logout_ok = bool(clear_supabase_auth_session())
         except Exception:
             remote_logout_ok = False
-
         clear_app_session_for_logout(
             feedback_level="success" if remote_logout_ok else "warning",
             feedback_message=(
@@ -199,6 +210,7 @@ def logout_current_user():
         try:
             st.logout()
         except Exception:
+            st.session_state["_hm_oidc_logout_failed"] = True
             clear_app_session_for_logout(
                 feedback_level="warning",
                 feedback_message=(
@@ -206,5 +218,6 @@ def logout_current_user():
                     "session could not be fully confirmed. Please close this browser tab."
                 ),
             )
+            st.session_state["_hm_oidc_logout_failed"] = True
             return False
     return True
