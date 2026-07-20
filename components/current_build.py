@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-APP_BUILD_VERSION = "v102.4B15S3H13C"
-APP_BUILD_LABEL = "Supabase Durable Refresh Sessions"
+APP_BUILD_VERSION = "v102.4B15S3H13D"
+APP_BUILD_LABEL = "Browser Cookie Reload Handoff"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 
