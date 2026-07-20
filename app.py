@@ -25,7 +25,27 @@ if not restored and auth0_enabled():
     restored = restore_login_from_token()
 
 if restored:
-    if is_admin_role(st.session_state.get("user_role")):
+    is_admin = is_admin_role(st.session_state.get("user_role"))
+    restored_role = "admin" if is_admin else "member"
+    requested_page = str(
+        st.session_state.pop("_hm_requested_page_after_login", "") or ""
+    )
+    requested_role = str(
+        st.session_state.pop("_hm_requested_role_after_bootstrap", "") or ""
+    ).strip().lower()
+
+    # A hard refresh of a legacy Streamlit multipage URL can start the page script
+    # without the HealthyMe role session even though the native OIDC cookie is still
+    # valid. Protected pages route here once so the entrypoint can rebuild the role
+    # session, then return the user to the exact page only when the role matches.
+    if (
+        requested_page.startswith("pages/")
+        and requested_page != "pages/01_Login.py"
+        and requested_role == restored_role
+    ):
+        st.switch_page(requested_page)
+
+    if is_admin:
         st.switch_page("pages/10_Admin_Dashboard.py")
     else:
         st.switch_page("pages/02_Member_Home.py")
