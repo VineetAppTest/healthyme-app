@@ -84,6 +84,11 @@ before update on public.hm_streamlit_auth_sessions
 for each row
 execute function public.hm_set_streamlit_auth_session_updated_at();
 
+revoke all on function public.hm_set_streamlit_auth_session_updated_at() from public;
+revoke all on function public.hm_set_streamlit_auth_session_updated_at() from anon;
+revoke all on function public.hm_set_streamlit_auth_session_updated_at() from authenticated;
+grant execute on function public.hm_set_streamlit_auth_session_updated_at() to service_role;
+
 create or replace function public.hm_cleanup_streamlit_auth_sessions(
     p_retention_days integer default 7
 )
