@@ -54,9 +54,7 @@ def _route_authenticated_user() -> None:
     requested_page = str(
         st.session_state.pop("_hm_requested_page_after_login", "") or ""
     )
-    expected_role = str(
-        st.session_state.pop("_hm_expected_login_role", "") or ""
-    ).strip().lower()
+    st.session_state.pop("_hm_expected_login_role", None)
     is_admin = is_admin_role(st.session_state.get("user_role"))
 
     if requested_page.startswith("pages/") and requested_page != "pages/01_Login.py":
@@ -72,13 +70,8 @@ def _route_authenticated_user() -> None:
             except Exception:
                 pass
 
-    if expected_role == "member" and is_admin:
-        st.session_state["auth_error"] = (
-            "An admin account was detected while a member page was being recovered. "
-            "Please sign out and use the member account."
-        )
-        return
-
+    # The authenticated HealthyMe role is authoritative. A stale member-recovery
+    # hint must never block a later explicit admin login.
     if is_admin:
         st.switch_page("pages/10_Admin_Dashboard.py")
     else:
@@ -103,6 +96,8 @@ def _notice_html(message: str = "", level: str = "info", *, inline: bool = False
 def _clear_login_request_flags() -> None:
     st.session_state.pop("signed_out", None)
     st.session_state.pop("logout_requested", None)
+    st.session_state.pop("_hm_legacy_supabase_marker_detected", None)
+    st.session_state.pop("_hm_member_restore_retry", None)
     try:
         st.query_params.clear()
     except Exception:
@@ -158,7 +153,6 @@ else:
         page_notice_message = str(recovery_message)
         page_notice_level = "info"
 
-# Retired cookie markers are informational only and never trigger authentication.
 st.session_state.pop("_hm_legacy_supabase_marker_detected", None)
 
 st.markdown(
@@ -311,7 +305,7 @@ st.markdown(
     <div class="login-feature-strip">
       <div class="login-feature"><b>Secure</b><span>{html.escape(feature_auth_label)}</span></div>
       <div class="login-feature"><b>Role-based</b><span>Admin / Member</span></div>
-      <div class="login-feature"><b>Private</b><span>No URL token</span></div>
+      <div class="login-feature"><b>Private</b><span>Opaque session marker</span></div>
     </div>
     """,
     unsafe_allow_html=True,
