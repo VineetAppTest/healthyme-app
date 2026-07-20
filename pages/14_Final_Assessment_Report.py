@@ -5,11 +5,13 @@ from components.guards import require_admin
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_page_nav, priority_action_start, priority_action_end, render_build_text_v14, render_back_to_top, compact_topbar
 from components.db import load_db, get_workflow, get_admin_assessment, is_instance_final_report_ready
 from components.report_engine import build_full_admin_report, summary_preview_rows, prepare_report_db, report_data_diagnostics
+from components.assessment_report_systems import add_systems_column_to_final_report
 
 @st.cache_data(show_spinner=False, ttl=300)
 def build_full_admin_report_cached(db_payload_json: str, member_id: str):
     """Cache final report bytes so UI-only actions do not regenerate the Excel file."""
-    return build_full_admin_report(json.loads(db_payload_json), member_id)
+    report_bytes = build_full_admin_report(json.loads(db_payload_json), member_id)
+    return add_systems_column_to_final_report(report_bytes)
 
 st.set_page_config(page_title="Final Assessment Report", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
