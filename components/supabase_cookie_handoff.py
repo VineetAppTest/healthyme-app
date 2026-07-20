@@ -1,18 +1,20 @@
-"""Confirmed browser-cookie handoff for Streamlit Supabase login.
+"""Browser-cookie handoff for HealthyMe Streamlit Supabase login.
 
-The extra-streamlit-components cookie API is asynchronous. A successful Supabase
-login must therefore remain on the Login page until the browser confirms that the
-opaque HealthyMe session marker was actually written. Only the marker is stored in
-the browser; Supabase access and refresh tokens remain in the server-side registry.
+H13D removes the asynchronous CookieManager read-back loop that could leave the
+Login page permanently stuck on “Securing your HealthyMe session…”. A successful
+login now commits the opaque marker in the browser and performs one full browser
+reload. The new Streamlit session then reads the marker from ``st.context.cookies``
+and restores the durable Supabase session.
 """
 
 from __future__ import annotations
 
-import datetime
+import json
 import time
 from typing import Literal, Tuple
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from components.supabase_auth_session import (
     SUPABASE_BROWSER_COOKIE_NAME,
@@ -24,45 +26,25 @@ from components.supabase_auth_session import (
 
 HANDOFF_ARMED_KEY = "_hm_supabase_cookie_handoff_armed"
 HANDOFF_PENDING_KEY = "_hm_supabase_cookie_handoff_pending"
-HANDOFF_PHASE_KEY = "_hm_supabase_cookie_handoff_phase"
 HANDOFF_STARTED_AT_KEY = "_hm_supabase_cookie_handoff_started_at"
-HANDOFF_MANAGER_KEY = "_hm_supabase_cookie_manager_v3"
+HANDOFF_RENDERED_KEY = "_hm_supabase_cookie_handoff_rendered"
 HANDOFF_TIMEOUT_SECONDS = 20
 
 HandoffStatus = Literal["not_pending", "waiting", "confirmed", "failed"]
-
-
-def _manager():
-    """Create the browser component only once for the current Streamlit session."""
-    manager = st.session_state.get(HANDOFF_MANAGER_KEY)
-    if manager is not None:
-        return manager
-
-    import extra_streamlit_components as stx
-
-    manager = stx.CookieManager(key="hm_supabase_cookie_manager_v3")
-    st.session_state[HANDOFF_MANAGER_KEY] = manager
-    return manager
 
 
 def clear_cookie_handoff_state() -> None:
     for key in (
         HANDOFF_ARMED_KEY,
         HANDOFF_PENDING_KEY,
-        HANDOFF_PHASE_KEY,
         HANDOFF_STARTED_AT_KEY,
+        HANDOFF_RENDERED_KEY,
     ):
         st.session_state.pop(key, None)
 
 
 def arm_cookie_handoff() -> None:
-    """Arm the handoff before calling Supabase login.
-
-    The older H13A login path invokes a cookie component while storing the server
-    record. That component can trigger a rerun before the password-login function
-    returns. Arming first lets the next run discover the newly created marker and
-    continue through confirmation instead of routing immediately.
-    """
+    """Arm before Supabase login so component-triggered reruns cannot lose state."""
     clear_cookie_handoff_state()
     st.session_state[HANDOFF_ARMED_KEY] = True
 
@@ -72,7 +54,7 @@ def cancel_cookie_handoff() -> None:
 
 
 def begin_cookie_handoff() -> bool:
-    """Start the two-phase cookie write and confirmation process."""
+    """Prepare the opaque browser marker for one browser-level commit/reload."""
     marker = str(
         st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or ""
     ).strip()
@@ -81,8 +63,8 @@ def begin_cookie_handoff() -> bool:
 
     st.session_state.pop(HANDOFF_ARMED_KEY, None)
     st.session_state[HANDOFF_PENDING_KEY] = marker
-    st.session_state[HANDOFF_PHASE_KEY] = "write"
     st.session_state[HANDOFF_STARTED_AT_KEY] = time.time()
+    st.session_state[HANDOFF_RENDERED_KEY] = False
     st.session_state[SUPABASE_BROWSER_COOKIE_WRITE_KEY] = False
     return True
 
@@ -92,8 +74,7 @@ def cookie_handoff_pending() -> bool:
     if pending_marker:
         return True
 
-    # Recover when the existing H13A component reruns the script before the login
-    # call has returned to pages/01_Login.py.
+    # Recover when the login call itself was interrupted by a Streamlit rerun.
     if st.session_state.get(HANDOFF_ARMED_KEY):
         marker = str(
             st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or ""
@@ -103,12 +84,51 @@ def cookie_handoff_pending() -> bool:
     return False
 
 
-def process_cookie_handoff() -> Tuple[HandoffStatus, str]:
-    """Write the opaque marker, then confirm it from the browser component.
+def _render_cookie_commit_and_reload(marker: str) -> None:
+    """Set the opaque marker and reload the parent browser after it commits.
 
-    Component calls may trigger Streamlit reruns. The phase is persisted before a
-    component invocation so the next run continues safely instead of repeating the
-    login or routing before the browser has committed the cookie.
+    ``st.context.cookies`` is populated only from the initial browser request. A
+    normal Streamlit script rerun is therefore insufficient. The full browser reload
+    is intentional and occurs once immediately after a successful login.
+    """
+    cookie_name = json.dumps(SUPABASE_BROWSER_COOKIE_NAME)
+    cookie_value = json.dumps(marker)
+    ttl_seconds = int(_browser_session_ttl_seconds())
+    secure_attribute = "; Secure" if _browser_cookie_is_secure() else ""
+
+    components.html(
+        f"""
+        <script>
+        (() => {{
+          const cookieName = {cookie_name};
+          const cookieValue = {cookie_value};
+          const attributes = "Path=/; Max-Age={ttl_seconds}; SameSite=Strict{secure_attribute}";
+          document.cookie = `${{cookieName}}=${{encodeURIComponent(cookieValue)}}; ${{attributes}}`;
+
+          const committed = document.cookie
+            .split("; ")
+            .some((row) => row.startsWith(`${{cookieName}}=`));
+
+          window.setTimeout(() => {{
+            try {{
+              window.parent.location.reload();
+            }} catch (error) {{
+              window.location.reload();
+            }}
+          }}, committed ? 700 : 1300);
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
+def process_cookie_handoff() -> Tuple[HandoffStatus, str]:
+    """Commit the marker and wait for a full browser reload.
+
+    This function deliberately does not use CookieManager ``get_all`` confirmation.
+    That custom-component read-back was the source of the deployed H13C wait loop.
     """
     marker = str(st.session_state.get(HANDOFF_PENDING_KEY) or "").strip()
     if not marker:
@@ -126,35 +146,10 @@ def process_cookie_handoff() -> Tuple[HandoffStatus, str]:
         clear_cookie_handoff_state()
         return (
             "failed",
-            "HealthyMe could not confirm the secure browser session. Please sign in again.",
+            "HealthyMe could not complete the secure browser handoff. Please sign in again.",
         )
 
-    manager = _manager()
-    phase = str(st.session_state.get(HANDOFF_PHASE_KEY) or "write")
-    key_suffix = marker[:12]
-
-    if phase == "write":
-        # Persist the next phase before invoking the browser component because the
-        # component can itself trigger a Streamlit rerun.
-        st.session_state[HANDOFF_PHASE_KEY] = "confirm"
-        manager.set(
-            SUPABASE_BROWSER_COOKIE_NAME,
-            marker,
-            key=f"hm_supabase_handoff_set_{key_suffix}",
-            path="/",
-            expires_at=datetime.datetime.now() + datetime.timedelta(
-                seconds=_browser_session_ttl_seconds()
-            ),
-            secure=_browser_cookie_is_secure(),
-            same_site="strict",
-        )
-        return "waiting", "Securing your HealthyMe session…"
-
-    cookies = manager.get_all(key=f"hm_supabase_handoff_confirm_{key_suffix}") or {}
-    confirmed_marker = str(cookies.get(SUPABASE_BROWSER_COOKIE_NAME) or "").strip()
-    if confirmed_marker == marker:
-        clear_cookie_handoff_state()
-        st.session_state[SUPABASE_BROWSER_COOKIE_WRITE_KEY] = True
-        return "confirmed", "Secure session confirmed."
-
+    st.session_state[HANDOFF_RENDERED_KEY] = True
+    st.session_state[SUPABASE_BROWSER_COOKIE_WRITE_KEY] = True
+    _render_cookie_commit_and_reload(marker)
     return "waiting", "Securing your HealthyMe session…"
