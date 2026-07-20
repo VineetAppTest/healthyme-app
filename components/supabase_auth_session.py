@@ -47,6 +47,7 @@ RESTORE_COOKIE_PROBE_STARTED_KEY = "_hm_h13c_restore_cookie_probe_started"
 RESTORE_COOKIE_PROBE_COMPLETE_KEY = "_hm_h13c_restore_cookie_probe_complete"
 LAST_DURABLE_TOUCH_KEY = "_hm_h13c_last_durable_touch"
 DURABLE_CLEANUP_ATTEMPTED_KEY = "_hm_h13c_cleanup_attempted"
+SECRET_SECTIONS = ("auth", "auth0", "authentication", "healthyme", "supabase")
 
 ROLE_SESSION_KEYS = [
     "logged_in",
@@ -85,12 +86,33 @@ HANDOFF_SESSION_KEYS = [
 def _get_secret(name: str, default: str = "") -> str:
     value = os.environ.get(name)
     if value:
-        return str(value)
+        return str(value).strip()
+
     try:
-        value = st.secrets.get(name, default)
-        return str(value) if value is not None else default
+        value = st.secrets.get(name)
+        if value is not None:
+            return str(value).strip()
+
+        lower_name = name.lower()
+        value = st.secrets.get(lower_name)
+        if value is not None:
+            return str(value).strip()
+
+        for section in SECRET_SECTIONS:
+            section_values = st.secrets.get(section)
+            if not section_values:
+                continue
+            try:
+                value = section_values.get(name)
+                if value is None:
+                    value = section_values.get(lower_name)
+                if value is not None:
+                    return str(value).strip()
+            except Exception:
+                continue
     except Exception:
-        return default
+        pass
+    return default
 
 
 def _positive_int_secret(name: str, default: int, minimum: int) -> int:
@@ -325,6 +347,7 @@ def _component_cookie(cookie_name: str, *, allow_probe: bool) -> str:
     if first_probe:
         # The browser component now mounts and sends its cookie dictionary back,
         # which triggers a Streamlit rerun. Stop this run before a guard redirects.
+        st.info("Restoring your secure HealthyMe session…")
         st.stop()
 
     st.session_state.pop(RESTORE_COOKIE_PROBE_STARTED_KEY, None)
@@ -623,7 +646,7 @@ def _refresh_active_session_if_needed(force: bool = False) -> bool:
     ).strip()
     expires_at = st.session_state.get(SUPABASE_EXPIRES_AT_KEY)
 
-    if not refresh_token:
+    if not marker or not refresh_token:
         return False
 
     if force or _token_needs_refresh(expires_at, refresh_token):
@@ -632,30 +655,87 @@ def _refresh_active_session_if_needed(force: bool = False) -> bool:
             refresh_token,
         )
         if not ok:
+            revoke_session(marker)
             return False
         _store_session_payload(payload)
-        if marker:
-            try:
-                update_tokens(
-                    marker=marker,
-                    access_token=str(payload.get("access_token") or ""),
-                    refresh_token=str(payload.get("refresh_token") or ""),
-                    token_expires_at=payload.get("expires_at"),
-                    ttl_seconds=_browser_session_ttl_seconds(),
-                )
-            except DurableSessionStoreError:
-                return False
+        try:
+            update_tokens(
+                marker=marker,
+                access_token=str(payload.get("access_token") or ""),
+                refresh_token=str(payload.get("refresh_token") or ""),
+                token_expires_at=payload.get("expires_at"),
+                ttl_seconds=_browser_session_ttl_seconds(),
+            )
+        except DurableSessionStoreError:
+            return False
+
+    now = time.time()
+    role_refreshed_at = float(
+        st.session_state.get(SUPABASE_ROLE_REFRESHED_AT_KEY)
+        or 0
+    )
+    if now - role_refreshed_at >= _role_refresh_interval_seconds():
+        try:
+            record = load_session(marker)
+        except DurableSessionStoreError:
+            return False
+        if not record:
+            return False
+
+        email = str(
+            st.session_state.get("supabase_auth_email")
+            or st.session_state.get("user_email")
+            or record.get("user_email")
+            or ""
+        ).strip().lower()
+        auth_user_id = str(
+            st.session_state.get("supabase_auth_user_id")
+            or record.get("auth_user_id")
+            or ""
+        ).strip()
+        app_user = _find_authorized_user(email, auth_user_id)
+        if not app_user:
+            revoke_session(marker)
+            return False
+
+        if not _apply_supabase_user_to_session(
+            app_user,
+            email,
+            auth_user_id=auth_user_id,
+            access_token=str(
+                st.session_state.get("supabase_access_token")
+                or record.get("access_token")
+                or ""
+            ).strip(),
+        ):
+            return False
+        try:
+            update_role_snapshot(
+                marker=marker,
+                app_role=str(
+                    app_user.get("role")
+                    or app_user.get("user_role")
+                    or ""
+                ),
+                app_user_snapshot=dict(app_user),
+            )
+        except DurableSessionStoreError:
+            # The role was revalidated successfully. A transient snapshot-write
+            # failure must not log out an otherwise valid active session.
+            pass
 
     last_touch = float(
         st.session_state.get(LAST_DURABLE_TOUCH_KEY)
         or 0
     )
-    if marker and time.time() - last_touch >= _role_refresh_interval_seconds():
+    if now - last_touch >= _role_refresh_interval_seconds():
         try:
             touch_session(marker, _browser_session_ttl_seconds())
-            st.session_state[LAST_DURABLE_TOUCH_KEY] = time.time()
+            st.session_state[LAST_DURABLE_TOUCH_KEY] = now
         except DurableSessionStoreError:
-            return False
+            # Keep the active session; the durable expiry remains unchanged and a
+            # later refresh will retry against the authoritative store.
+            pass
     return True
 
 
