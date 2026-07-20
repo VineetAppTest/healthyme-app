@@ -93,14 +93,7 @@ def _apply_user_to_session(
 def restore_login_from_token():
     has_native_identity = oidc_is_logged_in()
 
-    # Streamlit can retain signed_out/logout_requested in an existing tab even after
-    # a fresh native OIDC identity cookie has been issued. A new tab has clean
-    # session_state, which is why it restored while a refresh of the original tab did
-    # not. Treat a valid native identity as the source of truth unless a prior native
-    # logout explicitly failed.
     if has_native_identity:
-        if st.session_state.get("_hm_oidc_logout_failed"):
-            return False
         st.session_state.pop("signed_out", None)
         st.session_state.pop("logout_requested", None)
     elif st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
@@ -183,15 +176,14 @@ def clear_app_session_for_logout(
 
 
 def logout_current_user():
+    # In the OIDC PoC, navigate to a dedicated page that executes st.logout()
+    # immediately at the top level. This avoids page-guard or button-rerun logic
+    # interfering with Streamlit's cookie-deletion redirect.
+    if oidc_is_logged_in():
+        st.switch_page("pages/00_Native_Logout.py")
+
     provider = st.session_state.get("auth_provider")
     login_method = st.session_state.get("auth_login_method")
-
-    # Native OIDC logout must be called directly. Streamlit uses an internal
-    # control-flow redirect to delete its identity cookie and create a new session;
-    # wrapping st.logout() in a broad try/except can swallow that redirect and leave
-    # the user signed in.
-    if oidc_is_logged_in():
-        st.logout()
 
     if provider == "supabase" or login_method == "supabase":
         remote_logout_ok = True
