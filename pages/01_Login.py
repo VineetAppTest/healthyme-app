@@ -9,10 +9,7 @@ from components.auth_mode import (
     oidc_provider_name,
     supabase_oidc_poc_enabled,
 )
-from components.auth_session import (
-    logout_current_user,
-    restore_login_from_token,
-)
+from components.auth_session import restore_login_from_token
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
@@ -52,12 +49,45 @@ def _route_authenticated_user() -> None:
         st.switch_page("pages/02_Member_Home.py")
 
 
+def _logout_was_requested() -> bool:
+    if st.session_state.get("logout_requested") or st.session_state.get("signed_out"):
+        return True
+    try:
+        return str(st.query_params.get("logout") or "").strip() == "1"
+    except Exception:
+        return False
+
+
+def _clear_local_logout_state() -> None:
+    for key in list(st.session_state.keys()):
+        try:
+            del st.session_state[key]
+        except Exception:
+            pass
+    try:
+        st.query_params.clear()
+    except Exception:
+        pass
+
+
 if not supabase_oidc_poc_enabled():
     st.error(
         "This branch is the isolated Supabase OIDC proof of concept. "
         "Set AUTH_MODE='supabase_oidc_poc' in the temporary Streamlit app secrets."
     )
     st.stop()
+
+# Logout must be handled before any identity restoration. The dashboard sets a
+# session flag before navigating here; otherwise the valid Streamlit identity
+# cookie would immediately rebuild the HealthyMe session and route back.
+if _logout_was_requested():
+    try:
+        st.query_params.clear()
+    except Exception:
+        pass
+    if st.user.is_logged_in:
+        st.logout()
+    _clear_local_logout_state()
 
 if restore_login_from_token():
     _route_authenticated_user()
@@ -124,4 +154,4 @@ with right:
 
 if st.user.is_logged_in:
     if st.button("Clear test identity", use_container_width=True):
-        logout_current_user()
+        st.logout()
