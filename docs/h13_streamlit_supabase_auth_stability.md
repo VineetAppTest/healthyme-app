@@ -1,78 +1,83 @@
-# H13A — Streamlit Supabase Auth Stability Correction
+# H13B — Streamlit Supabase Cookie Confirmation Handoff
 
 ## Objective
 
-Correct the failed H13 smoke-test items before starting Flutter Admin Lite:
+Correct the deployed H13A browser-refresh failure before starting Flutter Admin Lite.
 
-- normal browser refresh must retain an active Supabase Admin or Member login;
-- a stale Member recovery hint must not block a later explicit Admin login;
-- logout and login-page layout must remain stable.
+The deployed smoke test showed that Admin Dashboard, Member Home, Daily Log and My Schedule all returned to Login after a full browser refresh. The screenshot message was: “Your member session is no longer active. Please sign in again with the member account.”
 
 Streamlit remains on `AUTH_MODE=supabase`; this build does not add another production authentication route.
 
-## Changes
+## Root cause
 
-- A successful Supabase login creates a random opaque browser-session marker.
-- The browser receives only that marker in a Secure, SameSite cookie. Supabase access and refresh tokens remain in the Streamlit server process.
-- Normal browser refresh restores the matching server-side session and re-applies the authorized HealthyMe role.
-- Expiring Supabase access tokens are refreshed through the server-held refresh token.
-- Active user-role data is cached briefly for refresh speed and periodically revalidated.
-- Logout attempts Supabase remote sign-out, removes the server record, expires both the current v2 marker and retired v1 marker, and clears HealthyMe state.
-- The authenticated HealthyMe role is authoritative after login. A stale `_hm_expected_login_role=member` recovery hint no longer rejects a valid Admin login.
-- The H13 reserved login/error/logout status areas and single-step logout flow are retained.
+H13A created the server-side Supabase session record and invoked the browser-cookie component, but immediately routed away from Login. The cookie component is asynchronous and may trigger its own Streamlit rerun. Therefore the page change could occur before the browser had actually committed the opaque session marker.
+
+Pattern observed:
+
+`Supabase login succeeds → server record exists → page switches before cookie confirmation → full refresh starts a new Streamlit session without the marker → protected-page guard returns to Login`
+
+## H13B correction
+
+- A successful Supabase password login no longer routes immediately.
+- Login begins a two-phase browser handoff:
+  1. write the opaque `hm_supabase_sid_v2` marker;
+  2. read all browser cookies back through the component and confirm the exact marker.
+- The handoff phase is saved before each component invocation so component-triggered reruns continue safely.
+- The cookie manager is initialized once per Streamlit session rather than recreated repeatedly.
+- Admin Dashboard or Member Home opens only after browser confirmation succeeds.
+- A confirmation timeout fails closed, clears the authenticated session and asks the user to sign in again.
+- Supabase access and refresh tokens remain in the process-local server registry; only a random opaque marker is stored in the browser.
+- H13A role-switch cleanup, token refresh, logout protection and login-page layout stability are retained.
 
 ## Security boundaries
 
-- No password, access token, or refresh token is written to query parameters.
+- No password, access token or refresh token is written to query parameters.
 - No authentication token is written to browser local storage.
-- No password, access token, or refresh token is written to the browser cookie.
+- No password, access token or refresh token is written to the browser cookie.
 - The opaque marker cannot authenticate without its matching process-local server record.
-- A Render process restart clears that server record. The stale marker is then expired and the user receives one clean request to sign in again.
+- A Render process restart still requires a fresh sign-in because the registry is process-local.
 
-## Expected login timing
+## Deployment smoke test — mandatory before acceptance
 
-The first Admin or Member login still performs Supabase authentication and HealthyMe role resolution over the network. A few seconds can therefore occur on the initial login. Normal protected-page navigation and browser refresh should not repeat the complete login sequence.
+### Cookie handoff
 
-## Deployment smoke test
+1. Sign in as Admin.
+2. Confirm a brief “Securing your HealthyMe session…” handoff appears before Admin Dashboard.
+3. Repeat with a Member account and confirm Member Home opens only after the handoff.
+4. The handoff must complete automatically; the retry button is only a fallback.
 
 ### Admin refresh
 
-1. Confirm `AUTH_MODE=supabase` in the deployed Streamlit environment.
-2. Sign in using an authorized Supabase Admin account.
-3. Refresh Admin Dashboard.
-4. Open another protected Admin page and refresh it.
-5. Confirm the same Admin remains signed in and no Member recovery message appears.
+1. Refresh Admin Dashboard.
+2. Open another protected Admin page and refresh it.
+3. Confirm the same Admin remains signed in.
 
 ### Member refresh
 
-1. Sign in using an authorized Supabase Member account.
-2. Refresh Member Home.
-3. Open Daily Log and refresh.
-4. Open My Schedule and refresh.
-5. Confirm the same Member remains signed in on all four pages.
+1. Refresh Member Home.
+2. Refresh Daily Log.
+3. Refresh My Schedule.
+4. Confirm the same Member remains signed in on every page.
 
 ### Role switching
 
 1. Admin login → logout.
 2. Member login → logout.
-3. Attempt Admin login again.
-4. Confirm Admin Dashboard opens and no “member account was being recovered” error appears.
+3. Admin login again.
+4. Confirm Admin Dashboard opens without a stale Member recovery error.
 
 ### Logout protection
 
 1. Log out from Admin and Member separately.
-2. Use browser Back.
-3. Open a protected-page direct URL.
-4. Confirm the prior session is not restored and a fresh login is required.
+2. Use browser Back and a protected-page direct URL.
+3. Confirm a fresh login is required.
 
-### Login layout
+## Acceptance rule
 
-1. Submit invalid credentials.
-2. Confirm the login form and wellness-journey panel remain top-aligned.
-3. Confirm the error and signed-out messages use the reserved status area.
+H13B is accepted only after the deployed Render build passes refresh on Admin Dashboard, Member Home, Daily Log and My Schedule. Local or mocked lifecycle tests are not sufficient for this issue.
 
 ## Exclusions
 
 - No Flutter or Admin Lite change.
 - No SQL or Supabase schema change.
-- No assessment, report, recommendation, or member-data logic change.
+- No assessment, report, recommendation or member-data logic change.
