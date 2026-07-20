@@ -1,1 +1,1 @@
-v102.4B15S3H13 Supabase Auth Stability
+v102.4B15S3H13A Supabase Refresh Persistence + Role Switch Fix
