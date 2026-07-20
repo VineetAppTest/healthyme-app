@@ -82,42 +82,8 @@ def auth0_enabled() -> bool:
     }
 
 
-def _restore_native_oidc_before_member_guard() -> None:
-    """Compatibility bridge for the legacy member guard ordering.
-
-    The existing guard checks direct Supabase restoration and returns early for a
-    member before it reaches the native OIDC restoration block. In the isolated
-    H13O1 mode, rebuild the HealthyMe role session from Streamlit's valid OIDC
-    identity before that early member fallback runs.
-    """
-    if not supabase_oidc_poc_enabled():
-        return
-    try:
-        import streamlit as st
-
-        already_resolved = bool(
-            st.session_state.get("logged_in")
-            and st.session_state.get("_hm_auth_role_resolved")
-        )
-        if already_resolved or not st.user.is_logged_in:
-            return
-
-        from components.auth_session import restore_login_from_token
-
-        restore_login_from_token()
-    except Exception:
-        # The guard will route to Login through its existing recovery flow.
-        pass
-
-
 def supabase_auth_enabled() -> bool:
-    mode = get_auth_mode()
-    if mode == AUTH_MODE_SUPABASE_OIDC_POC:
-        _restore_native_oidc_before_member_guard()
-        # H13O1 uses Streamlit's native OIDC cookie, not the legacy durable
-        # Supabase marker/cookie restoration path.
-        return False
-    return mode in {AUTH_MODE_DUAL, AUTH_MODE_SUPABASE}
+    return get_auth_mode() in {AUTH_MODE_DUAL, AUTH_MODE_SUPABASE}
 
 
 def oidc_provider_name() -> str:
