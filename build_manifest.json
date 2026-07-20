@@ -1,20 +1,20 @@
 {
-  "build_name": "HealthyMe_Streamlit_Admin_H9A5E_Unified_Recommendation_Allocation_Contract",
-  "version": "v102.4B15H9A5E",
-  "updated_on": "2026-07-08T10:00:00Z",
-  "base_build": "v102.4B15S3H12 Supabase Cutover Mode Hardening",
+  "build_name": "HealthyMe_Streamlit_H13_Supabase_Auth_Stability",
+  "version": "v102.4B15S3H13",
+  "updated_on": "2026-07-20T07:30:00Z",
+  "base_build": "v102.4B15S3H12 Streamlit Supabase Admin Auth Cutover",
   "scope": [
-    "Adds unified recommendation allocation contract helpers",
-    "Adds admin Unified Recommendations workbench",
-    "Mirrors recipe and exercise CSV repositories into app-state keys",
-    "Migrates legacy direct recipe/exercise assignments into canonical member allocation layers",
-    "Publishes recommendation_shares with resolved recipe/exercise IDs and names for member consumption"
+    "Keeps Streamlit authentication on the configured Supabase-only path without restoring stale Auth0 identity from the root route",
+    "Stores the active Supabase refresh session in Streamlit session state and refreshes expiring access tokens",
+    "Attempts Supabase remote sign-out before clearing all local HealthyMe identity and role state",
+    "Reworks login and logout feedback into reserved layout slots so the adjacent journey panel does not shift after submission",
+    "Removes the redundant second Supabase clear-session action from the login page"
   ],
   "excluded": [
-    "No Flutter code change",
-    "No LAF or NSP logic change",
-    "No Auth0 or Supabase Auth behavior change",
-    "No SQL schema migration required",
-    "No report engine change"
+    "No Flutter or Admin Lite code change",
+    "No Supabase SQL or schema migration",
+    "No assessment, report, recommendation, or member-data logic change",
+    "No browser token or credential stored in URL or local storage",
+    "No promise of session recovery after a Render process restart; a fresh sign-in remains required"
   ]
 }
