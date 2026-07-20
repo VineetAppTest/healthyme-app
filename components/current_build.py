@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-APP_BUILD_VERSION = "v102.4B15S3H13"
-APP_BUILD_LABEL = "Supabase Auth Stability"
+APP_BUILD_VERSION = "v102.4B15S3H13A"
+APP_BUILD_LABEL = "Supabase Refresh Persistence + Role Switch Fix"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 
