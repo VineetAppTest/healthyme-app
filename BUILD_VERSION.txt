@@ -1,1 +1,1 @@
-v102.4B15S3H13C Supabase Durable Refresh Sessions
+v102.4B15S3H13D Browser Cookie Reload Handoff
