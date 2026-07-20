@@ -22,6 +22,7 @@ from components.supabase_auth_session import (
     _browser_session_ttl_seconds,
 )
 
+HANDOFF_ARMED_KEY = "_hm_supabase_cookie_handoff_armed"
 HANDOFF_PENDING_KEY = "_hm_supabase_cookie_handoff_pending"
 HANDOFF_PHASE_KEY = "_hm_supabase_cookie_handoff_phase"
 HANDOFF_STARTED_AT_KEY = "_hm_supabase_cookie_handoff_started_at"
@@ -46,11 +47,28 @@ def _manager():
 
 def clear_cookie_handoff_state() -> None:
     for key in (
+        HANDOFF_ARMED_KEY,
         HANDOFF_PENDING_KEY,
         HANDOFF_PHASE_KEY,
         HANDOFF_STARTED_AT_KEY,
     ):
         st.session_state.pop(key, None)
+
+
+def arm_cookie_handoff() -> None:
+    """Arm the handoff before calling Supabase login.
+
+    The older H13A login path invokes a cookie component while storing the server
+    record. That component can trigger a rerun before the password-login function
+    returns. Arming first lets the next run discover the newly created marker and
+    continue through confirmation instead of routing immediately.
+    """
+    clear_cookie_handoff_state()
+    st.session_state[HANDOFF_ARMED_KEY] = True
+
+
+def cancel_cookie_handoff() -> None:
+    clear_cookie_handoff_state()
 
 
 def begin_cookie_handoff() -> bool:
@@ -61,6 +79,7 @@ def begin_cookie_handoff() -> bool:
     if not marker:
         return False
 
+    st.session_state.pop(HANDOFF_ARMED_KEY, None)
     st.session_state[HANDOFF_PENDING_KEY] = marker
     st.session_state[HANDOFF_PHASE_KEY] = "write"
     st.session_state[HANDOFF_STARTED_AT_KEY] = time.time()
@@ -69,7 +88,19 @@ def begin_cookie_handoff() -> bool:
 
 
 def cookie_handoff_pending() -> bool:
-    return bool(str(st.session_state.get(HANDOFF_PENDING_KEY) or "").strip())
+    pending_marker = str(st.session_state.get(HANDOFF_PENDING_KEY) or "").strip()
+    if pending_marker:
+        return True
+
+    # Recover when the existing H13A component reruns the script before the login
+    # call has returned to pages/01_Login.py.
+    if st.session_state.get(HANDOFF_ARMED_KEY):
+        marker = str(
+            st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or ""
+        ).strip()
+        if marker:
+            return begin_cookie_handoff()
+    return False
 
 
 def process_cookie_handoff() -> Tuple[HandoffStatus, str]:
