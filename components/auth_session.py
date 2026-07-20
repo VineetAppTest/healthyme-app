@@ -10,6 +10,18 @@ SECURE_LOGOUT_WARNING_MESSAGE = (
     "Please close this browser tab before switching users."
 )
 
+RECOVERY_SESSION_KEYS = (
+    "_hm_expected_login_role",
+    "_hm_access_recovery_message",
+    "_hm_legacy_supabase_marker_detected",
+    "_hm_member_restore_retry",
+)
+
+
+def _clear_recovery_flags():
+    for key in RECOVERY_SESSION_KEYS:
+        st.session_state.pop(key, None)
+
 
 def oidc_is_logged_in():
     try:
@@ -51,7 +63,14 @@ def _resolve_app_user_by_email(email):
 
 
 def _apply_user_to_session(app_user, email, auth_method="auth0"):
-    return apply_app_user_to_session(app_user, email=email, auth_provider=auth_method)
+    ok = apply_app_user_to_session(
+        app_user,
+        email=email,
+        auth_provider=auth_method,
+    )
+    if ok:
+        _clear_recovery_flags()
+    return ok
 
 
 def restore_login_from_token():
@@ -65,6 +84,7 @@ def restore_login_from_token():
         and st.session_state.get("_hm_auth_role_resolved")
         and st.session_state.get("oidc_email") == email
     ):
+        _clear_recovery_flags()
         return True
     ok, app_user, message = resolve_app_user(email=email)
     if not ok or not app_user:
@@ -85,10 +105,14 @@ def login_with_supabase_password(email, password):
         st.session_state["logged_in"] = False
         st.session_state["auth_error"] = message
         return False
+    _clear_recovery_flags()
     return True
 
 
-def _set_secure_logout_feedback(level="success", message=SECURE_LOGOUT_SUCCESS_MESSAGE):
+def _set_secure_logout_feedback(
+    level="success",
+    message=SECURE_LOGOUT_SUCCESS_MESSAGE,
+):
     st.session_state[SECURE_LOGOUT_MESSAGE_KEY] = {
         "level": level,
         "message": message,
