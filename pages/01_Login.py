@@ -27,21 +27,29 @@ def _route_authenticated_user() -> None:
     requested_page = str(
         st.session_state.pop("_hm_requested_page_after_login", "") or ""
     )
-    st.session_state.pop("_hm_expected_login_role", None)
-    is_admin = is_admin_role(st.session_state.get("user_role"))
+    expected_role = str(
+        st.session_state.pop("_hm_expected_login_role", "") or ""
+    ).strip().lower()
+    requested_role = str(
+        st.session_state.pop("_hm_requested_role_after_bootstrap", "")
+        or expected_role
+        or ""
+    ).strip().lower()
+    st.session_state.pop("_hm_oidc_entrypoint_bootstrap_attempted", None)
 
-    if requested_page.startswith("pages/") and requested_page != "pages/01_Login.py":
-        requested_is_admin_page = "Admin" in requested_page
-        role_matches_page = (
-            (is_admin and requested_is_admin_page)
-            or (not is_admin and not requested_is_admin_page)
-        )
-        if role_matches_page:
-            try:
-                st.switch_page(requested_page)
-                return
-            except Exception:
-                pass
+    is_admin = is_admin_role(st.session_state.get("user_role"))
+    restored_role = "admin" if is_admin else "member"
+
+    if (
+        requested_page.startswith("pages/")
+        and requested_page != "pages/01_Login.py"
+        and requested_role == restored_role
+    ):
+        try:
+            st.switch_page(requested_page)
+            return
+        except Exception:
+            pass
 
     if is_admin:
         st.switch_page("pages/10_Admin_Dashboard.py")
@@ -70,6 +78,24 @@ def _clear_local_logout_state() -> None:
         pass
 
 
+def _bootstrap_entrypoint_for_protected_refresh() -> None:
+    """Let app.py rebuild the role session from the retained OIDC cookie once."""
+    requested_page = str(
+        st.session_state.get("_hm_requested_page_after_login") or ""
+    )
+    if not requested_page.startswith("pages/"):
+        return
+    if st.session_state.get("_hm_oidc_entrypoint_bootstrap_attempted"):
+        return
+
+    requested_role = str(
+        st.session_state.get("_hm_expected_login_role") or ""
+    ).strip().lower()
+    st.session_state["_hm_requested_role_after_bootstrap"] = requested_role
+    st.session_state["_hm_oidc_entrypoint_bootstrap_attempted"] = True
+    st.switch_page("app.py")
+
+
 if not supabase_oidc_poc_enabled():
     st.error(
         "This branch is the isolated Supabase OIDC proof of concept. "
@@ -88,6 +114,12 @@ if _logout_was_requested():
     if st.user.is_logged_in:
         st.logout()
     _clear_local_logout_state()
+
+# A hard refresh of a protected legacy multipage URL can reach Login before that
+# page can see the native OIDC identity. The entrypoint is able to see and restore
+# the cookie, as confirmed when opening the temporary app root directly. Bootstrap
+# through app.py once, then return to the requested page when the role matches.
+_bootstrap_entrypoint_for_protected_refresh()
 
 if restore_login_from_token():
     _route_authenticated_user()
@@ -127,7 +159,7 @@ with left:
         ):
             st.session_state.pop("signed_out", None)
             st.session_state.pop("logout_requested", None)
-            st.session_state.pop("_hm_expected_login_role", None)
+            st.session_state.pop("_hm_oidc_entrypoint_bootstrap_attempted", None)
             st.login(oidc_provider_name())
 
         st.info(
