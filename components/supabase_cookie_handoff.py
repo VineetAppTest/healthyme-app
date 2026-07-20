@@ -103,11 +103,26 @@ def _render_cookie_commit_and_reload(marker: str) -> None:
           const cookieName = {cookie_name};
           const cookieValue = {cookie_value};
           const attributes = "Path=/; Max-Age={ttl_seconds}; SameSite=Strict{secure_attribute}";
-          document.cookie = `${{cookieName}}=${{encodeURIComponent(cookieValue)}}; ${{attributes}}`;
+          const cookieText = `${{cookieName}}=${{encodeURIComponent(cookieValue)}}; ${{attributes}}`;
 
-          const committed = document.cookie
+          document.cookie = cookieText;
+          try {{
+            window.parent.document.cookie = cookieText;
+          }} catch (error) {{
+            // The component document is normally same-origin. Its cookie write
+            // remains the fallback when parent-document access is restricted.
+          }}
+
+          let committed = document.cookie
             .split("; ")
             .some((row) => row.startsWith(`${{cookieName}}=`));
+          try {{
+            committed = committed || window.parent.document.cookie
+              .split("; ")
+              .some((row) => row.startsWith(`${{cookieName}}=`));
+          }} catch (error) {{
+            // Keep the component-document result.
+          }}
 
           window.setTimeout(() => {{
             try {{
