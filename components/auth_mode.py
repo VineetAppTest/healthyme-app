@@ -87,7 +87,8 @@ def supabase_auth_enabled() -> bool:
 
 
 def oidc_provider_name() -> str:
-    return "supabase_oidc" if supabase_oidc_poc_enabled() else "auth0"
+    # Streamlit does not support underscores in named OIDC provider identifiers.
+    return "supabaseoidc" if supabase_oidc_poc_enabled() else "auth0"
 
 
 def oidc_button_label() -> str:
