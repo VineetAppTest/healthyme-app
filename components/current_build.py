@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-APP_BUILD_VERSION = "v102.4B15S3H13B"
-APP_BUILD_LABEL = "Supabase Cookie Confirmation Handoff"
+APP_BUILD_VERSION = "v102.4B15S3H13C"
+APP_BUILD_LABEL = "Supabase Durable Refresh Sessions"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 

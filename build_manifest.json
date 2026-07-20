@@ -1,20 +1,19 @@
 {
-  "build_name": "HealthyMe_Streamlit_H13B_Supabase_Cookie_Confirmation_Handoff",
-  "version": "v102.4B15S3H13B",
-  "updated_on": "2026-07-20T09:00:00Z",
-  "base_build": "v102.4B15S3H13A Supabase Refresh Persistence + Role Switch Fix",
+  "build_name": "HealthyMe_Streamlit_H13C_Supabase_Durable_Refresh_Sessions",
+  "version": "v102.4B15S3H13C",
+  "updated_on": "2026-07-20T10:00:00Z",
+  "base_build": "v102.4B15S3H13B Supabase Cookie Confirmation Handoff",
   "scope": [
-    "Keeps a successful Supabase login on the Login page until the browser confirms the opaque HealthyMe session marker was written",
-    "Uses a two-phase write and read-back handoff that survives custom-component-triggered Streamlit reruns",
-    "Creates the cookie component only once per Streamlit session to avoid repeated initialization reruns",
-    "Routes to Admin Dashboard or Member Home only after browser marker confirmation",
-    "Retains server-side Supabase tokens, role-switch cleanup, refresh restoration and logout protection"
+    "Replaces the process-local Streamlit session registry with a durable Supabase session table",
+    "Stores only a SHA-256 hash of the opaque browser marker and keeps access/refresh tokens server-side",
+    "Uses a server-only SUPABASE_SERVICE_ROLE_KEY to restore sessions across browser refreshes and Render process changes",
+    "Reads the browser marker through Streamlit context with a controlled CookieManager fallback before protected-page guards redirect",
+    "Refreshes expiring Supabase tokens, revalidates HealthyMe roles, revokes sessions on logout and expires legacy markers"
   ],
   "excluded": [
     "No Flutter or Admin Lite code change",
-    "No Supabase SQL or schema migration",
-    "No assessment, report, recommendation, or member-data logic change",
-    "No password, access token, or refresh token stored in browser cookies or local storage",
-    "A Render process restart still requires a fresh sign-in because the secure token registry is process-local"
+    "No assessment, report, recommendation, schedule or member-data contract change",
+    "No password, access token or refresh token stored in browser cookies, URLs or local storage",
+    "H13A and H13B process-local session records are intentionally not migrated; users sign in once after H13C deployment"
   ]
 }
