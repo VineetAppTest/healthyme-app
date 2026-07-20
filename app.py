@@ -16,10 +16,6 @@ st.set_page_config(
 inject_global_styles()
 apply_luxe_theme()
 
-# A completed logout must always land on Login without attempting any provider restore.
-if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
-    st.switch_page("pages/01_Login.py")
-
 restored = False
 if supabase_auth_enabled():
     restored = restore_supabase_login_from_session()
@@ -33,5 +29,11 @@ if restored:
         st.switch_page("pages/10_Admin_Dashboard.py")
     else:
         st.switch_page("pages/02_Member_Home.py")
+
+# Honor a completed logout only after all configured providers have had a chance
+# to restore. This avoids stale per-tab flags overriding a valid Streamlit OIDC
+# identity cookie after refresh.
+if st.session_state.get("signed_out") or st.session_state.get("logout_requested"):
+    st.switch_page("pages/01_Login.py")
 
 st.switch_page("pages/01_Login.py")
