@@ -1,15 +1,15 @@
 """HealthyMe current build override helpers.
 
-Small, low-risk helper used by Supabase Auth migration pages to show the current
-build label without rewriting the large shared ui_common history file.
+Small, low-risk helper used by authentication and migration pages to show the
+current build label without rewriting the large shared ui_common history file.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-APP_BUILD_VERSION = "v102.4B15S3H12"
-APP_BUILD_LABEL = "Streamlit Supabase Admin Auth Cutover"
+APP_BUILD_VERSION = "v102.4B15S3H13"
+APP_BUILD_LABEL = "Supabase Auth Stability"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 
