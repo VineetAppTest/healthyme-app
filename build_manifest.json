@@ -1,22 +1,26 @@
 {
-  "build_name": "HealthyMe_Streamlit_H13R1_Restore_Working_Supabase_Login",
-  "version": "v102.4B15S3H13R1",
-  "updated_on": "2026-07-20T14:00:00Z",
-  "base_build": "v102.4B15S3H13E CookieManager Commit Reload",
+  "build_name": "HealthyMe_Streamlit_H13O1_Same_App_Supabase_OIDC_PoC",
+  "version": "v102.4B15S3H13O1",
+  "updated_on": "2026-07-20T16:30:00Z",
+  "base_build": "v102.4B15S3H13R1 Restore Working Supabase Login",
   "scope": [
-    "Removes the failed secure-session handoff from the active Login page",
-    "Restores direct routing after a valid Supabase password login so Admin and Member access work again",
-    "Retains Supabase-only authentication, HealthyMe role validation, single-step logout and stale role-recovery cleanup",
-    "Treats browser refresh persistence as unresolved rather than blocking login",
-    "Stops further iframe and CookieManager persistence patches pending a standards-based OIDC implementation"
+    "Adds an isolated supabase_oidc_poc authentication mode for a temporary Streamlit Community Cloud deployment",
+    "Uses Streamlit native OIDC identity cookies while keeping Supabase as the identity source",
+    "Maps the Supabase OIDC subject and email to existing HealthyMe Admin and Member roles",
+    "Adds a same-app OAuth consent page for Supabase OAuth Server authorization",
+    "Documents exact secrets, controlled dashboard steps, acceptance tests and rollback"
   ],
   "known_limitations": [
-    "A full browser refresh may require a fresh login until the Supabase OIDC replacement is implemented",
-    "The H13C durable session table remains in Supabase but is not accepted as the active browser-persistence mechanism"
+    "Supabase OAuth 2.1 Server is beta",
+    "OpenID Connect requires asymmetric Supabase JWT signing keys",
+    "The PoC requires a temporary Streamlit app and a controlled Supabase Site URL test window",
+    "The production H13R1 password login remains the active production route"
   ],
   "excluded": [
-    "No additional SQL migration",
-    "No Flutter or Admin Lite code change",
-    "No assessment, report, recommendation, schedule or member-data contract change"
+    "No production cutover",
+    "No Auth0",
+    "No Flutter or Admin Lite change",
+    "No assessment, report, recommendation, schedule or member-data contract change",
+    "No credentials or real secrets committed to GitHub"
   ]
 }
