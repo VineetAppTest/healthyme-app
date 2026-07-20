@@ -33,6 +33,8 @@ if restored:
     requested_role = str(
         st.session_state.pop("_hm_requested_role_after_bootstrap", "") or ""
     ).strip().lower()
+    st.session_state.pop("_hm_expected_login_role", None)
+    st.session_state.pop("_hm_oidc_entrypoint_bootstrap_attempted", None)
 
     # A hard refresh of a legacy Streamlit multipage URL can start the page script
     # without the HealthyMe role session even though the native OIDC cookie is still
