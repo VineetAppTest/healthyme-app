@@ -1,3 +1,4 @@
+import json
 import time
 
 import streamlit as st
@@ -9,8 +10,8 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13O2-st-navigation-poc-v7-native-session-flow"
-PROTECTED_BOOTSTRAP_DELAYS = (0.15, 0.35, 0.75)
+ROUTER_BUILD = "H13O2-st-navigation-poc-v9-browser-session-bootstrap"
+BOOTSTRAP_QUERY_KEY = "hm_bootstrap"
 
 
 st.set_page_config(
@@ -21,6 +22,13 @@ st.set_page_config(
 )
 inject_global_styles()
 apply_luxe_theme()
+
+
+def _query_value(name: str) -> str:
+    try:
+        return str(st.query_params.get(name) or "").strip()
+    except Exception:
+        return ""
 
 
 def _native_identity_present() -> bool:
@@ -109,22 +117,38 @@ def _member_router_test_page() -> None:
 
 
 def _show_role_restore_recovery() -> None:
-    """Keep an authenticated user out of Login when only restoration is delayed."""
+    """Keep an authenticated user out of Login when only role restoration is delayed."""
     st.title("HealthyMe is restoring your access")
     st.warning(
         "Your secure sign-in is still active, but HealthyMe could not finish restoring "
         "your access profile. This is a temporary restoration issue, not a logout."
     )
     st.caption(
-        "The app has already retried automatically. Use Retry access once; do not sign in again."
+        "Use Retry access once. Do not sign in again while this message is displayed."
     )
     attempts = st.session_state.get("_hm_role_restore_attempts", "—")
     st.metric("Automatic role-lookup attempts", attempts)
     if st.button("Retry access", type="primary"):
-        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
         st.rerun()
     if st.button("Open safe diagnostics"):
         st.switch_page(auth_diagnostics_page)
+    st.stop()
+
+
+def _restart_as_new_browser_session(target_role: str) -> None:
+    """Force a new browser session so Streamlit rereads the identity cookie.
+
+    Streamlit reads the OIDC identity cookie only at the start of a session. A Python
+    rerun cannot repair a session that began before the cookie was exposed. A top-level
+    browser navigation creates the required new session exactly once.
+    """
+    destination = f"/?{BOOTSTRAP_QUERY_KEY}={target_role}"
+    st.info("HealthyMe is restoring your secure session…")
+    st.html(
+        f"<script>window.location.replace({json.dumps(destination)});</script>",
+        unsafe_allow_javascript=True,
+    )
+    st.caption("The page will continue automatically.")
     st.stop()
 
 
@@ -200,46 +224,38 @@ st.session_state["_hm_router_restore_ms"] = round(
 )
 st.session_state["_hm_router_native_identity"] = _native_identity_present()
 st.session_state["_hm_router_auth_cookie_present"] = _auth_cookie_present()
+st.session_state["_hm_router_bootstrap_target"] = _query_value(BOOTSTRAP_QUERY_KEY)
 
 technical_pages = (
     consent_page,
     native_logout_page,
     auth_diagnostics_page,
 )
-protected_pages = (
-    root_page,
-    admin_page,
-    member_page,
-)
 
 if selected_page not in technical_pages:
     if restored:
-        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
         is_admin = is_admin_role(st.session_state.get("user_role"))
         if is_admin and selected_page in (root_page, login_page, member_page):
             st.switch_page(admin_page)
         if not is_admin and selected_page in (root_page, login_page, admin_page):
             st.switch_page(member_page)
-    elif selected_page in protected_pages:
-        # A hard refresh can begin before Streamlit exposes the persisted identity to
-        # the first Python run. Retry the complete router for a short bounded period.
-        attempt = int(st.session_state.get("_hm_protected_bootstrap_attempt") or 0)
-        if attempt < len(PROTECTED_BOOTSTRAP_DELAYS):
-            st.session_state["_hm_protected_bootstrap_attempt"] = attempt + 1
-            time.sleep(PROTECTED_BOOTSTRAP_DELAYS[attempt])
-            st.rerun()
-
-        if _native_identity_present() or _auth_cookie_present():
-            _show_role_restore_recovery()
-
-        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
+    elif selected_page is admin_page:
+        _restart_as_new_browser_session("admin")
+    elif selected_page is member_page:
+        _restart_as_new_browser_session("member")
+    elif selected_page is root_page:
+        # Root reached through the one-time browser bootstrap. At this point Streamlit
+        # has started a genuinely new session and has already had its opportunity to read
+        # the identity cookie. Do not loop back through another browser restart.
+        if _query_value(BOOTSTRAP_QUERY_KEY):
+            if _native_identity_present() or _auth_cookie_present():
+                _show_role_restore_recovery()
+            st.switch_page(login_page)
         st.switch_page(login_page)
     elif selected_page is login_page and (
         _native_identity_present() or _auth_cookie_present()
     ):
         # Never present a second login form while a native identity is already active.
         _show_role_restore_recovery()
-    else:
-        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
 
 selected_page.run()
