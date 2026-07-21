@@ -46,7 +46,8 @@ st.caption(
 )
 
 if not authorization_id:
-    st.error("The authorization request is missing its authorization_id.")
+    st.error("The authorization request is missing or has expired. Start a fresh login.")
+    st.page_link("pages/01_Login.py", label="Return to Login", icon="↩️")
     st.stop()
 
 if not supabase_url or not publishable_key:
@@ -80,6 +81,7 @@ html_document = f"""
       padding: 12px 16px; border: 0; border-radius: 10px;
       font-size: 15px; font-weight: 700; cursor: pointer;
     }}
+    button:disabled {{ opacity: .65; cursor: wait; }}
     .primary {{ width: 100%; margin-top: 18px; background: #176b55; color: white; }}
     .secondary {{ background: #e9f1ee; color: #17483b; }}
     .danger {{ background: #f8e9e9; color: #8b2020; }}
@@ -92,7 +94,7 @@ html_document = f"""
       display: inline-block; margin: 4px 5px 0 0; padding: 6px 9px;
       background: #edf5f2; border-radius: 999px; font-size: 13px; font-weight: 700;
     }}
-    #consent-panel {{ display: none; }}
+    #consent-panel, #restart-panel {{ display: none; }}
   </style>
 </head>
 <body>
@@ -107,7 +109,7 @@ html_document = f"""
       <input id="email" type="email" required autocomplete="username">
       <label for="password">Password</label>
       <input id="password" type="password" required autocomplete="current-password">
-      <button class="primary" type="submit">Sign in and review access</button>
+      <button id="signin" class="primary" type="submit">Sign in and review access</button>
     </form>
   </section>
 
@@ -119,6 +121,11 @@ html_document = f"""
       <button id="deny" class="danger" type="button">Deny</button>
       <button id="approve" class="secondary" type="button">Approve</button>
     </div>
+  </section>
+
+  <section id="restart-panel">
+    <p>This authorization request is no longer valid. No password retry can repair an expired request.</p>
+    <button id="restart" class="primary" type="button">Start a fresh login</button>
   </section>
 </main>
 
@@ -139,9 +146,12 @@ html_document = f"""
 
   const loginPanel = document.getElementById("login-panel");
   const consentPanel = document.getElementById("consent-panel");
+  const restartPanel = document.getElementById("restart-panel");
   const messageBox = document.getElementById("message");
   const clientName = document.getElementById("client-name");
   const scopesBox = document.getElementById("scopes");
+  const signInButton = document.getElementById("signin");
+  let submissionInProgress = false;
 
   function showMessage(text, level = "info") {{
     messageBox.textContent = text;
@@ -156,12 +166,29 @@ html_document = f"""
     }}
   }}
 
+  function isStaleAuthorization(error) {{
+    const message = String(error?.message || error || "").toLowerCase();
+    return message.includes("authorization not found")
+      || message.includes("invalid authorization")
+      || message.includes("authorization request cannot be processed");
+  }}
+
+  function showRestartRequired() {{
+    loginPanel.style.display = "none";
+    consentPanel.style.display = "none";
+    restartPanel.style.display = "block";
+    showMessage(
+      "This authorization request expired or was already consumed. Start a fresh login; do not re-enter your password on this page.",
+      "error"
+    );
+  }}
+
   async function loadAuthorizationDetails() {{
     const {{ data, error }} =
       await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
 
     if (error) throw error;
-    if (data?.redirect_url && !data?.authorization_id) {{
+    if (data?.redirect_url && !("authorization_id" in data)) {{
       redirectTop(data.redirect_url);
       return;
     }}
@@ -170,7 +197,7 @@ html_document = f"""
     clientName.textContent = `Authorize ${{client.name || "HealthyMe"}}`;
     const rawScope = data?.scope || "openid email profile";
     scopesBox.innerHTML = "";
-    rawScope.split(/\\s+/).filter(Boolean).forEach((scope) => {{
+    rawScope.split(/\s+/).filter(Boolean).forEach((scope) => {{
       const pill = document.createElement("span");
       pill.className = "scope";
       pill.textContent = scope;
@@ -184,6 +211,9 @@ html_document = f"""
 
   document.getElementById("login-form").addEventListener("submit", async (event) => {{
     event.preventDefault();
+    if (submissionInProgress) return;
+    submissionInProgress = true;
+    signInButton.disabled = true;
     showMessage("Confirming your Supabase identity…", "info");
 
     const email = document.getElementById("email").value.trim();
@@ -194,13 +224,22 @@ html_document = f"""
 
     if (error) {{
       showMessage(error.message || "Supabase login failed.", "error");
+      submissionInProgress = false;
+      signInButton.disabled = false;
       return;
     }}
 
     try {{
       await loadAuthorizationDetails();
     }} catch (error) {{
+      if (isStaleAuthorization(error)) {{
+        try {{ await supabase.auth.signOut(); }} catch (_signOutError) {{}}
+        showRestartRequired();
+        return;
+      }}
       showMessage(error?.message || "Unable to load the authorization request.", "error");
+      submissionInProgress = false;
+      signInButton.disabled = false;
     }}
   }});
 
@@ -209,6 +248,10 @@ html_document = f"""
     const {{ data, error }} =
       await supabase.auth.oauth.approveAuthorization(authorizationId);
     if (error) {{
+      if (isStaleAuthorization(error)) {{
+        showRestartRequired();
+        return;
+      }}
       showMessage(error.message || "Approval failed.", "error");
       return;
     }}
@@ -220,15 +263,23 @@ html_document = f"""
     const {{ data, error }} =
       await supabase.auth.oauth.denyAuthorization(authorizationId);
     if (error) {{
+      if (isStaleAuthorization(error)) {{
+        showRestartRequired();
+        return;
+      }}
       showMessage(error.message || "Unable to deny the request.", "error");
       return;
     }}
     redirectTop(data.redirect_url);
+  }});
+
+  document.getElementById("restart").addEventListener("click", () => {{
+    redirectTop("/Login");
   }});
 </script>
 </body>
 </html>
 """
 
-components.html(html_document, height=690, scrolling=True)
+components.html(html_document, height=740, scrolling=True)
 st.stop()
