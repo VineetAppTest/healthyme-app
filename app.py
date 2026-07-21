@@ -10,8 +10,11 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13O2-st-navigation-poc-v9-browser-session-bootstrap"
+ROUTER_BUILD = "H13O2-st-navigation-poc-v10-stable-switch"
 BOOTSTRAP_QUERY_KEY = "hm_bootstrap"
+BOOTSTRAP_ATTEMPT_QUERY_KEY = "hm_bootstrap_try"
+BOOTSTRAP_MAX_ATTEMPTS = 3
+BOOTSTRAP_DELAYS_MS = (200, 600, 1200)
 
 
 st.set_page_config(
@@ -29,6 +32,13 @@ def _query_value(name: str) -> str:
         return str(st.query_params.get(name) or "").strip()
     except Exception:
         return ""
+
+
+def _query_int(name: str, default: int = 0) -> int:
+    try:
+        return max(0, int(_query_value(name) or default))
+    except (TypeError, ValueError):
+        return default
 
 
 def _native_identity_present() -> bool:
@@ -51,13 +61,10 @@ def _root_route() -> None:
 
 
 def _router_logout_button(key: str) -> None:
-    """Use Streamlit's native logout lifecycle without page or query-param redirects."""
-    st.button(
-        "Logout",
-        key=key,
-        use_container_width=False,
-        on_click=st.logout,
-    )
+    """Run Streamlit's native logout directly in the button event."""
+    if st.button("Logout", key=key, use_container_width=False):
+        st.logout()
+        st.stop()
 
 
 def _admin_router_test_page() -> None:
@@ -135,17 +142,31 @@ def _show_role_restore_recovery() -> None:
     st.stop()
 
 
-def _restart_as_new_browser_session(target_role: str) -> None:
-    """Force a new browser session so Streamlit rereads the identity cookie.
+def _restart_as_new_browser_session(
+    target_role: str,
+    *,
+    attempt: int,
+    message: str = "HealthyMe is restoring your secure session…",
+) -> None:
+    """Start a fresh browser session so Streamlit rereads the identity cookie.
 
-    Streamlit reads the OIDC identity cookie only at the start of a session. A Python
-    rerun cannot repair a session that began before the cookie was exposed. A top-level
-    browser navigation creates the required new session exactly once.
+    The attempt number is carried in the URL, so bounded retries survive the new
+    WebSocket session without relying on Session State.
     """
-    destination = f"/?{BOOTSTRAP_QUERY_KEY}={target_role}"
-    st.info("HealthyMe is restoring your secure session…")
+    safe_attempt = max(1, min(int(attempt), BOOTSTRAP_MAX_ATTEMPTS))
+    delay_ms = BOOTSTRAP_DELAYS_MS[safe_attempt - 1]
+    destination = (
+        f"/?{BOOTSTRAP_QUERY_KEY}={target_role}"
+        f"&{BOOTSTRAP_ATTEMPT_QUERY_KEY}={safe_attempt}"
+    )
+    st.info(message)
     st.html(
-        f"<script>window.location.replace({json.dumps(destination)});</script>",
+        (
+            "<script>"
+            f"setTimeout(() => window.location.replace({json.dumps(destination)}), "
+            f"{delay_ms});"
+            "</script>"
+        ),
         unsafe_allow_javascript=True,
     )
     st.caption("The page will continue automatically.")
@@ -217,6 +238,9 @@ if not restored and auth0_enabled():
     except Exception:
         restored = False
 
+bootstrap_target = _query_value(BOOTSTRAP_QUERY_KEY).lower()
+bootstrap_attempt = _query_int(BOOTSTRAP_ATTEMPT_QUERY_KEY)
+
 st.session_state["_hm_router_build"] = ROUTER_BUILD
 st.session_state["_hm_router_restore_ms"] = round(
     (time.perf_counter() - restore_started) * 1000,
@@ -224,7 +248,8 @@ st.session_state["_hm_router_restore_ms"] = round(
 )
 st.session_state["_hm_router_native_identity"] = _native_identity_present()
 st.session_state["_hm_router_auth_cookie_present"] = _auth_cookie_present()
-st.session_state["_hm_router_bootstrap_target"] = _query_value(BOOTSTRAP_QUERY_KEY)
+st.session_state["_hm_router_bootstrap_target"] = bootstrap_target
+st.session_state["_hm_router_bootstrap_attempt"] = bootstrap_attempt
 
 technical_pages = (
     consent_page,
@@ -235,23 +260,40 @@ technical_pages = (
 if selected_page not in technical_pages:
     if restored:
         is_admin = is_admin_role(st.session_state.get("user_role"))
+        restored_role = "admin" if is_admin else "member"
+
+        # After OIDC returns to the root, perform one browser-level stabilization
+        # before showing a protected page. This proves the newly written identity
+        # cookie can be read by a separate Streamlit session before the user refreshes.
+        if selected_page is root_page and not bootstrap_target:
+            _restart_as_new_browser_session(
+                restored_role,
+                attempt=1,
+                message="HealthyMe is securing your new sign-in…",
+            )
+
         if is_admin and selected_page in (root_page, login_page, member_page):
             st.switch_page(admin_page)
         if not is_admin and selected_page in (root_page, login_page, admin_page):
             st.switch_page(member_page)
+
     elif selected_page is admin_page:
-        _restart_as_new_browser_session("admin")
+        _restart_as_new_browser_session("admin", attempt=1)
+
     elif selected_page is member_page:
-        _restart_as_new_browser_session("member")
+        _restart_as_new_browser_session("member", attempt=1)
+
     elif selected_page is root_page:
-        # Root reached through the one-time browser bootstrap. At this point Streamlit
-        # has started a genuinely new session and has already had its opportunity to read
-        # the identity cookie. Do not loop back through another browser restart.
-        if _query_value(BOOTSTRAP_QUERY_KEY):
+        if bootstrap_target in {"admin", "member"}:
+            if bootstrap_attempt < BOOTSTRAP_MAX_ATTEMPTS:
+                _restart_as_new_browser_session(
+                    bootstrap_target,
+                    attempt=bootstrap_attempt + 1,
+                )
             if _native_identity_present() or _auth_cookie_present():
                 _show_role_restore_recovery()
-            st.switch_page(login_page)
         st.switch_page(login_page)
+
     elif selected_page is login_page and (
         _native_identity_present() or _auth_cookie_present()
     ):
