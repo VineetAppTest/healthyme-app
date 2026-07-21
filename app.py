@@ -1,4 +1,5 @@
 import time
+from urllib.parse import urlsplit
 
 import streamlit as st
 
@@ -9,7 +10,9 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13O2-st-navigation-poc-v4-resilient-restore"
+ROUTER_BUILD = "H13O2-st-navigation-poc-v5-session-bootstrap"
+LOGOUT_QUERY_KEY = "logout"
+PROTECTED_BOOTSTRAP_DELAYS = (0.15, 0.35, 0.75)
 
 
 st.set_page_config(
@@ -22,25 +25,36 @@ inject_global_styles()
 apply_luxe_theme()
 
 
-def _logout_was_requested() -> bool:
-    if st.session_state.get("logout_requested") or st.session_state.get("signed_out"):
-        return True
+def _query_value(name: str) -> str:
     try:
-        return str(st.query_params.get("logout") or "").strip() == "1"
+        return str(st.query_params.get(name) or "").strip()
     except Exception:
-        return False
+        return ""
 
 
-def _clear_local_session() -> None:
+def _logout_marker_present() -> bool:
+    return _query_value(LOGOUT_QUERY_KEY) == "1"
+
+
+def _logout_was_requested() -> bool:
+    return bool(
+        _logout_marker_present()
+        or st.session_state.get("logout_requested")
+        or st.session_state.get("signed_out")
+    )
+
+
+def _clear_local_session(*, preserve_query_params: bool = False) -> None:
     for key in list(st.session_state.keys()):
         try:
             del st.session_state[key]
         except Exception:
             pass
-    try:
-        st.query_params.clear()
-    except Exception:
-        pass
+    if not preserve_query_params:
+        try:
+            st.query_params.clear()
+        except Exception:
+            pass
 
 
 def _native_identity_present() -> bool:
@@ -57,15 +71,35 @@ def _auth_cookie_present() -> bool:
         return False
 
 
+def _app_origin() -> str:
+    try:
+        parsed = urlsplit(str(st.context.url or ""))
+        if parsed.scheme and parsed.netloc:
+            return f"{parsed.scheme}://{parsed.netloc}"
+    except Exception:
+        pass
+    return ""
+
+
+def _absolute_app_url(path: str) -> str:
+    normalized = "/" + str(path or "").lstrip("/")
+    origin = _app_origin()
+    return f"{origin}{normalized}" if origin else normalized
+
+
 def _root_route() -> None:
     """The central router redirects root before this placeholder normally runs."""
     st.empty()
 
 
-def _router_logout_button(key: str) -> None:
-    if st.button("Logout", key=key, use_container_width=False):
-        # st.logout deletes Streamlit's identity cookie and starts a fresh session.
-        st.logout()
+def _router_logout_button() -> None:
+    # A URL marker survives the new browser session created by st.logout(). It keeps
+    # Login stable while the browser finishes deleting the identity cookie.
+    st.link_button(
+        "Logout",
+        _absolute_app_url("/Native_Logout?logout=1"),
+        use_container_width=False,
+    )
 
 
 def _admin_router_test_page() -> None:
@@ -93,7 +127,7 @@ def _admin_router_test_page() -> None:
         f"{st.session_state.get('_hm_router_restore_ms', '—')} ms",
     )
     st.code(ROUTER_BUILD)
-    _router_logout_button("h13o2_admin_logout")
+    _router_logout_button()
 
 
 def _member_router_test_page() -> None:
@@ -121,15 +155,15 @@ def _member_router_test_page() -> None:
         f"{st.session_state.get('_hm_router_restore_ms', '—')} ms",
     )
     st.code(ROUTER_BUILD)
-    _router_logout_button("h13o2_member_logout")
+    _router_logout_button()
 
 
 def _show_role_restore_recovery() -> None:
-    """Keep an authenticated user out of Login when only role lookup is delayed."""
+    """Keep an authenticated user out of Login when only restoration is delayed."""
     st.title("HealthyMe is restoring your access")
     st.warning(
-        "Your secure sign-in is still active, but HealthyMe could not load your access "
-        "profile on the first attempt. This is a temporary restoration issue, not a logout."
+        "Your secure sign-in is still active, but HealthyMe could not finish restoring "
+        "your access profile. This is a temporary restoration issue, not a logout."
     )
     st.caption(
         "The app has already retried automatically. Use Retry access once; do not sign in again."
@@ -137,6 +171,7 @@ def _show_role_restore_recovery() -> None:
     attempts = st.session_state.get("_hm_role_restore_attempts", "—")
     st.metric("Automatic role-lookup attempts", attempts)
     if st.button("Retry access", type="primary"):
+        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
         st.session_state.pop("_hm_router_final_retry_done", None)
         st.rerun()
     if st.button("Open safe diagnostics"):
@@ -194,30 +229,31 @@ selected_page = st.navigation(
     position="hidden",
 )
 
-# Logout is handled centrally before any retained OIDC identity can rebuild the
-# HealthyMe role session.
+logout_marker = _logout_marker_present()
+
+# A durable URL marker is intentionally preserved across the new session created by
+# st.logout(). While it is present, stale identity state is never allowed to rebuild a
+# HealthyMe session or redirect Login back to a protected page.
 if _logout_was_requested():
-    try:
-        st.query_params.clear()
-    except Exception:
-        pass
-    if st.user.is_logged_in:
+    if _native_identity_present():
         st.logout()
-    _clear_local_session()
+    _clear_local_session(preserve_query_params=logout_marker)
 
 restore_started = time.perf_counter()
 restored = False
-if supabase_auth_enabled():
-    try:
-        restored = restore_supabase_login_from_session()
-    except Exception:
-        restored = False
 
-if not restored and auth0_enabled():
-    try:
-        restored = restore_login_from_token()
-    except Exception:
-        restored = False
+if not logout_marker:
+    if supabase_auth_enabled():
+        try:
+            restored = restore_supabase_login_from_session()
+        except Exception:
+            restored = False
+
+    if not restored and auth0_enabled():
+        try:
+            restored = restore_login_from_token()
+        except Exception:
+            restored = False
 
 st.session_state["_hm_router_build"] = ROUTER_BUILD
 st.session_state["_hm_router_restore_ms"] = round(
@@ -226,35 +262,50 @@ st.session_state["_hm_router_restore_ms"] = round(
 )
 st.session_state["_hm_router_native_identity"] = _native_identity_present()
 st.session_state["_hm_router_auth_cookie_present"] = _auth_cookie_present()
+st.session_state["_hm_router_logout_marker"] = logout_marker
 
 technical_pages = (
     consent_page,
     native_logout_page,
     auth_diagnostics_page,
 )
+protected_pages = (
+    root_page,
+    admin_page,
+    member_page,
+)
 
 if selected_page not in technical_pages:
-    if restored:
+    if logout_marker:
+        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
+        if selected_page is not login_page:
+            st.switch_page(login_page)
+    elif restored:
+        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
         st.session_state.pop("_hm_router_final_retry_done", None)
         is_admin = is_admin_role(st.session_state.get("user_role"))
         if is_admin and selected_page in (root_page, login_page, member_page):
             st.switch_page(admin_page)
         if not is_admin and selected_page in (root_page, login_page, admin_page):
             st.switch_page(member_page)
-    elif selected_page in (root_page, admin_page, member_page):
+    elif selected_page in protected_pages:
+        # On a hard refresh, the first script run can occur before Streamlit has exposed
+        # the persisted identity cookie through st.user/st.context. Retry the whole router
+        # across bounded reruns even when the first run sees neither signal.
+        attempt = int(st.session_state.get("_hm_protected_bootstrap_attempt") or 0)
+        if attempt < len(PROTECTED_BOOTSTRAP_DELAYS):
+            st.session_state["_hm_protected_bootstrap_attempt"] = attempt + 1
+            time.sleep(PROTECTED_BOOTSTRAP_DELAYS[attempt])
+            st.rerun()
+
         native_identity = _native_identity_present()
         auth_cookie = _auth_cookie_present()
-
-        # A valid Streamlit identity or auth cookie means the user did not log out.
-        # Give transient HealthyMe role resolution one final rerun instead of sending
-        # the user to Login, which would falsely present a backend lookup delay as logout.
         if native_identity or auth_cookie:
-            if not st.session_state.get("_hm_router_final_retry_done"):
-                st.session_state["_hm_router_final_retry_done"] = True
-                time.sleep(0.5)
-                st.rerun()
             _show_role_restore_recovery()
 
+        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
         st.switch_page(login_page)
+    else:
+        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
 
 selected_page.run()
