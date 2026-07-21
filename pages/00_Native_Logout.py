@@ -8,19 +8,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Keep the signed-out marker in the URL while Streamlit deletes the identity cookie
-# and starts a fresh browser session.
-try:
-    st.query_params["logout"] = "1"
-except Exception:
-    pass
-
+# This compatibility route now follows the same native lifecycle as the protected
+# page Logout buttons. Streamlit removes the identity cookie and starts a new session.
 if st.user.is_logged_in:
     st.logout()
 
-# After st.logout() starts the fresh session, continue to Login in the same tab.
-try:
-    st.query_params["logout"] = "1"
-except Exception:
-    pass
 st.switch_page("pages/01_Login.py")
