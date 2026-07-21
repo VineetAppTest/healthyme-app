@@ -9,7 +9,7 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13O2-st-navigation-poc-v2-diagnostics"
+ROUTER_BUILD = "H13O2-st-navigation-poc-v3-isolated-pages"
 
 
 st.set_page_config(
@@ -44,14 +44,70 @@ def _clear_local_session() -> None:
 
 
 def _root_route() -> None:
-    if (
+    """The central router redirects root before this placeholder normally runs."""
+    st.empty()
+
+
+def _router_logout_button(key: str) -> None:
+    if st.button("Logout", key=key, use_container_width=False):
+        # st.logout deletes Streamlit's identity cookie and starts a fresh session.
+        st.logout()
+
+
+def _admin_router_test_page() -> None:
+    """Minimal protected Admin page with no legacy page guard or UI side effects."""
+    role = st.session_state.get("user_role")
+    if not (
         st.session_state.get("logged_in")
         and st.session_state.get("_hm_auth_role_resolved")
+        and is_admin_role(role)
     ):
-        if is_admin_role(st.session_state.get("user_role")):
-            st.switch_page("pages/10_Admin_Dashboard.py")
-        st.switch_page("pages/02_Member_Home.py")
-    st.switch_page("pages/01_Login.py")
+        st.error("The central router did not restore an Admin session.")
+        st.stop()
+
+    st.title("Admin Dashboard — H13O2 router test")
+    st.success("Admin OIDC identity and HealthyMe role were restored before this page ran.")
+    st.caption(
+        "This deliberately lightweight page excludes the legacy Admin Dashboard guard, "
+        "logout bar and navigation code so the central router can be tested independently."
+    )
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Native OIDC identity", "Present")
+    col2.metric("HealthyMe role", "Admin")
+    col3.metric(
+        "Router restore",
+        f"{st.session_state.get('_hm_router_restore_ms', '—')} ms",
+    )
+    st.code(ROUTER_BUILD)
+    _router_logout_button("h13o2_admin_logout")
+
+
+def _member_router_test_page() -> None:
+    """Minimal protected Member page with no legacy page guard or UI side effects."""
+    role = st.session_state.get("user_role")
+    if not (
+        st.session_state.get("logged_in")
+        and st.session_state.get("_hm_auth_role_resolved")
+        and not is_admin_role(role)
+    ):
+        st.error("The central router did not restore a Member session.")
+        st.stop()
+
+    st.title("Member Home — H13O2 router test")
+    st.success("Member OIDC identity and HealthyMe role were restored before this page ran.")
+    st.caption(
+        "This deliberately lightweight page excludes the legacy Member Home guard, "
+        "page defaults and UI code so the central router can be tested independently."
+    )
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Native OIDC identity", "Present")
+    col2.metric("HealthyMe role", "Member")
+    col3.metric(
+        "Router restore",
+        f"{st.session_state.get('_hm_router_restore_ms', '—')} ms",
+    )
+    st.code(ROUTER_BUILD)
+    _router_logout_button("h13o2_member_logout")
 
 
 root_page = st.Page(
@@ -66,12 +122,12 @@ login_page = st.Page(
     url_path="Login",
 )
 admin_page = st.Page(
-    "pages/10_Admin_Dashboard.py",
+    _admin_router_test_page,
     title="Admin Dashboard",
     url_path="Admin_Dashboard",
 )
 member_page = st.Page(
-    "pages/02_Member_Home.py",
+    _member_router_test_page,
     title="Member Home",
     url_path="Member_Home",
 )
@@ -144,11 +200,11 @@ technical_pages = (
 if selected_page not in technical_pages:
     if restored:
         is_admin = is_admin_role(st.session_state.get("user_role"))
-        if is_admin and selected_page in (login_page, member_page):
+        if is_admin and selected_page in (root_page, login_page, member_page):
             st.switch_page(admin_page)
-        if not is_admin and selected_page in (login_page, admin_page):
+        if not is_admin and selected_page in (root_page, login_page, admin_page):
             st.switch_page(member_page)
-    elif selected_page in (admin_page, member_page):
+    elif selected_page in (root_page, admin_page, member_page):
         st.switch_page(login_page)
 
 selected_page.run()
