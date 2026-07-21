@@ -21,6 +21,13 @@ inject_global_styles()
 apply_luxe_theme()
 
 
+def _logout_marker_present() -> bool:
+    try:
+        return str(st.query_params.get("logout") or "").strip() == "1"
+    except Exception:
+        return False
+
+
 if not supabase_oidc_poc_enabled():
     st.error(
         "This branch is the isolated Supabase OIDC proof of concept. "
@@ -40,6 +47,9 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+if _logout_marker_present():
+    st.success("You have been signed out. This page will remain logged out when refreshed.")
 
 left, right = st.columns([0.96, 1.04], gap="large")
 
@@ -66,6 +76,11 @@ with left:
             st.session_state.pop("logout_requested", None)
             st.session_state.pop("_hm_expected_login_role", None)
             st.session_state.pop("_hm_requested_page_after_login", None)
+            st.session_state.pop("_hm_protected_bootstrap_attempt", None)
+            try:
+                st.query_params.clear()
+            except Exception:
+                pass
             st.login(oidc_provider_name())
 
         st.info(
