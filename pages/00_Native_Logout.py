@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 
 
 st.set_page_config(
@@ -9,25 +8,19 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-LOGIN_AFTER_LOGOUT_URL = "/Login?logout=1"
+# Keep the signed-out marker in the URL while Streamlit deletes the identity cookie
+# and starts a fresh browser session.
+try:
+    st.query_params["logout"] = "1"
+except Exception:
+    pass
 
-# This route is opened with ?logout=1. st.logout() deletes Streamlit's identity
-# cookie and creates a new session. The URL marker survives that transition and
-# keeps the Login page stable while cookie deletion finishes in the browser.
 if st.user.is_logged_in:
     st.logout()
 
-st.title("Signed out")
-st.success("Your HealthyMe test session has been closed.")
-
-# Navigate the top-level app, not the component iframe. The visible link remains
-# as a fallback if a browser blocks scripted navigation.
-components.html(
-    f"""
-    <script>
-      window.parent.location.replace({LOGIN_AFTER_LOGOUT_URL!r});
-    </script>
-    """,
-    height=0,
-)
-st.link_button("Continue to Login", LOGIN_AFTER_LOGOUT_URL, type="primary")
+# After st.logout() starts the fresh session, continue to Login in the same tab.
+try:
+    st.query_params["logout"] = "1"
+except Exception:
+    pass
+st.switch_page("pages/01_Login.py")
