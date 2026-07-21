@@ -9,8 +9,7 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13O2-st-navigation-poc-v6-same-tab-logout"
-LOGOUT_QUERY_KEY = "logout"
+ROUTER_BUILD = "H13O2-st-navigation-poc-v7-native-session-flow"
 PROTECTED_BOOTSTRAP_DELAYS = (0.15, 0.35, 0.75)
 
 
@@ -22,38 +21,6 @@ st.set_page_config(
 )
 inject_global_styles()
 apply_luxe_theme()
-
-
-def _query_value(name: str) -> str:
-    try:
-        return str(st.query_params.get(name) or "").strip()
-    except Exception:
-        return ""
-
-
-def _logout_marker_present() -> bool:
-    return _query_value(LOGOUT_QUERY_KEY) == "1"
-
-
-def _logout_was_requested() -> bool:
-    return bool(
-        _logout_marker_present()
-        or st.session_state.get("logout_requested")
-        or st.session_state.get("signed_out")
-    )
-
-
-def _clear_local_session(*, preserve_query_params: bool = False) -> None:
-    for key in list(st.session_state.keys()):
-        try:
-            del st.session_state[key]
-        except Exception:
-            pass
-    if not preserve_query_params:
-        try:
-            st.query_params.clear()
-        except Exception:
-            pass
 
 
 def _native_identity_present() -> bool:
@@ -76,13 +43,13 @@ def _root_route() -> None:
 
 
 def _router_logout_button(key: str) -> None:
-    """Start logout in the current tab and preserve a signed-out URL marker."""
-    if st.button("Logout", key=key, use_container_width=False):
-        try:
-            st.query_params[LOGOUT_QUERY_KEY] = "1"
-        except Exception:
-            pass
-        st.switch_page(native_logout_page)
+    """Use Streamlit's native logout lifecycle without page or query-param redirects."""
+    st.button(
+        "Logout",
+        key=key,
+        use_container_width=False,
+        on_click=st.logout,
+    )
 
 
 def _admin_router_test_page() -> None:
@@ -155,7 +122,6 @@ def _show_role_restore_recovery() -> None:
     st.metric("Automatic role-lookup attempts", attempts)
     if st.button("Retry access", type="primary"):
         st.session_state.pop("_hm_protected_bootstrap_attempt", None)
-        st.session_state.pop("_hm_router_final_retry_done", None)
         st.rerun()
     if st.button("Open safe diagnostics"):
         st.switch_page(auth_diagnostics_page)
@@ -212,31 +178,20 @@ selected_page = st.navigation(
     position="hidden",
 )
 
-logout_marker = _logout_marker_present()
-
-# A durable URL marker is intentionally preserved across the new session created by
-# st.logout(). While it is present, stale identity state is never allowed to rebuild a
-# HealthyMe session or redirect Login back to a protected page.
-if _logout_was_requested():
-    if _native_identity_present():
-        st.logout()
-    _clear_local_session(preserve_query_params=logout_marker)
-
 restore_started = time.perf_counter()
 restored = False
 
-if not logout_marker:
-    if supabase_auth_enabled():
-        try:
-            restored = restore_supabase_login_from_session()
-        except Exception:
-            restored = False
+if supabase_auth_enabled():
+    try:
+        restored = restore_supabase_login_from_session()
+    except Exception:
+        restored = False
 
-    if not restored and auth0_enabled():
-        try:
-            restored = restore_login_from_token()
-        except Exception:
-            restored = False
+if not restored and auth0_enabled():
+    try:
+        restored = restore_login_from_token()
+    except Exception:
+        restored = False
 
 st.session_state["_hm_router_build"] = ROUTER_BUILD
 st.session_state["_hm_router_restore_ms"] = round(
@@ -245,7 +200,6 @@ st.session_state["_hm_router_restore_ms"] = round(
 )
 st.session_state["_hm_router_native_identity"] = _native_identity_present()
 st.session_state["_hm_router_auth_cookie_present"] = _auth_cookie_present()
-st.session_state["_hm_router_logout_marker"] = logout_marker
 
 technical_pages = (
     consent_page,
@@ -259,35 +213,32 @@ protected_pages = (
 )
 
 if selected_page not in technical_pages:
-    if logout_marker:
+    if restored:
         st.session_state.pop("_hm_protected_bootstrap_attempt", None)
-        if selected_page is not login_page:
-            st.switch_page(login_page)
-    elif restored:
-        st.session_state.pop("_hm_protected_bootstrap_attempt", None)
-        st.session_state.pop("_hm_router_final_retry_done", None)
         is_admin = is_admin_role(st.session_state.get("user_role"))
         if is_admin and selected_page in (root_page, login_page, member_page):
             st.switch_page(admin_page)
         if not is_admin and selected_page in (root_page, login_page, admin_page):
             st.switch_page(member_page)
     elif selected_page in protected_pages:
-        # On a hard refresh, the first script run can occur before Streamlit has exposed
-        # the persisted identity cookie through st.user/st.context. Retry the whole router
-        # across bounded reruns even when the first run sees neither signal.
+        # A hard refresh can begin before Streamlit exposes the persisted identity to
+        # the first Python run. Retry the complete router for a short bounded period.
         attempt = int(st.session_state.get("_hm_protected_bootstrap_attempt") or 0)
         if attempt < len(PROTECTED_BOOTSTRAP_DELAYS):
             st.session_state["_hm_protected_bootstrap_attempt"] = attempt + 1
             time.sleep(PROTECTED_BOOTSTRAP_DELAYS[attempt])
             st.rerun()
 
-        native_identity = _native_identity_present()
-        auth_cookie = _auth_cookie_present()
-        if native_identity or auth_cookie:
+        if _native_identity_present() or _auth_cookie_present():
             _show_role_restore_recovery()
 
         st.session_state.pop("_hm_protected_bootstrap_attempt", None)
         st.switch_page(login_page)
+    elif selected_page is login_page and (
+        _native_identity_present() or _auth_cookie_present()
+    ):
+        # Never present a second login form while a native identity is already active.
+        _show_role_restore_recovery()
     else:
         st.session_state.pop("_hm_protected_bootstrap_attempt", None)
 
