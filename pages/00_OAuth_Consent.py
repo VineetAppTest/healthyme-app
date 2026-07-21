@@ -59,7 +59,7 @@ if not supabase_url or not publishable_key:
 # unsafe_allow_javascript=True. It is intentionally not rendered in an iframe because
 # the Supabase OAuth authorization request and the temporary authenticated Supabase
 # session must live in the same top-level browser context.
-html_document = f"""
+html_document = rf"""
 <style>
   #hm-oauth-root {{
     max-width: 560px; margin: 16px auto; padding: 24px;
