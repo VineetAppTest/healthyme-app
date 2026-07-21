@@ -122,6 +122,18 @@ snapshot = {
     "router_final_retry_done": _safe_bool(
         st.session_state.get("_hm_router_final_retry_done")
     ),
+    "protected_bootstrap_attempt": st.session_state.get(
+        "_hm_protected_bootstrap_attempt"
+    ),
+    "router_logout_marker": _safe_bool(
+        st.session_state.get("_hm_router_logout_marker")
+    ),
+    "router_native_identity": _safe_bool(
+        st.session_state.get("_hm_router_native_identity")
+    ),
+    "router_auth_cookie_present": _safe_bool(
+        st.session_state.get("_hm_router_auth_cookie_present")
+    ),
 }
 
 st.title("HealthyMe authentication diagnostics")
@@ -173,6 +185,7 @@ if snapshot["auth_cookie_length"] > 3500:
 st.subheader("Safe diagnostic snapshot")
 st.code(json.dumps(snapshot, indent=2, sort_keys=True), language="json")
 st.caption(
-    "The role restoration fields show whether HealthyMe loaded the access profile on "
-    "the first attempt, after an automatic retry, or not at all."
+    "The bootstrap, role-restoration and logout-marker fields show whether the router "
+    "was waiting for Streamlit identity hydration, loading the HealthyMe role, or "
+    "intentionally holding the signed-out state."
 )
