@@ -10,11 +10,12 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13O2-st-navigation-poc-v10-stable-switch"
+ROUTER_BUILD = "H13O2-st-navigation-poc-v11-hybrid-hydration"
 BOOTSTRAP_QUERY_KEY = "hm_bootstrap"
 BOOTSTRAP_ATTEMPT_QUERY_KEY = "hm_bootstrap_try"
 BOOTSTRAP_MAX_ATTEMPTS = 3
 BOOTSTRAP_DELAYS_MS = (200, 600, 1200)
+IN_SESSION_RESTORE_DELAYS = (0.2, 0.6, 1.2)
 
 
 st.set_page_config(
@@ -136,10 +137,27 @@ def _show_role_restore_recovery() -> None:
     attempts = st.session_state.get("_hm_role_restore_attempts", "—")
     st.metric("Automatic role-lookup attempts", attempts)
     if st.button("Retry access", type="primary"):
+        st.session_state.pop("_hm_in_session_restore_attempt", None)
         st.rerun()
     if st.button("Open safe diagnostics"):
         st.switch_page(auth_diagnostics_page)
     st.stop()
+
+
+def _retry_current_session() -> None:
+    """Give a newly opened WebSocket session time to expose its persisted OIDC identity.
+
+    The diagnostics page has demonstrated that the same browser cookie can become usable
+    without another login. Protected routes therefore wait and rerun briefly before they
+    force a second browser-level session. The retry counter is session-local and bounded.
+    """
+    attempt = int(st.session_state.get("_hm_in_session_restore_attempt") or 0)
+    if attempt >= len(IN_SESSION_RESTORE_DELAYS):
+        return
+
+    st.session_state["_hm_in_session_restore_attempt"] = attempt + 1
+    time.sleep(IN_SESSION_RESTORE_DELAYS[attempt])
+    st.rerun()
 
 
 def _restart_as_new_browser_session(
@@ -259,6 +277,7 @@ technical_pages = (
 
 if selected_page not in technical_pages:
     if restored:
+        st.session_state.pop("_hm_in_session_restore_attempt", None)
         is_admin = is_admin_role(st.session_state.get("user_role"))
         restored_role = "admin" if is_admin else "member"
 
@@ -278,13 +297,20 @@ if selected_page not in technical_pages:
             st.switch_page(member_page)
 
     elif selected_page is admin_page:
+        _retry_current_session()
+        if _native_identity_present() or _auth_cookie_present():
+            _show_role_restore_recovery()
         _restart_as_new_browser_session("admin", attempt=1)
 
     elif selected_page is member_page:
+        _retry_current_session()
+        if _native_identity_present() or _auth_cookie_present():
+            _show_role_restore_recovery()
         _restart_as_new_browser_session("member", attempt=1)
 
     elif selected_page is root_page:
         if bootstrap_target in {"admin", "member"}:
+            _retry_current_session()
             if bootstrap_attempt < BOOTSTRAP_MAX_ATTEMPTS:
                 _restart_as_new_browser_session(
                     bootstrap_target,
