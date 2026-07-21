@@ -21,19 +21,23 @@ inject_global_styles()
 apply_luxe_theme()
 
 
-def _logout_marker_present() -> bool:
-    try:
-        return str(st.query_params.get("logout") or "").strip() == "1"
-    except Exception:
-        return False
-
-
 if not supabase_oidc_poc_enabled():
     st.error(
         "This branch is the isolated Supabase OIDC proof of concept. "
         "Set AUTH_MODE='supabase_oidc_poc' in the temporary Streamlit app secrets."
     )
     st.stop()
+
+
+def _begin_oidc_login() -> None:
+    """Start exactly one native OIDC request without mutating the URL first."""
+    st.session_state.pop("signed_out", None)
+    st.session_state.pop("logout_requested", None)
+    st.session_state.pop("_hm_expected_login_role", None)
+    st.session_state.pop("_hm_requested_page_after_login", None)
+    st.session_state.pop("_hm_protected_bootstrap_attempt", None)
+    st.login(oidc_provider_name())
+
 
 st.markdown(
     f"""
@@ -47,9 +51,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-if _logout_marker_present():
-    st.success("You have been signed out. This page will remain logged out when refreshed.")
 
 left, right = st.columns([0.96, 1.04], gap="large")
 
@@ -67,21 +68,12 @@ with left:
             "page runs after browser refresh."
         )
 
-        if st.button(
+        st.button(
             oidc_button_label(),
             type="primary",
             use_container_width=True,
-        ):
-            st.session_state.pop("signed_out", None)
-            st.session_state.pop("logout_requested", None)
-            st.session_state.pop("_hm_expected_login_role", None)
-            st.session_state.pop("_hm_requested_page_after_login", None)
-            st.session_state.pop("_hm_protected_bootstrap_attempt", None)
-            try:
-                st.query_params.clear()
-            except Exception:
-                pass
-            st.login(oidc_provider_name())
+            on_click=_begin_oidc_login,
+        )
 
         st.info(
             "This test does not replace the working H13R1 production login. "
@@ -104,7 +96,3 @@ with right:
         """,
         unsafe_allow_html=True,
     )
-
-if st.user.is_logged_in:
-    if st.button("Clear test identity", use_container_width=True):
-        st.logout()
