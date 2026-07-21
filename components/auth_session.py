@@ -1,3 +1,5 @@
+import time
+
 import streamlit as st
 
 from components.admin_role_model import apply_app_user_to_session, resolve_app_user
@@ -17,6 +19,8 @@ RECOVERY_SESSION_KEYS = (
     "_hm_legacy_supabase_marker_detected",
     "_hm_member_restore_retry",
 )
+
+OIDC_ROLE_RESTORE_DELAYS = (0.0, 0.25, 0.75)
 
 
 def _clear_recovery_flags():
@@ -73,6 +77,23 @@ def _resolve_app_user_by_email(email):
     return app_user if ok else None
 
 
+@st.cache_data(ttl=30, show_spinner=False)
+def _resolve_oidc_app_user_cached(email: str, subject: str, use_subject: bool):
+    """Cache only successful short-lived OIDC-to-HealthyMe role mappings.
+
+    Raising on failure prevents a transient database failure or cold-start timeout from
+    being cached. The short TTL keeps access changes responsive while eliminating the
+    immediate duplicate role lookup after a successful login and browser refresh.
+    """
+    ok, app_user, message = resolve_app_user(
+        email=email,
+        auth_user_id=subject if use_subject else "",
+    )
+    if not ok or not app_user:
+        raise RuntimeError(message or "HealthyMe role mapping was not available.")
+    return dict(app_user)
+
+
 def _apply_user_to_session(
     app_user,
     email,
@@ -92,6 +113,7 @@ def _apply_user_to_session(
 
 def restore_login_from_token():
     has_native_identity = oidc_is_logged_in()
+    st.session_state["_hm_native_identity_seen"] = bool(has_native_identity)
 
     if has_native_identity:
         st.session_state.pop("signed_out", None)
@@ -103,7 +125,8 @@ def restore_login_from_token():
 
     email = get_oidc_email()
     subject = get_oidc_subject()
-    auth_method = "supabase_oidc" if supabase_oidc_poc_enabled() else "auth0"
+    use_subject = supabase_oidc_poc_enabled()
+    auth_method = "supabase_oidc" if use_subject else "auth0"
 
     if (
         st.session_state.get("logged_in")
@@ -111,24 +134,48 @@ def restore_login_from_token():
         and st.session_state.get("oidc_email") == email
     ):
         _clear_recovery_flags()
+        st.session_state["_hm_role_restore_attempts"] = 0
+        st.session_state["_hm_role_restore_status"] = "existing_session"
         return True
 
-    ok, app_user, message = resolve_app_user(
-        email=email,
-        auth_user_id=subject if supabase_oidc_poc_enabled() else "",
+    last_error = ""
+    for attempt_number, delay_seconds in enumerate(
+        OIDC_ROLE_RESTORE_DELAYS,
+        start=1,
+    ):
+        if delay_seconds:
+            time.sleep(delay_seconds)
+        try:
+            app_user = _resolve_oidc_app_user_cached(
+                email,
+                subject,
+                use_subject,
+            )
+            restored = _apply_user_to_session(
+                app_user,
+                email,
+                auth_method=auth_method,
+                auth_user_id=subject,
+            )
+            if restored:
+                st.session_state["_hm_role_restore_attempts"] = attempt_number
+                st.session_state["_hm_role_restore_status"] = "restored"
+                st.session_state.pop("_hm_role_restore_failed", None)
+                return True
+        except Exception as exc:
+            last_error = str(exc or "")
+
+    st.session_state["logged_in"] = False
+    st.session_state["_hm_role_restore_attempts"] = len(OIDC_ROLE_RESTORE_DELAYS)
+    st.session_state["_hm_role_restore_status"] = "mapping_unavailable"
+    st.session_state["_hm_role_restore_failed"] = True
+    st.session_state["auth_error"] = (
+        "Your identity is active, but HealthyMe could not load your access profile. "
+        "Please retry in a moment."
     )
-    if not ok or not app_user:
-        st.session_state["logged_in"] = False
-        st.session_state["auth_error"] = (
-            f"{email or 'This email'} is authenticated but not authorized in HealthyMe. {message}"
-        )
-        return False
-    return _apply_user_to_session(
-        app_user,
-        email,
-        auth_method=auth_method,
-        auth_user_id=subject,
-    )
+    if last_error:
+        st.session_state["_hm_role_restore_error_class"] = "lookup_failed"
+    return False
 
 
 def login_with_supabase_password(email, password):
