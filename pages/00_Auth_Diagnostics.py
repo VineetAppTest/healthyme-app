@@ -112,6 +112,16 @@ snapshot = {
     ),
     "healthyme_role": role,
     "router_restore_ms": st.session_state.get("_hm_router_restore_ms"),
+    "role_restore_attempts": st.session_state.get("_hm_role_restore_attempts"),
+    "role_restore_status": str(
+        st.session_state.get("_hm_role_restore_status") or "unknown"
+    ),
+    "role_restore_failed": _safe_bool(
+        st.session_state.get("_hm_role_restore_failed")
+    ),
+    "router_final_retry_done": _safe_bool(
+        st.session_state.get("_hm_router_final_retry_done")
+    ),
 }
 
 st.title("HealthyMe authentication diagnostics")
@@ -163,7 +173,6 @@ if snapshot["auth_cookie_length"] > 3500:
 st.subheader("Safe diagnostic snapshot")
 st.code(json.dumps(snapshot, indent=2, sort_keys=True), language="json")
 st.caption(
-    "Take one screenshot before refresh and one after refresh. The comparison will "
-    "identify whether the failure is cookie persistence, cookie scope, Streamlit "
-    "validation or HealthyMe role restoration."
+    "The role restoration fields show whether HealthyMe loaded the access profile on "
+    "the first attempt, after an automatic retry, or not at all."
 )
