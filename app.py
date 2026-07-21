@@ -1,5 +1,4 @@
 import time
-from urllib.parse import urlsplit
 
 import streamlit as st
 
@@ -10,7 +9,7 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13O2-st-navigation-poc-v5-session-bootstrap"
+ROUTER_BUILD = "H13O2-st-navigation-poc-v6-same-tab-logout"
 LOGOUT_QUERY_KEY = "logout"
 PROTECTED_BOOTSTRAP_DELAYS = (0.15, 0.35, 0.75)
 
@@ -71,35 +70,19 @@ def _auth_cookie_present() -> bool:
         return False
 
 
-def _app_origin() -> str:
-    try:
-        parsed = urlsplit(str(st.context.url or ""))
-        if parsed.scheme and parsed.netloc:
-            return f"{parsed.scheme}://{parsed.netloc}"
-    except Exception:
-        pass
-    return ""
-
-
-def _absolute_app_url(path: str) -> str:
-    normalized = "/" + str(path or "").lstrip("/")
-    origin = _app_origin()
-    return f"{origin}{normalized}" if origin else normalized
-
-
 def _root_route() -> None:
     """The central router redirects root before this placeholder normally runs."""
     st.empty()
 
 
-def _router_logout_button() -> None:
-    # A URL marker survives the new browser session created by st.logout(). It keeps
-    # Login stable while the browser finishes deleting the identity cookie.
-    st.link_button(
-        "Logout",
-        _absolute_app_url("/Native_Logout?logout=1"),
-        use_container_width=False,
-    )
+def _router_logout_button(key: str) -> None:
+    """Start logout in the current tab and preserve a signed-out URL marker."""
+    if st.button("Logout", key=key, use_container_width=False):
+        try:
+            st.query_params[LOGOUT_QUERY_KEY] = "1"
+        except Exception:
+            pass
+        st.switch_page(native_logout_page)
 
 
 def _admin_router_test_page() -> None:
@@ -127,7 +110,7 @@ def _admin_router_test_page() -> None:
         f"{st.session_state.get('_hm_router_restore_ms', '—')} ms",
     )
     st.code(ROUTER_BUILD)
-    _router_logout_button()
+    _router_logout_button("h13o2_admin_logout")
 
 
 def _member_router_test_page() -> None:
@@ -155,7 +138,7 @@ def _member_router_test_page() -> None:
         f"{st.session_state.get('_hm_router_restore_ms', '—')} ms",
     )
     st.code(ROUTER_BUILD)
-    _router_logout_button()
+    _router_logout_button("h13o2_member_logout")
 
 
 def _show_role_restore_recovery() -> None:
