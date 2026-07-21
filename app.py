@@ -9,7 +9,7 @@ from components.supabase_auth_session import restore_supabase_login_from_session
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13O2-st-navigation-poc-v3-isolated-pages"
+ROUTER_BUILD = "H13O2-st-navigation-poc-v4-resilient-restore"
 
 
 st.set_page_config(
@@ -41,6 +41,20 @@ def _clear_local_session() -> None:
         st.query_params.clear()
     except Exception:
         pass
+
+
+def _native_identity_present() -> bool:
+    try:
+        return bool(st.user.is_logged_in)
+    except Exception:
+        return False
+
+
+def _auth_cookie_present() -> bool:
+    try:
+        return "_streamlit_user" in dict(st.context.cookies)
+    except Exception:
+        return False
 
 
 def _root_route() -> None:
@@ -108,6 +122,26 @@ def _member_router_test_page() -> None:
     )
     st.code(ROUTER_BUILD)
     _router_logout_button("h13o2_member_logout")
+
+
+def _show_role_restore_recovery() -> None:
+    """Keep an authenticated user out of Login when only role lookup is delayed."""
+    st.title("HealthyMe is restoring your access")
+    st.warning(
+        "Your secure sign-in is still active, but HealthyMe could not load your access "
+        "profile on the first attempt. This is a temporary restoration issue, not a logout."
+    )
+    st.caption(
+        "The app has already retried automatically. Use Retry access once; do not sign in again."
+    )
+    attempts = st.session_state.get("_hm_role_restore_attempts", "—")
+    st.metric("Automatic role-lookup attempts", attempts)
+    if st.button("Retry access", type="primary"):
+        st.session_state.pop("_hm_router_final_retry_done", None)
+        st.rerun()
+    if st.button("Open safe diagnostics"):
+        st.switch_page(auth_diagnostics_page)
+    st.stop()
 
 
 root_page = st.Page(
@@ -190,6 +224,8 @@ st.session_state["_hm_router_restore_ms"] = round(
     (time.perf_counter() - restore_started) * 1000,
     1,
 )
+st.session_state["_hm_router_native_identity"] = _native_identity_present()
+st.session_state["_hm_router_auth_cookie_present"] = _auth_cookie_present()
 
 technical_pages = (
     consent_page,
@@ -199,12 +235,26 @@ technical_pages = (
 
 if selected_page not in technical_pages:
     if restored:
+        st.session_state.pop("_hm_router_final_retry_done", None)
         is_admin = is_admin_role(st.session_state.get("user_role"))
         if is_admin and selected_page in (root_page, login_page, member_page):
             st.switch_page(admin_page)
         if not is_admin and selected_page in (root_page, login_page, admin_page):
             st.switch_page(member_page)
     elif selected_page in (root_page, admin_page, member_page):
+        native_identity = _native_identity_present()
+        auth_cookie = _auth_cookie_present()
+
+        # A valid Streamlit identity or auth cookie means the user did not log out.
+        # Give transient HealthyMe role resolution one final rerun instead of sending
+        # the user to Login, which would falsely present a backend lookup delay as logout.
+        if native_identity or auth_cookie:
+            if not st.session_state.get("_hm_router_final_retry_done"):
+                st.session_state["_hm_router_final_retry_done"] = True
+                time.sleep(0.5)
+                st.rerun()
+            _show_role_restore_recovery()
+
         st.switch_page(login_page)
 
 selected_page.run()
