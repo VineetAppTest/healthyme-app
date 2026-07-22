@@ -26,21 +26,35 @@ The main page uses only `st.login()`, `st.user` and `st.logout()`.
 - Python: 3.11
 - Provider secret: `AUTH_TEST_PROVIDER = "auth0"`
 
-Acceptance:
+Accepted result on 2026-07-22:
 
-1. Fresh Auth0 login succeeds.
-2. Native identity remains present across 10 consecutive refreshes.
-3. Closing and reopening the tab restores identity.
-4. Logout returns to logged-out state.
-5. Three Login-page refreshes remain logged out.
+1. Fresh Auth0 login succeeded.
+2. Native identity remained present across 10 consecutive refreshes.
+3. Closing and reopening the tab restored identity.
+4. Logout returned to logged-out state after the exact `/oauth2callback` URL was added to Auth0 Allowed Logout URLs.
+5. Three Login-page refreshes remained logged out.
+
+This proves Streamlit Community Cloud native OIDC identity persistence works independently of HealthyMe role, router and Session State logic.
 
 ## Deployment B — Supabase comparison
 
-Use the same repository, branch, main file and Python version, but set `AUTH_TEST_PROVIDER = "supabaseoidc"` and configure the Supabase OIDC provider.
+Create a second temporary Streamlit app using the same repository, branch, main file and Python version. Do not replace the accepted Auth0 deployment.
 
-Supabase OAuth Server must use this app's `/OAuth_Consent` path and exact `/oauth2callback` redirect URI.
+Recommended app URL: `healthyme-identity-parity-b`.
 
-Run the same refresh and logout checks.
+Set `AUTH_TEST_PROVIDER = "supabaseoidc"` and configure the Supabase OIDC provider.
+
+Required Supabase configuration:
+
+- OAuth 2.1 Server enabled.
+- OAuth client type: Confidential.
+- OAuth client redirect URI: exact Streamlit `/oauth2callback` URL.
+- Authorization Path: `/OAuth_Consent`.
+- The Supabase Site URL and Authorization Path must combine to the deployed consent page URL.
+- OIDC discovery URL: `https://<project-ref>.supabase.co/auth/v1/.well-known/openid-configuration`.
+- The Supabase project must use an asymmetric JWT signing key for OIDC ID tokens.
+
+Run the same login, 10-refresh, tab-reopen and logout checks.
 
 ## Decision rules
 
