@@ -4,7 +4,7 @@ import os
 import streamlit as st
 
 
-BUILD = "H13Q1-supabase-oauth-consent-v1"
+BUILD = "H13Q1-supabase-oauth-consent-v2-native-route-guard"
 
 
 def _secret(name: str) -> str:
@@ -18,12 +18,29 @@ def _secret(name: str) -> str:
     return str(value or "").strip()
 
 
+def _native_identity_present() -> bool:
+    try:
+        return bool(st.user and st.user.is_logged_in)
+    except Exception:
+        return False
+
+
 st.set_page_config(
     page_title="HealthyMe Supabase Authorization Test",
     page_icon="🔐",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
+
+# The consent URL is a one-time authorization route. If Streamlit has already
+# restored the native identity, never leave the browser parked on or refreshing
+# the old authorization_id URL; return to the app root instead.
+if _native_identity_present():
+    st.html(
+        '<script>window.location.replace("/");</script>',
+        unsafe_allow_javascript=True,
+    )
+    st.stop()
 
 provider = _secret("AUTH_TEST_PROVIDER").lower()
 authorization_id = str(st.query_params.get("authorization_id") or "").strip()
