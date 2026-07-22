@@ -21,7 +21,7 @@ from components.supabase_cookie_handoff import (
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13P1-direct-supabase-cookie-handoff-v1"
+ROUTER_BUILD = "H13P1-direct-supabase-cookie-handoff-v2-inline"
 
 
 st.set_page_config(
@@ -54,6 +54,58 @@ def _resolved_supabase_session() -> bool:
 
 def _role_destination():
     return admin_page if is_admin_role(st.session_state.get("user_role")) else member_page
+
+
+def _render_login_handoff() -> None:
+    marker = str(
+        st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or ""
+    ).strip()
+    if not marker or not _resolved_supabase_session():
+        st.error("HealthyMe created no usable secure session after Supabase sign-in.")
+        st.stop()
+
+    st.title("Securing your HealthyMe session")
+    st.info(
+        "HealthyMe is committing the opaque browser marker and opening a fresh "
+        "session to prove that refresh restoration works."
+    )
+    st.caption("No password or Supabase token is written to the browser.")
+    render_cookie_commit_handoff(
+        marker=marker,
+        cookie_name=SUPABASE_BROWSER_COOKIE_NAME,
+        destination="/",
+    )
+    st.stop()
+
+
+def _perform_logout() -> None:
+    st.title("Signing out securely")
+    st.info(
+        "HealthyMe is revoking the server-side session and clearing the browser marker."
+    )
+
+    clear_ok = False
+    try:
+        clear_ok = bool(clear_supabase_auth_session())
+    except Exception:
+        clear_ok = False
+
+    clear_app_session_for_logout(
+        feedback_level="success" if clear_ok else "warning",
+        feedback_message=(
+            "You have been signed out securely."
+            if clear_ok
+            else "The local session was cleared. Close this tab before switching users."
+        ),
+    )
+    render_cookie_clear_handoff(
+        cookie_names=(
+            SUPABASE_BROWSER_COOKIE_NAME,
+            "hm_supabase_sid_v1",
+        ),
+        destination="/Login",
+    )
+    st.stop()
 
 
 def _login_page() -> None:
@@ -101,7 +153,12 @@ def _login_page() -> None:
             st.error(message)
             st.stop()
         st.session_state["_hm_h13p1_login_started_at"] = time.time()
-        st.switch_page(session_handoff_page)
+
+        # Do not navigate to another Streamlit page before the browser cookie is
+        # committed. The earlier v1 navigation could update the URL while leaving
+        # the previous callable page rendered. Commit the first-party marker in the
+        # same successful login execution, then open a fresh root session.
+        _render_login_handoff()
 
 
 def _admin_page() -> None:
@@ -119,7 +176,7 @@ def _admin_page() -> None:
     )
     st.code(ROUTER_BUILD)
     if st.button("Logout", key="h13p1_admin_logout"):
-        st.switch_page(logout_handoff_page)
+        _perform_logout()
 
 
 def _member_page() -> None:
@@ -137,59 +194,7 @@ def _member_page() -> None:
     )
     st.code(ROUTER_BUILD)
     if st.button("Logout", key="h13p1_member_logout"):
-        st.switch_page(logout_handoff_page)
-
-
-def _session_handoff_page() -> None:
-    marker = str(
-        st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or ""
-    ).strip()
-    if not marker or not _resolved_supabase_session():
-        st.error("The secure Supabase session handoff is not available.")
-        if st.button("Return to Login"):
-            st.switch_page(login_page)
-        st.stop()
-
-    st.title("Securing your HealthyMe session")
-    st.info(
-        "HealthyMe is committing the opaque browser marker and opening a fresh "
-        "session to prove that refresh restoration works."
-    )
-    st.caption("No password or Supabase token is written to the browser.")
-    render_cookie_commit_handoff(
-        marker=marker,
-        cookie_name=SUPABASE_BROWSER_COOKIE_NAME,
-        destination="/",
-    )
-    st.stop()
-
-
-def _logout_handoff_page() -> None:
-    st.title("Signing out securely")
-    st.info("HealthyMe is revoking the server-side session and clearing the browser marker.")
-
-    clear_ok = False
-    try:
-        clear_ok = bool(clear_supabase_auth_session())
-    except Exception:
-        clear_ok = False
-
-    clear_app_session_for_logout(
-        feedback_level="success" if clear_ok else "warning",
-        feedback_message=(
-            "You have been signed out securely."
-            if clear_ok
-            else "The local session was cleared. Close this tab before switching users."
-        ),
-    )
-    render_cookie_clear_handoff(
-        cookie_names=(
-            SUPABASE_BROWSER_COOKIE_NAME,
-            "hm_supabase_sid_v1",
-        ),
-        destination="/Login",
-    )
-    st.stop()
+        _perform_logout()
 
 
 def _diagnostics_page() -> None:
@@ -254,16 +259,6 @@ member_page = st.Page(
     title="Member Home",
     url_path="Member_Home",
 )
-session_handoff_page = st.Page(
-    _session_handoff_page,
-    title="Session Handoff",
-    url_path="Session_Handoff",
-)
-logout_handoff_page = st.Page(
-    _logout_handoff_page,
-    title="Logout Handoff",
-    url_path="Logout_Handoff",
-)
 diagnostics_page = st.Page(
     _diagnostics_page,
     title="Auth Diagnostics",
@@ -276,17 +271,9 @@ selected_page = st.navigation(
         login_page,
         admin_page,
         member_page,
-        session_handoff_page,
-        logout_handoff_page,
         diagnostics_page,
     ],
     position="hidden",
-)
-
-technical_pages = (
-    session_handoff_page,
-    logout_handoff_page,
-    diagnostics_page,
 )
 
 restore_started = time.perf_counter()
@@ -295,7 +282,6 @@ cookie_present = bool(_native_cookie_value(SUPABASE_BROWSER_COOKIE_NAME))
 
 if (
     not restored
-    and selected_page not in (session_handoff_page, logout_handoff_page)
     and cookie_present
     and supabase_auth_enabled()
 ):
@@ -309,7 +295,7 @@ st.session_state["_hm_h13p1_restore_ms"] = round(
     1,
 )
 
-if selected_page not in technical_pages:
+if selected_page is not diagnostics_page:
     if restored:
         destination = _role_destination()
         if selected_page in (root_page, login_page):
