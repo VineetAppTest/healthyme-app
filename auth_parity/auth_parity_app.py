@@ -4,7 +4,7 @@ import os
 import streamlit as st
 
 
-BUILD = "H13Q1-native-oidc-provider-parity-v2-cookie-observation"
+BUILD = "H13Q1-native-oidc-provider-parity-v3-post-logout-observation"
 SUPPORTED_PROVIDERS = {"auth0", "supabaseoidc"}
 
 
@@ -104,6 +104,7 @@ if not logged_in:
         "application_session_state_required": False,
         "custom_browser_marker_used": False,
         "local_storage_used": False,
+        "diagnostic_focus": "post_logout_relogin_cookie_lifecycle",
     }
     st.code(
         json.dumps(safe_logged_out_snapshot, indent=2, sort_keys=True),
@@ -136,6 +137,7 @@ safe_snapshot = {
     "application_session_state_required": False,
     "custom_browser_marker_used": False,
     "local_storage_used": False,
+    "diagnostic_focus": "post_logout_relogin_cookie_lifecycle",
 }
 
 st.success(f"Streamlit restored a native identity from {provider_label}.")
@@ -146,8 +148,8 @@ col3.metric("Subject claim", "Present" if safe_snapshot["subject_claim_present"]
 
 st.code(json.dumps(safe_snapshot, indent=2, sort_keys=True), language="json")
 st.caption(
-    "For the current diagnostic, capture this screen, refresh once, and capture the "
-    "logged-out or restored screen. The page displays no cookie or token values."
+    "Current focus: log out once, log back in once, then refresh the root page once. "
+    "Capture the logged-in screen before refresh and the root screen after refresh."
 )
 
 if st.button("Logout", use_container_width=True):
