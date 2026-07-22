@@ -21,7 +21,9 @@ from components.supabase_cookie_handoff import (
 from components.ui_common import apply_luxe_theme, inject_global_styles
 
 
-ROUTER_BUILD = "H13P1-direct-supabase-cookie-handoff-v2-inline"
+ROUTER_BUILD = "H13P1-direct-supabase-cookie-handoff-v3-observable-login"
+LOGIN_STAGE_KEY = "_hm_h13p1_login_stage"
+LOGIN_STAGE_MESSAGE_KEY = "_hm_h13p1_login_stage_message"
 
 
 st.set_page_config(
@@ -56,14 +58,44 @@ def _role_destination():
     return admin_page if is_admin_role(st.session_state.get("user_role")) else member_page
 
 
+def _set_login_stage(stage: str, message: str = "") -> None:
+    st.session_state[LOGIN_STAGE_KEY] = str(stage or "").strip()
+    st.session_state[LOGIN_STAGE_MESSAGE_KEY] = str(message or "").strip()
+
+
+def _render_login_stage() -> None:
+    stage = str(st.session_state.get(LOGIN_STAGE_KEY) or "not_started").strip()
+    message = str(st.session_state.get(LOGIN_STAGE_MESSAGE_KEY) or "").strip()
+    if stage == "request_received":
+        st.info(message or "The login request reached HealthyMe.")
+    elif stage == "failed":
+        st.warning(message or "The login attempt did not complete.")
+    elif stage == "authenticated":
+        st.success(
+            message
+            or "Supabase authenticated the account and HealthyMe resolved the role."
+        )
+    elif stage == "handoff_started":
+        st.info(message or "HealthyMe is committing the secure browser marker.")
+
+
 def _render_login_handoff() -> None:
     marker = str(
         st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY) or ""
     ).strip()
     if not marker or not _resolved_supabase_session():
+        _set_login_stage(
+            "failed",
+            "Supabase authenticated, but HealthyMe did not create a usable durable session.",
+        )
         st.error("HealthyMe created no usable secure session after Supabase sign-in.")
         st.stop()
 
+    _set_login_stage(
+        "handoff_started",
+        "Supabase authentication and HealthyMe role resolution passed. "
+        "The opaque browser marker is now being committed.",
+    )
     st.title("Securing your HealthyMe session")
     st.info(
         "HealthyMe is committing the opaque browser marker and opening a fresh "
@@ -134,31 +166,56 @@ def _login_page() -> None:
     if existing_error:
         st.error(existing_error)
 
-    with st.form("h13p1_login_form", clear_on_submit=False):
-        email = st.text_input("Email", key="h13p1_login_email")
-        password = st.text_input(
-            "Password",
-            type="password",
-            key="h13p1_login_password",
-        )
-        submitted = st.form_submit_button(
-            "Continue with Supabase",
-            type="primary",
-            use_container_width=True,
-        )
+    _render_login_stage()
 
-    if submitted:
-        ok, message = sign_in_with_supabase(email, password)
+    email = st.text_input("Email", key="h13p1_login_email")
+    password = st.text_input(
+        "Password",
+        type="password",
+        key="h13p1_login_password",
+    )
+
+    if st.button(
+        "Continue with Supabase",
+        type="primary",
+        use_container_width=True,
+        key="h13p1_login_button_v3",
+    ):
+        _set_login_stage(
+            "request_received",
+            "The login request reached HealthyMe and Supabase authentication has started.",
+        )
+        if not str(email or "").strip() or not password:
+            _set_login_stage("failed", "Both email and password are required.")
+            st.error("Please enter both email and password.")
+            st.stop()
+
+        with st.spinner("Checking the Supabase account and HealthyMe access…"):
+            ok, message = sign_in_with_supabase(email, password)
+
         if not ok:
+            _set_login_stage(
+                "failed",
+                "Supabase sign-in or HealthyMe role authorization did not complete.",
+            )
             st.error(message)
             st.stop()
-        st.session_state["_hm_h13p1_login_started_at"] = time.time()
 
-        # Do not navigate to another Streamlit page before the browser cookie is
-        # committed. The earlier v1 navigation could update the URL while leaving
-        # the previous callable page rendered. Commit the first-party marker in the
-        # same successful login execution, then open a fresh root session.
+        st.session_state["_hm_h13p1_login_started_at"] = time.time()
+        _set_login_stage(
+            "authenticated",
+            "Supabase authenticated the account and HealthyMe resolved the role.",
+        )
+        st.success(
+            "Supabase authentication passed. HealthyMe is securing the browser session."
+        )
         _render_login_handoff()
+
+    st.page_link(
+        diagnostics_page,
+        label="Open safe authentication diagnostics",
+        icon="🩺",
+    )
 
 
 def _admin_page() -> None:
@@ -207,6 +264,12 @@ def _diagnostics_page() -> None:
     safe_snapshot = {
         "router_build": ROUTER_BUILD,
         "auth_mode": get_auth_mode(),
+        "login_stage": str(
+            st.session_state.get(LOGIN_STAGE_KEY) or "not_started"
+        ),
+        "server_marker_in_session": bool(
+            st.session_state.get(SUPABASE_BROWSER_SESSION_ID_KEY)
+        ),
         "opaque_cookie_present": bool(cookie_value),
         "opaque_cookie_length": len(cookie_value),
         "healthyme_logged_in": bool(st.session_state.get("logged_in")),
@@ -232,6 +295,7 @@ def _diagnostics_page() -> None:
     )
     col3.metric("HealthyMe role", role.title())
     st.code(json.dumps(safe_snapshot, indent=2, sort_keys=True), language="json")
+    st.page_link(login_page, label="Return to Login", icon="🔐")
 
 
 def _root_page() -> None:
@@ -280,11 +344,7 @@ restore_started = time.perf_counter()
 restored = _resolved_supabase_session()
 cookie_present = bool(_native_cookie_value(SUPABASE_BROWSER_COOKIE_NAME))
 
-if (
-    not restored
-    and cookie_present
-    and supabase_auth_enabled()
-):
+if not restored and cookie_present and supabase_auth_enabled():
     try:
         restored = bool(restore_supabase_login_from_session())
     except Exception:
