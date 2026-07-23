@@ -17,7 +17,7 @@ from components.admin_role_model import (  # noqa: E402
 )
 
 
-BUILD = "H13Q4-native-role-protected-routing-gate2-v3-separated-authorizer"
+BUILD = "H13Q4-native-role-protected-routing-gate2-v3.1-route-stability"
 SUPPORTED_PROVIDER = "supabaseoidc"
 ROUTER_CONTEXT: dict[str, Any] = {}
 
@@ -99,6 +99,7 @@ def _base_snapshot(*, route_name: str, route_allowed: bool) -> dict[str, Any]:
         "healthyme_role_resolved": bool(context.get("role_resolved")),
         "resolved_role_category": context.get("role_category", "None"),
         "selected_route": route_name,
+        "selected_navigation_path": context.get("selected_navigation_path", ""),
         "protected_page_routing_used": True,
         "route_allowed_for_role": route_allowed,
         "central_router_executed_first": True,
@@ -139,6 +140,7 @@ def _login_page() -> None:
                 "native_identity_present": False,
                 "healthyme_role_lookup_used": False,
                 "healthyme_role_resolved": False,
+                "selected_navigation_path": ROUTER_CONTEXT.get("selected_navigation_path", ""),
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
                 "authorization_ui_separate_app": True,
@@ -247,6 +249,7 @@ def _show_role_resolution_failure(
                 "healthyme_role_lookup_used": True,
                 "healthyme_role_resolved": False,
                 "role_lookup_completed": bool(role_lookup_ok),
+                "selected_navigation_path": ROUTER_CONTEXT.get("selected_navigation_path", ""),
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
                 "authorization_ui_separate_app": True,
@@ -306,13 +309,14 @@ selected_page = st.navigation(
     [root_page, login_page, admin_page, member_page],
     position="hidden",
 )
-
+selected_path = str(selected_page.url_path or "")
 ROUTER_CONTEXT["provider"] = provider
+ROUTER_CONTEXT["selected_navigation_path"] = selected_path
 native_identity_present = _native_identity_present()
 ROUTER_CONTEXT["native_identity_present"] = native_identity_present
 
 if not native_identity_present:
-    if selected_page is not login_page:
+    if selected_path != login_page.url_path:
         st.switch_page(login_page)
     selected_page.run()
     st.stop()
@@ -356,13 +360,13 @@ ROUTER_CONTEXT["role_category"] = role_category
 ROUTER_CONTEXT["lookup_message"] = lookup_message
 
 if role_category == "Admin":
-    if selected_page is not admin_page:
+    if selected_path != admin_page.url_path:
         st.switch_page(admin_page)
     selected_page.run()
     st.stop()
 
 if role_category == "Member":
-    if selected_page is not member_page:
+    if selected_path != member_page.url_path:
         st.switch_page(member_page)
     selected_page.run()
     st.stop()
