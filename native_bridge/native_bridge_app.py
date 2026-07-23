@@ -17,7 +17,7 @@ from components.admin_role_model import (  # noqa: E402
 )
 
 
-BUILD = "H13Q3-native-role-protected-routing-gate2-v2"
+BUILD = "H13Q4-native-role-protected-routing-gate2-v3-separated-authorizer"
 SUPPORTED_PROVIDER = "supabaseoidc"
 ROUTER_CONTEXT: dict[str, Any] = {}
 
@@ -102,7 +102,8 @@ def _base_snapshot(*, route_name: str, route_allowed: bool) -> dict[str, Any]:
         "protected_page_routing_used": True,
         "route_allowed_for_role": route_allowed,
         "central_router_executed_first": True,
-        "oauth_consent_handoff_owned_by_router": True,
+        "authorization_ui_separate_app": True,
+        "oauth_consent_route_registered": False,
         "application_session_state_required": False,
         "custom_browser_marker_used": False,
         "durable_auth_session_used": False,
@@ -125,8 +126,8 @@ def _root_page() -> None:
 def _login_page() -> None:
     st.title("HealthyMe native role router")
     st.caption(
-        "Gate 2 adds only lightweight protected routing after the accepted native "
-        "identity and HealthyMe role bridge. It does not load any real HealthyMe page."
+        "Gate 2 v3 keeps the Supabase authorization UI in a separate app. This app "
+        "owns only native Streamlit identity, HealthyMe role lookup and protected routing."
     )
     st.code(BUILD)
     st.metric("Native Streamlit identity", "Absent")
@@ -140,7 +141,8 @@ def _login_page() -> None:
                 "healthyme_role_resolved": False,
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
-                "oauth_consent_handoff_owned_by_router": True,
+                "authorization_ui_separate_app": True,
+                "oauth_consent_route_registered": False,
                 "application_session_state_required": False,
                 "custom_browser_marker_used": False,
                 "durable_auth_session_used": False,
@@ -169,8 +171,8 @@ def _admin_page() -> None:
     st.title("Admin Dashboard — Gate 2 protected route")
     if route_allowed:
         st.success(
-            "Central router restored the native identity, resolved the Admin role, "
-            "and allowed the Admin route before this page executed."
+            "Native identity was restored, HealthyMe resolved the Admin role, and the "
+            "central router allowed this protected route."
         )
     else:
         st.error("The central router allowed an invalid Admin-route state.")
@@ -190,7 +192,7 @@ def _admin_page() -> None:
         ),
         language="json",
     )
-    _logout_button("h13q3_admin_logout")
+    _logout_button("h13q4_admin_logout")
 
 
 def _member_page() -> None:
@@ -200,14 +202,14 @@ def _member_page() -> None:
     st.title("Member Home — Gate 2 protected route")
     if route_allowed:
         st.success(
-            "Central router restored the native identity, resolved the Member role, "
-            "and allowed the Member route before this page executed."
+            "Native identity was restored, HealthyMe resolved the Member role, and the "
+            "central router allowed this protected route."
         )
     else:
         st.error("The central router allowed an invalid Member-route state.")
     st.caption(
-        "This is intentionally not the real Member Home. No legacy page guard, "
-        "member defaults, feature visibility code or application Session State is used."
+        "This is intentionally not the real Member Home. No legacy page guard, member "
+        "defaults, feature visibility code or application Session State is used."
     )
     st.code(BUILD)
     st.code(
@@ -221,7 +223,7 @@ def _member_page() -> None:
         ),
         language="json",
     )
-    _logout_button("h13q3_member_logout")
+    _logout_button("h13q4_member_logout")
 
 
 def _show_role_resolution_failure(
@@ -247,7 +249,8 @@ def _show_role_resolution_failure(
                 "role_lookup_completed": bool(role_lookup_ok),
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
-                "oauth_consent_handoff_owned_by_router": True,
+                "authorization_ui_separate_app": True,
+                "oauth_consent_route_registered": False,
                 "application_session_state_required": False,
                 "custom_browser_marker_used": False,
                 "durable_auth_session_used": False,
@@ -261,7 +264,7 @@ def _show_role_resolution_failure(
         language="json",
     )
     st.caption(lookup_message or "No active HealthyMe role mapping was returned.")
-    _logout_button("h13q3_mapping_logout")
+    _logout_button("h13q4_mapping_logout")
     st.stop()
 
 
@@ -298,34 +301,15 @@ member_page = st.Page(
     title="Member Home",
     url_path="Member_Home",
 )
-consent_page = st.Page(
-    "pages/01_OAuth_Consent.py",
-    title="OAuth Consent",
-    url_path="OAuth_Consent",
-)
 
 selected_page = st.navigation(
-    [
-        root_page,
-        login_page,
-        admin_page,
-        member_page,
-        consent_page,
-    ],
+    [root_page, login_page, admin_page, member_page],
     position="hidden",
 )
 
 ROUTER_CONTEXT["provider"] = provider
 native_identity_present = _native_identity_present()
 ROUTER_CONTEXT["native_identity_present"] = native_identity_present
-
-# The technical OAuth consent page runs only while there is no restored native
-# identity. After the OIDC callback restores st.user, the central router owns the
-# handoff and switches directly to the role-appropriate protected route. This
-# prevents the browser from remaining parked on a consumed /OAuth_Consent URL.
-if selected_page is consent_page and not native_identity_present:
-    selected_page.run()
-    st.stop()
 
 if not native_identity_present:
     if selected_page is not login_page:
