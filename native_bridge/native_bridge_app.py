@@ -16,7 +16,8 @@ from components.admin_role_model import (  # noqa: E402
     resolve_app_user,
 )
 
-BUILD = "H13Q3-native-role-protected-routing-gate2-v1"
+
+BUILD = "H13Q3-native-role-protected-routing-gate2-v2"
 SUPPORTED_PROVIDER = "supabaseoidc"
 ROUTER_CONTEXT: dict[str, Any] = {}
 
@@ -101,6 +102,7 @@ def _base_snapshot(*, route_name: str, route_allowed: bool) -> dict[str, Any]:
         "protected_page_routing_used": True,
         "route_allowed_for_role": route_allowed,
         "central_router_executed_first": True,
+        "oauth_consent_handoff_owned_by_router": True,
         "application_session_state_required": False,
         "custom_browser_marker_used": False,
         "durable_auth_session_used": False,
@@ -138,6 +140,7 @@ def _login_page() -> None:
                 "healthyme_role_resolved": False,
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
+                "oauth_consent_handoff_owned_by_router": True,
                 "application_session_state_required": False,
                 "custom_browser_marker_used": False,
                 "durable_auth_session_used": False,
@@ -244,6 +247,7 @@ def _show_role_resolution_failure(
                 "role_lookup_completed": bool(role_lookup_ok),
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
+                "oauth_consent_handoff_owned_by_router": True,
                 "application_session_state_required": False,
                 "custom_browser_marker_used": False,
                 "durable_auth_session_used": False,
@@ -312,13 +316,16 @@ selected_page = st.navigation(
 )
 
 ROUTER_CONTEXT["provider"] = provider
-
-if selected_page is consent_page:
-    selected_page.run()
-    st.stop()
-
 native_identity_present = _native_identity_present()
 ROUTER_CONTEXT["native_identity_present"] = native_identity_present
+
+# The technical OAuth consent page runs only while there is no restored native
+# identity. After the OIDC callback restores st.user, the central router owns the
+# handoff and switches directly to the role-appropriate protected route. This
+# prevents the browser from remaining parked on a consumed /OAuth_Consent URL.
+if selected_page is consent_page and not native_identity_present:
+    selected_page.run()
+    st.stop()
 
 if not native_identity_present:
     if selected_page is not login_page:
@@ -365,13 +372,13 @@ ROUTER_CONTEXT["role_category"] = role_category
 ROUTER_CONTEXT["lookup_message"] = lookup_message
 
 if role_category == "Admin":
-    if selected_page in (root_page, login_page, member_page):
+    if selected_page is not admin_page:
         st.switch_page(admin_page)
     selected_page.run()
     st.stop()
 
 if role_category == "Member":
-    if selected_page in (root_page, login_page, admin_page):
+    if selected_page is not member_page:
         st.switch_page(member_page)
     selected_page.run()
     st.stop()
