@@ -16,9 +16,9 @@ from components.admin_role_model import (  # noqa: E402
     resolve_app_user,
 )
 
-
-BUILD = "H13Q2-native-identity-role-bridge-gate1-v1"
+BUILD = "H13Q3-native-role-protected-routing-gate2-v1"
 SUPPORTED_PROVIDER = "supabaseoidc"
+ROUTER_CONTEXT: dict[str, Any] = {}
 
 
 def _secret(name: str, default: str = "") -> str:
@@ -86,85 +86,258 @@ def _role_category(role: str) -> str:
     return "Unsupported"
 
 
-st.set_page_config(
-    page_title="HealthyMe Native Role Bridge",
-    page_icon="🌿",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-)
-
-st.title("HealthyMe native identity → role bridge")
-st.caption(
-    "Gate 1 tests one additional layer beyond the proven parity app: "
-    "Streamlit restores the Supabase OIDC identity first, then HealthyMe performs "
-    "one role lookup. No custom browser marker, durable auth session, legacy guard, "
-    "application login Session State or protected-page routing is used."
-)
-st.code(BUILD)
-
-provider = _secret("AUTH_BRIDGE_PROVIDER", SUPPORTED_PROVIDER).lower()
-if provider != SUPPORTED_PROVIDER:
-    st.error("AUTH_BRIDGE_PROVIDER must be 'supabaseoidc' for this Gate 1 deployment.")
-    st.stop()
-
-cookie_snapshot = _safe_cookie_snapshot()
-native_identity_present = _native_identity_present()
-
-if not native_identity_present:
-    st.metric("Native Streamlit identity", "Absent")
-    logged_out_snapshot = {
+def _base_snapshot(*, route_name: str, route_allowed: bool) -> dict[str, Any]:
+    context = ROUTER_CONTEXT
+    return {
         "build": BUILD,
-        "configured_provider": provider,
-        "native_identity_present": False,
-        "healthyme_role_lookup_used": False,
-        "healthyme_role_resolved": False,
+        "configured_provider": context.get("provider", SUPPORTED_PROVIDER),
+        "native_identity_present": bool(context.get("native_identity_present")),
+        "email_claim_present": bool(context.get("email_claim_present")),
+        "subject_claim_present": bool(context.get("subject_claim_present")),
+        "healthyme_role_lookup_used": bool(context.get("role_lookup_used")),
+        "healthyme_role_resolved": bool(context.get("role_resolved")),
+        "resolved_role_category": context.get("role_category", "None"),
+        "selected_route": route_name,
+        "protected_page_routing_used": True,
+        "route_allowed_for_role": route_allowed,
+        "central_router_executed_first": True,
         "application_session_state_required": False,
         "custom_browser_marker_used": False,
         "durable_auth_session_used": False,
         "legacy_page_guard_used": False,
-        "protected_page_routing_used": False,
         "local_storage_used": False,
-        **cookie_snapshot,
+        **_safe_cookie_snapshot(),
     }
-    st.code(json.dumps(logged_out_snapshot, indent=2, sort_keys=True), language="json")
-    if st.button(
-        "Continue with Supabase OIDC",
-        type="primary",
-        use_container_width=True,
-    ):
-        st.login(provider)
-    st.stop()
 
-email = _claim("email").lower()
-subject = _claim("sub")
-claim_snapshot = {
-    "email_claim_present": bool(email),
-    "subject_claim_present": bool(subject),
-}
 
-if not email and not subject:
-    st.error(
-        "Streamlit restored a native identity, but neither the email nor subject claim "
-        "is available for HealthyMe role resolution."
+def _logout_button(key: str) -> None:
+    if st.button("Logout", key=key, use_container_width=True):
+        st.logout()
+        st.stop()
+
+
+def _root_page() -> None:
+    st.empty()
+
+
+def _login_page() -> None:
+    st.title("HealthyMe native role router")
+    st.caption(
+        "Gate 2 adds only lightweight protected routing after the accepted native "
+        "identity and HealthyMe role bridge. It does not load any real HealthyMe page."
     )
+    st.code(BUILD)
+    st.metric("Native Streamlit identity", "Absent")
     st.code(
         json.dumps(
             {
                 "build": BUILD,
-                "native_identity_present": True,
+                "configured_provider": ROUTER_CONTEXT.get("provider", SUPPORTED_PROVIDER),
+                "native_identity_present": False,
                 "healthyme_role_lookup_used": False,
                 "healthyme_role_resolved": False,
-                **claim_snapshot,
-                **cookie_snapshot,
+                "protected_page_routing_used": True,
+                "central_router_executed_first": True,
+                "application_session_state_required": False,
+                "custom_browser_marker_used": False,
+                "durable_auth_session_used": False,
+                "legacy_page_guard_used": False,
+                "local_storage_used": False,
+                **_safe_cookie_snapshot(),
             },
             indent=2,
             sort_keys=True,
         ),
         language="json",
     )
-    if st.button("Logout", use_container_width=True):
-        st.logout()
+    if st.button(
+        "Continue with Supabase OIDC",
+        type="primary",
+        use_container_width=True,
+    ):
+        st.login(ROUTER_CONTEXT.get("provider", SUPPORTED_PROVIDER))
+        st.stop()
+
+
+def _admin_page() -> None:
+    role_category = ROUTER_CONTEXT.get("role_category")
+    route_allowed = role_category == "Admin"
+
+    st.title("Admin Dashboard — Gate 2 protected route")
+    if route_allowed:
+        st.success(
+            "Central router restored the native identity, resolved the Admin role, "
+            "and allowed the Admin route before this page executed."
+        )
+    else:
+        st.error("The central router allowed an invalid Admin-route state.")
+    st.caption(
+        "This is intentionally not the real Admin Dashboard. No legacy page guard, "
+        "navigation shell, dashboard data or application Session State is used."
+    )
+    st.code(BUILD)
+    st.code(
+        json.dumps(
+            _base_snapshot(
+                route_name="/Admin_Dashboard",
+                route_allowed=route_allowed,
+            ),
+            indent=2,
+            sort_keys=True,
+        ),
+        language="json",
+    )
+    _logout_button("h13q3_admin_logout")
+
+
+def _member_page() -> None:
+    role_category = ROUTER_CONTEXT.get("role_category")
+    route_allowed = role_category == "Member"
+
+    st.title("Member Home — Gate 2 protected route")
+    if route_allowed:
+        st.success(
+            "Central router restored the native identity, resolved the Member role, "
+            "and allowed the Member route before this page executed."
+        )
+    else:
+        st.error("The central router allowed an invalid Member-route state.")
+    st.caption(
+        "This is intentionally not the real Member Home. No legacy page guard, "
+        "member defaults, feature visibility code or application Session State is used."
+    )
+    st.code(BUILD)
+    st.code(
+        json.dumps(
+            _base_snapshot(
+                route_name="/Member_Home",
+                route_allowed=route_allowed,
+            ),
+            indent=2,
+            sort_keys=True,
+        ),
+        language="json",
+    )
+    _logout_button("h13q3_member_logout")
+
+
+def _show_role_resolution_failure(
+    *,
+    role_lookup_ok: bool,
+    lookup_message: str,
+) -> None:
+    st.title("HealthyMe access mapping unavailable")
+    st.warning(
+        "The native Supabase OIDC identity is active, but HealthyMe could not resolve "
+        "an authorized Admin or Member role. This is not a logout."
+    )
+    st.code(BUILD)
+    st.code(
+        json.dumps(
+            {
+                "build": BUILD,
+                "native_identity_present": True,
+                "email_claim_present": bool(ROUTER_CONTEXT.get("email_claim_present")),
+                "subject_claim_present": bool(ROUTER_CONTEXT.get("subject_claim_present")),
+                "healthyme_role_lookup_used": True,
+                "healthyme_role_resolved": False,
+                "role_lookup_completed": bool(role_lookup_ok),
+                "protected_page_routing_used": True,
+                "central_router_executed_first": True,
+                "application_session_state_required": False,
+                "custom_browser_marker_used": False,
+                "durable_auth_session_used": False,
+                "legacy_page_guard_used": False,
+                "local_storage_used": False,
+                **_safe_cookie_snapshot(),
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        language="json",
+    )
+    st.caption(lookup_message or "No active HealthyMe role mapping was returned.")
+    _logout_button("h13q3_mapping_logout")
     st.stop()
+
+
+st.set_page_config(
+    page_title="HealthyMe Native Role Router",
+    page_icon="🌿",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+)
+
+provider = _secret("AUTH_BRIDGE_PROVIDER", SUPPORTED_PROVIDER).lower()
+if provider != SUPPORTED_PROVIDER:
+    st.error("AUTH_BRIDGE_PROVIDER must be 'supabaseoidc' for this Gate 2 deployment.")
+    st.stop()
+
+root_page = st.Page(
+    _root_page,
+    title="HealthyMe",
+    icon="🌿",
+    default=True,
+)
+login_page = st.Page(
+    _login_page,
+    title="Login",
+    url_path="Login",
+)
+admin_page = st.Page(
+    _admin_page,
+    title="Admin Dashboard",
+    url_path="Admin_Dashboard",
+)
+member_page = st.Page(
+    _member_page,
+    title="Member Home",
+    url_path="Member_Home",
+)
+consent_page = st.Page(
+    "pages/01_OAuth_Consent.py",
+    title="OAuth Consent",
+    url_path="OAuth_Consent",
+)
+
+selected_page = st.navigation(
+    [
+        root_page,
+        login_page,
+        admin_page,
+        member_page,
+        consent_page,
+    ],
+    position="hidden",
+)
+
+ROUTER_CONTEXT["provider"] = provider
+
+if selected_page is consent_page:
+    selected_page.run()
+    st.stop()
+
+native_identity_present = _native_identity_present()
+ROUTER_CONTEXT["native_identity_present"] = native_identity_present
+
+if not native_identity_present:
+    if selected_page is not login_page:
+        st.switch_page(login_page)
+    selected_page.run()
+    st.stop()
+
+email = _claim("email").lower()
+subject = _claim("sub")
+ROUTER_CONTEXT["email_claim_present"] = bool(email)
+ROUTER_CONTEXT["subject_claim_present"] = bool(subject)
+
+if not email and not subject:
+    ROUTER_CONTEXT["role_lookup_used"] = False
+    ROUTER_CONTEXT["role_resolved"] = False
+    _show_role_resolution_failure(
+        role_lookup_ok=False,
+        lookup_message="Neither the email nor subject claim is available.",
+    )
 
 role_lookup_ok = False
 app_user = None
@@ -177,73 +350,33 @@ try:
 except Exception as exc:
     lookup_message = f"{type(exc).__name__}: role lookup could not complete."
 
+ROUTER_CONTEXT["role_lookup_used"] = True
+ROUTER_CONTEXT["role_resolved"] = bool(role_lookup_ok and app_user)
+
 if not role_lookup_ok or not app_user:
-    st.warning(
-        "Your Supabase OIDC identity is active, but HealthyMe did not resolve an "
-        "authorized Admin or Member role. This is a role-bridge result, not a logout."
+    _show_role_resolution_failure(
+        role_lookup_ok=role_lookup_ok,
+        lookup_message=lookup_message,
     )
-    unresolved_snapshot = {
-        "build": BUILD,
-        "native_identity_present": True,
-        "healthyme_role_lookup_used": True,
-        "healthyme_role_resolved": False,
-        "role_lookup_completed": bool(role_lookup_ok),
-        "application_session_state_required": False,
-        "custom_browser_marker_used": False,
-        "durable_auth_session_used": False,
-        "legacy_page_guard_used": False,
-        "protected_page_routing_used": False,
-        "local_storage_used": False,
-        **claim_snapshot,
-        **cookie_snapshot,
-    }
-    st.code(json.dumps(unresolved_snapshot, indent=2, sort_keys=True), language="json")
-    st.caption(lookup_message or "No active HealthyMe user mapping was returned.")
-    if st.button("Logout", use_container_width=True):
-        st.logout()
-    st.stop()
 
 role = str(app_user.get("role") or "").strip().lower()
 role_category = _role_category(role)
+ROUTER_CONTEXT["role_category"] = role_category
+ROUTER_CONTEXT["lookup_message"] = lookup_message
 
-if role_category == "Unsupported":
-    st.warning(
-        "The native identity and HealthyMe user mapping were restored, but this role "
-        "is outside the Gate 1 Admin/Member acceptance boundary."
-    )
-elif role_category == "Admin":
-    st.success("Native identity restored first; HealthyMe then resolved the Admin role.")
-    st.subheader("Admin access — Gate 1 test page")
-    st.write(
-        "This is intentionally not the real Admin Dashboard. It proves only the "
-        "identity-to-role bridge before routing and legacy page code are introduced."
-    )
-else:
-    st.success("Native identity restored first; HealthyMe then resolved the Member role.")
-    st.subheader("Member access — Gate 1 test page")
-    st.write(
-        "This is intentionally not the real Member Home. It proves only the "
-        "identity-to-role bridge before routing and legacy page code are introduced."
-    )
+if role_category == "Admin":
+    if selected_page in (root_page, login_page, member_page):
+        st.switch_page(admin_page)
+    selected_page.run()
+    st.stop()
 
-resolved_snapshot = {
-    "build": BUILD,
-    "native_identity_present": True,
-    "healthyme_role_lookup_used": True,
-    "healthyme_role_resolved": True,
-    "resolved_role_category": role_category,
-    "supported_gate1_role": role_category in {"Admin", "Member"},
-    "application_session_state_required": False,
-    "custom_browser_marker_used": False,
-    "durable_auth_session_used": False,
-    "legacy_page_guard_used": False,
-    "protected_page_routing_used": False,
-    "local_storage_used": False,
-    **claim_snapshot,
-    **cookie_snapshot,
-}
-st.code(json.dumps(resolved_snapshot, indent=2, sort_keys=True), language="json")
-st.caption(lookup_message or "HealthyMe role lookup completed.")
+if role_category == "Member":
+    if selected_page in (root_page, login_page, admin_page):
+        st.switch_page(member_page)
+    selected_page.run()
+    st.stop()
 
-if st.button("Logout", use_container_width=True):
-    st.logout()
+_show_role_resolution_failure(
+    role_lookup_ok=True,
+    lookup_message="The mapped role is outside the Gate 2 Admin/Member boundary.",
+)
