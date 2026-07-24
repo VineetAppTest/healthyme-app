@@ -15,9 +15,12 @@ from components.admin_role_model import (  # noqa: E402
     is_member_role,
     resolve_app_user,
 )
+from native_bridge.root_authorization_ui import (  # noqa: E402
+    render_root_authorization_ui,
+)
 
 
-BUILD = "H13Q4-native-role-protected-routing-gate2-v3.1-route-stability"
+BUILD = "H13Q4-native-role-protected-routing-gate2-v4-root-authorizer"
 SUPPORTED_PROVIDER = "supabaseoidc"
 ROUTER_CONTEXT: dict[str, Any] = {}
 
@@ -103,7 +106,8 @@ def _base_snapshot(*, route_name: str, route_allowed: bool) -> dict[str, Any]:
         "protected_page_routing_used": True,
         "route_allowed_for_role": route_allowed,
         "central_router_executed_first": True,
-        "authorization_ui_separate_app": True,
+        "authorization_ui_root_hosted": True,
+        "authorization_ui_separate_app": False,
         "oauth_consent_route_registered": False,
         "application_session_state_required": False,
         "custom_browser_marker_used": False,
@@ -127,8 +131,8 @@ def _root_page() -> None:
 def _login_page() -> None:
     st.title("HealthyMe native role router")
     st.caption(
-        "Gate 2 v3 keeps the Supabase authorization UI in a separate app. This app "
-        "owns only native Streamlit identity, HealthyMe role lookup and protected routing."
+        "Gate 2 v4 hosts the one-time Supabase authorization UI at this app's root "
+        "and keeps protected routing separate from that technical request."
     )
     st.code(BUILD)
     st.metric("Native Streamlit identity", "Absent")
@@ -143,7 +147,8 @@ def _login_page() -> None:
                 "selected_navigation_path": ROUTER_CONTEXT.get("selected_navigation_path", ""),
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
-                "authorization_ui_separate_app": True,
+                "authorization_ui_root_hosted": True,
+                "authorization_ui_separate_app": False,
                 "oauth_consent_route_registered": False,
                 "application_session_state_required": False,
                 "custom_browser_marker_used": False,
@@ -252,7 +257,8 @@ def _show_role_resolution_failure(
                 "selected_navigation_path": ROUTER_CONTEXT.get("selected_navigation_path", ""),
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
-                "authorization_ui_separate_app": True,
+                "authorization_ui_root_hosted": True,
+                "authorization_ui_separate_app": False,
                 "oauth_consent_route_registered": False,
                 "application_session_state_required": False,
                 "custom_browser_marker_used": False,
@@ -282,6 +288,13 @@ provider = _secret("AUTH_BRIDGE_PROVIDER", SUPPORTED_PROVIDER).lower()
 if provider != SUPPORTED_PROVIDER:
     st.error("AUTH_BRIDGE_PROVIDER must be 'supabaseoidc' for this Gate 2 deployment.")
     st.stop()
+
+# Supabase OAuth Server sends the one-time authorization request to the app root
+# as /?authorization_id=.... Intercept it before st.navigation so no protected
+# route or Login redirect can compete with the authorization handoff.
+authorization_id = str(st.query_params.get("authorization_id") or "").strip()
+if authorization_id:
+    render_root_authorization_ui(authorization_id)
 
 root_page = st.Page(
     _root_page,
