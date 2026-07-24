@@ -1,5 +1,6 @@
 import json
 import os
+import runpy
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,7 @@ if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from components.admin_role_model import (  # noqa: E402
+    apply_app_user_to_session,
     is_admin_role,
     is_member_role,
     resolve_app_user,
@@ -20,9 +22,31 @@ from native_bridge.root_authorization_ui import (  # noqa: E402
 )
 
 
-BUILD = "H13Q4-native-role-protected-routing-gate2-v4-root-authorizer"
+BUILD = "H13Q5-native-gate3-real-member-home-v1"
 SUPPORTED_PROVIDER = "supabaseoidc"
 ROUTER_CONTEXT: dict[str, Any] = {}
+
+_DERIVED_CONTEXT_KEYS = {
+    "logged_in",
+    "user_id",
+    "user_role",
+    "role",
+    "user_name",
+    "user_email",
+    "must_reset_password",
+    "oidc_email",
+    "auth_login_method",
+    "auth_provider",
+    "_hm_auth_role_resolved",
+    "_hm_role_model",
+    "supabase_auth_email",
+    "supabase_auth_user_id",
+    "is_admin",
+    "admin_logged_in",
+    "is_member",
+    "_hm_native_gate3_embedded",
+    "_hm_gate3_blocked_target",
+}
 
 
 def _secret(name: str, default: str = "") -> str:
@@ -90,6 +114,11 @@ def _role_category(role: str) -> str:
     return "Unsupported"
 
 
+def _clear_derived_application_context() -> None:
+    for key in _DERIVED_CONTEXT_KEYS:
+        st.session_state.pop(key, None)
+
+
 def _base_snapshot(*, route_name: str, route_allowed: bool) -> dict[str, Any]:
     context = ROUTER_CONTEXT
     return {
@@ -109,19 +138,31 @@ def _base_snapshot(*, route_name: str, route_allowed: bool) -> dict[str, Any]:
         "authorization_ui_root_hosted": True,
         "authorization_ui_separate_app": False,
         "oauth_consent_route_registered": False,
-        "application_session_state_required": False,
+        "application_session_state_auth_source": False,
+        "derived_application_context_applied": bool(
+            context.get("derived_application_context_applied")
+        ),
+        "real_member_home_loaded": bool(context.get("real_member_home_loaded")),
+        "legacy_page_guard_used": False,
+        "legacy_keepalive_guard_used": False,
+        "legacy_logout_used": False,
+        "downstream_member_routes_enabled": False,
         "custom_browser_marker_used": False,
         "durable_auth_session_used": False,
-        "legacy_page_guard_used": False,
         "local_storage_used": False,
         **_safe_cookie_snapshot(),
     }
 
 
+def _native_logout() -> None:
+    _clear_derived_application_context()
+    st.logout()
+    st.stop()
+
+
 def _logout_button(key: str) -> None:
     if st.button("Logout", key=key, use_container_width=True):
-        st.logout()
-        st.stop()
+        _native_logout()
 
 
 def _root_page() -> None:
@@ -131,8 +172,8 @@ def _root_page() -> None:
 def _login_page() -> None:
     st.title("HealthyMe native role router")
     st.caption(
-        "Gate 2 v4 hosts the one-time Supabase authorization UI at this app's root "
-        "and keeps protected routing separate from that technical request."
+        "Gate 3 keeps the accepted native identity and protected router, then loads "
+        "the real HealthyMe Member Home for the resolved Member role."
     )
     st.code(BUILD)
     st.metric("Native Streamlit identity", "Absent")
@@ -140,20 +181,23 @@ def _login_page() -> None:
         json.dumps(
             {
                 "build": BUILD,
-                "configured_provider": ROUTER_CONTEXT.get("provider", SUPPORTED_PROVIDER),
+                "configured_provider": ROUTER_CONTEXT.get(
+                    "provider", SUPPORTED_PROVIDER
+                ),
                 "native_identity_present": False,
                 "healthyme_role_lookup_used": False,
                 "healthyme_role_resolved": False,
-                "selected_navigation_path": ROUTER_CONTEXT.get("selected_navigation_path", ""),
+                "selected_navigation_path": ROUTER_CONTEXT.get(
+                    "selected_navigation_path", ""
+                ),
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
                 "authorization_ui_root_hosted": True,
-                "authorization_ui_separate_app": False,
-                "oauth_consent_route_registered": False,
-                "application_session_state_required": False,
+                "application_session_state_auth_source": False,
+                "real_member_home_loaded": False,
+                "legacy_page_guard_used": False,
                 "custom_browser_marker_used": False,
                 "durable_auth_session_used": False,
-                "legacy_page_guard_used": False,
                 "local_storage_used": False,
                 **_safe_cookie_snapshot(),
             },
@@ -175,7 +219,7 @@ def _admin_page() -> None:
     role_category = ROUTER_CONTEXT.get("role_category")
     route_allowed = role_category == "Admin"
 
-    st.title("Admin Dashboard — Gate 2 protected route")
+    st.title("Admin Dashboard — Gate 3 protected route")
     if route_allowed:
         st.success(
             "Native identity was restored, HealthyMe resolved the Admin role, and the "
@@ -184,8 +228,8 @@ def _admin_page() -> None:
     else:
         st.error("The central router allowed an invalid Admin-route state.")
     st.caption(
-        "This is intentionally not the real Admin Dashboard. No legacy page guard, "
-        "navigation shell, dashboard data or application Session State is used."
+        "Gate 3 changes only the Member route. The real Admin Dashboard remains outside "
+        "this sprint."
     )
     st.code(BUILD)
     st.code(
@@ -199,38 +243,83 @@ def _admin_page() -> None:
         ),
         language="json",
     )
-    _logout_button("h13q4_admin_logout")
+    _logout_button("h13q5_admin_logout")
+
+
+def _blocked_member_destination(target: Any) -> None:
+    clean_target = str(target or "").strip()
+    st.session_state["_hm_gate3_blocked_target"] = clean_target
+    st.warning(
+        "Gate 3 currently validates the real Member Home only. This destination has "
+        "not yet been connected to the native protected router."
+    )
+
+
+def _render_real_member_home() -> None:
+    """Execute the real Member Home with only its legacy auth boundary replaced.
+
+    The production page remains unchanged. During this isolated Gate 3 execution:
+    - the legacy page guard is bypassed because the central router has already allowed
+      the Member role;
+    - the old keepalive guard is disabled;
+    - logout calls Streamlit native logout;
+    - downstream legacy page navigation is blocked until later gates;
+    - the duplicate page-config call is ignored because this entry script owns config.
+    """
+
+    import components.auth_session as auth_session
+    import components.guards as guards
+    import components.ui_common as ui_common
+
+    original_require_member = guards.require_member
+    original_logout_current_user = auth_session.logout_current_user
+    original_keepalive_guard = ui_common.inject_keepalive_guard_v96_11
+    original_set_page_config = st.set_page_config
+    original_switch_page = st.switch_page
+
+    guards.require_member = lambda: None
+    auth_session.logout_current_user = _native_logout
+    ui_common.inject_keepalive_guard_v96_11 = lambda: None
+    st.set_page_config = lambda *args, **kwargs: None
+    st.switch_page = _blocked_member_destination
+
+    st.session_state["_hm_native_gate3_embedded"] = True
+    ROUTER_CONTEXT["real_member_home_loaded"] = True
+
+    try:
+        runpy.run_path(
+            str(REPOSITORY_ROOT / "pages" / "02_Member_Home.py"),
+            run_name="__hm_gate3_real_member_home__",
+        )
+    finally:
+        guards.require_member = original_require_member
+        auth_session.logout_current_user = original_logout_current_user
+        ui_common.inject_keepalive_guard_v96_11 = original_keepalive_guard
+        st.set_page_config = original_set_page_config
+        st.switch_page = original_switch_page
+
+    st.caption(f"Gate 3 test build: {BUILD}")
 
 
 def _member_page() -> None:
     role_category = ROUTER_CONTEXT.get("role_category")
     route_allowed = role_category == "Member"
-
-    st.title("Member Home — Gate 2 protected route")
-    if route_allowed:
-        st.success(
-            "Native identity was restored, HealthyMe resolved the Member role, and the "
-            "central router allowed this protected route."
-        )
-    else:
+    if not route_allowed:
         st.error("The central router allowed an invalid Member-route state.")
-    st.caption(
-        "This is intentionally not the real Member Home. No legacy page guard, member "
-        "defaults, feature visibility code or application Session State is used."
-    )
-    st.code(BUILD)
-    st.code(
-        json.dumps(
-            _base_snapshot(
-                route_name="/Member_Home",
-                route_allowed=route_allowed,
+        st.code(
+            json.dumps(
+                _base_snapshot(
+                    route_name="/Member_Home",
+                    route_allowed=False,
+                ),
+                indent=2,
+                sort_keys=True,
             ),
-            indent=2,
-            sort_keys=True,
-        ),
-        language="json",
-    )
-    _logout_button("h13q4_member_logout")
+            language="json",
+        )
+        st.stop()
+
+    _render_real_member_home()
 
 
 def _show_role_resolution_failure(
@@ -249,21 +338,25 @@ def _show_role_resolution_failure(
             {
                 "build": BUILD,
                 "native_identity_present": True,
-                "email_claim_present": bool(ROUTER_CONTEXT.get("email_claim_present")),
-                "subject_claim_present": bool(ROUTER_CONTEXT.get("subject_claim_present")),
+                "email_claim_present": bool(
+                    ROUTER_CONTEXT.get("email_claim_present")
+                ),
+                "subject_claim_present": bool(
+                    ROUTER_CONTEXT.get("subject_claim_present")
+                ),
                 "healthyme_role_lookup_used": True,
                 "healthyme_role_resolved": False,
                 "role_lookup_completed": bool(role_lookup_ok),
-                "selected_navigation_path": ROUTER_CONTEXT.get("selected_navigation_path", ""),
+                "selected_navigation_path": ROUTER_CONTEXT.get(
+                    "selected_navigation_path", ""
+                ),
                 "protected_page_routing_used": True,
                 "central_router_executed_first": True,
                 "authorization_ui_root_hosted": True,
-                "authorization_ui_separate_app": False,
-                "oauth_consent_route_registered": False,
-                "application_session_state_required": False,
+                "application_session_state_auth_source": False,
+                "legacy_page_guard_used": False,
                 "custom_browser_marker_used": False,
                 "durable_auth_session_used": False,
-                "legacy_page_guard_used": False,
                 "local_storage_used": False,
                 **_safe_cookie_snapshot(),
             },
@@ -273,20 +366,20 @@ def _show_role_resolution_failure(
         language="json",
     )
     st.caption(lookup_message or "No active HealthyMe role mapping was returned.")
-    _logout_button("h13q4_mapping_logout")
+    _logout_button("h13q5_mapping_logout")
     st.stop()
 
 
 st.set_page_config(
-    page_title="HealthyMe Native Role Router",
+    page_title="HealthyMe Native Gate 3",
     page_icon="🌿",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 provider = _secret("AUTH_BRIDGE_PROVIDER", SUPPORTED_PROVIDER).lower()
 if provider != SUPPORTED_PROVIDER:
-    st.error("AUTH_BRIDGE_PROVIDER must be 'supabaseoidc' for this Gate 2 deployment.")
+    st.error("AUTH_BRIDGE_PROVIDER must be 'supabaseoidc' for this deployment.")
     st.stop()
 
 # Supabase OAuth Server sends the one-time authorization request to the app root
@@ -329,6 +422,7 @@ native_identity_present = _native_identity_present()
 ROUTER_CONTEXT["native_identity_present"] = native_identity_present
 
 if not native_identity_present:
+    _clear_derived_application_context()
     if selected_path != login_page.url_path:
         st.switch_page(login_page)
     selected_page.run()
@@ -373,12 +467,30 @@ ROUTER_CONTEXT["role_category"] = role_category
 ROUTER_CONTEXT["lookup_message"] = lookup_message
 
 if role_category == "Admin":
+    _clear_derived_application_context()
+    ROUTER_CONTEXT["derived_application_context_applied"] = False
+    ROUTER_CONTEXT["real_member_home_loaded"] = False
     if selected_path != admin_page.url_path:
         st.switch_page(admin_page)
     selected_page.run()
     st.stop()
 
 if role_category == "Member":
+    try:
+        apply_app_user_to_session(
+            app_user,
+            email=email,
+            auth_provider="supabase",
+            auth_user_id=subject,
+        )
+    except Exception as exc:
+        _show_role_resolution_failure(
+            role_lookup_ok=True,
+            lookup_message=(
+                f"{type(exc).__name__}: Member compatibility context could not be built."
+            ),
+        )
+    ROUTER_CONTEXT["derived_application_context_applied"] = True
     if selected_path != member_page.url_path:
         st.switch_page(member_page)
     selected_page.run()
@@ -386,5 +498,5 @@ if role_category == "Member":
 
 _show_role_resolution_failure(
     role_lookup_ok=True,
-    lookup_message="The mapped role is outside the Gate 2 Admin/Member boundary.",
+    lookup_message="The mapped role is outside the Gate 3 Admin/Member boundary.",
 )
