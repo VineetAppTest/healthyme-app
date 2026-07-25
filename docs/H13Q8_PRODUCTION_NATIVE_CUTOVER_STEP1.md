@@ -9,7 +9,7 @@ Move the accepted Supabase OIDC and native Streamlit identity architecture from 
 - Protected rollback branch: `rollback-pre-native-auth-cutover-20260725`
 - Cutover branch: `h13q8-production-native-cutover-step1`
 
-No live production deployment or Secret change is permitted in Step 1.
+No live production deployment or production Secret change is permitted in Step 1.
 
 ## Accepted source of truth
 - H13Q7 branch: `h13q7-full-member-native-integration`
@@ -19,36 +19,53 @@ No live production deployment or Secret change is permitted in Step 1.
   - native `st.user` identity persistence
   - HealthyMe role lookup using email and subject claim
   - central Member/Admin route selection and wrong-role correction
-  - real Member Home and enabled Member pages
-  - controlled Daily Log write
   - direct-route, refresh, tab-reopen and logout persistence
-  - hidden Recipe, Exercise and Supplements routes redirected to Member Home
+  - no custom browser marker, CookieManager or durable-session mechanism as the native identity source
 
-## Step 1 scope
+## Step 1 implementation
 1. Preserve the production baseline and rollback branch.
 2. Create the production-cutover branch from the exact production baseline.
-3. Inventory current production auth dependencies before changing them:
-   - `app.py`
-   - `pages/01_Login.py`
-   - `components/guards.py`
-   - `components/auth_session.py`
-   - `components/supabase_auth_session.py`
-   - role-resolution modules
-4. Bring across only the accepted native identity, role-resolution and protected-routing architecture from H13Q7.
-5. Add a temporary production-parity entry point for Streamlit Community Cloud deployment.
-6. Keep current Member and Admin legacy auth code available as rollback-only code during Steps 1–2.
-7. Do not remove old session restoration, browser marker, CookieManager or legacy guards in this step.
+3. Inventory the existing production authentication dependencies without deleting them.
+4. Transplant the accepted native role-router runtime unchanged into `native_bridge/`.
+5. Add the isolated Streamlit entry `production_cutover/production_parity_app.py`.
+6. Align the branch dependency pin to `streamlit[auth]==1.59.0` and `Authlib==1.6.6`.
+7. Leave production `app.py`, Login, legacy guards and legacy session restoration intact during Steps 1–2.
 
-## Production-parity deployment rule
-Deploy this branch to a new temporary Streamlit app. Do not change the live HealthyMe production app URL or production branch.
+## Temporary deployment strategy
+For the fastest and lowest-risk Step 1 test, reuse the already registered temporary URL:
+
+`https://healthyme-native-role-bridge.streamlit.app`
+
+Delete and redeploy only that temporary Streamlit app with the H13Q8 branch and entry file. The accepted H13Q7 source remains preserved in GitHub PR #183 and can be redeployed if required.
+
+Because the URL remains unchanged, the existing Supabase OAuth client callback, Supabase authorization-page URL and copied native-role-bridge Secrets remain valid. No Supabase configuration change is required for Step 1.
+
+## Streamlit deployment fields
+- Repository: `VineetAppTest/healthyme-app`
+- Branch: `h13q8-production-native-cutover-step1`
+- Main file: `production_cutover/production_parity_app.py`
+- App URL/subdomain: `healthyme-native-role-bridge`
+- Python: `3.11`
+- Secrets: reuse the complete accepted native-role-bridge Secrets without modification
+
+## Step 1 smoke test
+1. Open `/Login` and confirm native identity is absent.
+2. Fresh Member login must resolve Member and reach the protected Member route.
+3. Refresh the protected Member route five times.
+4. Close and reopen the protected Member route.
+5. Logout and refresh `/Login` three times.
+6. Fresh Admin login must resolve Admin and reach `/Admin_Dashboard`.
+7. Direct Member URL while Admin is logged in must correct to `/Admin_Dashboard`.
+8. Admin logout must return to `/Login` with identity absent.
 
 ## Step 1 acceptance
-- Temporary production-parity app starts successfully.
-- Native login reaches HealthyMe role resolution.
-- Member and Admin are routed to the correct protected shell.
+- Temporary production-parity app starts successfully from PR #189.
+- Native login reaches HealthyMe role resolution for Member and Admin.
+- Member and Admin are routed to the correct protected route.
+- Refresh, tab reopen, wrong-role correction and logout pass.
 - No production database schema change is required.
 - Current `main` remains untouched.
-- Rollback branch resolves to the original production baseline.
+- Rollback branch remains at the original production baseline.
 
 ## Six-step migration sequence
 1. Production cutover branch and parity shell.
@@ -59,10 +76,10 @@ Deploy this branch to a new temporary Streamlit app. Do not change the live Heal
 6. Stabilization, monitoring and final legacy-auth cleanup.
 
 ## Stop rule
-Return to `rollback-pre-native-auth-cutover-20260725` if there is identity loss, repeated callback failure, role crossover, routing loop, logout failure or multiple unrelated pages failing before page code executes.
+Return the temporary deployment to the accepted H13Q7 branch, or use `rollback-pre-native-auth-cutover-20260725` for the production baseline, if there is identity loss, repeated callback failure, role crossover, routing loop or logout failure.
 
 ## Team readiness after migration
-The team must be ready to begin the already identified backlog immediately after migration stabilization. Current tracked examples include:
+The team must be ready to begin the identified backlog immediately after migration stabilization. Current tracked examples include:
 - Admin/Nutritionist cannot edit existing allocated or unallocated recommendation profiles (#186).
 - Daily Log and other date-sensitive pages require explicit member-local timezone handling (#184).
 - Scheduling and other practitioner/member time exchanges must show both parties’ local date, time and timezone (#185).
