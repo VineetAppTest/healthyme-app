@@ -20,6 +20,16 @@ HIDDEN_DISABLED_MEMBER_TOKENS = (
     "supplement",
 )
 
+# Register the disabled public paths as redirect-only pages. This prevents
+# Streamlit's generic "Page not found" modal while keeping the underlying
+# HealthyMe source pages unavailable to Members.
+DISABLED_MEMBER_REDIRECT_ROUTES = (
+    ("Recipe Repository", "Recipe_Repository"),
+    ("Exercise Repository", "Exercise_Repository"),
+    ("Member Supplements", "Member_Supplements"),
+)
+DISABLED_REDIRECT_SOURCE = "native_bridge/disabled_member_redirect.py"
+
 # Checkpoint A: currently enabled read-oriented Member routes. Gate 4 already
 # owns Member Home and Today's Plan, so they are intentionally excluded here.
 READ_MEMBER_FILES = (
@@ -70,6 +80,16 @@ def _spec(filename: str, checkpoint: str) -> MemberRouteSpec:
     )
 
 
+def _disabled_redirect_spec(title: str, url_path: str) -> MemberRouteSpec:
+    return MemberRouteSpec(
+        filename=f"__disabled_{url_path}.py",
+        source_path=DISABLED_REDIRECT_SOURCE,
+        title=title,
+        url_path=url_path,
+        checkpoint="D-disabled-redirect",
+    )
+
+
 def _is_hidden_disabled_member_page(filename: str) -> bool:
     lowered = filename.lower()
     return any(token in lowered for token in HIDDEN_DISABLED_MEMBER_TOKENS)
@@ -100,6 +120,12 @@ def discover_member_page_specs(repository_root: Path) -> list[MemberRouteSpec]:
         if (pages_dir / filename).is_file():
             specs.append(_spec(filename, "B-write"))
             seen.add(filename)
+
+    # The public paths remain registered, but their implementation is a safe
+    # redirect to Member Home. The retained repository/supplement source files
+    # are never executed through these route objects.
+    for title, url_path in DISABLED_MEMBER_REDIRECT_ROUTES:
+        specs.append(_disabled_redirect_spec(title, url_path))
 
     # Checkpoint C: include any additional current Member page without requiring
     # a new deployment iteration. Hidden/disabled repository and supplement pages
