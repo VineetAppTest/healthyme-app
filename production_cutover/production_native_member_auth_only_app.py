@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import runpy
 import traceback
 from pathlib import Path
+from typing import Any
 
 import streamlit as st
 
@@ -11,6 +13,7 @@ BUILD = "H13R0-production-native-member-auth-only-v1"
 ROLLBACK_BUILD = "H13Q9-production-parity-full-member-v1"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE = REPOSITORY_ROOT / "native_bridge" / "native_bridge_full_member_app.py"
+GATE4_SOURCE = REPOSITORY_ROOT / "native_bridge" / "native_bridge_gate4_app.py"
 
 st.set_page_config(
     page_title="HealthyMe H13R0 Native Member",
@@ -20,7 +23,10 @@ st.set_page_config(
 )
 
 try:
-    from components.native_member_auth import install_native_member_adapters
+    from components.native_member_auth import (
+        install_native_member_adapters,
+        require_native_member,
+    )
 
     adapter_status = install_native_member_adapters()
 except Exception as exc:
@@ -81,6 +87,12 @@ source_text = source_text.replace(
     1,
 )
 
+# Replace the final H13Q9 compatibility guard bypass with the real native guard.
+source_text = source_text.replace(
+    "guards.require_member = lambda: None",
+    "guards.require_member = require_native_member",
+)
+
 # Surface the Step 3 retirement state in the existing diagnostics without
 # changing the accepted Member page layouts.
 source_text = source_text.replace(
@@ -96,8 +108,53 @@ source_text = source_text.replace(
     '                "native_member_logout_installed": True,',
 )
 
+original_run_path = runpy.run_path
+
+
+def _run_path_with_native_gate4(
+    path_name: str,
+    init_globals: dict[str, Any] | None = None,
+    run_name: str | None = None,
+) -> dict[str, Any]:
+    path = Path(path_name)
+    try:
+        is_gate4 = path.resolve() == GATE4_SOURCE.resolve()
+    except Exception:
+        is_gate4 = str(path) == str(GATE4_SOURCE)
+
+    if not is_gate4:
+        return original_run_path(
+            path_name,
+            init_globals=init_globals,
+            run_name=run_name,
+        )
+
+    gate4_text = path.read_text(encoding="utf-8")
+    gate4_text = gate4_text.replace(
+        "guards.require_member = lambda: None",
+        "guards.require_member = require_native_member",
+    )
+
+    gate4_globals: dict[str, Any] = {
+        "__name__": run_name or "__hm_h13r0_native_gate4__",
+        "__file__": str(path),
+        "__package__": None,
+        "__cached__": None,
+        "require_native_member": require_native_member,
+    }
+    if init_globals:
+        gate4_globals.update(init_globals)
+
+    exec(
+        compile(gate4_text, str(path), "exec"),
+        gate4_globals,
+    )
+    return gate4_globals
+
+
 original_set_page_config = st.set_page_config
 st.set_page_config = lambda *args, **kwargs: None
+runpy.run_path = _run_path_with_native_gate4
 
 try:
     exec(
@@ -106,6 +163,7 @@ try:
             "__name__": "__hm_h13r0_native_member_retired__",
             "__file__": str(SOURCE),
             "__package__": None,
+            "require_native_member": require_native_member,
         },
     )
 except Exception as exc:
@@ -128,4 +186,5 @@ except Exception as exc:
     st.code("".join(traceback.format_exception(type(exc), exc, exc.__traceback__)))
     st.stop()
 finally:
+    runpy.run_path = original_run_path
     st.set_page_config = original_set_page_config
