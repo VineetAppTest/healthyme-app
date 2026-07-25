@@ -10,15 +10,22 @@ CORE_GATE4_FILES = {
     "36_Todays_Journey.py",
 }
 
-# Checkpoint A: read-oriented Member routes. Gate 4 already owns Member Home
-# and Today's Plan, so they are intentionally excluded here.
+# These Member-facing repository/supplement pages are intentionally retained in
+# the codebase for possible future activation, but they are hidden and disabled
+# for the current Member experience. The filename-token rule also prevents any
+# related detail route from being re-added by automatic discovery.
+HIDDEN_DISABLED_MEMBER_TOKENS = (
+    "recipe",
+    "exercise",
+    "supplement",
+)
+
+# Checkpoint A: currently enabled read-oriented Member routes. Gate 4 already
+# owns Member Home and Today's Plan, so they are intentionally excluded here.
 READ_MEMBER_FILES = (
     "07_My_Profile.py",
-    "08_Recipe_Repository.py",
-    "09_Exercise_Repository.py",
     "33_My_Schedule.py",
     "37_Member_Plan.py",
-    "40_Member_Supplements.py",
 )
 
 # Checkpoint B: interactive and database-write routes.
@@ -63,6 +70,11 @@ def _spec(filename: str, checkpoint: str) -> MemberRouteSpec:
     )
 
 
+def _is_hidden_disabled_member_page(filename: str) -> bool:
+    lowered = filename.lower()
+    return any(token in lowered for token in HIDDEN_DISABLED_MEMBER_TOKENS)
+
+
 def _looks_like_member_page(path: Path) -> bool:
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
@@ -90,13 +102,15 @@ def discover_member_page_specs(repository_root: Path) -> list[MemberRouteSpec]:
             seen.add(filename)
 
     # Checkpoint C: include any additional current Member page without requiring
-    # a new deployment iteration. The route still runs through the same native
-    # role gate and generic compatibility adapter.
+    # a new deployment iteration. Hidden/disabled repository and supplement pages
+    # remain excluded even when they call require_member.
     for path in sorted(pages_dir.glob("*.py")):
         filename = path.name
         if filename in seen or filename in CORE_GATE4_FILES:
             continue
         if filename.startswith("01_") or "login" in filename.lower():
+            continue
+        if _is_hidden_disabled_member_page(filename):
             continue
         if not _looks_like_member_page(path):
             continue
