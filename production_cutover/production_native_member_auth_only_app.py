@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import runpy
+import sys
 import traceback
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,9 @@ import streamlit as st
 BUILD = "H13R0-production-native-member-auth-only-v1"
 ROLLBACK_BUILD = "H13Q9-production-parity-full-member-v1"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
 SOURCE = REPOSITORY_ROOT / "native_bridge" / "native_bridge_full_member_app.py"
 GATE4_SOURCE = REPOSITORY_ROOT / "native_bridge" / "native_bridge_gate4_app.py"
 
