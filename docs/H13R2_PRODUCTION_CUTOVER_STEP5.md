@@ -59,10 +59,16 @@ Stop testing and roll back immediately for any of these:
 A single isolated page defect that leaves identity and routing intact may be investigated without rollback, but no broad patch should be attempted during the live cutover window.
 
 ## Immediate production rollback
-1. Revert the Step 5 merge commit on `main`.
-2. Wait for Streamlit to redeploy `app.py` from the pre-cutover production state.
-3. Confirm the prior production Login flow is restored.
-4. Leave the production OAuth client and added Secrets in place; the legacy entry ignores the native `[auth]` configuration.
+Perform both configuration and code rollback in this order:
+
+1. In Supabase OAuth Server, restore the shared Site URL to:
+   - `https://healthyme-native-role-bridge.streamlit.app`
+   - Keep Authorization Path as `/`.
+2. Revert the Step 5 merge commit on `main`.
+3. Wait for Streamlit to redeploy `app.py` from the pre-cutover production state.
+4. Confirm the prior production Login flow is restored.
+5. Confirm a fresh login still works on the temporary role-bridge fallback app.
+6. Leave the production OAuth client and added Secrets in place; the legacy production entry ignores the native `[auth]` configuration.
 
 ## Accepted native fallback
 PR #193 remains the accepted native full-application runtime. To use the temporary app as the fallback after a production rollback:
@@ -71,7 +77,7 @@ PR #193 remains the accepted native full-application runtime. To use the tempora
 - main file: `production_cutover/production_native_full_app.py`
 - app: `healthyme-native-role-bridge`
 
-If the Supabase OAuth authorization-page URL had already been moved to production and the production app was reverted to the legacy entry, change that URL back to:
+The shared Supabase OAuth Server Site URL must point to:
 
 `https://healthyme-native-role-bridge.streamlit.app`
 
