@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import runpy
 from pathlib import Path
 
@@ -25,10 +26,10 @@ for public_name, cache_name in _ROUTING_PRIMITIVES.items():
 
 
 # Supabase can return the browser to the one-time authorization URL after the
-# native Streamlit identity has already been created. The accepted authorizer
-# clears that parameter and immediately reruns, but the rerun can interrupt the
-# browser URL update. Consume the parameter and continue into normal role routing
-# so the selected Member/Admin page receives a canonical URL before any form rerun.
+# native Streamlit identity has already been created. Streamlit query mutation
+# alone did not reliably replace the top-level browser URL. Redirect the browser
+# to the clean production login route; the native router then resolves the active
+# identity and sends the user to the canonical Member/Admin destination.
 from native_bridge import root_authorization_ui as _root_authorization_ui  # noqa: E402
 
 
@@ -48,16 +49,26 @@ if not getattr(
         _root_authorization_ui.render_root_authorization_ui
     )
 
-    def _render_root_authorization_ui_without_stale_rerun(
+    def _render_root_authorization_ui_with_clean_redirect(
         authorization_id: str,
     ) -> None:
         if _native_identity_present():
+            clean_login_url = _root_authorization_ui._secret(
+                "AUTH_CLIENT_LOGIN_URL",
+                _root_authorization_ui.DEFAULT_CLIENT_LOGIN_URL,
+            )
             st.query_params.clear()
-            return
+            st.html(
+                "<script>"
+                f"window.top.location.replace({json.dumps(clean_login_url)});"
+                "</script>",
+                unsafe_allow_javascript=True,
+            )
+            st.stop()
         _original_render_root_authorization_ui(authorization_id)
 
     _root_authorization_ui.render_root_authorization_ui = (
-        _render_root_authorization_ui_without_stale_rerun
+        _render_root_authorization_ui_with_clean_redirect
     )
     _root_authorization_ui._hm_h13r2_consumed_query_patch_installed = True
 
