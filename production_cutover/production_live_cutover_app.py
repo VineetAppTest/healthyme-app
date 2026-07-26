@@ -46,8 +46,11 @@ source_text = source_text.replace(
     '                "production_entry": "app.py",',
     1,
 )
-source_text = source_text.replace("H13R1", "H13R2")
-source_text = source_text.replace("h13r1", "h13r2")
+source_text = source_text.replace(
+    '__hm_h13r1_native_full_app__',
+    '__hm_h13r2_production_cutover__',
+    1,
+)
 
 exec(
     compile(source_text, str(SOURCE), "exec"),
