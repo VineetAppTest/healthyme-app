@@ -4,7 +4,8 @@ import os
 import streamlit as st
 
 
-AUTHORIZATION_BUILD = "H13Q4-root-hosted-supabase-authorizer-v1.1-stale-query-cleanup"
+AUTHORIZATION_BUILD = "H13R2-production-root-authorizer-v1"
+DEFAULT_CLIENT_LOGIN_URL = "https://healthymeappbyankita.streamlit.app/Login"
 
 
 def _secret(name: str, default: str = "") -> str:
@@ -35,7 +36,7 @@ def render_root_authorization_ui(authorization_id: str) -> None:
 
     supabase_url = _secret("SUPABASE_URL")
     publishable_key = _secret("SUPABASE_ANON_KEY") or _secret("SUPABASE_PUBLISHABLE_KEY")
-    client_login_url = "https://healthyme-native-role-bridge.streamlit.app/Login"
+    client_login_url = _secret("AUTH_CLIENT_LOGIN_URL", DEFAULT_CLIENT_LOGIN_URL)
 
     st.title("HealthyMe Supabase authorization")
     st.caption(
