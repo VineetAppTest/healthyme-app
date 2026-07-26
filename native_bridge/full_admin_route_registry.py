@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 import re
 
+from native_bridge.full_member_route_registry import discover_member_page_specs
+
 
 CORE_ADMIN_FILES = {"10_Admin_Dashboard.py"}
 
@@ -94,14 +96,26 @@ def discover_admin_page_specs(repository_root: Path) -> list[AdminRouteSpec]:
     specs: list[AdminRouteSpec] = []
     seen: set[str] = set()
 
+    # Member ownership is authoritative. A file or URL already registered by the
+    # Member router must never be rediscovered as an Admin route.
+    member_specs = discover_member_page_specs(repository_root)
+    member_filenames = {spec.filename for spec in member_specs}
+    member_url_paths = {spec.url_path for spec in member_specs}
+
     for filename in DASHBOARD_ADMIN_FILES:
+        if filename in member_filenames:
+            continue
         if (pages_dir / filename).is_file():
             specs.append(_spec(filename, "A-dashboard-linked"))
             seen.add(filename)
 
     for path in sorted(pages_dir.glob("*.py")):
         filename = path.name
-        if filename in seen or filename in CORE_ADMIN_FILES:
+        if (
+            filename in seen
+            or filename in CORE_ADMIN_FILES
+            or filename in member_filenames
+        ):
             continue
         if not _looks_like_admin_page(path):
             continue
@@ -117,6 +131,8 @@ def discover_admin_page_specs(repository_root: Path) -> list[AdminRouteSpec]:
         "My_Schedule",
         "Member_Plan",
     }
+    used_paths.update(member_url_paths)
+
     unique_specs: list[AdminRouteSpec] = []
     for spec in specs:
         candidate = spec.url_path
