@@ -24,6 +24,44 @@ for public_name, cache_name in _ROUTING_PRIMITIVES.items():
         setattr(st, public_name, base_callable)
 
 
+# Supabase can return the browser to the one-time authorization URL after the
+# native Streamlit identity has already been created. The accepted authorizer
+# clears that parameter and immediately reruns, but the rerun can interrupt the
+# browser URL update. Consume the parameter and continue into normal role routing
+# so the selected Member/Admin page receives a canonical URL before any form rerun.
+from native_bridge import root_authorization_ui as _root_authorization_ui  # noqa: E402
+
+
+def _native_identity_present() -> bool:
+    try:
+        return bool(st.user and st.user.is_logged_in)
+    except Exception:
+        return False
+
+
+if not getattr(
+    _root_authorization_ui,
+    "_hm_h13r2_consumed_query_patch_installed",
+    False,
+):
+    _original_render_root_authorization_ui = (
+        _root_authorization_ui.render_root_authorization_ui
+    )
+
+    def _render_root_authorization_ui_without_stale_rerun(
+        authorization_id: str,
+    ) -> None:
+        if _native_identity_present():
+            st.query_params.clear()
+            return
+        _original_render_root_authorization_ui(authorization_id)
+
+    _root_authorization_ui.render_root_authorization_ui = (
+        _render_root_authorization_ui_without_stale_rerun
+    )
+    _root_authorization_ui._hm_h13r2_consumed_query_patch_installed = True
+
+
 CUTOVER_ENTRY = (
     Path(__file__).resolve().parent
     / "production_cutover"
