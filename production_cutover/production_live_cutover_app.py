@@ -39,21 +39,37 @@ source_text = source_text.replace(
     '        "runs the real HealthyMe Member and Admin applications."',
     1,
 )
+
+# H13R1 builds its final diagnostics through a quoted source-transformation
+# string. Patch that source-code string with escaped newlines so the H13R1
+# wrapper remains syntactically valid before it performs its own transform.
+diagnostic_source_marker = (
+    "        '                \"nutritionist_role_promoted_to_admin\": False,',\n"
+)
+diagnostic_source_replacement = (
+    "        '                \"nutritionist_role_promoted_to_admin\": False,\\n'\n"
+    "        '                \"production_cutover_active\": True,\\n'\n"
+    "        '                \"production_entry\": \"app.py\",',\n"
+)
+if diagnostic_source_marker not in source_text:
+    raise RuntimeError(
+        "H13R2 source-integrity check failed: H13R1 diagnostic marker missing."
+    )
 source_text = source_text.replace(
-    '                "nutritionist_role_promoted_to_admin": False,',
-    '                "nutritionist_role_promoted_to_admin": False,\n'
-    '                "production_cutover_active": True,\n'
-    '                "production_entry": "app.py",',
+    diagnostic_source_marker,
+    diagnostic_source_replacement,
     1,
 )
+
 source_text = source_text.replace(
     '__hm_h13r1_native_full_app__',
     '__hm_h13r2_production_cutover__',
     1,
 )
 
+compiled_source = compile(source_text, str(SOURCE), "exec")
 exec(
-    compile(source_text, str(SOURCE), "exec"),
+    compiled_source,
     {
         "__name__": "__hm_h13r2_production_cutover__",
         "__file__": str(SOURCE),
