@@ -1,3 +1,4 @@
+import inspect
 import os
 
 AUTH_MODE_AUTH0 = "auth0"
@@ -46,6 +47,32 @@ def _get_secret(name: str, default: str = "") -> str:
         pass
 
     return default
+
+
+def _native_cutover_enabled() -> bool:
+    return _get_secret("AUTH_BRIDGE_PROVIDER", "").strip().lower() == "supabaseoidc"
+
+
+def _legacy_pages_script_is_executing() -> bool:
+    for frame in inspect.stack():
+        filename = str(frame.filename or "").replace("\\", "/")
+        if "/pages/" in filename:
+            return True
+    return False
+
+
+def _route_cold_legacy_page_to_native_entry() -> None:
+    """Ensure a cold direct legacy page URL enters through the native app router."""
+    if not _native_cutover_enabled() or not _legacy_pages_script_is_executing():
+        return
+
+    import streamlit as st
+
+    st.switch_page("app.py")
+    st.stop()
+
+
+_route_cold_legacy_page_to_native_entry()
 
 
 def get_auth_mode() -> str:
