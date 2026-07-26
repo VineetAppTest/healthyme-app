@@ -27,9 +27,8 @@ for public_name, cache_name in _ROUTING_PRIMITIVES.items():
 
 # Supabase can return the browser to the one-time authorization URL after the
 # native Streamlit identity has already been created. Streamlit query mutation
-# alone did not reliably replace the top-level browser URL. Redirect the browser
-# to the clean production login route; the native router then resolves the active
-# identity and sends the user to the canonical Member/Admin destination.
+# can trigger a rerun before browser-level JavaScript executes. Use only a
+# top-window redirect so the stale authorization URL is replaced deterministically.
 from native_bridge import root_authorization_ui as _root_authorization_ui  # noqa: E402
 
 
@@ -57,7 +56,6 @@ if not getattr(
                 "AUTH_CLIENT_LOGIN_URL",
                 _root_authorization_ui.DEFAULT_CLIENT_LOGIN_URL,
             )
-            st.query_params.clear()
             st.html(
                 "<script>"
                 f"window.top.location.replace({json.dumps(clean_login_url)});"
