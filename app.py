@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 import runpy
+from collections.abc import Iterable, Mapping
 from pathlib import Path
+from typing import Any
 
 import streamlit as st
 
@@ -24,11 +25,11 @@ for public_name, cache_name in _ROUTING_PRIMITIVES.items():
     else:
         setattr(st, public_name, base_callable)
 
+_BASE_NAVIGATION = getattr(st, "_hm_h13r2_base_navigation")
+_BASE_SWITCH_PAGE = getattr(st, "_hm_h13r2_base_switch_page")
+_AUTH_CANONICAL_SWITCH_FLAG = "_hm_h13r2_force_canonical_after_authorization"
 
-# Supabase can return the browser to the one-time authorization URL after the
-# native Streamlit identity has already been created. Streamlit query mutation
-# can trigger a rerun before browser-level JavaScript executes. Use only a
-# top-window redirect so the stale authorization URL is replaced deterministically.
+
 from native_bridge import root_authorization_ui as _root_authorization_ui  # noqa: E402
 
 
@@ -39,36 +40,81 @@ def _native_identity_present() -> bool:
         return False
 
 
-if not getattr(
+def _iter_pages(pages: Any) -> Iterable[Any]:
+    if isinstance(pages, Mapping):
+        for section_pages in pages.values():
+            yield from _iter_pages(section_pages)
+        return
+    if isinstance(pages, (list, tuple)):
+        for page in pages:
+            yield page
+        return
+    yield pages
+
+
+# Cache the unmodified authorizer once, then reinstall the current H13R2 wrapper on
+# every rerun. This avoids process-level wrapper accumulation while preserving the
+# unauthenticated Supabase authorization screen.
+_BASE_AUTHORIZER = getattr(
     _root_authorization_ui,
-    "_hm_h13r2_consumed_query_patch_installed",
-    False,
-):
-    _original_render_root_authorization_ui = (
-        _root_authorization_ui.render_root_authorization_ui
+    "_hm_h13r2_base_render_root_authorization_ui",
+    None,
+)
+if _BASE_AUTHORIZER is None:
+    _BASE_AUTHORIZER = _root_authorization_ui.render_root_authorization_ui
+    _root_authorization_ui._hm_h13r2_base_render_root_authorization_ui = (
+        _BASE_AUTHORIZER
     )
+else:
+    _root_authorization_ui.render_root_authorization_ui = _BASE_AUTHORIZER
 
-    def _render_root_authorization_ui_with_clean_redirect(
-        authorization_id: str,
-    ) -> None:
-        if _native_identity_present():
-            clean_login_url = _root_authorization_ui._secret(
-                "AUTH_CLIENT_LOGIN_URL",
-                _root_authorization_ui.DEFAULT_CLIENT_LOGIN_URL,
-            )
-            st.html(
-                "<script>"
-                f"window.top.location.replace({json.dumps(clean_login_url)});"
-                "</script>",
-                unsafe_allow_javascript=True,
-            )
-            st.stop()
-        _original_render_root_authorization_ui(authorization_id)
 
-    _root_authorization_ui.render_root_authorization_ui = (
-        _render_root_authorization_ui_with_clean_redirect
-    )
-    _root_authorization_ui._hm_h13r2_consumed_query_patch_installed = True
+def _render_root_authorization_ui_for_native_router(authorization_id: str) -> None:
+    if _native_identity_present():
+        # The OAuth request has already created the native Streamlit identity. Defer
+        # canonicalization until st.navigation has registered its real Login page.
+        st.session_state[_AUTH_CANONICAL_SWITCH_FLAG] = True
+        return
+    _BASE_AUTHORIZER(authorization_id)
+
+
+_root_authorization_ui.render_root_authorization_ui = (
+    _render_root_authorization_ui_for_native_router
+)
+
+
+def _navigation_with_post_oauth_canonical_switch(
+    pages: Any,
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    selected_page = _BASE_NAVIGATION(pages, *args, **kwargs)
+
+    if st.session_state.get(_AUTH_CANONICAL_SWITCH_FLAG):
+        login_page = next(
+            (
+                page
+                for page in _iter_pages(pages)
+                if str(getattr(page, "url_path", "") or "") == "Login"
+            ),
+            None,
+        )
+        st.session_state.pop(_AUTH_CANONICAL_SWITCH_FLAG, None)
+        if login_page is None:
+            raise RuntimeError(
+                "H13R2 could not locate the registered Login page after OAuth authorization."
+            )
+
+        # Streamlit multipage navigation clears non-embed query parameters when
+        # query_params is omitted/empty. The next native-router run sees the existing
+        # identity on /Login and resolves it to canonical Member/Admin destination.
+        _BASE_SWITCH_PAGE(login_page, query_params={})
+        st.stop()
+
+    return selected_page
+
+
+st.navigation = _navigation_with_post_oauth_canonical_switch
 
 
 CUTOVER_ENTRY = (
