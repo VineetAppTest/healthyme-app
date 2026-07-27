@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 
-BUILD = "H13R5-production-direct-login-v1"
-ROLLBACK_BUILD = "H13R4-production-single-visible-login-v1"
+BUILD = "H13R6-production-canonical-url-v1"
+ROLLBACK_BUILD = "H13R5-production-direct-login-v1"
 SOURCE = Path(__file__).resolve().with_name("production_native_full_app.py")
 
 source_text = SOURCE.read_text(encoding="utf-8")
@@ -13,9 +13,9 @@ expected_build = 'BUILD = "H13R1-production-native-full-app-v1"'
 expected_rollback = 'ROLLBACK_BUILD = "H13R0-production-native-member-auth-only-v1"'
 
 if expected_build not in source_text:
-    raise RuntimeError("H13R5 source-integrity check failed: accepted H13R1 build marker missing.")
+    raise RuntimeError("H13R6 source-integrity check failed: accepted H13R1 build marker missing.")
 if expected_rollback not in source_text:
-    raise RuntimeError("H13R5 source-integrity check failed: accepted H13R1 rollback marker missing.")
+    raise RuntimeError("H13R6 source-integrity check failed: accepted H13R1 rollback marker missing.")
 
 source_text = source_text.replace(
     expected_build,
@@ -51,7 +51,7 @@ title_patch_marker = (
 )
 if title_patch_marker not in source_text:
     raise RuntimeError(
-        "H13R5 source-integrity check failed: H13R1 Login title transform missing."
+        "H13R6 source-integrity check failed: H13R1 Login title transform missing."
     )
 
 production_login_ui = '''    st.login(provider)
@@ -89,11 +89,12 @@ diagnostic_source_replacement = (
     "        '                \"single_visible_login_active\": True,\\n'\n"
     "        '                \"direct_oidc_handoff_active\": True,\\n'\n"
     "        '                \"oauth_destination_query_cleanup_active\": True,\\n'\n"
+    "        '                \"oauth_url_cleanup_without_refresh\": True,\\n'\n"
     "        '                \"production_entry\": \"app.py\",',\n"
 )
 if diagnostic_source_marker not in source_text:
     raise RuntimeError(
-        "H13R5 source-integrity check failed: H13R1 diagnostic marker missing."
+        "H13R6 source-integrity check failed: H13R1 diagnostic marker missing."
     )
 source_text = source_text.replace(
     diagnostic_source_marker,
@@ -103,7 +104,7 @@ source_text = source_text.replace(
 
 source_text = source_text.replace(
     '__hm_h13r1_native_full_app__',
-    '__hm_h13r5_production_direct_login__',
+    '__hm_h13r6_production_canonical_url__',
     1,
 )
 
@@ -111,7 +112,7 @@ compiled_source = compile(source_text, str(SOURCE), "exec")
 exec(
     compiled_source,
     {
-        "__name__": "__hm_h13r5_production_direct_login__",
+        "__name__": "__hm_h13r6_production_canonical_url__",
         "__file__": str(SOURCE),
         "__package__": None,
     },
