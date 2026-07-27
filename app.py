@@ -94,11 +94,9 @@ _root_authorization_ui.render_root_authorization_ui = (
 def _fast_finalize_authenticated_root() -> None:
     """Move an authenticated OAuth callback to clean /Login before app boot.
 
-    The previous implementation allowed the full Member/Admin runtime to render and
-    then refreshed the browser. That worked functionally but added visible delay.
-    When the native identity is present and the browser is still at the app root,
-    render only a lightweight finalization overlay, replace the top-level URL with
-    the configured clean Login URL, and stop this run before heavy pages load.
+    Render only a lightweight finalization overlay, immediately replace the
+    top-level URL with the configured clean Login URL, and stop this run before
+    heavy Member/Admin pages load.
     """
     if not _native_identity_present() or _browser_path() != "/":
         return
@@ -140,13 +138,11 @@ def _fast_finalize_authenticated_root() -> None:
           } catch (_overlayError) {}
 
           const cleanLoginUrl = __CLEAN_LOGIN_URL__;
-          topWindow.setTimeout(() => {
-            try {
-              topWindow.location.replace(cleanLoginUrl);
-            } catch (_redirectError) {
-              window.location.replace(cleanLoginUrl);
-            }
-          }, 10);
+          try {
+            topWindow.location.href = cleanLoginUrl;
+          } catch (_redirectError) {
+            window.location.href = cleanLoginUrl;
+          }
         })();
         </script>
         """.replace("__CLEAN_LOGIN_URL__", json.dumps(clean_login_url)),
