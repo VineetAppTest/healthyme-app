@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import runpy
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -70,42 +69,6 @@ def _page_for_path(pages: Any, browser_path: str) -> Any | None:
     return None
 
 
-def _canonical_path_for_page(page: Any) -> str:
-    page_path = str(getattr(page, "url_path", "") or "").strip("/")
-    return f"/{page_path}" if page_path else "/"
-
-
-def _replace_browser_url_without_reload(path: str) -> None:
-    """Replace the visible OAuth callback URL without another page load."""
-    st.html(
-        f"""
-        <script>
-        (() => {{
-          let topWindow;
-          try {{
-            topWindow = window.top || window.parent || window;
-          }} catch (_error) {{
-            topWindow = window;
-          }}
-
-          try {{
-            const currentUrl = new URL(topWindow.location.href);
-            currentUrl.pathname = {json.dumps(path)};
-            currentUrl.search = "";
-            currentUrl.hash = "";
-            topWindow.history.replaceState(
-              topWindow.history.state,
-              "",
-              currentUrl.toString()
-            );
-          }} catch (_error) {{}}
-        }})();
-        </script>
-        """,
-        unsafe_allow_javascript=True,
-    )
-
-
 # Cache the unmodified authorizer once, then reinstall the production wrapper on
 # every rerun. Unauthenticated authorization requests render the HealthyMe
 # credential screen. Once native identity exists, the consumed request is left for
@@ -147,14 +110,12 @@ def _navigation_with_authenticated_url_cleanup(
 
     browser_path, query = _browser_request()
 
-    # The OAuth authorization_id is one-time technical state. The callback can
-    # already be rendering the correct Member/Admin page while the browser still
-    # displays the root authorization URL. Replace the address bar with the selected
-    # registered page without triggering another refresh or rerun.
+    # The OAuth authorization_id is one-time technical state. Never leave it on a
+    # Member/Admin URL. Re-open the same registered page with an empty query string.
     if "authorization_id" in query:
         target_page = _page_for_path(pages, browser_path) or selected_page
-        _replace_browser_url_without_reload(_canonical_path_for_page(target_page))
-        return selected_page
+        _BASE_SWITCH_PAGE(target_page, query_params={})
+        st.stop()
 
     # Streamlit can restore an authenticated callback at the root path. Move through
     # the registered Login page so the existing role router selects Member/Admin.
@@ -169,7 +130,7 @@ def _navigation_with_authenticated_url_cleanup(
         )
         if login_page is None:
             raise RuntimeError(
-                "H13R6 could not locate the registered Login page for OAuth canonicalization."
+                "H13R5 could not locate the registered Login page for OAuth canonicalization."
             )
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
@@ -188,5 +149,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r6_production_entry__",
+    run_name="__hm_h13r5_production_entry__",
 )
