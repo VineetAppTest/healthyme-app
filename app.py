@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import runpy
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -61,99 +62,10 @@ def _iter_pages(pages: Any) -> Iterable[Any]:
     yield pages
 
 
-def _install_one_time_post_oauth_reload() -> None:
-    """Refresh the browser once when the consumed OAuth URL is still visible.
-
-    Streamlit Cloud can expose a clean server-side page context while the top-level
-    browser still shows ``?authorization_id=...``. A real browser refresh reliably
-    reconciles those two states. The per-authorization sessionStorage/window.name
-    marker prevents refresh loops and leaves normal Member/Admin pages untouched.
-    """
-    if not _native_identity_present():
-        return
-
-    st.html(
-        r"""
-        <script>
-        (() => {
-          let topWindow;
-          try {
-            topWindow = window.top || window.parent || window;
-          } catch (_error) {
-            topWindow = window;
-          }
-
-          let currentUrl;
-          try {
-            currentUrl = new URL(topWindow.location.href);
-          } catch (_error) {
-            return;
-          }
-
-          const authorizationId = currentUrl.searchParams.get("authorization_id");
-          if (!authorizationId) {
-            return;
-          }
-
-          const key = `hm_h13r2_oauth_reload:${authorizationId}`;
-          let shouldReload = true;
-
-          try {
-            const storage = topWindow.sessionStorage;
-            if (storage.getItem(key) === "done") {
-              storage.removeItem(key);
-              shouldReload = false;
-            } else {
-              storage.setItem(key, "done");
-            }
-          } catch (_storageError) {
-            const marker = `|${key}|`;
-            const currentName = String(topWindow.name || "");
-            if (currentName.includes(marker)) {
-              topWindow.name = currentName.replace(marker, "");
-              shouldReload = false;
-            } else {
-              topWindow.name = `${currentName}${marker}`;
-            }
-          }
-
-          if (!shouldReload) {
-            return;
-          }
-
-          try {
-            const doc = topWindow.document;
-            if (doc && doc.body && !doc.getElementById("hm-h13r2-login-finalising")) {
-              const overlay = doc.createElement("div");
-              overlay.id = "hm-h13r2-login-finalising";
-              overlay.textContent = "Finalising secure login…";
-              overlay.style.cssText = [
-                "position:fixed",
-                "inset:0",
-                "z-index:2147483647",
-                "display:flex",
-                "align-items:center",
-                "justify-content:center",
-                "background:#fffaf2",
-                "color:#073b2c",
-                "font:600 16px system-ui,sans-serif"
-              ].join(";");
-              doc.body.appendChild(overlay);
-            }
-          } catch (_overlayError) {}
-
-          topWindow.setTimeout(() => topWindow.location.reload(), 40);
-        })();
-        </script>
-        """,
-        unsafe_allow_javascript=True,
-    )
-
-
 # Cache the unmodified authorizer once, then reinstall the H13R2 wrapper on every
 # rerun. When Streamlit has already created the native identity, leave the consumed
-# authorization request behind and let registered multipage navigation canonicalize
-# the browser path. Unauthenticated requests still render the accepted authorizer.
+# authorization request behind and let the production entrypoint finalize the URL.
+# Unauthenticated requests still render the accepted authorizer.
 _BASE_AUTHORIZER = getattr(
     _root_authorization_ui,
     "_hm_h13r2_base_render_root_authorization_ui",
@@ -179,6 +91,70 @@ _root_authorization_ui.render_root_authorization_ui = (
 )
 
 
+def _fast_finalize_authenticated_root() -> None:
+    """Move an authenticated OAuth callback to clean /Login before app boot.
+
+    The previous implementation allowed the full Member/Admin runtime to render and
+    then refreshed the browser. That worked functionally but added visible delay.
+    When the native identity is present and the browser is still at the app root,
+    render only a lightweight finalization overlay, replace the top-level URL with
+    the configured clean Login URL, and stop this run before heavy pages load.
+    """
+    if not _native_identity_present() or _browser_path() != "/":
+        return
+
+    clean_login_url = _root_authorization_ui._secret(
+        "AUTH_CLIENT_LOGIN_URL",
+        _root_authorization_ui.DEFAULT_CLIENT_LOGIN_URL,
+    )
+    st.html(
+        """
+        <script>
+        (() => {
+          let topWindow;
+          try {
+            topWindow = window.top || window.parent || window;
+          } catch (_error) {
+            topWindow = window;
+          }
+
+          try {
+            const doc = topWindow.document;
+            if (doc && doc.body && !doc.getElementById("hm-h13r2-login-finalising")) {
+              const overlay = doc.createElement("div");
+              overlay.id = "hm-h13r2-login-finalising";
+              overlay.textContent = "Finalising secure login…";
+              overlay.style.cssText = [
+                "position:fixed",
+                "inset:0",
+                "z-index:2147483647",
+                "display:flex",
+                "align-items:center",
+                "justify-content:center",
+                "background:#fffaf2",
+                "color:#073b2c",
+                "font:600 16px system-ui,sans-serif"
+              ].join(";");
+              doc.body.appendChild(overlay);
+            }
+          } catch (_overlayError) {}
+
+          const cleanLoginUrl = __CLEAN_LOGIN_URL__;
+          topWindow.setTimeout(() => {
+            try {
+              topWindow.location.replace(cleanLoginUrl);
+            } catch (_redirectError) {
+              window.location.replace(cleanLoginUrl);
+            }
+          }, 10);
+        })();
+        </script>
+        """.replace("__CLEAN_LOGIN_URL__", json.dumps(clean_login_url)),
+        unsafe_allow_javascript=True,
+    )
+    st.stop()
+
+
 def _navigation_with_authenticated_root_canonicalization(
     pages: Any,
     *args: Any,
@@ -186,10 +162,9 @@ def _navigation_with_authenticated_root_canonicalization(
 ) -> Any:
     selected_page = _BASE_NAVIGATION(pages, *args, **kwargs)
 
-    # Streamlit's OAuth return can restore the app root in the browser while the
-    # native identity and remembered selected page are already active. Detect that
-    # mismatch from st.context.url instead of relying on st.query_params, which is
-    # not consistently populated on the restored callback request in Cloud.
+    # Fallback for environments where the early browser redirect cannot run. The
+    # registered Login page clears the stale OAuth query and lets the accepted role
+    # router select canonical Member/Admin Home on the next run.
     if _native_identity_present() and _browser_path() == "/":
         login_page = next(
             (
@@ -203,10 +178,6 @@ def _navigation_with_authenticated_root_canonicalization(
             raise RuntimeError(
                 "H13R2 could not locate the registered Login page for OAuth canonicalization."
             )
-
-        # The clean Login run retains st.user, resolves the HealthyMe role, and then
-        # switches to the canonical Member/Admin destination. Passing an empty query
-        # dictionary explicitly clears the consumed OAuth authorization parameter.
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
 
@@ -214,7 +185,7 @@ def _navigation_with_authenticated_root_canonicalization(
 
 
 st.navigation = _navigation_with_authenticated_root_canonicalization
-_install_one_time_post_oauth_reload()
+_fast_finalize_authenticated_root()
 
 
 CUTOVER_ENTRY = (
