@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import json
 import runpy
-from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any
 from urllib.parse import urlsplit
 
 import streamlit as st
@@ -12,8 +9,8 @@ import streamlit as st
 
 # Streamlit reruns reuse the same Python process. The H13R2 integration temporarily
 # wraps these routing callables while assembling the real Member/Admin application.
-# Always restore the process-level originals before starting a new run so wrappers
-# cannot stack and append the same page registry more than once.
+# Restore the process-level originals before every production run so wrappers cannot
+# stack and duplicate page registries.
 _ROUTING_PRIMITIVES = {
     "Page": "_hm_h13r2_base_page",
     "navigation": "_hm_h13r2_base_navigation",
@@ -27,6 +24,7 @@ for public_name, cache_name in _ROUTING_PRIMITIVES.items():
     else:
         setattr(st, public_name, base_callable)
 
+_BASE_PAGE = getattr(st, "_hm_h13r2_base_page")
 _BASE_NAVIGATION = getattr(st, "_hm_h13r2_base_navigation")
 _BASE_SWITCH_PAGE = getattr(st, "_hm_h13r2_base_switch_page")
 
@@ -50,22 +48,16 @@ def _browser_path() -> str:
         return ""
 
 
-def _iter_pages(pages: Any) -> Iterable[Any]:
-    if isinstance(pages, Mapping):
-        for section_pages in pages.values():
-            yield from _iter_pages(section_pages)
-        return
-    if isinstance(pages, (list, tuple)):
-        for page in pages:
-            yield page
-        return
-    yield pages
+def _authorization_query_present() -> bool:
+    try:
+        return bool(str(st.query_params.get("authorization_id", "") or "").strip())
+    except Exception:
+        return False
 
 
-# Cache the unmodified authorizer once, then reinstall the H13R2 wrapper on every
-# rerun. When Streamlit has already created the native identity, leave the consumed
-# authorization request behind and let the production entrypoint finalize the URL.
-# Unauthenticated requests still render the accepted authorizer.
+# Cache the accepted authorizer once. When Streamlit has already created the native
+# identity, the production entrypoint completes the route handoff instead of asking
+# the authorizer to clear query parameters or rerun itself.
 _BASE_AUTHORIZER = getattr(
     _root_authorization_ui,
     "_hm_h13r2_base_render_root_authorization_ui",
@@ -91,97 +83,35 @@ _root_authorization_ui.render_root_authorization_ui = (
 )
 
 
-def _fast_finalize_authenticated_root() -> None:
-    """Move an authenticated OAuth callback to clean /Login before app boot.
+def _complete_authenticated_oauth_handoff() -> None:
+    """Move the authenticated callback to clean /Login without browser JavaScript.
 
-    Render only a lightweight finalization overlay, immediately replace the
-    top-level URL with the configured clean Login URL, and stop this run before
-    heavy Member/Admin pages load.
+    Streamlit Cloud can return the authenticated browser to the app root with the
+    one-time ``authorization_id`` still visible. Register a lightweight temporary
+    Login page and switch to it using Streamlit's native multipage navigation. This
+    clears the stale query and starts a clean run before the full Member/Admin runtime
+    or any database-backed page is loaded.
     """
-    if not _native_identity_present() or _browser_path() != "/":
+    if not _native_identity_present():
+        return
+    if not (_authorization_query_present() or _browser_path() == "/"):
         return
 
-    clean_login_url = _root_authorization_ui._secret(
-        "AUTH_CLIENT_LOGIN_URL",
-        _root_authorization_ui.DEFAULT_CLIENT_LOGIN_URL,
-    )
-    st.html(
-        """
-        <script>
-        (() => {
-          let topWindow;
-          try {
-            topWindow = window.top || window.parent || window;
-          } catch (_error) {
-            topWindow = window;
-          }
+    def _login_handoff_page() -> None:
+        st.caption("Finalising secure login…")
 
-          try {
-            const doc = topWindow.document;
-            if (doc && doc.body && !doc.getElementById("hm-h13r2-login-finalising")) {
-              const overlay = doc.createElement("div");
-              overlay.id = "hm-h13r2-login-finalising";
-              overlay.textContent = "Finalising secure login…";
-              overlay.style.cssText = [
-                "position:fixed",
-                "inset:0",
-                "z-index:2147483647",
-                "display:flex",
-                "align-items:center",
-                "justify-content:center",
-                "background:#fffaf2",
-                "color:#073b2c",
-                "font:600 16px system-ui,sans-serif"
-              ].join(";");
-              doc.body.appendChild(overlay);
-            }
-          } catch (_overlayError) {}
-
-          const cleanLoginUrl = __CLEAN_LOGIN_URL__;
-          try {
-            topWindow.location.href = cleanLoginUrl;
-          } catch (_redirectError) {
-            window.location.href = cleanLoginUrl;
-          }
-        })();
-        </script>
-        """.replace("__CLEAN_LOGIN_URL__", json.dumps(clean_login_url)),
-        unsafe_allow_javascript=True,
+    login_handoff_page = _BASE_PAGE(
+        _login_handoff_page,
+        title="Login",
+        url_path="Login",
+        default=True,
     )
+    _BASE_NAVIGATION([login_handoff_page], position="hidden")
+    _BASE_SWITCH_PAGE(login_handoff_page, query_params={})
     st.stop()
 
 
-def _navigation_with_authenticated_root_canonicalization(
-    pages: Any,
-    *args: Any,
-    **kwargs: Any,
-) -> Any:
-    selected_page = _BASE_NAVIGATION(pages, *args, **kwargs)
-
-    # Fallback for environments where the early browser redirect cannot run. The
-    # registered Login page clears the stale OAuth query and lets the accepted role
-    # router select canonical Member/Admin Home on the next run.
-    if _native_identity_present() and _browser_path() == "/":
-        login_page = next(
-            (
-                page
-                for page in _iter_pages(pages)
-                if str(getattr(page, "url_path", "") or "") == "Login"
-            ),
-            None,
-        )
-        if login_page is None:
-            raise RuntimeError(
-                "H13R2 could not locate the registered Login page for OAuth canonicalization."
-            )
-        _BASE_SWITCH_PAGE(login_page, query_params={})
-        st.stop()
-
-    return selected_page
-
-
-st.navigation = _navigation_with_authenticated_root_canonicalization
-_fast_finalize_authenticated_root()
+_complete_authenticated_oauth_handoff()
 
 
 CUTOVER_ENTRY = (
