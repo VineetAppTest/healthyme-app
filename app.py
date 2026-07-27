@@ -4,15 +4,13 @@ import runpy
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import streamlit as st
 
 
-# Streamlit reruns reuse the same Python process. The H13R2 integration temporarily
-# wraps these routing callables while assembling the real Member/Admin application.
-# Always restore the process-level originals before starting a new run so wrappers
-# cannot stack and append the same page registry more than once.
+# Streamlit reruns reuse the same Python process. Always restore the process-level
+# routing primitives before installing the current production wrapper.
 _ROUTING_PRIMITIVES = {
     "Page": "_hm_h13r2_base_page",
     "navigation": "_hm_h13r2_base_navigation",
@@ -40,13 +38,14 @@ def _native_identity_present() -> bool:
         return False
 
 
-def _browser_path() -> str:
+def _browser_request() -> tuple[str, dict[str, list[str]]]:
     try:
         raw_url = str(st.context.url or "").strip()
-        path = urlsplit(raw_url).path or "/"
-        return path.rstrip("/") or "/"
+        parsed = urlsplit(raw_url)
+        path = (parsed.path or "/").rstrip("/") or "/"
+        return path, parse_qs(parsed.query, keep_blank_values=True)
     except Exception:
-        return ""
+        return "", {}
 
 
 def _iter_pages(pages: Any) -> Iterable[Any]:
@@ -61,99 +60,19 @@ def _iter_pages(pages: Any) -> Iterable[Any]:
     yield pages
 
 
-def _install_one_time_post_oauth_reload() -> None:
-    """Refresh the browser once when the consumed OAuth URL is still visible.
-
-    Streamlit Cloud can expose a clean server-side page context while the top-level
-    browser still shows ``?authorization_id=...``. A real browser refresh reliably
-    reconciles those two states. The per-authorization sessionStorage/window.name
-    marker prevents refresh loops and leaves normal Member/Admin pages untouched.
-    """
-    if not _native_identity_present():
-        return
-
-    st.html(
-        r"""
-        <script>
-        (() => {
-          let topWindow;
-          try {
-            topWindow = window.top || window.parent || window;
-          } catch (_error) {
-            topWindow = window;
-          }
-
-          let currentUrl;
-          try {
-            currentUrl = new URL(topWindow.location.href);
-          } catch (_error) {
-            return;
-          }
-
-          const authorizationId = currentUrl.searchParams.get("authorization_id");
-          if (!authorizationId) {
-            return;
-          }
-
-          const key = `hm_h13r2_oauth_reload:${authorizationId}`;
-          let shouldReload = true;
-
-          try {
-            const storage = topWindow.sessionStorage;
-            if (storage.getItem(key) === "done") {
-              storage.removeItem(key);
-              shouldReload = false;
-            } else {
-              storage.setItem(key, "done");
-            }
-          } catch (_storageError) {
-            const marker = `|${key}|`;
-            const currentName = String(topWindow.name || "");
-            if (currentName.includes(marker)) {
-              topWindow.name = currentName.replace(marker, "");
-              shouldReload = false;
-            } else {
-              topWindow.name = `${currentName}${marker}`;
-            }
-          }
-
-          if (!shouldReload) {
-            return;
-          }
-
-          try {
-            const doc = topWindow.document;
-            if (doc && doc.body && !doc.getElementById("hm-h13r2-login-finalising")) {
-              const overlay = doc.createElement("div");
-              overlay.id = "hm-h13r2-login-finalising";
-              overlay.textContent = "Finalising secure login…";
-              overlay.style.cssText = [
-                "position:fixed",
-                "inset:0",
-                "z-index:2147483647",
-                "display:flex",
-                "align-items:center",
-                "justify-content:center",
-                "background:#fffaf2",
-                "color:#073b2c",
-                "font:600 16px system-ui,sans-serif"
-              ].join(";");
-              doc.body.appendChild(overlay);
-            }
-          } catch (_overlayError) {}
-
-          topWindow.setTimeout(() => topWindow.location.reload(), 40);
-        })();
-        </script>
-        """,
-        unsafe_allow_javascript=True,
-    )
+def _page_for_path(pages: Any, browser_path: str) -> Any | None:
+    normalized_path = browser_path.strip("/")
+    for page in _iter_pages(pages):
+        page_path = str(getattr(page, "url_path", "") or "").strip("/")
+        if page_path == normalized_path:
+            return page
+    return None
 
 
-# Cache the unmodified authorizer once, then reinstall the H13R2 wrapper on every
-# rerun. When Streamlit has already created the native identity, leave the consumed
-# authorization request behind and let registered multipage navigation canonicalize
-# the browser path. Unauthenticated requests still render the accepted authorizer.
+# Cache the unmodified authorizer once, then reinstall the production wrapper on
+# every rerun. Unauthenticated authorization requests render the HealthyMe
+# credential screen. Once native identity exists, the consumed request is left for
+# the registered navigation wrapper to canonicalize without showing another screen.
 _BASE_AUTHORIZER = getattr(
     _root_authorization_ui,
     "_hm_h13r2_base_render_root_authorization_ui",
@@ -179,18 +98,28 @@ _root_authorization_ui.render_root_authorization_ui = (
 )
 
 
-def _navigation_with_authenticated_root_canonicalization(
+def _navigation_with_authenticated_url_cleanup(
     pages: Any,
     *args: Any,
     **kwargs: Any,
 ) -> Any:
     selected_page = _BASE_NAVIGATION(pages, *args, **kwargs)
 
-    # Streamlit's OAuth return can restore the app root in the browser while the
-    # native identity and remembered selected page are already active. Detect that
-    # mismatch from st.context.url instead of relying on st.query_params, which is
-    # not consistently populated on the restored callback request in Cloud.
-    if _native_identity_present() and _browser_path() == "/":
+    if not _native_identity_present():
+        return selected_page
+
+    browser_path, query = _browser_request()
+
+    # The OAuth authorization_id is one-time technical state. Never leave it on a
+    # Member/Admin URL. Re-open the same registered page with an empty query string.
+    if "authorization_id" in query:
+        target_page = _page_for_path(pages, browser_path) or selected_page
+        _BASE_SWITCH_PAGE(target_page, query_params={})
+        st.stop()
+
+    # Streamlit can restore an authenticated callback at the root path. Move through
+    # the registered Login page so the existing role router selects Member/Admin.
+    if browser_path == "/":
         login_page = next(
             (
                 page
@@ -201,20 +130,15 @@ def _navigation_with_authenticated_root_canonicalization(
         )
         if login_page is None:
             raise RuntimeError(
-                "H13R2 could not locate the registered Login page for OAuth canonicalization."
+                "H13R5 could not locate the registered Login page for OAuth canonicalization."
             )
-
-        # The clean Login run retains st.user, resolves the HealthyMe role, and then
-        # switches to the canonical Member/Admin destination. Passing an empty query
-        # dictionary explicitly clears the consumed OAuth authorization parameter.
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
 
     return selected_page
 
 
-st.navigation = _navigation_with_authenticated_root_canonicalization
-_install_one_time_post_oauth_reload()
+st.navigation = _navigation_with_authenticated_url_cleanup
 
 
 CUTOVER_ENTRY = (
@@ -225,5 +149,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r2_production_entry__",
+    run_name="__hm_h13r5_production_entry__",
 )
