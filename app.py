@@ -4,6 +4,7 @@ import runpy
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import streamlit as st
 
@@ -27,7 +28,6 @@ for public_name, cache_name in _ROUTING_PRIMITIVES.items():
 
 _BASE_NAVIGATION = getattr(st, "_hm_h13r2_base_navigation")
 _BASE_SWITCH_PAGE = getattr(st, "_hm_h13r2_base_switch_page")
-_AUTH_CANONICAL_SWITCH_FLAG = "_hm_h13r2_force_canonical_after_authorization"
 
 
 from native_bridge import root_authorization_ui as _root_authorization_ui  # noqa: E402
@@ -38,6 +38,15 @@ def _native_identity_present() -> bool:
         return bool(st.user and st.user.is_logged_in)
     except Exception:
         return False
+
+
+def _browser_path() -> str:
+    try:
+        raw_url = str(st.context.url or "").strip()
+        path = urlsplit(raw_url).path or "/"
+        return path.rstrip("/") or "/"
+    except Exception:
+        return ""
 
 
 def _iter_pages(pages: Any) -> Iterable[Any]:
@@ -52,9 +61,10 @@ def _iter_pages(pages: Any) -> Iterable[Any]:
     yield pages
 
 
-# Cache the unmodified authorizer once, then reinstall the current H13R2 wrapper on
-# every rerun. This avoids process-level wrapper accumulation while preserving the
-# unauthenticated Supabase authorization screen.
+# Cache the unmodified authorizer once, then reinstall the H13R2 wrapper on every
+# rerun. When Streamlit has already created the native identity, leave the consumed
+# authorization request behind and let registered multipage navigation canonicalize
+# the browser path. Unauthenticated requests still render the accepted authorizer.
 _BASE_AUTHORIZER = getattr(
     _root_authorization_ui,
     "_hm_h13r2_base_render_root_authorization_ui",
@@ -71,9 +81,6 @@ else:
 
 def _render_root_authorization_ui_for_native_router(authorization_id: str) -> None:
     if _native_identity_present():
-        # The OAuth request has already created the native Streamlit identity. Defer
-        # canonicalization until st.navigation has registered its real Login page.
-        st.session_state[_AUTH_CANONICAL_SWITCH_FLAG] = True
         return
     _BASE_AUTHORIZER(authorization_id)
 
@@ -83,14 +90,18 @@ _root_authorization_ui.render_root_authorization_ui = (
 )
 
 
-def _navigation_with_post_oauth_canonical_switch(
+def _navigation_with_authenticated_root_canonicalization(
     pages: Any,
     *args: Any,
     **kwargs: Any,
 ) -> Any:
     selected_page = _BASE_NAVIGATION(pages, *args, **kwargs)
 
-    if st.session_state.get(_AUTH_CANONICAL_SWITCH_FLAG):
+    # Streamlit's OAuth return can restore the app root in the browser while the
+    # native identity and remembered selected page are already active. Detect that
+    # mismatch from st.context.url instead of relying on st.query_params, which is
+    # not consistently populated on the restored callback request in Cloud.
+    if _native_identity_present() and _browser_path() == "/":
         login_page = next(
             (
                 page
@@ -99,22 +110,21 @@ def _navigation_with_post_oauth_canonical_switch(
             ),
             None,
         )
-        st.session_state.pop(_AUTH_CANONICAL_SWITCH_FLAG, None)
         if login_page is None:
             raise RuntimeError(
-                "H13R2 could not locate the registered Login page after OAuth authorization."
+                "H13R2 could not locate the registered Login page for OAuth canonicalization."
             )
 
-        # Streamlit multipage navigation clears non-embed query parameters when
-        # query_params is omitted/empty. The next native-router run sees the existing
-        # identity on /Login and resolves it to canonical Member/Admin destination.
+        # The clean Login run retains st.user, resolves the HealthyMe role, and then
+        # switches to the canonical Member/Admin destination. Passing an empty query
+        # dictionary explicitly clears the consumed OAuth authorization parameter.
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
 
     return selected_page
 
 
-st.navigation = _navigation_with_post_oauth_canonical_switch
+st.navigation = _navigation_with_authenticated_root_canonicalization
 
 
 CUTOVER_ENTRY = (
