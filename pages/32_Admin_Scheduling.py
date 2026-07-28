@@ -18,8 +18,8 @@ schedule_timezone_ui.render_page_nav = ui_common.render_page_nav
 
 
 # Streamlit keeps widget values across reruns and deployments. A stale value from
-# an earlier Scheduling build can therefore reach the new IANA timezone selector
-# even when that value is no longer one of its options. Cache the unwrapped base
+# an earlier Scheduling build can therefore reach the IANA timezone selector even
+# when that value is no longer one of its options. Cache the unwrapped base
 # functions once, sanitize the choices and clear an invalid retained value.
 _ORIGINAL_TIMEZONE_OPTIONS = getattr(
     schedule_timezone_ui,
@@ -38,6 +38,7 @@ schedule_timezone_ui._hm_base_persist_practitioner_timezone_before_sanitizer = (
     _ORIGINAL_PERSIST_PRACTITIONER_TIMEZONE
 )
 _TIMEZONE_WIDGET_KEY = "hm_tz_practitioner_timezone"
+_TIMEZONE_SEARCH_KEY = "hm_tz_practitioner_timezone_search"
 _COMMON_TIMEZONE_ORDER = [
     "Asia/Kolkata",
     "Europe/London",
@@ -133,9 +134,32 @@ if _retained_timezone is not None and str(_retained_timezone) not in _safe_timez
     st.session_state.pop(_TIMEZONE_WIDGET_KEY, None)
 
 
+# Remove the redundant explanatory sentence requested after production review.
+_BASE_MARKDOWN = getattr(
+    st,
+    "_hm_base_markdown_before_schedule_subtitle_removal",
+    st.markdown,
+)
+st._hm_base_markdown_before_schedule_subtitle_removal = _BASE_MARKDOWN
+_REMOVED_CONTEXT_SUBTITLE = (
+    "<div class='hm-tz-context-sub'>All schedule creation, status, reschedule "
+    "review and session usage below are for the selected member only.</div>"
+)
+
+
+def _schedule_markdown_without_redundant_subtitle(body, *args, **kwargs):
+    if str(body or "") == _REMOVED_CONTEXT_SUBTITLE:
+        return None
+    return _BASE_MARKDOWN(body, *args, **kwargs)
+
+
+st.markdown = _schedule_markdown_without_redundant_subtitle
+schedule_timezone_ui.st.markdown = _schedule_markdown_without_redundant_subtitle
+
+
 # The scheduling component resolves the selected member before it resolves the
 # practitioner timezone. Keep that data dependency intact while presenting the
-# two controls in the requested order: practitioner timezone first, member second.
+# practitioner controls first and the member selector immediately afterwards.
 _BASE_SELECTBOX = getattr(
     st,
     "_hm_base_selectbox_before_schedule_control_order",
@@ -161,6 +185,54 @@ def _selected_value_without_render(options: list, kwargs: dict):
     return selected
 
 
+def _filtered_timezone_options(options: list[str], current_value: str) -> tuple[list[str], bool]:
+    query = str(st.session_state.get(_TIMEZONE_SEARCH_KEY) or "").strip().lower()
+    if not query:
+        return list(options), True
+
+    matches = [
+        timezone_name
+        for timezone_name in options
+        if query in _friendly_timezone_label(timezone_name).lower()
+    ]
+    has_match = bool(matches)
+    if current_value and current_value not in matches:
+        matches.insert(0, current_value)
+    return matches or ([current_value] if current_value else list(options[:1])), has_match
+
+
+def _lock_timezone_dropdown_typing() -> None:
+    """Keep the dropdown selection controlled; searching happens in its own field."""
+    st.html(
+        """
+<script>
+(() => {
+  let root;
+  try { root = window.parent.document; } catch (_error) { root = document; }
+  const lock = () => {
+    const inputs = root.querySelectorAll(
+      'input[aria-label="Practitioner scheduling timezone"]'
+    );
+    inputs.forEach((input) => {
+      input.readOnly = true;
+      input.setAttribute('inputmode', 'none');
+      input.setAttribute('autocomplete', 'off');
+      input.style.cursor = 'pointer';
+    });
+  };
+  lock();
+  if (!root.body.__hmTimezoneReadonlyObserver) {
+    const observer = new MutationObserver(lock);
+    observer.observe(root.body, {childList: true, subtree: true});
+    root.body.__hmTimezoneReadonlyObserver = observer;
+  }
+})();
+</script>
+""",
+        unsafe_allow_javascript=True,
+    )
+
+
 def _selectbox_with_practitioner_timezone_first(
     label,
     options,
@@ -182,16 +254,43 @@ def _selectbox_with_practitioner_timezone_first(
         return selected
 
     if label == "Your scheduling timezone":
+        all_options = list(options)
+        original_index = kwargs.get("index", 0)
+        original_index = original_index if isinstance(original_index, int) else 0
+        original_index = max(0, min(original_index, len(all_options) - 1))
+        retained = st.session_state.get(_TIMEZONE_WIDGET_KEY)
+        current_value = retained if retained in all_options else all_options[original_index]
+
+        st.text_input(
+            "Search practitioner timezone",
+            key=_TIMEZONE_SEARCH_KEY,
+            placeholder="Type a city, country or timezone",
+            help="Search examples: London, United Kingdom or Europe/London.",
+        )
+        filtered_options, has_match = _filtered_timezone_options(
+            all_options,
+            current_value,
+        )
+
         timezone_kwargs = dict(kwargs)
-        # Streamlit searches against the formatted labels while still returning only
-        # one of the approved IANA values. Arbitrary text can never be persisted.
         timezone_kwargs["format_func"] = _friendly_timezone_label
+        timezone_kwargs["index"] = (
+            filtered_options.index(current_value)
+            if current_value in filtered_options
+            else 0
+        )
         selected_timezone = _BASE_SELECTBOX(
             "Practitioner scheduling timezone",
-            options,
+            filtered_options,
             *args,
             **timezone_kwargs,
         )
+        _lock_timezone_dropdown_typing()
+        if st.session_state.get(_TIMEZONE_SEARCH_KEY) and not has_match:
+            st.caption(
+                "No matching timezone found. The current practitioner timezone is retained."
+            )
+
         if _PENDING_MEMBER_SELECTBOX:
             selected_member = _BASE_SELECTBOX(
                 "Select member controlling this page",
@@ -209,11 +308,11 @@ def _selectbox_with_practitioner_timezone_first(
 st.selectbox = _selectbox_with_practitioner_timezone_first
 schedule_timezone_ui.st.selectbox = _selectbox_with_practitioner_timezone_first
 
-# Make the long timezone list easier to navigate. The selector remains a closed
-# approved-value control; typing only filters the dropdown options.
+# Make the long timezone list easier to navigate. The dropdown remains a closed
+# approved-value control; filtering is handled by the dedicated search field.
 st.markdown(
     """
-<style id="hm-friendly-timezone-selector-v1">
+<style id="hm-friendly-timezone-selector-v2">
 div[data-baseweb="popover"] [role="listbox"],
 div[data-baseweb="popover"] ul{
   scrollbar-width:auto!important;
