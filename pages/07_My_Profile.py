@@ -5,12 +5,20 @@ import streamlit as st
 from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12, render_back_to_top
 from components.db import get_profile_with_laf_fallback, update_profile, sync_profile_from_laf
+from components.member_timezone import (
+    DEFAULT_MEMBER_TIMEZONE,
+    member_timezone_name,
+    persist_member_timezone_profile,
+    resolve_member_timezone,
+    timezones_for_country,
+)
 
 st.set_page_config(page_title="My Profile", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
 inject_global_styles(); apply_luxe_theme(); require_member(); utility_logout_bar(); render_back_to_top()
 
 user_id = st.session_state["user_id"]
 sync_profile_from_laf(user_id)
+member_timezone_name(user_id, persist=True)
 p = get_profile_with_laf_fallback(user_id)
 
 def load_country_options():
@@ -81,7 +89,7 @@ st.markdown(
     """
     <div class='info-banner'>
       <b>Auto-filled from LAF.</b><br>
-      Full name, email, gender, age, height, weight, country, mobile number and occupation are pulled from LAF wherever available.
+      Country is pulled from the LAF. City and timezone are stored with your profile so Daily Log and future schedules use your local calendar date rather than the server location.
     </div>
     """,
     unsafe_allow_html=True,
@@ -90,6 +98,7 @@ st.markdown(
 card_start()
 if st.button("Refresh from LAF", use_container_width=True):
     sync_profile_from_laf(user_id)
+    member_timezone_name(user_id, persist=True)
     st.success("Profile refreshed from LAF.")
     st.rerun()
 
@@ -105,7 +114,7 @@ with c1:
         GENDER_OPTIONS,
         index=GENDER_OPTIONS.index(gender_default) if gender_default in GENDER_OPTIONS else 0,
     )
-    country_default = p.get("country", p.get("city", "India")) or "India"
+    country_default = p.get("country", "India") or "India"
     data["country"] = st.selectbox(
         "Country",
         COUNTRY_OPTIONS,
@@ -122,6 +131,33 @@ with c2:
     data["height_cm"] = str(st.number_input("Height (cm)", min_value=50, max_value=250, value=int_value(p.get("height_cm"), 160, 50, 250), step=1))
     data["weight_kg"] = str(st.number_input("Weight (kg)", min_value=20, max_value=250, value=int_value(p.get("weight_kg"), 60, 20, 250), step=1))
     data["occupation"] = st.text_input("Occupation", value=str(p.get("occupation", "")))
+    stored_city = p.get("timezone_city") or p.get("city") or ""
+    if stored_city == data["country"]:
+        stored_city = ""
+    data["city"] = st.text_input(
+        "City",
+        value=str(stored_city),
+        placeholder="Example: Lucknow, New York or Sydney",
+        help="Used only with the selected country to establish your local timezone.",
+    )
+
+    timezone_options = timezones_for_country(data["country"])
+    if not timezone_options:
+        timezone_options = [DEFAULT_MEMBER_TIMEZONE]
+    stored_timezone = str(p.get("timezone_name") or "")
+    if stored_timezone not in timezone_options:
+        stored_timezone, _ = resolve_member_timezone(
+            data["country"],
+            data["city"],
+            stored_timezone,
+        )
+    timezone_index = timezone_options.index(stored_timezone) if stored_timezone in timezone_options else 0
+    data["timezone_name"] = st.selectbox(
+        "Timezone",
+        timezone_options,
+        index=timezone_index,
+        help="IANA timezone used for Daily Log dates and future cross-timezone scheduling.",
+    )
 
 # v100.15 profile action row: Save left, Back to Home right
 save_col_v10015, back_col_v10015 = st.columns([1, 1], gap="medium")
@@ -142,11 +178,15 @@ with save_col_v10015:
             for err in errors:
                 st.error(err)
         else:
-            # Backward-compatible aliases
             data["phone"] = data["mobile_number"]
-            data["city"] = data["country"]
             update_profile(user_id, data)
-            st.success("Profile saved.")
+            persist_member_timezone_profile(
+                user_id,
+                data["country"],
+                data["city"],
+                data["timezone_name"],
+            )
+            st.success("Profile saved with your local timezone.")
 
 with back_col_v10015:
     if st.button("Back to Home", use_container_width=True):
