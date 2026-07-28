@@ -27,8 +27,8 @@ from native_bridge import root_authorization_ui as _router_authorization_ui  # n
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
-BUILD = "H13R8A-canonical-route-after-login-v1"
-ROLLBACK_BUILD = "H13R8-login-timing-url-cleanup-v1"
+BUILD = "H13R8B-auth-callback-rerun-v1"
+ROLLBACK_BUILD = "H13R8A-canonical-route-after-login-v1"
 
 
 def _native_identity_present() -> bool:
@@ -163,12 +163,12 @@ def _instrument_authorizer_html(document: str) -> str:
 # on every rerun.
 _BASE_AUTHORIZER = getattr(
     _root_authorization_ui,
-    "_hm_h13r8a_base_render_root_authorization_ui",
+    "_hm_h13r8b_base_render_root_authorization_ui",
     None,
 )
 if _BASE_AUTHORIZER is None:
     _BASE_AUTHORIZER = _root_authorization_ui.render_root_authorization_ui
-    _root_authorization_ui._hm_h13r8a_base_render_root_authorization_ui = (
+    _root_authorization_ui._hm_h13r8b_base_render_root_authorization_ui = (
         _BASE_AUTHORIZER
     )
 else:
@@ -177,11 +177,13 @@ else:
 
 def _render_root_authorization_ui_for_native_router(authorization_id: str) -> None:
     if _native_identity_present():
-        # authorization_id is required while the Supabase authorization request is
-        # active. Once native identity exists, clear the consumed query parameter and
-        # allow the accepted role router to perform the canonical page switch.
+        # The callback has already created the native Streamlit identity. Consume the
+        # one-time authorization_id, then rerun once so the accepted role router can
+        # select the canonical Member/Admin page. This is the programmatic equivalent
+        # of the manual refresh that production testing proved was still required.
         if authorization_id:
             st.query_params.clear()
+            st.rerun()
         return
 
     original_html = st.html
@@ -203,15 +205,14 @@ _root_authorization_ui.render_root_authorization_ui = (
 )
 
 # The accepted Gate 4/full-member runtime imports the legacy authorizer module
-# directly. Point it at the H13R8A wrapper before the production runtime is compiled.
+# directly. Point it at the H13R8B wrapper before the production runtime is compiled.
 _router_authorization_ui.render_root_authorization_ui = (
     _render_root_authorization_ui_for_native_router
 )
 
-# Do not rewrite the browser URL to /Login while the OAuth request is still active.
-# That desynchronizes Streamlit's internal route from the address bar and causes
-# Member/Admin content to render under /Login. Supabase's returned redirect URL and
-# the accepted role router now remain the only route-changing mechanisms.
+# Do not wrap st.navigation or rewrite the browser URL while OAuth is active. The only
+# explicit callback action is one rerun after the consumed query parameter is cleared;
+# the accepted role router then owns the canonical destination.
 
 CUTOVER_ENTRY = (
     Path(__file__).resolve().parent
@@ -221,5 +222,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r8a_canonical_route_after_login__",
+    run_name="__hm_h13r8b_auth_callback_rerun__",
 )
