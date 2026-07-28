@@ -14,8 +14,8 @@ from components.pbm_core import (
     safe_key,
 )
 
-APP_BUILD_VERSION = "v100.41"
-APP_BUILD_LABEL = "Member-Filtered Setup Editing"
+APP_BUILD_VERSION = "v100.42"
+APP_BUILD_LABEL = "Existing Profile Editing"
 
 
 def _epoch_widget_key(row, field):
@@ -114,8 +114,7 @@ def render_modular_profile_builder() -> None:
     st.markdown(
         f"<div class='hero-shell'><div class='hero-kicker'>Admin recommendations</div>"
         f"<div class='hero-title'>Recommendation Profile Builder</div>"
-        f"<div class='hero-subtitle'>Profile shell creation with member-filtered, "
-        f"module-specific recommendation saves.</div><div><span class='meta-pill'>"
+        f"<div class='hero-subtitle'>Create new profiles or edit existing allocated and unallocated profiles in place, with module-specific saves.</div><div><span class='meta-pill'>"
         f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span></div></div>",
         unsafe_allow_html=True,
     )
@@ -133,8 +132,7 @@ def render_modular_profile_builder() -> None:
     st.markdown("</div><div class='hm-section-rule'></div>", unsafe_allow_html=True)
     if status.get("ok"):
         st.markdown(
-            "<div class='hm-readiness-strip hm-ready-ok'><b>Profile Builder store is ready.</b> "
-            "Setup and recommendation modules now save independently.</div>",
+            "<div class='hm-readiness-strip hm-ready-ok'><b>Profile Builder store is ready.</b> Existing Draft and Active profiles can be loaded and updated without changing unrelated modules or allocation.</div>",
             unsafe_allow_html=True,
         )
     else:
