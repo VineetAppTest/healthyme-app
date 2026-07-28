@@ -20,6 +20,93 @@ from components.profile_publish_control import (
 )
 
 
+def _render_publish_review_toggle_css() -> None:
+    """Match the stable Food Journal Expand / Collapse button presentation."""
+    st.markdown(
+        """
+<style id="hm-publish-review-food-journal-toggle-v1">
+.hm-publish-toggle-anchor{display:block!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+.hm-publish-toggle-anchor + div [data-testid="stButton"] > button,
+.hm-publish-toggle-anchor + div .stButton > button,
+[class*="st-key-hm_publish_review_toggle_btn"] button,
+[class*="st-key-hm_publish_review_toggle_btn"] [data-testid="stButton"] > button,
+[class*="st-key-hm_publish_review_toggle_btn"] .stButton > button{
+  display:flex!important;
+  width:100%!important;
+  justify-content:flex-start!important;
+  align-items:center!important;
+  text-align:left!important;
+  min-height:2.72rem!important;
+  background:linear-gradient(135deg,#FFFDF8 0%,#FFF6E5 100%)!important;
+  border:1.45px solid #D8A84E!important;
+  border-radius:16px!important;
+  box-shadow:0 7px 16px rgba(15,23,42,.045)!important;
+  color:#064E3B!important;
+  font-weight:950!important;
+  margin:.50rem 0 .34rem 0!important;
+  padding:.58rem .78rem!important;
+}
+.hm-publish-toggle-anchor + div [data-testid="stButton"] > button *,
+.hm-publish-toggle-anchor + div .stButton > button *,
+[class*="st-key-hm_publish_review_toggle_btn"] button > div,
+[class*="st-key-hm_publish_review_toggle_btn"] button p,
+[class*="st-key-hm_publish_review_toggle_btn"] button span,
+[class*="st-key-hm_publish_review_toggle_btn"] button *{
+  width:100%!important;
+  justify-content:flex-start!important;
+  color:#064E3B!important;
+  font-size:.90rem!important;
+  font-weight:950!important;
+  line-height:1.18!important;
+  white-space:normal!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  text-align:left!important;
+}
+.hm-publish-review-body{
+  border:1px solid #E7D8BE;
+  background:#FFFDF8;
+  border-radius:16px;
+  padding:1rem 1rem 1.18rem!important;
+  margin:.16rem 0 .76rem 0;
+  overflow:visible!important;
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_review_rows_toggle(items) -> None:
+    state_key = "hm_publish_review_rows_open"
+    st.session_state.setdefault(state_key, False)
+    is_open = bool(st.session_state.get(state_key))
+    prefix = "▾" if is_open else "▸"
+
+    st.markdown(
+        "<div class='hm-publish-toggle-anchor'></div>",
+        unsafe_allow_html=True,
+    )
+    if st.button(
+        f"{prefix} Review Recommendation Rows Before Activation",
+        key="hm_publish_review_toggle_btn",
+        use_container_width=True,
+    ):
+        st.session_state[state_key] = not is_open
+        st.rerun()
+
+    if st.session_state.get(state_key):
+        st.markdown(
+            "<div class='hm-publish-review-body'>",
+            unsafe_allow_html=True,
+        )
+        _safe_table(
+            _review_rows(items),
+            "No recommendation rows found for this draft.",
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
 def _activate_without_typed_confirmation(profile):
     # The Admin/Super Admin role gate is the authorization boundary. The legacy
     # ACTIVATE text entry is intentionally removed from the visible workflow.
@@ -35,6 +122,7 @@ def _render_profile_publish_control_inner() -> None:
         )
         return
 
+    _render_publish_review_toggle_css()
     ok_drafts, drafts, draft_message = load_publish_candidates()
     ok_active, active_profiles, active_message = load_active_profiles()
 
@@ -151,14 +239,7 @@ def _render_profile_publish_control_inner() -> None:
         st.error("At least one recommendation row is required before activation.")
 
     if items:
-        with st.expander(
-            "Review Recommendation Rows Before Activation",
-            expanded=False,
-        ):
-            _safe_table(
-                _review_rows(items),
-                "No recommendation rows found for this draft.",
-            )
+        _render_review_rows_toggle(items)
 
     st.markdown(
         "<div class='hm-preview'><b>Activation Confirmation</b><br>"
