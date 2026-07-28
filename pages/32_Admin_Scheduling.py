@@ -370,17 +370,17 @@ schedule_timezone_ui.st.selectbox = _selectbox_with_practitioner_timezone_first
 st.markdown(
     """
 <style id="hm-friendly-timezone-selector-v3">
-[class*="st-key-hm_tz_practitioner_timezone_search"]{
+.st-key-hm_tz_practitioner_timezone_search{
   margin-top:.48rem!important;
   margin-bottom:-.42rem!important;
 }
-[class*="st-key-hm_tz_practitioner_timezone"],
-[class*="st-key-hm_tz_practitioner_timezone_filtered"]{
+.st-key-hm_tz_practitioner_timezone,
+.st-key-hm_tz_practitioner_timezone_filtered{
   margin-top:0!important;
   margin-bottom:0!important;
 }
 .hm-tz-search-status{
-  margin:-.30rem 0 .18rem 0!important;
+  margin:-.36rem 0 .14rem 0!important;
   color:#7A6A55!important;
   font-size:.78rem!important;
   font-weight:650!important;
