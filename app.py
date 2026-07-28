@@ -28,7 +28,7 @@ _BASE_NAVIGATION = getattr(st, "_hm_h13r2_base_navigation")
 _BASE_SWITCH_PAGE = getattr(st, "_hm_h13r2_base_switch_page")
 
 
-from native_bridge import root_authorization_ui as _root_authorization_ui  # noqa: E402
+from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
 def _native_identity_present() -> bool:
