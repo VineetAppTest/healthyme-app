@@ -5,6 +5,7 @@
 --   package_hardening_123_03_admin_write_contracts.sql
 --   package_hardening_123_04_member_contract_and_usage_audit.sql
 --   package_hardening_123_05_usage_dedupe_constraint.sql
+--   package_hardening_123_06_function_permissions.sql
 --
 -- Accepted rule preserved throughout:
 -- Package inclusions are informational only and never grant, hide, block or
