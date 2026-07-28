@@ -6,7 +6,10 @@ from components.guards import require_member
 from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12, render_back_to_top
 from components.db import get_profile_with_laf_fallback, update_profile, sync_profile_from_laf
 from components.member_timezone import (
+    CITY_OTHER_OPTION,
+    CITY_PLACEHOLDER,
     DEFAULT_MEMBER_TIMEZONE,
+    cities_for_country,
     member_timezone_name,
     persist_member_timezone_profile,
     resolve_member_timezone,
@@ -79,6 +82,9 @@ def validate_mobile(mobile, country):
         return False, f"Mobile Number for {country} should have {min_digits}-{max_digits} digits."
     return True, ""
 
+def _widget_slug(value):
+    return re.sub(r"[^A-Za-z0-9]+", "_", str(value or "")).strip("_") or "default"
+
 topbar(
     "My Profile",
     "Profile fields are automatically populated from overlapping LAF responses. You can still update them here if needed.",
@@ -89,7 +95,7 @@ st.markdown(
     """
     <div class='info-banner'>
       <b>Auto-filled from LAF.</b><br>
-      Country is pulled from the LAF. City and timezone are stored with your profile so Daily Log and future schedules use your local calendar date rather than the server location.
+      Country is pulled from the LAF. Select your city and exact timezone so Daily Log and future schedules use your local calendar date rather than the server location.
     </div>
     """,
     unsafe_allow_html=True,
@@ -119,6 +125,7 @@ with c1:
         "Country",
         COUNTRY_OPTIONS,
         index=COUNTRY_OPTIONS.index(country_default) if country_default in COUNTRY_OPTIONS else 0,
+        key="hm_profile_country",
     )
     data["mobile_number"] = st.text_input(
         "Mobile Number",
@@ -131,31 +138,40 @@ with c2:
     data["height_cm"] = str(st.number_input("Height (cm)", min_value=50, max_value=250, value=int_value(p.get("height_cm"), 160, 50, 250), step=1))
     data["weight_kg"] = str(st.number_input("Weight (kg)", min_value=20, max_value=250, value=int_value(p.get("weight_kg"), 60, 20, 250), step=1))
     data["occupation"] = st.text_input("Occupation", value=str(p.get("occupation", "")))
-    stored_city = p.get("timezone_city") or p.get("city") or ""
+
+    stored_city = str(p.get("timezone_city") or p.get("city") or "").strip()
     if stored_city == data["country"]:
         stored_city = ""
-    data["city"] = st.text_input(
+    city_options = cities_for_country(data["country"], stored_city)
+    city_default = stored_city if stored_city in city_options else CITY_PLACEHOLDER
+    city_key = f"hm_profile_city_{_widget_slug(data['country'])}"
+    data["city"] = st.selectbox(
         "City",
-        value=str(stored_city),
-        placeholder="Example: Lucknow, New York or Sydney",
-        help="Used only with the selected country to establish your local timezone.",
+        city_options,
+        index=city_options.index(city_default),
+        key=city_key,
+        help="City options are based on the selected country. Choose Other / Not listed when required, then select the correct timezone below.",
     )
 
     timezone_options = timezones_for_country(data["country"])
     if not timezone_options:
         timezone_options = [DEFAULT_MEMBER_TIMEZONE]
+
     stored_timezone = str(p.get("timezone_name") or "")
-    if stored_timezone not in timezone_options:
+    city_changed = bool(stored_city and data["city"] != stored_city)
+    if city_changed or stored_timezone not in timezone_options:
         stored_timezone, _ = resolve_member_timezone(
             data["country"],
             data["city"],
-            stored_timezone,
+            "" if city_changed else stored_timezone,
         )
     timezone_index = timezone_options.index(stored_timezone) if stored_timezone in timezone_options else 0
+    timezone_key = f"hm_profile_timezone_{_widget_slug(data['country'])}_{_widget_slug(data['city'])}"
     data["timezone_name"] = st.selectbox(
         "Timezone",
         timezone_options,
         index=timezone_index,
+        key=timezone_key,
         help="IANA timezone used for Daily Log dates and future cross-timezone scheduling.",
     )
 
@@ -173,6 +189,8 @@ with save_col_v10015:
         ok, mobile_error = validate_mobile(data["mobile_number"], data["country"])
         if not ok:
             errors.append(mobile_error)
+        if data["city"] == CITY_PLACEHOLDER:
+            errors.append("City should be selected from the dropdown.")
 
         if errors:
             for err in errors:
