@@ -4,8 +4,8 @@ import os
 import streamlit as st
 
 
-AUTHORIZATION_BUILD = "H13R7-healthyme-authorizer-ux-v1"
-ROLLBACK_BUILD = "H13R5-production-direct-login-v1"
+AUTHORIZATION_BUILD = "H13R7A-healthyme-authorizer-width-palette-v1"
+ROLLBACK_BUILD = "H13R7-healthyme-authorizer-ux-v1"
 DEFAULT_CLIENT_LOGIN_URL = "https://healthymeappbyankita.streamlit.app/Login"
 
 
@@ -28,21 +28,32 @@ def _native_identity_present() -> bool:
 
 
 def render_root_authorization_ui(authorization_id: str) -> None:
-    # Preserve the accepted H13R2 callback cleanup. Once Streamlit has created the
+    # Preserve the accepted callback cleanup. Once Streamlit has created the
     # native identity, the consumed one-time authorization parameter is removed.
     if _native_identity_present():
         st.query_params.clear()
         st.rerun()
 
     supabase_url = _secret("SUPABASE_URL")
-    publishable_key = _secret("SUPABASE_ANON_KEY") or _secret("SUPABASE_PUBLISHABLE_KEY")
+    publishable_key = _secret("SUPABASE_ANON_KEY") or _secret(
+        "SUPABASE_PUBLISHABLE_KEY"
+    )
     client_login_url = _secret("AUTH_CLIENT_LOGIN_URL", DEFAULT_CLIENT_LOGIN_URL)
 
-    st.set_page_config(page_title="HealthyMe Login", page_icon="🌿", layout="wide")
+    st.set_page_config(
+        page_title="HealthyMe Login",
+        page_icon="🌿",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
 
     if not authorization_id:
         st.error("This secure login request has expired or is incomplete.")
-        st.link_button("Return to HealthyMe login", client_login_url, use_container_width=True)
+        st.link_button(
+            "Return to HealthyMe login",
+            client_login_url,
+            use_container_width=True,
+        )
         st.stop()
 
     if not supabase_url or not publishable_key:
@@ -52,119 +63,338 @@ def render_root_authorization_ui(authorization_id: str) -> None:
             st.code(AUTHORIZATION_BUILD)
         st.stop()
 
+    # The authorizer is rendered inside the Streamlit shell. Remove the default
+    # centred-page constraint so the accepted HealthyMe login composition can use
+    # the available browser width.
+    st.markdown(
+        """
+        <style>
+        [data-testid="stAppViewContainer"] {
+            background:
+                radial-gradient(circle at 11% 10%, rgba(220, 190, 121, .12), transparent 24rem),
+                linear-gradient(180deg, #fffaf1 0%, #fbf5e9 100%) !important;
+        }
+        [data-testid="stHeader"] {
+            background: transparent !important;
+        }
+        [data-testid="stMainBlockContainer"] {
+            max-width: none !important;
+            padding: 1.15rem 2.5rem 2rem !important;
+        }
+        div[data-testid="stHtml"] {
+            width: 100% !important;
+        }
+        @media (max-width: 700px) {
+            [data-testid="stMainBlockContainer"] {
+                padding: .75rem .85rem 1.25rem !important;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     html_document = rf"""
     <style>
-      :root {{ color-scheme: light; }}
+      :root {{
+        color-scheme: light;
+        --hm-ink:#003f35;
+        --hm-ink-soft:#315c50;
+        --hm-green:#0e6a56;
+        --hm-green-dark:#075244;
+        --hm-cream:#fffaf1;
+        --hm-card:#fffdf8;
+        --hm-mint:#eef7f2;
+        --hm-gold:#c99a3d;
+        --hm-gold-soft:#ead7ae;
+        --hm-border:#e7d8bb;
+        --hm-muted:#6d7a73;
+        --hm-danger:#a93636;
+      }}
       * {{ box-sizing:border-box; }}
       html,body {{
-        margin:0;padding:0;background:#ffffff;
-        font-family:Inter,Arial,sans-serif;color:#17352d;
+        margin:0;padding:0;background:transparent;
+        font-family:Inter,Arial,sans-serif;color:var(--hm-ink);
       }}
       body {{ min-height:100vh; }}
       #hm-page {{
-        width:min(1180px,calc(100% - 44px));
-        margin:0 auto;padding:28px 0 26px;
+        width:100%;
+        max-width:1240px;
+        margin:0 auto;
+        padding:10px 4px 28px;
       }}
       .hm-topbar {{
-        display:flex;align-items:flex-start;justify-content:space-between;
-        gap:18px;margin-bottom:22px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:24px;
+        margin:0 0 20px;
+        padding:0 2px;
+      }}
+      .hm-brand-wrap {{
+        display:flex;
+        align-items:center;
+        gap:12px;
+      }}
+      .hm-brand-mark {{
+        width:42px;
+        height:42px;
+        display:grid;
+        place-items:center;
+        border:1px solid var(--hm-gold-soft);
+        border-radius:13px;
+        background:#f7edd7;
+        font-size:22px;
+        box-shadow:0 5px 14px rgba(83,58,18,.07);
       }}
       .hm-brand-name {{
-        font-size:30px;line-height:1;font-weight:850;letter-spacing:-.6px;color:#063e31;
+        font-size:31px;
+        line-height:1;
+        font-weight:850;
+        letter-spacing:-.7px;
+        color:var(--hm-ink);
       }}
-      .hm-brand-sub {{ margin-top:7px;font-size:13px;color:#6d7d77; }}
+      .hm-brand-sub {{
+        margin-top:6px;
+        font-size:13px;
+        color:var(--hm-muted);
+      }}
       .hm-secure-pill {{
-        border:1px solid #cfe2da;background:#eff8f4;color:#245b49;
-        border-radius:999px;padding:10px 14px;font-size:12px;font-weight:750;
+        border:1px solid var(--hm-gold-soft);
+        background:#fff8e8;
+        color:var(--hm-ink-soft);
+        border-radius:999px;
+        padding:10px 15px;
+        font-size:12px;
+        font-weight:760;
         white-space:nowrap;
       }}
       .hm-main-grid {{
-        display:grid;grid-template-columns:minmax(0,.96fr) minmax(0,1.04fr);
-        gap:34px;align-items:stretch;
+        display:grid;
+        grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr);
+        gap:22px;
+        align-items:stretch;
+      }}
+      .hm-login-card,
+      .hm-journey-card {{
+        border:1px solid var(--hm-border);
+        border-radius:17px;
+        background:rgba(255,253,248,.96);
+        box-shadow:0 12px 30px rgba(70,52,19,.055);
       }}
       .hm-login-card {{
-        border:1px solid #d9e2de;border-radius:12px;background:#fff;
-        padding:22px 22px 20px;min-height:100%;
-        box-shadow:0 8px 22px rgba(15,63,48,.035);
+        padding:28px 30px 24px;
       }}
       .hm-login-card h1 {{
-        margin:0 0 7px;font-size:22px;line-height:1.2;color:#123f32;
+        margin:0 0 8px;
+        font-size:25px;
+        line-height:1.2;
+        color:var(--hm-ink);
       }}
-      .hm-copy {{ margin:0 0 16px;color:#687872;font-size:13px;line-height:1.55; }}
+      .hm-copy {{
+        max-width:620px;
+        margin:0 0 18px;
+        color:#5f7068;
+        font-size:14px;
+        line-height:1.55;
+      }}
+      .hm-form-grid {{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:16px;
+      }}
+      .hm-field {{ min-width:0; }}
       label {{
-        display:block;margin-top:13px;font-size:12px;font-weight:780;color:#234b3e;
+        display:block;
+        margin-top:0;
+        font-size:12px;
+        font-weight:780;
+        color:var(--hm-ink-soft);
       }}
       input {{
-        width:100%;margin-top:7px;padding:12px 13px;border:1px solid #c8d9d2;
-        border-radius:9px;font-size:15px;outline:none;background:#fff;color:#17352d;
+        width:100%;
+        margin-top:8px;
+        padding:14px 15px;
+        border:1px solid #cdbf9f;
+        border-radius:10px;
+        font-size:15px;
+        outline:none;
+        background:#fff;
+        color:var(--hm-ink);
       }}
-      input:focus {{ border-color:#176b55;box-shadow:0 0 0 3px rgba(23,107,85,.10); }}
+      input:focus {{
+        border-color:var(--hm-green);
+        box-shadow:0 0 0 3px rgba(14,106,86,.12);
+      }}
       button {{
-        width:100%;margin-top:17px;padding:12px 15px;border:0;border-radius:8px;
-        background:#ff4f57;color:#fff;font-size:13px;font-weight:780;cursor:pointer;
+        width:100%;
+        margin-top:18px;
+        padding:14px 16px;
+        border:0;
+        border-radius:10px;
+        background:var(--hm-green);
+        color:#fff;
+        font-size:14px;
+        font-weight:790;
+        cursor:pointer;
+        box-shadow:0 7px 16px rgba(14,106,86,.14);
       }}
-      button:hover {{ filter:brightness(.98); }}
+      button:hover {{ background:var(--hm-green-dark); }}
       button:disabled {{ opacity:.66;cursor:wait; }}
       #hm-message {{
-        display:none;margin:13px 0 0;padding:10px 11px;border-radius:9px;
-        font-size:12px;line-height:1.45;
+        display:none;
+        margin:14px 0 0;
+        padding:11px 12px;
+        border-radius:10px;
+        font-size:12px;
+        line-height:1.45;
       }}
-      #hm-message.info {{ display:block;background:#edf7f4;color:#245a48; }}
-      #hm-message.error {{ display:block;background:#fdecec;color:#8e2020; }}
-      #hm-progress {{ display:none;text-align:center;padding:35px 8px 22px; }}
+      #hm-message.info {{
+        display:block;
+        border:1px solid #cce3da;
+        background:var(--hm-mint);
+        color:#245a48;
+      }}
+      #hm-message.error {{
+        display:block;
+        border:1px solid #efc5c5;
+        background:#fff0ef;
+        color:var(--hm-danger);
+      }}
+      #hm-progress {{
+        display:none;
+        text-align:center;
+        padding:54px 12px 40px;
+      }}
       .hm-spinner {{
-        width:30px;height:30px;margin:0 auto 13px;border:3px solid #d8ebe4;
-        border-top-color:#176b55;border-radius:50%;animation:spin .8s linear infinite;
+        width:34px;
+        height:34px;
+        margin:0 auto 14px;
+        border:3px solid #d9eadf;
+        border-top-color:var(--hm-green);
+        border-radius:50%;
+        animation:spin .8s linear infinite;
       }}
-      .hm-progress-title {{ font-weight:780;color:#234b3e;font-size:15px; }}
-      .hm-progress-copy {{ margin-top:6px;color:#71817b;font-size:12px; }}
+      .hm-progress-title {{
+        font-weight:790;
+        color:var(--hm-ink);
+        font-size:16px;
+      }}
+      .hm-progress-copy {{
+        margin-top:7px;
+        color:var(--hm-muted);
+        font-size:13px;
+      }}
       .hm-login-note {{
-        margin-top:18px;padding:12px 13px;border:1px solid #cee4dc;
-        border-radius:10px;background:#edf7f4;color:#315e50;font-size:12px;line-height:1.5;
+        margin-top:18px;
+        padding:13px 14px;
+        border:1px solid #d7e5de;
+        border-radius:11px;
+        background:var(--hm-mint);
+        color:#315e50;
+        font-size:12px;
+        line-height:1.5;
       }}
-      .hm-login-note strong {{ display:block;margin-bottom:2px;color:#245847; }}
-      .hm-protected {{ margin-top:13px;text-align:center;color:#788780;font-size:11px; }}
+      .hm-login-note strong {{
+        display:block;
+        margin-bottom:3px;
+        color:var(--hm-ink);
+      }}
+      .hm-protected {{
+        margin-top:14px;
+        color:#788078;
+        font-size:11px;
+      }}
       .hm-restart {{ display:none; }}
       .hm-journey-card {{
-        min-height:100%;border:1px solid #dbe7e2;border-radius:14px;
-        padding:26px;background:linear-gradient(145deg,#fbfdfc,#f0f8f4);
-        box-shadow:0 9px 24px rgba(21,61,49,.055);
+        padding:30px;
+        background:
+          radial-gradient(circle at 88% 18%, rgba(205,162,79,.13), transparent 14rem),
+          linear-gradient(145deg,#fffdf8,#f4f0e5);
       }}
-      .hm-journey-card h2 {{ margin:0 0 9px;color:#173d33;font-size:19px; }}
-      .hm-journey-copy {{ margin:0 0 18px;color:#687872;font-size:13px;line-height:1.55; }}
-      .hm-journey-grid {{ display:grid;grid-template-columns:1fr 1fr;gap:10px; }}
+      .hm-journey-card h2 {{
+        margin:0 0 10px;
+        color:var(--hm-ink);
+        font-size:21px;
+      }}
+      .hm-journey-copy {{
+        margin:0 0 20px;
+        color:#62736b;
+        font-size:14px;
+        line-height:1.55;
+      }}
+      .hm-journey-grid {{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+      }}
       .hm-journey-item {{
-        border:1px solid #dce8e3;border-radius:10px;background:#fff;
-        padding:12px;color:#34594c;font-size:12px;font-weight:720;
+        min-height:70px;
+        display:flex;
+        align-items:center;
+        border:1px solid #e1d5bd;
+        border-radius:11px;
+        background:#fffdf9;
+        padding:14px;
+        color:var(--hm-ink-soft);
+        font-size:12px;
+        font-weight:740;
       }}
       .hm-feature-strip {{
-        display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px;
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+        gap:12px;
+        margin-top:18px;
       }}
       .hm-feature {{
-        border:1px solid #dfe8e4;border-radius:10px;background:#fff;
-        padding:12px 14px;display:flex;flex-direction:column;gap:3px;
+        border:1px solid var(--hm-border);
+        border-radius:11px;
+        background:rgba(255,253,248,.94);
+        padding:13px 15px;
+        display:flex;
+        flex-direction:column;
+        gap:4px;
       }}
-      .hm-feature strong {{ color:#234b3e;font-size:12px; }}
-      .hm-feature span {{ color:#74817d;font-size:11px; }}
+      .hm-feature strong {{
+        color:var(--hm-ink);
+        font-size:12px;
+      }}
+      .hm-feature span {{
+        color:#737d77;
+        font-size:11px;
+      }}
       @keyframes spin {{ to {{ transform:rotate(360deg); }} }}
-      @media (max-width:800px) {{
-        #hm-page {{ width:min(100% - 24px,680px);padding-top:18px; }}
-        .hm-topbar {{ align-items:flex-start;flex-direction:column;margin-bottom:16px; }}
-        .hm-main-grid {{ grid-template-columns:1fr;gap:16px; }}
-        .hm-feature-strip {{ grid-template-columns:1fr; }}
+      @media (max-width:900px) {{
+        #hm-page {{ max-width:760px; }}
+        .hm-topbar {{
+          align-items:flex-start;
+          flex-direction:column;
+          margin-bottom:16px;
+        }}
+        .hm-main-grid {{
+          grid-template-columns:1fr;
+          gap:16px;
+        }}
       }}
-      @media (max-width:520px) {{
-        .hm-brand-name {{ font-size:26px; }}
-        .hm-login-card,.hm-journey-card {{ padding:19px; }}
+      @media (max-width:620px) {{
+        .hm-brand-name {{ font-size:27px; }}
+        .hm-secure-pill {{ padding:8px 12px; }}
+        .hm-login-card,
+        .hm-journey-card {{ padding:20px; }}
+        .hm-form-grid {{ grid-template-columns:1fr;gap:13px; }}
         .hm-journey-grid {{ grid-template-columns:1fr; }}
+        .hm-feature-strip {{ grid-template-columns:1fr; }}
       }}
     </style>
 
     <main id="hm-page">
       <header class="hm-topbar">
-        <div>
-          <div class="hm-brand-name">HealthyMe</div>
-          <div class="hm-brand-sub">Guided wellness assessment platform</div>
+        <div class="hm-brand-wrap">
+          <div class="hm-brand-mark">🌿</div>
+          <div>
+            <div class="hm-brand-name">HealthyMe</div>
+            <div class="hm-brand-sub">Guided wellness assessment platform</div>
+          </div>
         </div>
         <div class="hm-secure-pill">Supabase OIDC · Secure access</div>
       </header>
@@ -178,10 +408,16 @@ def render_root_authorization_ui(authorization_id: str) -> None:
               HealthyMe verifies your active Member or Admin role.
             </p>
             <form id="hm-form">
-              <label for="hm-email">Email</label>
-              <input id="hm-email" type="email" autocomplete="username" required>
-              <label for="hm-password">Password</label>
-              <input id="hm-password" type="password" autocomplete="current-password" required>
+              <div class="hm-form-grid">
+                <div class="hm-field">
+                  <label for="hm-email">Email</label>
+                  <input id="hm-email" type="email" autocomplete="username" required>
+                </div>
+                <div class="hm-field">
+                  <label for="hm-password">Password</label>
+                  <input id="hm-password" type="password" autocomplete="current-password" required>
+                </div>
+              </div>
               <button id="hm-signin" type="submit">Sign in securely</button>
             </form>
 
