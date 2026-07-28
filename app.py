@@ -100,7 +100,7 @@ def _install_member_local_daily_log_defaults() -> None:
 
 
 def _install_daily_log_tab_emphasis() -> None:
-    """Make the two Daily Log journals read as primary section headers."""
+    """Render Food and Exercise Journal as a polished segmented header."""
     cache_name = "_hm_original_daily_log_ui_before_tab_emphasis"
     original = getattr(_member_guards, cache_name, None)
     if original is None:
@@ -115,62 +115,84 @@ def _install_daily_log_tab_emphasis() -> None:
             return
         st.markdown(
             """
-            <style id="hm-daily-log-primary-tabs-v1">
+            <style id="hm-daily-log-primary-tabs-v2">
             html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tablist"],
             html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab-list"]{
               display:grid!important;
               grid-template-columns:repeat(2,minmax(0,1fr))!important;
-              gap:.75rem!important;
+              gap:.72rem!important;
               width:100%!important;
-              margin:.35rem 0 1.15rem 0!important;
-              padding:.42rem!important;
-              border:1px solid #E3D4BA!important;
-              border-radius:16px!important;
-              background:#FFF9EE!important;
+              margin:.55rem 0 1.20rem 0!important;
+              padding:.52rem!important;
+              border:1px solid #E5D2A9!important;
+              border-radius:18px!important;
+              background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E8 100%)!important;
+              box-shadow:0 8px 22px rgba(15,23,42,.055)!important;
               box-sizing:border-box!important;
+              overflow:visible!important;
             }
-            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] button[role="tab"],
-            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab"]{
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tab"]{
               width:100%!important;
               min-width:0!important;
-              min-height:3.15rem!important;
+              min-height:3.28rem!important;
               display:flex!important;
               align-items:center!important;
               justify-content:center!important;
               border:1.5px solid #D8A84E!important;
-              border-radius:13px!important;
+              border-radius:14px!important;
               background:#FFFFFF!important;
               color:#064E3B!important;
               font-size:1rem!important;
-              font-weight:950!important;
+              font-weight:900!important;
               letter-spacing:.01em!important;
-              padding:.70rem 1rem!important;
-              box-shadow:0 6px 14px rgba(6,78,59,.07)!important;
+              line-height:1.15!important;
+              padding:.76rem 1rem!important;
+              box-shadow:0 5px 14px rgba(6,78,59,.07)!important;
+              box-sizing:border-box!important;
+              opacity:1!important;
+              transition:transform .15s ease,box-shadow .15s ease,background .15s ease!important;
             }
-            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] button[role="tab"] *,
-            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab"] *{
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tab"] *,
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tab"] p{
               color:inherit!important;
               font-size:inherit!important;
               font-weight:inherit!important;
+              line-height:inherit!important;
+              margin:0!important;
             }
-            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
-            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"]{
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tab"][aria-selected="true"]{
               background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
               color:#FFFFFF!important;
               border-color:#064E3B!important;
-              box-shadow:0 10px 20px rgba(6,78,59,.18)!important;
+              box-shadow:0 10px 22px rgba(6,78,59,.20)!important;
+              transform:translateY(-1px)!important;
+            }
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tab"][aria-selected="false"]:hover{
+              background:#FFF9EC!important;
+              border-color:#C99531!important;
+              box-shadow:0 8px 18px rgba(6,78,59,.10)!important;
+            }
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab-border"],
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tab"]::after{
+              display:none!important;
+              visibility:hidden!important;
+              height:0!important;
+              border:0!important;
+              background:transparent!important;
             }
             @media(max-width:640px){
               html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tablist"],
               html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab-list"]{
                 gap:.42rem!important;
-                padding:.32rem!important;
+                padding:.36rem!important;
+                border-radius:15px!important;
               }
-              html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] button[role="tab"],
-              html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab"]{
-                min-height:2.85rem!important;
+              html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tab"]{
+                min-height:2.95rem!important;
                 font-size:.90rem!important;
-                padding:.58rem .40rem!important;
+                padding:.60rem .42rem!important;
+                border-radius:12px!important;
               }
             }
             </style>
@@ -191,8 +213,8 @@ from native_bridge import root_authorization_ui as _router_authorization_ui  # n
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
-BUILD = "H13R9C-profile-dropdown-daily-log-tabs-v1"
-ROLLBACK_BUILD = "H13R9B-member-local-daily-log-date-v1"
+BUILD = "H13R9D-profile-timezone-daily-log-tab-polish-v1"
+ROLLBACK_BUILD = "H13R9C-profile-dropdown-daily-log-tabs-v1"
 
 
 def _native_identity_present() -> bool:
@@ -366,7 +388,7 @@ def _navigation_with_authenticated_root_canonicalization(
         )
         if login_page is None:
             raise RuntimeError(
-                "H13R9C could not locate the registered Login page for OAuth canonicalization."
+                "H13R9D could not locate the registered Login page for OAuth canonicalization."
             )
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
@@ -386,5 +408,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r9c_profile_dropdown_daily_log_tabs__",
+    run_name="__hm_h13r9d_profile_timezone_daily_log_tab_polish__",
 )
