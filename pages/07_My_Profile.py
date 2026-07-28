@@ -158,7 +158,10 @@ with c2:
         timezone_options = [DEFAULT_MEMBER_TIMEZONE]
 
     stored_timezone = str(p.get("timezone_name") or "")
-    city_changed = bool(stored_city and data["city"] != stored_city)
+    city_changed = (
+        data["city"] not in {CITY_PLACEHOLDER, CITY_OTHER_OPTION}
+        and data["city"] != stored_city
+    )
     if city_changed or stored_timezone not in timezone_options:
         stored_timezone, _ = resolve_member_timezone(
             data["country"],
