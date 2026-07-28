@@ -36,7 +36,7 @@ _COUNTRY_CODE_ALIASES = {
 
 # Safe defaults for multi-timezone countries when an older LAF record has no
 # city/timezone value yet. These are only fallbacks; an existing stored IANA
-# timezone or a recognised LAF city always wins.
+# timezone, recognised city or explicit member selection always wins.
 _COUNTRY_DEFAULT_TIMEZONES = {
     "US": "America/New_York",
     "CA": "America/Toronto",
@@ -150,9 +150,9 @@ def resolve_member_timezone(
 
     Priority:
     1. Existing valid timezone stored for the member.
-    2. Recognised LAF country + city.
+    2. Recognised LAF/profile country + city.
     3. The country's only timezone.
-    4. A deterministic country default for multi-timezone countries.
+    4. A deterministic country default for older multi-timezone records.
     5. HealthyMe deployment fallback: Asia/Kolkata.
     """
     country_code = _country_code(country)
@@ -181,6 +181,52 @@ def resolve_member_timezone(
     return DEFAULT_MEMBER_TIMEZONE, "healthyme_fallback"
 
 
+def persist_member_timezone_profile(
+    user_id: object,
+    country: object,
+    city: object,
+    timezone_name: object,
+) -> str:
+    """Persist an explicit member timezone choice and its profile context."""
+    user_key = str(user_id or "").strip()
+    if not user_key:
+        return DEFAULT_MEMBER_TIMEZONE
+
+    valid_options = timezones_for_country(country)
+    explicit = _valid_timezone_name(timezone_name)
+    if explicit and (not valid_options or explicit in valid_options):
+        resolved, source = explicit, "member_selected"
+    else:
+        resolved, source = resolve_member_timezone(country, city, timezone_name)
+
+    db = load_db()
+    profile = db.setdefault("profiles", {}).setdefault(user_key, {})
+    profile.update(
+        {
+            "country": str(country or "").strip(),
+            "city": str(city or "").strip(),
+            "timezone_name": resolved,
+            "timezone_source": source,
+            "timezone_country": str(country or "").strip(),
+            "timezone_city": str(city or "").strip(),
+        }
+    )
+    db["profiles"][user_key] = profile
+
+    # Preserve the same HealthyMe-owned location context alongside the LAF record.
+    # This is additive and does not alter historical journal date keys.
+    laf = db.setdefault("laf_responses", {}).setdefault(user_key, {})
+    if str(country or "").strip():
+        laf["country"] = str(country).strip()
+    if str(city or "").strip():
+        laf["city"] = str(city).strip()
+    laf["timezone_name"] = resolved
+    db["laf_responses"][user_key] = laf
+
+    save_db(db)
+    return resolved
+
+
 def member_timezone_name(user_id: object, persist: bool = True) -> str:
     """Resolve and optionally persist the member's profile timezone."""
     user_key = str(user_id or "").strip()
@@ -195,6 +241,7 @@ def member_timezone_name(user_id: object, persist: bool = True) -> str:
     city = (
         laf.get("city")
         or laf.get("client_city")
+        or profile.get("timezone_city")
         or profile.get("city")
         or profile.get("client_city")
         or ""
