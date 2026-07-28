@@ -1,11 +1,30 @@
-from components.ui_common import render_page_nav, render_back_to_top
-import streamlit as st
-from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, compact_topbar, utility_logout_bar, render_back_to_top
-from components.db import list_members, queue_member_message, get_member_messages
+import html
 
-st.set_page_config(page_title="Admin-Member Communication", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+import streamlit as st
+
+from components.db import get_member_messages, list_members, queue_member_message
+from components.guards import require_admin
+from components.member_email import email_delivery_configuration_status
+from components.ui_common import (
+    apply_luxe_theme,
+    compact_topbar,
+    inject_global_styles,
+    render_back_to_top,
+    render_page_nav,
+    utility_logout_bar,
+)
+
+
+st.set_page_config(
+    page_title="Admin-Member Communication",
+    page_icon="💚",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+inject_global_styles()
+apply_luxe_theme()
+require_admin()
+utility_logout_bar()
 
 st.markdown(
     """
@@ -30,12 +49,43 @@ st.markdown(
       margin-bottom:.5rem;
       padding:.55rem .8rem;
     }
+    .hm-email-status{
+      display:inline-flex;
+      align-items:center;
+      padding:.16rem .44rem;
+      border-radius:999px;
+      border:1px solid #D9C28F;
+      background:#FFF7E6;
+      color:#72551A;
+      font-size:.72rem;
+      font-weight:800;
+      margin-left:.35rem;
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-compact_topbar("Admin-Member Communication", "Send app messages to members and queue email notifications.", "Admin communication")
+compact_topbar(
+    "Admin-Member Communication",
+    "Send app messages to members with tracked email delivery.",
+    "Admin communication",
+)
+
+email_status = email_delivery_configuration_status()
+if email_status.get("configured"):
+    st.success("Member email delivery is configured through Resend.")
+else:
+    missing = []
+    if not email_status.get("api_key_configured"):
+        missing.append("RESEND_API_KEY")
+    if not email_status.get("sender_configured"):
+        missing.append("RESEND_FROM_EMAIL or RESEND_FROM")
+    st.warning(
+        "Member updates will remain recorded in HealthyMe, but outbound email cannot be delivered until "
+        + " and ".join(missing)
+        + " is configured in Streamlit secrets."
+    )
 
 members = list_members()
 if not members:
@@ -46,20 +96,35 @@ member_options = {f"{m['name']} — {m['email']}": m["id"] for m in members}
 selected_label = st.selectbox("Select member", list(member_options.keys()))
 member_id = member_options[selected_label]
 
-subject = st.text_input("Subject", placeholder="Example: Please review your daily log")
+subject = st.text_input("Subject", placeholder="Example: Please review your Daily Log")
 message = st.text_area(
     "Message",
-    placeholder="Write the message that should be visible to the member and queued for email.",
+    placeholder="Write a friendly and professional message for the member.",
     height=110,
 )
 
 st.markdown("<div class='hm-comm-success-space'>", unsafe_allow_html=True)
-if st.button("Send Message / Queue Email", type="primary", use_container_width=True):
+if st.button("Send Message and Email", type="primary", use_container_width=True):
     if not subject.strip() or not message.strip():
         st.error("Subject and message are required.")
     else:
-        queue_member_message(member_id, "admin", subject.strip(), message.strip(), actor_id=st.session_state.get("user_id", "admin"))
-        st.success("Message saved in app and queued for email notification.")
+        result = queue_member_message(
+            member_id,
+            "admin",
+            subject.strip(),
+            message.strip(),
+            actor_id=st.session_state.get("user_id", "admin"),
+        )
+        delivery = str((result or {}).get("email_delivery_status") or "")
+        if delivery == "sent":
+            st.success("Message saved in HealthyMe and email sent to the member.")
+        elif delivery == "configuration_missing":
+            st.warning("Message saved in HealthyMe. Email delivery is waiting for Resend configuration.")
+        elif delivery == "recipient_missing":
+            st.warning("Message saved in HealthyMe, but the member does not have a valid email address.")
+        else:
+            error = str((result or {}).get("email_delivery_error") or "Email delivery could not be confirmed.")
+            st.warning(f"Message saved in HealthyMe. Email delivery needs attention: {error}")
 st.markdown("</div>", unsafe_allow_html=True)
 
 st.subheader("Recent messages for selected member")
@@ -68,24 +133,25 @@ if not rows:
     st.info("No messages yet.")
 else:
     for row in rows:
+        delivery = str(row.get("email_delivery_status") or "not attempted").replace("_", " ").title()
         st.markdown(
             f"""
             <div class='hm-comm-card'>
-              <b>{row.get('subject','')}</b><br>
-              <span style='color:#64748B;font-size:.82rem;'>{row.get('ts','')} · {row.get('sender_role','')}</span>
-              <p style='margin:.35rem 0 0 0;'>{row.get('message','')}</p>
+              <b>{html.escape(str(row.get('subject','')))}</b>
+              <span class='hm-email-status'>Email: {html.escape(delivery)}</span><br>
+              <span style='color:#64748B;font-size:.82rem;'>{html.escape(str(row.get('ts','')))} · {html.escape(str(row.get('sender_role','')))}</span>
+              <p style='margin:.35rem 0 0 0;'>{html.escape(str(row.get('message','')))}</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-back_col, _ = st.columns([1.2, 4])
-with back_col:
-    pass  # v102.0 legacy direct navigation removed; use canonical footer
-# v96: Add st.success("Action completed successfully.") after completed communication actions.
-
-# v101.8: standard bottom navigation
-
-# v102.0: canonical global footer navigation
-render_page_nav("Admin-Member Communication", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_page_nav(
+    "Admin-Member Communication",
+    back_page="pages/10_Admin_Dashboard.py",
+    dashboard_page="pages/10_Admin_Dashboard.py",
+    show_evaluation=False,
+    show_dashboard=True,
+    location="bottom",
+)
 render_back_to_top()
