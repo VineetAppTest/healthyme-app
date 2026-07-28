@@ -28,6 +28,7 @@ _BASE_NAVIGATION = getattr(st, "_hm_h13r2_base_navigation")
 _BASE_SWITCH_PAGE = getattr(st, "_hm_h13r2_base_switch_page")
 
 
+from native_bridge import root_authorization_ui as _router_authorization_ui  # noqa: E402
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
@@ -94,6 +95,13 @@ def _render_root_authorization_ui_for_native_router(authorization_id: str) -> No
 
 
 _root_authorization_ui.render_root_authorization_ui = (
+    _render_root_authorization_ui_for_native_router
+)
+
+# The accepted Gate 4/full-member runtime imports the legacy authorizer module
+# directly. Point that module at the H13R7E wrapper before the production runtime is
+# compiled, otherwise production continues to render the previous abstract-art UI.
+_router_authorization_ui.render_root_authorization_ui = (
     _render_root_authorization_ui_for_native_router
 )
 
