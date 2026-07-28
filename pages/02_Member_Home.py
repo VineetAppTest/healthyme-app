@@ -325,7 +325,7 @@ stat_grid([
     {"label": "Status", "value": instance_status, "note": "Current stage"},
 ])
 
-left, right = st.columns([1.15, .85], gap="large")
+left, right = st.columns([1, 1], gap="large")
 
 with left:
     with st.container(border=True):
