@@ -1,3 +1,5 @@
+import hashlib
+import re
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pytz
@@ -39,7 +41,7 @@ schedule_timezone_ui._hm_base_persist_practitioner_timezone_before_sanitizer = (
 )
 _TIMEZONE_WIDGET_KEY = "hm_tz_practitioner_timezone"
 _TIMEZONE_SEARCH_KEY = "hm_tz_practitioner_timezone_search"
-_TIMEZONE_FILTERED_WIDGET_KEY = "hm_tz_practitioner_timezone_filtered"
+_TIMEZONE_SELECTION_READY_KEY = "hm_tz_practitioner_timezone_selection_ready"
 _COMMON_TIMEZONE_ORDER = [
     "Asia/Kolkata",
     "Europe/London",
@@ -50,23 +52,94 @@ _COMMON_TIMEZONE_ORDER = [
     "America/Los_Angeles",
     "Australia/Sydney",
 ]
-_TIMEZONE_SEARCH_ALIASES = {
+_CITY_ALIASES_BY_TIMEZONE = {
     "Asia/Kolkata": (
-        "india new delhi delhi kolkata calcutta mumbai bombay lucknow "
-        "bengaluru bangalore chennai hyderabad pune"
+        "Kolkata",
+        "New Delhi",
+        "Delhi",
+        "Mumbai",
+        "Lucknow",
+        "Bengaluru",
+        "Bangalore",
+        "Chennai",
+        "Hyderabad",
+        "Pune",
+        "Ahmedabad",
+        "Jaipur",
+        "Noida",
+        "Gurugram",
+        "Gurgaon",
     ),
-    "Europe/London": "united kingdom uk britain great britain london",
-    "Asia/Dubai": "united arab emirates uae dubai abu dhabi",
-    "Asia/Singapore": "singapore",
-    "America/New_York": "new york eastern time usa united states",
-    "America/Chicago": "chicago central time usa united states",
-    "America/Los_Angeles": "los angeles california pacific time usa united states",
-    "Australia/Sydney": "sydney new south wales australia",
+    "Europe/London": (
+        "London",
+        "Manchester",
+        "Birmingham",
+        "Edinburgh",
+        "Glasgow",
+        "Liverpool",
+        "Leeds",
+        "Bristol",
+    ),
+    "Asia/Dubai": ("Dubai", "Abu Dhabi", "Sharjah", "Ajman"),
+    "Asia/Singapore": ("Singapore",),
+    "America/New_York": (
+        "New York",
+        "Boston",
+        "Miami",
+        "Washington DC",
+        "Philadelphia",
+        "Atlanta",
+    ),
+    "America/Chicago": (
+        "Chicago",
+        "Dallas",
+        "Houston",
+        "Austin",
+        "Minneapolis",
+        "New Orleans",
+    ),
+    "America/Denver": ("Denver", "Salt Lake City"),
+    "America/Phoenix": ("Phoenix",),
+    "America/Los_Angeles": (
+        "Los Angeles",
+        "San Francisco",
+        "Seattle",
+        "San Diego",
+        "Portland",
+        "Las Vegas",
+    ),
+    "America/Toronto": ("Toronto", "Ottawa"),
+    "America/Vancouver": ("Vancouver", "Victoria"),
+    "America/Edmonton": ("Edmonton", "Calgary"),
+    "America/Winnipeg": ("Winnipeg",),
+    "America/Halifax": ("Halifax",),
+    "America/St_Johns": ("St Johns", "St. John's"),
+    "Australia/Sydney": ("Sydney", "Canberra"),
+    "Australia/Melbourne": ("Melbourne",),
+    "Australia/Brisbane": ("Brisbane",),
+    "Australia/Adelaide": ("Adelaide",),
+    "Australia/Darwin": ("Darwin",),
+    "Australia/Perth": ("Perth",),
+    "Pacific/Auckland": ("Auckland", "Wellington"),
+    "Asia/Tokyo": ("Tokyo", "Osaka", "Kyoto"),
+    "Asia/Shanghai": ("Shanghai", "Beijing", "Shenzhen", "Guangzhou"),
+    "Asia/Hong_Kong": ("Hong Kong",),
+    "Europe/Paris": ("Paris",),
+    "Europe/Berlin": ("Berlin", "Munich", "Frankfurt", "Hamburg"),
+    "Europe/Rome": ("Rome", "Milan"),
+    "Europe/Madrid": ("Madrid", "Barcelona"),
+    "Europe/Amsterdam": ("Amsterdam",),
+    "Europe/Zurich": ("Zurich", "Geneva"),
 }
 _COUNTRY_LABEL_OVERRIDES = {
     "Britain (UK)": "United Kingdom",
-    "United States": "United States",
 }
+
+
+def _normalise_city(value: object) -> str:
+    text = str(value or "").strip().lower()
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return " ".join(text.split())
 
 
 def _valid_iana_timezone(value: object) -> bool:
@@ -93,30 +166,27 @@ def _timezone_country_map() -> dict[str, str]:
 _TIMEZONE_COUNTRIES = _timezone_country_map()
 
 
-def _friendly_timezone_label(timezone_name: object) -> str:
-    """Display a human-readable location while retaining the IANA value."""
+def _iana_city_name(timezone_name: str) -> str:
+    parts = str(timezone_name or "").split("/")
+    return parts[-1].replace("_", " ") if len(parts) > 1 else ""
+
+
+def _friendly_timezone_label(
+    timezone_name: object,
+    city_name: object = "",
+) -> str:
+    """Display the matched city, derived country and retained IANA timezone."""
     value = str(timezone_name or "").strip()
     if not value:
-        return "Select timezone"
+        return ""
     if value == "UTC":
         return "Coordinated Universal Time — UTC"
 
-    parts = value.split("/")
-    location = parts[-1].replace("_", " ") if parts else value
+    location = str(city_name or "").strip() or _iana_city_name(value) or value
     country = _TIMEZONE_COUNTRIES.get(value, "")
     if country:
         return f"{location}, {country} — {value}"
     return f"{location} — {value}"
-
-
-def _timezone_search_text(timezone_name: str) -> str:
-    return " ".join(
-        [
-            _friendly_timezone_label(timezone_name),
-            timezone_name,
-            _TIMEZONE_SEARCH_ALIASES.get(timezone_name, ""),
-        ]
-    ).lower()
 
 
 def _safe_timezone_options() -> list[str]:
@@ -137,6 +207,62 @@ def _safe_timezone_options() -> list[str]:
             _friendly_timezone_label(name).lower(),
         ),
     )
+
+
+def _candidate_cities(timezone_name: str) -> list[str]:
+    candidates: list[str] = []
+    for city in _CITY_ALIASES_BY_TIMEZONE.get(timezone_name, ()):
+        if city and city not in candidates:
+            candidates.append(city)
+    iana_city = _iana_city_name(timezone_name)
+    if iana_city and iana_city not in candidates:
+        candidates.append(iana_city)
+    return candidates
+
+
+def _match_city_timezones(
+    options: list[str],
+) -> tuple[list[str], dict[str, str]]:
+    """Match only city names, then derive country and timezone from that city."""
+    query = _normalise_city(st.session_state.get(_TIMEZONE_SEARCH_KEY))
+    if not query:
+        return [], {}
+
+    ranked: list[tuple[int, str, str]] = []
+    matched_city_by_timezone: dict[str, str] = {}
+    for timezone_name in options:
+        best_match: tuple[int, str] | None = None
+        for city in _candidate_cities(timezone_name):
+            city_key = _normalise_city(city)
+            if not city_key:
+                continue
+            if query == city_key:
+                score = 0
+            elif city_key.startswith(query):
+                score = 1
+            elif query in city_key:
+                score = 2
+            else:
+                continue
+            if best_match is None or (score, city.lower()) < (
+                best_match[0],
+                best_match[1].lower(),
+            ):
+                best_match = (score, city)
+        if best_match is not None:
+            score, city = best_match
+            ranked.append((score, city.lower(), timezone_name))
+            matched_city_by_timezone[timezone_name] = city
+
+    ranked.sort(
+        key=lambda item: (
+            item[0],
+            item[1],
+            _TIMEZONE_COUNTRIES.get(item[2], "").lower(),
+            item[2].lower(),
+        )
+    )
+    return [item[2] for item in ranked], matched_city_by_timezone
 
 
 def _safe_persist_practitioner_timezone(
@@ -163,7 +289,6 @@ if _retained_timezone is not None and str(_retained_timezone) not in _safe_timez
     st.session_state.pop(_TIMEZONE_WIDGET_KEY, None)
 
 
-# Remove the redundant explanatory sentence requested after production review.
 _BASE_MARKDOWN = getattr(
     st,
     "_hm_base_markdown_before_schedule_subtitle_removal",
@@ -174,16 +299,33 @@ _REMOVED_CONTEXT_SUBTITLE = (
     "<div class='hm-tz-context-sub'>All schedule creation, status, reschedule "
     "review and session usage below are for the selected member only.</div>"
 )
+_PRACTITIONER_TIMEZONE_STATUS_PREFIX = (
+    "<div class='hm-schedule-muted'>Practitioner timezone:"
+)
 
 
-def _schedule_markdown_without_redundant_subtitle(body, *args, **kwargs):
-    if str(body or "") == _REMOVED_CONTEXT_SUBTITLE:
+def _schedule_markdown_with_blank_unselected_timezone(body, *args, **kwargs):
+    rendered = str(body or "")
+    if rendered == _REMOVED_CONTEXT_SUBTITLE:
         return None
-    return _BASE_MARKDOWN(body, *args, **kwargs)
+    if (
+        rendered.startswith(_PRACTITIONER_TIMEZONE_STATUS_PREFIX)
+        and not st.session_state.get(_TIMEZONE_SELECTION_READY_KEY, False)
+    ):
+        member_suffix = ""
+        marker = " · Member timezone:"
+        if marker in rendered:
+            member_suffix = marker + rendered.split(marker, 1)[1]
+        rendered = (
+            "<div class='hm-schedule-muted'>Practitioner timezone: "
+            "<b>Not selected</b>"
+            f"{member_suffix}"
+        )
+    return _BASE_MARKDOWN(rendered, *args, **kwargs)
 
 
-st.markdown = _schedule_markdown_without_redundant_subtitle
-schedule_timezone_ui.st.markdown = _schedule_markdown_without_redundant_subtitle
+st.markdown = _schedule_markdown_with_blank_unselected_timezone
+schedule_timezone_ui.st.markdown = _schedule_markdown_with_blank_unselected_timezone
 
 
 # The scheduling component resolves the selected member before it resolves the
@@ -195,6 +337,12 @@ _BASE_SELECTBOX = getattr(
     st.selectbox,
 )
 st._hm_base_selectbox_before_schedule_control_order = _BASE_SELECTBOX
+_BASE_RADIO = getattr(
+    st,
+    "_hm_base_radio_before_practitioner_timezone_required",
+    st.radio,
+)
+st._hm_base_radio_before_practitioner_timezone_required = _BASE_RADIO
 _PENDING_MEMBER_SELECTBOX = {}
 
 
@@ -214,21 +362,8 @@ def _selected_value_without_render(options: list, kwargs: dict):
     return selected
 
 
-def _filtered_timezone_options(options: list[str]) -> tuple[list[str], bool]:
-    query = str(st.session_state.get(_TIMEZONE_SEARCH_KEY) or "").strip().lower()
-    if not query:
-        return list(options), True
-
-    matches = [
-        timezone_name
-        for timezone_name in options
-        if query in _timezone_search_text(timezone_name)
-    ]
-    return matches, bool(matches)
-
-
 def _lock_timezone_dropdown_typing() -> None:
-    """Keep the dropdown selection controlled; searching happens in its own field."""
+    """Keep the timezone output controlled; city search is the only text input."""
     st.html(
         """
 <script>
@@ -266,7 +401,14 @@ def _render_timezone_search_status(message: str) -> None:
     )
 
 
-def _selectbox_with_practitioner_timezone_first(
+def _city_query_widget_key(query: object) -> str:
+    digest = hashlib.sha1(
+        _normalise_city(query).encode("utf-8")
+    ).hexdigest()[:10]
+    return f"hm_tz_practitioner_timezone_city_{digest}"
+
+
+def _selectbox_with_city_first_practitioner_timezone(
     label,
     options,
     *args,
@@ -297,54 +439,73 @@ def _selectbox_with_practitioner_timezone_first(
         st.text_input(
             "Search practitioner timezone",
             key=_TIMEZONE_SEARCH_KEY,
-            placeholder="Type a city, country or timezone",
-            help="Search examples: New Delhi, London, United Kingdom or Europe/London.",
+            placeholder="Type the practitioner city",
+            help=(
+                "HealthyMe matches the city first, derives the country, and then "
+                "evaluates the valid IANA timezone. Country names alone are not used."
+            ),
         )
-        filtered_options, has_match = _filtered_timezone_options(all_options)
-        search_active = bool(
-            str(st.session_state.get(_TIMEZONE_SEARCH_KEY) or "").strip()
-        )
+        query = str(st.session_state.get(_TIMEZONE_SEARCH_KEY) or "").strip()
+        matching_timezones, matched_cities = _match_city_timezones(all_options)
 
         timezone_kwargs = dict(kwargs)
-        timezone_kwargs["format_func"] = _friendly_timezone_label
-
-        if search_active and has_match:
-            retained_filtered = st.session_state.get(_TIMEZONE_FILTERED_WIDGET_KEY)
-            if retained_filtered not in filtered_options:
-                st.session_state.pop(_TIMEZONE_FILTERED_WIDGET_KEY, None)
-            timezone_kwargs["key"] = _TIMEZONE_FILTERED_WIDGET_KEY
-            timezone_kwargs["index"] = None
-            timezone_kwargs["placeholder"] = "Select a matching timezone"
-            selected_match = _BASE_SELECTBOX(
-                "Practitioner scheduling timezone",
-                filtered_options,
-                *args,
-                **timezone_kwargs,
+        timezone_kwargs["key"] = _city_query_widget_key(query)
+        timezone_kwargs["format_func"] = lambda timezone_name: (
+            _friendly_timezone_label(
+                timezone_name,
+                matched_cities.get(timezone_name, ""),
             )
-            selected_timezone = selected_match or current_value
-        elif search_active and not has_match:
-            timezone_kwargs["key"] = _TIMEZONE_FILTERED_WIDGET_KEY
-            timezone_kwargs["index"] = 0
-            st.session_state[_TIMEZONE_FILTERED_WIDGET_KEY] = current_value
+        )
+
+        selected_timezone = None
+        if not query:
+            timezone_kwargs["index"] = None
+            timezone_kwargs["placeholder"] = "Search for a practitioner city first"
             selected_timezone = _BASE_SELECTBOX(
                 "Practitioner scheduling timezone",
-                [current_value],
+                [],
                 *args,
                 **timezone_kwargs,
             )
             _render_timezone_search_status(
-                "No matching timezone found. The current practitioner timezone is retained."
+                "Enter a city to derive the country and practitioner timezone."
             )
-        else:
-            st.session_state.pop(_TIMEZONE_FILTERED_WIDGET_KEY, None)
-            timezone_kwargs["key"] = _TIMEZONE_WIDGET_KEY
-            timezone_kwargs["index"] = all_options.index(current_value)
+        elif not matching_timezones:
+            timezone_kwargs["index"] = None
+            timezone_kwargs["placeholder"] = "No matching city found"
             selected_timezone = _BASE_SELECTBOX(
                 "Practitioner scheduling timezone",
-                all_options,
+                [],
                 *args,
                 **timezone_kwargs,
             )
+            _render_timezone_search_status(
+                "No matching city found. Practitioner scheduling timezone remains empty."
+            )
+        else:
+            timezone_kwargs["index"] = 0 if len(matching_timezones) == 1 else None
+            timezone_kwargs["placeholder"] = (
+                "Select the derived timezone"
+                if len(matching_timezones) > 1
+                else None
+            )
+            selected_timezone = _BASE_SELECTBOX(
+                "Practitioner scheduling timezone",
+                matching_timezones,
+                *args,
+                **timezone_kwargs,
+            )
+            if len(matching_timezones) > 1 and not selected_timezone:
+                _render_timezone_search_status(
+                    "More than one city match was found. Select the correct derived timezone."
+                )
+
+        selection_ready = bool(selected_timezone)
+        st.session_state[_TIMEZONE_SELECTION_READY_KEY] = selection_ready
+        if selection_ready:
+            st.session_state[_TIMEZONE_WIDGET_KEY] = selected_timezone
+        else:
+            st.session_state.pop(_TIMEZONE_WIDGET_KEY, None)
 
         _lock_timezone_dropdown_typing()
 
@@ -357,25 +518,42 @@ def _selectbox_with_practitioner_timezone_first(
             )
             if selected_member != _PENDING_MEMBER_SELECTBOX["selected"]:
                 st.rerun()
-        return selected_timezone
+
+        # Preserve the underlying component's current valid value only to complete
+        # rendering safely. The visible field remains blank and schedule actions are
+        # blocked below until a city-derived timezone is selected.
+        return selected_timezone or current_value
 
     return _BASE_SELECTBOX(label, options, *args, **kwargs)
 
 
-st.selectbox = _selectbox_with_practitioner_timezone_first
-schedule_timezone_ui.st.selectbox = _selectbox_with_practitioner_timezone_first
+def _radio_require_city_derived_timezone(label, options, *args, **kwargs):
+    if (
+        label == "Enter the schedule in"
+        and not st.session_state.get(_TIMEZONE_SELECTION_READY_KEY, False)
+    ):
+        st.info(
+            "Search for the practitioner city and confirm the derived timezone to continue."
+        )
+        st.stop()
+    return _BASE_RADIO(label, options, *args, **kwargs)
 
-# Keep search and selection visually grouped while making the long timezone list
-# easier to navigate.
+
+st.selectbox = _selectbox_with_city_first_practitioner_timezone
+schedule_timezone_ui.st.selectbox = _selectbox_with_city_first_practitioner_timezone
+st.radio = _radio_require_city_derived_timezone
+schedule_timezone_ui.st.radio = _radio_require_city_derived_timezone
+
+# Keep city search and its derived timezone visually grouped while making the long
+# timezone result list easy to navigate.
 st.markdown(
     """
-<style id="hm-friendly-timezone-selector-v3">
+<style id="hm-friendly-timezone-selector-v4">
 .st-key-hm_tz_practitioner_timezone_search{
   margin-top:.48rem!important;
   margin-bottom:-.42rem!important;
 }
-.st-key-hm_tz_practitioner_timezone,
-.st-key-hm_tz_practitioner_timezone_filtered{
+[class*="st-key-hm_tz_practitioner_timezone_city_"]{
   margin-top:0!important;
   margin-bottom:0!important;
 }
