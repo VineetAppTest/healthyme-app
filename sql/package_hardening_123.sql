@@ -1,1 +1,11 @@
--- placeholder
+-- Package Hardening 1, 2 and 3 migration manifest.
+-- Apply in numeric order:
+--   package_hardening_123_01_schema_and_backfill.sql
+--   package_hardening_123_02_metrics_and_cost_contract.sql
+--   package_hardening_123_03_admin_write_contracts.sql
+--   package_hardening_123_04_member_contract_and_usage_audit.sql
+--   package_hardening_123_05_usage_dedupe_constraint.sql
+--
+-- Accepted rule preserved throughout:
+-- Package inclusions are informational only and never grant, hide, block or
+-- enforce access to HealthyMe modules.
