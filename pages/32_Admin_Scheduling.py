@@ -39,6 +39,7 @@ schedule_timezone_ui._hm_base_persist_practitioner_timezone_before_sanitizer = (
 )
 _TIMEZONE_WIDGET_KEY = "hm_tz_practitioner_timezone"
 _TIMEZONE_SEARCH_KEY = "hm_tz_practitioner_timezone_search"
+_TIMEZONE_FILTERED_WIDGET_KEY = "hm_tz_practitioner_timezone_filtered"
 _COMMON_TIMEZONE_ORDER = [
     "Asia/Kolkata",
     "Europe/London",
@@ -49,6 +50,23 @@ _COMMON_TIMEZONE_ORDER = [
     "America/Los_Angeles",
     "Australia/Sydney",
 ]
+_TIMEZONE_SEARCH_ALIASES = {
+    "Asia/Kolkata": (
+        "india new delhi delhi kolkata calcutta mumbai bombay lucknow "
+        "bengaluru bangalore chennai hyderabad pune"
+    ),
+    "Europe/London": "united kingdom uk britain great britain london",
+    "Asia/Dubai": "united arab emirates uae dubai abu dhabi",
+    "Asia/Singapore": "singapore",
+    "America/New_York": "new york eastern time usa united states",
+    "America/Chicago": "chicago central time usa united states",
+    "America/Los_Angeles": "los angeles california pacific time usa united states",
+    "Australia/Sydney": "sydney new south wales australia",
+}
+_COUNTRY_LABEL_OVERRIDES = {
+    "Britain (UK)": "United Kingdom",
+    "United States": "United States",
+}
 
 
 def _valid_iana_timezone(value: object) -> bool:
@@ -66,6 +84,7 @@ def _timezone_country_map() -> dict[str, str]:
     mapping: dict[str, str] = {}
     for country_code, timezone_names in pytz.country_timezones.items():
         country_name = str(pytz.country_names.get(country_code) or country_code)
+        country_name = _COUNTRY_LABEL_OVERRIDES.get(country_name, country_name)
         for timezone_name in timezone_names:
             mapping.setdefault(str(timezone_name), country_name)
     return mapping
@@ -88,6 +107,16 @@ def _friendly_timezone_label(timezone_name: object) -> str:
     if country:
         return f"{location}, {country} — {value}"
     return f"{location} — {value}"
+
+
+def _timezone_search_text(timezone_name: str) -> str:
+    return " ".join(
+        [
+            _friendly_timezone_label(timezone_name),
+            timezone_name,
+            _TIMEZONE_SEARCH_ALIASES.get(timezone_name, ""),
+        ]
+    ).lower()
 
 
 def _safe_timezone_options() -> list[str]:
@@ -185,7 +214,7 @@ def _selected_value_without_render(options: list, kwargs: dict):
     return selected
 
 
-def _filtered_timezone_options(options: list[str], current_value: str) -> tuple[list[str], bool]:
+def _filtered_timezone_options(options: list[str]) -> tuple[list[str], bool]:
     query = str(st.session_state.get(_TIMEZONE_SEARCH_KEY) or "").strip().lower()
     if not query:
         return list(options), True
@@ -193,12 +222,9 @@ def _filtered_timezone_options(options: list[str], current_value: str) -> tuple[
     matches = [
         timezone_name
         for timezone_name in options
-        if query in _friendly_timezone_label(timezone_name).lower()
+        if query in _timezone_search_text(timezone_name)
     ]
-    has_match = bool(matches)
-    if current_value and current_value not in matches:
-        matches.insert(0, current_value)
-    return matches or ([current_value] if current_value else list(options[:1])), has_match
+    return matches, bool(matches)
 
 
 def _lock_timezone_dropdown_typing() -> None:
@@ -230,6 +256,13 @@ def _lock_timezone_dropdown_typing() -> None:
 </script>
 """,
         unsafe_allow_javascript=True,
+    )
+
+
+def _render_timezone_search_status(message: str) -> None:
+    st.markdown(
+        f"<div class='hm-tz-search-status'>{message}</div>",
+        unsafe_allow_html=True,
     )
 
 
@@ -265,31 +298,55 @@ def _selectbox_with_practitioner_timezone_first(
             "Search practitioner timezone",
             key=_TIMEZONE_SEARCH_KEY,
             placeholder="Type a city, country or timezone",
-            help="Search examples: London, United Kingdom or Europe/London.",
+            help="Search examples: New Delhi, London, United Kingdom or Europe/London.",
         )
-        filtered_options, has_match = _filtered_timezone_options(
-            all_options,
-            current_value,
+        filtered_options, has_match = _filtered_timezone_options(all_options)
+        search_active = bool(
+            str(st.session_state.get(_TIMEZONE_SEARCH_KEY) or "").strip()
         )
 
         timezone_kwargs = dict(kwargs)
         timezone_kwargs["format_func"] = _friendly_timezone_label
-        timezone_kwargs["index"] = (
-            filtered_options.index(current_value)
-            if current_value in filtered_options
-            else 0
-        )
-        selected_timezone = _BASE_SELECTBOX(
-            "Practitioner scheduling timezone",
-            filtered_options,
-            *args,
-            **timezone_kwargs,
-        )
-        _lock_timezone_dropdown_typing()
-        if st.session_state.get(_TIMEZONE_SEARCH_KEY) and not has_match:
-            st.caption(
+
+        if search_active and has_match:
+            retained_filtered = st.session_state.get(_TIMEZONE_FILTERED_WIDGET_KEY)
+            if retained_filtered not in filtered_options:
+                st.session_state.pop(_TIMEZONE_FILTERED_WIDGET_KEY, None)
+            timezone_kwargs["key"] = _TIMEZONE_FILTERED_WIDGET_KEY
+            timezone_kwargs["index"] = None
+            timezone_kwargs["placeholder"] = "Select a matching timezone"
+            selected_match = _BASE_SELECTBOX(
+                "Practitioner scheduling timezone",
+                filtered_options,
+                *args,
+                **timezone_kwargs,
+            )
+            selected_timezone = selected_match or current_value
+        elif search_active and not has_match:
+            timezone_kwargs["key"] = _TIMEZONE_FILTERED_WIDGET_KEY
+            timezone_kwargs["index"] = 0
+            st.session_state[_TIMEZONE_FILTERED_WIDGET_KEY] = current_value
+            selected_timezone = _BASE_SELECTBOX(
+                "Practitioner scheduling timezone",
+                [current_value],
+                *args,
+                **timezone_kwargs,
+            )
+            _render_timezone_search_status(
                 "No matching timezone found. The current practitioner timezone is retained."
             )
+        else:
+            st.session_state.pop(_TIMEZONE_FILTERED_WIDGET_KEY, None)
+            timezone_kwargs["key"] = _TIMEZONE_WIDGET_KEY
+            timezone_kwargs["index"] = all_options.index(current_value)
+            selected_timezone = _BASE_SELECTBOX(
+                "Practitioner scheduling timezone",
+                all_options,
+                *args,
+                **timezone_kwargs,
+            )
+
+        _lock_timezone_dropdown_typing()
 
         if _PENDING_MEMBER_SELECTBOX:
             selected_member = _BASE_SELECTBOX(
@@ -308,11 +365,27 @@ def _selectbox_with_practitioner_timezone_first(
 st.selectbox = _selectbox_with_practitioner_timezone_first
 schedule_timezone_ui.st.selectbox = _selectbox_with_practitioner_timezone_first
 
-# Make the long timezone list easier to navigate. The dropdown remains a closed
-# approved-value control; filtering is handled by the dedicated search field.
+# Keep search and selection visually grouped while making the long timezone list
+# easier to navigate.
 st.markdown(
     """
-<style id="hm-friendly-timezone-selector-v2">
+<style id="hm-friendly-timezone-selector-v3">
+.st-key-hm_tz_practitioner_timezone_search{
+  margin-top:.48rem!important;
+  margin-bottom:-.42rem!important;
+}
+.st-key-hm_tz_practitioner_timezone,
+.st-key-hm_tz_practitioner_timezone_filtered{
+  margin-top:0!important;
+  margin-bottom:0!important;
+}
+.hm-tz-search-status{
+  margin:-.36rem 0 .14rem 0!important;
+  color:#7A6A55!important;
+  font-size:.78rem!important;
+  font-weight:650!important;
+  line-height:1.25!important;
+}
 div[data-baseweb="popover"] [role="listbox"],
 div[data-baseweb="popover"] ul{
   scrollbar-width:auto!important;
