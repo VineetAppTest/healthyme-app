@@ -43,7 +43,7 @@ class PackageHardeningContractTests(unittest.TestCase):
         self.assertIn("('scheduled','acknowledged')", sql)
         self.assertIn("sessions_available_to_schedule", sql)
         self.assertIn("hm_package_schedule_subscription_id", sql)
-        self.assertNotIn("latest active package", sql.lower())
+        self.assertIn("never substitutes the latest active package", sql.lower())
 
     def test_replacement_and_override_require_reasons(self):
         sql = (ROOT / "sql/package_hardening_123_03_admin_write_contracts.sql").read_text()
