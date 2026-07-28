@@ -13,9 +13,13 @@ from components.pbm_core import (
     safe,
     safe_key,
 )
+from components.profile_builder_access import (
+    current_profile_builder_role,
+    current_profile_builder_user_can_publish,
+)
 
-APP_BUILD_VERSION = "v100.42"
-APP_BUILD_LABEL = "Existing Profile Editing"
+APP_BUILD_VERSION = "v100.43"
+APP_BUILD_LABEL = "Scoped Nutritionist Editing"
 
 
 def _epoch_widget_key(row, field):
@@ -71,7 +75,7 @@ _pbm_rows.copy_day = _copy_day
 
 from components.pbm_modules import render_module, render_preview
 from components.pbm_setup import render_setup
-from components.profile_publish_control import render_profile_publish_control
+from components.profile_publish_control_v2 import render_profile_publish_control
 from components.recommendation_profile_store import (
     check_profile_builder_store,
     load_profile_builder_sources,
@@ -101,6 +105,16 @@ def _render_css() -> None:
 def render_modular_profile_builder() -> None:
     ensure_state()
     _render_css()
+    can_publish = current_profile_builder_user_can_publish()
+    role = current_profile_builder_role()
+    visible_sections = [
+        section
+        for section in SECTIONS
+        if can_publish or section != "Publish Control"
+    ]
+    if st.session_state.get("pbm_section") not in visible_sections:
+        st.session_state["pbm_section"] = "Profile Setup"
+
     status = check_profile_builder_store()
     sources, source_message = load_profile_builder_sources()
     options = {
@@ -111,16 +125,21 @@ def render_modular_profile_builder() -> None:
         "health_concern": list(sources.get("health_concern") or []),
         "diet_type": list(sources.get("diet_type") or []),
     }
+    role_note = (
+        "Nutritionist editing access · Publish remains Admin/Super Admin only"
+        if role == "nutritionist"
+        else "Admin recommendations"
+    )
     st.markdown(
-        f"<div class='hero-shell'><div class='hero-kicker'>Admin recommendations</div>"
+        f"<div class='hero-shell'><div class='hero-kicker'>{safe(role_note)}</div>"
         f"<div class='hero-title'>Recommendation Profile Builder</div>"
         f"<div class='hero-subtitle'>Create new profiles or edit existing allocated and unallocated profiles in place, with module-specific saves.</div><div><span class='meta-pill'>"
         f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span></div></div>",
         unsafe_allow_html=True,
     )
     st.markdown("<div class='hm-tab-nav'>", unsafe_allow_html=True)
-    columns = st.columns(len(SECTIONS), gap="small")
-    for column, section in zip(columns, SECTIONS):
+    columns = st.columns(len(visible_sections), gap="small")
+    for column, section in zip(columns, visible_sections):
         if column.button(
             NAV_LABELS[section],
             key=f"pbm_nav_{safe_key(section)}",

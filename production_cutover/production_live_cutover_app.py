@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 
-BUILD = "H13R5-production-direct-login-v1"
-ROLLBACK_BUILD = "H13R4-production-single-visible-login-v1"
+BUILD = "H13R5A-production-scoped-profile-builder-staff-v1"
+ROLLBACK_BUILD = "H13R5-production-direct-login-v1"
 SOURCE = Path(__file__).resolve().with_name("production_native_full_app.py")
 
 source_text = SOURCE.read_text(encoding="utf-8")
@@ -13,9 +13,9 @@ expected_build = 'BUILD = "H13R1-production-native-full-app-v1"'
 expected_rollback = 'ROLLBACK_BUILD = "H13R0-production-native-member-auth-only-v1"'
 
 if expected_build not in source_text:
-    raise RuntimeError("H13R5 source-integrity check failed: accepted H13R1 build marker missing.")
+    raise RuntimeError("H13R5A source-integrity check failed: accepted H13R1 build marker missing.")
 if expected_rollback not in source_text:
-    raise RuntimeError("H13R5 source-integrity check failed: accepted H13R1 rollback marker missing.")
+    raise RuntimeError("H13R5A source-integrity check failed: accepted H13R1 rollback marker missing.")
 
 source_text = source_text.replace(
     expected_build,
@@ -51,7 +51,7 @@ title_patch_marker = (
 )
 if title_patch_marker not in source_text:
     raise RuntimeError(
-        "H13R5 source-integrity check failed: H13R1 Login title transform missing."
+        "H13R5A source-integrity check failed: H13R1 Login title transform missing."
     )
 
 production_login_ui = '''    st.login(provider)
@@ -79,12 +79,140 @@ source_text = source_text.replace(
     1,
 )
 
+# Permit the Nutritionist role only on the Recommendation Profile Builder route.
+# The general Admin role model and all other Admin routes remain unchanged.
+admin_route_marker = '''def _render_admin_route(spec: AdminRouteSpec) -> None:
+    context = _gate4_context()
+    if str(context.get("role_category") or "") != "Admin":
+'''
+admin_route_replacement = '''def _render_admin_route(spec: AdminRouteSpec) -> None:
+    context = _gate4_context()
+    role_category = str(context.get("role_category") or "")
+    nutritionist_profile_builder = (
+        role_category == "Nutritionist"
+        and spec.url_path == "Admin_Recommendation_Profile_Builder"
+    )
+    if role_category != "Admin" and not nutritionist_profile_builder:
+'''
+if admin_route_marker not in source_text:
+    raise RuntimeError(
+        "H13R5A source-integrity check failed: Admin route role marker missing."
+    )
+source_text = source_text.replace(
+    admin_route_marker,
+    admin_route_replacement,
+    1,
+)
+
+# Production Native Full App reads and compiles the accepted Gate 4 source. Add a
+# narrow Nutritionist role category during that compile without promoting the role
+# to Admin in the shared role model.
+gate4_read_marker = '    gate4_text = path.read_text(encoding="utf-8")\n'
+gate4_role_old = '''def _role_category(role: str) -> str:
+    if is_admin_role(role):
+        return "Admin"
+    if is_member_role(role):
+        return "Member"
+    return "Unsupported"
+'''
+gate4_role_new = '''def _role_category(role: str) -> str:
+    if is_admin_role(role):
+        return "Admin"
+    if is_member_role(role):
+        return "Member"
+    if str(role or "").strip().lower() == "nutritionist":
+        return "Nutritionist"
+    return "Unsupported"
+'''
+gate4_role_patch = (
+    gate4_read_marker
+    + "    gate4_role_old = " + repr(gate4_role_old) + "\n"
+    + "    gate4_role_new = " + repr(gate4_role_new) + "\n"
+    + "    if gate4_role_old not in gate4_text:\n"
+    + "        raise RuntimeError(\"H13R5A Gate 4 role category marker is missing.\")\n"
+    + "    gate4_text = gate4_text.replace(gate4_role_old, gate4_role_new, 1)\n"
+)
+if gate4_read_marker not in source_text:
+    raise RuntimeError(
+        "H13R5A source-integrity check failed: Gate 4 source-read marker missing."
+    )
+source_text = source_text.replace(
+    gate4_read_marker,
+    gate4_role_patch,
+    1,
+)
+
+admin_routing_marker = (
+    "    new_admin_block = '''if role_category == \"Admin\":\n"
+    "    _clear_derived_application_context()\n"
+    "    ROUTER_CONTEXT[\"derived_application_context_applied\"] = False\n"
+    "    ROUTER_CONTEXT[\"real_member_home_loaded\"] = False\n"
+    "    ROUTER_CONTEXT[\"real_todays_plan_loaded\"] = False\n"
+    "    allowed_admin_paths = set(\n"
+    "        ROUTER_CONTEXT.get(\"allowed_admin_paths\") or {admin_page.url_path}\n"
+    "    )\n"
+    "    if selected_path not in allowed_admin_paths:\n"
+    "        st.switch_page(admin_page)\n"
+    "    selected_page.run()\n"
+    "    st.stop()\n"
+    "'''\n"
+)
+admin_routing_replacement = (
+    "    new_admin_block = '''if role_category == \"Admin\":\n"
+    "    _clear_derived_application_context()\n"
+    "    ROUTER_CONTEXT[\"derived_application_context_applied\"] = False\n"
+    "    ROUTER_CONTEXT[\"real_member_home_loaded\"] = False\n"
+    "    ROUTER_CONTEXT[\"real_todays_plan_loaded\"] = False\n"
+    "    allowed_admin_paths = set(\n"
+    "        ROUTER_CONTEXT.get(\"allowed_admin_paths\") or {admin_page.url_path}\n"
+    "    )\n"
+    "    if selected_path not in allowed_admin_paths:\n"
+    "        st.switch_page(admin_page)\n"
+    "    selected_page.run()\n"
+    "    st.stop()\n"
+    "\n"
+    "if role_category == \"Nutritionist\":\n"
+    "    try:\n"
+    "        apply_app_user_to_session(\n"
+    "            app_user,\n"
+    "            email=email,\n"
+    "            auth_provider=\"supabase\",\n"
+    "            auth_user_id=subject,\n"
+    "        )\n"
+    "    except Exception as exc:\n"
+    "        _show_role_resolution_failure(\n"
+    "            role_lookup_ok=True,\n"
+    "            lookup_message=(\n"
+    "                f\"{type(exc).__name__}: Nutritionist compatibility context could not be built.\"\n"
+    "            ),\n"
+    "        )\n"
+    "    ROUTER_CONTEXT[\"derived_application_context_applied\"] = True\n"
+    "    ROUTER_CONTEXT[\"nutritionist_profile_builder_access_active\"] = True\n"
+    "    allowed_nutritionist_paths = {\"Admin_Recommendation_Profile_Builder\"}\n"
+    "    if selected_path not in allowed_nutritionist_paths:\n"
+    "        st.switch_page(\"pages/38_Admin_Recommendation_Profile_Builder.py\")\n"
+    "    selected_page.run()\n"
+    "    st.stop()\n"
+    "'''\n"
+)
+if admin_routing_marker not in source_text:
+    raise RuntimeError(
+        "H13R5A source-integrity check failed: Admin routing transform marker missing."
+    )
+source_text = source_text.replace(
+    admin_routing_marker,
+    admin_routing_replacement,
+    1,
+)
+
 # H13R1 builds its final diagnostics through a quoted source-transformation string.
 diagnostic_source_marker = (
     "        '                \"nutritionist_role_promoted_to_admin\": False,',\n"
 )
 diagnostic_source_replacement = (
     "        '                \"nutritionist_role_promoted_to_admin\": False,\\n'\n"
+    "        '                \"nutritionist_profile_builder_access_active\": True,\\n'\n"
+    "        '                \"nutritionist_publish_allowed\": False,\\n'\n"
     "        '                \"production_cutover_active\": True,\\n'\n"
     "        '                \"single_visible_login_active\": True,\\n'\n"
     "        '                \"direct_oidc_handoff_active\": True,\\n'\n"
@@ -93,7 +221,7 @@ diagnostic_source_replacement = (
 )
 if diagnostic_source_marker not in source_text:
     raise RuntimeError(
-        "H13R5 source-integrity check failed: H13R1 diagnostic marker missing."
+        "H13R5A source-integrity check failed: H13R1 diagnostic marker missing."
     )
 source_text = source_text.replace(
     diagnostic_source_marker,
@@ -103,7 +231,7 @@ source_text = source_text.replace(
 
 source_text = source_text.replace(
     '__hm_h13r1_native_full_app__',
-    '__hm_h13r5_production_direct_login__',
+    '__hm_h13r5a_scoped_profile_builder_staff__',
     1,
 )
 
@@ -111,7 +239,7 @@ compiled_source = compile(source_text, str(SOURCE), "exec")
 exec(
     compiled_source,
     {
-        "__name__": "__hm_h13r5_production_direct_login__",
+        "__name__": "__hm_h13r5a_scoped_profile_builder_staff__",
         "__file__": str(SOURCE),
         "__package__": None,
     },
