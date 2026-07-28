@@ -4,7 +4,7 @@ import runpy
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import urlsplit
 
 import streamlit as st
 
@@ -32,6 +32,10 @@ from native_bridge import root_authorization_ui as _router_authorization_ui  # n
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
+BUILD = "H13R9-pr205-one-time-refresh-v1"
+ROLLBACK_BUILD = "H13R5-production-direct-login-v1"
+
+
 def _native_identity_present() -> bool:
     try:
         return bool(st.user and st.user.is_logged_in)
@@ -39,14 +43,13 @@ def _native_identity_present() -> bool:
         return False
 
 
-def _browser_request() -> tuple[str, dict[str, list[str]]]:
+def _browser_path() -> str:
     try:
         raw_url = str(st.context.url or "").strip()
-        parsed = urlsplit(raw_url)
-        path = (parsed.path or "/").rstrip("/") or "/"
-        return path, parse_qs(parsed.query, keep_blank_values=True)
+        path = urlsplit(raw_url).path or "/"
+        return path.rstrip("/") or "/"
     except Exception:
-        return "", {}
+        return ""
 
 
 def _iter_pages(pages: Any) -> Iterable[Any]:
@@ -61,27 +64,105 @@ def _iter_pages(pages: Any) -> Iterable[Any]:
     yield pages
 
 
-def _page_for_path(pages: Any, browser_path: str) -> Any | None:
-    normalized_path = browser_path.strip("/")
-    for page in _iter_pages(pages):
-        page_path = str(getattr(page, "url_path", "") or "").strip("/")
-        if page_path == normalized_path:
-            return page
-    return None
+def _install_one_time_post_oauth_reload() -> None:
+    """Restore the PR #205 browser refresh after OAuth identity is created.
+
+    Streamlit Cloud can expose a clean server-side route while the top-level browser
+    still shows the consumed ``authorization_id`` callback. PR #205 proved that one
+    guarded full browser reload reconciles those states and then lets the registered
+    role router land on the canonical Member/Admin route.
+    """
+    if not _native_identity_present():
+        return
+
+    st.html(
+        r"""
+        <script>
+        (() => {
+          let topWindow;
+          try {
+            topWindow = window.top || window.parent || window;
+          } catch (_error) {
+            topWindow = window;
+          }
+
+          let currentUrl;
+          try {
+            currentUrl = new URL(topWindow.location.href);
+          } catch (_error) {
+            return;
+          }
+
+          const authorizationId = currentUrl.searchParams.get("authorization_id");
+          if (!authorizationId) {
+            return;
+          }
+
+          const key = `hm_h13r2_oauth_reload:${authorizationId}`;
+          let shouldReload = true;
+
+          try {
+            const storage = topWindow.sessionStorage;
+            if (storage.getItem(key) === "done") {
+              storage.removeItem(key);
+              shouldReload = false;
+            } else {
+              storage.setItem(key, "done");
+            }
+          } catch (_storageError) {
+            const marker = `|${key}|`;
+            const currentName = String(topWindow.name || "");
+            if (currentName.includes(marker)) {
+              topWindow.name = currentName.replace(marker, "");
+              shouldReload = false;
+            } else {
+              topWindow.name = `${currentName}${marker}`;
+            }
+          }
+
+          if (!shouldReload) {
+            return;
+          }
+
+          try {
+            const doc = topWindow.document;
+            if (doc && doc.body && !doc.getElementById("hm-h13r2-login-finalising")) {
+              const overlay = doc.createElement("div");
+              overlay.id = "hm-h13r2-login-finalising";
+              overlay.textContent = "Finalising secure login…";
+              overlay.style.cssText = [
+                "position:fixed",
+                "inset:0",
+                "z-index:2147483647",
+                "display:flex",
+                "align-items:center",
+                "justify-content:center",
+                "background:#fffaf2",
+                "color:#073b2c",
+                "font:600 16px system-ui,sans-serif"
+              ].join(";");
+              doc.body.appendChild(overlay);
+            }
+          } catch (_overlayError) {}
+
+          topWindow.setTimeout(() => topWindow.location.reload(), 40);
+        })();
+        </script>
+        """,
+        unsafe_allow_javascript=True,
+    )
 
 
-# Cache the unmodified authorizer once, then reinstall the production wrapper on
-# every rerun. Unauthenticated authorization requests render the HealthyMe
-# credential screen. Once native identity exists, the consumed request is left for
-# the registered navigation wrapper to canonicalize without showing another screen.
+# Keep the accepted H13R7E HealthyMe-branded authorizer. Once native identity exists,
+# leave the consumed request for the PR #205 refresh and registered role router.
 _BASE_AUTHORIZER = getattr(
     _root_authorization_ui,
-    "_hm_h13r2_base_render_root_authorization_ui",
+    "_hm_h13r9_base_render_root_authorization_ui",
     None,
 )
 if _BASE_AUTHORIZER is None:
     _BASE_AUTHORIZER = _root_authorization_ui.render_root_authorization_ui
-    _root_authorization_ui._hm_h13r2_base_render_root_authorization_ui = (
+    _root_authorization_ui._hm_h13r9_base_render_root_authorization_ui = (
         _BASE_AUTHORIZER
     )
 else:
@@ -98,36 +179,24 @@ _root_authorization_ui.render_root_authorization_ui = (
     _render_root_authorization_ui_for_native_router
 )
 
-# The accepted Gate 4/full-member runtime imports the legacy authorizer module
-# directly. Point that module at the H13R7E wrapper before the production runtime is
-# compiled, otherwise production continues to render the previous abstract-art UI.
+# The compiled full Member/Admin runtime imports the legacy authorizer module.
+# Point it to the accepted H13R7E wrapper without altering the login-page UX.
 _router_authorization_ui.render_root_authorization_ui = (
     _render_root_authorization_ui_for_native_router
 )
 
 
-def _navigation_with_authenticated_url_cleanup(
+def _navigation_with_authenticated_root_canonicalization(
     pages: Any,
     *args: Any,
     **kwargs: Any,
 ) -> Any:
     selected_page = _BASE_NAVIGATION(pages, *args, **kwargs)
 
-    if not _native_identity_present():
-        return selected_page
-
-    browser_path, query = _browser_request()
-
-    # The OAuth authorization_id is one-time technical state. Never leave it on a
-    # Member/Admin URL. Re-open the same registered page with an empty query string.
-    if "authorization_id" in query:
-        target_page = _page_for_path(pages, browser_path) or selected_page
-        _BASE_SWITCH_PAGE(target_page, query_params={})
-        st.stop()
-
-    # Streamlit can restore an authenticated callback at the root path. Move through
-    # the registered Login page so the existing role router selects Member/Admin.
-    if browser_path == "/":
+    # After the guarded browser refresh, an authenticated callback can re-enter at
+    # the app root. Move through the registered Login page with an empty query set;
+    # the existing role router then selects Member_Home or the correct Admin route.
+    if _native_identity_present() and _browser_path() == "/":
         login_page = next(
             (
                 page
@@ -138,7 +207,7 @@ def _navigation_with_authenticated_url_cleanup(
         )
         if login_page is None:
             raise RuntimeError(
-                "H13R5 could not locate the registered Login page for OAuth canonicalization."
+                "H13R9 could not locate the registered Login page for OAuth canonicalization."
             )
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
@@ -146,7 +215,8 @@ def _navigation_with_authenticated_url_cleanup(
     return selected_page
 
 
-st.navigation = _navigation_with_authenticated_url_cleanup
+st.navigation = _navigation_with_authenticated_root_canonicalization
+_install_one_time_post_oauth_reload()
 
 
 CUTOVER_ENTRY = (
@@ -157,5 +227,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r5_production_entry__",
+    run_name="__hm_h13r9_pr205_one_time_refresh__",
 )
