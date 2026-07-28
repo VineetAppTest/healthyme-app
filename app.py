@@ -99,15 +99,100 @@ def _install_member_local_daily_log_defaults() -> None:
     )
 
 
+def _install_daily_log_tab_emphasis() -> None:
+    """Make the two Daily Log journals read as primary section headers."""
+    cache_name = "_hm_original_daily_log_ui_before_tab_emphasis"
+    original = getattr(_member_guards, cache_name, None)
+    if original is None:
+        original = _member_guards._apply_daily_log_ui_and_autosave
+        setattr(_member_guards, cache_name, original)
+    else:
+        _member_guards._apply_daily_log_ui_and_autosave = original
+
+    def _apply_daily_log_ui_with_prominent_tabs(current_page: str) -> None:
+        original(current_page)
+        if current_page != "18_Daily_Log.py":
+            return
+        st.markdown(
+            """
+            <style id="hm-daily-log-primary-tabs-v1">
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tablist"],
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab-list"]{
+              display:grid!important;
+              grid-template-columns:repeat(2,minmax(0,1fr))!important;
+              gap:.75rem!important;
+              width:100%!important;
+              margin:.35rem 0 1.15rem 0!important;
+              padding:.42rem!important;
+              border:1px solid #E3D4BA!important;
+              border-radius:16px!important;
+              background:#FFF9EE!important;
+              box-sizing:border-box!important;
+            }
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] button[role="tab"],
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab"]{
+              width:100%!important;
+              min-width:0!important;
+              min-height:3.15rem!important;
+              display:flex!important;
+              align-items:center!important;
+              justify-content:center!important;
+              border:1.5px solid #D8A84E!important;
+              border-radius:13px!important;
+              background:#FFFFFF!important;
+              color:#064E3B!important;
+              font-size:1rem!important;
+              font-weight:950!important;
+              letter-spacing:.01em!important;
+              padding:.70rem 1rem!important;
+              box-shadow:0 6px 14px rgba(6,78,59,.07)!important;
+            }
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] button[role="tab"] *,
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab"] *{
+              color:inherit!important;
+              font-size:inherit!important;
+              font-weight:inherit!important;
+            }
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
+            html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"]{
+              background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
+              color:#FFFFFF!important;
+              border-color:#064E3B!important;
+              box-shadow:0 10px 20px rgba(6,78,59,.18)!important;
+            }
+            @media(max-width:640px){
+              html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [role="tablist"],
+              html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab-list"]{
+                gap:.42rem!important;
+                padding:.32rem!important;
+              }
+              html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] button[role="tab"],
+              html body [data-testid="stAppViewContainer"] div[data-testid="stTabs"] [data-baseweb="tab"]{
+                min-height:2.85rem!important;
+                font-size:.90rem!important;
+                padding:.58rem .40rem!important;
+              }
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    _member_guards._apply_daily_log_ui_and_autosave = (
+        _apply_daily_log_ui_with_prominent_tabs
+    )
+
+
 _install_member_local_daily_log_defaults()
+_install_daily_log_tab_emphasis()
 
 
 from native_bridge import root_authorization_ui as _router_authorization_ui  # noqa: E402
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
-BUILD = "H13R9B-member-local-daily-log-date-v1"
-ROLLBACK_BUILD = "H13R9A-navigation-unwrapper-hotfix-v1"
+BUILD = "H13R9C-profile-dropdown-daily-log-tabs-v1"
+ROLLBACK_BUILD = "H13R9B-member-local-daily-log-date-v1"
 
 
 def _native_identity_present() -> bool:
@@ -281,7 +366,7 @@ def _navigation_with_authenticated_root_canonicalization(
         )
         if login_page is None:
             raise RuntimeError(
-                "H13R9B could not locate the registered Login page for OAuth canonicalization."
+                "H13R9C could not locate the registered Login page for OAuth canonicalization."
             )
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
@@ -301,5 +386,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r9b_member_local_daily_log_date__",
+    run_name="__hm_h13r9c_profile_dropdown_daily_log_tabs__",
 )
