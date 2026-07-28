@@ -138,17 +138,17 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-te
 .hm-home-group-title{color:#064E3B;font-size:.82rem;font-weight:950;text-transform:uppercase;letter-spacing:.03em;margin:.34rem 0 .30rem 0;}
 .hm-home-action-anchor + div [data-testid="stButton"] > button,.hm-home-action-anchor + div .stButton > button{width:82%!important;min-height:2.30rem!important;margin:.08rem auto .30rem auto!important;padding:.42rem .64rem!important;border-radius:12px!important;box-shadow:0 4px 10px rgba(6,78,59,.045)!important;}
 .hm-home-action-anchor + div [data-testid="stButton"] > button *,.hm-home-action-anchor + div .stButton > button *{font-size:.82rem!important;line-height:1.18!important;}
-.hm-home-soft-separator{height:1px;background:#E3D4BA;margin:.95rem 0 1.12rem 0;}
+.hm-home-soft-separator{height:1px;background:#E3D4BA;margin:.95rem 0!important;}
 .hm-member-panel-heading{color:#064E3B;font-size:1rem;font-weight:900;line-height:1.2;margin:0!important;padding:0!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card){align-items:stretch!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"]{display:flex!important;align-items:stretch!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"] > div[data-testid="stVerticalBlock"]{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card){display:flex!important;flex:1 1 auto!important;height:100%!important;padding:.70rem .85rem .85rem!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card) > div{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;padding:0!important;margin:0!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:1fr!important;align-items:stretch!important;gap:1.5rem!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"]{width:100%!important;min-width:0!important;flex:none!important;display:flex!important;align-items:stretch!important;align-self:stretch!important;height:100%!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"] > div[data-testid="stVerticalBlock"]{display:flex!important;flex:1 1 auto!important;flex-direction:column!important;width:100%!important;height:100%!important;align-self:stretch!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card){display:flex!important;flex:1 1 auto!important;align-self:stretch!important;height:100%!important;min-height:100%!important;padding:.70rem .85rem .85rem!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card) > div{display:flex!important;flex:1 1 auto!important;flex-direction:column!important;width:100%!important;height:100%!important;padding:0!important;margin:0!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card) div[data-testid="stVerticalBlock"]{padding-top:0!important;margin-top:0!important;gap:.55rem!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stElementContainer"]:has(.hm-member-panel-heading){margin:0!important;padding:0!important;min-height:0!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stElementContainer"]:has(.hm-member-panel-heading),div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) div[data-testid="stElementContainer"]:has(.hm-home-soft-separator){margin:0!important;padding:0!important;min-height:0!important;}
 div[data-testid="stButton"] > button{height:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;}
-@media(max-width:900px){div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"]{display:block!important;}}
+@media(max-width:900px){div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card){grid-template-columns:1fr!important;grid-auto-rows:auto!important;gap:1rem!important;}div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card) > div[data-testid="column"]{display:block!important;height:auto!important;align-self:auto!important;}}
 </style>
 """,
         unsafe_allow_html=True,
@@ -325,10 +325,10 @@ stat_grid([
     {"label": "Status", "value": instance_status, "note": "Current stage"},
 ])
 
-left, right = st.columns([1.15, .85], gap="large")
+left, right = st.columns([1, 1], gap="large")
 
 with left:
-    with st.container(border=True):
+    with st.container(border=True, height="stretch"):
         st.markdown(
             "<span class='hm-member-home-balanced-card'></span>"
             "<div class='hm-member-panel-heading'>Your next steps</div>",
@@ -355,7 +355,7 @@ with left:
             st.switch_page("pages/06_Submit_Status.py")
 
 with right:
-    with st.container(border=True):
+    with st.container(border=True, height="stretch"):
         st.markdown(
             "<span class='hm-member-home-balanced-card'></span>"
             "<div class='hm-member-panel-heading'>Personalized content</div>",
