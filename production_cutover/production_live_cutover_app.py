@@ -142,57 +142,59 @@ source_text = source_text.replace(
     1,
 )
 
-admin_routing_marker = '''    new_admin_block = '''if role_category == "Admin":
-    _clear_derived_application_context()
-    ROUTER_CONTEXT["derived_application_context_applied"] = False
-    ROUTER_CONTEXT["real_member_home_loaded"] = False
-    ROUTER_CONTEXT["real_todays_plan_loaded"] = False
-    allowed_admin_paths = set(
-        ROUTER_CONTEXT.get("allowed_admin_paths") or {admin_page.url_path}
-    )
-    if selected_path not in allowed_admin_paths:
-        st.switch_page(admin_page)
-    selected_page.run()
-    st.stop()
-'''
-'''
-admin_routing_replacement = '''    new_admin_block = '''if role_category == "Admin":
-    _clear_derived_application_context()
-    ROUTER_CONTEXT["derived_application_context_applied"] = False
-    ROUTER_CONTEXT["real_member_home_loaded"] = False
-    ROUTER_CONTEXT["real_todays_plan_loaded"] = False
-    allowed_admin_paths = set(
-        ROUTER_CONTEXT.get("allowed_admin_paths") or {admin_page.url_path}
-    )
-    if selected_path not in allowed_admin_paths:
-        st.switch_page(admin_page)
-    selected_page.run()
-    st.stop()
-
-if role_category == "Nutritionist":
-    try:
-        apply_app_user_to_session(
-            app_user,
-            email=email,
-            auth_provider="supabase",
-            auth_user_id=subject,
-        )
-    except Exception as exc:
-        _show_role_resolution_failure(
-            role_lookup_ok=True,
-            lookup_message=(
-                f"{type(exc).__name__}: Nutritionist compatibility context could not be built."
-            ),
-        )
-    ROUTER_CONTEXT["derived_application_context_applied"] = True
-    ROUTER_CONTEXT["nutritionist_profile_builder_access_active"] = True
-    allowed_nutritionist_paths = {"Admin_Recommendation_Profile_Builder"}
-    if selected_path not in allowed_nutritionist_paths:
-        st.switch_page("pages/38_Admin_Recommendation_Profile_Builder.py")
-    selected_page.run()
-    st.stop()
-'''
-'''
+admin_routing_marker = (
+    "    new_admin_block = '''if role_category == \"Admin\":\n"
+    "    _clear_derived_application_context()\n"
+    "    ROUTER_CONTEXT[\"derived_application_context_applied\"] = False\n"
+    "    ROUTER_CONTEXT[\"real_member_home_loaded\"] = False\n"
+    "    ROUTER_CONTEXT[\"real_todays_plan_loaded\"] = False\n"
+    "    allowed_admin_paths = set(\n"
+    "        ROUTER_CONTEXT.get(\"allowed_admin_paths\") or {admin_page.url_path}\n"
+    "    )\n"
+    "    if selected_path not in allowed_admin_paths:\n"
+    "        st.switch_page(admin_page)\n"
+    "    selected_page.run()\n"
+    "    st.stop()\n"
+    "'''\n"
+)
+admin_routing_replacement = (
+    "    new_admin_block = '''if role_category == \"Admin\":\n"
+    "    _clear_derived_application_context()\n"
+    "    ROUTER_CONTEXT[\"derived_application_context_applied\"] = False\n"
+    "    ROUTER_CONTEXT[\"real_member_home_loaded\"] = False\n"
+    "    ROUTER_CONTEXT[\"real_todays_plan_loaded\"] = False\n"
+    "    allowed_admin_paths = set(\n"
+    "        ROUTER_CONTEXT.get(\"allowed_admin_paths\") or {admin_page.url_path}\n"
+    "    )\n"
+    "    if selected_path not in allowed_admin_paths:\n"
+    "        st.switch_page(admin_page)\n"
+    "    selected_page.run()\n"
+    "    st.stop()\n"
+    "\n"
+    "if role_category == \"Nutritionist\":\n"
+    "    try:\n"
+    "        apply_app_user_to_session(\n"
+    "            app_user,\n"
+    "            email=email,\n"
+    "            auth_provider=\"supabase\",\n"
+    "            auth_user_id=subject,\n"
+    "        )\n"
+    "    except Exception as exc:\n"
+    "        _show_role_resolution_failure(\n"
+    "            role_lookup_ok=True,\n"
+    "            lookup_message=(\n"
+    "                f\"{type(exc).__name__}: Nutritionist compatibility context could not be built.\"\n"
+    "            ),\n"
+    "        )\n"
+    "    ROUTER_CONTEXT[\"derived_application_context_applied\"] = True\n"
+    "    ROUTER_CONTEXT[\"nutritionist_profile_builder_access_active\"] = True\n"
+    "    allowed_nutritionist_paths = {\"Admin_Recommendation_Profile_Builder\"}\n"
+    "    if selected_path not in allowed_nutritionist_paths:\n"
+    "        st.switch_page(\"pages/38_Admin_Recommendation_Profile_Builder.py\")\n"
+    "    selected_page.run()\n"
+    "    st.stop()\n"
+    "'''\n"
+)
 if admin_routing_marker not in source_text:
     raise RuntimeError(
         "H13R5A source-integrity check failed: Admin routing transform marker missing."
