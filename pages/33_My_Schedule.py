@@ -1,4 +1,14 @@
-from components.schedule_timezone_ui import render_member_schedule_page
+from components import guards, ui_common
+import components.schedule_timezone_ui as schedule_timezone_ui
 
 
-render_member_schedule_page()
+schedule_timezone_ui.require_admin = guards.require_admin
+schedule_timezone_ui.require_member = guards.require_member
+schedule_timezone_ui.inject_global_styles = ui_common.inject_global_styles
+schedule_timezone_ui.apply_luxe_theme = ui_common.apply_luxe_theme
+schedule_timezone_ui.utility_logout_bar = ui_common.utility_logout_bar
+schedule_timezone_ui.render_back_to_top = ui_common.render_back_to_top
+schedule_timezone_ui.topbar = ui_common.topbar
+schedule_timezone_ui.render_page_nav = ui_common.render_page_nav
+
+schedule_timezone_ui.render_member_schedule_page()
