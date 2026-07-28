@@ -9,8 +9,40 @@ from urllib.parse import urlsplit
 import streamlit as st
 
 
+def _unwrap_navigation_callable(candidate: Any) -> Any:
+    """Recover Streamlit's native navigation callable from stale runtime wrappers.
+
+    Streamlit reruns reuse one Python process. If a previous run stops while the
+    dynamic full-app adapter is installed, a cached navigation primitive can point
+    at `_patched_navigation` rather than Streamlit's native function. Reusing that
+    wrapper causes the Member/Admin route list to be appended twice, producing
+    duplicate URL paths such as `My_Profile`.
+    """
+    seen: set[int] = set()
+    current = candidate
+
+    while callable(current) and id(current) not in seen:
+        seen.add(id(current))
+        name = str(getattr(current, "__name__", "") or "")
+        namespace = getattr(current, "__globals__", {})
+        next_callable = None
+
+        if name == "_patched_navigation":
+            next_callable = namespace.get("_ORIGINAL_NAVIGATION")
+        elif name.startswith("_navigation_with_"):
+            next_callable = namespace.get("_BASE_NAVIGATION")
+
+        if not callable(next_callable) or next_callable is current:
+            break
+        current = next_callable
+
+    return current
+
+
 # Streamlit reruns reuse the same Python process. Always restore the process-level
-# routing primitives before installing the current production wrapper.
+# routing primitives before installing the current production wrapper. Navigation
+# receives an additional unwrapping pass so a stale full-app adapter cannot become
+# the cached base and register the same URL path twice.
 _ROUTING_PRIMITIVES = {
     "Page": "_hm_h13r2_base_page",
     "navigation": "_hm_h13r2_base_navigation",
@@ -19,10 +51,11 @@ _ROUTING_PRIMITIVES = {
 for public_name, cache_name in _ROUTING_PRIMITIVES.items():
     current_callable = getattr(st, public_name)
     base_callable = getattr(st, cache_name, None)
-    if base_callable is None:
-        setattr(st, cache_name, current_callable)
-    else:
-        setattr(st, public_name, base_callable)
+    resolved_callable = base_callable if callable(base_callable) else current_callable
+    if public_name == "navigation":
+        resolved_callable = _unwrap_navigation_callable(resolved_callable)
+    setattr(st, cache_name, resolved_callable)
+    setattr(st, public_name, resolved_callable)
 
 _BASE_NAVIGATION = getattr(st, "_hm_h13r2_base_navigation")
 _BASE_SWITCH_PAGE = getattr(st, "_hm_h13r2_base_switch_page")
@@ -32,8 +65,8 @@ from native_bridge import root_authorization_ui as _router_authorization_ui  # n
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
-BUILD = "H13R9-pr205-one-time-refresh-v1"
-ROLLBACK_BUILD = "H13R5-production-direct-login-v1"
+BUILD = "H13R9A-navigation-unwrapper-hotfix-v1"
+ROLLBACK_BUILD = "H13R9-pr205-one-time-refresh-v1"
 
 
 def _native_identity_present() -> bool:
@@ -207,7 +240,7 @@ def _navigation_with_authenticated_root_canonicalization(
         )
         if login_page is None:
             raise RuntimeError(
-                "H13R9 could not locate the registered Login page for OAuth canonicalization."
+                "H13R9A could not locate the registered Login page for OAuth canonicalization."
             )
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
@@ -227,5 +260,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r9_pr205_one_time_refresh__",
+    run_name="__hm_h13r9a_navigation_unwrapper__",
 )
