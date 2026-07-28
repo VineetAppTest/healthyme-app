@@ -1,0 +1,66 @@
+name: Member email validation
+
+on:
+  pull_request:
+    paths:
+      - "components/member_email*.py"
+      - "components/__init__.py"
+      - "pages/31_Admin_Member_Communication.py"
+      - "requirements.txt"
+      - ".github/workflows/member-email-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compile-and-import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Compile member email modules
+        run: |
+          python -m py_compile \
+            components/__init__.py \
+            components/member_email.py \
+            components/member_email_bootstrap.py \
+            components/member_email_followups.py \
+            components/member_email_legacy_reminders.py \
+            components/member_email_retry.py \
+            pages/31_Admin_Member_Communication.py
+
+      - name: Install application dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Verify email bootstrap imports
+        env:
+          STREAMLIT_SERVER_HEADLESS: "true"
+        run: |
+          python - <<'PY'
+          import components
+          from components import assessment_instances, db, profile_publish_control, schedule_timezone
+          from components.member_email import email_delivery_configuration_status
+
+          required = [
+              db.assign_member_package_v1024b14,
+              db.save_resource_assignments,
+              db.add_member_supplement,
+              db.update_member_schedule_status,
+              assessment_instances.create_reassessment_request,
+              profile_publish_control.activate_profile,
+              schedule_timezone.create_timezone_aware_member_schedule,
+              schedule_timezone.request_timezone_aware_reschedule,
+              schedule_timezone.decide_timezone_aware_reschedule_request,
+          ]
+          assert all(callable(item) for item in required)
+          status = email_delivery_configuration_status()
+          assert status["provider"] == "Resend"
+          print("HealthyMe member email bootstrap import validation passed.")
+          PY
