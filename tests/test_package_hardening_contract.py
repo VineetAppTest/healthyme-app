@@ -38,9 +38,10 @@ class PackageHardeningContractTests(unittest.TestCase):
 
     def test_consumption_and_reservation_rules_are_canonical(self):
         sql = (ROOT / "sql/package_hardening_123_02_metrics_and_cost_contract.sql").read_text()
-        self.assertIn("status', '') = 'completed'", sql)
+        compact = "".join(sql.split())
+        self.assertIn("lower(coalesce(value->>'status',''))='completed'", compact)
         self.assertIn("session_counted", sql)
-        self.assertIn("('scheduled','acknowledged')", sql)
+        self.assertIn("lower(coalesce(value->>'status',''))in('scheduled','acknowledged')", compact)
         self.assertIn("sessions_available_to_schedule", sql)
         self.assertIn("hm_package_schedule_subscription_id", sql)
         self.assertIn("never substitutes the latest active package", sql.lower())
