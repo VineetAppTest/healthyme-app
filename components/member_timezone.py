@@ -10,6 +10,8 @@ from components.db import load_db, save_db
 
 
 DEFAULT_MEMBER_TIMEZONE = "Asia/Kolkata"
+CITY_PLACEHOLDER = "Select city"
+CITY_OTHER_OPTION = "Other / Not listed"
 
 # Common aliases used by the LAF country list and historical HealthyMe records.
 _COUNTRY_CODE_ALIASES = {
@@ -51,6 +53,42 @@ _COUNTRY_DEFAULT_TIMEZONES = {
     "NZ": "Pacific/Auckland",
     "PT": "Europe/Lisbon",
     "ES": "Europe/Madrid",
+}
+
+# Compact offline city lists for the most frequently used HealthyMe countries.
+# Exact timezone remains a separate dropdown, so an unlisted city never blocks
+# correct date handling.
+_COUNTRY_CITY_OPTIONS = {
+    "IN": [
+        "Ahmedabad", "Bengaluru", "Bhopal", "Bhubaneswar", "Chandigarh",
+        "Chennai", "Coimbatore", "Dehradun", "Delhi", "Gurugram",
+        "Guwahati", "Hyderabad", "Indore", "Jaipur", "Jammu", "Kochi",
+        "Kolkata", "Lucknow", "Mumbai", "Nagpur", "Nashik", "Noida",
+        "Patna", "Pune", "Raipur", "Ranchi", "Shimla", "Srinagar",
+        "Surat", "Thiruvananthapuram", "Vadodara", "Varanasi",
+        "Visakhapatnam",
+    ],
+    "NL": ["Amsterdam", "Eindhoven", "Groningen", "Rotterdam", "The Hague", "Utrecht"],
+    "GB": ["Belfast", "Birmingham", "Bristol", "Cardiff", "Edinburgh", "Glasgow", "Leeds", "Liverpool", "London", "Manchester"],
+    "AE": ["Abu Dhabi", "Ajman", "Dubai", "Fujairah", "Ras Al Khaimah", "Sharjah"],
+    "SG": ["Singapore"],
+    "US": ["Anchorage", "Boston", "Chicago", "Dallas", "Denver", "Honolulu", "Houston", "Los Angeles", "Miami", "New York", "Phoenix", "San Francisco", "Seattle", "Washington"],
+    "CA": ["Calgary", "Edmonton", "Halifax", "Montreal", "Ottawa", "Toronto", "Vancouver", "Winnipeg"],
+    "AU": ["Adelaide", "Brisbane", "Canberra", "Darwin", "Hobart", "Melbourne", "Perth", "Sydney"],
+    "BR": ["Brasilia", "Manaus", "Rio de Janeiro", "Sao Paulo"],
+    "MX": ["Cancun", "Guadalajara", "Mexico City", "Monterrey", "Tijuana"],
+    "RU": ["Moscow", "Novosibirsk", "Saint Petersburg", "Vladivostok"],
+    "ID": ["Bali", "Bandung", "Denpasar", "Jakarta", "Surabaya"],
+    "KZ": ["Almaty", "Astana"],
+    "NZ": ["Auckland", "Christchurch", "Wellington"],
+    "DE": ["Berlin", "Cologne", "Frankfurt", "Hamburg", "Munich"],
+    "FR": ["Bordeaux", "Lille", "Lyon", "Marseille", "Nice", "Paris", "Toulouse"],
+    "IT": ["Bologna", "Florence", "Milan", "Naples", "Rome", "Turin", "Venice"],
+    "ES": ["Barcelona", "Bilbao", "Madrid", "Seville", "Valencia"],
+    "PT": ["Faro", "Lisbon", "Porto"],
+    "JP": ["Fukuoka", "Kyoto", "Nagoya", "Osaka", "Sapporo", "Tokyo"],
+    "CN": ["Beijing", "Chengdu", "Guangzhou", "Shanghai", "Shenzhen"],
+    "ZA": ["Cape Town", "Durban", "Johannesburg", "Pretoria"],
 }
 
 # City resolution is intentionally local and deterministic. It never uses IP,
@@ -139,6 +177,44 @@ def timezones_for_country(country: object) -> list[str]:
     if not code:
         return []
     return [str(value) for value in pytz.country_timezones.get(code, [])]
+
+
+def cities_for_country(country: object, existing_city: object = "") -> list[str]:
+    """Return deterministic dropdown options without relying on network location."""
+    code = _country_code(country)
+    values = list(_COUNTRY_CITY_OPTIONS.get(code, []))
+
+    # Include cities explicitly supported by the local city-to-timezone resolver.
+    values.extend(
+        city.title()
+        for country_code, city in _CITY_TIMEZONE_OVERRIDES
+        if country_code == code
+    )
+
+    # For countries not covered by the compact list, use the representative
+    # location names embedded in their official IANA timezone identifiers.
+    for timezone_name in timezones_for_country(country):
+        location = timezone_name.rsplit("/", 1)[-1].replace("_", " ").strip()
+        if location and location.lower() not in {"gmt", "utc"}:
+            values.append(location.title())
+
+    current = str(existing_city or "").strip()
+    if current and _normalise(current) not in {
+        _normalise(country),
+        _normalise(CITY_PLACEHOLDER),
+        _normalise(CITY_OTHER_OPTION),
+    }:
+        values.append(current)
+
+    deduplicated = {}
+    for value in values:
+        clean = str(value or "").strip()
+        if clean:
+            deduplicated.setdefault(_normalise(clean), clean)
+
+    return [CITY_PLACEHOLDER] + sorted(
+        deduplicated.values(), key=lambda value: value.casefold()
+    ) + [CITY_OTHER_OPTION]
 
 
 def resolve_member_timezone(
