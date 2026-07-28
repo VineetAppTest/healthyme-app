@@ -1,4 +1,7 @@
 from components import guards, ui_common
+from components.package_hardening_schedule_ui import (
+    install_package_hardening_schedule_ui,
+)
 import components.schedule_timezone_ui as schedule_timezone_ui
 
 
@@ -11,4 +14,5 @@ schedule_timezone_ui.render_back_to_top = ui_common.render_back_to_top
 schedule_timezone_ui.topbar = ui_common.topbar
 schedule_timezone_ui.render_page_nav = ui_common.render_page_nav
 
+install_package_hardening_schedule_ui(schedule_timezone_ui, admin_page=False)
 schedule_timezone_ui.render_member_schedule_page()

@@ -4,6 +4,9 @@ from components import guards, ui_common
 from components.admin_scheduling_timezone_selector import (
     install_admin_scheduling_timezone_selector,
 )
+from components.package_hardening_schedule_ui import (
+    install_package_hardening_schedule_ui,
+)
 import components.schedule_timezone_ui as schedule_timezone_ui
 
 
@@ -17,4 +20,5 @@ schedule_timezone_ui.topbar = ui_common.topbar
 schedule_timezone_ui.render_page_nav = ui_common.render_page_nav
 
 install_admin_scheduling_timezone_selector(schedule_timezone_ui)
+install_package_hardening_schedule_ui(schedule_timezone_ui, admin_page=True)
 schedule_timezone_ui.render_admin_scheduling_page()
