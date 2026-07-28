@@ -27,8 +27,8 @@ from native_bridge import root_authorization_ui as _router_authorization_ui  # n
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
-BUILD = "H13R8B-auth-callback-rerun-v1"
-ROLLBACK_BUILD = "H13R8A-canonical-route-after-login-v1"
+BUILD = "H13R8C-hard-callback-navigation-v1"
+ROLLBACK_BUILD = "H13R8B-auth-callback-rerun-v1"
 
 
 def _native_identity_present() -> bool:
@@ -163,12 +163,12 @@ def _instrument_authorizer_html(document: str) -> str:
 # on every rerun.
 _BASE_AUTHORIZER = getattr(
     _root_authorization_ui,
-    "_hm_h13r8b_base_render_root_authorization_ui",
+    "_hm_h13r8c_base_render_root_authorization_ui",
     None,
 )
 if _BASE_AUTHORIZER is None:
     _BASE_AUTHORIZER = _root_authorization_ui.render_root_authorization_ui
-    _root_authorization_ui._hm_h13r8b_base_render_root_authorization_ui = (
+    _root_authorization_ui._hm_h13r8c_base_render_root_authorization_ui = (
         _BASE_AUTHORIZER
     )
 else:
@@ -177,13 +177,21 @@ else:
 
 def _render_root_authorization_ui_for_native_router(authorization_id: str) -> None:
     if _native_identity_present():
-        # The callback has already created the native Streamlit identity. Consume the
-        # one-time authorization_id, then rerun once so the accepted role router can
-        # select the canonical Member/Admin page. This is the programmatic equivalent
-        # of the manual refresh that production testing proved was still required.
+        # Query-parameter clearing and server reruns did not move the browser from the
+        # consumed OAuth callback. Use a real top-window navigation to the registered
+        # Login route. Because native identity already exists, the accepted role router
+        # immediately forwards that clean request to Member Home or Admin.
         if authorization_id:
-            st.query_params.clear()
-            st.rerun()
+            st.html(
+                """
+                <script>
+                  try { window.top.location.replace('/Login'); }
+                  catch (_error) { window.location.replace('/Login'); }
+                </script>
+                """,
+                unsafe_allow_javascript=True,
+            )
+            st.stop()
         return
 
     original_html = st.html
@@ -205,14 +213,14 @@ _root_authorization_ui.render_root_authorization_ui = (
 )
 
 # The accepted Gate 4/full-member runtime imports the legacy authorizer module
-# directly. Point it at the H13R8B wrapper before the production runtime is compiled.
+# directly. Point it at the H13R8C wrapper before the production runtime is compiled.
 _router_authorization_ui.render_root_authorization_ui = (
     _render_root_authorization_ui_for_native_router
 )
 
-# Do not wrap st.navigation or rewrite the browser URL while OAuth is active. The only
-# explicit callback action is one rerun after the consumed query parameter is cleared;
-# the accepted role router then owns the canonical destination.
+# Do not wrap st.navigation and do not use history.replaceState. The callback performs
+# one real browser navigation after native identity exists, then the accepted router
+# owns the canonical Member/Admin destination.
 
 CUTOVER_ENTRY = (
     Path(__file__).resolve().parent
@@ -222,5 +230,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r8b_auth_callback_rerun__",
+    run_name="__hm_h13r8c_hard_callback_navigation__",
 )
