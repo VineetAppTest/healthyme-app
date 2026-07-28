@@ -8,6 +8,9 @@ from urllib.parse import urlsplit
 
 import streamlit as st
 
+from components import guards as _member_guards
+from components.member_timezone import member_local_today
+
 
 def _unwrap_navigation_callable(candidate: Any) -> Any:
     """Recover Streamlit's native navigation callable from stale runtime wrappers.
@@ -61,12 +64,50 @@ _BASE_NAVIGATION = getattr(st, "_hm_h13r2_base_navigation")
 _BASE_SWITCH_PAGE = getattr(st, "_hm_h13r2_base_switch_page")
 
 
+def _install_member_local_daily_log_defaults() -> None:
+    """Use the member's LAF/profile timezone for Daily Log default dates.
+
+    The accepted Daily Log guard already owns page-entry defaults. Replace only its
+    Daily Log branch, preserving all other guard, authentication and routing logic.
+    Streamlit process reuse is handled by caching the original callable once.
+    """
+    cache_name = "_hm_original_apply_member_page_defaults_before_timezone"
+    original = getattr(_member_guards, cache_name, None)
+    if original is None:
+        original = _member_guards._apply_member_page_defaults
+        setattr(_member_guards, cache_name, original)
+    else:
+        _member_guards._apply_member_page_defaults = original
+
+    def _apply_member_page_defaults_with_local_date(current_page: str) -> None:
+        if current_page != "18_Daily_Log.py":
+            original(current_page)
+            return
+
+        previous_page = st.session_state.get("_hm_previous_member_page")
+        if previous_page != current_page:
+            today = member_local_today(st.session_state.get("user_id", ""))
+            st.session_state["hm_h9a4c_saved_from"] = today
+            st.session_state["hm_h9a4c_saved_to"] = today
+            # Preserve a member-selected or historically loaded journal date during
+            # ordinary reruns. Only a new Daily Log session receives today's date.
+            st.session_state.setdefault("hm_food_journal_date", today)
+        st.session_state["_hm_previous_member_page"] = current_page
+
+    _member_guards._apply_member_page_defaults = (
+        _apply_member_page_defaults_with_local_date
+    )
+
+
+_install_member_local_daily_log_defaults()
+
+
 from native_bridge import root_authorization_ui as _router_authorization_ui  # noqa: E402
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
-BUILD = "H13R9A-navigation-unwrapper-hotfix-v1"
-ROLLBACK_BUILD = "H13R9-pr205-one-time-refresh-v1"
+BUILD = "H13R9B-member-local-daily-log-date-v1"
+ROLLBACK_BUILD = "H13R9A-navigation-unwrapper-hotfix-v1"
 
 
 def _native_identity_present() -> bool:
@@ -240,7 +281,7 @@ def _navigation_with_authenticated_root_canonicalization(
         )
         if login_page is None:
             raise RuntimeError(
-                "H13R9A could not locate the registered Login page for OAuth canonicalization."
+                "H13R9B could not locate the registered Login page for OAuth canonicalization."
             )
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
@@ -260,5 +301,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r9a_navigation_unwrapper__",
+    run_name="__hm_h13r9b_member_local_daily_log_date__",
 )
