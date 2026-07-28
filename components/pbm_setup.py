@@ -18,7 +18,9 @@ from components.pbm_core import (
     with_placeholder,
 )
 from components.profile_builder_module_store import (
-    list_draft_profiles_for_member,
+    EDIT_SCOPE_ALL,
+    EDIT_SCOPE_UNALLOCATED,
+    list_profiles_for_editing,
     save_profile_shell,
 )
 from components.recommendation_profile_store import (
@@ -27,6 +29,9 @@ from components.recommendation_profile_store import (
     load_profile,
 )
 
+ALL_PROFILE_SCOPE = "All editable profiles"
+UNALLOCATED_PROFILE_SCOPE = "Unallocated profiles"
+
 
 def _clear_setup_edit_profile() -> None:
     st.session_state.pop("pbm_setup_edit_profile", None)
@@ -34,66 +39,75 @@ def _clear_setup_edit_profile() -> None:
 
 def _start_new_profile() -> None:
     reset_profile()
-    st.session_state.pop("pbm_setup_edit_member", None)
+    st.session_state.pop("pbm_setup_edit_scope", None)
     st.session_state.pop("pbm_setup_edit_profile", None)
-    st.session_state["pbm_setup_message"] = "New blank profile started."
+    st.session_state["pbm_setup_message"] = "New blank Draft profile started."
+
+
+def _profile_scope_options(member_labels):
+    assigned_members = [label for label in member_labels if label != SELECT_MEMBER]
+    return [ALL_PROFILE_SCOPE, UNALLOCATED_PROFILE_SCOPE] + assigned_members
+
+
+def _scope_value(scope_label, label_to_id):
+    if scope_label == UNALLOCATED_PROFILE_SCOPE:
+        return EDIT_SCOPE_UNALLOCATED
+    if scope_label == ALL_PROFILE_SCOPE:
+        return EDIT_SCOPE_ALL
+    return label_to_id.get(scope_label, EDIT_SCOPE_ALL)
+
+
+def _profile_option_label(row) -> str:
+    status = clean(row.get("status"), "draft").upper()
+    assignment = clean(row.get("assigned_member_label")) or "Unallocated"
+    updated = str(row.get("updated_at") or "")[:16]
+    return (
+        f"{row.get('profile_name', 'Untitled')} · {status} · "
+        f"{assignment} · {updated}"
+    )
 
 
 def render_setup(options) -> None:
     st.markdown(
         "<div class='hm-title'>Recommendation Profile Setup</div>"
-        "<div class='hm-sub'>Create and save the profile shell only. "
-        "Meals, Exercise and Supplements are selected and saved separately.</div>",
+        "<div class='hm-sub'>Create a new profile or load an existing Draft or Active profile for in-place editing.</div>",
         unsafe_allow_html=True,
     )
 
     member_labels, label_to_id, id_to_label, member_message = member_maps()
 
     st.markdown(
-        "<div class='hm-preview'><b>Edit Existing Profile Setup</b><br>"
-        "Select a member first. Only that member's Draft Profiles will be available. "
-        "Loading Setup does not load or change Meal, Exercise or Supplement rows.</div>",
+        "<div class='hm-preview'><b>Edit Existing Recommendation Profile</b><br>"
+        "Use the scope filter to find allocated or unallocated profiles. Load Profile hydrates Setup, Meals, Exercise and Supplements together. "
+        "Saving updates the same Profile ID. Use Clone Setup only when a new Draft/version is intended.</div>",
         unsafe_allow_html=True,
     )
 
-    edit_columns = st.columns([0.28, 0.42, 0.15, 0.15], gap="medium")
-    edit_member_label = edit_columns[0].selectbox(
-        "Member for Setup Editing",
-        member_labels,
-        key="pbm_setup_edit_member",
+    edit_columns = st.columns([0.26, 0.46, 0.14, 0.14], gap="medium")
+    scope_options = _profile_scope_options(member_labels)
+    selected_scope = edit_columns[0].selectbox(
+        "Profile Scope",
+        scope_options,
+        key="pbm_setup_edit_scope",
         on_change=_clear_setup_edit_profile,
     )
-    edit_member_id = label_to_id.get(edit_member_label, "")
+    scope_value = _scope_value(selected_scope, label_to_id)
+    ok_profiles, profiles, profile_message = list_profiles_for_editing(scope_value)
 
-    if edit_member_id:
-        ok_drafts, drafts, draft_message = list_draft_profiles_for_member(edit_member_id)
-    else:
-        ok_drafts, drafts, draft_message = (
-            False,
-            [],
-            "Select a member to view their Draft Profiles.",
-        )
-
-    draft_ids = [""] + [clean(row.get("id")) for row in drafts] if ok_drafts else [""]
-    draft_by_id = {
+    profile_ids = [""] + [clean(row.get("id")) for row in profiles] if ok_profiles else [""]
+    profile_by_id = {
         clean(row.get("id")): row
-        for row in drafts
+        for row in profiles
         if clean(row.get("id"))
     }
 
-    selected_draft = edit_columns[1].selectbox(
-        "Edit Existing Profile Setup",
-        draft_ids,
+    selected_profile = edit_columns[1].selectbox(
+        "Edit Existing Profile",
+        profile_ids,
         format_func=lambda value: (
-            SELECT_DRAFT
-            if not value
-            else (
-                f"{draft_by_id[value].get('profile_name', 'Untitled')} · "
-                f"{str(draft_by_id[value].get('updated_at', ''))[:16]}"
-            )
+            SELECT_DRAFT if not value else _profile_option_label(profile_by_id[value])
         ),
         key="pbm_setup_edit_profile",
-        disabled=not bool(edit_member_id),
     )
 
     edit_columns[2].markdown(
@@ -101,25 +115,18 @@ def render_setup(options) -> None:
         unsafe_allow_html=True,
     )
     if edit_columns[2].button(
-        "Load Setup",
+        "Load Profile",
         use_container_width=True,
-        disabled=not bool(selected_draft),
+        disabled=not bool(selected_profile),
     ):
-        ok, message = load_selected(selected_draft, shell_only=True)
+        ok, message = load_selected(selected_profile, shell_only=False)
         if ok:
-            loaded_member_id = clean(st.session_state["pbm_profile"].get("assigned_member_id"))
-            if loaded_member_id != edit_member_id:
-                reset_profile()
-                st.error(
-                    "The selected profile no longer belongs to the selected member. "
-                    "Nothing was loaded."
-                )
-            else:
-                st.session_state["pbm_setup_message"] = (
-                    "Profile Setup loaded for editing. Recommendation modules "
-                    "were not loaded or changed."
-                )
-                st.rerun()
+            loaded = st.session_state["pbm_profile"]
+            st.session_state["pbm_setup_message"] = (
+                f"{clean(loaded.get('profile_name')) or 'Profile'} loaded with Setup, Meals, Exercise and Supplements. "
+                "Future saves will update the same Profile ID."
+            )
+            st.rerun()
         else:
             st.error(message)
 
@@ -137,11 +144,14 @@ def render_setup(options) -> None:
     if message:
         st.success(message)
 
-    if edit_member_id:
-        if ok_drafts and not drafts:
-            st.caption("No Draft Profiles were found for the selected member.")
-        elif not ok_drafts:
-            st.caption(draft_message)
+    if ok_profiles and not profiles:
+        st.caption("No editable Draft or Active profiles were found for this scope.")
+    elif not ok_profiles:
+        st.caption(profile_message)
+    else:
+        st.caption(
+            f"{profile_message} Archived and replaced profiles remain historical and are intentionally not editable in place."
+        )
 
     profile = st.session_state["pbm_profile"]
     epoch = st.session_state.get("pbm_epoch", 0)
@@ -188,6 +198,7 @@ def render_setup(options) -> None:
             if ok:
                 cloned = profile_from_db(source_profile)
                 cloned["id"] = ""
+                cloned["status"] = "draft"
                 cloned["profile_name"] = f"Copy of {cloned['profile_name']}"
                 cloned["clone_source_profile_id"] = clone_id
                 cloned["clone_source_label"] = source_by_id[clone_id].get(
@@ -196,9 +207,11 @@ def render_setup(options) -> None:
                 )
                 st.session_state["pbm_profile"] = cloned
                 st.session_state["pbm_items"] = []
+                st.session_state["pbm_loaded_profile_id"] = ""
+                st.session_state["pbm_loaded_member_id"] = ""
                 bump_epoch()
                 st.success(
-                    "Profile Setup cloned. Recommendation rows were not copied."
+                    "Profile Setup cloned as a new Draft. Recommendation rows were not copied."
                 )
                 st.rerun()
             st.error(clone_message)
@@ -208,7 +221,8 @@ def render_setup(options) -> None:
             value=profile.get("change_note", ""),
             key=f"pbm_profile_change_note_{epoch}",
         )
-        st.text_input("Profile Status", value="Draft", disabled=True)
+        profile_status = clean(profile.get("status"), "draft").title()
+        st.text_input("Profile Status", value=profile_status, disabled=True)
 
     with right:
         profile["region"] = st.text_input(
@@ -254,14 +268,25 @@ def render_setup(options) -> None:
         current_member = profile.get("assigned_member_label", SELECT_MEMBER)
         if current_member not in member_labels:
             current_member = SELECT_MEMBER
+        active_existing = bool(profile.get("id")) and clean(profile.get("status")).lower() == "active"
         member_label = st.selectbox(
             "Member Assignment",
             member_labels,
             index=member_labels.index(current_member),
             key=f"pbm_profile_member_{epoch}",
+            disabled=active_existing,
+            help=(
+                "Active profile allocation is protected while content is edited. Use Publish Control to replace the active profile."
+                if active_existing
+                else "Draft profiles may remain unallocated or be assigned to a member."
+            ),
         )
         profile["assigned_member_label"] = member_label
         profile["assigned_member_id"] = label_to_id.get(member_label, "")
+        if active_existing:
+            st.caption(
+                "Active allocation is locked here so editing cannot detach or reassign the member."
+            )
         profile["profile_note"] = st.text_area(
             "Profile-level Nutritionist Note",
             value=profile.get("profile_note", ""),
@@ -282,7 +307,7 @@ def render_setup(options) -> None:
         )
         st.text_input(
             "Implementation Status",
-            value="Setup shell and module-specific saves enabled.",
+            value="Existing profile editing and module-specific saves enabled.",
             disabled=True,
         )
 
@@ -297,6 +322,7 @@ def render_setup(options) -> None:
         ok, profile_id, save_message = save_profile_shell(profile_payload())
         if ok:
             profile["id"] = profile_id
+            profile["status"] = clean(profile.get("status"), "draft").lower()
             st.session_state["pbm_loaded_profile_id"] = profile_id
             st.session_state["pbm_loaded_member_id"] = profile.get(
                 "assigned_member_id",
@@ -307,8 +333,8 @@ def render_setup(options) -> None:
             st.error(save_message)
 
     st.markdown(
-        "<div class='hm-preview'><b>Setup boundary</b><br>"
-        "Saving Setup creates or updates the profile shell only. It does not "
-        "create, replace or delete Meal, Exercise or Supplement rows.</div>",
+        "<div class='hm-preview'><b>Editing boundary</b><br>"
+        "Saving Setup updates the loaded Profile ID and preserves its status and allocation. It does not create, replace or delete Meal, Exercise or Supplement rows. "
+        "Clone Setup is the explicit action for creating a new Draft/version.</div>",
         unsafe_allow_html=True,
     )
