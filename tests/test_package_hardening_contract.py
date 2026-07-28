@@ -68,6 +68,17 @@ class PackageHardeningContractTests(unittest.TestCase):
             self.assertIn(field, sql)
         self.assertIn("inclusions_informational_only", sql)
 
+    def test_function_permissions_are_explicit(self):
+        sql = (ROOT / "sql/package_hardening_123_06_function_permissions.sql").read_text()
+        compact = " ".join(sql.split())
+        self.assertIn("from public, anon, authenticated", compact)
+        self.assertIn("hm_admin_assign_member_package", sql)
+        self.assertIn("grant execute on function public.hm_member_schedule_contract() to authenticated", compact.lower())
+        self.assertNotIn(
+            "grant execute on function public.hm_admin_assign_member_package(text,text,date,date,text,numeric,date,text,text,text,text,integer,text) to authenticated",
+            compact.lower(),
+        )
+
     def test_admin_ui_removes_people_control_and_labels_inclusions(self):
         admin_ui = (ROOT / "components/package_hardening_ui.py").read_text()
         schedule_ui = (ROOT / "components/package_hardening_schedule_ui.py").read_text()
