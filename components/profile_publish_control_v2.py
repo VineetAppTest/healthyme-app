@@ -20,43 +20,6 @@ from components.profile_publish_control import (
 )
 
 
-def _render_publish_expander_css() -> None:
-    st.markdown(
-        """
-<style id="hm-profile-publish-expander-v2">
-.hm-publish-review-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
-div[data-testid="stExpander"]:has(.hm-publish-review-anchor){
-  border:1px solid #E3C98E!important;
-  border-radius:14px!important;
-  background:#FFFDF8!important;
-  box-shadow:0 5px 14px rgba(15,23,42,.045)!important;
-  overflow:hidden!important;
-  margin:.45rem 0 .85rem!important;
-}
-div[data-testid="stExpander"]:has(.hm-publish-review-anchor) summary{
-  min-height:2.8rem!important;
-  padding:.62rem .78rem!important;
-  background:linear-gradient(180deg,#FFFDF8 0%,#FFF7E8 100%)!important;
-  color:#064E3B!important;
-  font-weight:900!important;
-  align-items:center!important;
-}
-div[data-testid="stExpander"]:has(.hm-publish-review-anchor) summary p{
-  color:#064E3B!important;
-  font-size:.86rem!important;
-  font-weight:900!important;
-  margin:0!important;
-  line-height:1.25!important;
-}
-div[data-testid="stExpander"]:has(.hm-publish-review-anchor) details[open] summary{
-  border-bottom:1px solid #E3C98E!important;
-}
-</style>
-""",
-        unsafe_allow_html=True,
-    )
-
-
 def _activate_without_typed_confirmation(profile):
     # The Admin/Super Admin role gate is the authorization boundary. The legacy
     # ACTIVATE text entry is intentionally removed from the visible workflow.
@@ -72,7 +35,6 @@ def _render_profile_publish_control_inner() -> None:
         )
         return
 
-    _render_publish_expander_css()
     ok_drafts, drafts, draft_message = load_publish_candidates()
     ok_active, active_profiles, active_message = load_active_profiles()
 
@@ -190,13 +152,9 @@ def _render_profile_publish_control_inner() -> None:
 
     if items:
         with st.expander(
-            "Expand / Collapse — Review Recommendation Rows Before Activation",
+            "Review Recommendation Rows Before Activation",
             expanded=False,
         ):
-            st.markdown(
-                "<span class='hm-publish-review-anchor'></span>",
-                unsafe_allow_html=True,
-            )
             _safe_table(
                 _review_rows(items),
                 "No recommendation rows found for this draft.",
