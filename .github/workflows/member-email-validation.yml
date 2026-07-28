@@ -1,0 +1,35 @@
+name: Member email validation
+
+on:
+  pull_request:
+    paths:
+      - "components/member_email*.py"
+      - "components/__init__.py"
+      - "pages/31_Admin_Member_Communication.py"
+      - ".github/workflows/member-email-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile member email modules
+        run: |
+          python -m py_compile \
+            components/__init__.py \
+            components/member_email.py \
+            components/member_email_bootstrap.py \
+            components/member_email_followups.py \
+            components/member_email_legacy_reminders.py \
+            components/member_email_retry.py \
+            pages/31_Admin_Member_Communication.py
