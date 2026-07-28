@@ -27,8 +27,8 @@ from native_bridge import root_authorization_ui as _router_authorization_ui  # n
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
-BUILD = "H13R8-login-timing-url-cleanup-v1"
-ROLLBACK_BUILD = "H13R7E-meaningful-wellness-authorizer-v1"
+BUILD = "H13R8A-canonical-route-after-login-v1"
+ROLLBACK_BUILD = "H13R8-login-timing-url-cleanup-v1"
 
 
 def _native_identity_present() -> bool:
@@ -84,14 +84,6 @@ def _instrument_authorizer_html(document: str) -> str:
         "        updateElapsed();\n"
         "        if (elapsedTimer) clearInterval(elapsedTimer);\n"
         "        elapsedTimer = null;\n"
-        "      }\n\n"
-        "      function cleanVisibleAuthorizationUrl() {\n"
-        "        try {\n"
-        "          const cleanUrl = new URL(clientLoginUrl, window.top.location.origin);\n"
-        "          window.top.history.replaceState({}, \"\", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);\n"
-        "        } catch (_error) {\n"
-        "          // The server-side post-auth cleanup remains the fallback.\n"
-        "        }\n"
         "      }",
         1,
     )
@@ -151,7 +143,6 @@ def _instrument_authorizer_html(document: str) -> str:
     document = document.replace(
         "        showProgress();\n"
         "        try {",
-        "        cleanVisibleAuthorizationUrl();\n"
         "        setProgressStage(\"Completing secure authorization…\", \"HealthyMe is preparing your protected application access.\");\n"
         "        showProgress();\n"
         "        try {",
@@ -172,12 +163,12 @@ def _instrument_authorizer_html(document: str) -> str:
 # on every rerun.
 _BASE_AUTHORIZER = getattr(
     _root_authorization_ui,
-    "_hm_h13r8_base_render_root_authorization_ui",
+    "_hm_h13r8a_base_render_root_authorization_ui",
     None,
 )
 if _BASE_AUTHORIZER is None:
     _BASE_AUTHORIZER = _root_authorization_ui.render_root_authorization_ui
-    _root_authorization_ui._hm_h13r8_base_render_root_authorization_ui = (
+    _root_authorization_ui._hm_h13r8a_base_render_root_authorization_ui = (
         _BASE_AUTHORIZER
     )
 else:
@@ -186,8 +177,9 @@ else:
 
 def _render_root_authorization_ui_for_native_router(authorization_id: str) -> None:
     if _native_identity_present():
-        # The authorization_id is one-time OAuth state. Clear it without an explicit
-        # st.rerun, then let the accepted role router select Member/Admin normally.
+        # authorization_id is required while the Supabase authorization request is
+        # active. Once native identity exists, clear the consumed query parameter and
+        # allow the accepted role router to perform the canonical page switch.
         if authorization_id:
             st.query_params.clear()
         return
@@ -211,14 +203,15 @@ _root_authorization_ui.render_root_authorization_ui = (
 )
 
 # The accepted Gate 4/full-member runtime imports the legacy authorizer module
-# directly. Point it at the H13R8 wrapper before the production runtime is compiled.
+# directly. Point it at the H13R8A wrapper before the production runtime is compiled.
 _router_authorization_ui.render_root_authorization_ui = (
     _render_root_authorization_ui_for_native_router
 )
 
-# Do not wrap st.navigation for callback cleanup. Earlier navigation wrapping touched
-# page registration and caused duplicate URL-path failures. The accepted role router
-# remains responsible for selecting the canonical Member/Admin page.
+# Do not rewrite the browser URL to /Login while the OAuth request is still active.
+# That desynchronizes Streamlit's internal route from the address bar and causes
+# Member/Admin content to render under /Login. Supabase's returned redirect URL and
+# the accepted role router now remain the only route-changing mechanisms.
 
 CUTOVER_ENTRY = (
     Path(__file__).resolve().parent
@@ -228,5 +221,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r8_login_timing_url_cleanup__",
+    run_name="__hm_h13r8a_canonical_route_after_login__",
 )
