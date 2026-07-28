@@ -1,0 +1,56 @@
+name: Package hardening validation
+
+on:
+  pull_request:
+    paths:
+      - "components/package_hardening*.py"
+      - "components/__init__.py"
+      - "pages/32_Admin_Scheduling.py"
+      - "pages/33_My_Schedule.py"
+      - "pages/41_Admin_Packages.py"
+      - "sql/package_hardening_123*.sql"
+      - "tests/test_package_hardening_contract.py"
+      - ".github/workflows/package-hardening-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compile-and-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install application dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile changed Python modules
+        run: |
+          python -m py_compile \
+            components/__init__.py \
+            components/package_hardening.py \
+            components/package_hardening_bootstrap.py \
+            components/package_hardening_ui.py \
+            components/package_hardening_schedule_ui.py \
+            pages/32_Admin_Scheduling.py \
+            pages/33_My_Schedule.py \
+            pages/41_Admin_Packages.py
+
+      - name: Verify component bootstrap imports
+        run: |
+          python - <<'PY'
+          import components
+          import components.package_hardening
+          import components.package_hardening_ui
+          import components.package_hardening_schedule_ui
+          print("Package hardening imports passed")
+          PY
+
+      - name: Run package contract tests
+        run: python -m unittest tests.test_package_hardening_contract -v
