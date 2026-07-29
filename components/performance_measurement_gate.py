@@ -161,20 +161,19 @@ def install_performance_measurement_gate() -> None:
 
         @functools.wraps(current_finish)
         def finish_with_member_export(page_name: str):
-            summary = current_finish(page_name)
-            resolved_page = str(
-                (summary or {}).get("page") or page_name or ""
-            ).strip()
-            if (
-                resolved_page.startswith(_MEMBER_PAGE_PREFIX)
-                and diagnostics.measurement_enabled()
-            ):
-                _render_member_measurement_panel(
-                    diagnostics,
-                    summary if isinstance(summary, dict) else None,
-                    resolved_page,
-                )
-            return summary
+            resolved_page = str(page_name or "").strip()
+            if resolved_page.startswith(_MEMBER_PAGE_PREFIX):
+                # Member pages use the single direct panel below. Calling the generic
+                # renderer as well would create a second diagnostics section.
+                summary = diagnostics.finish_page_measurement(resolved_page)
+                if diagnostics.measurement_enabled():
+                    _render_member_measurement_panel(
+                        diagnostics,
+                        summary if isinstance(summary, dict) else None,
+                        resolved_page,
+                    )
+                return summary
+            return current_finish(page_name)
 
         setattr(finish_with_member_export, _MEMBER_EXPORT_MARKER, True)
         finish_with_member_export._hm_perf_original = current_finish
