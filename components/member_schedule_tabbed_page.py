@@ -29,6 +29,18 @@ def render_tabbed_member_schedule_page(schedule_ui) -> None:
         "View your package, upcoming sessions and session usage.",
         "Member content",
     )
+
+    # Render navigation before package, timezone and schedule reads so these controls
+    # are immediately available instead of appearing only after the page finishes.
+    schedule_ui.render_page_nav(
+        "My Schedule",
+        back_page="pages/02_Member_Home.py",
+        dashboard_page="pages/02_Member_Home.py",
+        show_evaluation=False,
+        show_dashboard=True,
+        location="top",
+    )
+
     schedule_ui._inject_schedule_styles()
     member_tz = schedule_ui.member_timezone_name(user_id, persist=True)
 
@@ -203,12 +215,4 @@ def render_tabbed_member_schedule_page(schedule_ui) -> None:
     with usage_tab:
         schedule_ui._render_member_ledger(user_id, member_tz)
 
-    schedule_ui.render_page_nav(
-        "My Schedule",
-        back_page="pages/02_Member_Home.py",
-        dashboard_page="pages/02_Member_Home.py",
-        show_evaluation=False,
-        show_dashboard=True,
-        location="bottom",
-    )
     schedule_ui.render_back_to_top()

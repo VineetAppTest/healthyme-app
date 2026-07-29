@@ -8,8 +8,9 @@ from typing import Any
 import streamlit as st
 
 
-_MEMBER_EXPORT_MARKER = "_hm_member_performance_export"
-_MEMBER_FOOTER_MARKER = "_hm_member_performance_footer"
+_MEMBER_EXPORT_MARKER = "_hm_member_performance_export_v2"
+_MEMBER_FOOTER_MARKER = "_hm_member_performance_footer_v2"
+_MEMBER_HOME_FOOTER_MARKER = "_hm_member_home_performance_footer_v2"
 _MEMBER_PAGE_PREFIX = "Member "
 
 
@@ -40,7 +41,7 @@ def _render_member_measurement_panel(
     summary: dict[str, Any] | None,
     page_name: str,
 ) -> None:
-    """Always expose a visible, session-local Member diagnostics control."""
+    """Expose the single visible, session-local Member diagnostics control."""
 
     history = _member_measurement_history(diagnostics.measurement_history())
     enabled = diagnostics.measurement_enabled()
@@ -106,7 +107,7 @@ def _render_member_measurement_panel(
 
 
 def install_performance_measurement_gate() -> None:
-    """Gate measurements and expose a direct, visible Member JSON control."""
+    """Gate measurements and expose one direct Member JSON control."""
 
     from components import performance_diagnostics as diagnostics
 
@@ -128,22 +129,19 @@ def install_performance_measurement_gate() -> None:
 
         @functools.wraps(current_finish)
         def finish_with_member_export(page_name: str):
-            summary = current_finish(page_name)
-            resolved_page = str(
-                (summary or {}).get("page") or page_name or ""
-            ).strip()
-            # When measurement is disabled, the page footer owns the single visible
-            # Start control. Rendering here as well previously created duplicate widget
-            # keys on explicitly measured pages such as My Schedule.
-            if resolved_page.startswith(_MEMBER_PAGE_PREFIX) and (
-                diagnostics.measurement_enabled() or isinstance(summary, dict)
-            ):
-                _render_member_measurement_panel(
-                    diagnostics,
-                    summary if isinstance(summary, dict) else None,
-                    resolved_page,
-                )
-            return summary
+            resolved_page = str(page_name or "").strip()
+            if resolved_page.startswith(_MEMBER_PAGE_PREFIX):
+                # Member pages use the direct panel below. Calling the generic renderer
+                # as well would create a second diagnostics section.
+                summary = diagnostics.finish_page_measurement(resolved_page)
+                if diagnostics.measurement_enabled():
+                    _render_member_measurement_panel(
+                        diagnostics,
+                        summary if isinstance(summary, dict) else None,
+                        resolved_page,
+                    )
+                return summary
+            return current_finish(page_name)
 
         setattr(finish_with_member_export, _MEMBER_EXPORT_MARKER, True)
         finish_with_member_export._hm_perf_original = current_finish
@@ -171,5 +169,29 @@ def install_performance_measurement_gate() -> None:
             setattr(back_to_top_with_visible_start, _MEMBER_FOOTER_MARKER, True)
             back_to_top_with_visible_start._hm_perf_original = current_back_to_top
             ui_common.render_back_to_top = back_to_top_with_visible_start
+
+        current_keepalive = ui_common.inject_keepalive_guard_v96_11
+        if not getattr(current_keepalive, _MEMBER_HOME_FOOTER_MARKER, False):
+
+            @functools.wraps(current_keepalive)
+            def keepalive_with_member_home_start(*args, **kwargs):
+                result = current_keepalive(*args, **kwargs)
+                if not diagnostics.measurement_enabled():
+                    page_name = str(diagnostics._infer_page_name() or "").strip()
+                    if page_name == "Member Home":
+                        _render_member_measurement_panel(
+                            diagnostics,
+                            None,
+                            page_name,
+                        )
+                return result
+
+            setattr(
+                keepalive_with_member_home_start,
+                _MEMBER_HOME_FOOTER_MARKER,
+                True,
+            )
+            keepalive_with_member_home_start._hm_perf_original = current_keepalive
+            ui_common.inject_keepalive_guard_v96_11 = keepalive_with_member_home_start
     except Exception:
         pass
