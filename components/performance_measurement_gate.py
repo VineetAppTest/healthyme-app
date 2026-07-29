@@ -8,6 +8,7 @@ import streamlit as st
 
 
 _MEMBER_EXPORT_MARKER = "_hm_member_performance_export"
+_MEMBER_NOTICE_MARKER = "_hm_member_performance_notice"
 _MEMBER_PAGE_PREFIX = "Member "
 
 
@@ -28,29 +29,44 @@ def _render_member_measurement_export(diagnostics: Any, summary: dict[str, Any])
         return
 
     run_id = str(summary.get("run_id") or "current")
-    st.markdown(
-        "<div style='margin:.6rem 0 .25rem;font-weight:900;color:#064E3B'>"
-        "Member performance evidence</div>",
-        unsafe_allow_html=True,
-    )
-    st.caption(
-        "Download the accumulated Member measurements before logging out. "
-        "The file contains timing, operation names and aggregate counts only."
-    )
-    st.download_button(
-        "Download Member measurement JSON",
-        data=json.dumps(history, indent=2, sort_keys=True),
-        file_name="healthyme_member_performance_measurements.json",
-        mime="application/json",
-        use_container_width=True,
-        key=f"hm_member_perf_download_{run_id}",
-    )
+    with st.container(border=True):
+        st.markdown("### Performance measurement active")
+        st.caption(
+            "Download the accumulated Member measurements before logging out. "
+            "The file contains timing, operation names and aggregate counts only."
+        )
+        st.download_button(
+            f"Download Member measurement JSON ({len(history)} runs)",
+            data=json.dumps(history, indent=2, sort_keys=True),
+            file_name="healthyme_member_performance_measurements.json",
+            mime="application/json",
+            use_container_width=True,
+            key=f"hm_member_perf_download_{run_id}",
+        )
 
 
 def install_performance_measurement_gate() -> None:
     """Gate measurements and expose a direct, session-local Member JSON download."""
 
+    from components import guards
     from components import performance_diagnostics as diagnostics
+
+    current_require_member = guards.require_member
+    if not getattr(current_require_member, _MEMBER_NOTICE_MARKER, False):
+
+        @functools.wraps(current_require_member)
+        def require_member_with_measurement_notice(*args, **kwargs):
+            result = current_require_member(*args, **kwargs)
+            if diagnostics.measurement_enabled():
+                st.info(
+                    "Performance measurement is active. Complete the Member journey, "
+                    "then use the download control at the bottom of the page before logout."
+                )
+            return result
+
+        setattr(require_member_with_measurement_notice, _MEMBER_NOTICE_MARKER, True)
+        require_member_with_measurement_notice._hm_perf_original = current_require_member
+        guards.require_member = require_member_with_measurement_notice
 
     current_begin = diagnostics.begin_page_measurement
     if not getattr(current_begin, "_hm_perf_enable_gate", False):
