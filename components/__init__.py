@@ -10,6 +10,7 @@ from components.member_email_legacy_reminders import (
 from components.member_message_display_cleanup import (
     install_member_message_display_cleanup,
 )
+from components.performance_diagnostics import install_backend_measurement
 
 
 # Expired authorization recovery is installed before app.py captures the accepted
@@ -27,3 +28,8 @@ install_legacy_schedule_reminder_delivery()
 # Remove only the repeated scheduling cards from the generic message feed; stored
 # records, audit history and email delivery remain unchanged.
 install_member_message_display_cleanup()
+
+# Measurement-only instrumentation is installed last so it observes the final
+# production callables without changing authentication, routing or business logic.
+# It records nothing unless a page has started an explicit measurement run.
+install_backend_measurement()
