@@ -1,12 +1,11 @@
 from components import guards, ui_common
-from components.package_hardening_schedule_ui import (
-    install_package_hardening_schedule_ui,
-)
-from components.sprint1_schedule_hygiene import (
-    install_sprint1_schedule_hygiene,
-)
+from components.package_hardening_schedule_ui import install_package_hardening_schedule_ui
+from components.performance_diagnostics import begin_page_measurement, finish_and_render_page_diagnostics
+from components.sprint1_schedule_hygiene import install_sprint1_schedule_hygiene
 import components.schedule_timezone_ui as schedule_timezone_ui
 
+
+begin_page_measurement("Member My Schedule")
 
 schedule_timezone_ui.require_admin = guards.require_admin
 schedule_timezone_ui.require_member = guards.require_member
@@ -20,3 +19,4 @@ schedule_timezone_ui.render_page_nav = ui_common.render_page_nav
 install_package_hardening_schedule_ui(schedule_timezone_ui, admin_page=False)
 install_sprint1_schedule_hygiene(schedule_timezone_ui)
 schedule_timezone_ui.render_member_schedule_page()
+finish_and_render_page_diagnostics("Member My Schedule")
