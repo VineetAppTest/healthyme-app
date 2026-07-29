@@ -99,9 +99,9 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         bootstrap = (ROOT / "components/__init__.py").read_text()
         gate = (ROOT / "components/performance_measurement_gate.py").read_text()
         self.assertIn("install_member_home_schedule_presentation()", bootstrap)
-        self.assertIn("Performance measurement active", gate)
+        self.assertIn("Member Performance Diagnostics", gate)
+        self.assertIn("Start Member performance measurement", gate)
         self.assertIn("Download Member measurement JSON", gate)
-        self.assertIn("?perf=1", gate)
         self.assertIn("before logging out", gate)
 
 
