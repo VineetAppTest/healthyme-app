@@ -6,6 +6,11 @@ on:
       - "components/package_hardening*.py"
       - "components/package_value_formula_ui.py"
       - "components/admin_scheduling_default_navigation.py"
+      - "components/daily_guidance_today_default.py"
+      - "components/form_hygiene.py"
+      - "components/login_expiry_recovery.py"
+      - "components/sprint1_schedule_hygiene.py"
+      - "components/current_build.py"
       - "components/__init__.py"
       - "pages/31_Admin_Member_Communication.py"
       - "pages/32_Admin_Scheduling.py"
@@ -14,6 +19,7 @@ on:
       - "sql/package_hardening_123*.sql"
       - "tests/test_package_hardening_contract.py"
       - "tests/test_ui_corrections_ss1_ss3.py"
+      - "tests/test_sprint1_stability_hygiene.py"
       - ".github/workflows/package-hardening-validation.yml"
 
 permissions:
@@ -38,6 +44,11 @@ jobs:
         run: |
           python -m py_compile \
             components/__init__.py \
+            components/current_build.py \
+            components/daily_guidance_today_default.py \
+            components/form_hygiene.py \
+            components/login_expiry_recovery.py \
+            components/sprint1_schedule_hygiene.py \
             components/package_hardening.py \
             components/package_hardening_bootstrap.py \
             components/package_hardening_ui.py \
@@ -53,12 +64,16 @@ jobs:
         run: |
           python - <<'PY'
           import components
+          import components.daily_guidance_today_default
+          import components.form_hygiene
+          import components.login_expiry_recovery
+          import components.sprint1_schedule_hygiene
           import components.package_hardening
           import components.package_hardening_ui
           import components.package_hardening_schedule_ui
           import components.package_value_formula_ui
           import components.admin_scheduling_default_navigation
-          print("Package hardening and UI correction imports passed")
+          print("Package hardening and Sprint 1 imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -66,4 +81,5 @@ jobs:
           python -m unittest \
             tests.test_package_hardening_contract \
             tests.test_ui_corrections_ss1_ss3 \
+            tests.test_sprint1_stability_hygiene \
             -v

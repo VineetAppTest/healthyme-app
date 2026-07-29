@@ -8,13 +8,18 @@ from __future__ import annotations
 
 from typing import Any
 
+from components.daily_guidance_today_default import (
+    install_daily_guidance_today_default,
+)
+
+
 APP_BUILD_VERSION = "v102.4B15S3H13R1"
 APP_BUILD_LABEL = "Restore Working Supabase Login"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 
 def apply_current_build(ui_common_module: Any | None = None) -> None:
-    """Patch ui_common build globals at runtime for pages that import topbar."""
+    """Patch build globals and install narrow current-page compatibility helpers."""
     if ui_common_module is None:
         import components.ui_common as ui_common_module
     try:
@@ -22,3 +27,4 @@ def apply_current_build(ui_common_module: Any | None = None) -> None:
         ui_common_module.APP_BUILD_LABEL = APP_BUILD_LABEL
     except Exception:
         pass
+    install_daily_guidance_today_default()
