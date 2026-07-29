@@ -16,6 +16,10 @@ from components.member_email_retry import (
     retry_failed_member_emails,
     retry_member_email_delivery,
 )
+from components.performance_diagnostics import (
+    begin_page_measurement,
+    finish_and_render_page_diagnostics,
+)
 from components.ui_common import (
     apply_luxe_theme,
     compact_topbar,
@@ -32,6 +36,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+begin_page_measurement("Admin Messages")
 inject_global_styles()
 apply_luxe_theme()
 require_admin()
@@ -123,6 +128,7 @@ From the Streamlit Community Cloud workspace, open the menu beside this app, the
 members = list_members()
 if not members:
     st.info("No members available.")
+    finish_and_render_page_diagnostics("Admin Messages")
     st.stop()
 
 member_options = {f"{m['name']} — {m['email']}": m["id"] for m in members}
@@ -262,3 +268,4 @@ render_page_nav(
     location="bottom",
 )
 render_back_to_top()
+finish_and_render_page_diagnostics("Admin Messages")
