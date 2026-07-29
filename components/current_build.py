@@ -13,8 +13,8 @@ from components.daily_guidance_today_default import (
 )
 
 
-APP_BUILD_VERSION = "v102.4B15S3H13R1"
-APP_BUILD_LABEL = "Restore Working Supabase Login"
+APP_BUILD_VERSION = "v102.5S1"
+APP_BUILD_LABEL = "Consolidated Admin Scheduling"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 

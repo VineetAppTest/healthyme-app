@@ -43,17 +43,17 @@ class UiCorrectionsSs1Ss3Tests(unittest.TestCase):
             self.assertIn(text, page)
 
     def test_default_scheduling_state_renders_back_navigation_before_stop(self):
-        guard = (ROOT / "components/admin_scheduling_default_navigation.py").read_text()
         page = (ROOT / "pages/32_Admin_Scheduling.py").read_text()
-        nav_position = guard.index("render_page_nav")
-        stop_position = guard.index("st.stop()")
+        renderer = (
+            ROOT / "components/admin_scheduling_consolidated.py"
+        ).read_text()
+        self.assertIn("render_admin_scheduling_consolidated_page", page)
+        nav_position = renderer.index('_render_return_navigation("top")')
+        context_position = renderer.index("context = _render_context_selector()")
+        stop_position = renderer.index("st.stop()", context_position)
+        self.assertLess(nav_position, context_position)
         self.assertLess(nav_position, stop_position)
-        self.assertIn('back_page="pages/10_Admin_Dashboard.py"', guard)
-        self.assertIn("install_default_scheduling_navigation", page)
-        self.assertLess(
-            page.index("install_admin_scheduling_timezone_selector"),
-            page.index("install_default_scheduling_navigation(schedule_timezone_ui)"),
-        )
+        self.assertIn('st.switch_page("pages/10_Admin_Dashboard.py")', renderer)
 
 
 if __name__ == "__main__":
