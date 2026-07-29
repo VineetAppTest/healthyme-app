@@ -132,7 +132,12 @@ def install_performance_measurement_gate() -> None:
             resolved_page = str(
                 (summary or {}).get("page") or page_name or ""
             ).strip()
-            if resolved_page.startswith(_MEMBER_PAGE_PREFIX):
+            # When measurement is disabled, the page footer owns the single visible
+            # Start control. Rendering here as well previously created duplicate widget
+            # keys on explicitly measured pages such as My Schedule.
+            if resolved_page.startswith(_MEMBER_PAGE_PREFIX) and (
+                diagnostics.measurement_enabled() or isinstance(summary, dict)
+            ):
                 _render_member_measurement_panel(
                     diagnostics,
                     summary if isinstance(summary, dict) else None,
