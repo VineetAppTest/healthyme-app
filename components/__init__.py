@@ -35,10 +35,10 @@ install_legacy_schedule_reminder_delivery()
 # records, audit history and email delivery remain unchanged.
 install_member_message_display_cleanup()
 
-# Measurement-only instrumentation is installed last so it observes the final
-# production callables without changing authentication, routing or business logic.
-# Backend timings are recorded only while an explicit or temporary guarded-page run
-# is active, and measurements remain in Streamlit session state only.
+# Measurement instrumentation is installed last so it observes the final production
+# callables without changing authentication, routing or business logic. Measurements
+# remain in Streamlit session state; a Member can download the sanitized JSON directly
+# before logout, so no diagnostic evidence is stored in HealthyMe application data.
 install_backend_measurement()
 install_page_boundary_measurement()
 install_performance_measurement_gate()
