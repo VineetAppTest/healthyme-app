@@ -204,15 +204,19 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, bootstrap)
 
-    def test_member_diagnostics_render_once_and_cover_member_home(self):
+    def test_member_diagnostics_are_single_and_cover_member_home(self):
         source = (ROOT / "components/performance_measurement_gate.py").read_text()
-        self.assertIn("_MEMBER_PANEL_RENDERED_KEY", source)
-        self.assertIn("if st.session_state.get(_MEMBER_PANEL_RENDERED_KEY, False)", source)
-        self.assertIn("_reset_member_panel_guard()", source)
-        self.assertIn('"inject_keepalive_guard_v96_11"', source)
-        self.assertIn('"render_back_to_top"', source)
-        self.assertIn("require_member_with_panel_reset", source)
-        for forbidden in ("st.switch_page", "logout_current_user", "require_admin"):
+        self.assertIn("back_to_top_with_visible_start", source)
+        self.assertIn("keepalive_with_member_home_start", source)
+        self.assertIn('page_name == "Member Home"', source)
+        self.assertIn("diagnostics.finish_page_measurement(resolved_page)", source)
+        self.assertIn("Member pages use the direct panel below", source)
+        for forbidden in (
+            "st.switch_page",
+            "logout_current_user",
+            "require_admin",
+            "require_member",
+        ):
             self.assertNotIn(forbidden, source)
 
 
