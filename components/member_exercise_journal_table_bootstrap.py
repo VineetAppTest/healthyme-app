@@ -7,7 +7,8 @@ import inspect
 
 _DAILY_LOG_LABELS = ("Food Journal", "Exercise Journal")
 _DAILY_LOG_SELECTOR_KEY = "hm_daily_log_active_journal"
-_DAILY_LOG_TAB_MARKER = "_hm_daily_log_tab_isolation"
+_DAILY_LOG_TAB_MARKER = "_hm_daily_log_tab_isolation_v2"
+_DAILY_LOG_LAYOUT_MARKER = "_hm_exercise_layout_v4_installed"
 
 
 def _is_daily_log_call(frame_globals: dict) -> bool:
@@ -17,14 +18,15 @@ def _is_daily_log_call(frame_globals: dict) -> bool:
     )
 
 
-def _install_daily_log_tab_isolation() -> None:
-    """Render only the selected Daily Log journal body.
+def _activate_daily_log_journal(label: str) -> None:
+    import streamlit as st
 
-    Streamlit's native tabs execute both bodies and rely on browser-side hiding. The
-    production screenshot showed that hiding fail, exposing Food Journal above Exercise
-    Journal. This wrapper is limited to the exact Daily Log two-tab call and leaves all
-    other application tabs untouched.
-    """
+    if label in _DAILY_LOG_LABELS:
+        st.session_state[_DAILY_LOG_SELECTOR_KEY] = label
+
+
+def _install_daily_log_tab_isolation() -> None:
+    """Render only the selected Daily Log journal using stable button controls."""
 
     import streamlit as st
 
@@ -43,66 +45,80 @@ def _install_daily_log_tab_isolation() -> None:
         ):
             return current_tabs(labels, *args, **kwargs)
 
+        current_value = st.session_state.get(
+            _DAILY_LOG_SELECTOR_KEY,
+            _DAILY_LOG_LABELS[0],
+        )
+        if current_value not in _DAILY_LOG_LABELS:
+            current_value = _DAILY_LOG_LABELS[0]
+            st.session_state[_DAILY_LOG_SELECTOR_KEY] = current_value
+
         st.markdown(
             """
-<style id="hm-daily-log-journal-selector-v2">
-div[data-testid="stButtonGroup"]{width:100%;margin:.15rem 0 1rem 0;}
-div[data-testid="stButtonGroup"] [role="radiogroup"]{width:100%;gap:.55rem;}
-div[data-testid="stButtonGroup"] button{
-  flex:1 1 0!important;min-height:2.75rem!important;border:1.4px solid #D8A84E!important;
-  border-radius:14px!important;background:#FFFFFF!important;color:#064E3B!important;
-  font-weight:900!important;box-shadow:0 7px 16px rgba(6,78,59,.07)!important;
+<style id="hm-daily-log-journal-selector-v3">
+.hm-daily-log-selector-anchor{
+  display:block;height:0;min-height:0;margin:0;padding:0;overflow:hidden;
 }
-div[data-testid="stButtonGroup"] button[aria-pressed="true"],
-div[data-testid="stButtonGroup"] button[aria-checked="true"],
-div[data-testid="stButtonGroup"] button[aria-selected="true"],
-div[data-testid="stButtonGroup"] button[data-selected="true"],
-div[data-testid="stButtonGroup"] [role="radio"][aria-checked="true"],
-div[data-testid="stButtonGroup"] label:has(input:checked){
-  background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
-  color:#FFFFFF!important;border-color:#064E3B!important;
-  box-shadow:0 10px 20px rgba(6,78,59,.18)!important;
+.hm-daily-log-selector-anchor + div[data-testid="stHorizontalBlock"]{
+  gap:.55rem!important;margin:.05rem 0 .20rem 0!important;
 }
-div[data-testid="stButtonGroup"] button[aria-pressed="true"] *,
-div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
-div[data-testid="stButtonGroup"] button[aria-selected="true"] *,
-div[data-testid="stButtonGroup"] button[data-selected="true"] *,
-div[data-testid="stButtonGroup"] [role="radio"][aria-checked="true"] *,
-div[data-testid="stButtonGroup"] label:has(input:checked) *{color:#FFFFFF!important;}
+.hm-daily-log-selector-anchor + div[data-testid="stHorizontalBlock"] button{
+  min-height:2.75rem!important;border-radius:14px!important;font-weight:900!important;
+}
 </style>
             """,
             unsafe_allow_html=True,
         )
-
-        selector_kwargs = {
-            "key": _DAILY_LOG_SELECTOR_KEY,
-            "selection_mode": "single",
-            "label_visibility": "collapsed",
-            "width": "stretch",
-        }
-        if _DAILY_LOG_SELECTOR_KEY not in st.session_state:
-            selector_kwargs["default"] = _DAILY_LOG_LABELS[0]
-
-        selected = st.segmented_control(
-            "Daily Log Journal",
-            list(_DAILY_LOG_LABELS),
-            **selector_kwargs,
+        st.markdown(
+            "<span class='hm-daily-log-selector-anchor'></span>",
+            unsafe_allow_html=True,
         )
-        # Never write to the widget's own session-state key after the widget has been
-        # instantiated. Streamlit rejects that mutation and repeated switching could
-        # previously surface as a page failure/return to Member Home.
-        selected = selected if selected in _DAILY_LOG_LABELS else _DAILY_LOG_LABELS[0]
+        food_col, exercise_col = st.columns(2, gap="small")
+        with food_col:
+            st.button(
+                "Food Journal",
+                key="hm_daily_log_food_journal_selector",
+                type=(
+                    "primary"
+                    if current_value == _DAILY_LOG_LABELS[0]
+                    else "secondary"
+                ),
+                use_container_width=True,
+                on_click=_activate_daily_log_journal,
+                args=(_DAILY_LOG_LABELS[0],),
+            )
+        with exercise_col:
+            st.button(
+                "Exercise Journal",
+                key="hm_daily_log_exercise_journal_selector",
+                type=(
+                    "primary"
+                    if current_value == _DAILY_LOG_LABELS[1]
+                    else "secondary"
+                ),
+                use_container_width=True,
+                on_click=_activate_daily_log_journal,
+                args=(_DAILY_LOG_LABELS[1],),
+            )
 
         food_renderer = frame_globals.get("_render_food_journal")
         exercise_renderer = frame_globals.get("_render_exercise_journal")
 
         if callable(food_renderer) and not getattr(
-            food_renderer, _DAILY_LOG_TAB_MARKER, False
+            food_renderer,
+            _DAILY_LOG_TAB_MARKER,
+            False,
         ):
 
             @functools.wraps(food_renderer)
             def render_food_only_when_selected(*render_args, **render_kwargs):
-                if selected != _DAILY_LOG_LABELS[0]:
+                if (
+                    st.session_state.get(
+                        _DAILY_LOG_SELECTOR_KEY,
+                        _DAILY_LOG_LABELS[0],
+                    )
+                    != _DAILY_LOG_LABELS[0]
+                ):
                     return None
                 return food_renderer(*render_args, **render_kwargs)
 
@@ -110,12 +126,20 @@ div[data-testid="stButtonGroup"] label:has(input:checked) *{color:#FFFFFF!import
             frame_globals["_render_food_journal"] = render_food_only_when_selected
 
         if callable(exercise_renderer) and not getattr(
-            exercise_renderer, _DAILY_LOG_TAB_MARKER, False
+            exercise_renderer,
+            _DAILY_LOG_TAB_MARKER,
+            False,
         ):
 
             @functools.wraps(exercise_renderer)
             def render_exercise_only_when_selected(*render_args, **render_kwargs):
-                if selected != _DAILY_LOG_LABELS[1]:
+                if (
+                    st.session_state.get(
+                        _DAILY_LOG_SELECTOR_KEY,
+                        _DAILY_LOG_LABELS[0],
+                    )
+                    != _DAILY_LOG_LABELS[1]
+                ):
                     return None
                 return exercise_renderer(*render_args, **render_kwargs)
 
@@ -124,8 +148,6 @@ div[data-testid="stButtonGroup"] label:has(input:checked) *{color:#FFFFFF!import
                 "_render_exercise_journal"
             ] = render_exercise_only_when_selected
 
-        # The page's existing ``with food_tab`` / ``with exercise_tab`` structure is
-        # preserved. These neutral contexts execute the conditional wrappers above.
         return [contextlib.nullcontext(), contextlib.nullcontext()]
 
     setattr(isolated_daily_log_tabs, _DAILY_LOG_TAB_MARKER, True)
@@ -134,15 +156,24 @@ div[data-testid="stButtonGroup"] label:has(input:checked) *{color:#FFFFFF!import
 
 
 def install_member_exercise_journal_table() -> None:
-    """Install the editable journal renderer and isolate the Daily Log selector."""
+    """Install the aligned Exercise Journal and the stable Daily Log selector."""
 
     from components import member_exercise_journal as journal
-    from components.member_exercise_journal_table import (
-        render_member_exercise_journal_table,
+    from components.member_exercise_journal_layout_v4 import (
+        render_member_exercise_journal_layout_v4,
     )
 
-    if not getattr(journal, "_hm_editable_table_installed", False):
+    if not getattr(journal, _DAILY_LOG_LAYOUT_MARKER, False):
+
+        @functools.wraps(render_member_exercise_journal_layout_v4)
+        def contextual_exercise_renderer(*args, **kwargs):
+            if kwargs.get("key_prefix") == "hm_daily_log_exercise":
+                kwargs["heading"] = ""
+                kwargs["show_build_note"] = False
+            return render_member_exercise_journal_layout_v4(*args, **kwargs)
+
+        journal.render_member_exercise_journal = contextual_exercise_renderer
         journal._hm_editable_table_installed = True
-        journal.render_member_exercise_journal = render_member_exercise_journal_table
+        setattr(journal, _DAILY_LOG_LAYOUT_MARKER, True)
 
     _install_daily_log_tab_isolation()
