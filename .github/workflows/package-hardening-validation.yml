@@ -32,6 +32,7 @@ on:
       - "tests/test_performance_measurement_only.py"
       - "tests/test_admin_performance_optimization.py"
       - "tests/test_admin_uiux_corrections.py"
+      - "tests/test_member_performance_export.py"
       - ".github/workflows/package-hardening-validation.yml"
 
 permissions:
@@ -102,7 +103,7 @@ jobs:
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening, Scheduling, diagnostics, performance and Admin UI UX imports passed")
+          print("Package hardening, Scheduling, diagnostics, performance, Member export and Admin UI UX imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -115,4 +116,5 @@ jobs:
             tests.test_performance_measurement_only \
             tests.test_admin_performance_optimization \
             tests.test_admin_uiux_corrections \
+            tests.test_member_performance_export \
             -v
