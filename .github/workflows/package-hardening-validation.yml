@@ -13,17 +13,21 @@ on:
       - "components/login_expiry_recovery.py"
       - "components/member_message_display_cleanup.py"
       - "components/member_home_schedule_presentation.py"
+      - "components/member_schedule_tabbed_page.py"
+      - "components/member_exercise_journal*.py"
       - "components/performance_diagnostics.py"
       - "components/performance_measurement_gate.py"
       - "components/sprint1_schedule_hygiene.py"
       - "components/current_build.py"
       - "components/__init__.py"
       - "pages/10_Admin_Dashboard.py"
+      - "pages/18_Daily_Log.py"
       - "pages/31_Admin_Member_Communication.py"
       - "pages/32_Admin_Scheduling.py"
       - "pages/33_My_Schedule.py"
       - "pages/38_Admin_Recommendation_Profile_Builder.py"
       - "pages/41_Admin_Packages.py"
+      - "pages/41_Member_Exercise.py"
       - "pages/47_Admin_Performance_Diagnostics.py"
       - "sql/package_hardening_123*.sql"
       - "tests/test_package_hardening_contract.py"
@@ -35,6 +39,7 @@ on:
       - "tests/test_admin_uiux_corrections.py"
       - "tests/test_member_performance_export.py"
       - "tests/test_member_home_schedule_presentation.py"
+      - "tests/test_member_schedule_tabs_exercise_journal.py"
       - ".github/workflows/package-hardening-validation.yml"
 
 permissions:
@@ -65,6 +70,10 @@ jobs:
             components/login_expiry_recovery.py \
             components/member_message_display_cleanup.py \
             components/member_home_schedule_presentation.py \
+            components/member_schedule_tabbed_page.py \
+            components/member_exercise_journal.py \
+            components/member_exercise_journal_table.py \
+            components/member_exercise_journal_table_bootstrap.py \
             components/performance_diagnostics.py \
             components/performance_measurement_gate.py \
             components/admin_performance_optimization.py \
@@ -79,11 +88,13 @@ jobs:
             components/admin_scheduling_timezone_selector.py \
             components/admin_scheduling_consolidated.py \
             pages/10_Admin_Dashboard.py \
+            pages/18_Daily_Log.py \
             pages/31_Admin_Member_Communication.py \
             pages/32_Admin_Scheduling.py \
             pages/33_My_Schedule.py \
             pages/38_Admin_Recommendation_Profile_Builder.py \
             pages/41_Admin_Packages.py \
+            pages/41_Member_Exercise.py \
             pages/47_Admin_Performance_Diagnostics.py
 
       - name: Verify component imports
@@ -95,6 +106,10 @@ jobs:
           import components.login_expiry_recovery
           import components.member_message_display_cleanup
           import components.member_home_schedule_presentation
+          import components.member_schedule_tabbed_page
+          import components.member_exercise_journal
+          import components.member_exercise_journal_table
+          import components.member_exercise_journal_table_bootstrap
           import components.performance_diagnostics
           import components.performance_measurement_gate
           import components.admin_performance_optimization
@@ -107,7 +122,7 @@ jobs:
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening, Scheduling, diagnostics, performance, Member schedule/export and Admin UI UX imports passed")
+          print("Package hardening, Scheduling, diagnostics, performance, Member schedule/exercise and Admin UI UX imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -122,4 +137,5 @@ jobs:
             tests.test_admin_uiux_corrections \
             tests.test_member_performance_export \
             tests.test_member_home_schedule_presentation \
+            tests.test_member_schedule_tabs_exercise_journal \
             -v
