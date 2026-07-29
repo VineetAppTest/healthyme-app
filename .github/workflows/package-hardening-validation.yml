@@ -4,7 +4,10 @@ on:
   pull_request:
     paths:
       - "components/package_hardening*.py"
+      - "components/package_total_value_ui.py"
+      - "components/admin_scheduling_default_navigation.py"
       - "components/__init__.py"
+      - "pages/31_Admin_Member_Communication.py"
       - "pages/32_Admin_Scheduling.py"
       - "pages/33_My_Schedule.py"
       - "pages/41_Admin_Packages.py"
@@ -38,6 +41,9 @@ jobs:
             components/package_hardening_bootstrap.py \
             components/package_hardening_ui.py \
             components/package_hardening_schedule_ui.py \
+            components/package_total_value_ui.py \
+            components/admin_scheduling_default_navigation.py \
+            pages/31_Admin_Member_Communication.py \
             pages/32_Admin_Scheduling.py \
             pages/33_My_Schedule.py \
             pages/41_Admin_Packages.py
@@ -49,6 +55,8 @@ jobs:
           import components.package_hardening
           import components.package_hardening_ui
           import components.package_hardening_schedule_ui
+          import components.package_total_value_ui
+          import components.admin_scheduling_default_navigation
           print("Package hardening imports passed")
           PY
 
