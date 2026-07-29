@@ -67,6 +67,17 @@ st.markdown(
       margin-left:.35rem;
     }
     .hm-email-error{color:#9A3412;font-size:.76rem;line-height:1.35;margin-top:.30rem;}
+    .hm-secret-guide{
+      border:1px solid #D8A84E;
+      background:#FFF9EC;
+      border-radius:14px;
+      padding:.8rem .9rem;
+      margin:.45rem 0 .85rem;
+      color:#475569;
+      font-size:.84rem;
+      line-height:1.5;
+    }
+    .hm-secret-guide b{color:#064E3B;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -91,6 +102,25 @@ else:
         "Member updates will remain recorded in HealthyMe, but outbound email cannot be delivered until "
         + " and ".join(missing)
         + " is configured in Streamlit secrets."
+    )
+    st.markdown(
+        """
+        <div class='hm-secret-guide'>
+          <b>Where to add these production secrets</b><br>
+          Open the HealthyMe app in <b>Streamlit Community Cloud</b>, choose
+          <b>Manage app → Settings → Secrets</b>, and add the values in TOML format.
+          Save the secrets and restart/reboot the app so the production process reloads them.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.code(
+        'RESEND_API_KEY = "re_xxxxxxxxx"\n'
+        'RESEND_FROM_EMAIL = "HealthyMe <updates@your-verified-domain.com>"',
+        language="toml",
+    )
+    st.caption(
+        "RESEND_FROM may be used instead of RESEND_FROM_EMAIL. The sender address must be allowed by the connected Resend account/domain."
     )
 
 members = list_members()
