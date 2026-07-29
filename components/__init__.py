@@ -7,6 +7,9 @@ from components.member_email_followups import install_member_email_followups
 from components.member_email_legacy_reminders import (
     install_legacy_schedule_reminder_delivery,
 )
+from components.member_message_display_cleanup import (
+    install_member_message_display_cleanup,
+)
 
 
 # Expired authorization recovery is installed before app.py captures the accepted
@@ -19,3 +22,8 @@ install_package_hardening()
 install_member_email_notifications()
 install_member_email_followups()
 install_legacy_schedule_reminder_delivery()
+
+# Member Home already renders scheduling in its dedicated Upcoming Schedule area.
+# Remove only the repeated scheduling cards from the generic message feed; stored
+# records, audit history and email delivery remain unchanged.
+install_member_message_display_cleanup()
