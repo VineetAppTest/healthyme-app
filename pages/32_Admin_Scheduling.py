@@ -10,6 +10,9 @@ from components.admin_scheduling_timezone_selector import (
 from components.package_hardening_schedule_ui import (
     install_package_hardening_schedule_ui,
 )
+from components.sprint1_schedule_hygiene import (
+    install_sprint1_schedule_hygiene,
+)
 import components.schedule_timezone_ui as schedule_timezone_ui
 
 
@@ -25,4 +28,5 @@ schedule_timezone_ui.render_page_nav = ui_common.render_page_nav
 install_admin_scheduling_timezone_selector(schedule_timezone_ui)
 install_default_scheduling_navigation(schedule_timezone_ui)
 install_package_hardening_schedule_ui(schedule_timezone_ui, admin_page=True)
+install_sprint1_schedule_hygiene(schedule_timezone_ui)
 schedule_timezone_ui.render_admin_scheduling_page()
