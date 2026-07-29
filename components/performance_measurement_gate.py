@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import functools
 import json
+import re
 from typing import Any
 
 import streamlit as st
 
 
 _MEMBER_EXPORT_MARKER = "_hm_member_performance_export"
+_MEMBER_FOOTER_MARKER = "_hm_member_performance_footer"
 _MEMBER_PAGE_PREFIX = "Member "
 
 
@@ -22,31 +24,89 @@ def _member_measurement_history(history: list[dict[str, Any]]) -> list[dict[str,
     ]
 
 
-def _render_member_measurement_export(diagnostics: Any, summary: dict[str, Any]) -> None:
-    history = _member_measurement_history(diagnostics.measurement_history())
-    if not history:
-        return
+def _key_part(value: object) -> str:
+    return re.sub(r"[^a-zA-Z0-9]+", "_", str(value or "member")).strip("_").lower()
 
-    run_id = str(summary.get("run_id") or "current")
+
+def _set_perf_query(value: str) -> None:
+    try:
+        st.query_params["perf"] = value
+    except Exception:
+        pass
+
+
+def _render_member_measurement_panel(
+    diagnostics: Any,
+    summary: dict[str, Any] | None,
+    page_name: str,
+) -> None:
+    """Always expose a visible, session-local Member diagnostics control."""
+
+    history = _member_measurement_history(diagnostics.measurement_history())
+    enabled = diagnostics.measurement_enabled()
+    run_id = str((summary or {}).get("run_id") or _key_part(page_name) or "current")
+
     with st.container(border=True):
-        st.markdown("### Performance measurement active")
+        st.markdown("### Member Performance Diagnostics")
+        if not enabled:
+            st.caption(
+                "Start temporary measurement, use Member Home, Daily Log and My Schedule, "
+                "then download the accumulated JSON before logging out. Only timing, "
+                "operation names and aggregate counts are captured."
+            )
+            if st.button(
+                "Start Member performance measurement",
+                key=f"hm_member_perf_start_{run_id}",
+                use_container_width=True,
+            ):
+                diagnostics.clear_measurement_history()
+                diagnostics.set_measurement_enabled(True)
+                _set_perf_query("1")
+                st.rerun()
+            return
+
         st.caption(
-            "This panel appears only when Member measurement is enabled with `?perf=1`. "
-            "Download the accumulated Member measurements before logging out. "
-            "The file contains timing, operation names and aggregate counts only."
+            "Measurement is active for this browser session. Navigate through the Member "
+            "journey and download the JSON before logging out."
         )
-        st.download_button(
-            f"Download Member measurement JSON ({len(history)} runs)",
-            data=json.dumps(history, indent=2, sort_keys=True),
-            file_name="healthyme_member_performance_measurements.json",
-            mime="application/json",
-            use_container_width=True,
-            key=f"hm_member_perf_download_{run_id}",
-        )
+        if history:
+            st.download_button(
+                f"Download Member measurement JSON ({len(history)} runs)",
+                data=json.dumps(history, indent=2, sort_keys=True),
+                file_name="healthyme_member_performance_measurements.json",
+                mime="application/json",
+                use_container_width=True,
+                key=f"hm_member_perf_download_{run_id}",
+            )
+        else:
+            st.caption(
+                "Measurement has started. Open or interact with a Member page to create "
+                "the first recorded run."
+            )
+
+        stop_col, clear_col = st.columns(2)
+        with stop_col:
+            if st.button(
+                "Stop measurement",
+                key=f"hm_member_perf_stop_{run_id}",
+                use_container_width=True,
+            ):
+                diagnostics.set_measurement_enabled(False)
+                _set_perf_query("0")
+                st.rerun()
+        with clear_col:
+            if st.button(
+                "Clear recorded runs",
+                key=f"hm_member_perf_clear_{run_id}",
+                use_container_width=True,
+                disabled=not bool(history),
+            ):
+                diagnostics.clear_measurement_history()
+                st.rerun()
 
 
 def install_performance_measurement_gate() -> None:
-    """Gate measurements and expose a direct, session-local Member JSON download."""
+    """Gate measurements and expose a direct, visible Member JSON control."""
 
     from components import performance_diagnostics as diagnostics
 
@@ -72,14 +132,39 @@ def install_performance_measurement_gate() -> None:
             resolved_page = str(
                 (summary or {}).get("page") or page_name or ""
             ).strip()
-            if (
-                isinstance(summary, dict)
-                and diagnostics.measurement_enabled()
-                and resolved_page.startswith(_MEMBER_PAGE_PREFIX)
-            ):
-                _render_member_measurement_export(diagnostics, summary)
+            if resolved_page.startswith(_MEMBER_PAGE_PREFIX):
+                _render_member_measurement_panel(
+                    diagnostics,
+                    summary if isinstance(summary, dict) else None,
+                    resolved_page,
+                )
             return summary
 
         setattr(finish_with_member_export, _MEMBER_EXPORT_MARKER, True)
         finish_with_member_export._hm_perf_original = current_finish
         diagnostics.finish_and_render_page_diagnostics = finish_with_member_export
+
+    try:
+        from components import ui_common
+
+        current_back_to_top = ui_common.render_back_to_top
+        if not getattr(current_back_to_top, _MEMBER_FOOTER_MARKER, False):
+
+            @functools.wraps(current_back_to_top)
+            def back_to_top_with_visible_start(*args, **kwargs):
+                result = current_back_to_top(*args, **kwargs)
+                if not diagnostics.measurement_enabled():
+                    page_name = str(diagnostics._infer_page_name() or "").strip()
+                    if page_name.startswith(_MEMBER_PAGE_PREFIX):
+                        _render_member_measurement_panel(
+                            diagnostics,
+                            None,
+                            page_name,
+                        )
+                return result
+
+            setattr(back_to_top_with_visible_start, _MEMBER_FOOTER_MARKER, True)
+            back_to_top_with_visible_start._hm_perf_original = current_back_to_top
+            ui_common.render_back_to_top = back_to_top_with_visible_start
+    except Exception:
+        pass

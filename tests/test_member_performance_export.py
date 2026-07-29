@@ -29,6 +29,14 @@ class MemberPerformanceExportTests(unittest.TestCase):
         self.assertIn("diagnostics.measurement_history()", source)
         self.assertIn("before logging out", source)
 
+    def test_member_start_control_is_visible_before_measurement_is_enabled(self):
+        source = (ROOT / "components/performance_measurement_gate.py").read_text()
+        self.assertIn("Member Performance Diagnostics", source)
+        self.assertIn("Start Member performance measurement", source)
+        self.assertIn("back_to_top_with_visible_start", source)
+        self.assertIn("not diagnostics.measurement_enabled()", source)
+        self.assertIn("diagnostics._infer_page_name()", source)
+
     def test_member_export_does_not_persist_diagnostics(self):
         source = (ROOT / "components/performance_measurement_gate.py").read_text()
         for forbidden in (
@@ -48,6 +56,8 @@ class MemberPerformanceExportTests(unittest.TestCase):
         self.assertIn("_hm_perf_enable_gate", source)
         self.assertIn("diagnostics.begin_page_measurement", source)
         self.assertIn("diagnostics.finish_and_render_page_diagnostics", source)
+        self.assertIn("diagnostics.set_measurement_enabled(True)", source)
+        self.assertIn("diagnostics.set_measurement_enabled(False)", source)
 
     def test_admin_instructions_cover_member_download(self):
         workspace = (ROOT / "pages/47_Admin_Performance_Diagnostics.py").read_text()
