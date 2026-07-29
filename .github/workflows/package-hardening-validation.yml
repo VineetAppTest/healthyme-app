@@ -10,18 +10,23 @@ on:
       - "components/form_hygiene.py"
       - "components/login_expiry_recovery.py"
       - "components/member_message_display_cleanup.py"
+      - "components/performance_diagnostics.py"
       - "components/sprint1_schedule_hygiene.py"
       - "components/current_build.py"
       - "components/__init__.py"
+      - "pages/10_Admin_Dashboard.py"
       - "pages/31_Admin_Member_Communication.py"
       - "pages/32_Admin_Scheduling.py"
       - "pages/33_My_Schedule.py"
+      - "pages/38_Admin_Recommendation_Profile_Builder.py"
       - "pages/41_Admin_Packages.py"
+      - "pages/47_Admin_Performance_Diagnostics.py"
       - "sql/package_hardening_123*.sql"
       - "tests/test_package_hardening_contract.py"
       - "tests/test_ui_corrections_ss1_ss3.py"
       - "tests/test_sprint1_stability_hygiene.py"
       - "tests/test_admin_scheduling_consolidated.py"
+      - "tests/test_performance_measurement_only.py"
       - ".github/workflows/package-hardening-validation.yml"
 
 permissions:
@@ -51,6 +56,7 @@ jobs:
             components/form_hygiene.py \
             components/login_expiry_recovery.py \
             components/member_message_display_cleanup.py \
+            components/performance_diagnostics.py \
             components/sprint1_schedule_hygiene.py \
             components/package_hardening.py \
             components/package_hardening_bootstrap.py \
@@ -60,10 +66,13 @@ jobs:
             components/admin_scheduling_default_navigation.py \
             components/admin_scheduling_timezone_selector.py \
             components/admin_scheduling_consolidated.py \
+            pages/10_Admin_Dashboard.py \
             pages/31_Admin_Member_Communication.py \
             pages/32_Admin_Scheduling.py \
             pages/33_My_Schedule.py \
-            pages/41_Admin_Packages.py
+            pages/38_Admin_Recommendation_Profile_Builder.py \
+            pages/41_Admin_Packages.py \
+            pages/47_Admin_Performance_Diagnostics.py
 
       - name: Verify component imports
         run: |
@@ -73,6 +82,7 @@ jobs:
           import components.form_hygiene
           import components.login_expiry_recovery
           import components.member_message_display_cleanup
+          import components.performance_diagnostics
           import components.sprint1_schedule_hygiene
           import components.package_hardening
           import components.package_hardening_ui
@@ -81,7 +91,7 @@ jobs:
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening and consolidated Scheduling imports passed")
+          print("Package hardening, consolidated Scheduling and performance diagnostics imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -91,4 +101,5 @@ jobs:
             tests.test_ui_corrections_ss1_ss3 \
             tests.test_sprint1_stability_hygiene \
             tests.test_admin_scheduling_consolidated \
+            tests.test_performance_measurement_only \
             -v
