@@ -45,7 +45,7 @@ def _install_daily_log_tab_isolation() -> None:
 
         st.markdown(
             """
-<style id="hm-daily-log-journal-selector-v1">
+<style id="hm-daily-log-journal-selector-v2">
 div[data-testid="stButtonGroup"]{width:100%;margin:.15rem 0 1rem 0;}
 div[data-testid="stButtonGroup"] [role="radiogroup"]{width:100%;gap:.55rem;}
 div[data-testid="stButtonGroup"] button{
@@ -53,11 +53,22 @@ div[data-testid="stButtonGroup"] button{
   border-radius:14px!important;background:#FFFFFF!important;color:#064E3B!important;
   font-weight:900!important;box-shadow:0 7px 16px rgba(6,78,59,.07)!important;
 }
-div[data-testid="stButtonGroup"] button[aria-pressed="true"]{
+div[data-testid="stButtonGroup"] button[aria-pressed="true"],
+div[data-testid="stButtonGroup"] button[aria-checked="true"],
+div[data-testid="stButtonGroup"] button[aria-selected="true"],
+div[data-testid="stButtonGroup"] button[data-selected="true"],
+div[data-testid="stButtonGroup"] [role="radio"][aria-checked="true"],
+div[data-testid="stButtonGroup"] label:has(input:checked){
   background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;
   color:#FFFFFF!important;border-color:#064E3B!important;
+  box-shadow:0 10px 20px rgba(6,78,59,.18)!important;
 }
-div[data-testid="stButtonGroup"] button[aria-pressed="true"] *{color:#FFFFFF!important;}
+div[data-testid="stButtonGroup"] button[aria-pressed="true"] *,
+div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
+div[data-testid="stButtonGroup"] button[aria-selected="true"] *,
+div[data-testid="stButtonGroup"] button[data-selected="true"] *,
+div[data-testid="stButtonGroup"] [role="radio"][aria-checked="true"] *,
+div[data-testid="stButtonGroup"] label:has(input:checked) *{color:#FFFFFF!important;}
 </style>
             """,
             unsafe_allow_html=True,
@@ -77,9 +88,10 @@ div[data-testid="stButtonGroup"] button[aria-pressed="true"] *{color:#FFFFFF!imp
             list(_DAILY_LOG_LABELS),
             **selector_kwargs,
         )
-        if selected not in _DAILY_LOG_LABELS:
-            selected = _DAILY_LOG_LABELS[0]
-            st.session_state[_DAILY_LOG_SELECTOR_KEY] = selected
+        # Never write to the widget's own session-state key after the widget has been
+        # instantiated. Streamlit rejects that mutation and repeated switching could
+        # previously surface as a page failure/return to Member Home.
+        selected = selected if selected in _DAILY_LOG_LABELS else _DAILY_LOG_LABELS[0]
 
         food_renderer = frame_globals.get("_render_food_journal")
         exercise_renderer = frame_globals.get("_render_exercise_journal")
@@ -90,12 +102,7 @@ div[data-testid="stButtonGroup"] button[aria-pressed="true"] *{color:#FFFFFF!imp
 
             @functools.wraps(food_renderer)
             def render_food_only_when_selected(*render_args, **render_kwargs):
-                if (
-                    st.session_state.get(
-                        _DAILY_LOG_SELECTOR_KEY, _DAILY_LOG_LABELS[0]
-                    )
-                    != _DAILY_LOG_LABELS[0]
-                ):
+                if selected != _DAILY_LOG_LABELS[0]:
                     return None
                 return food_renderer(*render_args, **render_kwargs)
 
@@ -108,12 +115,7 @@ div[data-testid="stButtonGroup"] button[aria-pressed="true"] *{color:#FFFFFF!imp
 
             @functools.wraps(exercise_renderer)
             def render_exercise_only_when_selected(*render_args, **render_kwargs):
-                if (
-                    st.session_state.get(
-                        _DAILY_LOG_SELECTOR_KEY, _DAILY_LOG_LABELS[0]
-                    )
-                    != _DAILY_LOG_LABELS[1]
-                ):
+                if selected != _DAILY_LOG_LABELS[1]:
                     return None
                 return exercise_renderer(*render_args, **render_kwargs)
 
