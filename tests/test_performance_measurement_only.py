@@ -60,7 +60,7 @@ class PerformanceMeasurementOnlyTests(unittest.TestCase):
         self.assertIn("inject_keepalive_guard_v96_11", source)
         self.assertIn("install_page_boundary_measurement()", bootstrap)
 
-    def test_admin_workspace_and_build_label_are_present(self):
+    def test_admin_workspace_and_current_build_label_are_present(self):
         dashboard = (ROOT / "pages/10_Admin_Dashboard.py").read_text()
         workspace = (ROOT / "pages/47_Admin_Performance_Diagnostics.py").read_text()
         diagnostics = (ROOT / "components/performance_diagnostics.py").read_text()
@@ -68,8 +68,8 @@ class PerformanceMeasurementOnlyTests(unittest.TestCase):
         self.assertIn("Performance Diagnostics", dashboard)
         self.assertIn("Start measurement", workspace)
         self.assertIn("Download measurement JSON", diagnostics)
-        self.assertIn('APP_BUILD_VERSION = "v102.5M1"', build)
-        self.assertIn('APP_BUILD_LABEL = "Performance Measurement Only"', build)
+        self.assertIn('APP_BUILD_VERSION = "v102.5P1"', build)
+        self.assertIn('APP_BUILD_LABEL = "Admin Performance Optimisation"', build)
 
 
 if __name__ == "__main__":
