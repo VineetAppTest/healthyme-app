@@ -2,6 +2,7 @@ import streamlit as st
 
 import components.admin_scheduling_consolidated as admin_scheduling
 from components.admin_performance_optimization import admin_scheduling_render_scope
+from components.admin_uiux_corrections import admin_scheduling_uiux_scope
 from components.performance_diagnostics import (
     begin_page_measurement,
     finish_and_render_page_diagnostics,
@@ -54,5 +55,6 @@ st.markdown(
 )
 
 with admin_scheduling_render_scope(admin_scheduling):
-    admin_scheduling.render_admin_scheduling_consolidated_page()
+    with admin_scheduling_uiux_scope(admin_scheduling):
+        admin_scheduling.render_admin_scheduling_consolidated_page()
 finish_and_render_page_diagnostics("Admin Scheduling")
