@@ -36,6 +36,14 @@ class Sprint1StabilityHygieneTests(unittest.TestCase):
             self.assertIn(key, source)
         self.assertIn('if result and not result.get("error")', source)
 
+    def test_member_reschedule_page_installs_form_hygiene(self):
+        page = (ROOT / "pages/33_My_Schedule.py").read_text()
+        self.assertIn("install_sprint1_schedule_hygiene", page)
+        self.assertLess(
+            page.index("install_sprint1_schedule_hygiene(schedule_timezone_ui)"),
+            page.index("render_member_schedule_page()"),
+        )
+
     def test_admin_schedule_status_is_latest_first(self):
         source = (ROOT / "components/sprint1_schedule_hygiene.py").read_text()
         self.assertIn("reverse=True", source)
