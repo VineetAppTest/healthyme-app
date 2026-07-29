@@ -3,7 +3,13 @@ import streamlit as st
 from components.admin_scheduling_consolidated import (
     render_admin_scheduling_consolidated_page,
 )
+from components.performance_diagnostics import (
+    begin_page_measurement,
+    finish_and_render_page_diagnostics,
+)
 
+
+begin_page_measurement("Admin Scheduling")
 
 # Keep Scheduling navigation consistent with the rest of HealthyMe: Back on the
 # left edge and Dashboard on the right edge at both the top and bottom of the page.
@@ -49,3 +55,4 @@ st.markdown(
 )
 
 render_admin_scheduling_consolidated_page()
+finish_and_render_page_diagnostics("Admin Scheduling")
