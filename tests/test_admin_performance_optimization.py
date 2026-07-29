@@ -3,7 +3,12 @@ from __future__ import annotations
 import pathlib
 import unittest
 
-from components.admin_performance_optimization import LazySubscriptionMetrics
+from components.admin_performance_optimization import (
+    LazySubscriptionMetrics,
+    _PROFILE_REQUEST_CACHE,
+    _context_cached,
+    admin_profile_builder_render_scope,
+)
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -22,15 +27,38 @@ class AdminPerformanceOptimizationTests(unittest.TestCase):
         self.assertEqual(metrics["sessions_remaining"], 4)
         self.assertEqual(calls, ["subscription-1"])
 
+    def test_profile_reads_reuse_within_render_and_refresh_next_render(self):
+        calls = []
+
+        def loader():
+            calls.append(len(calls) + 1)
+            return {"version": calls[-1]}
+
+        wrapped = _context_cached(
+            "test.profile",
+            loader,
+            _PROFILE_REQUEST_CACHE,
+            "_hm_test_profile_cached",
+        )
+        with admin_profile_builder_render_scope():
+            self.assertEqual(wrapped(), {"version": 1})
+            self.assertEqual(wrapped(), {"version": 1})
+        with admin_profile_builder_render_scope():
+            self.assertEqual(wrapped(), {"version": 2})
+        self.assertEqual(calls, [1, 2])
+
     def test_profile_builder_installs_cache_before_modular_import(self):
         source = (ROOT / "pages/38_Admin_Recommendation_Profile_Builder.py").read_text()
         self.assertLess(
             source.index("install_profile_builder_performance()"),
             source.index("from components.profile_builder_modular import"),
         )
+        self.assertIn("with admin_profile_builder_render_scope():", source)
         optimizer = (ROOT / "components/admin_performance_optimization.py").read_text()
-        self.assertIn("PROFILE_CACHE_TTL_SECONDS = 60", optimizer)
+        self.assertIn("_PROFILE_REQUEST_CACHE.reset(token)", optimizer)
         self.assertIn("patch_profile_builder_source_detail_layout", optimizer)
+        self.assertNotIn("st.cache_data", optimizer)
+        self.assertNotIn("PROFILE_CACHE_TTL_SECONDS", optimizer)
 
     def test_packages_use_lazy_metrics_only_on_consumption(self):
         source = (ROOT / "pages/41_Admin_Packages.py").read_text()
@@ -38,7 +66,10 @@ class AdminPerformanceOptimizationTests(unittest.TestCase):
         self.assertIn("install_admin_packages_performance", source)
         self.assertIn("LazySubscriptionMetrics", optimizer)
         self.assertIn('"hm_member_package_subscriptions"', optimizer)
-        self.assertNotIn("for row in rows:\n        row[\"metrics\"] = package_contract.get_subscription_metrics", optimizer)
+        self.assertNotIn(
+            'for row in rows:\n        row["metrics"] = package_contract.get_subscription_metrics',
+            optimizer,
+        )
 
     def test_scheduling_cache_is_request_scoped(self):
         source = (ROOT / "pages/32_Admin_Scheduling.py").read_text()
