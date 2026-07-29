@@ -10,6 +10,9 @@ from components.member_email_legacy_reminders import (
 from components.member_message_display_cleanup import (
     install_member_message_display_cleanup,
 )
+from components.member_home_schedule_presentation import (
+    install_member_home_schedule_presentation,
+)
 from components.performance_diagnostics import (
     install_backend_measurement,
     install_page_boundary_measurement,
@@ -29,6 +32,10 @@ install_package_hardening()
 install_member_email_notifications()
 install_member_email_followups()
 install_legacy_schedule_reminder_delivery()
+
+# Member Home presents only still-open future meeting cards. The wrapper changes
+# ordering/visibility only; schedule status and package consumption remain untouched.
+install_member_home_schedule_presentation()
 
 # Member Home already renders scheduling in its dedicated Upcoming Schedule area.
 # Remove only the repeated scheduling cards from the generic message feed; stored
