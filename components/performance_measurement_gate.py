@@ -8,8 +8,10 @@ from typing import Any
 import streamlit as st
 
 
-_MEMBER_EXPORT_MARKER = "_hm_member_performance_export"
-_MEMBER_FOOTER_MARKER = "_hm_member_performance_footer"
+_MEMBER_EXPORT_MARKER = "_hm_member_performance_export_v2"
+_MEMBER_FOOTER_MARKER = "_hm_member_performance_footer_v2"
+_MEMBER_GUARD_MARKER = "_hm_member_performance_guard_v2"
+_MEMBER_PANEL_RENDERED_KEY = "_hm_member_performance_panel_rendered"
 _MEMBER_PAGE_PREFIX = "Member "
 
 
@@ -35,12 +37,26 @@ def _set_perf_query(value: str) -> None:
         pass
 
 
+def _reset_member_panel_guard() -> None:
+    try:
+        st.session_state[_MEMBER_PANEL_RENDERED_KEY] = False
+    except Exception:
+        pass
+
+
 def _render_member_measurement_panel(
     diagnostics: Any,
     summary: dict[str, Any] | None,
     page_name: str,
 ) -> None:
-    """Always expose a visible, session-local Member diagnostics control."""
+    """Expose one visible, session-local Member diagnostics control per page render."""
+
+    try:
+        if st.session_state.get(_MEMBER_PANEL_RENDERED_KEY, False):
+            return
+        st.session_state[_MEMBER_PANEL_RENDERED_KEY] = True
+    except Exception:
+        pass
 
     history = _member_measurement_history(diagnostics.measurement_history())
     enabled = diagnostics.measurement_enabled()
@@ -106,9 +122,26 @@ def _render_member_measurement_panel(
 
 
 def install_performance_measurement_gate() -> None:
-    """Gate measurements and expose a direct, visible Member JSON control."""
+    """Gate measurements and expose one direct Member JSON control."""
 
     from components import performance_diagnostics as diagnostics
+
+    try:
+        from components import guards
+
+        current_require_member = guards.require_member
+        if not getattr(current_require_member, _MEMBER_GUARD_MARKER, False):
+
+            @functools.wraps(current_require_member)
+            def require_member_with_panel_reset(*args, **kwargs):
+                _reset_member_panel_guard()
+                return current_require_member(*args, **kwargs)
+
+            setattr(require_member_with_panel_reset, _MEMBER_GUARD_MARKER, True)
+            require_member_with_panel_reset._hm_perf_original = current_require_member
+            guards.require_member = require_member_with_panel_reset
+    except Exception:
+        pass
 
     current_begin = diagnostics.begin_page_measurement
     if not getattr(current_begin, "_hm_perf_enable_gate", False):
@@ -132,11 +165,9 @@ def install_performance_measurement_gate() -> None:
             resolved_page = str(
                 (summary or {}).get("page") or page_name or ""
             ).strip()
-            # When measurement is disabled, the page footer owns the single visible
-            # Start control. Rendering here as well previously created duplicate widget
-            # keys on explicitly measured pages such as My Schedule.
-            if resolved_page.startswith(_MEMBER_PAGE_PREFIX) and (
-                diagnostics.measurement_enabled() or isinstance(summary, dict)
+            if (
+                resolved_page.startswith(_MEMBER_PAGE_PREFIX)
+                and diagnostics.measurement_enabled()
             ):
                 _render_member_measurement_panel(
                     diagnostics,
@@ -152,12 +183,25 @@ def install_performance_measurement_gate() -> None:
     try:
         from components import ui_common
 
-        current_back_to_top = ui_common.render_back_to_top
-        if not getattr(current_back_to_top, _MEMBER_FOOTER_MARKER, False):
+        for attribute in (
+            "render_back_to_top",
+            "inject_keepalive_guard_v96_11",
+        ):
+            current_footer = getattr(ui_common, attribute, None)
+            if not callable(current_footer) or getattr(
+                current_footer,
+                _MEMBER_FOOTER_MARKER,
+                False,
+            ):
+                continue
 
-            @functools.wraps(current_back_to_top)
-            def back_to_top_with_visible_start(*args, **kwargs):
-                result = current_back_to_top(*args, **kwargs)
+            @functools.wraps(current_footer)
+            def footer_with_visible_start(
+                *args,
+                __current_footer=current_footer,
+                **kwargs,
+            ):
+                result = __current_footer(*args, **kwargs)
                 if not diagnostics.measurement_enabled():
                     page_name = str(diagnostics._infer_page_name() or "").strip()
                     if page_name.startswith(_MEMBER_PAGE_PREFIX):
@@ -168,8 +212,8 @@ def install_performance_measurement_gate() -> None:
                         )
                 return result
 
-            setattr(back_to_top_with_visible_start, _MEMBER_FOOTER_MARKER, True)
-            back_to_top_with_visible_start._hm_perf_original = current_back_to_top
-            ui_common.render_back_to_top = back_to_top_with_visible_start
+            setattr(footer_with_visible_start, _MEMBER_FOOTER_MARKER, True)
+            footer_with_visible_start._hm_perf_original = current_footer
+            setattr(ui_common, attribute, footer_with_visible_start)
     except Exception:
         pass
