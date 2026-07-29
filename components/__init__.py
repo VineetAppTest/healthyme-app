@@ -14,6 +14,9 @@ from components.performance_diagnostics import (
     install_backend_measurement,
     install_page_boundary_measurement,
 )
+from components.performance_measurement_gate import (
+    install_performance_measurement_gate,
+)
 
 
 # Expired authorization recovery is installed before app.py captures the accepted
@@ -38,3 +41,4 @@ install_member_message_display_cleanup()
 # is active, and measurements remain in Streamlit session state only.
 install_backend_measurement()
 install_page_boundary_measurement()
+install_performance_measurement_gate()
