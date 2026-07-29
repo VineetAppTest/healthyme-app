@@ -5,6 +5,7 @@ on:
     paths:
       - "components/package_hardening*.py"
       - "components/package_value_formula_ui.py"
+      - "components/admin_performance_optimization.py"
       - "components/admin_scheduling*.py"
       - "components/daily_guidance_today_default.py"
       - "components/form_hygiene.py"
@@ -28,6 +29,7 @@ on:
       - "tests/test_sprint1_stability_hygiene.py"
       - "tests/test_admin_scheduling_consolidated.py"
       - "tests/test_performance_measurement_only.py"
+      - "tests/test_admin_performance_optimization.py"
       - ".github/workflows/package-hardening-validation.yml"
 
 permissions:
@@ -59,6 +61,7 @@ jobs:
             components/member_message_display_cleanup.py \
             components/performance_diagnostics.py \
             components/performance_measurement_gate.py \
+            components/admin_performance_optimization.py \
             components/sprint1_schedule_hygiene.py \
             components/package_hardening.py \
             components/package_hardening_bootstrap.py \
@@ -86,6 +89,7 @@ jobs:
           import components.member_message_display_cleanup
           import components.performance_diagnostics
           import components.performance_measurement_gate
+          import components.admin_performance_optimization
           import components.sprint1_schedule_hygiene
           import components.package_hardening
           import components.package_hardening_ui
@@ -94,7 +98,7 @@ jobs:
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening, consolidated Scheduling and performance diagnostics imports passed")
+          print("Package hardening, consolidated Scheduling, performance diagnostics and Admin optimization imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -105,4 +109,5 @@ jobs:
             tests.test_sprint1_stability_hygiene \
             tests.test_admin_scheduling_consolidated \
             tests.test_performance_measurement_only \
+            tests.test_admin_performance_optimization \
             -v
