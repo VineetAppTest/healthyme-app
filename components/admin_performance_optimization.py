@@ -7,39 +7,75 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any, Callable
 
-import streamlit as st
 
-
-PROFILE_CACHE_TTL_SECONDS = 60
-_PROFILE_PATCH_MARKER = "_hm_admin_profile_performance_v1"
+_PROFILE_PATCH_MARKER = "_hm_admin_profile_performance_v2"
 _PACKAGE_PATCH_MARKER = "_hm_admin_package_performance_v1"
 _SCHEDULING_PATCH_MARKER = "_hm_admin_scheduling_performance_v1"
+_PROFILE_REQUEST_CACHE: ContextVar[dict[tuple[Any, ...], Any] | None] = ContextVar(
+    "hm_admin_profile_request_cache",
+    default=None,
+)
 _SCHEDULING_REQUEST_CACHE: ContextVar[dict[tuple[Any, ...], Any] | None] = ContextVar(
     "hm_admin_scheduling_request_cache",
     default=None,
 )
 
 
-def _cached_read(function: Callable[..., Any]) -> Callable[..., Any]:
-    return st.cache_data(
-        ttl=PROFILE_CACHE_TTL_SECONDS,
-        show_spinner=False,
-    )(function)
+def _freeze(value: Any) -> Any:
+    if isinstance(value, dict):
+        return tuple(sorted((str(key), _freeze(item)) for key, item in value.items()))
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze(item) for item in value)
+    if isinstance(value, set):
+        return tuple(sorted(_freeze(item) for item in value))
+    try:
+        hash(value)
+        return value
+    except Exception:
+        return repr(value)
+
+
+def _context_cached(
+    name: str,
+    function: Callable[..., Any],
+    cache_context: ContextVar[dict[tuple[Any, ...], Any] | None],
+    marker: str,
+) -> Callable[..., Any]:
+    if getattr(function, marker, False):
+        return function
+
+    @functools.wraps(function)
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
+        cache = cache_context.get()
+        if cache is None:
+            return function(*args, **kwargs)
+        key = (name, _freeze(args), _freeze(kwargs))
+        if key not in cache:
+            cache[key] = function(*args, **kwargs)
+        return copy.deepcopy(cache[key])
+
+    setattr(wrapped, marker, True)
+    return wrapped
 
 
 def install_profile_builder_performance() -> None:
-    """Cache stable Profile Builder reads without changing save or publish behavior."""
+    """Reuse stable Profile Builder reads only within the current page render."""
 
     import components.profile_builder_source_contract as source_contract
     import components.recommendation_profile_store as profile_store
 
     if not getattr(source_contract, _PROFILE_PATCH_MARKER, False):
         original_builder = source_contract.build_profile_builder_source_contract
-        cached_builder = _cached_read(original_builder)
+        request_builder = _context_cached(
+            "profile.source_contract",
+            original_builder,
+            _PROFILE_REQUEST_CACHE,
+            "_hm_admin_profile_request_cached",
+        )
 
         @functools.wraps(original_builder)
         def build_profile_builder_source_contract_cached():
-            result = cached_builder()
+            result = request_builder()
             # These patches are page-context dependent and must still run on every rerun.
             source_contract.patch_streamlit_source_instruction_fields()
             source_contract.patch_profile_builder_source_detail_layout()
@@ -51,32 +87,36 @@ def install_profile_builder_performance() -> None:
         setattr(source_contract, _PROFILE_PATCH_MARKER, True)
 
     if not getattr(profile_store, _PROFILE_PATCH_MARKER, False):
-        original_status = profile_store.check_profile_builder_store
-        original_snapshot_status = profile_store.profile_source_snapshot_columns_ready
-        original_sources = profile_store.load_profile_builder_sources
-
-        cached_status = _cached_read(original_status)
-        cached_snapshot_status = _cached_read(original_snapshot_status)
-        cached_sources = _cached_read(original_sources)
-
-        @functools.wraps(original_status)
-        def check_profile_builder_store_cached():
-            return cached_status()
-
-        @functools.wraps(original_snapshot_status)
-        def profile_source_snapshot_columns_ready_cached():
-            return cached_snapshot_status()
-
-        @functools.wraps(original_sources)
-        def load_profile_builder_sources_cached():
-            return cached_sources()
-
-        profile_store.check_profile_builder_store = check_profile_builder_store_cached
-        profile_store.profile_source_snapshot_columns_ready = (
-            profile_source_snapshot_columns_ready_cached
+        profile_store.check_profile_builder_store = _context_cached(
+            "profile.store_readiness",
+            profile_store.check_profile_builder_store,
+            _PROFILE_REQUEST_CACHE,
+            "_hm_admin_profile_request_cached",
         )
-        profile_store.load_profile_builder_sources = load_profile_builder_sources_cached
+        profile_store.profile_source_snapshot_columns_ready = _context_cached(
+            "profile.snapshot_columns",
+            profile_store.profile_source_snapshot_columns_ready,
+            _PROFILE_REQUEST_CACHE,
+            "_hm_admin_profile_request_cached",
+        )
+        profile_store.load_profile_builder_sources = _context_cached(
+            "profile.source_options",
+            profile_store.load_profile_builder_sources,
+            _PROFILE_REQUEST_CACHE,
+            "_hm_admin_profile_request_cached",
+        )
         setattr(profile_store, _PROFILE_PATCH_MARKER, True)
+
+
+@contextmanager
+def admin_profile_builder_render_scope():
+    """Reuse Profile Builder reads for one render and read fresh data next rerun."""
+
+    token = _PROFILE_REQUEST_CACHE.set({})
+    try:
+        yield
+    finally:
+        _PROFILE_REQUEST_CACHE.reset(token)
 
 
 class LazySubscriptionMetrics(Mapping[str, Any]):
@@ -132,36 +172,13 @@ def install_admin_packages_performance(package_ui_module: Any) -> None:
     setattr(package_ui_module, _PACKAGE_PATCH_MARKER, True)
 
 
-def _freeze(value: Any) -> Any:
-    if isinstance(value, dict):
-        return tuple(sorted((str(key), _freeze(item)) for key, item in value.items()))
-    if isinstance(value, (list, tuple)):
-        return tuple(_freeze(item) for item in value)
-    if isinstance(value, set):
-        return tuple(sorted(_freeze(item) for item in value))
-    try:
-        hash(value)
-        return value
-    except Exception:
-        return repr(value)
-
-
 def _request_cached(name: str, function: Callable[..., Any]) -> Callable[..., Any]:
-    if getattr(function, "_hm_admin_request_cached", False):
-        return function
-
-    @functools.wraps(function)
-    def wrapped(*args: Any, **kwargs: Any) -> Any:
-        cache = _SCHEDULING_REQUEST_CACHE.get()
-        if cache is None:
-            return function(*args, **kwargs)
-        key = (name, _freeze(args), _freeze(kwargs))
-        if key not in cache:
-            cache[key] = function(*args, **kwargs)
-        return copy.deepcopy(cache[key])
-
-    wrapped._hm_admin_request_cached = True
-    return wrapped
+    return _context_cached(
+        name,
+        function,
+        _SCHEDULING_REQUEST_CACHE,
+        "_hm_admin_request_cached",
+    )
 
 
 def _invalidate_request_cache(prefix: str) -> None:
