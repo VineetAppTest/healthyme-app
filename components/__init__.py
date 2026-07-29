@@ -10,7 +10,10 @@ from components.member_email_legacy_reminders import (
 from components.member_message_display_cleanup import (
     install_member_message_display_cleanup,
 )
-from components.performance_diagnostics import install_backend_measurement
+from components.performance_diagnostics import (
+    install_backend_measurement,
+    install_page_boundary_measurement,
+)
 
 
 # Expired authorization recovery is installed before app.py captures the accepted
@@ -31,5 +34,7 @@ install_member_message_display_cleanup()
 
 # Measurement-only instrumentation is installed last so it observes the final
 # production callables without changing authentication, routing or business logic.
-# It records nothing unless a page has started an explicit measurement run.
+# Backend timings are recorded only while an explicit or temporary guarded-page run
+# is active, and measurements remain in Streamlit session state only.
 install_backend_measurement()
+install_page_boundary_measurement()
