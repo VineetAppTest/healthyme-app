@@ -4,7 +4,10 @@ import datetime as dt
 import pathlib
 import unittest
 
-from components.member_exercise_journal_table import build_exercise_log_payload
+from components.member_exercise_journal_table import (
+    build_exercise_log_payload,
+    saved_exercise_dates,
+)
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -66,6 +69,55 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertIn("Save Exercise Entry", source)
         self.assertIn("Status", source)
         self.assertIn("Completion time", source)
+
+    def test_zero_assignment_day_still_renders_editable_structure(self):
+        source = (ROOT / "components/member_exercise_journal_table.py").read_text()
+        self.assertIn("base_count = max(1, len(assigned), len(existing_rows))", source)
+        self.assertIn("No exercise is assigned for this date", source)
+        self.assertIn("for index in range(1, row_count + 1)", source)
+        self.assertIn("+ Add exercise entry", source)
+        self.assertNotIn("if not exercises:\n        st.info", source)
+
+    def test_activity_options_use_active_exercise_repository(self):
+        source = (ROOT / "components/member_exercise_journal_table.py").read_text()
+        self.assertIn('list_repository_items("exercises", active_only=True)', source)
+        self.assertIn("exercise_snapshot", source)
+        self.assertIn("Activity options come from the active Exercise Repository", source)
+
+    def test_exercise_journal_has_saved_days_matching_food_pattern(self):
+        source = (ROOT / "components/member_exercise_journal_table.py").read_text()
+        self.assertIn("### View Saved Days", source)
+        self.assertIn('st.date_input("From"', source)
+        self.assertIn('st.date_input("To"', source)
+        self.assertIn("pending_key", source)
+        dates = saved_exercise_dates(
+            [
+                {"log_date": "2026-07-27"},
+                {"log_date": "2026-07-29"},
+                {"log_date": "2026-07-27"},
+            ]
+        )
+        self.assertEqual(
+            dates,
+            [dt.date(2026, 7, 29), dt.date(2026, 7, 27)],
+        )
+
+    def test_member_package_inclusion_rule_is_hidden_only_on_member_page(self):
+        helper = (
+            ROOT / "components/member_schedule_member_copy_cleanup.py"
+        ).read_text()
+        page = (ROOT / "pages/33_My_Schedule.py").read_text()
+        self.assertIn(".hm-package-summary .hm-package-line:has(> i)", helper)
+        self.assertIn("if member_view", helper)
+        self.assertIn("install_member_schedule_package_copy_cleanup", page)
+        self.assertLess(
+            page.index("install_package_hardening_schedule_ui"),
+            page.index("install_member_schedule_package_copy_cleanup(schedule_timezone_ui)"),
+        )
+        self.assertLess(
+            page.index("install_member_schedule_package_copy_cleanup(schedule_timezone_ui)"),
+            page.index("render_tabbed_member_schedule_page(schedule_timezone_ui)"),
+        )
 
     def test_exercise_journal_does_not_write_to_profile_or_repository(self):
         source = (ROOT / "components/member_exercise_journal_table.py").read_text()
