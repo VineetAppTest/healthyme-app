@@ -10,6 +10,13 @@ from components.member_email_legacy_reminders import (
 from components.member_message_display_cleanup import (
     install_member_message_display_cleanup,
 )
+from components.performance_diagnostics import (
+    install_backend_measurement,
+    install_page_boundary_measurement,
+)
+from components.performance_measurement_gate import (
+    install_performance_measurement_gate,
+)
 
 
 # Expired authorization recovery is installed before app.py captures the accepted
@@ -27,3 +34,11 @@ install_legacy_schedule_reminder_delivery()
 # Remove only the repeated scheduling cards from the generic message feed; stored
 # records, audit history and email delivery remain unchanged.
 install_member_message_display_cleanup()
+
+# Measurement-only instrumentation is installed last so it observes the final
+# production callables without changing authentication, routing or business logic.
+# Backend timings are recorded only while an explicit or temporary guarded-page run
+# is active, and measurements remain in Streamlit session state only.
+install_backend_measurement()
+install_page_boundary_measurement()
+install_performance_measurement_gate()

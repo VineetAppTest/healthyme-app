@@ -1,6 +1,10 @@
 import streamlit as st
 
 from components.guards import require_admin
+from components.performance_diagnostics import (
+    begin_page_measurement,
+    finish_and_render_page_diagnostics,
+)
 from components.ui_common import (
     inject_keepalive_guard_v96_11,
     inject_global_styles,
@@ -10,6 +14,7 @@ from components.ui_common import (
 )
 
 st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+begin_page_measurement("Admin Dashboard")
 
 inject_global_styles()
 apply_luxe_theme()
@@ -233,10 +238,16 @@ with st.container(border=True):
         nav_cell("Active Profile Contract Diagnostics", "pages/45_Admin_Active_Profile_Contract_Diagnostics.py", "dash_active_profile_contract_diagnostics_h9a9b")
     with diagnostic_col_2:
         nav_cell("Profile Source Alignment", "pages/46_Admin_Profile_Source_Alignment.py", "dash_profile_source_alignment_h9a10a")
+    measurement_col_1, measurement_col_2 = st.columns(2, gap="large")
+    with measurement_col_1:
+        nav_cell("Performance Diagnostics", "pages/47_Admin_Performance_Diagnostics.py", "dash_performance_diagnostics_measurement_only")
+    with measurement_col_2:
+        st.caption("Temporary measurement-only workspace for Issue #260.")
     st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
 inject_keepalive_guard_v96_11()
+finish_and_render_page_diagnostics("Admin Dashboard")
 
 # v101.7: Admin Dashboard restructured per client placement request.
 # v102.4: Recipe-1/Exercise-1 testing buttons removed; Recommendations Share added as admin source of truth.

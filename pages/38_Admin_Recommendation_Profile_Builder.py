@@ -1,5 +1,9 @@
 import streamlit as st
 
+from components.performance_diagnostics import (
+    begin_page_measurement,
+    finish_and_render_page_diagnostics,
+)
 from components.profile_builder_access import (
     current_profile_builder_role,
     profile_builder_role_utility_bar,
@@ -20,6 +24,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+begin_page_measurement("Recommendation Profile Builder")
 inject_global_styles()
 apply_luxe_theme()
 require_profile_builder_access()
@@ -39,3 +44,4 @@ if current_profile_builder_role() in {"admin", "super_admin"}:
         location="bottom",
     )
 render_back_to_top()
+finish_and_render_page_diagnostics("Recommendation Profile Builder")
