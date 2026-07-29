@@ -63,10 +63,11 @@ class PerformanceMeasurementOnlyTests(unittest.TestCase):
     def test_admin_workspace_and_build_label_are_present(self):
         dashboard = (ROOT / "pages/10_Admin_Dashboard.py").read_text()
         workspace = (ROOT / "pages/47_Admin_Performance_Diagnostics.py").read_text()
+        diagnostics = (ROOT / "components/performance_diagnostics.py").read_text()
         build = (ROOT / "components/current_build.py").read_text()
         self.assertIn("Performance Diagnostics", dashboard)
         self.assertIn("Start measurement", workspace)
-        self.assertIn("Download measurement JSON", workspace)
+        self.assertIn("Download measurement JSON", diagnostics)
         self.assertIn('APP_BUILD_VERSION = "v102.5M1"', build)
         self.assertIn('APP_BUILD_LABEL = "Performance Measurement Only"', build)
 
