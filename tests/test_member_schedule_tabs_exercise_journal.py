@@ -91,7 +91,7 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertIn("#064E3B", source)
         self.assertNotIn("#FFF7E6", source)
         self.assertNotIn("hm-exercise-table-head", source)
-        self.assertNotIn("st.time_input(\"Completion time\"", source)
+        self.assertNotIn('st.time_input("Completion time"', source)
         self.assertIn("Example: 10:30 PM", source)
 
     def test_exercise_journal_has_saved_days_matching_food_pattern(self):
@@ -151,6 +151,28 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
             bootstrap,
         )
         self.assertIn("install_member_exercise_journal_table()", components_init)
+
+    def test_daily_log_selector_renders_only_the_selected_journal_body(self):
+        bootstrap = (
+            ROOT / "components/member_exercise_journal_table_bootstrap.py"
+        ).read_text()
+        page = (ROOT / "pages/18_Daily_Log.py").read_text()
+        self.assertIn('_DAILY_LOG_LABELS = ("Food Journal", "Exercise Journal")', bootstrap)
+        self.assertIn("st.segmented_control", bootstrap)
+        self.assertIn("contextlib.nullcontext()", bootstrap)
+        self.assertIn('frame_globals["_render_food_journal"]', bootstrap)
+        self.assertIn('frame_globals[\n                "_render_exercise_journal"\n            ]', bootstrap)
+        self.assertIn("render_food_only_when_selected", bootstrap)
+        self.assertIn("render_exercise_only_when_selected", bootstrap)
+        self.assertIn("pages/18_Daily_Log.py", bootstrap)
+        self.assertIn('st.tabs(["Food Journal", "Exercise Journal"])', page)
+        for forbidden in (
+            "save_daily_food_journal_day",
+            "save_member_exercise_log",
+            "require_member",
+            "switch_page",
+        ):
+            self.assertNotIn(forbidden, bootstrap)
 
 
 if __name__ == "__main__":
