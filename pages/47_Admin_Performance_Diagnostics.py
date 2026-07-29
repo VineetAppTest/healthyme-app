@@ -35,8 +35,8 @@ topbar(
 
 st.warning(
     "This workspace measures timing and record counts only. It does not capture passwords, "
-    "health responses, message text, notes or email content. Measurements are retained only "
-    "inside this browser session and disappear when the session is cleared."
+    "health responses, message text, notes or email content. Measurements remain inside the "
+    "current Streamlit session unless the user downloads the sanitized JSON file."
 )
 
 left, middle, right = st.columns(3, gap="medium")
@@ -85,9 +85,11 @@ with st.expander("How to use this temporary build", expanded=True):
 1. Select **Start measurement**.
 2. Open Admin Dashboard, Scheduling, Packages, Recommendation Profile Builder, Messages and Daily Logs.
 3. Change one selector or workspace control at a time and wait until the page becomes usable.
-4. Return here after the journey.
-5. Review the page table, inspect slow runs and download the JSON file for analysis.
-6. For the Member journey, append `?perf=1` to the Member Home URL once. The measurement flag then remains active in that browser session.
+4. Return here after the Admin journey.
+5. Review the page table, inspect slow runs and download the Admin JSON file for analysis.
+6. For the Member journey, append `?perf=1` to the Member Home URL once.
+7. Complete Member Home, Daily Log and My Schedule in the same Member session.
+8. At the bottom of a measured Member page, select **Download Member measurement JSON before logging out**.
 
 A high `load_db` count can indicate repeated full application-state access. A high Supabase-read count or a slow package RPC highlights backend work. A large page-render time with little backend time usually points to excessive UI construction, records rendered or full-page reruns.
 """
