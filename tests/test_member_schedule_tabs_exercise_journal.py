@@ -68,21 +68,31 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertIn("st.text_input", source)
         self.assertIn("Save Exercise Entry", source)
         self.assertIn("Status", source)
-        self.assertIn("Completion time", source)
+        self.assertIn("Completion time (optional)", source)
 
-    def test_zero_assignment_day_still_renders_editable_structure(self):
+    def test_zero_assignment_day_still_renders_editable_structure_without_banners(self):
         source = (ROOT / "components/member_exercise_journal_table.py").read_text()
         self.assertIn("base_count = max(1, len(assigned), len(existing_rows))", source)
-        self.assertIn("No exercise is assigned for this date", source)
         self.assertIn("for index in range(1, row_count + 1)", source)
         self.assertIn("+ Add exercise entry", source)
-        self.assertNotIn("if not exercises:\n        st.info", source)
+        self.assertNotIn("No exercise is assigned for this date", source)
+        self.assertNotIn("Progress for", source)
+        self.assertNotIn("Activity options come from the active Exercise Repository", source)
 
     def test_activity_options_use_active_exercise_repository(self):
         source = (ROOT / "components/member_exercise_journal_table.py").read_text()
         self.assertIn('list_repository_items("exercises", active_only=True)', source)
         self.assertIn("exercise_snapshot", source)
-        self.assertIn("Activity options come from the active Exercise Repository", source)
+        self.assertIn("repository_activity_catalog()", source)
+
+    def test_exercise_journal_uses_normal_palette_and_no_duplicate_header(self):
+        source = (ROOT / "components/member_exercise_journal_table.py").read_text()
+        self.assertIn("hm-exercise-journal-table-v3", source)
+        self.assertIn("#064E3B", source)
+        self.assertNotIn("#FFF7E6", source)
+        self.assertNotIn("hm-exercise-table-head", source)
+        self.assertNotIn("st.time_input(\"Completion time\"", source)
+        self.assertIn("Example: 10:30 PM", source)
 
     def test_exercise_journal_has_saved_days_matching_food_pattern(self):
         source = (ROOT / "components/member_exercise_journal_table.py").read_text()
