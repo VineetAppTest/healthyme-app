@@ -11,6 +11,7 @@ on:
       - "components/login_expiry_recovery.py"
       - "components/member_message_display_cleanup.py"
       - "components/performance_diagnostics.py"
+      - "components/performance_measurement_gate.py"
       - "components/sprint1_schedule_hygiene.py"
       - "components/current_build.py"
       - "components/__init__.py"
@@ -57,6 +58,7 @@ jobs:
             components/login_expiry_recovery.py \
             components/member_message_display_cleanup.py \
             components/performance_diagnostics.py \
+            components/performance_measurement_gate.py \
             components/sprint1_schedule_hygiene.py \
             components/package_hardening.py \
             components/package_hardening_bootstrap.py \
@@ -83,6 +85,7 @@ jobs:
           import components.login_expiry_recovery
           import components.member_message_display_cleanup
           import components.performance_diagnostics
+          import components.performance_measurement_gate
           import components.sprint1_schedule_hygiene
           import components.package_hardening
           import components.package_hardening_ui
