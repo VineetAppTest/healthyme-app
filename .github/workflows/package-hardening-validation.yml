@@ -9,6 +9,7 @@ on:
       - "components/daily_guidance_today_default.py"
       - "components/form_hygiene.py"
       - "components/login_expiry_recovery.py"
+      - "components/member_message_display_cleanup.py"
       - "components/sprint1_schedule_hygiene.py"
       - "components/current_build.py"
       - "components/__init__.py"
@@ -48,6 +49,7 @@ jobs:
             components/daily_guidance_today_default.py \
             components/form_hygiene.py \
             components/login_expiry_recovery.py \
+            components/member_message_display_cleanup.py \
             components/sprint1_schedule_hygiene.py \
             components/package_hardening.py \
             components/package_hardening_bootstrap.py \
@@ -67,13 +69,14 @@ jobs:
           import components.daily_guidance_today_default
           import components.form_hygiene
           import components.login_expiry_recovery
+          import components.member_message_display_cleanup
           import components.sprint1_schedule_hygiene
           import components.package_hardening
           import components.package_hardening_ui
           import components.package_hardening_schedule_ui
           import components.package_value_formula_ui
           import components.admin_scheduling_default_navigation
-          print("Package hardening and Sprint 1 imports passed")
+          print("Package hardening and Sprint 1 retest imports passed")
           PY
 
       - name: Run package and UI contract tests
