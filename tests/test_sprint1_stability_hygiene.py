@@ -80,6 +80,19 @@ class Sprint1StabilityHygieneTests(unittest.TestCase):
         self.assertIn('location="top"', source)
         self.assertLess(source.index("topbar_with_visible_navigation"), source.index("st.stop()"))
 
+    def test_scheduling_navigation_is_aligned_to_opposite_page_edges(self):
+        page = (ROOT / "pages/32_Admin_Scheduling.py").read_text()
+        self.assertIn("hm-admin-scheduling-edge-navigation-v1", page)
+        self.assertIn("hm_admin_schedule_back_top", page)
+        self.assertIn("hm_admin_schedule_back_bottom", page)
+        self.assertIn("grid-column:1!important", page)
+        self.assertIn("grid-column:3!important", page)
+        self.assertIn("@media(max-width:640px)", page)
+        self.assertLess(
+            page.index("hm-admin-scheduling-edge-navigation-v1"),
+            page.index("render_admin_scheduling_consolidated_page()"),
+        )
+
     def test_runtime_error_investigation_is_not_modified(self):
         page = (ROOT / "pages/32_Admin_Scheduling.py").read_text()
         self.assertNotIn("native router error hotfix", page.lower())
