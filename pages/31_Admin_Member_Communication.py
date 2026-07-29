@@ -92,6 +92,33 @@ else:
         + " and ".join(missing)
         + " is configured in Streamlit secrets."
     )
+    with st.expander(
+        "Where to obtain and configure the production secrets",
+        expanded=True,
+    ):
+        st.markdown(
+            """
+**1. Obtain `RESEND_API_KEY`**
+
+Open the Resend dashboard, go to **API Keys**, create a key with sending permission and copy it when shown.
+
+**2. Decide `RESEND_FROM_EMAIL`**
+
+In Resend, verify the HealthyMe sending domain under **Domains**. After verification, use an address on that domain, for example `HealthyMe <care@healthyme.in>`. `RESEND_FROM` is also accepted as an alternative secret name.
+
+**3. Add the secrets to this Streamlit application**
+
+From the Streamlit Community Cloud workspace, open the menu beside this app, then go to **Settings → Secrets**. Paste the values in TOML format and save.
+"""
+        )
+        st.code(
+            'RESEND_API_KEY = "re_your_production_key"\n'
+            'RESEND_FROM_EMAIL = "HealthyMe <care@your-verified-domain.com>"',
+            language="toml",
+        )
+        st.caption(
+            "The API key is confidential. Keep it only in Streamlit Secrets and never commit it to GitHub or paste it into a member message."
+        )
 
 members = list_members()
 if not members:

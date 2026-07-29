@@ -7,6 +7,7 @@
 --   package_hardening_123_05_usage_dedupe_constraint.sql
 --   package_hardening_123_06_function_permissions.sql
 --   package_hardening_123_07_foreign_key_indexes.sql
+--   package_hardening_123_08_total_formula.sql
 --
 -- Accepted rule preserved throughout:
 -- Package inclusions are informational only and never grant, hide, block or

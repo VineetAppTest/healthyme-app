@@ -1,4 +1,6 @@
-from components.package_hardening_ui import render_package_hardening_admin_page
+import components.package_hardening_ui as package_hardening_ui
+from components.package_value_formula_ui import install_package_value_formula
 
 
-render_package_hardening_admin_page()
+install_package_value_formula(package_hardening_ui)
+package_hardening_ui.render_package_hardening_admin_page()

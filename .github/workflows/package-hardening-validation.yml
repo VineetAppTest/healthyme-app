@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - "components/package_hardening*.py"
+      - "components/package_value_formula_ui.py"
+      - "components/admin_scheduling_default_navigation.py"
       - "components/__init__.py"
+      - "pages/31_Admin_Member_Communication.py"
       - "pages/32_Admin_Scheduling.py"
       - "pages/33_My_Schedule.py"
       - "pages/41_Admin_Packages.py"
       - "sql/package_hardening_123*.sql"
       - "tests/test_package_hardening_contract.py"
+      - "tests/test_ui_corrections_ss1_ss3.py"
       - ".github/workflows/package-hardening-validation.yml"
 
 permissions:
@@ -38,6 +42,9 @@ jobs:
             components/package_hardening_bootstrap.py \
             components/package_hardening_ui.py \
             components/package_hardening_schedule_ui.py \
+            components/package_value_formula_ui.py \
+            components/admin_scheduling_default_navigation.py \
+            pages/31_Admin_Member_Communication.py \
             pages/32_Admin_Scheduling.py \
             pages/33_My_Schedule.py \
             pages/41_Admin_Packages.py
@@ -49,8 +56,14 @@ jobs:
           import components.package_hardening
           import components.package_hardening_ui
           import components.package_hardening_schedule_ui
-          print("Package hardening imports passed")
+          import components.package_value_formula_ui
+          import components.admin_scheduling_default_navigation
+          print("Package hardening and UI correction imports passed")
           PY
 
-      - name: Run package contract tests
-        run: python -m unittest tests.test_package_hardening_contract -v
+      - name: Run package and UI contract tests
+        run: |
+          python -m unittest \
+            tests.test_package_hardening_contract \
+            tests.test_ui_corrections_ss1_ss3 \
+            -v
