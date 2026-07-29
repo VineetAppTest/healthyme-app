@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import datetime as dt
 import functools
+import inspect
 import json
+import pathlib
 import time
 import uuid
 from collections import Counter
@@ -16,6 +18,18 @@ ACTIVE_RUN_KEY = "_hm_perf_active_run"
 HISTORY_KEY = "_hm_perf_history"
 MAX_HISTORY = 80
 MAX_OPERATIONS_PER_RUN = 250
+
+_PAGE_NAMES = {
+    "02_Member_Home.py": "Member Home",
+    "10_Admin_Dashboard.py": "Admin Dashboard",
+    "18_Daily_Log.py": "Member Daily Log",
+    "22_Admin_Daily_Log_Report.py": "Admin Daily Logs",
+    "31_Admin_Member_Communication.py": "Admin Messages",
+    "32_Admin_Scheduling.py": "Admin Scheduling",
+    "33_My_Schedule.py": "Member My Schedule",
+    "38_Admin_Recommendation_Profile_Builder.py": "Recommendation Profile Builder",
+    "41_Admin_Packages.py": "Admin Packages",
+}
 
 
 def _text(value: object) -> str:
@@ -86,10 +100,7 @@ def _state_shape(db: object) -> dict[str, int]:
     return {key: _safe_count(db.get(key)) for key in keys if key in db}
 
 
-def begin_page_measurement(page_name: str) -> None:
-    """Start a temporary, session-local measurement run for one rendered page."""
-
-    install_backend_measurement()
+def _begin_run(page_name: str, *, explicit: bool) -> None:
     ss = _session_state()
     if ss is None:
         return
@@ -100,7 +111,15 @@ def begin_page_measurement(page_name: str) -> None:
         "started_perf": time.perf_counter(),
         "operations": [],
         "state_shape": {},
+        "explicit": bool(explicit),
     }
+
+
+def begin_page_measurement(page_name: str) -> None:
+    """Start a temporary, session-local measurement run for one rendered page."""
+
+    install_backend_measurement()
+    _begin_run(page_name, explicit=True)
 
 
 def record_operation(
@@ -281,18 +300,16 @@ def render_history_workspace() -> None:
         )
     st.dataframe(rows, use_container_width=True, hide_index=True)
 
-    selected_run = st.selectbox(
-        "Inspect run",
-        [
-            f"{row.get('started_at','')} · {row.get('page','')} · {float(row.get('total_render_ms',0))/1000:.2f}s · {row.get('run_id','')}"
-            for row in filtered
-        ],
-        key="hm_perf_history_run",
-    )
-    selected_index = [
+    selected_labels = [
         f"{row.get('started_at','')} · {row.get('page','')} · {float(row.get('total_render_ms',0))/1000:.2f}s · {row.get('run_id','')}"
         for row in filtered
-    ].index(selected_run)
+    ]
+    selected_run = st.selectbox(
+        "Inspect run",
+        selected_labels,
+        key="hm_perf_history_run",
+    )
+    selected_index = selected_labels.index(selected_run)
     _render_summary(filtered[selected_index])
 
     export_payload = json.dumps(history, indent=2, sort_keys=True)
@@ -349,6 +366,77 @@ def _wrap_function(
     setattr(module, attribute, measured)
 
 
+def _infer_page_name() -> str | None:
+    for frame in inspect.stack():
+        filename = pathlib.Path(frame.filename).name
+        if filename == "47_Admin_Performance_Diagnostics.py":
+            return None
+        if filename in _PAGE_NAMES:
+            return _PAGE_NAMES[filename]
+        if "pages" in pathlib.Path(frame.filename).parts and filename.endswith(".py"):
+            return filename[:-3].replace("_", " ")
+    return None
+
+
+def _auto_finish_if_needed() -> None:
+    ss = _session_state()
+    if ss is None:
+        return
+    run = ss.get(ACTIVE_RUN_KEY)
+    if not isinstance(run, dict) or bool(run.get("explicit")):
+        return
+    finish_and_render_page_diagnostics(_text(run.get("page")) or "Unknown page")
+
+
+def install_page_boundary_measurement() -> None:
+    """Auto-measure guarded pages when temporary measurement has been enabled."""
+
+    try:
+        from components import guards
+
+        for attribute in ("require_admin", "require_member"):
+            original = getattr(guards, attribute, None)
+            if not callable(original) or getattr(original, "_hm_perf_boundary_wrapped", False):
+                continue
+
+            @functools.wraps(original)
+            def guarded(*args, __original=original, **kwargs):
+                ss = _session_state()
+                if (
+                    measurement_enabled()
+                    and ss is not None
+                    and not isinstance(ss.get(ACTIVE_RUN_KEY), dict)
+                ):
+                    page_name = _infer_page_name()
+                    if page_name:
+                        _begin_run(page_name, explicit=False)
+                return __original(*args, **kwargs)
+
+            guarded._hm_perf_boundary_wrapped = True
+            setattr(guards, attribute, guarded)
+    except Exception:
+        pass
+
+    try:
+        from components import ui_common
+
+        for attribute in ("render_back_to_top", "inject_keepalive_guard_v96_11"):
+            original = getattr(ui_common, attribute, None)
+            if not callable(original) or getattr(original, "_hm_perf_boundary_wrapped", False):
+                continue
+
+            @functools.wraps(original)
+            def finishing_ui(*args, __original=original, **kwargs):
+                result = __original(*args, **kwargs)
+                _auto_finish_if_needed()
+                return result
+
+            finishing_ui._hm_perf_boundary_wrapped = True
+            setattr(ui_common, attribute, finishing_ui)
+    except Exception:
+        pass
+
+
 def install_backend_measurement() -> None:
     """Install low-risk timing wrappers without changing application results."""
 
@@ -374,7 +462,6 @@ def install_backend_measurement() -> None:
             details_before=load_details,
             capture_state=True,
         )
-        # db.py imported these functions directly, so update its module aliases too.
         db_api.load_state = storage_backend.load_state
 
         _wrap_function(storage_backend, "save_state", "storage.save_state")
