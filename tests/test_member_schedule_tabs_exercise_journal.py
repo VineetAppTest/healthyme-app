@@ -26,6 +26,15 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertIn("Request Reschedule", source)
         self.assertIn("Submit Reschedule Request", source)
 
+    def test_my_schedule_navigation_renders_before_slow_reads(self):
+        source = (ROOT / "components/member_schedule_tabbed_page.py").read_text()
+        self.assertEqual(source.count("schedule_ui.render_page_nav("), 1)
+        self.assertLess(
+            source.index("schedule_ui.render_page_nav("),
+            source.index("schedule_ui.member_timezone_name("),
+        )
+        self.assertIn('location="top"', source)
+
     def test_my_schedule_page_uses_tabbed_renderer_and_keeps_measurement(self):
         source = (ROOT / "pages/33_My_Schedule.py").read_text()
         self.assertIn("render_tabbed_member_schedule_page", source)
@@ -61,7 +70,7 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertEqual(payload["status"], "Completed")
 
     def test_exercise_journal_has_editable_requested_columns(self):
-        source = (ROOT / "components/member_exercise_journal_table.py").read_text()
+        source = (ROOT / "components/member_exercise_journal_layout_v4.py").read_text()
         for label in ("Timing", "Activity", "Duration / Sets", "Remarks"):
             self.assertIn(label, source)
         self.assertIn("st.selectbox", source)
@@ -70,14 +79,13 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertIn("Status", source)
         self.assertIn("Completion time (optional)", source)
 
-    def test_zero_assignment_day_still_renders_editable_structure_without_banners(self):
-        source = (ROOT / "components/member_exercise_journal_table.py").read_text()
+    def test_zero_assignment_day_still_renders_editable_structure(self):
+        source = (ROOT / "components/member_exercise_journal_layout_v4.py").read_text()
         self.assertIn("base_count = max(1, len(assigned), len(existing_rows))", source)
         self.assertIn("for index in range(1, row_count + 1)", source)
-        self.assertIn("+ Add exercise entry", source)
+        self.assertIn("+ Add Exercise", source)
         self.assertNotIn("No exercise is assigned for this date", source)
         self.assertNotIn("Progress for", source)
-        self.assertNotIn("Activity options come from the active Exercise Repository", source)
 
     def test_activity_options_use_active_exercise_repository(self):
         source = (ROOT / "components/member_exercise_journal_table.py").read_text()
@@ -85,14 +93,33 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertIn("exercise_snapshot", source)
         self.assertIn("repository_activity_catalog()", source)
 
-    def test_exercise_journal_uses_normal_palette_and_no_duplicate_header(self):
-        source = (ROOT / "components/member_exercise_journal_table.py").read_text()
-        self.assertIn("hm-exercise-journal-table-v3", source)
-        self.assertIn("#064E3B", source)
-        self.assertNotIn("#FFF7E6", source)
-        self.assertNotIn("hm-exercise-table-head", source)
-        self.assertNotIn('st.time_input("Completion time"', source)
-        self.assertIn("Example: 10:30 PM", source)
+    def test_exercise_journal_uses_normal_palette_and_compact_time(self):
+        base_source = (ROOT / "components/member_exercise_journal_table.py").read_text()
+        layout_source = (ROOT / "components/member_exercise_journal_layout_v4.py").read_text()
+        self.assertIn("hm-exercise-journal-table-v3", base_source)
+        self.assertIn("#064E3B", base_source)
+        self.assertNotIn("#FFF7E6", base_source)
+        self.assertNotIn("hm-exercise-table-head", layout_source)
+        self.assertNotIn('st.time_input("Completion time"', layout_source)
+        self.assertIn("Example: 10:30 PM", layout_source)
+
+    def test_exercise_actions_follow_all_exercise_rows(self):
+        source = (ROOT / "components/member_exercise_journal_layout_v4.py").read_text()
+        row_loop = source.index("for index in range(1, row_count + 1)")
+        add_action = source.index('"+ Add Exercise"')
+        saved_days = source.index("base._render_saved_days")
+        self.assertLess(row_loop, add_action)
+        self.assertLess(add_action, saved_days)
+        self.assertIn('"Remove Exercise"', source)
+
+    def test_daily_log_hides_duplicate_heading_and_day_caption(self):
+        bootstrap = (
+            ROOT / "components/member_exercise_journal_table_bootstrap.py"
+        ).read_text()
+        self.assertIn('kwargs["heading"] = ""', bootstrap)
+        self.assertIn('kwargs["show_build_note"] = False', bootstrap)
+        self.assertIn("hm-daily-log-selector-anchor", bootstrap)
+        self.assertIn("margin:.05rem 0 .20rem 0", bootstrap)
 
     def test_exercise_journal_has_saved_days_matching_food_pattern(self):
         source = (ROOT / "components/member_exercise_journal_table.py").read_text()
@@ -130,7 +157,7 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         )
 
     def test_exercise_journal_does_not_write_to_profile_or_repository(self):
-        source = (ROOT / "components/member_exercise_journal_table.py").read_text()
+        source = (ROOT / "components/member_exercise_journal_layout_v4.py").read_text()
         for forbidden in (
             "hm_recommendation_profiles",
             "hm_recommendation_profile_items",
@@ -139,29 +166,32 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
             "save_exercise_repository",
         ):
             self.assertNotIn(forbidden, source)
-        self.assertIn("save_member_exercise_log", source)
+        self.assertIn("base.save_member_exercise_log", source)
 
     def test_shared_renderer_bootstrap_keeps_both_entry_points_aligned(self):
         bootstrap = (
             ROOT / "components/member_exercise_journal_table_bootstrap.py"
         ).read_text()
         components_init = (ROOT / "components/__init__.py").read_text()
+        self.assertIn("render_member_exercise_journal_layout_v4", bootstrap)
         self.assertIn(
-            "journal.render_member_exercise_journal = render_member_exercise_journal_table",
+            "journal.render_member_exercise_journal = contextual_exercise_renderer",
             bootstrap,
         )
         self.assertIn("install_member_exercise_journal_table()", components_init)
 
-    def test_daily_log_selector_renders_only_the_selected_journal_body(self):
+    def test_daily_log_selector_is_stable_and_renders_one_journal(self):
         bootstrap = (
             ROOT / "components/member_exercise_journal_table_bootstrap.py"
         ).read_text()
         page = (ROOT / "pages/18_Daily_Log.py").read_text()
         self.assertIn('_DAILY_LOG_LABELS = ("Food Journal", "Exercise Journal")', bootstrap)
-        self.assertIn("st.segmented_control", bootstrap)
+        self.assertIn('st.button(\n                "Food Journal"', bootstrap)
+        self.assertIn('st.button(\n                "Exercise Journal"', bootstrap)
+        self.assertIn('type=(\n                    "primary"', bootstrap)
+        self.assertIn("on_click=_activate_daily_log_journal", bootstrap)
+        self.assertNotIn("st.segmented_control", bootstrap)
         self.assertIn("contextlib.nullcontext()", bootstrap)
-        self.assertIn('frame_globals["_render_food_journal"]', bootstrap)
-        self.assertIn('frame_globals[\n                "_render_exercise_journal"\n            ]', bootstrap)
         self.assertIn("render_food_only_when_selected", bootstrap)
         self.assertIn("render_exercise_only_when_selected", bootstrap)
         self.assertIn("pages/18_Daily_Log.py", bootstrap)
@@ -173,6 +203,17 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
             "switch_page",
         ):
             self.assertNotIn(forbidden, bootstrap)
+
+    def test_member_diagnostics_render_once_and_cover_member_home(self):
+        source = (ROOT / "components/performance_measurement_gate.py").read_text()
+        self.assertIn("_MEMBER_PANEL_RENDERED_KEY", source)
+        self.assertIn("if st.session_state.get(_MEMBER_PANEL_RENDERED_KEY, False)", source)
+        self.assertIn("_reset_member_panel_guard()", source)
+        self.assertIn('"inject_keepalive_guard_v96_11"', source)
+        self.assertIn('"render_back_to_top"', source)
+        self.assertIn("require_member_with_panel_reset", source)
+        for forbidden in ("st.switch_page", "logout_current_user", "require_admin"):
+            self.assertNotIn(forbidden, source)
 
 
 if __name__ == "__main__":
