@@ -205,7 +205,6 @@ def _install_admin_create_guard(schedule_timezone_ui) -> None:
         else:
             st.session_state.pop(_OVERRIDE_KEY, None)
             st.session_state.pop(_OVERRIDE_REASON_KEY, None)
-            st.success("Package capacity is available for this session.")
 
         original_disabled = bool(kwargs.get("disabled", False))
         kwargs["disabled"] = original_disabled or (

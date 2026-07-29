@@ -21,7 +21,7 @@ class Sprint1StabilityHygieneTests(unittest.TestCase):
         self.assertIn("member_local_today(member_id)", source)
         self.assertIn("original_key", source)
 
-    def test_schedule_success_clears_entry_fields(self):
+    def test_schedule_success_defers_reset_until_before_next_widget_render(self):
         source = (ROOT / "components/sprint1_schedule_hygiene.py").read_text()
         for key in (
             "hm_tz_schedule_type",
@@ -34,7 +34,33 @@ class Sprint1StabilityHygieneTests(unittest.TestCase):
             "hm_tz_schedule_notes",
         ):
             self.assertIn(key, source)
-        self.assertIn('if result and not result.get("error")', source)
+        self.assertIn('st.session_state[_CREATE_RESET_PENDING] = True', source)
+        self.assertIn("_consume_pending_resets()", source)
+        self.assertLess(
+            source.index("_consume_pending_resets()"),
+            source.index("base_styles()"),
+        )
+
+    def test_schedule_success_message_is_visually_prominent(self):
+        source = (ROOT / "components/sprint1_schedule_hygiene.py").read_text()
+        self.assertIn("hm-schedule-success-prominence-v1", source)
+        self.assertIn("border:2px solid #0F766E", source)
+        self.assertIn('content:"✓"', source)
+        self.assertIn("font-weight:900", source)
+
+    def test_repetitive_available_capacity_success_is_removed(self):
+        source = (ROOT / "components/package_hardening_schedule_ui.py").read_text()
+        self.assertNotIn("Package capacity is available for this session.", source)
+        self.assertIn("Package capacity check:", source)
+        self.assertIn("A package-limit override is required", source)
+
+    def test_member_home_does_not_repeat_schedule_events_as_messages(self):
+        source = (ROOT / "components/member_message_display_cleanup.py").read_text()
+        bootstrap = (ROOT / "components/__init__.py").read_text()
+        self.assertIn('"schedule"', source)
+        self.assertIn('"schedule_48h_acknowledgement_reminder"', source)
+        self.assertIn("changes display only", source)
+        self.assertIn("install_member_message_display_cleanup()", bootstrap)
 
     def test_member_reschedule_page_installs_form_hygiene(self):
         page = (ROOT / "pages/33_My_Schedule.py").read_text()
