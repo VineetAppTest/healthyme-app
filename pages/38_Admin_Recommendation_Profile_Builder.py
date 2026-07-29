@@ -1,6 +1,7 @@
 import streamlit as st
 
 from components.admin_performance_optimization import (
+    admin_profile_builder_render_scope,
     install_profile_builder_performance,
 )
 from components.performance_diagnostics import (
@@ -20,8 +21,8 @@ from components.ui_common import (
 )
 
 
-# Install read-only caching before importing the modular builder so its direct
-# function bindings use the optimized source/store loaders.
+# Install request-local read reuse before importing the modular builder so its
+# direct function bindings use the optimized source/store loaders.
 install_profile_builder_performance()
 from components.profile_builder_modular import render_modular_profile_builder
 
@@ -38,7 +39,8 @@ apply_luxe_theme()
 require_profile_builder_access()
 profile_builder_role_utility_bar()
 
-render_modular_profile_builder()
+with admin_profile_builder_render_scope():
+    render_modular_profile_builder()
 
 # Nutritionists are intentionally restricted to this workflow and should not be
 # given a navigation control that points to the wider Admin application.
