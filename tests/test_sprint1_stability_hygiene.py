@@ -67,7 +67,7 @@ class Sprint1StabilityHygieneTests(unittest.TestCase):
         self.assertIn("install_sprint1_schedule_hygiene", page)
         self.assertLess(
             page.index("install_sprint1_schedule_hygiene(schedule_timezone_ui)"),
-            page.index("render_member_schedule_page()"),
+            page.index("render_tabbed_member_schedule_page(schedule_timezone_ui)"),
         )
 
     def test_admin_schedule_status_is_latest_first(self):
