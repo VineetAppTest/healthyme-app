@@ -8,7 +8,6 @@ import streamlit as st
 
 
 _MEMBER_EXPORT_MARKER = "_hm_member_performance_export"
-_MEMBER_NOTICE_MARKER = "_hm_member_performance_notice"
 _MEMBER_PAGE_PREFIX = "Member "
 
 
@@ -32,6 +31,7 @@ def _render_member_measurement_export(diagnostics: Any, summary: dict[str, Any])
     with st.container(border=True):
         st.markdown("### Performance measurement active")
         st.caption(
+            "This panel appears only when Member measurement is enabled with `?perf=1`. "
             "Download the accumulated Member measurements before logging out. "
             "The file contains timing, operation names and aggregate counts only."
         )
@@ -48,25 +48,7 @@ def _render_member_measurement_export(diagnostics: Any, summary: dict[str, Any])
 def install_performance_measurement_gate() -> None:
     """Gate measurements and expose a direct, session-local Member JSON download."""
 
-    from components import guards
     from components import performance_diagnostics as diagnostics
-
-    current_require_member = guards.require_member
-    if not getattr(current_require_member, _MEMBER_NOTICE_MARKER, False):
-
-        @functools.wraps(current_require_member)
-        def require_member_with_measurement_notice(*args, **kwargs):
-            result = current_require_member(*args, **kwargs)
-            if diagnostics.measurement_enabled():
-                st.info(
-                    "Performance measurement is active. Complete the Member journey, "
-                    "then use the download control at the bottom of the page before logout."
-                )
-            return result
-
-        setattr(require_member_with_measurement_notice, _MEMBER_NOTICE_MARKER, True)
-        require_member_with_measurement_notice._hm_perf_original = current_require_member
-        guards.require_member = require_member_with_measurement_notice
 
     current_begin = diagnostics.begin_page_measurement
     if not getattr(current_begin, "_hm_perf_enable_gate", False):
