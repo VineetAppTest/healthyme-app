@@ -13,7 +13,7 @@ on:
       - "components/login_expiry_recovery.py"
       - "components/member_message_display_cleanup.py"
       - "components/member_home_schedule_presentation.py"
-      - "components/member_schedule_tabbed_page.py"
+      - "components/member_schedule*.py"
       - "components/member_exercise_journal*.py"
       - "components/performance_diagnostics.py"
       - "components/performance_measurement_gate.py"
@@ -71,6 +71,7 @@ jobs:
             components/member_message_display_cleanup.py \
             components/member_home_schedule_presentation.py \
             components/member_schedule_tabbed_page.py \
+            components/member_schedule_member_copy_cleanup.py \
             components/member_exercise_journal.py \
             components/member_exercise_journal_table.py \
             components/member_exercise_journal_table_bootstrap.py \
@@ -107,6 +108,7 @@ jobs:
           import components.member_message_display_cleanup
           import components.member_home_schedule_presentation
           import components.member_schedule_tabbed_page
+          import components.member_schedule_member_copy_cleanup
           import components.member_exercise_journal
           import components.member_exercise_journal_table
           import components.member_exercise_journal_table_bootstrap
