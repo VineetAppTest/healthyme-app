@@ -9,6 +9,7 @@ import streamlit as st
 
 
 _MEMBER_EXPORT_MARKER = "_hm_member_performance_export"
+_MEMBER_FOOTER_MARKER = "_hm_member_performance_footer"
 _MEMBER_PAGE_PREFIX = "Member "
 
 
@@ -142,3 +143,28 @@ def install_performance_measurement_gate() -> None:
         setattr(finish_with_member_export, _MEMBER_EXPORT_MARKER, True)
         finish_with_member_export._hm_perf_original = current_finish
         diagnostics.finish_and_render_page_diagnostics = finish_with_member_export
+
+    try:
+        from components import ui_common
+
+        current_back_to_top = ui_common.render_back_to_top
+        if not getattr(current_back_to_top, _MEMBER_FOOTER_MARKER, False):
+
+            @functools.wraps(current_back_to_top)
+            def back_to_top_with_visible_start(*args, **kwargs):
+                result = current_back_to_top(*args, **kwargs)
+                if not diagnostics.measurement_enabled():
+                    page_name = str(diagnostics._infer_page_name() or "").strip()
+                    if page_name.startswith(_MEMBER_PAGE_PREFIX):
+                        _render_member_measurement_panel(
+                            diagnostics,
+                            None,
+                            page_name,
+                        )
+                return result
+
+            setattr(back_to_top_with_visible_start, _MEMBER_FOOTER_MARKER, True)
+            back_to_top_with_visible_start._hm_perf_original = current_back_to_top
+            ui_common.render_back_to_top = back_to_top_with_visible_start
+    except Exception:
+        pass
