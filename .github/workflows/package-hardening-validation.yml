@@ -12,6 +12,7 @@ on:
       - "components/form_hygiene.py"
       - "components/login_expiry_recovery.py"
       - "components/member_message_display_cleanup.py"
+      - "components/member_home_schedule_presentation.py"
       - "components/performance_diagnostics.py"
       - "components/performance_measurement_gate.py"
       - "components/sprint1_schedule_hygiene.py"
@@ -33,6 +34,7 @@ on:
       - "tests/test_admin_performance_optimization.py"
       - "tests/test_admin_uiux_corrections.py"
       - "tests/test_member_performance_export.py"
+      - "tests/test_member_home_schedule_presentation.py"
       - ".github/workflows/package-hardening-validation.yml"
 
 permissions:
@@ -62,6 +64,7 @@ jobs:
             components/form_hygiene.py \
             components/login_expiry_recovery.py \
             components/member_message_display_cleanup.py \
+            components/member_home_schedule_presentation.py \
             components/performance_diagnostics.py \
             components/performance_measurement_gate.py \
             components/admin_performance_optimization.py \
@@ -91,6 +94,7 @@ jobs:
           import components.form_hygiene
           import components.login_expiry_recovery
           import components.member_message_display_cleanup
+          import components.member_home_schedule_presentation
           import components.performance_diagnostics
           import components.performance_measurement_gate
           import components.admin_performance_optimization
@@ -103,7 +107,7 @@ jobs:
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening, Scheduling, diagnostics, performance, Member export and Admin UI UX imports passed")
+          print("Package hardening, Scheduling, diagnostics, performance, Member schedule/export and Admin UI UX imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -117,4 +121,5 @@ jobs:
             tests.test_admin_performance_optimization \
             tests.test_admin_uiux_corrections \
             tests.test_member_performance_export \
+            tests.test_member_home_schedule_presentation \
             -v
