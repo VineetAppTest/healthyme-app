@@ -43,12 +43,6 @@ def install_login_expiry_recovery() -> None:
         )
 
         if not str(authorization_id or "").strip():
-            st.set_page_config(
-                page_title="HealthyMe Login",
-                page_icon="🌿",
-                layout="centered",
-                initial_sidebar_state="collapsed",
-            )
             st.info(
                 "Your secure sign-in request has expired. HealthyMe is starting a fresh login."
             )
