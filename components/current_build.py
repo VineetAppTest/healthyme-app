@@ -12,8 +12,8 @@ from components.daily_guidance_today_default import (
 )
 
 
-APP_BUILD_VERSION = "v102.5M1"
-APP_BUILD_LABEL = "Performance Measurement Only"
+APP_BUILD_VERSION = "v102.5P1"
+APP_BUILD_LABEL = "Admin Performance Optimisation"
 FULL_BUILD_LABEL = f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}"
 
 
