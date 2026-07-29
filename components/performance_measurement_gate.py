@@ -28,23 +28,21 @@ def _render_member_measurement_export(diagnostics: Any, summary: dict[str, Any])
         return
 
     run_id = str(summary.get("run_id") or "current")
-    st.markdown(
-        "<div style='margin:.6rem 0 .25rem;font-weight:900;color:#064E3B'>"
-        "Member performance evidence</div>",
-        unsafe_allow_html=True,
-    )
-    st.caption(
-        "Download the accumulated Member measurements before logging out. "
-        "The file contains timing, operation names and aggregate counts only."
-    )
-    st.download_button(
-        "Download Member measurement JSON",
-        data=json.dumps(history, indent=2, sort_keys=True),
-        file_name="healthyme_member_performance_measurements.json",
-        mime="application/json",
-        use_container_width=True,
-        key=f"hm_member_perf_download_{run_id}",
-    )
+    with st.container(border=True):
+        st.markdown("### Performance measurement active")
+        st.caption(
+            "This panel appears only when Member measurement is enabled with `?perf=1`. "
+            "Download the accumulated Member measurements before logging out. "
+            "The file contains timing, operation names and aggregate counts only."
+        )
+        st.download_button(
+            f"Download Member measurement JSON ({len(history)} runs)",
+            data=json.dumps(history, indent=2, sort_keys=True),
+            file_name="healthyme_member_performance_measurements.json",
+            mime="application/json",
+            use_container_width=True,
+            key=f"hm_member_perf_download_{run_id}",
+        )
 
 
 def install_performance_measurement_gate() -> None:
