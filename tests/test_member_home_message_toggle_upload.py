@@ -16,7 +16,7 @@ def test_presentation_components_compile():
 def test_messages_use_the_same_native_expander_control_as_schedule():
     source = HOME_RUNTIME.read_text(encoding="utf-8")
     assert 'right.expander("Messages from Nutritionist", expanded=True)' in source
-    assert "hm-messages-nutritionist-anchor-v4" in source
+    assert "hm-messages-nutritionist-anchor-v5" in source
     assert 'return box.markdown' in source
     assert 'return box.button' in source
     assert "hm_member_home_messages_expanded" not in source
@@ -32,19 +32,44 @@ def test_schedule_and_messages_have_identical_pill_dimensions_and_alignment():
     assert 'min-height:2.12rem' in source
     assert 'height:2.12rem' in source
     assert '.hm-upcoming-schedule-anchor' in source
-    assert '.hm-messages-nutritionist-anchor-v4' in source
+    assert '.hm-messages-nutritionist-anchor-v5' in source
+    assert 'summary+div' in source
+    assert 'border:0!important' in source
 
 
-def test_active_task_panel_is_visually_prioritised_without_rewriting_task_logic():
+def test_home_gap_and_message_card_match_schedule_presentation():
     source = HOME_RUNTIME.read_text(encoding="utf-8")
-    assert 'stVerticalBlockBorderWrapper"]:has(.hm-v990-task-progress)' in source
-    assert 'content:"Action required"' in source
-    assert '.hm-v990-due-date' in source
-    assert '.hm-v990-task-chip.pending' in source
+    assert '.hero-shell{margin-bottom:.20rem!important;}' in source
+    assert 'margin:-1.05rem 0 .82rem 0' in source
+    assert '.hm-b13-message-card' in source
+    assert 'border-radius:18px!important' in source
+    assert 'padding:.80rem .95rem!important' in source
+    assert 'background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%)' in source
+
+
+def test_task_due_state_uses_india_date_and_distinct_green_red_styles():
+    source = HOME_RUNTIME.read_text(encoding="utf-8")
+    assert 'ZoneInfo("Asia/Kolkata")' in source
+    assert 'due_date < today' in source
+    assert 'hm-task-before-due' in source
+    assert 'hm-task-overdue' in source
+    assert '#22C55E' in source
+    assert '#DC2626' in source
+    assert 'font-size:.90rem' in source
+    assert 'font-size:.84rem' in source
+
+
+def test_completed_nsp_buttons_are_relabelled_and_disabled_without_data_writes():
+    source = HOME_RUNTIME.read_text(encoding="utf-8")
+    assert '"nsp1_completed", "NSP Page 1 Completed"' in source
+    assert '"nsp2_completed", "NSP Page 2 Completed"' in source
+    assert 'kwargs["disabled"] = True' in source
+    assert '_member_home_frame("_render_task_progress")' in source
     for forbidden in (
-        "requested_pages =",
-        "task_status_done_v96_2",
-        "submitted_for_review",
+        "update(",
+        "insert(",
+        "delete(",
+        "upsert(",
         "switch_page(\"pages/04_NSP_Page1.py\")",
         "switch_page(\"pages/05_NSP_Page2.py\")",
     ):
