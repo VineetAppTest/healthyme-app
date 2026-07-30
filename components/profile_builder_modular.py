@@ -20,6 +20,7 @@ from components.profile_builder_access import (
 
 APP_BUILD_VERSION = "v100.43"
 APP_BUILD_LABEL = "Scoped Nutritionist Editing"
+VIEW_PROFILES_SECTION = "View Profiles"
 
 
 def _epoch_widget_key(row, field):
@@ -80,7 +81,10 @@ from components.recommendation_profile_store import (
     check_profile_builder_store,
     load_profile_builder_sources,
 )
-from components.recommendation_profile_viewer import render_profile_lifecycle_guide
+from components.recommendation_profile_viewer import (
+    render_profile_lifecycle_guide,
+    render_view_profiles,
+)
 
 
 def _render_css() -> None:
@@ -113,6 +117,8 @@ def render_modular_profile_builder() -> None:
         for section in SECTIONS
         if can_publish or section != "Publish Control"
     ]
+    # View Profiles is intentionally the final tab, immediately after Active.
+    visible_sections.append(VIEW_PROFILES_SECTION)
     if st.session_state.get("pbm_section") not in visible_sections:
         st.session_state["pbm_section"] = "Profile Setup"
 
@@ -143,7 +149,7 @@ def render_modular_profile_builder() -> None:
     columns = st.columns(len(visible_sections), gap="small")
     for column, section in zip(columns, visible_sections):
         if column.button(
-            NAV_LABELS[section],
+            NAV_LABELS.get(section, "View Profiles"),
             key=f"pbm_nav_{safe_key(section)}",
             type="primary" if st.session_state["pbm_section"] == section else "secondary",
             use_container_width=True,
@@ -176,5 +182,7 @@ def render_modular_profile_builder() -> None:
         render_preview()
     elif section == "Publish Control":
         render_profile_publish_control()
-    else:
+    elif section == "Active Profile Preview":
         render_active_profile_preview_contract()
+    else:
+        render_view_profiles()
