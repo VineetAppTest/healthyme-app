@@ -30,7 +30,12 @@ from components.ui_common import (
 SHOW_MEMBER_REFERENCE_LIBRARY = False
 
 
-st.set_page_config(page_title="Member Home", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title="Member Home",
+    page_icon="💚",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
 inject_global_styles()
 apply_luxe_theme()
 require_member()
@@ -41,7 +46,11 @@ def _esc(value):
 
 
 def _workflow_finalized(wf_state):
-    return bool(wf_state.get("admin_completed")) or bool(wf_state.get("final_report_ready")) or wf_state.get("workflow_status") == "finalized"
+    return (
+        bool(wf_state.get("admin_completed"))
+        or bool(wf_state.get("final_report_ready"))
+        or wf_state.get("workflow_status") == "finalized"
+    )
 
 
 def _normalised_requested_pages(instance):
@@ -54,12 +63,16 @@ def _normalised_requested_pages(instance):
 
 
 def should_show_body_mind_next_step_v96_6(wf_state, current_inst):
-    if bool(wf_state.get("body_mind_completed")) or bool(current_inst.get("body_mind_completed")):
+    if bool(wf_state.get("body_mind_completed")) or bool(
+        current_inst.get("body_mind_completed")
+    ):
         return False
     requested = _normalised_requested_pages(current_inst)
     if "body_mind" in requested:
         return True
-    if bool(wf_state.get("body_mind_unlocked")) or bool(wf_state.get("admin_completed")):
+    if bool(wf_state.get("body_mind_unlocked")) or bool(
+        wf_state.get("admin_completed")
+    ):
         return True
     return False
 
@@ -78,7 +91,9 @@ def task_status_done_v96_2(instance, wf_state, task_key):
     if task_key == "nsp2":
         return bool(instance.get("nsp2_completed"))
     if task_key == "body_mind":
-        return bool(instance.get("body_mind_completed")) or bool(wf_state.get("body_mind_completed"))
+        return bool(instance.get("body_mind_completed")) or bool(
+            wf_state.get("body_mind_completed")
+        )
     return False
 
 
@@ -95,12 +110,12 @@ def _member_email():
 def _render_member_home_css():
     st.markdown(
         """
-<style id="hm-member-home-local-style">
-/* Member Home only: rendered last so global/topbar CSS cannot reintroduce headspace. */
-html,body{margin-top:0!important;padding-top:0!important;}
+<style id="hm-member-home-local-style-v2">
+/* Member Home only: injected before page reads so the first visible row starts at the top. */
+html,body,#root{margin-top:0!important;padding-top:0!important;}
 header[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"]{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;}
-html body [data-testid="stAppViewContainer"],html body [data-testid="stAppViewContainer"] > .main,html body [data-testid="stMain"],html body section.main{padding-top:0!important;padding-block-start:0!important;margin-top:0!important;}
-html body [data-testid="stMainBlockContainer"],html body [data-testid="stAppViewBlockContainer"],html body section.main > div.block-container,html body .main .block-container,html body .stMainBlockContainer,html body .block-container{padding-top:.12rem!important;padding-block-start:.12rem!important;margin-top:0!important;}
+html body [data-testid="stAppViewContainer"],html body [data-testid="stAppViewContainer"] > .main,html body [data-testid="stMain"],html body section.main{padding-top:0!important;padding-block-start:0!important;margin-top:0!important;top:0!important;}
+html body [data-testid="stMainBlockContainer"],html body [data-testid="stAppViewBlockContainer"],html body section.main > div.block-container,html body .main .block-container,html body .stMainBlockContainer,html body .block-container{padding-top:0!important;padding-block-start:0!important;margin-top:0!important;}
 .hm-member-identity-pill{height:2.46rem;min-height:2.46rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.76);border:1px solid #E9DFCC;border-radius:999px;padding:.24rem .64rem;margin:0!important;}
 .hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;white-space:nowrap;}
 .hm-top-profile-anchor,.hm-top-logout-anchor,.hm-task-action-anchor,.hm-home-action-anchor,.hm-member-home-balanced-card{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
@@ -121,6 +136,9 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-te
 .hm-v101-schedule-line{color:#334155;font-size:.82rem;font-weight:720;margin:.08rem 0;}
 .hm-v101-schedule-pill{display:inline-flex;padding:.16rem .44rem;border-radius:999px;border:1px solid #D9C28F;background:#FFF7E6;color:#7A5A16;font-size:.70rem;font-weight:850;margin-left:.22rem;}
 .hm-v104b11-ack-note{border:1px solid #E3C98E;background:#FFF7E6;color:#7A5A16!important;border-radius:12px;padding:.55rem .70rem;margin-top:.45rem!important;font-weight:560!important;}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor){margin:.45rem 0 .85rem 0!important;}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{border:1.4px solid #D8A84E!important;border-radius:16px!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:950!important;}
+.hm-upcoming-schedule-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
 .hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:.62rem .72rem;margin:.52rem 0 .62rem 0;}
 .hm-v990-progress-head{display:flex;align-items:center;justify-content:space-between;gap:.65rem;flex-wrap:wrap;margin:0 0 .38rem 0;}
 .hm-v990-progress-title{color:#064E3B;font-size:.88rem;font-weight:920;margin:0;}
@@ -156,7 +174,10 @@ div[data-testid="stButton"] > button{height:auto!important;display:flex!importan
 
 
 def _render_member_utility_bar():
-    identity_col, profile_col, logout_col = st.columns([6.65, 0.42, 1.0], gap="small")
+    identity_col, profile_col, logout_col = st.columns(
+        [6.65, 0.42, 1.0],
+        gap="small",
+    )
     with identity_col:
         st.markdown(
             f"""
@@ -168,11 +189,22 @@ def _render_member_utility_bar():
             unsafe_allow_html=True,
         )
     with profile_col:
-        st.markdown("<span class='hm-top-profile-anchor'></span>", unsafe_allow_html=True)
-        if st.button("👤", key="hm_top_my_profile", use_container_width=True, help="My Profile"):
+        st.markdown(
+            "<span class='hm-top-profile-anchor'></span>",
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "👤",
+            key="hm_top_my_profile",
+            use_container_width=True,
+            help="My Profile",
+        ):
             st.switch_page("pages/07_My_Profile.py")
     with logout_col:
-        st.markdown("<span class='hm-top-logout-anchor'></span>", unsafe_allow_html=True)
+        st.markdown(
+            "<span class='hm-top-logout-anchor'></span>",
+            unsafe_allow_html=True,
+        )
         if st.button("Logout", key="hm_top_logout", use_container_width=True):
             logout_current_user()
             st.rerun()
@@ -183,11 +215,20 @@ def _render_messages(user_id):
     messages = get_member_messages(user_id, limit=3)
     if not messages:
         return
-    st.markdown("<div class='hm-b13-message-shell'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-b13-message-title'>Messages from Nutritionist</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='hm-b13-message-shell'>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<div class='hm-b13-message-title'>Messages from Nutritionist</div>",
+        unsafe_allow_html=True,
+    )
     seen_msg_keys = set()
     for msg in messages:
-        msg_key = f"{msg.get('member_id','')}|{msg.get('log_date','')}|{' '.join(str(msg.get('message','')).strip().split()).lower()}"
+        msg_key = (
+            f"{msg.get('member_id','')}|{msg.get('log_date','')}|"
+            f"{' '.join(str(msg.get('message','')).strip().split()).lower()}"
+        )
         if msg_key in seen_msg_keys:
             continue
         seen_msg_keys.add(msg_key)
@@ -201,12 +242,23 @@ def _render_messages(user_id):
             """,
             unsafe_allow_html=True,
         )
-        if st.button("Read & Archive", key=f"read_msg_{msg.get('id','')}", use_container_width=True):
+        if st.button(
+            "Read & Archive",
+            key=f"read_msg_{msg.get('id','')}",
+            use_container_width=True,
+        ):
             ok = mark_member_message_read(user_id, msg.get("id", ""))
             if ok:
-                set_system_message("Message archived. You can find it in Daily Food Journal → Nutritionist Notes Archive.", "success")
+                set_system_message(
+                    "Message archived. You can find it in Daily Food Journal → "
+                    "Nutritionist Notes Archive.",
+                    "success",
+                )
             else:
-                set_system_message("Message could not be archived. Please refresh and try again.", "error")
+                set_system_message(
+                    "Message could not be archived. Please refresh and try again.",
+                    "error",
+                )
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -216,49 +268,83 @@ def _render_upcoming_schedules(user_id):
     upcoming_schedules = list_upcoming_member_schedules(user_id, limit=5)
     if not upcoming_schedules:
         return
-    st.markdown("<div class='hm-nutritionist-message-shell'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-b13-message-title'>Upcoming Schedule</div>", unsafe_allow_html=True)
-    for schedule in upcoming_schedules:
-        time_text = str(schedule.get("start_time", "") or "")
-        if schedule.get("end_time"):
-            time_text += f" - {schedule.get('end_time')}"
-        notice = schedule_acknowledgement_notice_v104b11(schedule)
-        notice_html = f"<div class='hm-v101-schedule-line hm-v104b11-ack-note'>{_esc(notice)}</div>" if notice else ""
+
+    # The read helper already removes ended/closed meetings before this section is built.
+    # Collapsing the section therefore changes presentation only, not expiry behaviour.
+    with st.expander(
+        f"Upcoming Schedule ({len(upcoming_schedules)})",
+        expanded=True,
+    ):
         st.markdown(
-            f"""
-            <div class='hm-v101-schedule-card'>
-              <div class='hm-v101-schedule-title'>{_esc(schedule.get('title','Scheduled session'))}<span class='hm-v101-schedule-pill'>{_esc(schedule_display_status_label_v104b11(schedule))}</span></div>
-              <div class='hm-v101-schedule-line'>{_esc(schedule.get('schedule_date',''))} · {_esc(time_text)}</div>
-              <div class='hm-v101-schedule-line'>Mode: {_esc(schedule.get('mode','-'))} · Link/location: {_esc(schedule.get('location_or_link') or '-')}</div>
-              {notice_html}
-            </div>
-            """,
+            "<span class='hm-upcoming-schedule-anchor'></span>",
             unsafe_allow_html=True,
         )
-    st.markdown("</div>", unsafe_allow_html=True)
+        for schedule in upcoming_schedules:
+            time_text = str(schedule.get("start_time", "") or "")
+            if schedule.get("end_time"):
+                time_text += f" - {schedule.get('end_time')}"
+            notice = schedule_acknowledgement_notice_v104b11(schedule)
+            notice_html = (
+                "<div class='hm-v101-schedule-line hm-v104b11-ack-note'>"
+                f"{_esc(notice)}</div>"
+                if notice
+                else ""
+            )
+            st.markdown(
+                f"""
+                <div class='hm-v101-schedule-card'>
+                  <div class='hm-v101-schedule-title'>{_esc(schedule.get('title','Scheduled session'))}<span class='hm-v101-schedule-pill'>{_esc(schedule_display_status_label_v104b11(schedule))}</span></div>
+                  <div class='hm-v101-schedule-line'>{_esc(schedule.get('schedule_date',''))} · {_esc(time_text)}</div>
+                  <div class='hm-v101-schedule-line'>Mode: {_esc(schedule.get('mode','-'))} · Link/location: {_esc(schedule.get('location_or_link') or '-')}</div>
+                  {notice_html}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def _render_task_button(label, key, page, disabled=False):
-    st.markdown("<span class='hm-task-action-anchor'></span>", unsafe_allow_html=True)
+    st.markdown(
+        "<span class='hm-task-action-anchor'></span>",
+        unsafe_allow_html=True,
+    )
     if st.button(label, key=key, use_container_width=True, disabled=disabled):
         st.switch_page(page)
 
 
 def _render_task_progress(current_instance, wf, requested_pages):
-    visible_tasks = [p for p in requested_pages if p in ["nsp1", "nsp2", "body_mind"]]
-    if should_show_body_mind_next_step_v96_6(wf, current_instance) and "body_mind" not in visible_tasks:
+    visible_tasks = [
+        page
+        for page in requested_pages
+        if page in ["nsp1", "nsp2", "body_mind"]
+    ]
+    if (
+        should_show_body_mind_next_step_v96_6(wf, current_instance)
+        and "body_mind" not in visible_tasks
+    ):
         visible_tasks.append("body_mind")
     due_date = _esc(current_instance.get("due_date") or "Not set")
     admin_note = _esc(current_instance.get("admin_note") or "Not provided")
     progress_total = len(visible_tasks)
-    progress_done = sum(1 for p in visible_tasks if task_status_done_v96_2(current_instance, wf, p))
-    progress_width = int(round((progress_done / progress_total) * 100)) if progress_total else 100
+    progress_done = sum(
+        1
+        for page in visible_tasks
+        if task_status_done_v96_2(current_instance, wf, page)
+    )
+    progress_width = (
+        int(round((progress_done / progress_total) * 100))
+        if progress_total
+        else 100
+    )
     task_chips = []
-    for p in visible_tasks:
-        done = task_status_done_v96_2(current_instance, wf, p)
+    for page in visible_tasks:
+        done = task_status_done_v96_2(current_instance, wf, page)
         chip_class = "done" if done else "pending"
         chip_label = "Done" if done else "Pending"
-        task_chips.append(f"<span class='hm-v990-task-chip {chip_class}'>{_esc(task_title_v96_2(p))} · {chip_label}</span>")
+        task_chips.append(
+            f"<span class='hm-v990-task-chip {chip_class}'>"
+            f"{_esc(task_title_v96_2(page))} · {chip_label}</span>"
+        )
     st.markdown(
         f"""
         <div class='hm-v990-task-progress'>
@@ -280,50 +366,119 @@ def _render_task_progress(current_instance, wf, requested_pages):
     task_cols = st.columns([1, 1, 1.08], gap="medium")
     with task_cols[0]:
         if "nsp1" in visible_tasks:
-            _render_task_button("Start NSP Page 1", "hm_task_nsp1", "pages/04_NSP_Page1.py")
+            _render_task_button(
+                "Start NSP Page 1",
+                "hm_task_nsp1",
+                "pages/04_NSP_Page1.py",
+            )
     with task_cols[1]:
         if "nsp2" in visible_tasks:
-            _render_task_button("Start NSP Page 2", "hm_task_nsp2", "pages/05_NSP_Page2.py")
+            _render_task_button(
+                "Start NSP Page 2",
+                "hm_task_nsp2",
+                "pages/05_NSP_Page2.py",
+            )
     with task_cols[2]:
         if "body_mind" in visible_tasks:
-            body_done = task_status_done_v96_2(current_instance, wf, "body_mind")
+            body_done = task_status_done_v96_2(
+                current_instance,
+                wf,
+                "body_mind",
+            )
             label = "Body Mind Completed" if body_done else "Body Mind"
-            _render_task_button(label, "hm_task_body_mind", "pages/19_Body_Mind_Connection.py", disabled=body_done)
+            _render_task_button(
+                label,
+                "hm_task_body_mind",
+                "pages/19_Body_Mind_Connection.py",
+                disabled=body_done,
+            )
 
 
-def _home_action(label: str, page: str, key: str, muted: bool = False, disabled: bool = False):
-    anchor_class = "hm-home-action-anchor hm-home-muted-anchor" if muted else "hm-home-action-anchor"
-    st.markdown(f"<span class='{anchor_class}'></span>", unsafe_allow_html=True)
+def _home_action(
+    label: str,
+    page: str,
+    key: str,
+    muted: bool = False,
+    disabled: bool = False,
+):
+    anchor_class = (
+        "hm-home-action-anchor hm-home-muted-anchor"
+        if muted
+        else "hm-home-action-anchor"
+    )
+    st.markdown(
+        f"<span class='{anchor_class}'></span>",
+        unsafe_allow_html=True,
+    )
     if st.button(label, key=key, use_container_width=True, disabled=disabled):
         st.switch_page(page)
 
 
+# Render the local spacing override and first visible controls before slower page reads.
+_render_member_home_css()
+_render_member_utility_bar()
+topbar(
+    "Member Home",
+    "Continue your wellness assessment and access your tools.",
+    "Member experience",
+)
+
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id) or {}
-if _workflow_finalized(wf) and wf.get("body_mind_activation_requested") and not wf.get("body_mind_unlocked"):
+if (
+    _workflow_finalized(wf)
+    and wf.get("body_mind_activation_requested")
+    and not wf.get("body_mind_unlocked")
+):
     hard_sync_body_mind_if_requested(user_id)
     wf = get_workflow(user_id) or {}
 
 current_instance = get_current_assessment_instance(user_id) or {}
 requested_pages = _normalised_requested_pages(current_instance)
 
-for _repo_detail_key in ["hm_recipe_selected_id", "hm_recipe_detail_mode", "hm_exercise_selected_id", "hm_exercise_detail_mode"]:
+for _repo_detail_key in [
+    "hm_recipe_selected_id",
+    "hm_recipe_detail_mode",
+    "hm_exercise_selected_id",
+    "hm_exercise_detail_mode",
+]:
     st.session_state.pop(_repo_detail_key, None)
-
-_render_member_utility_bar()
-topbar("Member Home", "Continue your wellness assessment and access your tools.", "Member experience")
 
 render_system_message()
 _render_messages(user_id)
 _render_upcoming_schedules(user_id)
 
-instance_status = str(current_instance.get("status") or wf.get("workflow_status") or "not_started").replace("_", " ").title()
-stat_grid([
-    {"label": "LAF", "value": "Completed" if wf.get("laf_completed") else "Pending", "note": "Lifestyle intake"},
-    {"label": "Current Instance", "value": current_instance.get("instance_number", "-"), "note": current_instance.get("instance_type", "-")},
-    {"label": "Requested Tasks", "value": ", ".join([task_title_v96_2(p) for p in requested_pages]), "note": "Current requirement"},
-    {"label": "Status", "value": instance_status, "note": "Current stage"},
-])
+instance_status = str(
+    current_instance.get("status")
+    or wf.get("workflow_status")
+    or "not_started"
+).replace("_", " ").title()
+stat_grid(
+    [
+        {
+            "label": "LAF",
+            "value": "Completed" if wf.get("laf_completed") else "Pending",
+            "note": "Lifestyle intake",
+        },
+        {
+            "label": "Current Instance",
+            "value": current_instance.get("instance_number", "-"),
+            "note": current_instance.get("instance_type", "-"),
+        },
+        {
+            "label": "Requested Tasks",
+            "value": ", ".join(
+                [task_title_v96_2(page) for page in requested_pages]
+            ),
+            "note": "Current requirement",
+        },
+        {
+            "label": "Status",
+            "value": instance_status,
+            "note": "Current stage",
+        },
+    ]
+)
 
 left, right = st.columns([1, 1], gap="large")
 
@@ -334,24 +489,57 @@ with left:
             "<div class='hm-member-panel-heading'>Your next steps</div>",
             unsafe_allow_html=True,
         )
-        is_task_instance = current_instance.get("instance_type") in ["Task Request", "Reassessment"] and not current_instance.get("submitted_for_review")
+        is_task_instance = (
+            current_instance.get("instance_type")
+            in ["Task Request", "Reassessment"]
+            and not current_instance.get("submitted_for_review")
+        )
         if is_task_instance:
             _render_task_progress(current_instance, wf, requested_pages)
         elif not wf.get("laf_completed"):
-            _render_task_button("1. Fill LAF", "hm_fill_laf", "pages/03_LAF_Form.py")
+            _render_task_button(
+                "1. Fill LAF",
+                "hm_fill_laf",
+                "pages/03_LAF_Form.py",
+            )
         elif current_instance.get("submitted_for_review"):
-            st.info("Your latest evaluation has been submitted and is under review.")
+            st.info(
+                "Your latest evaluation has been submitted and is under review."
+            )
         else:
             action_cols = st.columns([1, 1, 1.08], gap="medium")
             with action_cols[0]:
-                _render_task_button("Start NSP Page 1", "hm_home_nsp1", "pages/04_NSP_Page1.py", disabled=("nsp1" not in requested_pages))
+                _render_task_button(
+                    "Start NSP Page 1",
+                    "hm_home_nsp1",
+                    "pages/04_NSP_Page1.py",
+                    disabled=("nsp1" not in requested_pages),
+                )
             with action_cols[1]:
-                _render_task_button("Start NSP Page 2", "hm_home_nsp2", "pages/05_NSP_Page2.py", disabled=("nsp2" not in requested_pages))
+                _render_task_button(
+                    "Start NSP Page 2",
+                    "hm_home_nsp2",
+                    "pages/05_NSP_Page2.py",
+                    disabled=("nsp2" not in requested_pages),
+                )
             with action_cols[2]:
-                if should_show_body_mind_next_step_v96_6(wf, current_instance):
-                    _render_task_button("Body Mind", "hm_home_body_mind", "pages/19_Body_Mind_Connection.py")
-        st.markdown("<div class='hm-home-soft-separator'></div>", unsafe_allow_html=True)
-        if st.button("Submit / Status — Send completed tasks for admin review", use_container_width=True):
+                if should_show_body_mind_next_step_v96_6(
+                    wf,
+                    current_instance,
+                ):
+                    _render_task_button(
+                        "Body Mind",
+                        "hm_home_body_mind",
+                        "pages/19_Body_Mind_Connection.py",
+                    )
+        st.markdown(
+            "<div class='hm-home-soft-separator'></div>",
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "Submit / Status — Send completed tasks for admin review",
+            use_container_width=True,
+        ):
             st.switch_page("pages/06_Submit_Status.py")
 
 with right:
@@ -362,18 +550,64 @@ with right:
             unsafe_allow_html=True,
         )
         plans_ready = _workflow_finalized(wf)
-        st.markdown("<div class='hm-home-group-title'>Daily tools</div>", unsafe_allow_html=True)
-        _home_action("Today's Plan", "pages/36_Todays_Journey.py", "hm_home_today_plan", disabled=not plans_ready)
-        _home_action("Daily Log", "pages/18_Daily_Log.py", "hm_home_daily_log")
-        _home_action("My Schedule", "pages/33_My_Schedule.py", "hm_home_schedule")
-        _home_action("My Weekly Plan", "pages/37_Member_Plan.py", "hm_home_weekly_plan", disabled=not plans_ready)
+        st.markdown(
+            "<div class='hm-home-group-title'>Daily tools</div>",
+            unsafe_allow_html=True,
+        )
+        _home_action(
+            "Today's Plan",
+            "pages/36_Todays_Journey.py",
+            "hm_home_today_plan",
+            disabled=not plans_ready,
+        )
+        _home_action(
+            "Daily Log",
+            "pages/18_Daily_Log.py",
+            "hm_home_daily_log",
+        )
+        _home_action(
+            "My Schedule",
+            "pages/33_My_Schedule.py",
+            "hm_home_schedule",
+        )
+        _home_action(
+            "My Weekly Plan",
+            "pages/37_Member_Plan.py",
+            "hm_home_weekly_plan",
+            disabled=not plans_ready,
+        )
         if not plans_ready:
-            st.markdown("<div class='lock-card'><b>Weekly plan, recipes, exercises and supplements unlock after expert review is complete.</b></div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div class='lock-card'><b>Weekly plan, recipes, exercises and "
+                "supplements unlock after expert review is complete.</b></div>",
+                unsafe_allow_html=True,
+            )
         if SHOW_MEMBER_REFERENCE_LIBRARY:
-            st.markdown("<div class='hm-home-group-title hm-home-reference-title'>Reference library</div>", unsafe_allow_html=True)
-            _home_action("Recipe Repository", "pages/08_Recipe_Repository.py", "hm_home_recipe_repo", muted=True, disabled=not plans_ready)
-            _home_action("Exercise Repository", "pages/09_Exercise_Repository.py", "hm_home_exercise_repo", muted=True, disabled=not plans_ready)
-            _home_action("Supplements", "pages/40_Member_Supplements.py", "hm_home_supplements", muted=True, disabled=not plans_ready)
+            st.markdown(
+                "<div class='hm-home-group-title hm-home-reference-title'>"
+                "Reference library</div>",
+                unsafe_allow_html=True,
+            )
+            _home_action(
+                "Recipe Repository",
+                "pages/08_Recipe_Repository.py",
+                "hm_home_recipe_repo",
+                muted=True,
+                disabled=not plans_ready,
+            )
+            _home_action(
+                "Exercise Repository",
+                "pages/09_Exercise_Repository.py",
+                "hm_home_exercise_repo",
+                muted=True,
+                disabled=not plans_ready,
+            )
+            _home_action(
+                "Supplements",
+                "pages/40_Member_Supplements.py",
+                "hm_home_supplements",
+                muted=True,
+                disabled=not plans_ready,
+            )
 
 inject_keepalive_guard_v96_11()
-_render_member_home_css()
