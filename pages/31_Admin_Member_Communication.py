@@ -30,6 +30,101 @@ from components.ui_common import (
 )
 
 
+MESSAGE_MEMBER_KEY = "hm_admin_message_member"
+MESSAGE_SUBJECT_KEY = "hm_admin_message_subject"
+MESSAGE_BODY_KEY = "hm_admin_message_body"
+MESSAGE_FLASH_KEY = "hm_admin_message_flash"
+
+
+def _set_message_flash(kind, message):
+    st.session_state[MESSAGE_FLASH_KEY] = {
+        "kind": str(kind or "info"),
+        "message": str(message or "").strip(),
+    }
+
+
+def _render_message_flash():
+    flash = st.session_state.pop(MESSAGE_FLASH_KEY, None)
+    if not isinstance(flash, dict):
+        return
+    message = str(flash.get("message") or "").strip()
+    if not message:
+        return
+    kind = str(flash.get("kind") or "info")
+    if kind == "success":
+        st.success(message)
+    elif kind == "warning":
+        st.warning(message)
+    else:
+        st.error(message)
+
+
+def _send_member_message(member_options):
+    selected_label = st.session_state.get(MESSAGE_MEMBER_KEY)
+    member_id = member_options.get(selected_label, "")
+    subject = str(st.session_state.get(MESSAGE_SUBJECT_KEY) or "").strip()
+    message = str(st.session_state.get(MESSAGE_BODY_KEY) or "").strip()
+
+    if not member_id:
+        _set_message_flash("error", "Select a member before sending the message.")
+        return
+    if not subject or not message:
+        _set_message_flash("error", "Subject and message are required.")
+        return
+
+    try:
+        result = queue_member_message(
+            member_id,
+            "admin",
+            subject,
+            message,
+            actor_id=st.session_state.get("user_id", "admin"),
+        )
+    except Exception as exc:
+        _set_message_flash(
+            "error",
+            f"Message could not be saved. Your entered text has been retained: {exc}",
+        )
+        return
+
+    if not isinstance(result, dict) or not str(result.get("id") or "").strip():
+        _set_message_flash(
+            "error",
+            "Message saving could not be confirmed. Your entered text has been retained.",
+        )
+        return
+
+    delivery = str(result.get("email_delivery_status") or "")
+    if delivery == "sent":
+        kind = "success"
+        flash_message = "Message saved in HealthyMe and email sent to the member."
+    elif delivery == "configuration_missing":
+        kind = "warning"
+        flash_message = (
+            "Message saved in HealthyMe. Email delivery is waiting for Resend configuration."
+        )
+    elif delivery == "recipient_missing":
+        kind = "warning"
+        flash_message = (
+            "Message saved in HealthyMe, but the member does not have a valid email address."
+        )
+    else:
+        error = str(
+            result.get("email_delivery_error")
+            or "Email delivery could not be confirmed."
+        )
+        kind = "warning"
+        flash_message = (
+            f"Message saved in HealthyMe. Email delivery needs attention: {error}"
+        )
+
+    # The callback runs before Streamlit renders the next page cycle. Clear only the
+    # transaction fields after the message record is confirmed; preserve the member.
+    st.session_state[MESSAGE_SUBJECT_KEY] = ""
+    st.session_state[MESSAGE_BODY_KEY] = ""
+    _set_message_flash(kind, flash_message)
+
+
 st.set_page_config(
     page_title="Admin-Member Communication",
     page_icon="💚",
@@ -132,49 +227,38 @@ if not members:
     st.stop()
 
 member_options = {f"{m['name']} — {m['email']}": m["id"] for m in members}
-selected_label = st.selectbox("Select member", list(member_options.keys()))
+selected_label = st.selectbox(
+    "Select member",
+    list(member_options.keys()),
+    key=MESSAGE_MEMBER_KEY,
+)
 member_id = member_options[selected_label]
 
 compose_tab, delivery_tab = st.tabs(["Send Message", "Email Delivery"])
 
 with compose_tab:
+    st.markdown("<div class='hm-comm-success-space'>", unsafe_allow_html=True)
+    _render_message_flash()
     subject = st.text_input(
         "Subject",
         placeholder="Example: Please review your Daily Log",
+        key=MESSAGE_SUBJECT_KEY,
     )
     message = st.text_area(
         "Message",
         placeholder="Write a friendly and professional message for the member.",
         height=110,
+        key=MESSAGE_BODY_KEY,
     )
 
-    st.markdown("<div class='hm-comm-success-space'>", unsafe_allow_html=True)
-    if st.button("Send Message and Email", type="primary", use_container_width=True):
-        if not subject.strip() or not message.strip():
-            st.error("Subject and message are required.")
-        else:
-            result = queue_member_message(
-                member_id,
-                "admin",
-                subject.strip(),
-                message.strip(),
-                actor_id=st.session_state.get("user_id", "admin"),
-            )
-            delivery = str((result or {}).get("email_delivery_status") or "")
-            if delivery == "sent":
-                st.success("Message saved in HealthyMe and email sent to the member.")
-            elif delivery == "configuration_missing":
-                st.warning("Message saved in HealthyMe. Email delivery is waiting for Resend configuration.")
-            elif delivery == "recipient_missing":
-                st.warning("Message saved in HealthyMe, but the member does not have a valid email address.")
-            else:
-                error = str(
-                    (result or {}).get("email_delivery_error")
-                    or "Email delivery could not be confirmed."
-                )
-                st.warning(
-                    f"Message saved in HealthyMe. Email delivery needs attention: {error}"
-                )
+    st.button(
+        "Send Message and Email",
+        type="primary",
+        use_container_width=True,
+        on_click=_send_member_message,
+        args=(member_options,),
+        key="hm_admin_message_send",
+    )
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.subheader("Recent messages for selected member")
