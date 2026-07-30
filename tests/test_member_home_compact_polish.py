@@ -21,9 +21,9 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
         self.assertIn('id="hm-member-home-local-style-v2"', source)
-        self.assertIn("hm-member-home-compact-polish-v3", source)
+        self.assertIn("hm-member-home-compact-polish-v4", source)
         self.assertIn("top:-2.75rem", source)
-        self.assertIn("width:315px", source)
+        self.assertIn("width:285px", source)
         self.assertIn("white-space:nowrap", source)
         self.assertIn("word-break:keep-all", source)
         self.assertIn("_install_member_home_compact_polish()", source)
@@ -38,23 +38,25 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
         self.assertIn('content:"›"', source)
         self.assertIn("details[open] summary::before", source)
 
-    def test_expander_divider_is_removed_and_pill_is_wider(self):
+    def test_expander_divider_is_removed_and_pill_is_balanced(self):
         source = (
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
-        self.assertIn("width:315px", source)
-        self.assertIn("border-bottom:0", source)
-        self.assertIn("summary::after", source)
-        self.assertIn("content:none", source)
+        self.assertIn("width:285px", source)
+        self.assertIn('[data-testid="stExpanderDetails"]', source)
+        self.assertIn("summary + div", source)
+        self.assertIn("border-top:0", source)
+        self.assertIn("hr{", source)
+        self.assertIn("display:none", source)
 
-    def test_consultation_cards_are_centered_and_more_compact(self):
+    def test_consultation_cards_are_left_aligned_and_reduced_to_sixty_percent(self):
         source = (
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
         self.assertIn(".hm-v101-schedule-card", source)
-        self.assertIn("width:78%", source)
-        self.assertIn("max-width:760px", source)
-        self.assertIn("margin:.34rem auto .52rem auto", source)
+        self.assertIn("width:47%", source)
+        self.assertIn("max-width:460px", source)
+        self.assertIn("margin:.34rem 0 .52rem 0", source)
         self.assertIn("width:100%", source)
 
     def test_upcoming_pill_is_not_rendered_when_no_schedule_remains(self):
