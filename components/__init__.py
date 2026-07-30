@@ -26,6 +26,9 @@ from components.performance_measurement_gate import (
 from components.member_post_optimization_cleanup import (
     install_member_post_optimization_cleanup,
 )
+from components.member_saved_days_home_cleanup import (
+    install_member_saved_days_home_cleanup,
+)
 
 
 # Expired authorization recovery is installed before app.py captures the accepted
@@ -63,3 +66,7 @@ install_performance_measurement_gate()
 # The performance correction is complete. Apply the final production Member shell,
 # working Other Fluid time field and remove temporary diagnostics panels.
 install_member_post_optimization_cleanup()
+
+# Replace Saved Days loading with a seven-day meal-only summary, remove the Member Home
+# KPI strip and balance Messages with Upcoming Schedule without changing stored data.
+install_member_saved_days_home_cleanup()
