@@ -39,6 +39,7 @@ on:
       - "pages/48_Admin_View_Profiles.py"
       - "sql/package_hardening_123*.sql"
       - "tests/test_package_hardening_contract.py"
+      - "tests/test_package_form_hygiene.py"
       - "tests/test_ui_corrections_ss1_ss3.py"
       - "tests/test_sprint1_stability_hygiene.py"
       - "tests/test_admin_scheduling_consolidated.py"
@@ -104,6 +105,7 @@ jobs:
             components/package_hardening.py \
             components/package_hardening_bootstrap.py \
             components/package_hardening_ui.py \
+            components/package_hardening_form_hygiene.py \
             components/package_hardening_schedule_ui.py \
             components/package_value_formula_ui.py \
             components/admin_scheduling_default_navigation.py \
@@ -146,18 +148,20 @@ jobs:
           import components.sprint1_schedule_hygiene
           import components.package_hardening
           import components.package_hardening_ui
+          import components.package_hardening_form_hygiene
           import components.package_hardening_schedule_ui
           import components.package_value_formula_ui
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening, Scheduling, diagnostics, performance, Profile Builder hygiene, Profile Viewer, Member schedule/exercise and Admin UI UX imports passed")
+          print("Package hardening, Package form hygiene, Scheduling, diagnostics, performance, Profile Builder hygiene, Profile Viewer, Member schedule/exercise and Admin UI UX imports passed")
           PY
 
       - name: Run package and UI contract tests
         run: |
           python -m unittest \
             tests.test_package_hardening_contract \
+            tests.test_package_form_hygiene \
             tests.test_ui_corrections_ss1_ss3 \
             tests.test_sprint1_stability_hygiene \
             tests.test_admin_scheduling_consolidated \
