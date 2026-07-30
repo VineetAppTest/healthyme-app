@@ -19,6 +19,8 @@ on:
       - "components/member_exercise_journal*.py"
       - "components/performance_diagnostics.py"
       - "components/performance_measurement_gate.py"
+      - "components/profile_builder_modular.py"
+      - "components/recommendation_profile_viewer.py"
       - "components/sprint1_schedule_hygiene.py"
       - "components/current_build.py"
       - "components/__init__.py"
@@ -31,6 +33,7 @@ on:
       - "pages/41_Admin_Packages.py"
       - "pages/41_Member_Exercise.py"
       - "pages/47_Admin_Performance_Diagnostics.py"
+      - "pages/48_Admin_View_Profiles.py"
       - "sql/package_hardening_123*.sql"
       - "tests/test_package_hardening_contract.py"
       - "tests/test_ui_corrections_ss1_ss3.py"
@@ -43,6 +46,7 @@ on:
       - "tests/test_member_home_schedule_presentation.py"
       - "tests/test_member_home_message_toggle_upload.py"
       - "tests/test_member_schedule_tabs_exercise_journal.py"
+      - "tests/test_view_profiles_lifecycle.py"
       - ".github/workflows/package-hardening-validation.yml"
 
 permissions:
@@ -84,6 +88,8 @@ jobs:
             components/performance_measurement_gate.py \
             components/admin_performance_optimization.py \
             components/admin_uiux_corrections.py \
+            components/profile_builder_modular.py \
+            components/recommendation_profile_viewer.py \
             components/sprint1_schedule_hygiene.py \
             components/package_hardening.py \
             components/package_hardening_bootstrap.py \
@@ -101,7 +107,8 @@ jobs:
             pages/38_Admin_Recommendation_Profile_Builder.py \
             pages/41_Admin_Packages.py \
             pages/41_Member_Exercise.py \
-            pages/47_Admin_Performance_Diagnostics.py
+            pages/47_Admin_Performance_Diagnostics.py \
+            pages/48_Admin_View_Profiles.py
 
       - name: Verify component imports
         run: |
@@ -123,6 +130,8 @@ jobs:
           import components.performance_measurement_gate
           import components.admin_performance_optimization
           import components.admin_uiux_corrections
+          import components.profile_builder_modular
+          import components.recommendation_profile_viewer
           import components.sprint1_schedule_hygiene
           import components.package_hardening
           import components.package_hardening_ui
@@ -131,7 +140,7 @@ jobs:
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening, Scheduling, diagnostics, performance, Member schedule/exercise and Admin UI UX imports passed")
+          print("Package hardening, Scheduling, diagnostics, performance, Profile Viewer, Member schedule/exercise and Admin UI UX imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -148,4 +157,5 @@ jobs:
             tests.test_member_home_schedule_presentation \
             tests.test_member_home_message_toggle_upload \
             tests.test_member_schedule_tabs_exercise_journal \
+            tests.test_view_profiles_lifecycle \
             -v
