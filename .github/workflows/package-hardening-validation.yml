@@ -19,7 +19,10 @@ on:
       - "components/member_exercise_journal*.py"
       - "components/performance_diagnostics.py"
       - "components/performance_measurement_gate.py"
+      - "components/pbm_*.py"
+      - "components/profile_builder_form_hygiene.py"
       - "components/profile_builder_modular.py"
+      - "components/profile_publish_control_v2.py"
       - "components/recommendation_profile_viewer.py"
       - "components/sprint1_schedule_hygiene.py"
       - "components/current_build.py"
@@ -46,6 +49,7 @@ on:
       - "tests/test_member_home_schedule_presentation.py"
       - "tests/test_member_home_message_toggle_upload.py"
       - "tests/test_member_schedule_tabs_exercise_journal.py"
+      - "tests/test_profile_builder_form_hygiene.py"
       - "tests/test_view_profiles_lifecycle.py"
       - ".github/workflows/package-hardening-validation.yml"
 
@@ -88,7 +92,13 @@ jobs:
             components/performance_measurement_gate.py \
             components/admin_performance_optimization.py \
             components/admin_uiux_corrections.py \
+            components/pbm_core.py \
+            components/pbm_modules.py \
+            components/pbm_rows.py \
+            components/pbm_setup.py \
+            components/profile_builder_form_hygiene.py \
             components/profile_builder_modular.py \
+            components/profile_publish_control_v2.py \
             components/recommendation_profile_viewer.py \
             components/sprint1_schedule_hygiene.py \
             components/package_hardening.py \
@@ -130,6 +140,7 @@ jobs:
           import components.performance_measurement_gate
           import components.admin_performance_optimization
           import components.admin_uiux_corrections
+          import components.profile_builder_form_hygiene
           import components.profile_builder_modular
           import components.recommendation_profile_viewer
           import components.sprint1_schedule_hygiene
@@ -140,7 +151,7 @@ jobs:
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening, Scheduling, diagnostics, performance, Profile Viewer, Member schedule/exercise and Admin UI UX imports passed")
+          print("Package hardening, Scheduling, diagnostics, performance, Profile Builder hygiene, Profile Viewer, Member schedule/exercise and Admin UI UX imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -157,5 +168,6 @@ jobs:
             tests.test_member_home_schedule_presentation \
             tests.test_member_home_message_toggle_upload \
             tests.test_member_schedule_tabs_exercise_journal \
+            tests.test_profile_builder_form_hygiene \
             tests.test_view_profiles_lifecycle \
             -v
