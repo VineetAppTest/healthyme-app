@@ -21,9 +21,9 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
         self.assertIn('id="hm-member-home-local-style-v2"', source)
-        self.assertIn("hm-member-home-compact-polish-v2", source)
+        self.assertIn("hm-member-home-compact-polish-v3", source)
         self.assertIn("top:-2.75rem", source)
-        self.assertIn("width:max-content", source)
+        self.assertIn("width:18.5rem", source)
         self.assertIn("white-space:nowrap", source)
         self.assertIn("word-break:keep-all", source)
         self.assertIn("_install_member_home_compact_polish()", source)
@@ -38,15 +38,28 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
         self.assertIn('content:"›"', source)
         self.assertIn('details[open] summary::before', source)
 
-    def test_consultation_cards_are_centered_and_narrower(self):
+    def test_expander_rule_and_consultation_cards_are_more_compact(self):
         source = (
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
-        self.assertIn(".hm-v101-schedule-card", source)
-        self.assertIn("width:92%", source)
-        self.assertIn("max-width:920px", source)
-        self.assertIn("margin:.42rem auto .62rem auto", source)
+        self.assertIn("border-bottom:0!important", source)
+        self.assertIn('[data-testid="stExpanderDetails"]', source)
+        self.assertIn("width:74%", source)
+        self.assertIn("max-width:760px", source)
+        self.assertIn("margin:.34rem auto .52rem auto", source)
         self.assertIn("width:100%", source)
+
+    def test_upcoming_pill_is_not_rendered_when_no_schedule_remains(self):
+        source = (ROOT / "pages/02_Member_Home.py").read_text()
+        schedule_read = source.index(
+            "upcoming_schedules = list_upcoming_member_schedules(user_id, limit=5)"
+        )
+        empty_guard = source.index("if not upcoming_schedules:", schedule_read)
+        return_line = source.index("return", empty_guard)
+        expander = source.index("with st.expander(", return_line)
+        self.assertLess(schedule_read, empty_guard)
+        self.assertLess(empty_guard, return_line)
+        self.assertLess(return_line, expander)
 
     def test_compact_polish_does_not_change_schedule_or_member_business_state(self):
         source = (
