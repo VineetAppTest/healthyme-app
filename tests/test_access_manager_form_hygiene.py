@@ -27,17 +27,21 @@ class AccessManagerFormHygieneTests(unittest.TestCase):
         self.assertIn('active_key = f"hm_access_active_{uid}_v{version}"', self.access_source)
 
     def test_success_reloads_canonical_values_and_failure_preserves_inputs(self):
-        ok_block = self.access_source.split("if ok:", 1)[1].split("else:", 1)[0]
+        submitted_block = self.access_source.split("if submitted:", 1)[1].split(
+            "st.divider()", 1
+        )[0]
+        ok_block, failure_block = submitted_block.split("if ok:", 1)[1].split(
+            "else:", 1
+        )
         self.assertIn("st.session_state[CLEANUP_KEY]", ok_block)
         self.assertIn("_bump_form_version(uid)", ok_block)
-        failure_block = self.access_source.split("else:", 1)[1]
         self.assertNotIn("_bump_form_version(uid)", failure_block)
-        self.assertIn('set_system_message(msg, "error")', self.access_source)
+        self.assertIn('set_system_message(msg, "error")', failure_block)
 
     def test_create_user_forms_already_clear_only_after_success(self):
         self.assertIn('st.session_state["clear_member_fields_next_run"] = True', self.create_source)
         self.assertIn('st.session_state["clear_admin_fields_next_run"] = True', self.create_source)
-        self.assertIn("if not prov.get(\"ok\"):", self.create_source)
+        self.assertIn('if not prov.get("ok"):', self.create_source)
         self.assertIn("st.rerun()", self.create_source)
 
     def test_no_extra_database_read_is_added_by_form_hygiene(self):
