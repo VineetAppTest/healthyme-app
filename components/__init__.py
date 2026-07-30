@@ -23,6 +23,9 @@ from components.performance_diagnostics import (
 from components.performance_measurement_gate import (
     install_performance_measurement_gate,
 )
+from components.member_post_optimization_cleanup import (
+    install_member_post_optimization_cleanup,
+)
 
 
 # Expired authorization recovery is installed before app.py captures the accepted
@@ -56,3 +59,7 @@ install_member_message_display_cleanup()
 install_backend_measurement()
 install_page_boundary_measurement()
 install_performance_measurement_gate()
+
+# The performance correction is complete. Apply the final production Member shell,
+# working Other Fluid time field and remove temporary diagnostics panels.
+install_member_post_optimization_cleanup()
