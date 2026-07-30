@@ -14,6 +14,7 @@ _INSTALLED = False
 
 _SETUP_SAVE_PENDING = "pbm_hygiene_setup_save_pending"
 _CLONE_SUCCESS_PENDING = "pbm_hygiene_clone_success_pending"
+_CLONE_CLEAR_PENDING = "pbm_hygiene_clone_clear_pending"
 _MODULE_SAVE_PENDING = "pbm_hygiene_module_save_pending"
 _PUBLISH_SUCCESS_PENDING = "pbm_hygiene_publish_success_pending"
 _WIDGET_CLEANUP_PENDING = "pbm_hygiene_widget_cleanup_pending"
@@ -115,8 +116,11 @@ def install_profile_builder_form_hygiene() -> None:
 
     def render_setup_with_hygiene(options) -> None:
         _consume_widget_cleanup()
+        if st.session_state.pop(_CLONE_CLEAR_PENDING, False):
+            _clear_clone_selector()
         if st.session_state.pop(_CLONE_SUCCESS_PENDING, False):
             _clear_clone_selector()
+            clear_prefixed_widget_state(_PROFILE_WIDGET_PREFIXES)
             _set_flash(
                 _SETUP_FLASH,
                 "Profile Setup cloned as a new Draft. Recommendation rows were not copied.",
@@ -131,7 +135,7 @@ def install_profile_builder_form_hygiene() -> None:
         profile_id = _text(pending.get("profile_id"))
         reload_ok, reload_message = pbm_core.load_selected(profile_id, shell_only=False)
         if reload_ok:
-            _clear_clone_selector()
+            st.session_state[_CLONE_CLEAR_PENDING] = True
             _schedule_widget_cleanup()
             _set_flash(_SETUP_FLASH, _text(pending.get("message")))
             st.rerun()
@@ -151,21 +155,21 @@ def install_profile_builder_form_hygiene() -> None:
     def save_profile_module_with_hygiene(
         profile_id: str,
         member_id: str,
-        module: str,
-        rows,
+        item_type: str,
+        items,
         **kwargs,
     ):
         result = original_module_save(
             profile_id,
             member_id,
-            module,
-            rows,
+            item_type,
+            items,
             **kwargs,
         )
         ok, message = result
         if ok:
             st.session_state[_MODULE_SAVE_PENDING] = {
-                "module": _text(module),
+                "module": _text(item_type),
                 "profile_id": _text(profile_id),
                 "message": _text(message),
             }
