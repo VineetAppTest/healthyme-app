@@ -65,7 +65,7 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertIn("hm-member-schedule-nav-anchor", schedule)
         self.assertIn("hm-member-schedule-selector-anchor", schedule)
         self.assertIn("margin:.04rem 0 .06rem 0", schedule)
-        self.assertIn("hm-daily-log-selector-v5", daily)
+        self.assertIn("hm-daily-log-journal-selector-v5", daily)
 
     def test_my_schedule_page_uses_selected_renderer_and_keeps_measurement(self):
         source = (ROOT / "pages/33_My_Schedule.py").read_text()
