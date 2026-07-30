@@ -117,11 +117,16 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         source = (ROOT / "pages/02_Member_Home.py").read_text()
         self.assertIn("hm-member-home-local-style-v2", source)
         self.assertIn("padding-top:0!important", source)
-        self.assertLess(source.index("_render_member_home_css()"), source.index("get_workflow(user_id)"))
-        self.assertLess(source.index("_render_member_utility_bar()"), source.index("get_workflow(user_id)"))
-        self.assertLess(source.index('topbar(\n    "Member Home"'), source.index("get_workflow(user_id)"))
-        self.assertEqual(source.count("_render_member_home_css()"), 1)
-        self.assertEqual(source.count("_render_member_utility_bar()"), 1)
+        render_start = source.index(
+            "# Render the local spacing override and first visible controls"
+        )
+        workflow_read = source.index("get_workflow(user_id)")
+        self.assertLess(render_start, workflow_read)
+        self.assertLess(source.index("\n_render_member_home_css()\n"), workflow_read)
+        self.assertLess(source.index("\n_render_member_utility_bar()\n"), workflow_read)
+        self.assertLess(source.index('topbar(\n    "Member Home"'), workflow_read)
+        self.assertEqual(source.count("\n_render_member_home_css()\n"), 1)
+        self.assertEqual(source.count("\n_render_member_utility_bar()\n"), 1)
 
     def test_installer_and_export_discovery_are_active(self):
         bootstrap = (ROOT / "components/__init__.py").read_text()
