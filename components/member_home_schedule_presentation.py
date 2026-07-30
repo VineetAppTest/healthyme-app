@@ -8,7 +8,51 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 _DEFAULT_MEMBER_TIMEZONE = "Asia/Kolkata"
 _PATCH_MARKER = "_hm_member_home_schedule_presentation_v1"
+_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v1"
+_MEMBER_HOME_STYLE_MARKER = 'id="hm-member-home-local-style-v2"'
 _CLOSED_STATUSES = {"cancelled", "completed", "rescheduled"}
+_MEMBER_HOME_COMPACT_CSS = """
+/* hm-member-home-compact-polish-v1 */
+div[data-testid="stElementContainer"]:has(#hm-member-home-local-style-v2){
+  display:none!important;height:0!important;min-height:0!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){
+  position:relative!important;top:-2.75rem!important;
+  margin-bottom:-2.25rem!important;
+}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor){
+  border:0!important;background:transparent!important;box-shadow:none!important;
+  margin:.20rem 0 .55rem 0!important;
+}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details{
+  border:0!important;background:transparent!important;box-shadow:none!important;
+}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
+  width:max-content!important;max-width:100%!important;min-height:2.30rem!important;
+  padding:.36rem .68rem!important;border:1px solid #E3C98E!important;
+  border-radius:999px!important;background:#FFFDF8!important;
+  box-shadow:0 4px 10px rgba(6,78,59,.06)!important;
+  display:flex!important;align-items:center!important;gap:.42rem!important;
+}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary,
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary *{
+  white-space:nowrap!important;overflow-wrap:normal!important;
+  word-break:keep-all!important;line-height:1.10!important;
+}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary p{
+  margin:0!important;font-size:.90rem!important;font-weight:900!important;
+}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary svg{
+  width:.82rem!important;height:.82rem!important;min-width:.82rem!important;
+  flex:0 0 .82rem!important;
+}
+@media(max-width:640px){
+  div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){
+    top:-1.75rem!important;margin-bottom:-1.30rem!important;
+  }
+}
+"""
 
 
 def _text(value: object) -> str:
@@ -131,10 +175,40 @@ def prepare_member_home_upcoming_schedules(
     return visible[:limit] if limit else visible
 
 
+def _install_member_home_compact_polish() -> None:
+    """Append Member Home-only CSS to the existing local style block."""
+
+    import streamlit as st
+
+    current_markdown = st.markdown
+    if getattr(current_markdown, _MARKDOWN_PATCH_MARKER, False):
+        return
+
+    @wraps(current_markdown)
+    def polished_markdown(body, *args, **kwargs):
+        if (
+            isinstance(body, str)
+            and _MEMBER_HOME_STYLE_MARKER in body
+            and "hm-member-home-compact-polish-v1" not in body
+        ):
+            body = body.replace(
+                "</style>",
+                f"{_MEMBER_HOME_COMPACT_CSS}</style>",
+                1,
+            )
+        return current_markdown(body, *args, **kwargs)
+
+    setattr(polished_markdown, _MARKDOWN_PATCH_MARKER, True)
+    polished_markdown._hm_original_markdown = current_markdown
+    st.markdown = polished_markdown
+
+
 def install_member_home_schedule_presentation() -> None:
-    """Patch only the Member Home upcoming-schedule read presentation."""
+    """Install Member Home schedule filtering and presentation-only polish."""
 
     from components import db as db_api
+
+    _install_member_home_compact_polish()
 
     current = db_api.list_upcoming_member_schedules
     if getattr(current, _PATCH_MARKER, False):
