@@ -8,11 +8,11 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 _DEFAULT_MEMBER_TIMEZONE = "Asia/Kolkata"
 _PATCH_MARKER = "_hm_member_home_schedule_presentation_v1"
-_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v3"
+_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v4"
 _MEMBER_HOME_STYLE_MARKER = 'id="hm-member-home-local-style-v2"'
 _CLOSED_STATUSES = {"cancelled", "completed", "rescheduled"}
 _MEMBER_HOME_COMPACT_CSS = """
-/* hm-member-home-compact-polish-v3 */
+/* hm-member-home-compact-polish-v4 */
 div[data-testid="stElementContainer"]:has(#hm-member-home-local-style-v2){
   display:none!important;height:0!important;min-height:0!important;
   margin:0!important;padding:0!important;overflow:hidden!important;
@@ -21,23 +21,30 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){
   position:relative!important;top:-2.75rem!important;
   margin-bottom:-2.25rem!important;
 }
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor){
-  border:0!important;border-bottom:0!important;outline:0!important;
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor),
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) > div,
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details,
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) [data-testid="stExpanderDetails"]{
+  border:0!important;border-top:0!important;border-bottom:0!important;outline:0!important;
   background:transparent!important;box-shadow:none!important;
   margin:.20rem 0 .42rem 0!important;padding:0!important;
 }
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details{
-  border:0!important;border-bottom:0!important;outline:0!important;
-  background:transparent!important;box-shadow:none!important;
-  margin:0!important;padding:0!important;
-}
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details::before,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details::after,
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary::after{
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary::after,
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary + div::before,
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary + div::after{
   display:none!important;content:none!important;border:0!important;
 }
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary + div{
+  border:0!important;border-top:0!important;border-bottom:0!important;
+  box-shadow:none!important;margin-top:0!important;padding-top:.24rem!important;
+}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) hr{
+  display:none!important;border:0!important;height:0!important;margin:0!important;
+}
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
-  width:315px!important;max-width:calc(100vw - 2rem)!important;
+  width:285px!important;max-width:calc(100vw - 2rem)!important;
   min-height:2.12rem!important;padding:.30rem .72rem!important;
   border:1px solid #E3C98E!important;border-bottom:1px solid #E3C98E!important;
   border-radius:999px!important;background:#FFFDF8!important;
@@ -70,17 +77,20 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
   transform:rotate(90deg);
 }
 .hm-v101-schedule-card{
-  width:78%!important;max-width:760px!important;
-  margin:.34rem auto .52rem auto!important;
-  padding:.54rem .72rem!important;border-radius:12px!important;
+  width:47%!important;max-width:460px!important;
+  margin:.34rem 0 .52rem 0!important;
+  padding:.52rem .68rem!important;border-radius:12px!important;
 }
 .hm-upcoming-schedule-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+@media(max-width:900px){
+  .hm-v101-schedule-card{width:68%!important;max-width:560px!important;}
+}
 @media(max-width:640px){
   div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){
     top:-1.75rem!important;margin-bottom:-1.30rem!important;
   }
   div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
-    width:min(315px,calc(100vw - 2rem))!important;
+    width:min(285px,calc(100vw - 2rem))!important;
   }
   .hm-v101-schedule-card{
     width:100%!important;max-width:none!important;
@@ -224,7 +234,7 @@ def _install_member_home_compact_polish() -> None:
         if (
             isinstance(body, str)
             and _MEMBER_HOME_STYLE_MARKER in body
-            and "hm-member-home-compact-polish-v3" not in body
+            and "hm-member-home-compact-polish-v4" not in body
         ):
             body = body.replace(
                 "</style>",
