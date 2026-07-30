@@ -13,6 +13,8 @@ on:
       - "components/login_expiry_recovery.py"
       - "components/member_message_display_cleanup.py"
       - "components/member_home_schedule_presentation.py"
+      - "components/member_home_side_by_side_runtime.py"
+      - "components/file_uploader_presentation.py"
       - "components/member_schedule*.py"
       - "components/member_exercise_journal*.py"
       - "components/performance_diagnostics.py"
@@ -39,6 +41,7 @@ on:
       - "tests/test_admin_uiux_corrections.py"
       - "tests/test_member_performance_export.py"
       - "tests/test_member_home_schedule_presentation.py"
+      - "tests/test_member_home_message_toggle_upload.py"
       - "tests/test_member_schedule_tabs_exercise_journal.py"
       - ".github/workflows/package-hardening-validation.yml"
 
@@ -70,6 +73,8 @@ jobs:
             components/login_expiry_recovery.py \
             components/member_message_display_cleanup.py \
             components/member_home_schedule_presentation.py \
+            components/member_home_side_by_side_runtime.py \
+            components/file_uploader_presentation.py \
             components/member_schedule_tabbed_page.py \
             components/member_schedule_member_copy_cleanup.py \
             components/member_exercise_journal.py \
@@ -107,6 +112,8 @@ jobs:
           import components.login_expiry_recovery
           import components.member_message_display_cleanup
           import components.member_home_schedule_presentation
+          import components.member_home_side_by_side_runtime
+          import components.file_uploader_presentation
           import components.member_schedule_tabbed_page
           import components.member_schedule_member_copy_cleanup
           import components.member_exercise_journal
@@ -139,5 +146,6 @@ jobs:
             tests.test_admin_uiux_corrections \
             tests.test_member_performance_export \
             tests.test_member_home_schedule_presentation \
+            tests.test_member_home_message_toggle_upload \
             tests.test_member_schedule_tabs_exercise_journal \
             -v
