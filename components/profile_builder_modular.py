@@ -74,6 +74,13 @@ _pbm_rows.widget_key = _epoch_widget_key
 _pbm_rows.remove_row = _remove_row
 _pbm_rows.copy_day = _copy_day
 
+# Install success-only reset behaviour before binding the section renderers below.
+# This preserves the loaded profile while replacing stale widget copies with the
+# canonical persisted values after confirmed saves.
+from components.profile_builder_form_hygiene import install_profile_builder_form_hygiene
+
+install_profile_builder_form_hygiene()
+
 from components.pbm_modules import render_module, render_preview
 from components.pbm_setup import render_setup
 from components.profile_publish_control_v2 import render_profile_publish_control
