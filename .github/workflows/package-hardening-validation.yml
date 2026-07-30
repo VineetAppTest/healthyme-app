@@ -29,6 +29,7 @@ on:
       - "components/__init__.py"
       - "pages/10_Admin_Dashboard.py"
       - "pages/18_Daily_Log.py"
+      - "pages/22_Admin_Daily_Log_Report.py"
       - "pages/31_Admin_Member_Communication.py"
       - "pages/32_Admin_Scheduling.py"
       - "pages/33_My_Schedule.py"
@@ -40,6 +41,7 @@ on:
       - "sql/package_hardening_123*.sql"
       - "tests/test_package_hardening_contract.py"
       - "tests/test_package_form_hygiene.py"
+      - "tests/test_communication_guidance_form_hygiene.py"
       - "tests/test_ui_corrections_ss1_ss3.py"
       - "tests/test_sprint1_stability_hygiene.py"
       - "tests/test_admin_scheduling_consolidated.py"
@@ -113,6 +115,7 @@ jobs:
             components/admin_scheduling_consolidated.py \
             pages/10_Admin_Dashboard.py \
             pages/18_Daily_Log.py \
+            pages/22_Admin_Daily_Log_Report.py \
             pages/31_Admin_Member_Communication.py \
             pages/32_Admin_Scheduling.py \
             pages/33_My_Schedule.py \
@@ -154,7 +157,7 @@ jobs:
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening, Package form hygiene, Scheduling, diagnostics, performance, Profile Builder hygiene, Profile Viewer, Member schedule/exercise and Admin UI UX imports passed")
+          print("Package hardening, Package form hygiene, communication/guidance form hygiene, Scheduling, diagnostics, performance, Profile Builder hygiene, Profile Viewer, Member schedule/exercise and Admin UI UX imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -162,6 +165,7 @@ jobs:
           python -m unittest \
             tests.test_package_hardening_contract \
             tests.test_package_form_hygiene \
+            tests.test_communication_guidance_form_hygiene \
             tests.test_ui_corrections_ss1_ss3 \
             tests.test_sprint1_stability_hygiene \
             tests.test_admin_scheduling_consolidated \
