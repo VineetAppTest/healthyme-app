@@ -8,11 +8,11 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 _DEFAULT_MEMBER_TIMEZONE = "Asia/Kolkata"
 _PATCH_MARKER = "_hm_member_home_schedule_presentation_v1"
-_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v2"
+_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v3"
 _MEMBER_HOME_STYLE_MARKER = 'id="hm-member-home-local-style-v2"'
 _CLOSED_STATUSES = {"cancelled", "completed", "rescheduled"}
 _MEMBER_HOME_COMPACT_CSS = """
-/* hm-member-home-compact-polish-v2 */
+/* hm-member-home-compact-polish-v3 */
 div[data-testid="stElementContainer"]:has(#hm-member-home-local-style-v2){
   display:none!important;height:0!important;min-height:0!important;
   margin:0!important;padding:0!important;overflow:hidden!important;
@@ -22,19 +22,26 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){
   margin-bottom:-2.25rem!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor){
-  border:0!important;background:transparent!important;box-shadow:none!important;
-  margin:.20rem 0 .55rem 0!important;
+  border:0!important;border-bottom:0!important;background:transparent!important;
+  box-shadow:none!important;margin:.20rem 0 .48rem 0!important;
+  padding:0!important;
 }
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details{
-  border:0!important;background:transparent!important;box-shadow:none!important;
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor)::after,
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) hr{
+  display:none!important;content:none!important;border:0!important;
+}
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details,
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open]{
+  border:0!important;border-bottom:0!important;background:transparent!important;
+  box-shadow:none!important;outline:0!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
-  width:max-content!important;max-width:100%!important;min-height:2.12rem!important;
-  padding:.30rem .64rem!important;border:1px solid #E3C98E!important;
+  width:18.5rem!important;max-width:100%!important;min-height:2.12rem!important;
+  padding:.30rem .72rem!important;border:1px solid #E3C98E!important;
   border-radius:999px!important;background:#FFFDF8!important;
   box-shadow:0 3px 8px rgba(6,78,59,.05)!important;
-  display:flex!important;align-items:center!important;gap:.36rem!important;
-  overflow:hidden!important;
+  display:flex!important;align-items:center!important;gap:.42rem!important;
+  overflow:hidden!important;outline:0!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary *{
@@ -60,19 +67,28 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary::before{
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] summary::before{
   transform:rotate(90deg);
 }
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) [data-testid="stExpanderDetails"]{
+  border-top:0!important;margin-top:.18rem!important;padding-top:.18rem!important;
+}
 .hm-v101-schedule-card{
-  width:92%!important;max-width:920px!important;
-  margin:.42rem auto .62rem auto!important;
-  padding:.66rem .82rem!important;border-radius:14px!important;
+  width:74%!important;max-width:760px!important;
+  margin:.34rem auto .52rem auto!important;
+  padding:.54rem .72rem!important;border-radius:12px!important;
 }
 .hm-upcoming-schedule-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+@media(max-width:900px){
+  .hm-v101-schedule-card{width:86%!important;max-width:760px!important;}
+}
 @media(max-width:640px){
   div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){
     top:-1.75rem!important;margin-bottom:-1.30rem!important;
   }
+  div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
+    width:16.5rem!important;max-width:100%!important;
+  }
   .hm-v101-schedule-card{
     width:100%!important;max-width:none!important;
-    padding:.62rem .72rem!important;
+    padding:.58rem .66rem!important;
   }
 }
 """
@@ -212,7 +228,7 @@ def _install_member_home_compact_polish() -> None:
         if (
             isinstance(body, str)
             and _MEMBER_HOME_STYLE_MARKER in body
-            and "hm-member-home-compact-polish-v2" not in body
+            and "hm-member-home-compact-polish-v3" not in body
         ):
             body = body.replace(
                 "</style>",
