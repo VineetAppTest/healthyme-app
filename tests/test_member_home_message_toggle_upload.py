@@ -1,6 +1,7 @@
 from pathlib import Path
 
 
+# Presentation-only regression coverage for Member Home and upload controls.
 ROOT = Path(__file__).resolve().parents[1]
 HOME_RUNTIME = ROOT / "components" / "member_home_side_by_side_runtime.py"
 UPLOADER = ROOT / "components" / "file_uploader_presentation.py"
