@@ -173,21 +173,6 @@ def render_member_exercise_journal_layout_v4(
                     placeholder="Optional remarks",
                 )
 
-            details = " · ".join(
-                value
-                for value in (
-                    base._clean(definition.get("difficulty")),
-                    base._clean(definition.get("equipment")),
-                )
-                if value
-            )
-            if details:
-                st.markdown(
-                    "<div class='hm-exercise-source-note'>Repository details: "
-                    f"{base._esc(details)}</div>",
-                    unsafe_allow_html=True,
-                )
-
             status_col, time_col, save_col = st.columns(
                 [1.1, 1.5, 1.35],
                 gap="small",
