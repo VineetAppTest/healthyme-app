@@ -55,15 +55,20 @@ def _install_daily_log_tab_isolation() -> None:
 
         st.markdown(
             """
-<style id="hm-daily-log-journal-selector-v3">
+<style id="hm-daily-log-journal-selector-v4">
 .hm-daily-log-selector-anchor{
   display:block;height:0;min-height:0;margin:0;padding:0;overflow:hidden;
 }
 .hm-daily-log-selector-anchor + div[data-testid="stHorizontalBlock"]{
-  gap:.55rem!important;margin:.05rem 0 .20rem 0!important;
+  gap:.55rem!important;margin:.02rem 0 .06rem 0!important;
 }
 .hm-daily-log-selector-anchor + div[data-testid="stHorizontalBlock"] button{
   min-height:2.75rem!important;border-radius:14px!important;font-weight:900!important;
+}
+div[data-testid="stElementContainer"]:has(style#hm-exercise-journal-table-v3),
+div[data-testid="stElementContainer"]:has(style#hm-exercise-journal-layout-v4){
+  display:none!important;height:0!important;min-height:0!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
 }
 </style>
             """,
