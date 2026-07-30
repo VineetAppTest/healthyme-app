@@ -30,6 +30,12 @@ from components.member_post_optimization_cleanup import (
 from components.member_saved_days_home_cleanup import (
     install_member_saved_days_home_cleanup,
 )
+from components.member_home_side_by_side_runtime import (
+    install_member_home_side_by_side_runtime,
+)
+from components.member_saved_days_dispatch_runtime import (
+    install_member_saved_days_dispatch_runtime,
+)
 from components.admin_content_form_cleanup import (
     install_admin_content_form_cleanup,
 )
@@ -63,22 +69,28 @@ install_member_exercise_journal_table()
 # records, audit history and email delivery remain unchanged.
 install_member_message_display_cleanup()
 
-# Measurement instrumentation is installed last so it observes the final production
-# callables without changing authentication, routing or business logic. Measurements
-# remain in Streamlit session state; a Member can download the sanitized JSON directly
-# before logout, so no diagnostic evidence is stored in HealthyMe application data.
+# Measurement instrumentation observes the final production callables without changing
+# authentication, routing or business logic.
 install_backend_measurement()
 install_page_boundary_measurement()
 install_performance_measurement_gate()
 
-# The performance correction is complete. Apply the final production Member shell,
-# working Other Fluid time field and remove temporary diagnostics panels.
+# Apply the final production Member shell and retire temporary diagnostics panels.
 install_member_post_optimization_cleanup()
 
-# Replace Saved Days loading with a seven-day meal-only summary, remove the Member Home
-# KPI strip and balance Messages with Upcoming Schedule without changing stored data.
+# Install Admin isolation before the final Member page-specific wrappers. This keeps
+# inactive Admin sections silent while allowing Member wrappers to see the true page
+# caller rather than an intermediate Admin wrapper frame.
+install_admin_content_form_cleanup()
+
+# Keep Saved Days filters visible, show meal-only history without loading the form and
+# suppress only the Member Home KPI strip.
 install_member_saved_days_home_cleanup()
 
-# Stabilize Admin Recipe/Exercise sections, hide legacy Feedback/Allocation surfaces and
-# retain success messages while safely resetting transient content-manager form state.
-install_admin_content_form_cleanup()
+# Route Member Home messages and schedule into real Streamlit columns rather than CSS
+# floats so both sections remain adjacent on desktop and stack safely on mobile.
+install_member_home_side_by_side_runtime()
+
+# Keep the Saved Days button/heading dispatch outermost so its page frame remains visible
+# after the Member Home and Admin Streamlit wrappers are installed.
+install_member_saved_days_dispatch_runtime()
