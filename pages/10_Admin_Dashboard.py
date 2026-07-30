@@ -192,6 +192,7 @@ with right:
         nav_cell("Exercises", "pages/16_Admin_Exercise_Manager.py", "dash_exercises_v102_4b4")
         nav_cell("Supplements", "pages/39_Admin_Supplement_Manager.py", "dash_supplements_v102_4b4")
         nav_cell("Recommendation Profile Builder", "pages/38_Admin_Recommendation_Profile_Builder.py", "dash_profile_builder_h9a8b")
+        nav_cell("View Profiles", "pages/48_Admin_View_Profiles.py", "dash_view_profiles_v103_1")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with st.container(border=True):
@@ -260,3 +261,4 @@ finish_and_render_page_diagnostics("Admin Dashboard")
 # H9A.9B: Added Active Profile Contract Diagnostics under System Tools.
 # H9A.10A: Added Repository-to-Profile Builder Source Alignment diagnostics under System Tools.
 # v102.4B23: Swapped Content & Allocation with Reports & Logs and centralized Communication & Scheduling.
+# v103.1: Added read-only View Profiles workspace under Content & Allocation.
