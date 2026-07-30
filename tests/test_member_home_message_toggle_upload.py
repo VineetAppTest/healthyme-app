@@ -12,22 +12,42 @@ def test_presentation_components_compile():
         compile(path.read_text(encoding="utf-8"), str(path), "exec")
 
 
-def test_messages_have_a_persistent_expand_collapse_control():
+def test_messages_use_the_same_native_expander_control_as_schedule():
     source = HOME_RUNTIME.read_text(encoding="utf-8")
-    assert "hm_member_home_messages_expanded" in source
-    assert "Messages from Nutritionist" in source
-    assert "not open_now" in source
-    assert 'right.button(' in source
-    assert 'return right.markdown' in source
-    assert 'return right.button' in source
+    assert 'right.expander("Messages from Nutritionist", expanded=True)' in source
+    assert "hm-messages-nutritionist-anchor-v4" in source
+    assert 'return box.markdown' in source
+    assert 'return box.button' in source
+    assert "hm_member_home_messages_expanded" not in source
+    assert "hm_member_home_messages_toggle" not in source
 
 
-def test_schedule_and_messages_share_real_aligned_columns():
+def test_schedule_and_messages_have_identical_pill_dimensions_and_alignment():
     source = HOME_RUNTIME.read_text(encoding="utf-8")
     assert 'current_columns([1, 1], gap="large")' in source
     assert 'return left.expander' in source
     assert 'align-items:flex-start' in source
     assert 'width:285px' in source
+    assert 'min-height:2.12rem' in source
+    assert 'height:2.12rem' in source
+    assert '.hm-upcoming-schedule-anchor' in source
+    assert '.hm-messages-nutritionist-anchor-v4' in source
+
+
+def test_active_task_panel_is_visually_prioritised_without_rewriting_task_logic():
+    source = HOME_RUNTIME.read_text(encoding="utf-8")
+    assert 'stVerticalBlockBorderWrapper"]:has(.hm-v990-task-progress)' in source
+    assert 'content:"Action required"' in source
+    assert '.hm-v990-due-date' in source
+    assert '.hm-v990-task-chip.pending' in source
+    for forbidden in (
+        "requested_pages =",
+        "task_status_done_v96_2",
+        "submitted_for_review",
+        "switch_page(\"pages/04_NSP_Page1.py\")",
+        "switch_page(\"pages/05_NSP_Page2.py\")",
+    ):
+        assert forbidden not in source
 
 
 def test_uploader_icon_font_and_button_layout_are_restored():
