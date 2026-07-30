@@ -1,6 +1,7 @@
 """HealthyMe shared components package."""
 
 from components.streamlit_toolbar_cleanup import install_streamlit_toolbar_cleanup
+from components.file_uploader_presentation import install_file_uploader_presentation
 from components.login_expiry_recovery import install_login_expiry_recovery
 from components.package_hardening_bootstrap import install_package_hardening
 from components.member_email_bootstrap import install_member_email_notifications
@@ -44,6 +45,10 @@ from components.admin_content_form_cleanup import (
 # Install first so every route, including the root OAuth callback, receives the
 # presentation-only toolbar cleanup immediately after its own page configuration.
 install_streamlit_toolbar_cleanup()
+
+# Restore Streamlit's Material upload icon after HealthyMe's global font rules while
+# preserving the original uploader values, callbacks and file objects.
+install_file_uploader_presentation()
 
 # Expired authorization recovery is installed before app.py captures the accepted
 # authorizer callable. It changes only the dead-end expired-request presentation.
