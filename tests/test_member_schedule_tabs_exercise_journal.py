@@ -14,12 +14,16 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
-    def test_my_schedule_uses_exact_three_tabs_and_preserves_actions(self):
+    def test_my_schedule_uses_exact_three_sections_and_preserves_actions(self):
         source = (ROOT / "components/member_schedule_tabbed_page.py").read_text()
         self.assertIn(
-            '["Package Subscribed", "Upcoming Schedule", "Session Usage"]',
+            '_SECTIONS = ("Package Subscribed", "Upcoming Schedule", "Session Usage")',
             source,
         )
+        self.assertNotIn("st.tabs(", source)
+        self.assertIn("on_click=_activate_section", source)
+        self.assertIn('if selected == "Package Subscribed"', source)
+        self.assertIn('elif selected == "Upcoming Schedule"', source)
         self.assertIn("schedule_ui._render_package", source)
         self.assertIn("schedule_ui._render_member_ledger", source)
         self.assertIn("Acknowledge schedule", source)
@@ -29,13 +33,41 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
     def test_my_schedule_navigation_renders_before_slow_reads(self):
         source = (ROOT / "components/member_schedule_tabbed_page.py").read_text()
         self.assertEqual(source.count("schedule_ui.render_page_nav("), 1)
-        self.assertLess(
-            source.index("schedule_ui.render_page_nav("),
-            source.index("schedule_ui.member_timezone_name("),
-        )
+        page_renderer = source.index("def render_tabbed_member_schedule_page")
+        navigation = source.index("schedule_ui.render_page_nav(", page_renderer)
+        timezone_read = source.index("schedule_ui.member_timezone_name(", page_renderer)
+        self.assertLess(navigation, timezone_read)
         self.assertIn('location="top"', source)
 
-    def test_my_schedule_page_uses_tabbed_renderer_and_keeps_measurement(self):
+    def test_my_schedule_renders_only_selected_section_and_avoids_eager_rpcs(self):
+        source = (ROOT / "components/member_schedule_tabbed_page.py").read_text()
+        selector = source.index("selected = _render_section_selector()")
+        package_branch = source.index('if selected == "Package Subscribed"', selector)
+        upcoming_branch = source.index('elif selected == "Upcoming Schedule"', selector)
+        usage_branch = source.index("else:", upcoming_branch)
+        package_read = source.index("schedule_ui._render_package", package_branch)
+        upcoming_read = source.index("_render_upcoming_section", upcoming_branch)
+        ledger_read = source.index("schedule_ui._render_member_ledger", usage_branch)
+        self.assertLess(package_branch, package_read)
+        self.assertLess(upcoming_branch, upcoming_read)
+        self.assertLess(usage_branch, ledger_read)
+        self.assertNotIn("package_tab, upcoming_tab, usage_tab", source)
+
+    def test_my_schedule_and_daily_log_use_member_home_spacing(self):
+        schedule = (ROOT / "components/member_schedule_tabbed_page.py").read_text()
+        daily = (
+            ROOT / "components/member_exercise_journal_table_bootstrap.py"
+        ).read_text()
+        for source in (schedule, daily):
+            self.assertIn("padding-top:0!important", source)
+            self.assertIn("stHeader", source)
+            self.assertIn(".hero-shell", source)
+        self.assertIn("hm-member-schedule-nav-anchor", schedule)
+        self.assertIn("hm-member-schedule-selector-anchor", schedule)
+        self.assertIn("margin:.04rem 0 .06rem 0", schedule)
+        self.assertIn("hm-daily-log-journal-selector-v5", daily)
+
+    def test_my_schedule_page_uses_selected_renderer_and_keeps_measurement(self):
         source = (ROOT / "pages/33_My_Schedule.py").read_text()
         self.assertIn("render_tabbed_member_schedule_page", source)
         self.assertIn('begin_page_measurement("Member My Schedule")', source)
@@ -123,6 +155,29 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertIn("style#hm-exercise-journal-table-v3", bootstrap)
         self.assertIn("style#hm-exercise-journal-layout-v4", bootstrap)
 
+    def test_food_saved_day_is_staged_before_date_widget_instantiation(self):
+        bootstrap = (
+            ROOT / "components/member_exercise_journal_table_bootstrap.py"
+        ).read_text()
+        self.assertIn('_FOOD_PENDING_DATE_KEY = "hm_food_journal_pending_date"', bootstrap)
+        self.assertIn("button_with_safe_saved_day_callback", bootstrap)
+        self.assertIn("date_input_with_pending_saved_day", bootstrap)
+        self.assertIn("st.session_state[_FOOD_PENDING_DATE_KEY] = saved_date", bootstrap)
+        self.assertIn("return False", bootstrap)
+        pending_apply = bootstrap.index("st.session_state[_FOOD_DATE_KEY] = parsed")
+        widget_create = bootstrap.index("return current_date_input(label, *args, **kwargs)")
+        self.assertLess(pending_apply, widget_create)
+
+    def test_other_fluid_time_uses_one_compact_editable_field(self):
+        bootstrap = (
+            ROOT / "components/member_exercise_journal_table_bootstrap.py"
+        ).read_text()
+        self.assertIn('_FLUID_TIME_PREFIX = "hm_h9a4c_fluid_time_"', bootstrap)
+        self.assertIn("time_input_with_compact_fluid_field", bootstrap)
+        self.assertIn("current_text_input(label, **text_kwargs)", bootstrap)
+        self.assertIn('"placeholder": "Example: 10:30 PM"', bootstrap)
+        self.assertIn("%I:%M %p", bootstrap)
+
     def test_exercise_journal_has_saved_days_matching_food_pattern(self):
         source = (ROOT / "components/member_exercise_journal_table.py").read_text()
         self.assertIn("### View Saved Days", source)
@@ -205,6 +260,21 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
             "switch_page",
         ):
             self.assertNotIn(forbidden, bootstrap)
+
+    def test_member_corrections_do_not_change_auth_routing_or_business_writes(self):
+        bootstrap = (
+            ROOT / "components/member_exercise_journal_table_bootstrap.py"
+        ).read_text()
+        schedule = (ROOT / "components/member_schedule_tabbed_page.py").read_text()
+        for source in (bootstrap, schedule):
+            for forbidden in (
+                "logout_current_user",
+                "require_admin",
+                "save_db(",
+                "assign_or_replace_member_package(",
+                "update_member_schedule_status(",
+            ):
+                self.assertNotIn(forbidden, source)
 
     def test_member_diagnostics_are_single_and_cover_member_home(self):
         source = (ROOT / "components/performance_measurement_gate.py").read_text()
