@@ -80,6 +80,7 @@ from components.recommendation_profile_store import (
     check_profile_builder_store,
     load_profile_builder_sources,
 )
+from components.recommendation_profile_viewer import render_profile_lifecycle_guide
 
 
 def _render_css() -> None:
@@ -137,6 +138,7 @@ def render_modular_profile_builder() -> None:
         f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span></div></div>",
         unsafe_allow_html=True,
     )
+    render_profile_lifecycle_guide()
     st.markdown("<div class='hm-tab-nav'>", unsafe_allow_html=True)
     columns = st.columns(len(visible_sections), gap="small")
     for column, section in zip(columns, visible_sections):
