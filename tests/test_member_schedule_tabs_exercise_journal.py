@@ -112,14 +112,16 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertLess(add_action, saved_days)
         self.assertIn('"Remove Exercise"', source)
 
-    def test_daily_log_hides_duplicate_heading_and_day_caption(self):
+    def test_daily_log_hides_duplicate_heading_and_aligns_date_spacing(self):
         bootstrap = (
             ROOT / "components/member_exercise_journal_table_bootstrap.py"
         ).read_text()
         self.assertIn('kwargs["heading"] = ""', bootstrap)
         self.assertIn('kwargs["show_build_note"] = False', bootstrap)
         self.assertIn("hm-daily-log-selector-anchor", bootstrap)
-        self.assertIn("margin:.05rem 0 .20rem 0", bootstrap)
+        self.assertIn("margin:.02rem 0 .06rem 0", bootstrap)
+        self.assertIn("style#hm-exercise-journal-table-v3", bootstrap)
+        self.assertIn("style#hm-exercise-journal-layout-v4", bootstrap)
 
     def test_exercise_journal_has_saved_days_matching_food_pattern(self):
         source = (ROOT / "components/member_exercise_journal_table.py").read_text()
