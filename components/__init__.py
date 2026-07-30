@@ -29,6 +29,9 @@ from components.member_post_optimization_cleanup import (
 from components.member_saved_days_home_cleanup import (
     install_member_saved_days_home_cleanup,
 )
+from components.admin_content_form_cleanup import (
+    install_admin_content_form_cleanup,
+)
 
 
 # Expired authorization recovery is installed before app.py captures the accepted
@@ -70,3 +73,7 @@ install_member_post_optimization_cleanup()
 # Replace Saved Days loading with a seven-day meal-only summary, remove the Member Home
 # KPI strip and balance Messages with Upcoming Schedule without changing stored data.
 install_member_saved_days_home_cleanup()
+
+# Stabilize Admin Recipe/Exercise sections, hide legacy Feedback/Allocation surfaces and
+# retain success messages while safely resetting transient content-manager form state.
+install_admin_content_form_cleanup()
