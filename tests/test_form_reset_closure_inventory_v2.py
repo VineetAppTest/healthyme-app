@@ -11,6 +11,7 @@ COMPONENTS = ROOT / "components"
 # already compliant, an editable-record exception, or a non-production/support surface.
 CLASSIFIED_RUNTIME_PATHS = {
     # Member assessment/profile editable records and one-time submission controls.
+    "pages/00_Reset_Password.py",
     "pages/03_LAF_Form.py",
     "pages/04_NSP_Page1.py",
     "pages/05_NSP_Page2.py",
@@ -30,6 +31,7 @@ CLASSIFIED_RUNTIME_PATHS = {
     "pages/23_Admin_Body_Mind_Control.py",
     "pages/25_Admin_Reassessment_Manager.py",
     "pages/25_Admin_Daily_Log_Settings.py",
+    "pages/28_Admin_Database_Status.py",
     "pages/30_Admin_User_Access_Manager.py",
     "pages/31_Admin_Member_Communication.py",
     "pages/32_Admin_Scheduling.py",
