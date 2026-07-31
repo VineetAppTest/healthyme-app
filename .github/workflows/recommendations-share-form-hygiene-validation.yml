@@ -1,0 +1,33 @@
+name: Recommendations Share form hygiene validation
+
+on:
+  pull_request:
+    paths:
+      - "components/__init__.py"
+      - "components/recommendations_share_form_hygiene.py"
+      - "pages/35_Admin_Recommendations_Share.py"
+      - "tests/test_recommendations_share_form_hygiene.py"
+      - ".github/workflows/recommendations-share-form-hygiene-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  focused-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Compile runtime and page
+        run: python -m py_compile components/__init__.py components/recommendations_share_form_hygiene.py pages/35_Admin_Recommendations_Share.py tests/test_recommendations_share_form_hygiene.py
+      - name: Run focused contracts
+        run: |
+          python - <<'PY'
+          from tests import test_recommendations_share_form_hygiene as checks
+          checks.test_runtime_and_page_compile()
+          checks.test_member_scoping_and_success_only_reload()
+          checks.test_existing_rerun_is_reused_without_database_changes()
+          PY
