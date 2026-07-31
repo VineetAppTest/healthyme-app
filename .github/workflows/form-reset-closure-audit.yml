@@ -1,0 +1,30 @@
+name: Form reset closure audit
+
+on:
+  pull_request:
+    paths:
+      - "pages/**/*.py"
+      - "components/**/*.py"
+      - "tests/test_form_reset_closure_inventory.py"
+      - ".github/workflows/form-reset-closure-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile closure inventory
+        run: python -m py_compile tests/test_form_reset_closure_inventory.py
+
+      - name: Run repository-wide closure inventory
+        run: python -m unittest tests.test_form_reset_closure_inventory -v
