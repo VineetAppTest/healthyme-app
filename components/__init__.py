@@ -40,6 +40,9 @@ from components.member_saved_days_dispatch_runtime import (
 from components.admin_content_form_cleanup import (
     install_admin_content_form_cleanup,
 )
+from components.notes_supplement_form_hygiene import (
+    install_notes_supplement_form_hygiene,
+)
 
 
 # Install first so every route, including the root OAuth callback, receives the
@@ -87,6 +90,11 @@ install_member_post_optimization_cleanup()
 # inactive Admin sections silent while allowing Member wrappers to see the true page
 # caller rather than an intermediate Admin wrapper frame.
 install_admin_content_form_cleanup()
+
+# Nutritionist Notes and Supplement Add use success-versioned form identities. Failed
+# validation/save attempts retain work; confirmed creates start a clean transaction while
+# preserving the selected member. No write, auth or routing function is replaced.
+install_notes_supplement_form_hygiene()
 
 # Keep Saved Days filters visible, show meal-only history without loading the form and
 # suppress only the Member Home KPI strip.
