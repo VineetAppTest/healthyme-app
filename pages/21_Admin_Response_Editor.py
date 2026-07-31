@@ -1,23 +1,52 @@
-from components.ui_common import render_page_nav, render_back_to_top
+import copy
+import hashlib
+import json
+import pathlib
+from io import BytesIO
+
+import streamlit as st
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
+
+from components.db import (
+    list_members,
+    load_db,
+    save_db_direct,
+    update_member_response_with_audit,
+)
+from components.guards import require_admin
+from components.ui_common import (
+    apply_luxe_theme,
+    card_end,
+    card_start,
+    inject_global_styles,
+    render_back_to_top,
+    render_page_nav,
+    topbar,
+    utility_logout_bar,
+)
+
 
 def v96_response_editor_success():
     st.success("Response updated. Please download a fresh final report.")
 
-import json
-import streamlit as st, json, pathlib
-from io import BytesIO
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from openpyxl.utils import get_column_letter
 
-from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_build_text_v12, render_back_to_top
-from components.db import load_db, save_db_direct, update_member_response_with_audit, list_members
-
-st.set_page_config(page_title="Response Editor", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
+st.set_page_config(
+    page_title="Response Editor",
+    page_icon="💚",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+inject_global_styles()
+apply_luxe_theme()
+require_admin()
+utility_logout_bar()
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
+SUCCESS_KEY = "response_editor_success_message"
+CLEANUP_KEY = "hm_response_editor_cleanup_keys"
+VERSION_PREFIX = "hm_response_editor_version_"
 
 FORM_STORES = {
     "LAF": ("laf_responses", "config/laf_questions.json"),
@@ -27,66 +56,120 @@ FORM_STORES = {
     "5 Admin Assessment Pages": ("admin_assessments", "config/admin_templates.json"),
 }
 
+
 def load_json(path):
     return json.loads((BASE / path).read_text(encoding="utf-8"))
 
-def question_label(q):
-    return q.get("label") or q.get("text") or q.get("code")
+
+def question_label(question):
+    return question.get("label") or question.get("text") or question.get("code")
+
+
+def _context_token(member_id, form_name, field_code):
+    raw = f"{member_id}|{form_name}|{field_code}".encode("utf-8")
+    return hashlib.sha1(raw).hexdigest()[:16]
+
+
+def _version(token):
+    key = f"{VERSION_PREFIX}{token}"
+    return max(int(st.session_state.get(key, 1) or 1), 1)
+
+
+def _bump_version(token):
+    key = f"{VERSION_PREFIX}{token}"
+    st.session_state[key] = _version(token) + 1
+
+
+def _schedule_cleanup(*keys):
+    st.session_state[CLEANUP_KEY] = tuple(str(key) for key in keys)
+
+
+def _consume_cleanup():
+    for key in st.session_state.pop(CLEANUP_KEY, ()) or ():
+        st.session_state.pop(key, None)
+
 
 def build_audit_excel(member, audit_rows):
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Response Audit Log"
-    headers = ["Timestamp", "Member", "Member Email", "Admin ID", "Form", "Field Code", "Old Value", "New Value", "Rationale"]
-    ws.append(headers)
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Response Audit Log"
+    headers = [
+        "Timestamp",
+        "Member",
+        "Member Email",
+        "Admin ID",
+        "Form",
+        "Field Code",
+        "Old Value",
+        "New Value",
+        "Rationale",
+    ]
+    worksheet.append(headers)
     for item in audit_rows:
-        ws.append([
-            item.get("timestamp", ""),
-            member.get("name", ""),
-            member.get("email", ""),
-            item.get("admin_id", ""),
-            item.get("form_name", ""),
-            item.get("field_code", ""),
-            item.get("old_value", ""),
-            item.get("new_value", ""),
-            item.get("rationale", ""),
-        ])
-    style_excel(ws)
-    bio = BytesIO()
-    wb.save(bio)
-    return bio.getvalue()
+        worksheet.append(
+            [
+                item.get("timestamp", ""),
+                member.get("name", ""),
+                member.get("email", ""),
+                item.get("admin_id", ""),
+                item.get("form_name", ""),
+                item.get("field_code", ""),
+                item.get("old_value", ""),
+                item.get("new_value", ""),
+                item.get("rationale", ""),
+            ]
+        )
+    style_excel(worksheet)
+    output = BytesIO()
+    workbook.save(output)
+    return output.getvalue()
 
-def style_excel(ws):
+
+def style_excel(worksheet):
     header_fill = PatternFill("solid", fgColor="064E3B")
     header_font = Font(color="FFFFFF", bold=True)
     thin = Side(style="thin", color="E9DFCC")
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
-    for row in ws.iter_rows():
+    for row in worksheet.iter_rows():
         for cell in row:
             cell.alignment = Alignment(wrap_text=True, vertical="top")
             cell.border = border
             if cell.row == 1:
                 cell.fill = header_fill
                 cell.font = header_font
-    for col in ws.columns:
-        col_letter = get_column_letter(col[0].column)
-        max_len = max((len(str(c.value)) if c.value is not None else 0) for c in col)
-        ws.column_dimensions[col_letter].width = min(max(max_len + 2, 14), 60)
+    for column in worksheet.columns:
+        column_letter = get_column_letter(column[0].column)
+        max_length = max(
+            (len(str(cell.value)) if cell.value is not None else 0)
+            for cell in column
+        )
+        worksheet.column_dimensions[column_letter].width = min(
+            max(max_length + 2, 14),
+            60,
+        )
 
-def flatten_standard_questions(form_name, cfg_path):
-    data = load_json(cfg_path)
+
+def flatten_standard_questions(form_name, config_path):
+    del form_name
+    data = load_json(config_path)
     fields = []
-    for q in data:
-        status = "Inactive" if q.get("deleted") else "Active"
-        fields.append({
-            "field_code": q.get("code", ""),
-            "display": f"{status} — {q.get('code','')} — {question_label(q)[:100]}",
-            "question": question_label(q),
-            "type": q.get("type", "text"),
-            "options": q.get("options", []),
-            "deleted": bool(q.get("deleted")),
-        })
+    for question in data:
+        status = "Inactive" if question.get("deleted") else "Active"
+        fields.append(
+            {
+                "field_code": question.get("code", ""),
+                "display": (
+                    f"{status} — {question.get('code', '')} — "
+                    f"{question_label(question)[:100]}"
+                ),
+                "question": question_label(question),
+                "type": question.get("type", "text"),
+                "options": question.get("options", []),
+                "deleted": bool(question.get("deleted")),
+            }
+        )
     return fields
+
 
 def flatten_admin_questions():
     templates = load_json("config/admin_templates.json")
@@ -97,43 +180,69 @@ def flatten_admin_questions():
             for item in group.get("items", []):
                 label = item.get("label", "")
                 key = f"{system}|{heading}|{label}"
-                status = "Inactive" if item.get("deleted") or group.get("deleted") else "Active"
-                fields.append({
-                    "field_code": key,
-                    "display": f"{status} — {system} > {heading} — {label[:100]}",
-                    "question": label,
-                    "system": system,
-                    "subheader": heading,
-                    "type": "select",
-                    "options": ["NA", "1", "2", "3"],
-                    "deleted": bool(item.get("deleted") or group.get("deleted")),
-                })
+                status = (
+                    "Inactive"
+                    if item.get("deleted") or group.get("deleted")
+                    else "Active"
+                )
+                fields.append(
+                    {
+                        "field_code": key,
+                        "display": f"{status} — {system} > {heading} — {label[:100]}",
+                        "question": label,
+                        "system": system,
+                        "subheader": heading,
+                        "type": "select",
+                        "options": ["NA", "1", "2", "3"],
+                        "deleted": bool(
+                            item.get("deleted") or group.get("deleted")
+                        ),
+                    }
+                )
     return fields
 
-def get_current_value(db, member_id, form_name, field):
-    if form_name == "5 Admin Assessment Pages":
-        system = field["system"]
-        key = field["field_code"]
-        return db.setdefault("admin_assessments", {}).setdefault(member_id, {}).setdefault(system, {}).get(key, "")
-    store, _ = FORM_STORES[form_name]
-    return db.setdefault(store, {}).setdefault(member_id, {}).get(field["field_code"], "")
 
-def set_current_value(db, member_id, form_name, field, new_value):
+def get_current_value(database, member_id, form_name, field):
     if form_name == "5 Admin Assessment Pages":
         system = field["system"]
         key = field["field_code"]
-        db.setdefault("admin_assessments", {}).setdefault(member_id, {}).setdefault(system, {})[key] = str(new_value)
+        return (
+            database.setdefault("admin_assessments", {})
+            .setdefault(member_id, {})
+            .setdefault(system, {})
+            .get(key, "")
+        )
+    store, _ = FORM_STORES[form_name]
+    return database.setdefault(store, {}).setdefault(member_id, {}).get(
+        field["field_code"],
+        "",
+    )
+
+
+def set_current_value(database, member_id, form_name, field, new_value):
+    if form_name == "5 Admin Assessment Pages":
+        system = field["system"]
+        key = field["field_code"]
+        (
+            database.setdefault("admin_assessments", {})
+            .setdefault(member_id, {})
+            .setdefault(system, {})
+        )[key] = str(new_value)
     else:
         store, _ = FORM_STORES[form_name]
-        db.setdefault(store, {}).setdefault(member_id, {})[field["field_code"]] = str(new_value)
+        database.setdefault(store, {}).setdefault(member_id, {})[
+            field["field_code"]
+        ] = str(new_value)
 
-if st.session_state.pop("response_editor_success_message", None):
-    st.success("Response updated. Please download a fresh final report.")
+
+_consume_cleanup()
+if st.session_state.pop(SUCCESS_KEY, None):
+    v96_response_editor_success()
 
 topbar(
     "Admin Response Editor",
     "Edit any member response, including blank/unanswered fields, and record rationale with timestamp.",
-    "Audited admin correction"
+    "Audited admin correction",
 )
 
 members = list_members()
@@ -141,113 +250,190 @@ if not members:
     st.info("No members available.")
     st.stop()
 
-member_options = [f"{m['id']} — {m['name']} — {m['email']}" for m in members]
-selected_member = st.selectbox("Select member", member_options)
-member_id = selected_member.split(" — ")[0]
+member_map = {
+    str(member.get("id", "")): member
+    for member in members
+    if member.get("id")
+}
+member_id = st.selectbox(
+    "Select member",
+    list(member_map.keys()),
+    format_func=lambda value: (
+        f"{value} — {member_map[value].get('name', '')} — "
+        f"{member_map[value].get('email', '')}"
+    ),
+    key="hm_response_editor_member_id",
+)
+member = member_map.get(member_id, {})
 
-db = load_db()
-member_lookup = {m["id"]: m for m in members}
-member = member_lookup.get(member_id, {})
-
-selected_form = st.selectbox("Select response area", list(FORM_STORES.keys()))
-store, cfg = FORM_STORES[selected_form]
+database = load_db()
+selected_form = st.selectbox(
+    "Select response area",
+    list(FORM_STORES.keys()),
+    key="hm_response_editor_form",
+)
+_, config_path = FORM_STORES[selected_form]
 
 if selected_form == "5 Admin Assessment Pages":
     fields = flatten_admin_questions()
 else:
-    fields = flatten_standard_questions(selected_form, cfg)
+    fields = flatten_standard_questions(selected_form, config_path)
 
-show_filter = st.radio("Show fields", ["All fields", "Answered only", "Unanswered only"], horizontal=True)
+show_filter = st.radio(
+    "Show fields",
+    ["All fields", "Answered only", "Unanswered only"],
+    horizontal=True,
+    key=f"hm_response_editor_filter_{selected_form}",
+)
 filtered_fields = []
-for f in fields:
-    val = get_current_value(db, member_id, selected_form, f)
-    answered = str(val).strip() not in ["", "Select", "None"]
+for field in fields:
+    value = get_current_value(database, member_id, selected_form, field)
+    answered = str(value).strip() not in ["", "Select", "None"]
     if show_filter == "Answered only" and not answered:
         continue
     if show_filter == "Unanswered only" and answered:
         continue
-    filtered_fields.append(f)
+    filtered_fields.append(field)
 
 card_start()
 st.subheader("All responses / fields")
-st.caption(f"Showing {len(filtered_fields)} of {len(fields)} fields for {selected_form}.")
+st.caption(
+    f"Showing {len(filtered_fields)} of {len(fields)} fields for {selected_form}."
+)
 if not filtered_fields:
     st.info("No fields match the selected view.")
 else:
-    selected_field_display = st.selectbox("Select field to edit", [f["display"] for f in filtered_fields])
-    field = next(f for f in filtered_fields if f["display"] == selected_field_display)
-    old_value = get_current_value(db, member_id, selected_form, field)
-    rationale_key_v96_10 = f"resp_rationale_{member_id}_{selected_form}_{field['field_code']}"
+    selected_field_index = st.selectbox(
+        "Select field to edit",
+        list(range(len(filtered_fields))),
+        format_func=lambda index: filtered_fields[index]["display"],
+        key=(
+            "hm_response_editor_field_"
+            f"{_context_token(member_id, selected_form, show_filter)}"
+        ),
+    )
+    field = filtered_fields[selected_field_index]
+    old_value = get_current_value(database, member_id, selected_form, field)
+    token = _context_token(member_id, selected_form, field["field_code"])
+    version = _version(token)
+    value_key = f"hm_response_editor_value_{token}_v{version}"
+    rationale_key = f"hm_response_editor_rationale_{token}_v{version}"
 
     st.markdown(f"**Question:** {field['question']}")
     st.markdown(f"**Current value:** `{old_value}`")
 
     if field["type"] in ["select", "scale"]:
-        opts = field.get("options", [])
-        if field["type"] == "scale" and not opts:
-            opts = [str(i) for i in range(1, 11)]
-        opts = ["Select"] + [x for x in opts if x != "Select"]
-        if selected_form.startswith("NSP") and "NA" not in opts:
-            opts.insert(1, "NA")
-        idx = opts.index(old_value) if old_value in opts else 0
-        new_value = st.selectbox("New value", opts, index=idx)
+        options = list(field.get("options", []))
+        if field["type"] == "scale" and not options:
+            options = [str(value) for value in range(1, 11)]
+        options = ["Select"] + [value for value in options if value != "Select"]
+        if selected_form.startswith("NSP") and "NA" not in options:
+            options.insert(1, "NA")
+        selected_index = options.index(old_value) if old_value in options else 0
+        new_value = st.selectbox(
+            "New value",
+            options,
+            index=selected_index,
+            key=value_key,
+        )
     elif field["type"] == "checkbox":
-        new_value = st.checkbox("New value", value=(str(old_value).lower() == "true" or old_value is True))
+        new_value = st.checkbox(
+            "New value",
+            value=(str(old_value).lower() == "true" or old_value is True),
+            key=value_key,
+        )
     else:
-        new_value = st.text_area("New value", value=str(old_value), height=120)
+        new_value = st.text_area(
+            "New value",
+            value=str(old_value),
+            height=120,
+            key=value_key,
+        )
 
-    rationale = st.text_area("Rationale / note for change", placeholder="Mandatory. Example: Corrected after conversation with member.", height=100, key=rationale_key_v96_10)
+    rationale = st.text_area(
+        "Rationale / note for change",
+        placeholder="Mandatory. Example: Corrected after conversation with member.",
+        height=100,
+        key=rationale_key,
+    )
 
-    if st.button("Save Edited Response with Audit Note", type="primary", use_container_width=True):
+    if st.button(
+        "Save Edited Response with Audit Note",
+        type="primary",
+        use_container_width=True,
+        key=f"hm_response_editor_save_{token}_v{version}",
+    ):
         if str(new_value) == str(old_value):
             st.info("No value changed.")
         elif not rationale.strip():
             st.error("Rationale/note is mandatory for edited member responses.")
         else:
-            set_current_value(db, member_id, selected_form, field, new_value)
-            save_db_direct(db)
-            update_member_response_with_audit(
-                st.session_state.get("user_id", "admin"),
-                member_id,
-                selected_form,
-                field["field_code"],
-                old_value,
-                str(new_value),
-                rationale.strip(),
-            )
-            st.session_state.pop(rationale_key_v96_10, None)
-            st.session_state["response_editor_success_message"] = True
-            st.rerun()
+            try:
+                candidate_database = copy.deepcopy(database)
+                set_current_value(
+                    candidate_database,
+                    member_id,
+                    selected_form,
+                    field,
+                    new_value,
+                )
+                save_db_direct(candidate_database)
+                update_member_response_with_audit(
+                    st.session_state.get("user_id", "admin"),
+                    member_id,
+                    selected_form,
+                    field["field_code"],
+                    old_value,
+                    str(new_value),
+                    rationale.strip(),
+                )
+            except Exception as exc:
+                st.error(
+                    "Unable to complete the audited response update. "
+                    f"Your entered value and rationale have been retained. {exc}"
+                )
+            else:
+                _schedule_cleanup(value_key, rationale_key)
+                _bump_version(token)
+                st.session_state[SUCCESS_KEY] = True
+                st.rerun()
 card_end()
 
 card_start()
 st.subheader("Audit log for this member")
-audit = [x for x in load_db().get("response_audit_log", []) if x.get("member_id") == member_id]
+audit = [
+    item
+    for item in load_db().get("response_audit_log", [])
+    if item.get("member_id") == member_id
+]
 if not audit:
     st.info("No response edits recorded yet.")
 else:
     st.download_button(
         "Download Member Response Audit Report",
         data=build_audit_excel(member, audit),
-        file_name=f"{member.get('name','member').replace(' ','_')}_response_audit_log.xlsx",
+        file_name=(
+            f"{member.get('name', 'member').replace(' ', '_')}_response_audit_log.xlsx"
+        ),
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
     )
     for item in reversed(audit[-30:]):
         st.markdown(
             f"""
-            **{item.get('timestamp','')}** — {item.get('form_name','')} / `{item.get('field_code','')}`  
-            Old: `{item.get('old_value','')}` → New: `{item.get('new_value','')}`  
-            Rationale: {item.get('rationale','')}
+            **{item.get('timestamp', '')}** — {item.get('form_name', '')} / `{item.get('field_code', '')}`  
+            Old: `{item.get('old_value', '')}` → New: `{item.get('new_value', '')}`  
+            Rationale: {item.get('rationale', '')}
             """
         )
 card_end()
 
-pass  # v102.0 legacy direct navigation removed; use canonical footer
-# v96: call v96_response_editor_success() after response edits are saved.
-
-# v101.8: standard bottom navigation
-
-# v102.0: canonical global footer navigation
-render_page_nav("Response Editor", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_page_nav(
+    "Response Editor",
+    back_page="pages/10_Admin_Dashboard.py",
+    dashboard_page="pages/10_Admin_Dashboard.py",
+    show_evaluation=False,
+    show_dashboard=True,
+    location="bottom",
+)
 render_back_to_top()

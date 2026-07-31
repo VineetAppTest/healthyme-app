@@ -30,6 +30,8 @@ on:
       - "pages/10_Admin_Dashboard.py"
       - "pages/17_Admin_User_Manager.py"
       - "pages/18_Daily_Log.py"
+      - "pages/20_Admin_Question_Manager.py"
+      - "pages/21_Admin_Response_Editor.py"
       - "pages/22_Admin_Daily_Log_Report.py"
       - "pages/25_Admin_Reassessment_Manager.py"
       - "pages/30_Admin_User_Access_Manager.py"
@@ -47,6 +49,7 @@ on:
       - "tests/test_communication_guidance_form_hygiene.py"
       - "tests/test_access_manager_form_hygiene.py"
       - "tests/test_reassessment_form_hygiene.py"
+      - "tests/test_question_response_form_hygiene.py"
       - "tests/test_ui_corrections_ss1_ss3.py"
       - "tests/test_sprint1_stability_hygiene.py"
       - "tests/test_admin_scheduling_consolidated.py"
@@ -121,6 +124,8 @@ jobs:
             pages/10_Admin_Dashboard.py \
             pages/17_Admin_User_Manager.py \
             pages/18_Daily_Log.py \
+            pages/20_Admin_Question_Manager.py \
+            pages/21_Admin_Response_Editor.py \
             pages/22_Admin_Daily_Log_Report.py \
             pages/25_Admin_Reassessment_Manager.py \
             pages/30_Admin_User_Access_Manager.py \
@@ -165,7 +170,7 @@ jobs:
           import components.admin_scheduling_default_navigation
           import components.admin_scheduling_timezone_selector
           import components.admin_scheduling_consolidated
-          print("Package hardening, form hygiene, communication/guidance, access management, reassessment, Scheduling, diagnostics, performance, Profile Builder, Profile Viewer, Member schedule/exercise and Admin UI UX imports passed")
+          print("Package hardening, form hygiene, communication/guidance, access management, reassessment, question/response management, Scheduling, diagnostics, performance, Profile Builder, Profile Viewer, Member schedule/exercise and Admin UI UX imports passed")
           PY
 
       - name: Run package and UI contract tests
@@ -176,6 +181,7 @@ jobs:
             tests.test_communication_guidance_form_hygiene \
             tests.test_access_manager_form_hygiene \
             tests.test_reassessment_form_hygiene \
+            tests.test_question_response_form_hygiene \
             tests.test_ui_corrections_ss1_ss3 \
             tests.test_sprint1_stability_hygiene \
             tests.test_admin_scheduling_consolidated \
