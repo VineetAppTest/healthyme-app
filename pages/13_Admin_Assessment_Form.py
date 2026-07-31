@@ -1,50 +1,129 @@
 from components.ui_common import render_page_nav, render_back_to_top
 import json
+import pathlib
 
-import streamlit as st, json, pathlib
-from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, render_page_nav, render_build_text_v12, render_back_to_top, compact_topbar
-from components.db import load_db, get_admin_assessment, save_admin_assessment, update_workflow, get_form_response, member_has_meaningful_data, unlock_body_mind, get_workflow, sync_body_mind_after_admin_completion, request_body_mind_activation, finalize_admin_assessment, manually_unlock_body_mind_after_finalization, sync_member_finalization_state, has_explicit_body_mind_access
-from components.scoring import map_answer
-from components.flash import set_system_message, render_system_message
+import streamlit as st
+
 from components.admin_value_resolver import resolve_admin_linked_value
-st.set_page_config(page_title="Admin Assessment", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar()
-mid=st.session_state.get("selected_member_id")
-if not mid: st.switch_page("pages/11_Evaluation_Status.py")
-templates=json.loads((pathlib.Path(__file__).resolve().parents[1]/"config"/"admin_templates.json").read_text())
+from components.db import (
+    finalize_admin_assessment,
+    get_admin_assessment,
+    get_form_response,
+    get_workflow,
+    has_explicit_body_mind_access,
+    load_db,
+    manually_unlock_body_mind_after_finalization,
+    member_has_meaningful_data,
+    request_body_mind_activation,
+    save_admin_assessment,
+    sync_member_finalization_state,
+)
+from components.flash import render_system_message, set_system_message
+from components.guards import require_admin
+from components.scoring import map_answer
+from components.ui_common import (
+    apply_luxe_theme,
+    card_end,
+    card_start,
+    compact_topbar,
+    inject_global_styles,
+    render_page_nav,
+    render_back_to_top,
+    utility_logout_bar,
+)
+
+st.set_page_config(
+    page_title="Admin Assessment",
+    page_icon="💚",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+inject_global_styles()
+apply_luxe_theme()
+require_admin()
+utility_logout_bar()
+
+mid = st.session_state.get("selected_member_id")
+if not mid:
+    st.switch_page("pages/11_Evaluation_Status.py")
+
+templates = json.loads(
+    (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "config"
+        / "admin_templates.json"
+    ).read_text()
+)
 selected_instance_id = st.session_state.get("selected_instance_id")
-existing=get_admin_assessment(mid, selected_instance_id)
+existing = get_admin_assessment(mid, selected_instance_id)
 current_wf = get_workflow(mid)
+
+
+def _assessment_widget_key(field_key: str) -> str:
+    """Keep widget state isolated to one member and assessment instance."""
+    instance_scope = selected_instance_id or "legacy"
+    return f"admin_assessment::{mid}::{instance_scope}::{field_key}"
+
+
 try:
     _db_for_instance = load_db()
-    _selected_instance = next((i for i in _db_for_instance.get("assessment_instances", {}).get(mid, []) if i.get("instance_id") == selected_instance_id), {}) if selected_instance_id else {}
-    _inst_resp = _db_for_instance.get("assessment_instance_responses", {}).get(selected_instance_id, {}) if selected_instance_id else {}
+    _selected_instance = (
+        next(
+            (
+                item
+                for item in _db_for_instance.get("assessment_instances", {}).get(mid, [])
+                if item.get("instance_id") == selected_instance_id
+            ),
+            {},
+        )
+        if selected_instance_id
+        else {}
+    )
+    _inst_resp = (
+        _db_for_instance.get("assessment_instance_responses", {}).get(
+            selected_instance_id, {}
+        )
+        if selected_instance_id
+        else {}
+    )
 except Exception:
     _selected_instance = {}
     _inst_resp = {}
-nsp1=_inst_resp.get("nsp1") or get_form_response("nsp1_responses", mid)
-nsp2=_inst_resp.get("nsp2") or get_form_response("nsp2_responses", mid)
-laf=get_form_response("laf_responses", mid)
-# v101.6: top page navigation removed; bottom nav remains standard
-compact_topbar("Fill Admin Page", f"Linked items are auto-pulled; manual items can be NA, 1, 2, or 3.{' Instance: ' + selected_instance_id if selected_instance_id else ''}", "Admin assessment")
+
+nsp1 = _inst_resp.get("nsp1") or get_form_response("nsp1_responses", mid)
+nsp2 = _inst_resp.get("nsp2") or get_form_response("nsp2_responses", mid)
+laf = get_form_response("laf_responses", mid)
+
+compact_topbar(
+    "Fill Admin Page",
+    (
+        "Linked items are auto-pulled; manual items can be NA, 1, 2, or 3."
+        + (f" Instance: {selected_instance_id}" if selected_instance_id else "")
+    ),
+    "Admin assessment",
+)
 render_system_message()
 
-# v26 finalization lock:
 # Once final report/admin review is complete, the form is frozen.
 current_wf = get_workflow(mid)
 if selected_instance_id:
     _selected_status = str(_selected_instance.get("status", "")).lower()
-    is_finalized = bool(_selected_instance.get("admin_completed")) or bool(_selected_instance.get("final_report_ready")) or _selected_status == "finalized"
+    is_finalized = (
+        bool(_selected_instance.get("admin_completed"))
+        or bool(_selected_instance.get("final_report_ready"))
+        or _selected_status == "finalized"
+    )
 else:
-    is_finalized = bool(current_wf.get("admin_completed")) or bool(current_wf.get("final_report_ready"))
+    is_finalized = bool(current_wf.get("admin_completed")) or bool(
+        current_wf.get("final_report_ready")
+    )
 
 if is_finalized:
-
-    # v31: repair stale review/instance status for finalized records.
     current_wf = sync_member_finalization_state(mid, body_mind_unlock=None)
     card_start()
-    st.success("Final admin assessment is already completed. The final report is ready and this form is now locked.")
+    st.success(
+        "Final admin assessment is already completed. The final report is ready and this form is now locked."
+    )
     st.markdown(
         """
         <div class='info-banner'>
@@ -55,13 +134,20 @@ if is_finalized:
         unsafe_allow_html=True,
     )
 
-    # v30: Even after finalization lock, manual Body-Mind activation must remain available.
     latest_wf_locked = get_workflow(mid)
-    if latest_wf_locked.get("body_mind_unlocked") or has_explicit_body_mind_access(mid):
+    if latest_wf_locked.get("body_mind_unlocked") or has_explicit_body_mind_access(
+        mid
+    ):
         st.success("Body-Mind Connection is active for this member.")
     else:
-        st.warning("Body-Mind Connection is not active yet. Final admin work is complete, so you can activate it now.")
-        if st.button("Activate Body-Mind Connection", type="primary", use_container_width=True):
+        st.warning(
+            "Body-Mind Connection is not active yet. Final admin work is complete, so you can activate it now."
+        )
+        if st.button(
+            "Activate Body-Mind Connection",
+            type="primary",
+            use_container_width=True,
+        ):
             ok, msg = manually_unlock_body_mind_after_finalization(mid)
             if ok:
                 set_system_message(msg, "success", celebrate=True)
@@ -80,78 +166,142 @@ if is_finalized:
         if st.button("Final Report", type="primary", use_container_width=True):
             st.switch_page("pages/14_Final_Assessment_Report.py")
     card_end()
-    render_page_nav("Admin Assessment", back_page="pages/11_Evaluation_Status.py", location="bottom")
+    render_page_nav(
+        "Admin Assessment",
+        back_page="pages/11_Evaluation_Status.py",
+        location="bottom",
+    )
     st.stop()
 
 card_start()
-if not member_has_meaningful_data(mid): st.warning("Member assessment is incomplete. Final report generation is disabled until member data exists.")
-all_data={}; grand=0
+if not member_has_meaningful_data(mid):
+    st.warning(
+        "Member assessment is incomplete. Final report generation is disabled until member data exists."
+    )
+
+all_data = {}
+grand = 0
 for section, groups in templates.items():
-    st.header(section); section_data={}
-    for group in [g for g in groups if not g.get("deleted")]:
+    st.header(section)
+    section_data = {}
+    for group in [group for group in groups if not group.get("deleted")]:
         st.subheader(group["heading"])
-        cols=st.columns(2)
-        for idx,item in enumerate([x for x in group["items"] if not x.get("deleted")]):
-            with cols[idx%2]:
-                key=f"{section}|{group['heading']}|{item['label']}"
+        cols = st.columns(2)
+        for idx, item in enumerate(
+            [item for item in group["items"] if not item.get("deleted")]
+        ):
+            with cols[idx % 2]:
+                field_key = f"{section}|{group['heading']}|{item['label']}"
+                widget_key = _assessment_widget_key(field_key)
                 if item.get("linked_code"):
-                    old=existing.get(section,{}).get(key,"Select")
-                    val, meta = resolve_admin_linked_value(item, nsp1=nsp1, nsp2=nsp2, laf=laf, stored=old)
-                    st.caption(f"Auto-populated from {meta.get('source_label','linked source')}.")
-                    st.selectbox(item["label"], ["NA","1","2","3"], index=["NA","1","2","3"].index(val), key=key, disabled=True)
+                    old = existing.get(section, {}).get(field_key, "Select")
+                    value, meta = resolve_admin_linked_value(
+                        item,
+                        nsp1=nsp1,
+                        nsp2=nsp2,
+                        laf=laf,
+                        stored=old,
+                    )
+                    st.caption(
+                        f"Auto-populated from {meta.get('source_label', 'linked source')}."
+                    )
+                    value = st.selectbox(
+                        item["label"],
+                        ["NA", "1", "2", "3"],
+                        index=["NA", "1", "2", "3"].index(value),
+                        key=widget_key,
+                        disabled=True,
+                    )
                 else:
-                    old=existing.get(section,{}).get(key,"Select")
-                    val=st.selectbox(item["label"], ["Select","NA","1","2","3"], index=["Select","NA","1","2","3"].index(old) if old in ["Select","NA","1","2","3"] else 0, key=key)
-                section_data[key]=val; grand+=map_answer(val)
-    all_data[section]=section_data
+                    old = existing.get(section, {}).get(field_key, "Select")
+                    options = ["Select", "NA", "1", "2", "3"]
+                    value = st.selectbox(
+                        item["label"],
+                        options,
+                        index=options.index(old) if old in options else 0,
+                        key=widget_key,
+                    )
+                section_data[field_key] = value
+                grand += map_answer(value)
+    all_data[section] = section_data
+
 st.info(f"Estimated internal total: {grand}")
 body_mind_already_unlocked = bool(current_wf.get("body_mind_unlocked"))
-body_mind_activation_requested = bool(current_wf.get("body_mind_activation_requested"))
+body_mind_activation_requested = bool(
+    current_wf.get("body_mind_activation_requested")
+)
 
 if body_mind_already_unlocked:
-    st.info("Body-Mind Connection is already activated for this member. No further activation is required from this page.")
+    st.info(
+        "Body-Mind Connection is already activated for this member. No further activation is required from this page."
+    )
     body_mind_unlock_choice = True
 else:
     body_mind_unlock_choice = st.checkbox(
         "After saving this admin assessment, make Body-Mind Connection page visible to this member",
-        value=bool(body_mind_activation_requested),
+        value=body_mind_activation_requested,
+        key=_assessment_widget_key("body_mind_activation"),
     )
 
-# v39: Auto-save Admin Assessment draft on every interaction/rerun.
+# Auto-save Admin Assessment draft on every interaction/rerun.
 # This saves the five admin pages as draft only. Final report generation remains manual.
 save_admin_assessment(mid, all_data, selected_instance_id)
-if body_mind_unlock_choice and not bool(get_workflow(mid).get("body_mind_unlocked")):
+if body_mind_unlock_choice and not bool(
+    get_workflow(mid).get("body_mind_unlocked")
+):
     request_body_mind_activation(mid)
-st.markdown("<div class='autosave-note'>Auto-saved draft. Use Save and Generate Final Report only when the admin review is final.</div>", unsafe_allow_html=True)
+st.markdown(
+    "<div class='autosave-note'>Auto-saved draft. Use Save and Generate Final Report only when the admin review is final.</div>",
+    unsafe_allow_html=True,
+)
 
-# v21 safety:
-# The Admin Assessment page can enable Body-Mind, but must not accidentally disable it.
-# Disabling should happen only from Body-Mind Access Control via explicit disable confirmation.
+
 def _effective_body_mind_unlock():
     latest_wf = get_workflow(mid)
-    return bool(latest_wf.get("body_mind_unlocked")) or bool(latest_wf.get("body_mind_activation_requested")) or bool(body_mind_unlock_choice)
+    return (
+        bool(latest_wf.get("body_mind_unlocked"))
+        or bool(latest_wf.get("body_mind_activation_requested"))
+        or bool(body_mind_unlock_choice)
+    )
 
-c1,c2=st.columns(2)
+
+c1, c2 = st.columns(2)
 with c1:
     if st.button("Save Draft / Confirm Changes", use_container_width=True):
-        old_body_mind_visibility = bool(get_workflow(mid).get("body_mind_unlocked"))
+        old_body_mind_visibility = bool(
+            get_workflow(mid).get("body_mind_unlocked")
+        )
         save_admin_assessment(mid, all_data, selected_instance_id)
         if body_mind_unlock_choice:
             request_body_mind_activation(mid)
         if body_mind_unlock_choice and not old_body_mind_visibility:
-            set_system_message("Draft saved. Body-Mind activation request has been recorded.", "success", celebrate=True)
+            set_system_message(
+                "Draft saved. Body-Mind activation request has been recorded.",
+                "success",
+                celebrate=True,
+            )
         elif old_body_mind_visibility:
-            set_system_message("Draft saved. Body-Mind Connection remains activated for this member.", "info")
+            set_system_message(
+                "Draft saved. Body-Mind Connection remains activated for this member.",
+                "info",
+            )
         else:
             set_system_message("Draft confirmed successfully.", "success")
         st.rerun()
+
 with c2:
-    if st.button("Save and Generate Final Report", type="primary", use_container_width=True):
+    if st.button(
+        "Save and Generate Final Report",
+        type="primary",
+        use_container_width=True,
+    ):
         if not member_has_meaningful_data(mid):
             set_system_message("Member assessment is incomplete.", "error")
             st.rerun()
         else:
-            with st.spinner("Finalizing admin assessment and preparing final report..."):
+            with st.spinner(
+                "Finalizing admin assessment and preparing final report..."
+            ):
                 result = finalize_admin_assessment(
                     mid,
                     all_data,
@@ -174,6 +324,12 @@ with c2:
             st.rerun()
 card_end()
 
-# v102.0: canonical global footer navigation
-render_page_nav("Admin Assessment", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_page_nav(
+    "Admin Assessment",
+    back_page="pages/10_Admin_Dashboard.py",
+    dashboard_page="pages/10_Admin_Dashboard.py",
+    show_evaluation=False,
+    show_dashboard=True,
+    location="bottom",
+)
 render_back_to_top()
