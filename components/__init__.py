@@ -46,6 +46,9 @@ from components.notes_supplement_form_hygiene import (
 from components.auth_provisioning_form_hygiene import (
     install_auth_provisioning_form_hygiene,
 )
+from components.recommendations_share_form_hygiene import (
+    install_recommendations_share_form_hygiene,
+)
 
 
 # Install first so every route, including the root OAuth callback, receives the
@@ -103,6 +106,11 @@ install_notes_supplement_form_hygiene()
 # live completion advances the relevant form identity and redisplays its existing result.
 # The wrapped provisioning functions retain their original arguments, result and writes.
 install_auth_provisioning_form_hygiene()
+
+# Recommendations Share keeps every editable field isolated by the selected member.
+# Confirmed Draft Save/Publish advances only that member's form identity so the existing
+# page rerun reloads the canonical saved share; failures retain all entered work.
+install_recommendations_share_form_hygiene()
 
 # Keep Saved Days filters visible, show meal-only history without loading the form and
 # suppress only the Member Home KPI strip.
