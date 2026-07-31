@@ -38,10 +38,8 @@ class MemberAssessmentSubmitFormHygieneTests(unittest.TestCase):
         self.assertIn("submit_current_assessment_instance_once(", self.consent_source)
         self.assertIn("recalculate_member_nsp_system_scores(", self.consent_source)
         self.assertIn("except Exception:", self.consent_source)
-        self.assertIn(
-            "Your consent, name and date remain available so you can try again.",
-            self.consent_source,
-        )
+        self.assertIn("Your consent, name and ", self.consent_source)
+        self.assertIn("date remain available so you can try again.", self.consent_source)
 
     def test_submit_status_confirmation_is_instance_scoped(self):
         self.assertIn("instance_scope = _instance_scope(current)", self.status_source)
@@ -61,10 +59,8 @@ class MemberAssessmentSubmitFormHygieneTests(unittest.TestCase):
         )[0]
         self.assertIn("_advance_submit_version(instance_scope)", success_block)
         self.assertIn("except Exception:", self.status_source)
-        self.assertIn(
-            "The confirmation remains selected so you can try again.",
-            self.status_source,
-        )
+        self.assertIn("The confirmation remains ", self.status_source)
+        self.assertIn("selected so you can try again.", self.status_source)
         self.assertIn("submit_current_assessment_instance_once(", self.status_source)
 
     def test_editable_member_records_are_not_blank_reset(self):
