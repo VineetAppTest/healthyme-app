@@ -87,7 +87,9 @@ class AuthProvisioningFormHygieneTests(unittest.TestCase):
 
     def test_failed_partial_and_review_results_retain_widget_identity(self):
         self.assertEqual(self.source.count("_advance(scope)"), 1)
-        self.assertEqual(self.source.count("st.rerun()"), 1)
+        self.assertIn("current_rerun = st.rerun", self.source)
+        self.assertIn("rerun()", self.source)
+        self.assertNotIn("st.rerun()", self.source)
         self.assertIn("_stage_completed", self.source)
         self.assertIn("_render_pending(scope)", self.source)
         self.assertIn("st.dataframe(rows", self.source)
