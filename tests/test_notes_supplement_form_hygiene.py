@@ -33,6 +33,12 @@ class NotesSupplementFormHygieneTests(unittest.TestCase):
             self.init_source.index("install_member_saved_days_home_cleanup()"),
         )
 
+    def test_page_detection_walks_to_the_actual_page_frame(self):
+        self.assertIn("def _page_context()", self.source)
+        self.assertIn("while frame is not None:", self.source)
+        self.assertIn("return \"notes\", frame", self.source)
+        self.assertIn("return \"supplement\", frame", self.source)
+
     def test_notes_form_is_member_scoped_and_failure_safe(self):
         self.assertIn('"h9a4_structured_note_form"', self.source)
         self.assertIn('kwargs["clear_on_submit"] = False', self.source)
@@ -40,6 +46,12 @@ class NotesSupplementFormHygieneTests(unittest.TestCase):
         self.assertIn('kwargs.setdefault("key", _NOTES_MEMBER_KEY)', self.source)
         self.assertIn('f"h9a4_structured_note_form_{scope}_{version}"', self.source)
         self.assertIn('with st.form("h9a4_structured_note_form", clear_on_submit=False)', self.notes_source)
+
+    def test_first_notes_render_uses_real_member_scope(self):
+        self.assertIn("def _initialise_notes_member(page_frame", self.source)
+        self.assertIn('page_frame.f_locals.get("member_options")', self.source)
+        self.assertIn("_initialise_notes_member(page_frame)", self.source)
+        self.assertIn("st.session_state[_NOTES_MEMBER_KEY] = first_label", self.source)
 
     def test_notes_reset_occurs_only_after_confirmed_publish(self):
         success_block = self.source.split('if kind == "notes" and text.startswith("Published note "):', 1)[1].split(
