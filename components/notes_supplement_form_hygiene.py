@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import inspect
 import re
-from pathlib import Path
 from typing import Any
 
 import streamlit as st
@@ -16,18 +15,17 @@ _NOTES_MEMBER_KEY = "hm_h9a4_note_member"
 _PENDING_NOTES_SUCCESS = "_hm_h9a4_pending_success"
 
 
-def _caller_path() -> str:
-    frame = inspect.currentframe()
-    caller = frame.f_back.f_back if frame and frame.f_back else None
-    return str((caller.f_globals if caller is not None else {}).get("__file__") or "").replace("\\", "/")
-
-
 def _page_kind() -> str:
-    path = _caller_path()
-    if path.endswith(_NOTES_PAGE):
-        return "notes"
-    if path.endswith(_SUPPLEMENT_PAGE):
-        return "supplement"
+    """Walk outward until the actual Streamlit page frame is found."""
+    frame = inspect.currentframe()
+    frame = frame.f_back if frame is not None else None
+    while frame is not None:
+        path = str((frame.f_globals or {}).get("__file__") or "").replace("\\", "/")
+        if path.endswith(_NOTES_PAGE):
+            return "notes"
+        if path.endswith(_SUPPLEMENT_PAGE):
+            return "supplement"
+        frame = frame.f_back
     return ""
 
 
