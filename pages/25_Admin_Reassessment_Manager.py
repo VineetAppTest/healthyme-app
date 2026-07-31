@@ -1,16 +1,82 @@
-from components.ui_common import render_page_nav, render_back_to_top
-import streamlit as st
 from datetime import date, timedelta
+
+import streamlit as st
+
+from components.assessment_instances import (
+    create_reassessment_request,
+    get_assessment_instances,
+    task_progress_summary_v99,
+    task_progress_text_v99,
+)
+from components.db import (
+    clear_body_mind_activation,
+    get_admin_assessment,
+    get_workflow,
+    has_explicit_body_mind_access,
+    list_members,
+    load_db,
+    manually_unlock_body_mind_after_finalization,
+    sync_member_finalization_state,
+)
+from components.flash import render_system_message, set_system_message
 from components.guards import require_admin
-from components.ui_common import inject_global_styles, apply_luxe_theme, topbar, card_start, card_end, utility_logout_bar, stat_grid, render_back_to_top, inject_keepalive_guard_v96_11
-from components.db import list_members, get_workflow, load_db, get_admin_assessment, manually_unlock_body_mind_after_finalization, clear_body_mind_activation, sync_member_finalization_state, has_explicit_body_mind_access
-from components.assessment_instances import get_assessment_instances, create_reassessment_request, task_progress_summary_v99, task_progress_text_v99
-from components.flash import set_system_message, render_system_message
+from components.ui_common import (
+    apply_luxe_theme,
+    card_end,
+    card_start,
+    inject_global_styles,
+    inject_keepalive_guard_v96_11,
+    render_back_to_top,
+    render_page_nav,
+    stat_grid,
+    topbar,
+    utility_logout_bar,
+)
 
-st.set_page_config(page_title="Task Request Manager", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
-inject_global_styles(); apply_luxe_theme(); require_admin(); utility_logout_bar(); inject_keepalive_guard_v96_11()
 
-st.markdown("""
+SELECTED_MEMBER_KEY = "hm_task_request_member_id"
+FORM_VERSION_PREFIX = "hm_task_request_form_version_"
+CLEANUP_KEY = "hm_task_request_cleanup_keys"
+
+
+def _form_version(member_id: str) -> int:
+    key = f"{FORM_VERSION_PREFIX}{member_id}"
+    return max(int(st.session_state.get(key, 1) or 1), 1)
+
+
+def _bump_form_version(member_id: str) -> None:
+    key = f"{FORM_VERSION_PREFIX}{member_id}"
+    st.session_state[key] = _form_version(member_id) + 1
+
+
+def _consume_form_cleanup() -> None:
+    keys = st.session_state.pop(CLEANUP_KEY, ())
+    for key in keys or ():
+        st.session_state.pop(str(key), None)
+
+
+def _member_label(member: dict) -> str:
+    return (
+        f"{member.get('id', '')} — {member.get('name', '')} — "
+        f"{member.get('email', '')}"
+    )
+
+
+st.set_page_config(
+    page_title="Task Request Manager",
+    page_icon="💚",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+inject_global_styles()
+apply_luxe_theme()
+require_admin()
+utility_logout_bar()
+inject_keepalive_guard_v96_11()
+_consume_form_cleanup()
+
+st.markdown(
+    """
 <style>
 /* v96.12 compact Task Request Manager with inline Body-Mind control */
 .block-container{padding-top:.35rem!important;max-width:1120px!important;}
@@ -34,34 +100,30 @@ st.markdown("""
 .hm-bodymind-mini b{display:block;color:#064E3B;font-size:.9rem;line-height:1.1;}
 .hm-bodymind-mini span{display:block;color:#5B675D;font-size:.68rem;margin-top:.12rem;}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-
-st.markdown("""
+st.markdown(
+    """
 <style>
 /* v96.13 Task Request Manager spacing polish */
-.hm-task-card-compact{
-  margin-bottom:.25rem!important;
-}
-.hm-task-card-compact div[data-testid="stTextArea"] textarea{
-  min-height:72px!important;
-}
-.hm-task-right-spacer{
-  height:.35rem;
-}
-.hm-bodymind-action-anchor + div[data-testid="stButton"]{
-  margin-top:.25rem!important;
-}
+.hm-task-card-compact{margin-bottom:.25rem!important;}
+.hm-task-card-compact div[data-testid="stTextArea"] textarea{min-height:72px!important;}
+.hm-task-right-spacer{height:.35rem;}
+.hm-bodymind-action-anchor + div[data-testid="stButton"]{margin-top:.25rem!important;}
 .hm-bodymind-action-anchor + div[data-testid="stButton"] > button{
   min-height:34px!important;
   height:34px!important;
   border-radius:9px!important;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-
-st.markdown("""
+st.markdown(
+    """
 <style>
 /* v99.0 Admin task baseline clarity */
 .hm-v990-admin-task-status{
@@ -94,14 +156,8 @@ st.markdown("""
   font-size:.72rem;
   font-weight:850;
 }
-.hm-v990-pill.pending{
-  color:#7A5A16;
-  background:#FFF7E6;
-}
-.hm-v990-pill.done{
-  color:#065F46;
-  background:#ECFDF5;
-}
+.hm-v990-pill.pending{color:#7A5A16;background:#FFF7E6;}
+.hm-v990-pill.done{color:#065F46;background:#ECFDF5;}
 .hm-v990-admin-next-action{
   color:#64748B;
   font-size:.78rem;
@@ -109,11 +165,17 @@ st.markdown("""
   margin-top:.28rem;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-
-topbar("Task Request Manager", "Allocate NSP Page 1, NSP Page 2 and/or Body-Mind Connection as member tasks.", "Admin task request")
+topbar(
+    "Task Request Manager",
+    "Allocate NSP Page 1, NSP Page 2 and/or Body-Mind Connection as member tasks.",
+    "Admin task request",
+)
 render_system_message()
+
 
 def task_title(task_key):
     return {
@@ -126,14 +188,17 @@ def task_title(task_key):
 def task_progress_html_v99(inst):
     summary = task_progress_summary_v99(inst)
     chips = []
-    for p in summary.get("requested", []):
-        done = summary.get("status_map", {}).get(p)
-        cls = "done" if done else "pending"
+    for page in summary.get("requested", []):
+        done = summary.get("status_map", {}).get(page)
+        css_class = "done" if done else "pending"
         label = "Done" if done else "Pending"
-        chips.append(f"<span class='hm-v990-pill {cls}'>{task_title(p)} · {label}</span>")
+        chips.append(
+            f"<span class='hm-v990-pill {css_class}'>{task_title(page)} · {label}</span>"
+        )
     if not chips:
         chips.append("<span class='hm-v990-pill pending'>No task selected</span>")
     return "".join(chips)
+
 
 def admin_next_action_v99(inst):
     if inst.get("submitted_for_review"):
@@ -145,7 +210,11 @@ def admin_next_action_v99(inst):
 
 
 def is_instance_open(inst):
-    return (not inst.get("submitted_for_review")) and inst.get("status") in ["pending", "in_progress"]
+    return (not inst.get("submitted_for_review")) and inst.get("status") in [
+        "pending",
+        "in_progress",
+    ]
+
 
 def is_instance_complete_enough(inst):
     if not inst:
@@ -153,57 +222,95 @@ def is_instance_complete_enough(inst):
     status = str(inst.get("status", "")).lower()
     if inst.get("submitted_for_review"):
         return True
-    if status in ["review_required", "admin_completed", "final_report_ready", "finalized", "completed", "complete"]:
-        return True
-    return False
+    return status in [
+        "review_required",
+        "admin_completed",
+        "final_report_ready",
+        "finalized",
+        "completed",
+        "complete",
+    ]
+
 
 members = list_members()
 if not members:
     st.info("No members available.")
     st.stop()
 
-selected = st.selectbox("Select member", [f"{m['id']} — {m['name']} — {m['email']}" for m in members])
-member_id = selected.split(" — ")[0]
-member = next(m for m in members if m["id"] == member_id)
+member_map = {str(member.get("id", "")): member for member in members if member.get("id")}
+member_ids = list(member_map.keys())
+member_id = st.selectbox(
+    "Select member",
+    member_ids,
+    format_func=lambda value: _member_label(member_map[value]),
+    key=SELECTED_MEMBER_KEY,
+)
+member = member_map[member_id]
 instances = get_assessment_instances(member_id)
-instances_sorted = sorted(instances, key=lambda x: x.get("instance_number", 0))
+instances_sorted = sorted(instances, key=lambda row: row.get("instance_number", 0))
 
 latest_instance = instances_sorted[-1] if instances_sorted else None
 open_task_requests = [
-    i for i in instances
-    if i.get("instance_type") == "Task Request" and is_instance_open(i)
+    instance
+    for instance in instances
+    if instance.get("instance_type") == "Task Request" and is_instance_open(instance)
 ]
-current_assessment_incomplete = bool(latest_instance) and not is_instance_complete_enough(latest_instance)
+current_assessment_incomplete = bool(latest_instance) and not is_instance_complete_enough(
+    latest_instance
+)
 
-wf = get_workflow(member_id)
-if wf.get("admin_completed") or wf.get("final_report_ready") or wf.get("workflow_status") == "finalized":
-    wf = sync_member_finalization_state(member_id, body_mind_unlock=None)
+workflow = get_workflow(member_id)
+if (
+    workflow.get("admin_completed")
+    or workflow.get("final_report_ready")
+    or workflow.get("workflow_status") == "finalized"
+):
+    workflow = sync_member_finalization_state(member_id, body_mind_unlock=None)
 explicit_body_mind_access = has_explicit_body_mind_access(member_id)
 if explicit_body_mind_access:
-    wf["body_mind_unlocked"] = True
+    workflow["body_mind_unlocked"] = True
 admin_assessment = get_admin_assessment(member_id)
-admin_final_completed = bool(wf.get("admin_completed")) or bool(wf.get("final_report_ready"))
+admin_final_completed = bool(workflow.get("admin_completed")) or bool(
+    workflow.get("final_report_ready")
+)
 body_response = load_db().get("body_mind_responses", {}).get(member_id, {})
-body_mind_active = bool(wf.get("body_mind_unlocked")) or explicit_body_mind_access
+body_mind_active = bool(workflow.get("body_mind_unlocked")) or explicit_body_mind_access
 
-stat_grid([
-    {"label": "Member", "value": member["name"], "note": member["email"]},
-    {"label": "Instances", "value": len(instances), "note": "History"},
-    {"label": "Open Request", "value": "Yes" if open_task_requests else "No", "note": "Pending"},
-    {"label": "Next Instance", "value": max([i.get("instance_number", 0) for i in instances] + [0]) + 1, "note": "If created"},
-])
+stat_grid(
+    [
+        {"label": "Member", "value": member["name"], "note": member["email"]},
+        {"label": "Instances", "value": len(instances), "note": "History"},
+        {
+            "label": "Open Request",
+            "value": "Yes" if open_task_requests else "No",
+            "note": "Pending",
+        },
+        {
+            "label": "Next Instance",
+            "value": max(
+                [row.get("instance_number", 0) for row in instances] + [0]
+            )
+            + 1,
+            "note": "If created",
+        },
+    ]
+)
 
 if open_task_requests:
-    active_req_v99 = sorted(open_task_requests, key=lambda x: x.get("instance_number", 0), reverse=True)[0]
-    progress_v99 = task_progress_summary_v99(active_req_v99)
+    active_request = sorted(
+        open_task_requests,
+        key=lambda row: row.get("instance_number", 0),
+        reverse=True,
+    )[0]
+    progress = task_progress_summary_v99(active_request)
     st.markdown(
         f"""
         <div class='hm-v990-admin-task-status'>
           <div class='hm-v990-admin-task-title'>Open Task Request Baseline</div>
-          <div class='hm-v990-admin-task-line'>Instance {active_req_v99.get('instance_number')} · {progress_v99.get('done', 0)} of {progress_v99.get('total', 0)} completed · Status: {str(active_req_v99.get('status', '-')).replace('_', ' ').title()}</div>
-          <div class='hm-v990-admin-task-line'>Due date: {active_req_v99.get('due_date') or 'Not set'} · Allocation date: {active_req_v99.get('created_date') or '-'}</div>
-          <div>{task_progress_html_v99(active_req_v99)}</div>
-          <div class='hm-v990-admin-next-action'>{admin_next_action_v99(active_req_v99)}</div>
+          <div class='hm-v990-admin-task-line'>Instance {active_request.get('instance_number')} · {progress.get('done', 0)} of {progress.get('total', 0)} completed · Status: {str(active_request.get('status', '-')).replace('_', ' ').title()}</div>
+          <div class='hm-v990-admin-task-line'>Due date: {active_request.get('due_date') or 'Not set'} · Allocation date: {active_request.get('created_date') or '-'}</div>
+          <div>{task_progress_html_v99(active_request)}</div>
+          <div class='hm-v990-admin-next-action'>{admin_next_action_v99(active_request)}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -217,21 +324,45 @@ with left:
     st.subheader("Create Task Request")
 
     if current_assessment_incomplete:
-        st.warning("Current assessment/instance is not completed yet. Complete and submit it before allocating a new task.")
+        st.warning(
+            "Current assessment/instance is not completed yet. Complete and submit it before allocating a new task."
+        )
         can_create = False
     elif open_task_requests:
-        st.warning("This member already has an open task request. Ask the member to complete it before creating another one.")
+        st.warning(
+            "This member already has an open task request. Ask the member to complete it before creating another one."
+        )
         can_create = False
     else:
         can_create = True
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        task_nsp1 = st.checkbox("NSP Page 1", key="v96_12_task_nsp1", disabled=not can_create)
-    with c2:
-        task_nsp2 = st.checkbox("NSP Page 2", key="v96_12_task_nsp2", disabled=not can_create)
-    with c3:
-        task_body_mind = st.checkbox("Body-Mind Connection", key="v96_12_task_body_mind", disabled=not can_create)
+    version = _form_version(member_id)
+    nsp1_key = f"hm_task_nsp1_{member_id}_v{version}"
+    nsp2_key = f"hm_task_nsp2_{member_id}_v{version}"
+    body_mind_key = f"hm_task_body_mind_{member_id}_v{version}"
+    due_key = f"hm_task_due_{member_id}_v{version}"
+    note_key = f"hm_task_note_{member_id}_v{version}"
+    send_key = f"hm_task_send_{member_id}_v{version}"
+
+    first, second, third = st.columns(3)
+    with first:
+        task_nsp1 = st.checkbox(
+            "NSP Page 1",
+            key=nsp1_key,
+            disabled=not can_create,
+        )
+    with second:
+        task_nsp2 = st.checkbox(
+            "NSP Page 2",
+            key=nsp2_key,
+            disabled=not can_create,
+        )
+    with third:
+        task_body_mind = st.checkbox(
+            "Body-Mind Connection",
+            key=body_mind_key,
+            disabled=not can_create,
+        )
 
     requested_pages = []
     if task_nsp1:
@@ -241,26 +372,61 @@ with left:
     if task_body_mind:
         requested_pages.append("body_mind")
 
-    due = st.date_input("Due date", value=date.today() + timedelta(days=14), disabled=not can_create)
+    due = st.date_input(
+        "Due date",
+        value=date.today() + timedelta(days=14),
+        key=due_key,
+        disabled=not can_create,
+    )
     note = st.text_area(
         "Optional note to member",
         placeholder="Example: Please complete the allocated task before your follow-up call.",
+        key=note_key,
         disabled=not can_create,
     )
 
-    if st.button("Send Task Request", type="primary", use_container_width=True, disabled=(not can_create or not bool(requested_pages))):
-        inst, created = create_reassessment_request(
-            member_id,
-            requested_pages,
-            due_date=due.isoformat(),
-            admin_note=note.strip(),
-            admin_id=st.session_state.get("user_id", "admin"),
-        )
-        task_names = ", ".join(task_title(p) for p in requested_pages)
+    if st.button(
+        "Send Task Request",
+        type="primary",
+        use_container_width=True,
+        disabled=(not can_create or not bool(requested_pages)),
+        key=send_key,
+    ):
+        try:
+            instance, created = create_reassessment_request(
+                member_id,
+                requested_pages,
+                due_date=due.isoformat(),
+                admin_note=note.strip(),
+                admin_id=st.session_state.get("user_id", "admin"),
+            )
+        except Exception as exc:
+            set_system_message(
+                "Task request could not be created. Your entered values have been retained: "
+                + str(exc),
+                "error",
+            )
+            st.rerun()
+
+        task_names = ", ".join(task_title(page) for page in requested_pages)
         if created:
-            set_system_message(f"Task request created for {member['name']} — Instance {inst.get('instance_number')} ({task_names}).", "success")
+            st.session_state[CLEANUP_KEY] = (
+                nsp1_key,
+                nsp2_key,
+                body_mind_key,
+                due_key,
+                note_key,
+            )
+            _bump_form_version(member_id)
+            set_system_message(
+                f"Task request created for {member['name']} — Instance {instance.get('instance_number')} ({task_names}).",
+                "success",
+            )
         else:
-            set_system_message("An open task request already exists for this member.", "warning")
+            set_system_message(
+                "An open task request already exists for this member. Your entered values have been retained.",
+                "warning",
+            )
         st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
@@ -272,18 +438,23 @@ with right:
     if not instances_sorted:
         st.info("No assessment history available.")
     else:
-        for inst in instances_sorted:
-            tasks = ", ".join(task_title(p) for p in inst.get("requested_pages", [])) or "-"
-            progress_v99 = task_progress_summary_v99(inst)
+        for instance in instances_sorted:
+            tasks = (
+                ", ".join(
+                    task_title(page) for page in instance.get("requested_pages", [])
+                )
+                or "-"
+            )
+            progress = task_progress_summary_v99(instance)
             st.markdown(
                 f"""
                 <div class='hm-v990-admin-task-status'>
-                  <div class='hm-v990-admin-task-title'>Instance {inst.get('instance_number')} — {inst.get('instance_type')}</div>
+                  <div class='hm-v990-admin-task-title'>Instance {instance.get('instance_number')} — {instance.get('instance_type')}</div>
                   <div class='hm-v990-admin-task-line'>Tasks: {tasks}</div>
-                  <div class='hm-v990-admin-task-line'>Task allocation date: {inst.get('created_date') or '-'} · Due date: {inst.get('due_date') or '-'}</div>
-                  <div class='hm-v990-admin-task-line'>Progress: {progress_v99.get('done', 0)} of {progress_v99.get('total', 0)} completed · Status: {str(inst.get('status', '-')).replace('_', ' ').title()} · Submitted: {inst.get('submitted_date') or '-'}</div>
-                  <div>{task_progress_html_v99(inst)}</div>
-                  <div class='hm-v990-admin-next-action'>{admin_next_action_v99(inst)}</div>
+                  <div class='hm-v990-admin-task-line'>Task allocation date: {instance.get('created_date') or '-'} · Due date: {instance.get('due_date') or '-'}</div>
+                  <div class='hm-v990-admin-task-line'>Progress: {progress.get('done', 0)} of {progress.get('total', 0)} completed · Status: {str(instance.get('status', '-')).replace('_', ' ').title()} · Submitted: {instance.get('submitted_date') or '-'}</div>
+                  <div>{task_progress_html_v99(instance)}</div>
+                  <div class='hm-v990-admin-next-action'>{admin_next_action_v99(instance)}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -296,7 +467,7 @@ with right:
           <div class='hm-bodymind-control-title'>Body-Mind Control</div>
           <div class='hm-bodymind-mini-grid'>
             <div class='hm-bodymind-mini'><b>{'Active' if body_mind_active else 'Hidden'}</b><span>Member access</span></div>
-            <div class='hm-bodymind-mini'><b>{'Completed' if wf.get('body_mind_completed') else 'Pending'}</b><span>Member progress</span></div>
+            <div class='hm-bodymind-mini'><b>{'Completed' if workflow.get('body_mind_completed') else 'Pending'}</b><span>Member progress</span></div>
             <div class='hm-bodymind-mini'><b>{'Yes' if admin_final_completed else 'No'}</b><span>Final report/admin complete</span></div>
             <div class='hm-bodymind-mini'><b>{'Available' if body_response else 'No response'}</b><span>Stored response</span></div>
           </div>
@@ -304,21 +475,42 @@ with right:
         """,
         unsafe_allow_html=True,
     )
-    st.markdown("<div class='hm-bodymind-action-anchor'></div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='hm-bodymind-action-anchor'></div>",
+        unsafe_allow_html=True,
+    )
     if body_mind_active:
-        if st.button("Disable Body-Mind Visibility", key="disable_body_mind_v96_13", use_container_width=True):
+        if st.button(
+            "Disable Body-Mind Visibility",
+            key="disable_body_mind_v96_13",
+            use_container_width=True,
+        ):
             clear_body_mind_activation(member_id)
-            set_system_message("Body-Mind Connection disabled for this member.", "warning")
+            set_system_message(
+                "Body-Mind Connection disabled for this member.",
+                "warning",
+            )
             st.rerun()
     else:
-        if st.button("Activate Body-Mind Connection", key="activate_body_mind_v96_13", type="primary", use_container_width=True, disabled=not admin_final_completed):
-            ok, msg = manually_unlock_body_mind_after_finalization(member_id)
-            set_system_message(msg, "success" if ok else "error", celebrate=ok)
+        if st.button(
+            "Activate Body-Mind Connection",
+            key="activate_body_mind_v96_13",
+            type="primary",
+            use_container_width=True,
+            disabled=not admin_final_completed,
+        ):
+            ok, message = manually_unlock_body_mind_after_finalization(member_id)
+            set_system_message(message, "success" if ok else "error", celebrate=ok)
             st.rerun()
 
 pass  # v102.0 legacy direct navigation removed; use canonical footer
-# v101.8: standard bottom navigation
 
-# v102.0: canonical global footer navigation
-render_page_nav("Task Request Manager", back_page="pages/10_Admin_Dashboard.py", dashboard_page="pages/10_Admin_Dashboard.py", show_evaluation=False, show_dashboard=True, location="bottom")
+render_page_nav(
+    "Task Request Manager",
+    back_page="pages/10_Admin_Dashboard.py",
+    dashboard_page="pages/10_Admin_Dashboard.py",
+    show_evaluation=False,
+    show_dashboard=True,
+    location="bottom",
+)
 render_back_to_top()
