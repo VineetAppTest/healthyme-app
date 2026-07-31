@@ -1,0 +1,58 @@
+name: Body-Mind form hygiene validation
+
+on:
+  pull_request:
+    paths:
+      - "pages/23_Admin_Body_Mind_Control.py"
+      - "pages/34_Admin_NSP_Score_Recalculation.py"
+      - "tests/test_body_mind_access_form_hygiene.py"
+      - ".github/workflows/body-mind-form-hygiene-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compile-and-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install application dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile Body-Mind access page and contracts
+        run: |
+          python -m py_compile \
+            pages/23_Admin_Body_Mind_Control.py \
+            tests/test_body_mind_access_form_hygiene.py
+
+      - name: Run Body-Mind and complete Streamlit contract suite
+        run: |
+          python -m unittest \
+            tests.test_body_mind_access_form_hygiene \
+            tests.test_package_hardening_contract \
+            tests.test_package_form_hygiene \
+            tests.test_communication_guidance_form_hygiene \
+            tests.test_access_manager_form_hygiene \
+            tests.test_reassessment_form_hygiene \
+            tests.test_question_response_form_hygiene \
+            tests.test_admin_assessment_form_hygiene \
+            tests.test_ui_corrections_ss1_ss3 \
+            tests.test_sprint1_stability_hygiene \
+            tests.test_admin_scheduling_consolidated \
+            tests.test_performance_measurement_only \
+            tests.test_admin_performance_optimization \
+            tests.test_admin_uiux_corrections \
+            tests.test_member_performance_export \
+            tests.test_member_home_schedule_presentation \
+            tests.test_member_home_message_toggle_upload \
+            tests.test_member_schedule_tabs_exercise_journal \
+            tests.test_profile_builder_form_hygiene \
+            tests.test_view_profiles_lifecycle \
+            -v
