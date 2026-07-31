@@ -15,22 +15,40 @@ _NOTES_MEMBER_KEY = "hm_h9a4_note_member"
 _PENDING_NOTES_SUCCESS = "_hm_h9a4_pending_success"
 
 
-def _page_kind() -> str:
+def _page_context() -> tuple[str, Any | None]:
     """Walk outward until the actual Streamlit page frame is found."""
     frame = inspect.currentframe()
     frame = frame.f_back if frame is not None else None
     while frame is not None:
         path = str((frame.f_globals or {}).get("__file__") or "").replace("\\", "/")
         if path.endswith(_NOTES_PAGE):
-            return "notes"
+            return "notes", frame
         if path.endswith(_SUPPLEMENT_PAGE):
-            return "supplement"
+            return "supplement", frame
         frame = frame.f_back
-    return ""
+    return "", None
+
+
+def _page_kind() -> str:
+    return _page_context()[0]
 
 
 def _slug(value: Any) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "_", str(value or "")).strip("_") or "default"
+
+
+def _initialise_notes_member(page_frame: Any | None) -> None:
+    if st.session_state.get(_NOTES_MEMBER_KEY):
+        return
+    member_options = {}
+    if page_frame is not None:
+        member_options = page_frame.f_locals.get("member_options") or page_frame.f_globals.get("member_options") or {}
+    try:
+        first_label = next(iter(member_options.keys()))
+    except Exception:
+        first_label = ""
+    if first_label:
+        st.session_state[_NOTES_MEMBER_KEY] = first_label
 
 
 def _scope(kind: str) -> str:
@@ -74,9 +92,10 @@ def install_notes_supplement_form_hygiene() -> None:
 
     @functools.wraps(current_form)
     def form_with_success_version(*args, **kwargs):
-        kind = _page_kind()
+        kind, page_frame = _page_context()
         form_key = kwargs.get("key") if "key" in kwargs else (args[0] if args else "")
         if kind == "notes" and str(form_key) == "h9a4_structured_note_form":
+            _initialise_notes_member(page_frame)
             scope = _scope(kind)
             version = _version(kind, scope)
             args = _replace_first_arg(args, f"h9a4_structured_note_form_{scope}_{version}")
