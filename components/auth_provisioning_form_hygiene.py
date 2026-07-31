@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import inspect
-from typing import Any
+from typing import Any, Callable
 
 import streamlit as st
 
@@ -92,14 +92,14 @@ def _batch_completed(payload: Any, *, dry_run: bool) -> bool:
     return True
 
 
-def _stage_completed(scope: str, payload: Any, message: str) -> None:
+def _stage_completed(scope: str, payload: Any, message: str, rerun: Callable[[], Any]) -> None:
     st.session_state[_PENDING_RESULT] = {
         "scope": scope,
         "rows": _rows(payload),
         "message": str(message or "Action completed successfully."),
     }
     _advance(scope)
-    st.rerun()
+    rerun()
 
 
 def _render_pending(scope: str) -> None:
@@ -120,6 +120,7 @@ def install_auth_provisioning_form_hygiene() -> None:
         return
 
     current_checkbox = st.checkbox
+    current_rerun = st.rerun
     current_reset = auth_lifecycle.send_password_reset_for_member
     current_single = provisioning.provision_single_member
     current_batch = provisioning.provision_batch_members
@@ -157,6 +158,7 @@ def install_auth_provisioning_form_hygiene() -> None:
                 "reset",
                 result,
                 str(result.get("message") or "Password reset email sent."),
+                current_rerun,
             )
         return result
 
@@ -169,6 +171,7 @@ def install_auth_provisioning_form_hygiene() -> None:
                 "single",
                 result,
                 str((result or {}).get("message") or "Single-member provisioning completed."),
+                current_rerun,
             )
         return result
 
@@ -181,6 +184,7 @@ def install_auth_provisioning_form_hygiene() -> None:
                 "batch",
                 result,
                 "Batch execution completed successfully. Review the result table and audit log.",
+                current_rerun,
             )
         return result
 
