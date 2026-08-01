@@ -38,7 +38,33 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
 
         self.assertIn("Current Repository", text)
         self.assertIn("Add to Repository", text)
-        self.assertIn("Member allocation is managed only through Recommendation Profile Builder", text)
+
+    def test_requested_repository_ui_polish_is_present(self):
+        text = _text(SUPPLEMENT_PAGE)
+        self.assertNotIn(
+            "Member allocation is managed only through Recommendation Profile Builder. This page creates and maintains reusable supplement definitions and does not publish directly to any member.",
+            text,
+        )
+        self.assertNotIn("hm-sup-boundary", text)
+        self.assertNotIn("hm-sup-card", text)
+        self.assertIn("hm-sup-list-details", text)
+        self.assertIn("hm-sup-list-divider", text)
+        self.assertIn('add_column, repository_column = st.columns([0.78, 1.22]', text)
+        self.assertLess(text.index("with add_column:"), text.index("with repository_column:"))
+        self.assertIn('f"Expand — Inactive Repository Items ({counts[\'inactive\']})"', text)
+        self.assertIn('f"Close — Inactive Repository Items ({counts[\'inactive\']})"', text)
+        self.assertNotIn("with st.expander", text)
+
+    def test_repository_actions_remain_available(self):
+        text = _text(SUPPLEMENT_PAGE)
+        for token in (
+            'st.button("Edit"',
+            'st.button("Deactivate"',
+            'st.button("Reactivate"',
+            "update_supplement_repository_item(",
+            "set_supplement_repository_status(",
+        ):
+            self.assertIn(token, text)
 
     def test_repository_migration_preserves_member_rows(self):
         text = _text(REPOSITORY)
