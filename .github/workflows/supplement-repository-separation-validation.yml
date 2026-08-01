@@ -1,0 +1,30 @@
+name: Supplement repository separation validation
+
+on:
+  pull_request:
+    paths:
+      - "pages/39_Admin_Supplement_Manager.py"
+      - "pages/38_Admin_Recommendation_Profile_Builder.py"
+      - "components/supplement_repository.py"
+      - "components/supplement_repository_source.py"
+      - "tests/test_supplement_repository_separation.py"
+      - ".github/workflows/supplement-repository-separation-validation.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile focused Python files
+        run: |
+          python -m py_compile \
+            pages/39_Admin_Supplement_Manager.py \
+            pages/38_Admin_Recommendation_Profile_Builder.py \
+            components/supplement_repository.py \
+            components/supplement_repository_source.py
+      - name: Run focused separation contracts
+        run: python -m pytest -q tests/test_supplement_repository_separation.py
