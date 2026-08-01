@@ -51,7 +51,7 @@ if (parsedUrl && errors.length === 0) {
   try {
     const response = await fetch(parsedUrl, {
       redirect: 'follow',
-      signal: AbortSignal.timeout(90_000),
+      signal: AbortSignal.timeout(30_000),
       headers: {
         'User-Agent': 'HealthyMe-Jarvis-QC/0.2',
       },
@@ -65,7 +65,9 @@ if (parsedUrl && errors.length === 0) {
       error: '',
     };
     if (!reachability.reachable) {
-      errors.push(`HealthyMe returned HTTP ${response.status} during preflight.`);
+      warnings.push(
+        `Advisory HTTP preflight returned ${response.status}; Chromium remains the authoritative availability check.`,
+      );
     }
   } catch (error) {
     reachability = {
@@ -76,7 +78,9 @@ if (parsedUrl && errors.length === 0) {
       elapsed_ms: Date.now() - startedAt,
       error: error instanceof Error ? error.message : String(error),
     };
-    errors.push(`HealthyMe was not reachable during preflight: ${reachability.error}`);
+    warnings.push(
+      `Advisory HTTP preflight could not reach HealthyMe (${reachability.error}); Chromium will perform the authoritative check.`,
+    );
   }
 }
 
