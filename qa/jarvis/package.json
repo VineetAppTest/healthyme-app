@@ -9,6 +9,7 @@
     "test": "playwright test",
     "test:public": "playwright test tests/public-login.spec.ts",
     "test:member": "playwright test tests/member-login-refresh.spec.ts",
+    "verify:evidence": "node scripts/verify-evidence.mjs",
     "report": "playwright show-report artifacts/html-report"
   },
   "devDependencies": {
