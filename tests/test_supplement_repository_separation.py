@@ -51,16 +51,25 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
         self.assertIn("hm-sup-list-divider", text)
         self.assertIn('add_column, repository_column = st.columns([0.78, 1.22]', text)
         self.assertLess(text.index("with add_column:"), text.index("with repository_column:"))
-        self.assertIn('f"Expand — Inactive Repository Items ({counts[\'inactive\']})"', text)
-        self.assertIn('f"Close — Inactive Repository Items ({counts[\'inactive\']})"', text)
+        self.assertIn('f"+ Inactive Repository Items ({counts[\'inactive\']})"', text)
+        self.assertIn('f"- Inactive Repository Items ({counts[\'inactive\']})"', text)
+        self.assertNotIn("Expand — Inactive Repository Items", text)
+        self.assertNotIn("Close — Inactive Repository Items", text)
         self.assertNotIn("with st.expander", text)
+
+    def test_admin_notes_are_not_exposed_in_repository_forms(self):
+        text = _text(SUPPLEMENT_PAGE)
+        self.assertNotIn('"Admin Notes"', text)
+        self.assertNotIn("admin_notes =", text)
+        self.assertNotIn('"admin_notes":', text)
+        self.assertIn("<b>Instructions:</b>", text)
 
     def test_repository_actions_remain_available(self):
         text = _text(SUPPLEMENT_PAGE)
         for token in (
             'st.button("Edit"',
-            'st.button("Deactivate"',
-            'st.button("Reactivate"',
+            '"Deactivate",',
+            '"Reactivate",',
             "update_supplement_repository_item(",
             "set_supplement_repository_status(",
         ):

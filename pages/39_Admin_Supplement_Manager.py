@@ -153,7 +153,7 @@ all_rows = list_supplement_repository(active_only=False)
 active_rows = [row for row in all_rows if row.get("status") == "Active"]
 inactive_rows = [row for row in all_rows if row.get("status") != "Active"]
 
-# Requested order: creation first, repository second.
+# Creation remains first, repository second.
 add_column, repository_column = st.columns([0.78, 1.22], gap="large")
 
 with add_column:
@@ -180,10 +180,6 @@ with add_column:
             "Default Instructions",
             placeholder="Reusable guidance that can be adjusted inside Profile Builder.",
         )
-        admin_notes = st.text_area(
-            "Admin Notes",
-            placeholder="Internal source note; not member allocation guidance.",
-        )
         submitted = st.form_submit_button("Add to Repository", use_container_width=True)
 
         if submitted:
@@ -195,7 +191,6 @@ with add_column:
                         "frequency": frequency,
                         "timing": _timing_from_choices(timing_options, custom_timing),
                         "instructions": instructions,
-                        "admin_notes": admin_notes,
                     },
                     actor_id=_actor_id(),
                 )
@@ -219,9 +214,15 @@ with repository_column:
             unsafe_allow_html=True,
         )
     else:
-        head_details, head_status, head_edit, head_deactivate = st.columns([4.2, 0.9, 0.8, 1.35], gap="small")
+        head_details, head_status, head_edit, head_deactivate = st.columns(
+            [4.2, 0.9, 0.8, 1.35],
+            gap="small",
+        )
         with head_details:
-            st.markdown("<div class='hm-sup-list-head'>Supplement and reusable defaults</div>", unsafe_allow_html=True)
+            st.markdown(
+                "<div class='hm-sup-list-head'>Supplement and reusable defaults</div>",
+                unsafe_allow_html=True,
+            )
         with head_status:
             st.markdown("<div class='hm-sup-list-head'>Status</div>", unsafe_allow_html=True)
         with head_edit:
@@ -230,7 +231,10 @@ with repository_column:
             st.markdown("<div class='hm-sup-list-head'>Availability</div>", unsafe_allow_html=True)
 
     for row in active_rows:
-        details_col, status_col, edit_col, deactivate_col = st.columns([4.2, 0.9, 0.8, 1.35], gap="small")
+        details_col, status_col, edit_col, deactivate_col = st.columns(
+            [4.2, 0.9, 0.8, 1.35],
+            gap="small",
+        )
         with details_col:
             st.markdown(_repository_details(row), unsafe_allow_html=True)
         with status_col:
@@ -240,10 +244,16 @@ with repository_column:
                 st.session_state["hm_supp_repo_edit_id"] = row["id"]
                 st.rerun()
         with deactivate_col:
-            if st.button("Deactivate", key=f"hm_supp_repo_deactivate_{row['id']}", use_container_width=True):
+            if st.button(
+                "Deactivate",
+                key=f"hm_supp_repo_deactivate_{row['id']}",
+                use_container_width=True,
+            ):
                 try:
                     set_supplement_repository_status(row["id"], False, actor_id=_actor_id())
-                    st.success("Supplement deactivated in the repository. Existing member plans remain unchanged.")
+                    st.success(
+                        "Supplement deactivated in the repository. Existing member plans remain unchanged."
+                    )
                     st.rerun()
                 except Exception as exc:
                     st.error(str(exc))
@@ -251,7 +261,10 @@ with repository_column:
         if st.session_state.get("hm_supp_repo_edit_id") == row["id"]:
             selected_timing, custom_timing = _split_timing(row.get("timing"))
             with st.form(f"hm_supp_repo_edit_form_{row['id']}"):
-                st.markdown("<div class='hm-sup-edit-label'>Edit repository item</div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<div class='hm-sup-edit-label'>Edit repository item</div>",
+                    unsafe_allow_html=True,
+                )
                 edit_name = st.text_input(
                     "Supplement Name",
                     value=row.get("supplement_name", ""),
@@ -265,7 +278,11 @@ with repository_column:
                         key=f"hm_supp_repo_edit_dosage_{row['id']}",
                     )
                 with frequency_col:
-                    frequency_value = row.get("frequency") if row.get("frequency") in FREQUENCY_OPTIONS else FREQUENCY_OPTIONS[0]
+                    frequency_value = (
+                        row.get("frequency")
+                        if row.get("frequency") in FREQUENCY_OPTIONS
+                        else FREQUENCY_OPTIONS[0]
+                    )
                     edit_frequency = st.selectbox(
                         "Default Frequency",
                         FREQUENCY_OPTIONS,
@@ -288,11 +305,6 @@ with repository_column:
                     value=row.get("instructions", ""),
                     key=f"hm_supp_repo_edit_instructions_{row['id']}",
                 )
-                edit_notes = st.text_area(
-                    "Admin Notes",
-                    value=row.get("admin_notes", ""),
-                    key=f"hm_supp_repo_edit_notes_{row['id']}",
-                )
                 save_col, cancel_col = st.columns(2)
                 with save_col:
                     save_edit = st.form_submit_button("Save Changes", use_container_width=True)
@@ -309,7 +321,6 @@ with repository_column:
                                 "frequency": edit_frequency,
                                 "timing": _timing_from_choices(edit_timing, edit_custom_timing),
                                 "instructions": edit_instructions,
-                                "admin_notes": edit_notes,
                             },
                             actor_id=_actor_id(),
                         )
@@ -327,9 +338,9 @@ with repository_column:
     inactive_open_key = "hm_supp_repo_inactive_open"
     inactive_open = bool(st.session_state.get(inactive_open_key, False))
     inactive_toggle_label = (
-        f"Close — Inactive Repository Items ({counts['inactive']})"
+        f"- Inactive Repository Items ({counts['inactive']})"
         if inactive_open
-        else f"Expand — Inactive Repository Items ({counts['inactive']})"
+        else f"+ Inactive Repository Items ({counts['inactive']})"
     )
     if st.button(
         inactive_toggle_label,
@@ -349,7 +360,11 @@ with repository_column:
             with status_col:
                 st.markdown(_status_pill(row.get("status")), unsafe_allow_html=True)
             with reactivate_col:
-                if st.button("Reactivate", key=f"hm_supp_repo_reactivate_{row['id']}", use_container_width=True):
+                if st.button(
+                    "Reactivate",
+                    key=f"hm_supp_repo_reactivate_{row['id']}",
+                    use_container_width=True,
+                ):
                     try:
                         set_supplement_repository_status(row["id"], True, actor_id=_actor_id())
                         st.success("Supplement reactivated in the repository.")
