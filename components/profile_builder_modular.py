@@ -84,14 +84,8 @@ install_profile_builder_form_hygiene()
 from components.pbm_modules import render_module, render_preview
 from components.pbm_setup import render_setup
 from components.profile_publish_control_v2 import render_profile_publish_control
-from components.recommendation_profile_store import (
-    check_profile_builder_store,
-    load_profile_builder_sources,
-)
-from components.recommendation_profile_viewer import (
-    render_profile_lifecycle_guide,
-    render_view_profiles,
-)
+from components.recommendation_profile_store import load_profile_builder_sources
+from components.recommendation_profile_viewer import render_view_profiles
 
 
 def _render_css() -> None:
@@ -102,7 +96,6 @@ def _render_css() -> None:
 .hm-section-rule{height:1px;background:linear-gradient(90deg,transparent,rgba(216,168,78,.8),transparent);margin:.3rem 0 .72rem}
 .hm-tab-nav [data-testid="stButton"]>button{width:100%!important;height:2.82rem!important;min-height:2.82rem!important;border-radius:15px!important;font-weight:930!important;border:1.15px solid rgba(216,180,98,.72)!important;background:#fff!important;color:#064E3B!important;white-space:nowrap!important;padding:.35rem!important}
 .hm-tab-nav [data-testid="stButton"]>button[kind="primary"]{background:linear-gradient(135deg,#064E3B,#0F766E)!important;border-color:#064E3B!important;color:#fff!important}
-.hm-readiness-strip{border-radius:15px;padding:.62rem .78rem;margin:.25rem 0 1rem;font-size:.84rem;font-weight:780}.hm-ready-ok{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}.hm-ready-warn{background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412}
 .hm-load-label{min-height:1.22rem}.hm-slot{font-size:.80rem;color:#72551A;font-weight:900;margin:.8rem 0 .3rem}
 .hm-preview{border:1px dashed #D8A84E;background:#FFF9EC;border-radius:16px;padding:.75rem .85rem;margin:.45rem 0;color:#475569;font-size:.83rem;line-height:1.5}
 .hm-source-box{border:1px solid #D8A84E;background:#FFFDF7;border-radius:12px;padding:.48rem .65rem;margin:.35rem 0;color:#475569;font-size:.78rem}.hm-source-box b{color:#064E3B}.hm-source-box span{color:#64748B;font-weight:720}
@@ -129,8 +122,7 @@ def render_modular_profile_builder() -> None:
     if st.session_state.get("pbm_section") not in visible_sections:
         st.session_state["pbm_section"] = "Profile Setup"
 
-    status = check_profile_builder_store()
-    sources, source_message = load_profile_builder_sources()
+    sources, _source_message = load_profile_builder_sources()
     options = {
         "recipe": list(sources.get("recipe") or []),
         "exercise": list(sources.get("exercise") or []),
@@ -151,7 +143,6 @@ def render_modular_profile_builder() -> None:
         f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span></div></div>",
         unsafe_allow_html=True,
     )
-    render_profile_lifecycle_guide()
     st.markdown("<div class='hm-tab-nav'>", unsafe_allow_html=True)
     columns = st.columns(len(visible_sections), gap="small")
     for column, section in zip(columns, visible_sections):
@@ -164,18 +155,6 @@ def render_modular_profile_builder() -> None:
             st.session_state["pbm_section"] = section
             st.rerun()
     st.markdown("</div><div class='hm-section-rule'></div>", unsafe_allow_html=True)
-    if status.get("ok"):
-        st.markdown(
-            "<div class='hm-readiness-strip hm-ready-ok'><b>Profile Builder store is ready.</b> Existing Draft and Active profiles can be loaded and updated without changing unrelated modules or allocation.</div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            f"<div class='hm-readiness-strip hm-ready-warn'><b>Profile Builder store is not ready.</b> "
-            f"{safe(status.get('message'))}</div>",
-            unsafe_allow_html=True,
-        )
-    st.caption(source_message)
     section = st.session_state["pbm_section"]
     if section == "Profile Setup":
         render_setup(options)
