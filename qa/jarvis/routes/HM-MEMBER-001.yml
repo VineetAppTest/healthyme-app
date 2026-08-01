@@ -1,38 +1,41 @@
 id: HM-MEMBER-001
 name: Member login, landing and refresh persistence
 owner: Jarvis
+risk: authenticated_read_only
 starting_state:
   user_role: member
   authentication: signed_out
+  test_data_policy: dedicated_non_sensitive_member
   required_environment:
     - JARVIS_BASE_URL
     - JARVIS_MEMBER_EMAIL
     - JARVIS_MEMBER_PASSWORD
 steps:
   - checkpoint: T1
-    action: Open /Login
-    expected: HealthyMe Secure Login is visible
+    action: Open /Login and resolve the HealthyMe application surface
+    expected: Secure Login is visible in the direct page or Streamlit iframe
   - checkpoint: T2
     action: Enter the dedicated member test credentials
-    expected: Email and password fields accept input
+    expected: Email and Password accept input
   - checkpoint: T3
-    action: Submit Continue with Supabase
+    action: Submit the approved Supabase sign-in action
     expected: Authentication begins without a visible client error
   - checkpoint: T4
-    action: Wait for the authorized landing route
+    action: Wait for the authorized member landing surface
     expected: Member Home is visible
   - checkpoint: T5
-    action: Wait for an interactive control
+    action: Wait for an authenticated interactive control
     expected: Logout is visible and Member Home is usable
   - checkpoint: T6
-    action: Refresh the browser
+    action: Refresh the host browser page
     expected: Existing session restoration begins
   - checkpoint: T7
-    action: Wait for the refreshed application
+    action: Re-resolve the application surface after refresh
     expected: Member Home and Logout remain visible without another login
 non_regression:
   - Do not change authentication or routing logic
-  - Do not use production member data for destructive actions
+  - Do not use a real member account or sensitive member data
+  - Do not create, update, submit or delete member records
   - Preserve the existing login and refresh mechanism
 artifacts:
   - Full video
@@ -41,5 +44,5 @@ artifacts:
   - HTML report
   - JSON result report
   - Checkpoint timeline
-  - Console warnings and errors
-  - Failed requests and HTTP errors
+  - Frame-aware navigation timing
+  - Console, page, network and HTTP diagnostics
