@@ -22,7 +22,7 @@ Confirms that HealthyMe is reachable and that the actual login application surfa
 - An approved Supabase sign-in action
 - No public sign-up boundary
 
-This route supports both a directly rendered application and the cross-origin iframe used by Streamlit Community Cloud. It requires no credentials and performs no sign-in.
+This route supports both a directly rendered application and the cross-origin iframe used by Streamlit Community Cloud. It requires no credentials and performs no sign-in. The app-surface driver permits one visible browser reload when a Community Cloud cold start stalls halfway through the wait.
 
 ### HM-MEMBER-001
 
@@ -45,7 +45,6 @@ Every execution can create:
 
 - Full browser video
 - Failure screenshot
-- Playwright trace retained on failure
 - HTML and JSON test reports
 - Jarvis run metadata
 - Timestamped checkpoint timeline
@@ -55,8 +54,11 @@ Every execution can create:
 - Failed browser requests
 - HTTP error responses
 - Document, fetch and XHR timing
+- Evidence-security verification result
 
-Authentication query parameters, opaque provider payloads, JWTs and bearer tokens are redacted from Jarvis diagnostic attachments.
+Authentication query parameters, opaque provider payloads, JWTs and bearer tokens are redacted from Jarvis diagnostic attachments. The workflow scans generated text evidence before upload and fails if an unredacted sensitive value or trace archive is found.
+
+Playwright traces are disabled in CI because a raw trace can retain browser internals and authentication material that cannot be reliably sanitized. A developer may opt into a local-only trace with `JARVIS_ENABLE_LOCAL_TRACE=true` and must not upload it.
 
 ## GitHub configuration
 
@@ -85,6 +87,7 @@ The workflow supports:
 - TypeScript validation
 - Locked dependencies and critical dependency audit
 - Chromium execution
+- Post-run evidence privacy enforcement
 - A 14-day evidence bundle
 
 ## Local execution
@@ -97,6 +100,7 @@ npm run typecheck
 npm run preflight
 npx playwright install chromium
 npm test
+npm run verify:evidence
 ```
 
 For an authenticated local run, provide the three environment variables only in the local shell or an excluded local secret store.
