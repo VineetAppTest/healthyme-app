@@ -97,71 +97,115 @@ def _split_timing(text):
     return selected, ", ".join(custom)
 
 
-def _card(row):
-    details = []
+def _repository_details(row):
+    metadata = []
     if row.get("dosage"):
-        details.append(f"Dosage: {_esc(row.get('dosage'))}")
+        metadata.append(f"<span><b>Dosage:</b> {_esc(row.get('dosage'))}</span>")
     if row.get("frequency"):
-        details.append(f"Frequency: {_esc(row.get('frequency'))}")
+        metadata.append(f"<span><b>Frequency:</b> {_esc(row.get('frequency'))}</span>")
     if row.get("timing"):
-        details.append(f"Timing: {_esc(row.get('timing'))}")
-    detail_html = "".join(f"<div class='hm-sup-dose'>{value}</div>" for value in details)
-    instructions = (
-        f"<div class='hm-sup-dose'>Instructions: {_esc(row.get('instructions'))}</div>"
-        if row.get("instructions")
-        else ""
-    )
+        metadata.append(f"<span><b>Timing:</b> {_esc(row.get('timing'))}</span>")
+    if row.get("instructions"):
+        metadata.append(f"<span><b>Instructions:</b> {_esc(row.get('instructions'))}</span>")
+    meta_html = "".join(metadata) or "<span>No reusable defaults recorded.</span>"
     return f"""
-    <div class='hm-sup-card'>
-      <div class='hm-sup-icon'>◉</div>
-      <div>
-        <div class='hm-sup-name'>{_esc(row.get('supplement_name'))}</div>
-        {detail_html}
-        {instructions}
-      </div>
-      <div><span class='hm-sup-status'>{_esc(row.get('status'))}</span></div>
+    <div class='hm-sup-list-details'>
+      <div class='hm-sup-list-name'>{_esc(row.get('supplement_name'))}</div>
+      <div class='hm-sup-list-meta'>{meta_html}</div>
     </div>
     """
+
+
+def _status_pill(status):
+    inactive_class = " inactive" if str(status or "").lower() != "active" else ""
+    return f"<span class='hm-sup-status{inactive_class}'>{_esc(status)}</span>"
 
 
 st.markdown(
     """
 <style>
 .hm-sup-page{max-width:1180px;margin:0 auto;}
-.hm-sup-layout{display:grid;grid-template-columns:1.2fr .8fr;gap:1rem;margin:.8rem 0 1rem;align-items:start;}
 .hm-sup-panel{border:1px solid #E3C98E;background:linear-gradient(180deg,#FFFDF8 0%,#FFF9EC 100%);border-radius:20px;padding:1rem;box-shadow:0 10px 24px rgba(15,23,42,.05);}
-.hm-sup-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;gap:.75rem;}
+.hm-sup-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.72rem;gap:.75rem;}
 .hm-sup-title{color:#064E3B;font-size:1.02rem;font-weight:950;}
 .hm-sup-badge{background:#DDF7F3;color:#006D6F;border-radius:999px;padding:.22rem .58rem;font-size:.72rem;font-weight:900;white-space:nowrap;}
-.hm-sup-card{border:1px solid #E6D4A8;background:#FFFDF8;border-radius:16px;padding:.85rem;margin:.72rem 0;display:grid;grid-template-columns:40px 1fr auto;gap:.75rem;align-items:center;}
-.hm-sup-card.inactive{background:#F8F5EE;border-style:dashed;opacity:.88;}
-.hm-sup-icon{width:34px;height:34px;border-radius:999px;background:#FFF0EA;color:#B35C4D;display:flex;align-items:center;justify-content:center;font-weight:950;}
-.hm-sup-name{color:#1F2937;font-size:.92rem;font-weight:920;margin-bottom:.15rem;}
-.hm-sup-dose{color:#64748B;font-size:.78rem;font-weight:760;margin:.10rem 0;}
-.hm-sup-status{font-size:.72rem;font-weight:900;color:#006D6F;border:1px solid #BEEBE4;background:#F0FDFA;border-radius:999px;padding:.22rem .5rem;}
-.hm-sup-empty{border:1px dashed #D9C28F;background:#FFFDF8;border-radius:16px;padding:1rem;color:#64748B;font-size:.85rem;font-weight:760;margin:.8rem 0;}
-.hm-sup-boundary{border:1px solid #D8E8E2;background:#F4FBF8;border-radius:14px;padding:.72rem .8rem;color:#285B4D;font-size:.80rem;font-weight:760;margin:.3rem 0 1rem;}
-@media(max-width:850px){.hm-sup-layout{grid-template-columns:1fr}.hm-sup-card{grid-template-columns:34px 1fr}.hm-sup-card>div:last-child{grid-column:2}}
+.hm-sup-list-head{color:#64748B;font-size:.67rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;padding:.10rem 0 .34rem;}
+.hm-sup-list-details{padding:.20rem 0 .16rem;min-height:44px;}
+.hm-sup-list-name{color:#1F2937;font-size:.88rem;font-weight:930;line-height:1.25;margin-bottom:.18rem;}
+.hm-sup-list-meta{display:flex;flex-wrap:wrap;gap:.12rem .68rem;color:#64748B;font-size:.72rem;font-weight:720;line-height:1.35;}
+.hm-sup-list-meta span{display:inline-block;}
+.hm-sup-list-divider{height:1px;background:#EADDBE;margin:.34rem 0 .38rem;}
+.hm-sup-status{display:inline-flex;font-size:.69rem;font-weight:900;color:#006D6F;border:1px solid #BEEBE4;background:#F0FDFA;border-radius:999px;padding:.20rem .46rem;white-space:nowrap;margin-top:.28rem;}
+.hm-sup-status.inactive{color:#64748B;border-color:#D7DCE3;background:#F4F5F7;}
+.hm-sup-empty{border:1px dashed #D9C28F;background:#FFFDF8;border-radius:14px;padding:.78rem;color:#64748B;font-size:.82rem;font-weight:760;margin:.55rem 0;}
+.hm-sup-edit-label{font-size:.80rem;font-weight:900;color:#064E3B;margin:.20rem 0 .10rem;}
+div[data-testid="stButton"] button p{white-space:nowrap;}
+@media(max-width:850px){.hm-sup-list-meta{display:block}.hm-sup-list-meta span{display:block;margin:.08rem 0}}
 </style>
 """,
     unsafe_allow_html=True,
 )
 
 st.markdown("<div class='hm-sup-page'>", unsafe_allow_html=True)
-st.markdown(
-    "<div class='hm-sup-boundary'>Member allocation is managed only through Recommendation Profile Builder. "
-    "This page creates and maintains reusable supplement definitions and does not publish directly to any member.</div>",
-    unsafe_allow_html=True,
-)
 
 counts = supplement_repository_counts()
 all_rows = list_supplement_repository(active_only=False)
 active_rows = [row for row in all_rows if row.get("status") == "Active"]
 inactive_rows = [row for row in all_rows if row.get("status") != "Active"]
 
-left, right = st.columns([1.25, .75], gap="large")
+# Requested order: creation first, repository second.
+add_column, repository_column = st.columns([0.78, 1.22], gap="large")
 
-with left:
+with add_column:
+    st.markdown("<div class='hm-sup-panel'>", unsafe_allow_html=True)
+    st.markdown("<div class='hm-sup-title'>Add Supplement</div>", unsafe_allow_html=True)
+    with st.form("hm_v1023a_add_supplement_form", clear_on_submit=True):
+        name = st.text_input("Supplement Name", placeholder="e.g. Magnesium Glycinate")
+        dose_col, frequency_col = st.columns(2, gap="small")
+        with dose_col:
+            dosage = st.text_input("Default Dosage", placeholder="e.g. 400 mg")
+        with frequency_col:
+            frequency = st.selectbox(
+                "Default Frequency",
+                FREQUENCY_OPTIONS,
+                index=0,
+                key="hm_v1023a_add_frequency",
+            )
+        timing_options = st.multiselect("Default Timing", TIMING_OPTIONS, default=[])
+        custom_timing = st.text_input(
+            "Additional Timing",
+            placeholder="Optional custom timing; separate multiple values with commas.",
+        )
+        instructions = st.text_area(
+            "Default Instructions",
+            placeholder="Reusable guidance that can be adjusted inside Profile Builder.",
+        )
+        admin_notes = st.text_area(
+            "Admin Notes",
+            placeholder="Internal source note; not member allocation guidance.",
+        )
+        submitted = st.form_submit_button("Add to Repository", use_container_width=True)
+
+        if submitted:
+            try:
+                add_supplement_repository_item(
+                    {
+                        "supplement_name": name,
+                        "dosage": dosage,
+                        "frequency": frequency,
+                        "timing": _timing_from_choices(timing_options, custom_timing),
+                        "instructions": instructions,
+                        "admin_notes": admin_notes,
+                    },
+                    actor_id=_actor_id(),
+                )
+                st.success("Supplement added to repository.")
+                st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with repository_column:
     st.markdown("<div class='hm-sup-panel'>", unsafe_allow_html=True)
     st.markdown(
         f"<div class='hm-sup-title-row'><div class='hm-sup-title'>Current Repository</div>"
@@ -174,16 +218,29 @@ with left:
             "<div class='hm-sup-empty'>No active supplements are available. Add the first repository item.</div>",
             unsafe_allow_html=True,
         )
+    else:
+        head_details, head_status, head_edit, head_deactivate = st.columns([4.2, 0.9, 0.8, 1.35], gap="small")
+        with head_details:
+            st.markdown("<div class='hm-sup-list-head'>Supplement and reusable defaults</div>", unsafe_allow_html=True)
+        with head_status:
+            st.markdown("<div class='hm-sup-list-head'>Status</div>", unsafe_allow_html=True)
+        with head_edit:
+            st.markdown("<div class='hm-sup-list-head'>Edit</div>", unsafe_allow_html=True)
+        with head_deactivate:
+            st.markdown("<div class='hm-sup-list-head'>Availability</div>", unsafe_allow_html=True)
 
     for row in active_rows:
-        st.markdown(_card(row), unsafe_allow_html=True)
-        edit_col, deactivate_col, spacer = st.columns([.55, .75, 2.2])
+        details_col, status_col, edit_col, deactivate_col = st.columns([4.2, 0.9, 0.8, 1.35], gap="small")
+        with details_col:
+            st.markdown(_repository_details(row), unsafe_allow_html=True)
+        with status_col:
+            st.markdown(_status_pill(row.get("status")), unsafe_allow_html=True)
         with edit_col:
-            if st.button("Edit", key=f"hm_supp_repo_edit_{row['id']}"):
+            if st.button("Edit", key=f"hm_supp_repo_edit_{row['id']}", use_container_width=True):
                 st.session_state["hm_supp_repo_edit_id"] = row["id"]
                 st.rerun()
         with deactivate_col:
-            if st.button("Deactivate", key=f"hm_supp_repo_deactivate_{row['id']}"):
+            if st.button("Deactivate", key=f"hm_supp_repo_deactivate_{row['id']}", use_container_width=True):
                 try:
                     set_supplement_repository_status(row["id"], False, actor_id=_actor_id())
                     st.success("Supplement deactivated in the repository. Existing member plans remain unchanged.")
@@ -194,7 +251,7 @@ with left:
         if st.session_state.get("hm_supp_repo_edit_id") == row["id"]:
             selected_timing, custom_timing = _split_timing(row.get("timing"))
             with st.form(f"hm_supp_repo_edit_form_{row['id']}"):
-                st.markdown("**Edit repository item**")
+                st.markdown("<div class='hm-sup-edit-label'>Edit repository item</div>", unsafe_allow_html=True)
                 edit_name = st.text_input(
                     "Supplement Name",
                     value=row.get("supplement_name", ""),
@@ -265,68 +322,42 @@ with left:
                     st.session_state.pop("hm_supp_repo_edit_id", None)
                     st.rerun()
 
-    with st.expander(f"Inactive Repository Items ({counts['inactive']})", expanded=False):
+        st.markdown("<div class='hm-sup-list-divider'></div>", unsafe_allow_html=True)
+
+    inactive_open_key = "hm_supp_repo_inactive_open"
+    inactive_open = bool(st.session_state.get(inactive_open_key, False))
+    inactive_toggle_label = (
+        f"Close — Inactive Repository Items ({counts['inactive']})"
+        if inactive_open
+        else f"Expand — Inactive Repository Items ({counts['inactive']})"
+    )
+    if st.button(
+        inactive_toggle_label,
+        key="hm_supp_repo_inactive_toggle",
+        use_container_width=True,
+    ):
+        st.session_state[inactive_open_key] = not inactive_open
+        st.rerun()
+
+    if inactive_open:
         if not inactive_rows:
             st.caption("No inactive repository items.")
         for row in inactive_rows:
-            st.markdown(_card(row).replace("hm-sup-card", "hm-sup-card inactive", 1), unsafe_allow_html=True)
-            if st.button("Reactivate", key=f"hm_supp_repo_reactivate_{row['id']}"):
-                try:
-                    set_supplement_repository_status(row["id"], True, actor_id=_actor_id())
-                    st.success("Supplement reactivated in the repository.")
-                    st.rerun()
-                except Exception as exc:
-                    st.error(str(exc))
+            details_col, status_col, reactivate_col = st.columns([4.8, 0.9, 1.55], gap="small")
+            with details_col:
+                st.markdown(_repository_details(row), unsafe_allow_html=True)
+            with status_col:
+                st.markdown(_status_pill(row.get("status")), unsafe_allow_html=True)
+            with reactivate_col:
+                if st.button("Reactivate", key=f"hm_supp_repo_reactivate_{row['id']}", use_container_width=True):
+                    try:
+                        set_supplement_repository_status(row["id"], True, actor_id=_actor_id())
+                        st.success("Supplement reactivated in the repository.")
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(str(exc))
+            st.markdown("<div class='hm-sup-list-divider'></div>", unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with right:
-    st.markdown("<div class='hm-sup-panel'>", unsafe_allow_html=True)
-    st.markdown("<div class='hm-sup-title'>Add Supplement</div>", unsafe_allow_html=True)
-    with st.form("hm_v1023a_add_supplement_form", clear_on_submit=True):
-        name = st.text_input("Supplement Name", placeholder="e.g. Magnesium Glycinate")
-        dose_col, frequency_col = st.columns(2, gap="small")
-        with dose_col:
-            dosage = st.text_input("Default Dosage", placeholder="e.g. 400 mg")
-        with frequency_col:
-            frequency = st.selectbox(
-                "Default Frequency",
-                FREQUENCY_OPTIONS,
-                index=0,
-                key="hm_v1023a_add_frequency",
-            )
-        timing_options = st.multiselect("Default Timing", TIMING_OPTIONS, default=[])
-        custom_timing = st.text_input(
-            "Additional Timing",
-            placeholder="Optional custom timing; separate multiple values with commas.",
-        )
-        instructions = st.text_area(
-            "Default Instructions",
-            placeholder="Reusable guidance that can be adjusted inside Profile Builder.",
-        )
-        admin_notes = st.text_area(
-            "Admin Notes",
-            placeholder="Internal source note; not member allocation guidance.",
-        )
-        submitted = st.form_submit_button("Add to Repository", use_container_width=True)
-
-        if submitted:
-            try:
-                add_supplement_repository_item(
-                    {
-                        "supplement_name": name,
-                        "dosage": dosage,
-                        "frequency": frequency,
-                        "timing": _timing_from_choices(timing_options, custom_timing),
-                        "instructions": instructions,
-                        "admin_notes": admin_notes,
-                    },
-                    actor_id=_actor_id(),
-                )
-                st.success("Supplement added to repository.")
-                st.rerun()
-            except Exception as exc:
-                st.error(str(exc))
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
