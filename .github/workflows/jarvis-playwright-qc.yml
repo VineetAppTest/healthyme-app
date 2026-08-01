@@ -6,6 +6,30 @@ on:
       - "qa/jarvis/**"
       - ".github/workflows/jarvis-playwright-qc.yml"
   workflow_dispatch:
+    inputs:
+      suite:
+        description: "Jarvis route suite"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - public
+          - member
+      base_url:
+        description: "Optional HealthyMe environment URL override"
+        required: false
+        default: ""
+        type: string
+      require_authenticated:
+        description: "Fail preflight when member credentials are unavailable"
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: jarvis-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -13,14 +37,19 @@ permissions:
 jobs:
   browser-qc:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: qa/jarvis
     env:
-      JARVIS_BASE_URL: ${{ vars.JARVIS_BASE_URL }}
+      JARVIS_BASE_URL: ${{ inputs.base_url || vars.JARVIS_BASE_URL || 'https://healthymeappbyankita.streamlit.app' }}
       JARVIS_MEMBER_EMAIL: ${{ secrets.JARVIS_MEMBER_EMAIL }}
       JARVIS_MEMBER_PASSWORD: ${{ secrets.JARVIS_MEMBER_PASSWORD }}
+      JARVIS_SUITE: ${{ inputs.suite || 'all' }}
+      JARVIS_REQUIRE_AUTH: ${{ inputs.require_authenticated || 'false' }}
+      JARVIS_RUN_ID: jarvis-${{ github.run_id }}-${{ github.run_attempt }}
+      JARVIS_GIT_SHA: ${{ github.sha }}
+      JARVIS_GITHUB_EVENT: ${{ github.event_name }}
 
     steps:
       - name: Check out repository
@@ -32,19 +61,37 @@ jobs:
           node-version: "22"
 
       - name: Install Jarvis dependencies
-        run: npm install
+        run: |
+          npm install
+          mkdir -p artifacts
+          cp package-lock.json artifacts/package-lock.generated.json
+
+      - name: Check critical dependency vulnerabilities
+        run: npm audit --audit-level=critical
+
+      - name: Type-check Jarvis
+        run: npm run typecheck
+
+      - name: Run Jarvis preflight
+        run: npm run preflight
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
       - name: Execute Jarvis routes
-        run: npm test
+        run: |
+          case "$JARVIS_SUITE" in
+            public) npm run test:public ;;
+            member) npm run test:member ;;
+            all) npm test ;;
+            *) echo "Unsupported suite: $JARVIS_SUITE" >&2; exit 1 ;;
+          esac
 
       - name: Upload Jarvis evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: jarvis-playwright-evidence-${{ github.run_id }}
+          name: jarvis-playwright-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: qa/jarvis/artifacts/
           if-no-files-found: warn
           retention-days: 14
