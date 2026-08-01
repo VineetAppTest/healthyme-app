@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.JARVIS_BASE_URL || 'https://healthymeappbyankita.streamlit.app';
+const runId =
+  process.env.JARVIS_RUN_ID || `jarvis-local-${new Date().toISOString().replace(/[^0-9]/g, '')}`;
 
 export default defineConfig({
   testDir: './tests',
@@ -26,6 +28,10 @@ export default defineConfig({
     trace: 'retain-on-failure',
     video: 'on',
     viewport: { width: 1440, height: 1000 },
+    extraHTTPHeaders: {
+      'X-Jarvis-Agent': 'HealthyMe-QC',
+      'X-Jarvis-Run-Id': runId,
+    },
   },
   projects: [
     {
