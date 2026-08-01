@@ -19,11 +19,12 @@ Jarvis is not a second product owner and must not invent expected behaviour. Eve
 | Video, screenshots and traces | Ready | Video always; screenshot and trace on failure. |
 | Browser and network diagnostics | Ready | Console, page errors, failed requests, HTTP errors and selected request timings. |
 | Frame-aware performance timing | Ready | Navigation entries are collected from the host and app frames. |
-| Environment preflight | Ready | Validates URL, reachability, suite selection and credential completeness. |
-| Unique Jarvis run identity | Ready | Every CI execution receives a `JARVIS_RUN_ID`. |
+| Environment preflight | Ready | Validates URL, suite selection and credential completeness; lightweight HTTP reachability is advisory because Chromium is authoritative. |
+| Unique Jarvis run identity | Ready | Every CI execution receives a `JARVIS_RUN_ID` stored in the evidence bundle. |
+| Evidence privacy controls | Ready | Authentication parameters, opaque provider payloads, JWTs and bearer tokens are redacted from diagnostic attachments. |
 | GitHub evidence bundle | Ready | Retained for 14 days. |
 | Dedicated test member | Pending owner setup | Must be created and controlled by Vineet. |
-| Supabase/Sentry correlation | Not yet active | The run ID is sent as a browser header, but backend systems do not yet persist it. |
+| Supabase/Sentry correlation | Not yet active | The run ID remains evidence-only until HealthyMe provides a privacy-safe, same-origin correlation mechanism. |
 | Flutter/mobile execution | Not included | Requires Maestro or Appium in the Flutter repository. |
 | Automated visual-design judgment | Not included | Current routes use explicit assertions; screenshots/video support Victor's review. |
 
@@ -74,7 +75,7 @@ Run the `Jarvis Playwright QC` workflow manually with:
 The commissioning run passes only when:
 
 1. Preflight confirms both member secrets are configured.
-2. HealthyMe is reachable.
+2. Chromium reaches HealthyMe and resolves the actual application surface.
 3. Secure Login is visible in the actual application frame.
 4. The dedicated account reaches Member Home.
 5. Logout is visible, proving the page is interactive.
@@ -101,7 +102,7 @@ Every Jarvis route must produce enough evidence for a developer to reproduce or 
 - Playwright trace on failure
 - HTML and JSON results
 
-Sensitive authentication query parameters and bearer tokens are redacted before diagnostic attachment.
+Authentication query parameters, opaque provider payloads, JWTs, bearer tokens and sensitive nested values are redacted before diagnostic attachment. Redaction is enforced through an automated contract test and must remain green before merge.
 
 ## Safety boundaries
 
@@ -125,7 +126,7 @@ A mutation route must define its starting data, expected database effect, cleanu
 
 ### 1. Browser evidence is not full root-cause telemetry
 
-Jarvis can identify where the visible journey slowed or failed and can capture browser/network evidence. It cannot prove a database, Supabase, Streamlit or server-side root cause until those systems record the same `JARVIS_RUN_ID`.
+Jarvis can identify where the visible journey slowed or failed and can capture browser/network evidence. It cannot prove a database, Supabase, Streamlit or server-side root cause until HealthyMe implements a privacy-safe, same-origin mechanism that records the same `JARVIS_RUN_ID` in backend telemetry.
 
 ### 2. Authentication challenges requiring a human are not autonomous
 
@@ -159,16 +160,20 @@ Runner geography, CPU, bandwidth, browser version and screen size differ from Vi
 
 GitHub artifacts are retained for 14 days in the current workflow. Important release evidence must be preserved elsewhere if longer retention is required.
 
+### 10. Hosting and third-party noise must be classified
+
+Streamlit hosting, authentication providers and analytics services can emit console or network warnings unrelated to a HealthyMe defect. Jarvis records them, but Victor must classify platform noise separately from application failures.
+
 ## Definition of Jarvis settled
 
 Jarvis is considered operational for HealthyMe web QC when all of the following are true:
 
-- Public route passes on two consecutive runs.
+- Public route passes on two consecutive runs of the final secured code.
 - Dedicated member secrets are configured.
 - Authenticated login/refresh route passes on two consecutive runs.
 - Vineet reviews one complete evidence bundle.
 - Victor confirms route results are understandable and actionable.
-- No credential or sensitive-data leakage is found in logs/artifacts.
+- Automated redaction contracts pass and evidence inspection finds no credential or sensitive-data leakage.
 - PR #310 is approved and merged.
 
 ## Next capability layers
