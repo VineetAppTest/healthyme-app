@@ -17,8 +17,9 @@ class Issue260ProfileBuilderUICleanupTests(unittest.TestCase):
 
     def test_dashboard_view_profiles_shortcut_is_removed(self) -> None:
         self.assertNotIn('nav_cell("View Profiles"', self.dashboard_source)
+        self.assertIn("Recommendation Profile Builder", self.dashboard_source)
         self.assertIn(
-            'nav_cell("Recommendation Profile Builder"',
+            '"pages/38_Admin_Recommendation_Profile_Builder.py"',
             self.dashboard_source,
         )
 
