@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.JARVIS_BASE_URL || 'https://healthymeappbyankita.streamlit.app';
+const localTraceEnabled =
+  !process.env.CI && String(process.env.JARVIS_ENABLE_LOCAL_TRACE || 'false').toLowerCase() === 'true';
 
 export default defineConfig({
   testDir: './tests',
@@ -23,7 +25,7 @@ export default defineConfig({
     actionTimeout: 30_000,
     navigationTimeout: 90_000,
     screenshot: 'only-on-failure',
-    trace: 'retain-on-failure',
+    trace: localTraceEnabled ? 'retain-on-failure' : 'off',
     video: 'on',
     viewport: { width: 1440, height: 1000 },
   },
