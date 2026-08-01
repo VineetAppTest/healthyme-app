@@ -1,0 +1,45 @@
+id: HM-MEMBER-001
+name: Member login, landing and refresh persistence
+owner: Jarvis
+starting_state:
+  user_role: member
+  authentication: signed_out
+  required_environment:
+    - JARVIS_BASE_URL
+    - JARVIS_MEMBER_EMAIL
+    - JARVIS_MEMBER_PASSWORD
+steps:
+  - checkpoint: T1
+    action: Open /Login
+    expected: HealthyMe Secure Login is visible
+  - checkpoint: T2
+    action: Enter the dedicated member test credentials
+    expected: Email and password fields accept input
+  - checkpoint: T3
+    action: Submit Continue with Supabase
+    expected: Authentication begins without a visible client error
+  - checkpoint: T4
+    action: Wait for the authorized landing route
+    expected: Member Home is visible
+  - checkpoint: T5
+    action: Wait for an interactive control
+    expected: Logout is visible and Member Home is usable
+  - checkpoint: T6
+    action: Refresh the browser
+    expected: Existing session restoration begins
+  - checkpoint: T7
+    action: Wait for the refreshed application
+    expected: Member Home and Logout remain visible without another login
+non_regression:
+  - Do not change authentication or routing logic
+  - Do not use production member data for destructive actions
+  - Preserve the existing login and refresh mechanism
+artifacts:
+  - Full video
+  - Failure screenshot
+  - Playwright trace on failure
+  - HTML report
+  - JSON result report
+  - Checkpoint timeline
+  - Console warnings and errors
+  - Failed requests and HTTP errors
