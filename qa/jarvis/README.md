@@ -56,7 +56,7 @@ Every execution can create:
 - HTTP error responses
 - Document, fetch and XHR timing
 
-Authentication query parameters and bearer tokens are redacted from Jarvis diagnostic attachments.
+Authentication query parameters, opaque provider payloads, JWTs and bearer tokens are redacted from Jarvis diagnostic attachments.
 
 ## GitHub configuration
 
@@ -81,9 +81,9 @@ The workflow supports:
 - Manual `all`, `public` or `member` suite selection
 - Optional environment URL override
 - Optional strict requirement for authenticated credentials
-- Environment reachability and credential preflight
+- Environment and credential preflight
 - TypeScript validation
-- Critical dependency audit
+- Locked dependencies and critical dependency audit
 - Chromium execution
 - A 14-day evidence bundle
 
@@ -92,7 +92,7 @@ The workflow supports:
 From `qa/jarvis`:
 
 ```bash
-npm install
+npm ci
 npm run typecheck
 npm run preflight
 npx playwright install chromium
@@ -103,4 +103,4 @@ For an authenticated local run, provide the three environment variables only in 
 
 ## Current diagnostic boundary
 
-Version 0.2 captures visible behaviour, frame-aware timing and browser/network telemetry. A shared `JARVIS_RUN_ID` is generated and sent with browser requests, but HealthyMe, Supabase and Sentry do not yet persist that ID. Server-side correlation is therefore the next diagnostic layer.
+Version 0.2 captures visible behaviour, frame-aware timing and browser/network telemetry. A shared `JARVIS_RUN_ID` is stored in the evidence bundle, but it is not sent to HealthyMe, Supabase or Sentry yet. Server-side instrumentation must first provide a same-origin, privacy-safe correlation mechanism.
