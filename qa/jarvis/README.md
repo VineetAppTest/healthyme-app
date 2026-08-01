@@ -1,60 +1,91 @@
 # Jarvis QC
 
-Jarvis is the independent HealthyMe browser-QC layer. It moves through an approved route, records the full visible journey, captures browser telemetry and returns evidence that Victor can diagnose before Vineet approves a release.
+Jarvis is the independent HealthyMe web-QC layer. It moves through an approved route, records the visible journey, captures browser telemetry and returns evidence that Victor diagnoses before Vineet approves a release.
 
 ## Operating pattern
 
-`Approved route -> Playwright movement -> video and trace -> browser telemetry -> expected-versus-actual result -> diagnostic evidence`
+`Approved route -> Playwright movement -> video and telemetry -> expected-versus-actual result -> diagnostic evidence`
 
-This foundation is intentionally isolated under `qa/jarvis/`. It does not modify HealthyMe authentication, routing, session persistence, database logic or application UI.
+The framework is isolated under `qa/jarvis/`. It does not modify HealthyMe authentication, routing, session persistence, database logic or application UI.
+
+Read `ONBOARDING.md` for the complete setup, test-account policy, safety boundaries, commissioning gate and limitations.
 
 ## Included routes
 
 ### HM-PUBLIC-001
 
-Confirms that the HealthyMe login surface loads and at least one configured authentication provider is visible. This route needs no credentials.
+Confirms that HealthyMe is reachable and that the actual login application surface contains:
+
+- Secure Login
+- Email
+- Password
+- An approved Supabase sign-in action
+- No public sign-up boundary
+
+This route supports both a directly rendered application and the cross-origin iframe used by Streamlit Community Cloud. It requires no credentials and performs no sign-in.
 
 ### HM-MEMBER-001
 
 Performs the first critical authenticated journey:
 
 1. Open HealthyMe Login.
-2. Enter the dedicated member test account.
-3. Submit Supabase login.
-4. Confirm Member Home is visible and usable.
-5. Refresh the browser.
-6. Confirm the member remains logged in.
+2. Resolve the application page or Streamlit iframe.
+3. Enter a dedicated member test account.
+4. Submit the approved Supabase sign-in action.
+5. Confirm Member Home is visible and usable.
+6. Refresh the host browser page.
+7. Re-resolve the application surface.
+8. Confirm the member remains logged in.
 
-The approved route definition is stored in `routes/HM-MEMBER-001.yml`.
+Approved route definitions are stored under `routes/`.
 
 ## Evidence produced
 
-Every run creates:
+Every execution can create:
 
 - Full browser video
 - Failure screenshot
 - Playwright trace retained on failure
 - HTML and JSON test reports
-- A timestamped checkpoint timeline
+- Jarvis run metadata
+- Timestamped checkpoint timeline
+- Host and application-frame navigation timing
 - Console warnings and errors
+- Uncaught page errors
 - Failed browser requests
 - HTTP error responses
-- Browser navigation timing
+- Document, fetch and XHR timing
 
-The GitHub Actions workflow uploads the evidence as a retained workflow artifact.
+Authentication query parameters and bearer tokens are redacted from Jarvis diagnostic attachments.
 
 ## GitHub configuration
 
-Create the following repository configuration before running the authenticated route:
+The production URL is built into the workflow as a default. A repository variable is needed only to target another environment:
 
-- Repository variable `JARVIS_BASE_URL`
-  - Example: `https://healthymeappbyankita.streamlit.app`
-- Repository secret `JARVIS_MEMBER_EMAIL`
-- Repository secret `JARVIS_MEMBER_PASSWORD`
+- `JARVIS_BASE_URL`
 
-Use a dedicated non-production test member. Never commit credentials to the repository.
+The authenticated route requires two repository secrets:
 
-Without the two member secrets, `HM-MEMBER-001` is skipped while the public login route still runs.
+- `JARVIS_MEMBER_EMAIL`
+- `JARVIS_MEMBER_PASSWORD`
+
+Use a dedicated, non-sensitive QC member. Never commit or paste credentials into source files, issues, pull requests or logs.
+
+Without both member secrets, the member route skips during ordinary PR validation. A manual run with `Require authenticated = true` fails preflight until both secrets exist.
+
+## GitHub Actions execution
+
+The workflow supports:
+
+- Automatic public validation when Jarvis files change
+- Manual `all`, `public` or `member` suite selection
+- Optional environment URL override
+- Optional strict requirement for authenticated credentials
+- Environment reachability and credential preflight
+- TypeScript validation
+- Critical dependency audit
+- Chromium execution
+- A 14-day evidence bundle
 
 ## Local execution
 
@@ -62,19 +93,14 @@ From `qa/jarvis`:
 
 ```bash
 npm install
+npm run typecheck
+npm run preflight
 npx playwright install chromium
 npm test
 ```
 
-For an authenticated local run:
-
-```bash
-JARVIS_BASE_URL="https://healthymeappbyankita.streamlit.app" \
-JARVIS_MEMBER_EMAIL="test-member@example.com" \
-JARVIS_MEMBER_PASSWORD="replace-me" \
-npm test
-```
+For an authenticated local run, provide the three environment variables only in the local shell or an excluded local secret store.
 
 ## Current diagnostic boundary
 
-Version 0.1 captures user-visible behaviour and browser-side telemetry. Supabase, Sentry and server-side correlation will be added through a shared Jarvis run ID in the next stage. That correlation is what will convert a visible delay or failure into a stronger root-cause diagnosis.
+Version 0.2 captures visible behaviour, frame-aware timing and browser/network telemetry. A shared `JARVIS_RUN_ID` is generated and sent with browser requests, but HealthyMe, Supabase and Sentry do not yet persist that ID. Server-side correlation is therefore the next diagnostic layer.
