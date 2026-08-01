@@ -13,36 +13,77 @@ type BrowserDiagnostic = {
   detail: Record<string, unknown>;
 };
 
-const SENSITIVE_QUERY_KEYS = [
+const SENSITIVE_QUERY_KEYS = new Set([
   'access_token',
   'authorization_id',
   'code',
+  'code_challenge',
+  'email',
   'id_token',
+  'nonce',
   'password',
+  'payload',
+  'provider',
   'refresh_token',
   'state',
   'token',
-];
+]);
 
-function redactUrl(raw: string): string {
+function isSensitiveKey(raw: string): boolean {
+  const key = raw.toLowerCase();
+  return (
+    SENSITIVE_QUERY_KEYS.has(key) ||
+    key.includes('password') ||
+    key.includes('secret') ||
+    key.endsWith('token')
+  );
+}
+
+export function redactUrl(raw: string): string {
   try {
     const value = new URL(raw);
-    for (const key of SENSITIVE_QUERY_KEYS) {
-      if (value.searchParams.has(key)) {
+    const authenticationPath = /\/(auth|login|logout|oauth|callback)(\/|$)/i.test(value.pathname);
+    for (const [key] of value.searchParams.entries()) {
+      if (authenticationPath || isSensitiveKey(key)) {
         value.searchParams.set(key, '<redacted>');
       }
     }
     value.hash = value.hash ? '#<redacted>' : '';
     return value.toString();
   } catch {
-    return raw.replace(/(token|code|state|authorization_id)=([^&\s]+)/gi, '$1=<redacted>');
+    return raw.replace(
+      /(access_token|authorization_id|code|code_challenge|id_token|nonce|password|payload|provider|refresh_token|state|token)=([^&\s]+)/gi,
+      '$1=<redacted>',
+    );
   }
 }
 
-function redactText(raw: string): string {
+export function redactText(raw: string): string {
   return raw
+    .replace(/https?:\/\/[^\s"'<>]+/gi, (match) => redactUrl(match))
     .replace(/(Bearer\s+)[A-Za-z0-9._~-]+/gi, '$1<redacted>')
-    .replace(/(token|code|state|authorization_id)=([^&\s]+)/gi, '$1=<redacted>');
+    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '<redacted-jwt>')
+    .replace(
+      /(access_token|authorization_id|code|code_challenge|id_token|nonce|password|payload|provider|refresh_token|state|token)=([^&\s]+)/gi,
+      '$1=<redacted>',
+    );
+}
+
+export function sanitizeValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return redactText(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeValue(item));
+  }
+  if (value && typeof value === 'object') {
+    const output: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      output[key] = isSensitiveKey(key) ? '<redacted>' : sanitizeValue(item);
+    }
+    return output;
+  }
+  return value;
 }
 
 export class JarvisDiagnostics {
@@ -97,7 +138,7 @@ export class JarvisDiagnostics {
           method: request.method(),
           resource_type: request.resourceType(),
           url: redactUrl(request.url()),
-          failure: request.failure(),
+          failure: sanitizeValue(request.failure()) as Record<string, unknown> | null,
           elapsed_ms: Date.now() - (this.requestStartedAt.get(request) || Date.now()),
         },
       });
@@ -138,7 +179,7 @@ export class JarvisDiagnostics {
       checkpoint,
       elapsed_ms: Date.now() - this.startedAt,
       iso_time: new Date().toISOString(),
-      detail,
+      detail: detail ? (sanitizeValue(detail) as Record<string, unknown>) : undefined,
     });
   }
 
@@ -167,7 +208,10 @@ export class JarvisDiagnostics {
         frame_index: index,
         frame_name: frame.name(),
         frame_url: redactUrl(frame.url()),
-        navigation_entries: entries,
+        navigation_entries: entries.map((entry) => ({
+          ...entry,
+          name: redactUrl(entry.name),
+        })),
       });
     }
 
@@ -207,7 +251,7 @@ export class JarvisDiagnostics {
     });
 
     await testInfo.attach('jarvis-browser-diagnostics.json', {
-      body: Buffer.from(JSON.stringify(this.browserEvents, null, 2)),
+      body: Buffer.from(JSON.stringify(sanitizeValue(this.browserEvents), null, 2)),
       contentType: 'application/json',
     });
   }
