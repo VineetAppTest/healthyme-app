@@ -338,9 +338,9 @@ with repository_column:
     inactive_open_key = "hm_supp_repo_inactive_open"
     inactive_open = bool(st.session_state.get(inactive_open_key, False))
     inactive_toggle_label = (
-        f"Close — Inactive Repository Items ({counts['inactive']})"
+        f"- Inactive Repository Items ({counts['inactive']})"
         if inactive_open
-        else f"Inactive Repository Items ({counts['inactive']})"
+        else f"+ Inactive Repository Items ({counts['inactive']})"
     )
     if st.button(
         inactive_toggle_label,
