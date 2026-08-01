@@ -59,12 +59,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: qa/jarvis/package-lock.json
 
       - name: Install Jarvis dependencies
-        run: |
-          npm install
-          mkdir -p artifacts
-          cp package-lock.json artifacts/package-lock.generated.json
+        run: npm ci
 
       - name: Check critical dependency vulnerabilities
         run: npm audit --audit-level=critical
