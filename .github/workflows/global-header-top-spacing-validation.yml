@@ -1,0 +1,31 @@
+name: Global header top spacing validation
+
+on:
+  pull_request:
+    paths:
+      - "components/streamlit_toolbar_cleanup.py"
+      - "components/__init__.py"
+      - "tests/test_global_header_top_spacing.py"
+      - ".github/workflows/global-header-top-spacing-validation.yml"
+  workflow_dispatch:
+
+jobs:
+  compile-and-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile global header module
+        run: |
+          python -m py_compile \
+            components/streamlit_toolbar_cleanup.py \
+            tests/test_global_header_top_spacing.py
+
+      - name: Run global header spacing contracts
+        run: python -m unittest tests.test_global_header_top_spacing -v
