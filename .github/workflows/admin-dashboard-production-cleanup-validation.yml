@@ -1,0 +1,30 @@
+name: Admin Dashboard production cleanup validation
+
+on:
+  pull_request:
+    paths:
+      - "pages/10_Admin_Dashboard.py"
+      - "tests/test_admin_dashboard_production_cleanup.py"
+      - ".github/workflows/admin-dashboard-production-cleanup-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile Admin Dashboard
+        run: python -m py_compile pages/10_Admin_Dashboard.py tests/test_admin_dashboard_production_cleanup.py
+
+      - name: Run focused Admin Dashboard contract
+        run: python -m unittest tests.test_admin_dashboard_production_cleanup -v

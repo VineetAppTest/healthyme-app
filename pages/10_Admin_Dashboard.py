@@ -1,3 +1,5 @@
+import functools
+
 import streamlit as st
 
 from components.guards import require_admin
@@ -6,16 +8,49 @@ from components.performance_diagnostics import (
     finish_and_render_page_diagnostics,
 )
 from components.ui_common import (
-    inject_keepalive_guard_v96_11,
-    inject_global_styles,
     apply_luxe_theme,
-    utility_logout_bar,
+    inject_global_styles,
+    inject_keepalive_guard_v96_11,
     topbar,
+    utility_logout_bar,
 )
 
-st.set_page_config(page_title="Admin Dashboard", page_icon="💚", layout="wide", initial_sidebar_state="collapsed")
+
+_HIDDEN_BUILD_LABEL = "Full Admin integration build:"
+_BUILD_LABEL_SUPPRESSION_MARKER = "_hm_admin_dashboard_build_label_suppressed"
+
+
+def _install_build_label_suppression() -> None:
+    """Suppress the obsolete technical Admin build label wherever it is emitted."""
+
+    def should_hide(value: object) -> bool:
+        return _HIDDEN_BUILD_LABEL in str(value or "")
+
+    for attribute in ("caption", "markdown", "write"):
+        original = getattr(st, attribute, None)
+        if not callable(original) or getattr(original, _BUILD_LABEL_SUPPRESSION_MARKER, False):
+            continue
+
+        @functools.wraps(original)
+        def without_build_label(*args, __original=original, **kwargs):
+            body = args[0] if args else kwargs.get("body", kwargs.get("value", ""))
+            if should_hide(body):
+                return None
+            return __original(*args, **kwargs)
+
+        setattr(without_build_label, _BUILD_LABEL_SUPPRESSION_MARKER, True)
+        setattr(st, attribute, without_build_label)
+
+
+st.set_page_config(
+    page_title="Admin Dashboard",
+    page_icon="💚",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
 begin_page_measurement("Admin Dashboard")
 
+_install_build_label_suppression()
 inject_global_styles()
 apply_luxe_theme()
 require_admin()
@@ -23,14 +58,14 @@ utility_logout_bar()
 
 topbar(
     "Admin Dashboard",
-    "Access review workflows, content allocation, reports, communication, scheduling and system tools.",
+    "Access review workflows, content allocation, reports, communication and scheduling.",
     "Admin workflow",
 )
 
 st.markdown(
     """
 <style>
-/* v102.4B23 Admin Dashboard placement update */
+/* Final production Admin Dashboard: operational workflows only. */
 section.main > div.block-container,
 .main .block-container,
 [data-testid="stAppViewBlockContainer"],
@@ -93,8 +128,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover{
 .hm-dash-card [data-testid="stButton"]{
   margin:0 0 .46rem 0!important;
 }
-.hm-dash-card [data-testid="stButton"] > button,
-.hm-dash-system-card [data-testid="stButton"] > button{
+.hm-dash-card [data-testid="stButton"] > button{
   width:100%!important;
   min-height:2.72rem!important;
   height:2.72rem!important;
@@ -111,20 +145,16 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover{
   align-items:center!important;
   justify-content:center!important;
 }
-.hm-dash-card [data-testid="stButton"] > button:hover,
-.hm-dash-system-card [data-testid="stButton"] > button:hover{
+.hm-dash-card [data-testid="stButton"] > button:hover{
   transform:translateY(-1px)!important;
   background:linear-gradient(135deg,#FFF9EA 0%,#FFF3D6 100%)!important;
   border-color:#B89345!important;
   color:#003C36!important;
   box-shadow:0 9px 18px rgba(15,23,42,.075)!important;
 }
-.hm-dash-card [data-testid="stButton"] > button:active,
-.hm-dash-system-card [data-testid="stButton"] > button:active{
+.hm-dash-card [data-testid="stButton"] > button:active{
   transform:translateY(0)!important;
 }
-.hm-dash-system-wrap{margin-top:.16rem!important;}
-.hm-dashboard-small-gap [data-testid="stVerticalBlock"]{gap:.28rem!important;}
 .hm-communication-wrap{max-width:760px;margin:.04rem auto .94rem auto!important;}
 @media(max-width:760px){
   div[data-testid="stVerticalBlockBorderWrapper"]{
@@ -169,95 +199,123 @@ left, right = st.columns(2, gap="large")
 with left:
     with st.container(border=True):
         st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
-        section_header("Review & Assessment", "Track member assessments, reviews and reassessment tasks.")
+        section_header(
+            "Review & Assessment",
+            "Track member assessments, reviews and reassessment tasks.",
+        )
         nav_cell("Review", "pages/26_Admin_Review_Queue.py", "dash_review_v102_4b4")
-        nav_cell("Evaluation Status", "pages/11_Evaluation_Status.py", "dash_eval_status_v102_4b4")
-        nav_cell("Reassessment", "pages/25_Admin_Reassessment_Manager.py", "dash_reassessment_v102_4b4")
-        nav_cell("NSP Compare", "pages/27_Comparative_NSP_Report.py", "dash_nsp_compare_v102_4b4")
+        nav_cell(
+            "Evaluation Status",
+            "pages/11_Evaluation_Status.py",
+            "dash_eval_status_v102_4b4",
+        )
+        nav_cell(
+            "Reassessment",
+            "pages/25_Admin_Reassessment_Manager.py",
+            "dash_reassessment_v102_4b4",
+        )
+        nav_cell(
+            "NSP Compare",
+            "pages/27_Comparative_NSP_Report.py",
+            "dash_nsp_compare_v102_4b4",
+        )
         st.markdown("</div>", unsafe_allow_html=True)
 
     with st.container(border=True):
         st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
-        section_header("Member & Access", "Create users and manage member/admin access controls.")
-        nav_cell("Create Users", "pages/17_Admin_User_Manager.py", "dash_create_users_v102_4b4")
-        nav_cell("Access Manager", "pages/30_Admin_User_Access_Manager.py", "dash_access_manager_v102_4b4")
+        section_header(
+            "Member & Access",
+            "Create users and manage member/admin access controls.",
+        )
+        nav_cell(
+            "Create Users",
+            "pages/17_Admin_User_Manager.py",
+            "dash_create_users_v102_4b4",
+        )
+        nav_cell(
+            "Access Manager",
+            "pages/30_Admin_User_Access_Manager.py",
+            "dash_access_manager_v102_4b4",
+        )
         nav_cell("Packages", "pages/41_Admin_Packages.py", "dash_packages_v102_4b14")
         st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
     with st.container(border=True):
         st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
-        section_header("Content & Allocation", "Manage recipes, exercises, supplements and recommendation profiles.")
+        section_header(
+            "Content & Allocation",
+            "Manage recipes, exercises, supplements and recommendation profiles.",
+        )
         nav_cell("Recipes", "pages/15_Admin_Recipe_Manager.py", "dash_recipes_v102_4b4")
-        nav_cell("Exercises", "pages/16_Admin_Exercise_Manager.py", "dash_exercises_v102_4b4")
-        nav_cell("Supplements", "pages/39_Admin_Supplement_Manager.py", "dash_supplements_v102_4b4")
-        nav_cell("Recommendation Profile Builder", "pages/38_Admin_Recommendation_Profile_Builder.py", "dash_profile_builder_h9a8b")
+        nav_cell(
+            "Exercises",
+            "pages/16_Admin_Exercise_Manager.py",
+            "dash_exercises_v102_4b4",
+        )
+        nav_cell(
+            "Supplements",
+            "pages/39_Admin_Supplement_Manager.py",
+            "dash_supplements_v102_4b4",
+        )
+        nav_cell(
+            "Recommendation Profile Builder",
+            "pages/38_Admin_Recommendation_Profile_Builder.py",
+            "dash_profile_builder_h9a8b",
+        )
         st.markdown("</div>", unsafe_allow_html=True)
 
     with st.container(border=True):
         st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
-        section_header("Reports & Logs", "Review logs, questions and response content.")
-        nav_cell("Daily Logs", "pages/22_Admin_Daily_Log_Report.py", "dash_daily_logs_v102_4b4")
-        nav_cell("Questions", "pages/20_Admin_Question_Manager.py", "dash_questions_v102_4b4")
-        nav_cell("Responses", "pages/21_Admin_Response_Editor.py", "dash_responses_v102_4b4")
+        section_header(
+            "Reports & Logs",
+            "Review logs, questions and response content.",
+        )
+        nav_cell(
+            "Daily Logs",
+            "pages/22_Admin_Daily_Log_Report.py",
+            "dash_daily_logs_v102_4b4",
+        )
+        nav_cell(
+            "Questions",
+            "pages/20_Admin_Question_Manager.py",
+            "dash_questions_v102_4b4",
+        )
+        nav_cell(
+            "Responses",
+            "pages/21_Admin_Response_Editor.py",
+            "dash_responses_v102_4b4",
+        )
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<div class='hm-communication-wrap'>", unsafe_allow_html=True)
 with st.container(border=True):
     st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
-    section_header("Communication & Scheduling", "Send messages and manage member scheduling workflows.")
+    section_header(
+        "Communication & Scheduling",
+        "Send messages and manage member scheduling workflows.",
+    )
     message_col, schedule_col = st.columns(2, gap="large")
     with message_col:
-        nav_cell("Messages", "pages/31_Admin_Member_Communication.py", "dash_messages_v102_4b23")
+        nav_cell(
+            "Messages",
+            "pages/31_Admin_Member_Communication.py",
+            "dash_messages_v102_4b23",
+        )
     with schedule_col:
-        nav_cell("Scheduling", "pages/32_Admin_Scheduling.py", "dash_scheduling_v102_4b23")
-    st.markdown("</div>", unsafe_allow_html=True)
-st.markdown("</div>", unsafe_allow_html=True)
-
-st.markdown("<div class='hm-dash-system-wrap'>", unsafe_allow_html=True)
-with st.container(border=True):
-    st.markdown("<div class='hm-dash-system-card'>", unsafe_allow_html=True)
-    section_header("System Tools", "Database checks, recalculation utilities, legacy fallbacks and diagnostic controls.")
-    sys_col_1, sys_col_2 = st.columns(2, gap="large")
-    with sys_col_1:
-        nav_cell("Database", "pages/28_Admin_Database_Status.py", "dash_database_v102_4b4")
-    with sys_col_2:
-        nav_cell("NSP Recalculate", "pages/34_Admin_NSP_Score_Recalculation.py", "dash_nsp_recalc_v102_4b4")
-    sys_col_3, sys_col_4 = st.columns(2, gap="large")
-    with sys_col_3:
-        nav_cell("Supabase Auth Readiness", "pages/33_Admin_Supabase_Auth_Pilot_Readiness.py", "dash_supabase_auth_readiness_v102_4b15s3h4")
-    with sys_col_4:
-        nav_cell("Supabase Provisioning", "pages/34_Admin_Supabase_Auth_Provisioning_Workbench.py", "dash_supabase_provisioning_v102_4b15s3h4")
-    legacy_col_1, legacy_col_2 = st.columns(2, gap="large")
-    with legacy_col_1:
-        nav_cell("Legacy Recommendations Share", "pages/35_Admin_Recommendations_Share.py", "dash_legacy_recommendations_share_h9a8c")
-    with legacy_col_2:
-        nav_cell("Unified Recommendations Diagnostics", "pages/36_Admin_Unified_Recommendations.py", "dash_unified_recommendations_diagnostics_h9a8c")
-    diagnostic_col_1, diagnostic_col_2 = st.columns(2, gap="large")
-    with diagnostic_col_1:
-        nav_cell("Active Profile Contract Diagnostics", "pages/45_Admin_Active_Profile_Contract_Diagnostics.py", "dash_active_profile_contract_diagnostics_h9a9b")
-    with diagnostic_col_2:
-        nav_cell("Profile Source Alignment", "pages/46_Admin_Profile_Source_Alignment.py", "dash_profile_source_alignment_h9a10a")
-    measurement_col_1, measurement_col_2 = st.columns(2, gap="large")
-    with measurement_col_1:
-        nav_cell("Performance Diagnostics", "pages/47_Admin_Performance_Diagnostics.py", "dash_performance_diagnostics_measurement_only")
-    with measurement_col_2:
-        st.caption("Temporary measurement-only workspace for Issue #260.")
+        nav_cell(
+            "Scheduling",
+            "pages/32_Admin_Scheduling.py",
+            "dash_scheduling_v102_4b23",
+        )
     st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
 inject_keepalive_guard_v96_11()
 finish_and_render_page_diagnostics("Admin Dashboard")
 
-# v101.7: Admin Dashboard restructured per client placement request.
-# v102.4: Recipe-1/Exercise-1 testing buttons removed; Recommendations Share added as admin source of truth.
-# v102.4B4: Premium bordered section cards added to Admin Dashboard.
-# v102.4B14B: Communication & Scheduling section swapped with Content & Allocation.
-# v102.4B15S3H4: Added dashboard buttons for Supabase Auth tools because Streamlit sidebar/menu remains intentionally hidden.
-# H9A.5E: Added Unified Recommendations contract workbench entry point.
-# H9A.8B: Added final Recommendation Profile Builder entry point and removed mockup route dependency.
-# H9A.8C: Moved legacy Recommendations Share and Unified Recommendations out of main workflow into System Tools.
-# H9A.9B: Added Active Profile Contract Diagnostics under System Tools.
-# H9A.10A: Added Repository-to-Profile Builder Source Alignment diagnostics under System Tools.
-# v102.4B23: Swapped Content & Allocation with Reports & Logs and centralized Communication & Scheduling.
-# v103.1: View Profiles remains available inside Recommendation Profile Builder.
+# Final production Dashboard boundary:
+# - operational Admin workflows remain available;
+# - System Tools and diagnostic entry points are not exposed on the normal dashboard;
+# - obsolete technical build labels are suppressed without changing backend utilities;
+# - authentication, routing, roles, RLS and business logic remain unchanged.

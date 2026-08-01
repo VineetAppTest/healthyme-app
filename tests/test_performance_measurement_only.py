@@ -60,12 +60,17 @@ class PerformanceMeasurementOnlyTests(unittest.TestCase):
         self.assertIn("inject_keepalive_guard_v96_11", source)
         self.assertIn("install_page_boundary_measurement()", bootstrap)
 
-    def test_admin_workspace_and_current_build_label_are_present(self):
+    def test_admin_workspace_remains_available_but_not_dashboard_exposed(self):
         dashboard = (ROOT / "pages/10_Admin_Dashboard.py").read_text()
         workspace = (ROOT / "pages/47_Admin_Performance_Diagnostics.py").read_text()
         diagnostics = (ROOT / "components/performance_diagnostics.py").read_text()
         build = (ROOT / "components/current_build.py").read_text()
-        self.assertIn("Performance Diagnostics", dashboard)
+
+        self.assertNotIn('nav_cell("Performance Diagnostics"', dashboard)
+        self.assertNotIn('section_header("System Tools"', dashboard)
+        self.assertIn('_HIDDEN_BUILD_LABEL = "Full Admin integration build:"', dashboard)
+        self.assertIn("_install_build_label_suppression()", dashboard)
+
         self.assertIn("Start measurement", workspace)
         self.assertIn("Download measurement JSON", diagnostics)
         self.assertIn('APP_BUILD_VERSION = "v102.5P1"', build)
