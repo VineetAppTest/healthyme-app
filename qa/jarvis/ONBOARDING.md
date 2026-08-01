@@ -13,15 +13,16 @@ Jarvis is not a second product owner and must not invent expected behaviour. Eve
 | Requirement | Status | Notes |
 |---|---|---|
 | Playwright browser runtime | Ready | Chromium is installed by GitHub Actions. |
-| Streamlit Cloud application driver | Ready | Direct pages and cross-origin Streamlit iframes are supported. |
+| Streamlit Cloud application driver | Ready | Direct pages and cross-origin Streamlit iframes are supported; one visible reload can recover a stalled cold start. |
 | Public read-only route | Ready | `HM-PUBLIC-001`. |
 | Member login and refresh route | Code ready | `HM-MEMBER-001`; dedicated member secrets are still required. |
-| Video, screenshots and traces | Ready | Video always; screenshot and trace on failure. |
+| Video and failure screenshots | Ready | Video always; screenshot on failure. |
+| Playwright trace | Local-only | Disabled in CI because raw traces cannot be reliably sanitized; optional local use must never be uploaded. |
 | Browser and network diagnostics | Ready | Console, page errors, failed requests, HTTP errors and selected request timings. |
 | Frame-aware performance timing | Ready | Navigation entries are collected from the host and app frames. |
 | Environment preflight | Ready | Validates URL, suite selection and credential completeness; lightweight HTTP reachability is advisory because Chromium is authoritative. |
 | Unique Jarvis run identity | Ready | Every CI execution receives a `JARVIS_RUN_ID` stored in the evidence bundle. |
-| Evidence privacy controls | Ready | Authentication parameters, opaque provider payloads, JWTs and bearer tokens are redacted from diagnostic attachments. |
+| Evidence privacy controls | Ready | Authentication parameters, opaque provider payloads, JWTs and bearer tokens are redacted and post-run evidence is scanned before upload. |
 | GitHub evidence bundle | Ready | Retained for 14 days. |
 | Dedicated test member | Pending owner setup | Must be created and controlled by Vineet. |
 | Supabase/Sentry correlation | Not yet active | The run ID remains evidence-only until HealthyMe provides a privacy-safe, same-origin correlation mechanism. |
@@ -80,7 +81,7 @@ The commissioning run passes only when:
 4. The dedicated account reaches Member Home.
 5. Logout is visible, proving the page is interactive.
 6. Browser refresh retains the authenticated member session.
-7. Video, report, timeline and browser diagnostics are uploaded.
+7. Video, report, timeline, browser diagnostics and evidence-security result are uploaded.
 
 ## Evidence standard
 
@@ -99,10 +100,10 @@ Every Jarvis route must produce enough evidence for a developer to reproduce or 
 - Timings for document, fetch and XHR responses
 - Full execution video
 - Failure screenshot
-- Playwright trace on failure
 - HTML and JSON results
+- Post-run evidence-security result
 
-Authentication query parameters, opaque provider payloads, JWTs, bearer tokens and sensitive nested values are redacted before diagnostic attachment. Redaction is enforced through an automated contract test and must remain green before merge.
+Authentication query parameters, opaque provider payloads, JWTs, bearer tokens and sensitive nested values are redacted before diagnostic attachment. The workflow also scans generated text evidence and fails if it finds an unredacted sensitive value or trace archive.
 
 ## Safety boundaries
 
@@ -134,7 +135,7 @@ OTP, CAPTCHA, hardware keys, consent prompts or manual email-link approval inter
 
 ### 3. Streamlit Cloud can introduce external delay
 
-Cold starts, hosting queues, iframe loading and provider redirects can affect timing independently of HealthyMe code. Jarvis records these separately where possible, but one run is not enough to establish a performance regression. Performance decisions should use repeated runs and a baseline percentile.
+Cold starts, hosting queues, iframe loading and provider redirects can affect timing independently of HealthyMe code. Jarvis records these separately where possible and performs one controlled recovery reload, but one run is not enough to establish a performance regression. Performance decisions should use repeated runs and a baseline percentile.
 
 ### 4. Selectors still depend on an approved UI contract
 
@@ -164,16 +165,20 @@ GitHub artifacts are retained for 14 days in the current workflow. Important rel
 
 Streamlit hosting, authentication providers and analytics services can emit console or network warnings unrelated to a HealthyMe defect. Jarvis records them, but Victor must classify platform noise separately from application failures.
 
+### 11. Raw traces are intentionally excluded from CI
+
+A Playwright trace can contain browser internals, URLs, form values and authentication context. Jarvis therefore sacrifices CI trace convenience in favour of privacy. Local traces are opt-in and must not be uploaded or shared.
+
 ## Definition of Jarvis settled
 
 Jarvis is considered operational for HealthyMe web QC when all of the following are true:
 
-- Public route passes on two consecutive runs of the final secured code.
+- Public route passes on two consecutive non-flaky runs of the final secured code.
 - Dedicated member secrets are configured.
-- Authenticated login/refresh route passes on two consecutive runs.
+- Authenticated login/refresh route passes on two consecutive non-flaky runs.
 - Vineet reviews one complete evidence bundle.
 - Victor confirms route results are understandable and actionable.
-- Automated redaction contracts pass and evidence inspection finds no credential or sensitive-data leakage.
+- Automated redaction and post-run evidence-security checks pass with no credential or sensitive-data leakage.
 - PR #310 is approved and merged.
 
 ## Next capability layers
