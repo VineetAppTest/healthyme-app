@@ -51,9 +51,10 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
         self.assertIn("hm-sup-list-divider", text)
         self.assertIn('add_column, repository_column = st.columns([0.78, 1.22]', text)
         self.assertLess(text.index("with add_column:"), text.index("with repository_column:"))
-        self.assertIn('f"Inactive Repository Items ({counts[\'inactive\']})"', text)
-        self.assertIn('f"Close — Inactive Repository Items ({counts[\'inactive\']})"', text)
+        self.assertIn('f"+ Inactive Repository Items ({counts[\'inactive\']})"', text)
+        self.assertIn('f"- Inactive Repository Items ({counts[\'inactive\']})"', text)
         self.assertNotIn("Expand — Inactive Repository Items", text)
+        self.assertNotIn("Close — Inactive Repository Items", text)
         self.assertNotIn("with st.expander", text)
 
     def test_admin_notes_are_not_exposed_in_repository_forms(self):
