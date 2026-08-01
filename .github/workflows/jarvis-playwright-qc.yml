@@ -86,6 +86,10 @@ jobs:
             *) echo "Unsupported suite: $JARVIS_SUITE" >&2; exit 1 ;;
           esac
 
+      - name: Verify Jarvis evidence privacy
+        if: always()
+        run: npm run verify:evidence
+
       - name: Upload Jarvis evidence
         if: always()
         uses: actions/upload-artifact@v4
