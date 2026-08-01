@@ -224,8 +224,8 @@ export class JarvisDiagnostics {
       project: testInfo.project.name,
       retry: testInfo.retry,
       worker_index: testInfo.workerIndex,
-      status: testInfo.status,
       expected_status: testInfo.expectedStatus,
+      attachment_phase: 'before Playwright finalizes the test result',
     };
 
     await testInfo.attach('jarvis-run-metadata.json', {
