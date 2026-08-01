@@ -1,0 +1,50 @@
+name: Jarvis Playwright QC
+
+on:
+  pull_request:
+    paths:
+      - "qa/jarvis/**"
+      - ".github/workflows/jarvis-playwright-qc.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-qc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: qa/jarvis
+    env:
+      JARVIS_BASE_URL: ${{ vars.JARVIS_BASE_URL }}
+      JARVIS_MEMBER_EMAIL: ${{ secrets.JARVIS_MEMBER_EMAIL }}
+      JARVIS_MEMBER_PASSWORD: ${{ secrets.JARVIS_MEMBER_PASSWORD }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Jarvis dependencies
+        run: npm install
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Execute Jarvis routes
+        run: npm test
+
+      - name: Upload Jarvis evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-playwright-evidence-${{ github.run_id }}
+          path: qa/jarvis/artifacts/
+          if-no-files-found: warn
+          retention-days: 14
