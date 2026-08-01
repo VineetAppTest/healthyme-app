@@ -13,6 +13,9 @@ from components.profile_builder_access import (
     profile_builder_role_utility_bar,
     require_profile_builder_access,
 )
+from components.supplement_repository_source import (
+    install_profile_builder_supplement_repository_source,
+)
 from components.ui_common import (
     apply_luxe_theme,
     inject_global_styles,
@@ -21,9 +24,10 @@ from components.ui_common import (
 )
 
 
-# Install request-local read reuse before importing the modular builder so its
-# direct function bindings use the optimized source/store loaders.
+# Install request-local read reuse and the repository-only supplement source before
+# importing the modular builder so its direct function bindings use both contracts.
 install_profile_builder_performance()
+install_profile_builder_supplement_repository_source()
 from components.profile_builder_modular import render_modular_profile_builder
 
 
