@@ -47,6 +47,9 @@ from components.admin_content_form_cleanup import (
 from components.notes_supplement_form_hygiene import (
     install_notes_supplement_form_hygiene,
 )
+from components.repository_create_form_success import (
+    install_repository_create_form_success,
+)
 from components.auth_provisioning_form_hygiene import (
     install_auth_provisioning_form_hygiene,
 )
@@ -90,6 +93,9 @@ install_performance_measurement_gate()
 install_member_post_optimization_cleanup()
 install_admin_content_form_cleanup()
 install_notes_supplement_form_hygiene()
+# Repository create forms clear only after a confirmed save and surface the success
+# message next to the save action. Failed saves retain the entered information.
+install_repository_create_form_success()
 install_auth_provisioning_form_hygiene()
 install_recommendations_share_form_hygiene()
 install_member_saved_days_home_cleanup()
