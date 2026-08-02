@@ -1,15 +1,17 @@
 name: Apply dedicated repository workspaces
 
 on:
-  push:
+  pull_request:
     branches:
-      - feature/dedicated-repository-workspaces
+      - main
     paths:
       - scripts/apply_dedicated_repository_workspaces.py
       - .github/workflows/apply-dedicated-repository-workspaces.yml
+      - components/repository_workspace_common.py
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   transform:
