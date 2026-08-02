@@ -26,25 +26,28 @@ class RepositoryLayoutCorrectionRuntimeTests(unittest.TestCase):
         self.assertIn("pages/39_Admin_Supplement_Manager.py", source)
         self.assertNotIn("pages/18_Daily_Log.py", source)
 
-    def test_repository_cards_are_sharper_and_vertically_aligned(self):
+    def test_repository_cards_are_compact_readable_and_aligned(self):
         source = text(RUNTIME)
         self.assertIn("align-items:center!important", source)
-        self.assertIn("max-width:900px!important", source)
-        self.assertIn("flex:0 1 60%!important", source)
-        self.assertIn("flex:0 0 70px!important", source)
-        self.assertIn("flex:0 0 78px!important", source)
-        self.assertIn("min-height:2.18rem!important", source)
-        self.assertIn("padding:.3rem .52rem!important", source)
+        self.assertIn("max-width:1020px!important", source)
+        self.assertIn("flex:0 1 68%!important", source)
+        self.assertIn("flex:0 0 74px!important", source)
+        self.assertIn("flex:0 0 84px!important", source)
+        self.assertIn("min-height:2.45rem!important", source)
+        self.assertIn("padding:.4rem .62rem!important", source)
 
-    def test_native_disclosure_glyph_wrapper_is_removed(self):
+    def test_disclosure_keeps_one_inline_control_and_full_label(self):
         source = text(RUNTIME)
+        self.assertIn("display:flex!important", source)
         self.assertIn("summary::-webkit-details-marker{display:none!important;}", source)
-        self.assertIn('summary::marker{content:""!important;display:none!important;}', source)
+        self.assertIn('summary::marker{content:""!important;}', source)
         self.assertIn('summary [data-testid="stExpanderToggleIcon"]', source)
-        self.assertIn("summary>span:first-child", source)
-        self.assertIn("summary>div:first-child:has(svg)", source)
+        self.assertIn('summary [data-baseweb="icon"]', source)
+        self.assertIn("white-space:nowrap!important", source)
         self.assertIn("overflow:visible!important", source)
         self.assertIn("text-overflow:clip!important", source)
+        self.assertNotIn("summary>span:first-child", source)
+        self.assertNotIn("summary>div:first-child", source)
 
     def test_add_and_edit_forms_use_approved_sections(self):
         source = text(RUNTIME)
@@ -59,18 +62,22 @@ class RepositoryLayoutCorrectionRuntimeTests(unittest.TestCase):
         ):
             self.assertIn(heading, source)
 
-    def test_add_and_edit_forms_are_materially_more_compact(self):
+    def test_add_and_edit_use_same_balanced_density(self):
         source = text(RUNTIME)
-        self.assertIn('div[data-baseweb="tab-panel"]{', source)
-        self.assertIn("max-width:940px!important", source)
-        self.assertIn("gap:.16rem!important", source)
-        self.assertIn("font-size:.62rem!important", source)
-        self.assertIn("min-height:1.72rem!important", source)
-        self.assertIn("min-height:42px!important", source)
-        self.assertIn("height:42px!important", source)
-        self.assertIn("padding:.42rem .52rem!important", source)
+        self.assertIn('div[data-testid="stTabs"] [role="tabpanel"]', source)
+        self.assertIn('div[data-baseweb="tab-panel"]', source)
+        self.assertIn('div[data-testid="stExpander"]', source)
+        self.assertIn("max-width:1040px!important", source)
+        self.assertIn("gap:.34rem!important", source)
+        self.assertIn("font-size:.72rem!important", source)
+        self.assertIn("min-height:2.05rem!important", source)
+        self.assertIn("min-height:64px!important", source)
+        self.assertIn("height:64px!important", source)
+        self.assertIn("padding:.66rem .78rem!important", source)
         self.assertIn('border-left:3px solid #D4A72C!important', source)
         self.assertIn('[data-testid="stFileUploaderDropzone"]', source)
+        self.assertNotIn("min-height:42px!important", source)
+        self.assertNotIn("font-size:.62rem!important", source)
 
     def test_runtime_is_installed_outermost(self):
         bootstrap = text(BOOTSTRAP)
