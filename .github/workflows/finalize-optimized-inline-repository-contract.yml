@@ -1,0 +1,35 @@
+name: Finalize optimized inline repository contract
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+    paths:
+      - scripts/finalize_optimized_inline_repository_contract.py
+      - .github/workflows/finalize-optimized-inline-repository-contract.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply final repository and test corrections
+        run: python scripts/finalize_optimized_inline_repository_contract.py
+      - name: Commit application and test changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pages tests
+          git commit -m "Finalize optimized inline repository contract"
+          git push origin HEAD:${{ github.head_ref }}
