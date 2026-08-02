@@ -7,7 +7,7 @@ from typing import Any
 import streamlit as st
 
 
-_MARKER = "_hm_repository_layout_correction_v1"
+_MARKER = "_hm_repository_layout_correction_v2"
 _REPOSITORY_PAGES = {
     "pages/15_Admin_Recipe_Manager.py": "recipe",
     "pages/16_Admin_Exercise_Manager.py": "exercise",
@@ -17,30 +17,34 @@ _REPOSITORY_PAGES = {
 _REPOSITORY_CSS = """
 <style>
 /* Keep repository rows compact and align the content card with Edit/Delete. */
+div[data-baseweb="tab-panel"]{
+  max-width:940px!important;
+}
 div[data-testid="stHorizontalBlock"]:has(.hm-repo-row),
 div[data-testid="stHorizontalBlock"]:has(.hm-sup-row){
   align-items:center!important;
-  gap:.42rem!important;
+  gap:.34rem!important;
   width:100%!important;
-  margin:.14rem 0!important;
+  max-width:900px!important;
+  margin:.08rem 0!important;
 }
 div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="stColumn"]:first-child,
 div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"]:first-child{
-  flex:0 1 68%!important;
-  width:68%!important;
+  flex:0 1 60%!important;
+  width:60%!important;
   min-width:0!important;
 }
 div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="stColumn"]:nth-child(2),
 div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"]:nth-child(2){
-  flex:0 0 76px!important;
-  width:76px!important;
-  min-width:76px!important;
+  flex:0 0 70px!important;
+  width:70px!important;
+  min-width:70px!important;
 }
 div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="stColumn"]:nth-child(3),
 div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"]:nth-child(3){
-  flex:0 0 86px!important;
-  width:86px!important;
-  min-width:86px!important;
+  flex:0 0 78px!important;
+  width:78px!important;
+  min-width:78px!important;
 }
 div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="stColumn"],
 div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"]{
@@ -50,13 +54,24 @@ div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"
 div[data-testid="stHorizontalBlock"]:has(.hm-repo-row) .hm-repo-row,
 div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) .hm-sup-row{
   width:100%!important;
-  min-height:2.55rem!important;
+  min-height:2.18rem!important;
   margin:0!important;
-  padding:.42rem .62rem!important;
-  border-radius:12px!important;
+  padding:.3rem .52rem!important;
+  border-radius:10px!important;
   display:flex!important;
   flex-direction:column!important;
   justify-content:center!important;
+}
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row) .hm-repo-title,
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) .hm-sup-name{
+  font-size:.82rem!important;
+  line-height:1.08!important;
+}
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row) .hm-repo-meta,
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) .hm-sup-meta{
+  font-size:.67rem!important;
+  line-height:1.14!important;
+  margin-top:.05rem!important;
 }
 div[data-testid="stHorizontalBlock"]:has(.hm-repo-row) div[data-testid="stButton"],
 div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) div[data-testid="stButton"]{
@@ -65,26 +80,40 @@ div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) div[data-testid="stButton"
 }
 div[data-testid="stHorizontalBlock"]:has(.hm-repo-row) div[data-testid="stButton"]>button,
 div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) div[data-testid="stButton"]>button{
-  min-height:1.9rem!important;
-  padding:.2rem .48rem!important;
+  min-height:1.72rem!important;
+  padding:.12rem .38rem!important;
   margin:0!important;
+  font-size:.7rem!important;
 }
 
-/* Retain the accepted custom + / minus control, but remove Streamlit's native marker. */
-div[data-testid="stExpander"]{width:100%!important;max-width:100%!important;}
+/* Keep one custom + / minus control and hide every native Streamlit glyph wrapper. */
+div[data-testid="stExpander"]{width:100%!important;max-width:900px!important;}
 div[data-testid="stExpander"] summary{
   list-style:none!important;
   width:100%!important;
   max-width:100%!important;
+  min-height:1.9rem!important;
+  padding:.32rem .5rem!important;
 }
 div[data-testid="stExpander"] summary::-webkit-details-marker{display:none!important;}
 div[data-testid="stExpander"] summary::marker{content:""!important;display:none!important;}
 div[data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"],
 div[data-testid="stExpander"] summary [data-testid*="ExpanderIcon"],
-div[data-testid="stExpander"] summary>svg{
+div[data-testid="stExpander"] summary>svg,
+div[data-testid="stExpander"] summary>span:first-child,
+div[data-testid="stExpander"] summary>span:first-child:has(svg),
+div[data-testid="stExpander"] summary>div:first-child:has(svg){
   display:none!important;
   width:0!important;
   min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+div[data-testid="stExpander"] summary:before{
+  width:1.08rem!important;
+  height:1.08rem!important;
+  margin-right:.34rem!important;
+  font-size:.72rem!important;
 }
 div[data-testid="stExpander"] summary p{
   white-space:nowrap!important;
@@ -93,30 +122,97 @@ div[data-testid="stExpander"] summary p{
   max-width:none!important;
   width:auto!important;
   flex:1 1 auto!important;
+  font-size:.76rem!important;
+  line-height:1.1!important;
+}
+div[data-testid="stExpander"] details[open]>div{
+  padding:.12rem .5rem .46rem!important;
 }
 
-/* Apply the same compact structure to Add and Edit content. */
-div[data-baseweb="tab-panel"] div[data-testid="stVerticalBlock"]{gap:.38rem!important;}
-div[data-baseweb="tab-panel"] h3{font-size:1rem!important;margin:.25rem 0 .35rem!important;}
-div[data-baseweb="tab-panel"] h4{
+/* Sharper Add and Edit forms: compact workspace, fields, headings and uploaders. */
+div[data-baseweb="tab-panel"] div[data-testid="stVerticalBlock"],
+div[data-testid="stExpander"] div[data-testid="stVerticalBlock"]{
+  gap:.16rem!important;
+}
+div[data-baseweb="tab-panel"] div[data-testid="stHorizontalBlock"],
+div[data-testid="stExpander"] div[data-testid="stHorizontalBlock"]{
+  gap:.38rem!important;
+}
+div[data-baseweb="tab-panel"] h3{
+  font-size:.88rem!important;
+  line-height:1.1!important;
+  margin:.12rem 0 .18rem!important;
+}
+div[data-baseweb="tab-panel"] h4,
+div[data-testid="stExpander"] h4{
   color:#064E3B!important;
-  font-size:.82rem!important;
-  line-height:1.2!important;
-  margin:.34rem 0 .08rem!important;
+  background:#F8F3E7!important;
+  border-left:3px solid #D4A72C!important;
+  border-radius:6px!important;
+  font-size:.72rem!important;
+  line-height:1.05!important;
+  margin:.22rem 0 .04rem!important;
+  padding:.16rem .36rem!important;
 }
-div[data-baseweb="tab-panel"] textarea{min-height:64px!important;}
+div[data-baseweb="tab-panel"] [data-testid="stWidgetLabel"] p,
+div[data-testid="stExpander"] [data-testid="stWidgetLabel"] p{
+  font-size:.62rem!important;
+  line-height:1!important;
+  margin-bottom:.02rem!important;
+}
+div[data-baseweb="tab-panel"] [data-baseweb="input"]>div,
+div[data-testid="stExpander"] [data-baseweb="input"]>div,
+div[data-baseweb="tab-panel"] [data-baseweb="select"]>div,
+div[data-testid="stExpander"] [data-baseweb="select"]>div{
+  min-height:1.72rem!important;
+  height:1.72rem!important;
+}
+div[data-baseweb="tab-panel"] input,
+div[data-testid="stExpander"] input{
+  min-height:1.72rem!important;
+  height:1.72rem!important;
+  padding:.18rem .42rem!important;
+  font-size:.68rem!important;
+}
+div[data-baseweb="tab-panel"] textarea,
+div[data-testid="stExpander"] textarea{
+  min-height:42px!important;
+  height:42px!important;
+  padding:.28rem .42rem!important;
+  font-size:.68rem!important;
+  line-height:1.15!important;
+}
 div[data-baseweb="tab-panel"] div[data-testid="stForm"]{
-  padding:.65rem .75rem!important;
-  border-radius:14px!important;
+  padding:.42rem .52rem!important;
+  border-radius:10px!important;
 }
-div[data-baseweb="tab-panel"] div[data-testid="stFileUploader"]{
-  margin-top:.05rem!important;
+div[data-baseweb="tab-panel"] div[data-testid="stFileUploader"],
+div[data-testid="stExpander"] div[data-testid="stFileUploader"]{
+  margin-top:0!important;
+}
+div[data-baseweb="tab-panel"] [data-testid="stFileUploaderDropzone"],
+div[data-testid="stExpander"] [data-testid="stFileUploaderDropzone"]{
+  min-height:2.25rem!important;
+  padding:.22rem .38rem!important;
+}
+div[data-baseweb="tab-panel"] [data-testid="stFileUploaderDropzone"] small,
+div[data-testid="stExpander"] [data-testid="stFileUploaderDropzone"] small{
+  font-size:.58rem!important;
+}
+div[data-baseweb="tab-panel"] div[data-testid="stButton"]>button,
+div[data-baseweb="tab-panel"] div[data-testid="stFormSubmitButton"]>button,
+div[data-testid="stExpander"] div[data-testid="stButton"]>button{
+  min-height:1.72rem!important;
+  padding:.14rem .42rem!important;
+  font-size:.68rem!important;
 }
 
 @media(max-width:760px){
+  div[data-baseweb="tab-panel"]{max-width:100%!important;}
   div[data-testid="stHorizontalBlock"]:has(.hm-repo-row),
   div[data-testid="stHorizontalBlock"]:has(.hm-sup-row){
-    gap:.3rem!important;
+    gap:.26rem!important;
+    max-width:100%!important;
   }
   div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="stColumn"]:first-child,
   div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"]:first-child{
@@ -125,12 +221,13 @@ div[data-baseweb="tab-panel"] div[data-testid="stFileUploader"]{
   }
   div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="stColumn"]:nth-child(2),
   div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"]:nth-child(2){
-    flex:0 0 62px!important;width:62px!important;min-width:62px!important;
+    flex:0 0 58px!important;width:58px!important;min-width:58px!important;
   }
   div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="stColumn"]:nth-child(3),
   div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"]:nth-child(3){
-    flex:0 0 70px!important;width:70px!important;min-width:70px!important;
+    flex:0 0 64px!important;width:64px!important;min-width:64px!important;
   }
+  div[data-testid="stExpander"]{max-width:100%!important;}
 }
 </style>
 """
