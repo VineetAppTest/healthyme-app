@@ -19,6 +19,9 @@ from components.member_home_schedule_presentation import (
 from components.member_exercise_journal_table_bootstrap import (
     install_member_exercise_journal_table,
 )
+from components.exercise_saved_days_readonly_runtime import (
+    install_exercise_saved_days_readonly_runtime,
+)
 from components.performance_diagnostics import (
     install_backend_measurement,
     install_page_boundary_measurement,
@@ -73,6 +76,9 @@ install_member_home_schedule_presentation()
 
 # Retain the accepted Exercise Journal table and Food Journal widget corrections.
 install_member_exercise_journal_table()
+# Exercise history follows the Food Journal saved-days pattern: filtered, read-only
+# rows below the form. Historical dates must never replace the active form date.
+install_exercise_saved_days_readonly_runtime()
 
 install_member_message_display_cleanup()
 install_backend_measurement()
