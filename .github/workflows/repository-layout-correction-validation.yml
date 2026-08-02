@@ -5,8 +5,17 @@ on:
     paths:
       - 'components/repository_layout_correction_runtime.py'
       - 'components/__init__.py'
+      - 'pages/15_Admin_Recipe_Manager.py'
+      - 'pages/16_Admin_Exercise_Manager.py'
+      - 'pages/39_Admin_Supplement_Manager.py'
       - 'tests/test_repository_layout_correction_runtime.py'
+      - 'tests/test_*repository*.py'
+      - 'tests/test_*supplement*.py'
+      - 'tests/test_*exercise*.py'
       - '.github/workflows/repository-layout-correction-validation.yml'
+
+permissions:
+  contents: read
 
 jobs:
   validate:
@@ -20,12 +29,24 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Compile runtime and bootstrap
+      - name: Compile runtime, bootstrap and repository pages
         run: |
           python -m py_compile \
             components/repository_layout_correction_runtime.py \
             components/__init__.py \
+            pages/15_Admin_Recipe_Manager.py \
+            pages/16_Admin_Exercise_Manager.py \
+            pages/39_Admin_Supplement_Manager.py \
             tests/test_repository_layout_correction_runtime.py
 
-      - name: Run repository layout contracts
+      - name: Run focused layout contract
         run: python -m unittest tests.test_repository_layout_correction_runtime -v
+
+      - name: Run repository regression contracts
+        run: python -m unittest discover -s tests -p 'test_*repository*.py' -v
+
+      - name: Run supplement regression contracts
+        run: python -m unittest discover -s tests -p 'test_*supplement*.py' -v
+
+      - name: Run exercise regression contracts
+        run: python -m unittest discover -s tests -p 'test_*exercise*.py' -v
