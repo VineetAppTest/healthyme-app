@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "policy_name": "HealthyMe Jarvis UAT Privacy and Access Policy",
+  "default_environment": "uat",
+  "default_access_mode": "read_only",
+  "default_privacy_mode": "strict",
+  "environments": {
+    "uat": {
+      "read_only": "allowed_on_approved_routes",
+      "mutation": "two_key_approval_and_cleanup_required",
+      "deployment": "jarvis_may_evaluate_but_never_deploy"
+    },
+    "production": {
+      "read_only": "manual_approved_routes_only",
+      "mutation": "blocked",
+      "deployment": "outside_jarvis_workflow"
+    }
+  },
+  "evidence": {
+    "github_artifact_upload": false,
+    "retention": "runner_lifetime_only",
+    "strict_mode_media": "off",
+    "diagnostic_mode_media": "failure_only_ephemeral",
+    "raw_page_content": "prohibited",
+    "network_request_or_response_bodies": "prohibited",
+    "safe_report_fields": [
+      "route_id",
+      "status",
+      "duration_ms",
+      "retry_count",
+      "severity",
+      "checkpoint",
+      "expected_category",
+      "actual_category",
+      "run_id"
+    ]
+  },
+  "test_data": {
+    "classification": "synthetic_uat",
+    "fixture": "fixtures/uat-test-data.json",
+    "allowed_healthyme_ids": [
+      "jarvis_member",
+      "jarvis_admin"
+    ],
+    "mutation_namespace": "jarvis_uat",
+    "cleanup_ledger_required": true,
+    "cleanup_must_pass_before_deploy_eligibility": true
+  },
+  "approval_gates": {
+    "read_only": {
+      "route_manifest_required": true,
+      "owner_checkbox_required": false
+    },
+    "mutation": {
+      "route_manifest_required": true,
+      "repository_variable": "JARVIS_MUTATION_ENABLED",
+      "manual_checkbox_required": true,
+      "cleanup_ledger_required": true
+    },
+    "deployment": {
+      "jarvis_action": "evaluate_only",
+      "owner_approval_required": true,
+      "automatic_deployment": false
+    }
+  }
+}
