@@ -1,0 +1,49 @@
+name: Repository compact UI validation
+
+on:
+  pull_request:
+    paths:
+      - 'components/__init__.py'
+      - 'components/repository_create_form_success.py'
+      - 'pages/15_Admin_Recipe_Manager.py'
+      - 'pages/16_Admin_Exercise_Manager.py'
+      - 'pages/39_Admin_Supplement_Manager.py'
+      - 'tests/test_repository_compact_ui.py'
+      - 'tests/test_repository_create_form_success.py'
+      - '.github/workflows/repository-compact-ui-validation.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile repository pages and form runtime
+        run: |
+          python -m py_compile \
+            components/__init__.py \
+            components/repository_create_form_success.py \
+            pages/15_Admin_Recipe_Manager.py \
+            pages/16_Admin_Exercise_Manager.py \
+            pages/39_Admin_Supplement_Manager.py \
+            tests/test_repository_compact_ui.py \
+            tests/test_repository_create_form_success.py
+
+      - name: Import complete HealthyMe component bootstrap
+        run: python -c "import components; print('HealthyMe component bootstrap imported successfully')"
+
+      - name: Run compact UI and confirmed-save contracts
+        run: |
+          python -m unittest tests.test_repository_compact_ui -v
+          python -m unittest tests.test_repository_create_form_success -v
