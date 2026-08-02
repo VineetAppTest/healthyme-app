@@ -1,16 +1,22 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import {
   loginSubmitAction,
   resolveAppSurface,
   surfaceUrl,
+  type AppSurface,
 } from '../support/app-surface';
 import { JarvisDiagnostics } from '../support/diagnostics';
 
 const email = process.env.JARVIS_MEMBER_EMAIL || '';
 const password = process.env.JARVIS_MEMBER_PASSWORD || '';
 
-async function signInMember(page: import('@playwright/test').Page): Promise<void> {
+function checkpoint(code: string): void {
+  console.log(`JARVIS_CHECKPOINT ${code}`);
+}
+
+async function signInMember(page: Page): Promise<void> {
+  checkpoint('MEMBER_LOGIN_OPEN');
   await page.goto('/Login', { waitUntil: 'domcontentloaded' });
   const loginApp = await resolveAppSurface(page, /HealthyMe|Secure Login/i);
   await expect(loginApp.getByRole('heading', { name: 'Secure Login' })).toBeVisible();
@@ -26,6 +32,26 @@ async function signInMember(page: import('@playwright/test').Page): Promise<void
   await expect(memberApp.getByText('Member Home', { exact: true }).first()).toBeVisible({
     timeout: 120_000,
   });
+  checkpoint('MEMBER_HOME_READY');
+}
+
+async function clickExerciseJournalSelector(surface: AppSurface): Promise<string> {
+  const button = surface.getByRole('button', { name: 'Exercise Journal', exact: true }).first();
+  if (await button.isVisible().catch(() => false)) {
+    await button.click();
+    return 'button';
+  }
+
+  const tab = surface.getByRole('tab', { name: 'Exercise Journal', exact: true }).first();
+  if (await tab.isVisible().catch(() => false)) {
+    await tab.click();
+    return 'tab';
+  }
+
+  const text = surface.getByText('Exercise Journal', { exact: true }).first();
+  await expect(text).toBeVisible({ timeout: 30_000 });
+  await text.click();
+  return 'text';
 }
 
 test('HM-MEMBER-EXERCISE-JOURNAL-001: dropdown rerun stays on Exercise Journal', async ({ page }, testInfo) => {
@@ -38,18 +64,17 @@ test('HM-MEMBER-EXERCISE-JOURNAL-001: dropdown rerun stays on Exercise Journal',
     await signInMember(page);
     diagnostics.mark('T1_MEMBER_AUTHENTICATED');
 
+    checkpoint('DAILY_LOG_OPEN');
     await page.goto('/Daily_Log', { waitUntil: 'domcontentloaded' });
     let dailyLog = await resolveAppSurface(
       page,
       /Food Journal|Exercise Journal|Daily Log/i,
       120_000,
     );
-    const exerciseSelector = dailyLog.getByRole('button', {
-      name: 'Exercise Journal',
-      exact: true,
-    });
-    await expect(exerciseSelector).toBeVisible({ timeout: 60_000 });
-    await exerciseSelector.click();
+    checkpoint('DAILY_LOG_SURFACE_READY');
+
+    const selectorKind = await clickExerciseJournalSelector(dailyLog);
+    checkpoint(`EXERCISE_SELECTOR_CLICKED_${selectorKind.toUpperCase()}`);
 
     dailyLog = await resolveAppSurface(
       page,
@@ -59,9 +84,11 @@ test('HM-MEMBER-EXERCISE-JOURNAL-001: dropdown rerun stays on Exercise Journal',
     await expect(dailyLog.getByText('Exercise Journal Date', { exact: true }).first()).toBeVisible({
       timeout: 90_000,
     });
+    checkpoint('EXERCISE_JOURNAL_READY');
     diagnostics.mark('T2_EXERCISE_JOURNAL_SELECTED', {
       host_url: page.url(),
       app_url: surfaceUrl(dailyLog),
+      selector_kind: selectorKind,
     });
 
     const statusDropdown = dailyLog.getByRole('combobox', {
@@ -69,8 +96,10 @@ test('HM-MEMBER-EXERCISE-JOURNAL-001: dropdown rerun stays on Exercise Journal',
       exact: true,
     }).first();
     await expect(statusDropdown).toBeVisible({ timeout: 60_000 });
+    checkpoint('STATUS_DROPDOWN_READY');
     await statusDropdown.click();
     await dailyLog.getByRole('option', { name: 'Completed', exact: true }).click();
+    checkpoint('STATUS_DROPDOWN_CHANGED');
     diagnostics.mark('T3_EXERCISE_DROPDOWN_CHANGED_WITHOUT_SAVE');
 
     dailyLog = await resolveAppSurface(
@@ -89,6 +118,14 @@ test('HM-MEMBER-EXERCISE-JOURNAL-001: dropdown rerun stays on Exercise Journal',
       .isVisible()
       .catch(() => false);
 
+    checkpoint(
+      exerciseDateVisible
+        ? 'POST_DROPDOWN_EXERCISE_VISIBLE'
+        : 'POST_DROPDOWN_EXERCISE_NOT_VISIBLE',
+    );
+    checkpoint(
+      foodDateVisible ? 'POST_DROPDOWN_FOOD_VISIBLE' : 'POST_DROPDOWN_FOOD_NOT_VISIBLE',
+    );
     diagnostics.mark('T4_POST_DROPDOWN_JOURNAL_STATE', {
       exercise_journal_visible: exerciseDateVisible,
       food_journal_visible: foodDateVisible,
