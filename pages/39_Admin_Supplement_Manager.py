@@ -13,6 +13,14 @@ from components.supplement_repository import (
     supplement_repository_counts,
     update_supplement_repository_item,
 )
+from components.repository_workspace_common import (
+    actor_id as workspace_actor_id,
+    clear_widget_prefix,
+    clear_workspace,
+    inject_workspace_ui,
+    workspace_mode,
+    workspace_panel,
+)
 from components.repository_page_ui import (
     inject_repository_page_ui,
     render_repository_disclosure,
@@ -145,6 +153,183 @@ def _repository_details(row) -> str:
     )
 
 
+
+def _render_supplement_workspace() -> None:
+    mode, item_id = workspace_mode("supplement")
+    rows = list_supplement_repository(active_only=False)
+    row = {}
+    supplement_id = None
+    if mode == "edit":
+        supplement_id = str(item_id or "")
+        row = next((item for item in rows if str(item.get("id")) == supplement_id), None)
+        if row is None:
+            st.error("The selected supplement is no longer available.")
+            if st.button("Back to Supplement Repository"):
+                clear_workspace("supplement")
+                st.switch_page("pages/39_Admin_Supplement_Manager.py")
+            return
+
+    inject_workspace_ui()
+    title = "Edit Supplement" if mode == "edit" else "Add Supplement"
+    subtitle = (
+        f"Update {row.get('supplement_name') or 'the selected supplement'}."
+        if mode == "edit"
+        else "Create reusable supplement defaults for direct member allocation."
+    )
+    topbar(title, subtitle, "Supplement workspace")
+    prefix = f"supplement_workspace_{mode}_{supplement_id or 'new'}"
+    success_key = "hm_supplement_workspace_success"
+    selected_timing, custom_timing = _split_timing(row.get("timing"))
+
+    with workspace_panel():
+        if mode == "add":
+            with st.form("hm_v1023a_add_supplement_form", clear_on_submit=True):
+                st.markdown("#### Basic Details")
+                name_col, dose_col, frequency_col = st.columns(3, gap="small")
+                with name_col:
+                    name = st.text_input("Supplement Name", placeholder="e.g. Magnesium Glycinate")
+                with dose_col:
+                    dosage = st.text_input("Default Dosage", placeholder="e.g. 400 mg")
+                with frequency_col:
+                    frequency = st.selectbox(
+                        "Default Frequency",
+                        FREQUENCY_OPTIONS,
+                        index=0,
+                        key="hm_v1023a_add_frequency",
+                    )
+                st.markdown("#### Timing")
+                timing_col, custom_col = st.columns([1.35, 1], gap="small")
+                with timing_col:
+                    timing_options = st.multiselect("Default Timing", TIMING_OPTIONS, default=[])
+                with custom_col:
+                    custom = st.text_input(
+                        "Additional Timing",
+                        placeholder="Optional custom timing; separate values with commas.",
+                    )
+                st.markdown("#### Instructions")
+                instructions = st.text_area(
+                    "Default Instructions",
+                    placeholder="Reusable guidance that can be adjusted during member allocation.",
+                )
+                action_col, cancel_col, message_col = st.columns([1.05, .8, 2.8], gap="small")
+                with action_col:
+                    submitted = st.form_submit_button("Add to Repository", use_container_width=True)
+                with cancel_col:
+                    cancelled = st.form_submit_button("Cancel", use_container_width=True)
+                with message_col:
+                    message = st.session_state.pop(success_key, None)
+                    if message:
+                        st.success(message)
+
+            if cancelled:
+                clear_workspace("supplement")
+                st.switch_page("pages/39_Admin_Supplement_Manager.py")
+            if submitted:
+                try:
+                    add_supplement_repository_item(
+                        {
+                            "supplement_name": name,
+                            "dosage": dosage,
+                            "frequency": frequency,
+                            "timing": _timing_from_choices(timing_options, custom),
+                            "instructions": instructions,
+                        },
+                        actor_id=workspace_actor_id(),
+                    )
+                    st.session_state[success_key] = "Supplement saved successfully. The form has been cleared."
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+        else:
+            st.markdown("#### Basic Details")
+            name_col, dose_col, frequency_col = st.columns(3, gap="small")
+            with name_col:
+                name = st.text_input(
+                    "Supplement Name",
+                    value=row.get("supplement_name", ""),
+                    key=f"{prefix}_name",
+                )
+            with dose_col:
+                dosage = st.text_input(
+                    "Default Dosage",
+                    value=row.get("dosage", ""),
+                    key=f"{prefix}_dosage",
+                )
+            with frequency_col:
+                frequency_value = row.get("frequency") if row.get("frequency") in FREQUENCY_OPTIONS else FREQUENCY_OPTIONS[0]
+                frequency = st.selectbox(
+                    "Default Frequency",
+                    FREQUENCY_OPTIONS,
+                    index=FREQUENCY_OPTIONS.index(frequency_value),
+                    key=f"{prefix}_frequency",
+                )
+            st.markdown("#### Timing")
+            timing_col, custom_col = st.columns([1.35, 1], gap="small")
+            with timing_col:
+                timing_options = st.multiselect(
+                    "Default Timing",
+                    TIMING_OPTIONS,
+                    default=selected_timing,
+                    key=f"{prefix}_timing",
+                )
+            with custom_col:
+                custom = st.text_input(
+                    "Additional Timing",
+                    value=custom_timing,
+                    key=f"{prefix}_custom_timing",
+                )
+            st.markdown("#### Instructions")
+            instructions = st.text_area(
+                "Default Instructions",
+                value=row.get("instructions", ""),
+                key=f"{prefix}_instructions",
+            )
+            action_col, cancel_col, spacer = st.columns([1.05, .8, 2.8], gap="small")
+            with action_col:
+                submitted = st.button("Save Changes", type="primary", use_container_width=True, key=f"{prefix}_save")
+            with cancel_col:
+                cancelled = st.button("Cancel", use_container_width=True, key=f"{prefix}_cancel")
+
+            if cancelled:
+                clear_workspace("supplement")
+                clear_widget_prefix(prefix)
+                st.switch_page("pages/39_Admin_Supplement_Manager.py")
+            if submitted:
+                try:
+                    update_supplement_repository_item(
+                        supplement_id,
+                        {
+                            "supplement_name": name,
+                            "dosage": dosage,
+                            "frequency": frequency,
+                            "timing": _timing_from_choices(timing_options, custom),
+                            "instructions": instructions,
+                        },
+                        actor_id=workspace_actor_id(),
+                    )
+                    _flash("Supplement updated.")
+                    clear_workspace("supplement")
+                    clear_widget_prefix(prefix)
+                    st.switch_page("pages/39_Admin_Supplement_Manager.py")
+                except Exception as exc:
+                    st.error(str(exc))
+
+    render_page_nav(
+        title,
+        back_page="pages/39_Admin_Supplement_Manager.py",
+        dashboard_page="pages/10_Admin_Dashboard.py",
+        show_evaluation=False,
+        show_dashboard=True,
+        location="bottom",
+    )
+    render_back_to_top()
+
+
+if st.session_state.get("_hm_supplement_workspace_embedded"):
+    _render_supplement_workspace()
+    st.stop()
+
+
 st.markdown(
     """
 <style>
@@ -197,13 +382,10 @@ with repository_tab:
                 key=f"supplement_repo_edit_{supplement_id}",
                 use_container_width=True,
             ):
-                current = st.session_state.get("hm_supplement_repository_edit_id")
-                st.session_state["hm_supplement_repository_edit_id"] = (
-                    None if current == supplement_id else supplement_id
-                )
+                st.session_state["hm_supplement_workspace_mode"] = "edit"
+                st.session_state["hm_supplement_workspace_id"] = supplement_id
                 st.session_state.pop("hm_supplement_repository_delete_id", None)
-                st.session_state["hm_supplement_repository_add_open"] = False
-                st.rerun()
+                st.switch_page("pages/39A_Admin_Supplement_Form.py")
         with delete_col:
             if st.button(
                 "Delete",
@@ -213,104 +395,6 @@ with repository_tab:
                 st.session_state["hm_supplement_repository_delete_id"] = supplement_id
                 st.session_state.pop("hm_supplement_repository_edit_id", None)
                 st.rerun()
-
-        if st.session_state.get("hm_supplement_repository_edit_id") == supplement_id:
-            selected_timing, custom_timing = _split_timing(row.get("timing"))
-            name = row.get("supplement_name") or "Untitled Supplement"
-            if render_repository_disclosure(
-                f"Edit Supplement · {name}",
-                is_open=True,
-                key=f"supplement_repo_edit_disclosure_{supplement_id}",
-            ):
-                st.session_state.pop("hm_supplement_repository_edit_id", None)
-                st.rerun()
-            with repository_form_panel():
-                st.markdown("#### Basic Details")
-                basic_name, basic_dose, basic_frequency = st.columns(3, gap="small")
-                with basic_name:
-                    edit_name = st.text_input(
-                        "Supplement Name",
-                        value=row.get("supplement_name", ""),
-                        key=f"supplement_repo_edit_name_{supplement_id}",
-                    )
-                with basic_dose:
-                    edit_dosage = st.text_input(
-                        "Default Dosage",
-                        value=row.get("dosage", ""),
-                        key=f"supplement_repo_edit_dosage_{supplement_id}",
-                    )
-                with basic_frequency:
-                    frequency_value = (
-                        row.get("frequency")
-                        if row.get("frequency") in FREQUENCY_OPTIONS
-                        else FREQUENCY_OPTIONS[0]
-                    )
-                    edit_frequency = st.selectbox(
-                        "Default Frequency",
-                        FREQUENCY_OPTIONS,
-                        index=FREQUENCY_OPTIONS.index(frequency_value),
-                        key=f"supplement_repo_edit_frequency_{supplement_id}",
-                    )
-                st.markdown("#### Timing")
-                timing_col, custom_col = st.columns([1.35, 1], gap="small")
-                with timing_col:
-                    edit_timing = st.multiselect(
-                        "Default Timing",
-                        TIMING_OPTIONS,
-                        default=selected_timing,
-                        key=f"supplement_repo_edit_timing_{supplement_id}",
-                    )
-                with custom_col:
-                    edit_custom_timing = st.text_input(
-                        "Additional Timing",
-                        value=custom_timing,
-                        key=f"supplement_repo_edit_custom_timing_{supplement_id}",
-                    )
-                st.markdown("#### Instructions")
-                edit_instructions = st.text_area(
-                    "Default Instructions",
-                    value=row.get("instructions", ""),
-                    key=f"supplement_repo_edit_instructions_{supplement_id}",
-                )
-                save_col, cancel_col, spacer = st.columns([1, 1, 3], gap="small")
-                with save_col:
-                    if st.button(
-                        "Save Changes",
-                        key=f"supplement_repo_save_{supplement_id}",
-                        type="primary",
-                        use_container_width=True,
-                    ):
-                        try:
-                            update_supplement_repository_item(
-                                supplement_id,
-                                {
-                                    "supplement_name": edit_name,
-                                    "dosage": edit_dosage,
-                                    "frequency": edit_frequency,
-                                    "timing": _timing_from_choices(
-                                        edit_timing, edit_custom_timing
-                                    ),
-                                    "instructions": edit_instructions,
-                                },
-                                actor_id=_actor_id(),
-                            )
-                            st.session_state.pop(
-                                "hm_supplement_repository_edit_id", None
-                            )
-                            _flash("Supplement updated.")
-                            st.rerun()
-                        except Exception as exc:
-                            st.error(str(exc))
-                with cancel_col:
-                    if st.button(
-                        "Close",
-                        key=f"supplement_repo_cancel_{supplement_id}",
-                        use_container_width=True,
-                    ):
-                        st.session_state.pop(
-                            "hm_supplement_repository_edit_id", None
-                        )
-                        st.rerun()
 
         if st.session_state.get("hm_supplement_repository_delete_id") == supplement_id:
             st.warning(
@@ -384,68 +468,11 @@ with repository_tab:
                         except Exception as exc:
                             st.error(str(exc))
 with add_tab:
-    add_open = bool(st.session_state.get("hm_supplement_repository_add_open", False))
-    if render_repository_disclosure(
-        "Add Supplement",
-        is_open=add_open,
-        key="supplement_repo_add_disclosure",
-    ):
-        st.session_state["hm_supplement_repository_add_open"] = not add_open
-        if not add_open:
-            st.session_state.pop("hm_supplement_repository_edit_id", None)
-            st.session_state.pop("hm_supplement_repository_delete_id", None)
-        st.rerun()
-    if add_open:
-        with repository_form_panel():
-            with st.form("hm_v1023a_add_supplement_form", clear_on_submit=True):
-                st.markdown("#### Basic Details")
-                name = st.text_input(
-                    "Supplement Name", placeholder="e.g. Magnesium Glycinate"
-                )
-                dose_col, frequency_col = st.columns(2)
-                with dose_col:
-                    dosage = st.text_input("Default Dosage", placeholder="e.g. 400 mg")
-                with frequency_col:
-                    frequency = st.selectbox(
-                        "Default Frequency",
-                        FREQUENCY_OPTIONS,
-                        index=0,
-                        key="hm_v1023a_add_frequency",
-                    )
-                st.markdown("#### Timing")
-                timing_options = st.multiselect(
-                    "Default Timing", TIMING_OPTIONS, default=[]
-                )
-                custom_timing = st.text_input(
-                    "Additional Timing",
-                    placeholder="Optional custom timing; separate multiple values with commas.",
-                )
-                st.markdown("#### Instructions")
-                instructions = st.text_area(
-                    "Default Instructions",
-                    placeholder="Reusable guidance that can be adjusted during member allocation.",
-                )
-                submitted = st.form_submit_button(
-                    "Add to Repository", use_container_width=True
-                )
-                if submitted:
-                    try:
-                        add_supplement_repository_item(
-                            {
-                                "supplement_name": name,
-                                "dosage": dosage,
-                                "frequency": frequency,
-                                "timing": _timing_from_choices(
-                                    timing_options, custom_timing
-                                ),
-                                "instructions": instructions,
-                            },
-                            actor_id=_actor_id(),
-                        )
-                        _flash("Supplement added to repository.")
-                        st.rerun()
-                    except Exception as exc:
-                        st.error(str(exc))
+    st.caption("Add and Edit now open in a dedicated workspace so this repository stays fast and easy to scan.")
+    if st.button("Add Supplement", type="primary", use_container_width=False):
+        st.session_state["hm_supplement_workspace_mode"] = "add"
+        st.session_state.pop("hm_supplement_workspace_id", None)
+        st.switch_page("pages/39A_Admin_Supplement_Form.py")
 render_page_nav(
     "Supplement Repository",
     back_page="pages/10_Admin_Dashboard.py",

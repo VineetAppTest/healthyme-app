@@ -10,6 +10,14 @@ from components.exercise_repository import (
 )
 from components.guards import require_admin
 from components.storage_assets import upload_content_image
+from components.repository_workspace_common import (
+    actor_id as workspace_actor_id,
+    clear_widget_prefix,
+    clear_workspace,
+    inject_workspace_ui,
+    workspace_mode,
+    workspace_panel,
+)
 from components.repository_page_ui import (
     inject_repository_page_ui,
     render_repository_disclosure,
@@ -215,6 +223,95 @@ def _exercise_summary(row) -> str:
     return " · ".join(part for part in details if part) or "No summary details recorded."
 
 
+
+def _render_exercise_workspace() -> None:
+    mode, item_id = workspace_mode("exercise")
+    rows = list_exercise_repository(active_only=False)
+    row = {}
+    exercise_id = None
+    if mode == "edit":
+        exercise_id = str(item_id or "")
+        row = next((item for item in rows if str(item.get("id")) == exercise_id), None)
+        if row is None:
+            st.error("The selected exercise is no longer available.")
+            if st.button("Back to Exercise Repository"):
+                clear_workspace("exercise")
+                st.switch_page("pages/16_Admin_Exercise_Manager.py")
+            return
+
+    inject_workspace_ui()
+    title = "Edit Exercise" if mode == "edit" else "Add Exercise"
+    subtitle = (
+        f"Update {_clean(row.get('title')) or 'the selected exercise'}."
+        if mode == "edit"
+        else "Create a reusable exercise definition for member allocation."
+    )
+    topbar(title, subtitle, "Exercise workspace")
+    prefix = f"exercise_workspace_{mode}_{exercise_id or 'new'}"
+    success_key = "hm_exercise_workspace_success"
+
+    with workspace_panel():
+        values = exercise_form(prefix, row)
+        action_col, cancel_col, message_col = st.columns([1.05, .8, 2.8], gap="small")
+        with action_col:
+            submitted = st.button(
+                "Save Changes" if mode == "edit" else "Save Exercise",
+                type="primary",
+                use_container_width=True,
+                key=f"{prefix}_save",
+            )
+        with cancel_col:
+            cancelled = st.button(
+                "Cancel",
+                use_container_width=True,
+                key=f"{prefix}_cancel",
+            )
+        with message_col:
+            message = st.session_state.pop(success_key, None)
+            if message:
+                st.success(message)
+
+        if cancelled:
+            clear_workspace("exercise")
+            clear_widget_prefix(prefix)
+            st.switch_page("pages/16_Admin_Exercise_Manager.py")
+
+        if submitted:
+            try:
+                if mode == "edit" and exercise_id:
+                    update_exercise_repository_item(
+                        exercise_id,
+                        values,
+                        actor_id=workspace_actor_id(),
+                    )
+                    _flash("Exercise updated.")
+                    clear_workspace("exercise")
+                    clear_widget_prefix(prefix)
+                    st.switch_page("pages/16_Admin_Exercise_Manager.py")
+                else:
+                    add_exercise_repository_item(values, actor_id=workspace_actor_id())
+                    clear_widget_prefix(prefix)
+                    st.session_state[success_key] = "Exercise saved successfully. The form has been cleared."
+                    st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
+
+    render_page_nav(
+        title,
+        back_page="pages/16_Admin_Exercise_Manager.py",
+        dashboard_page="pages/10_Admin_Dashboard.py",
+        show_evaluation=False,
+        show_dashboard=True,
+        location="bottom",
+    )
+    render_back_to_top()
+
+
+if st.session_state.get("_hm_exercise_workspace_embedded"):
+    _render_exercise_workspace()
+    st.stop()
+
+
 st.markdown(
     """
 <style>
@@ -270,13 +367,10 @@ with repository_tab:
                 key=f"exercise_repo_edit_{exercise_id}",
                 use_container_width=True,
             ):
-                current = st.session_state.get("hm_exercise_repository_edit_id")
-                st.session_state["hm_exercise_repository_edit_id"] = (
-                    None if current == exercise_id else exercise_id
-                )
+                st.session_state["hm_exercise_workspace_mode"] = "edit"
+                st.session_state["hm_exercise_workspace_id"] = exercise_id
                 st.session_state.pop("hm_exercise_repository_delete_id", None)
-                st.session_state["hm_exercise_repository_add_open"] = False
-                st.rerun()
+                st.switch_page("pages/16A_Admin_Exercise_Form.py")
         with delete_col:
             if st.button(
                 "Delete",
@@ -286,52 +380,6 @@ with repository_tab:
                 st.session_state["hm_exercise_repository_delete_id"] = exercise_id
                 st.session_state.pop("hm_exercise_repository_edit_id", None)
                 st.rerun()
-
-        if st.session_state.get("hm_exercise_repository_edit_id") == exercise_id:
-            title = _clean(row.get("title")) or "Untitled Exercise"
-            if render_repository_disclosure(
-                f"Edit Exercise · {title}",
-                is_open=True,
-                key=f"exercise_repo_edit_disclosure_{exercise_id}",
-            ):
-                st.session_state.pop("hm_exercise_repository_edit_id", None)
-                st.rerun()
-            with repository_form_panel():
-                edited = exercise_form(
-                    f"exercise_repo_edit_form_{exercise_id}",
-                    row,
-                )
-                save_col, cancel_col, spacer = st.columns([1, 1, 3], gap="small")
-                with save_col:
-                    if st.button(
-                        "Save Changes",
-                        key=f"exercise_repo_save_{exercise_id}",
-                        type="primary",
-                        use_container_width=True,
-                    ):
-                        try:
-                            update_exercise_repository_item(
-                                exercise_id,
-                                edited,
-                                actor_id=_actor_id(),
-                            )
-                            st.session_state.pop(
-                                "hm_exercise_repository_edit_id", None
-                            )
-                            _flash("Exercise updated.")
-                            st.rerun()
-                        except Exception as exc:
-                            st.error(str(exc))
-                with cancel_col:
-                    if st.button(
-                        "Close",
-                        key=f"exercise_repo_cancel_{exercise_id}",
-                        use_container_width=True,
-                    ):
-                        st.session_state.pop(
-                            "hm_exercise_repository_edit_id", None
-                        )
-                        st.rerun()
 
         if st.session_state.get("hm_exercise_repository_delete_id") == exercise_id:
             st.warning(
@@ -407,27 +455,11 @@ with repository_tab:
                         except Exception as exc:
                             st.error(str(exc))
 with add_tab:
-    add_open = bool(st.session_state.get("hm_exercise_repository_add_open", False))
-    if render_repository_disclosure(
-        "Add Exercise",
-        is_open=add_open,
-        key="exercise_repo_add_disclosure",
-    ):
-        st.session_state["hm_exercise_repository_add_open"] = not add_open
-        if not add_open:
-            st.session_state.pop("hm_exercise_repository_edit_id", None)
-            st.session_state.pop("hm_exercise_repository_delete_id", None)
-        st.rerun()
-    if add_open:
-        with repository_form_panel():
-            values = exercise_form("new_exercise_repository")
-            if st.button("Save Exercise", type="primary", use_container_width=True):
-                try:
-                    add_exercise_repository_item(values, actor_id=_actor_id())
-                    _flash("Exercise saved.")
-                    st.rerun()
-                except Exception as exc:
-                    st.error(str(exc))
+    st.caption("Add and Edit now open in a dedicated workspace so this repository stays fast and easy to scan.")
+    if st.button("Add Exercise", type="primary", use_container_width=False):
+        st.session_state["hm_exercise_workspace_mode"] = "add"
+        st.session_state.pop("hm_exercise_workspace_id", None)
+        st.switch_page("pages/16A_Admin_Exercise_Form.py")
 render_page_nav(
     "Exercise Repository",
     back_page="pages/10_Admin_Dashboard.py",
