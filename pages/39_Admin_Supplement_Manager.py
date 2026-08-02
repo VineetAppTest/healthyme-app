@@ -340,7 +340,7 @@ with repository_tab:
 
 with add_tab:
     st.subheader("Add Supplement")
-    with st.form("hm_add_supplement_repository_form", clear_on_submit=True):
+    with st.form("hm_v1023a_add_supplement_form", clear_on_submit=True):
         name = st.text_input(
             "Supplement Name", placeholder="e.g. Magnesium Glycinate"
         )
@@ -352,7 +352,7 @@ with add_tab:
                 "Default Frequency",
                 FREQUENCY_OPTIONS,
                 index=0,
-                key="hm_add_supplement_frequency",
+                key="hm_v1023a_add_frequency",
             )
         timing_options = st.multiselect(
             "Default Timing", TIMING_OPTIONS, default=[]
