@@ -1,35 +1,42 @@
-name: Finalize optimized inline repository contract
+name: Optimized inline repository final validation
 
 on:
   pull_request:
-    branches:
-      - main
-    types: [opened, synchronize, reopened]
     paths:
-      - scripts/finalize_optimized_inline_repository_contract.py
+      - pages/15_Admin_Recipe_Manager.py
+      - pages/16_Admin_Exercise_Manager.py
+      - pages/39_Admin_Supplement_Manager.py
+      - tests/test_optimized_inline_repository_forms.py
+      - tests/test_repository_consolidation.py
+      - tests/test_supplement_repository_separation.py
+      - tests/test_repository_compact_ui.py
+      - tests/test_repository_density_and_lazy_add.py
+      - tests/test_exercise_journal_repository_fix_contract.py
       - .github/workflows/finalize-optimized-inline-repository-contract.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply:
-    if: github.actor != 'github-actions[bot]'
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Apply final repository and test corrections
-        run: python scripts/finalize_optimized_inline_repository_contract.py
-      - name: Commit application and test changes
+      - name: Compile repository pages
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pages tests
-          git commit -m "Finalize optimized inline repository contract"
-          git push origin HEAD:${{ github.head_ref }}
+          python -m py_compile \
+            pages/15_Admin_Recipe_Manager.py \
+            pages/16_Admin_Exercise_Manager.py \
+            pages/39_Admin_Supplement_Manager.py \
+            components/repository_page_ui.py
+      - name: Run final inline repository contracts
+        run: |
+          python -m unittest tests.test_optimized_inline_repository_forms -v
+          python -m unittest tests.test_repository_consolidation -v
+          python -m unittest tests.test_supplement_repository_separation -v
+          python -m unittest tests.test_repository_compact_ui -v
+          python -m unittest tests.test_repository_density_and_lazy_add -v
+          python -m unittest tests.test_exercise_journal_repository_fix_contract -v
