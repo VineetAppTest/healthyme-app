@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-import functools
 import pathlib
 import types
 import unittest
@@ -23,7 +22,7 @@ class _Context:
 
 
 class ExerciseLiveRepairTests(unittest.TestCase):
-    def test_bootstrap_retires_second_server_side_daily_log_wrapper(self):
+    def test_bootstrap_keeps_daily_log_exclusive_runtime_outermost(self):
         source = BOOTSTRAP.read_text(encoding="utf-8")
         self.assertNotIn("install_member_daily_log_section_runtime", source)
         self.assertIn("install_admin_exercise_repair_runtime()", source)
@@ -33,99 +32,66 @@ class ExerciseLiveRepairTests(unittest.TestCase):
             source.index("install_member_daily_log_native_tab_persistence()"),
         )
 
-    def test_member_daily_log_bypasses_legacy_wrappers_only_for_journal_tabs(self):
-        calls = []
+    def test_daily_log_executes_only_selected_renderer(self):
+        delegated_tabs = []
+        button_labels = []
+        rendered = []
 
-        def native_tabs(labels, *args, **kwargs):
-            calls.append(("native", tuple(labels)))
+        def current_tabs(labels, *args, **kwargs):
+            delegated_tabs.append(tuple(labels))
             return [contextlib.nullcontext() for _ in labels]
 
-        def legacy_tabs(labels, *args, **kwargs):
-            calls.append(("legacy", tuple(labels)))
-            return native_tabs(labels, *args, **kwargs)
+        def render_food(user_id):
+            rendered.append(("food", user_id))
 
-        legacy_tabs.__wrapped__ = native_tabs
+        def render_exercise(user_id):
+            rendered.append(("exercise", user_id))
 
-        def admin_tabs(labels, *args, **kwargs):
-            calls.append(("admin", tuple(labels)))
-            return legacy_tabs(labels, *args, **kwargs)
-
-        admin_tabs.__wrapped__ = legacy_tabs
-
-        html_calls = []
+        page_globals = {
+            "__file__": "/app/pages/18_Daily_Log.py",
+            "_render_food_journal": render_food,
+            "_render_exercise_journal": render_exercise,
+        }
+        fake_frame = types.SimpleNamespace(f_globals=page_globals)
+        markdown_calls = []
         fake_st = types.SimpleNamespace(
-            tabs=admin_tabs,
-            html=lambda body, **kwargs: html_calls.append((body, kwargs)),
+            tabs=current_tabs,
+            session_state={},
+            markdown=lambda body, **kwargs: markdown_calls.append(str(body)),
+            columns=lambda *args, **kwargs: [_Context(), _Context()],
+            button=lambda label, *args, **kwargs: button_labels.append(str(label)) or False,
         )
+
         original_st = member_runtime.st
-        original_page_check = member_runtime._page_in_stack
+        original_frame = member_runtime._daily_log_frame
         try:
             member_runtime.st = fake_st
-            member_runtime._page_in_stack = lambda: True
+            member_runtime._daily_log_frame = lambda: fake_frame
             member_runtime.install_member_daily_log_native_tab_persistence()
 
-            result = fake_st.tabs(["Food Journal", "Exercise Journal"])
-            self.assertEqual(len(result), 2)
-            self.assertEqual(calls[0][0], "native")
-            self.assertTrue(html_calls)
-            script = html_calls[0][0]
-            self.assertIn("sessionStorage", script)
-            self.assertIn("MutationObserver", script)
-            self.assertIn("Exercise Journal", script)
+            contexts = fake_st.tabs(["Food Journal", "Exercise Journal"])
+            self.assertEqual(len(contexts), 2)
+            self.assertEqual(delegated_tabs, [])
+            self.assertEqual(button_labels, ["Food Journal", "Exercise Journal"])
 
-            calls.clear()
+            page_globals["_render_food_journal"]("member-1")
+            page_globals["_render_exercise_journal"]("member-1")
+            self.assertEqual(rendered, [("food", "member-1")])
+
+            fake_st.session_state[member_runtime._SELECTOR_KEY] = "Exercise Journal"
+            page_globals["_render_food_journal"]("member-1")
+            page_globals["_render_exercise_journal"]("member-1")
+            self.assertEqual(
+                rendered,
+                [("food", "member-1"), ("exercise", "member-1")],
+            )
+
             fake_st.tabs(["One", "Two"])
-            self.assertEqual(calls[0][0], "admin")
+            self.assertEqual(delegated_tabs, [("One", "Two")])
+            self.assertTrue(any("exclusive-selector" in body for body in markdown_calls))
         finally:
             member_runtime.st = original_st
-            member_runtime._page_in_stack = original_page_check
-
-    def test_native_tab_unwrap_stops_at_bound_streamlit_method(self):
-        calls = []
-
-        class LayoutsMixin:
-            def raw_tabs(self, tabs, *args, **kwargs):
-                calls.append(tuple(tabs))
-                return [contextlib.nullcontext() for _ in tabs]
-
-            @functools.wraps(raw_tabs)
-            def tabs(self, tabs, *args, **kwargs):
-                return self.raw_tabs(tabs, *args, **kwargs)
-
-        layout = LayoutsMixin()
-        bound_tabs = layout.tabs
-
-        @functools.wraps(bound_tabs)
-        def healthyme_wrapper(labels, *args, **kwargs):
-            return bound_tabs(labels, *args, **kwargs)
-
-        resolved = member_runtime._unwrap_native_tabs(healthyme_wrapper)
-        self.assertIs(getattr(resolved, "__self__", None), layout)
-        result = resolved(["Food Journal", "Exercise Journal"])
-        self.assertEqual(len(result), 2)
-        self.assertEqual(calls, [("Food Journal", "Exercise Journal")])
-
-    def test_bound_main_container_tabs_are_preferred(self):
-        calls = []
-
-        class MainContainer:
-            def tabs(self, labels, *args, **kwargs):
-                calls.append(tuple(labels))
-                return [contextlib.nullcontext() for _ in labels]
-
-        def wrapped_tabs(labels, *args, **kwargs):
-            raise AssertionError("wrapper chain should not be used for Daily Log native tabs")
-
-        fake_st = types.SimpleNamespace(_main=MainContainer())
-        original_st = member_runtime.st
-        try:
-            member_runtime.st = fake_st
-            resolved = member_runtime._bound_native_tabs(wrapped_tabs)
-            result = resolved(["Food Journal", "Exercise Journal"])
-            self.assertEqual(len(result), 2)
-            self.assertEqual(calls, [("Food Journal", "Exercise Journal")])
-        finally:
-            member_runtime.st = original_st
+            member_runtime._daily_log_frame = original_frame
 
     def test_admin_success_survives_rerun_and_blank_field_is_not_rendered(self):
         rendered_success = []
