@@ -463,16 +463,18 @@ with repository_tab:
                         )
                         st.rerun()
 
-        inactive_open = bool(st.session_state.get("hm_recipe_repository_inactive_open", False))
-    if render_repository_disclosure(
-        f"Inactive Repository Items ({len(inactive_df)})",
-        is_open=inactive_open,
-        key="recipe_repo_inactive_disclosure",
-    ):
-        st.session_state["hm_recipe_repository_inactive_open"] = not inactive_open
-        st.rerun()
-    if inactive_open:
-        with repository_inactive_panel():
+        inactive_open = bool(
+            st.session_state.get("hm_recipe_repository_inactive_open", False)
+        )
+        if render_repository_disclosure(
+            f"Inactive Repository Items ({len(inactive_df)})",
+            is_open=inactive_open,
+            key="recipe_repo_inactive_disclosure",
+        ):
+            st.session_state["hm_recipe_repository_inactive_open"] = not inactive_open
+            st.rerun()
+        if inactive_open:
+            with repository_inactive_panel():
                 if inactive_df.empty:
                     st.caption("No inactive repository items.")
                 for index, row in inactive_df.iterrows():
@@ -491,6 +493,7 @@ with repository_tab:
                             save(df)
                             _flash("Recipe reactivated.")
                             st.rerun()
+
 with add_tab:
     with repository_form_panel():
         st.subheader("Add Recipe")
