@@ -2,17 +2,30 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { join, relative } from 'node:path';
 
 const root = 'artifacts';
+const strictPrivacy = (process.env.JARVIS_PRIVACY_MODE || 'strict') === 'strict';
 const findings = [];
 const checkedFiles = [];
 
 const sensitiveAssignment =
-  /(access_token|authorization_id|code|code_challenge|id_token|nonce|password|payload|provider|refresh_token|state|token)=([^&\s"'<>]+)/gi;
+  /(access_token|authorization_id|code|code_challenge|email|id_token|nonce|password|payload|provider|refresh_token|state|token)=([^&\s"'<>]+)/gi;
 const jwtPattern = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g;
 const bearerPattern = /Bearer\s+(?!<redacted>)[A-Za-z0-9._~-]+/gi;
+const emailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+const uuidPattern = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
+const phonePattern = /(?:\+\d{8,15}|\b\d{3}[-\s]\d{3}[-\s]\d{4}\b)/g;
 
 function acceptableValue(value) {
   const decoded = decodeURIComponent(value).toLowerCase();
   return decoded.includes('<redacted>') || decoded.includes('redacted-jwt');
+}
+
+function addPatternFinding(path, type, pattern, text) {
+  const matches = text.match(pattern) || [];
+  const unredacted = matches.filter((match) => !match.toLowerCase().includes('redacted'));
+  if (unredacted.length > 0) {
+    findings.push({ file: relative(root, path), type, count: unredacted.length });
+  }
+  pattern.lastIndex = 0;
 }
 
 function inspectText(path, text) {
@@ -22,39 +35,17 @@ function inspectText(path, text) {
     if (!acceptableValue(match[2])) {
       findings.push({
         file: relative(root, path),
-        type: 'unredacted_sensitive_query_value',
+        type: 'unredacted_sensitive_assignment',
         key: match[1],
       });
     }
   }
 
-  if (jwtPattern.test(text)) {
-    findings.push({ file: relative(root, path), type: 'jwt_like_value' });
-  }
-  jwtPattern.lastIndex = 0;
-
-  if (bearerPattern.test(text)) {
-    findings.push({ file: relative(root, path), type: 'bearer_value' });
-  }
-  bearerPattern.lastIndex = 0;
-}
-
-function inspectJsonReport(path) {
-  const report = JSON.parse(readFileSync(path, 'utf8'));
-  for (const suite of report.suites || []) {
-    for (const spec of suite.specs || []) {
-      for (const test of spec.tests || []) {
-        for (const result of test.results || []) {
-          for (const attachment of result.attachments || []) {
-            if (!attachment.body) continue;
-            if (!String(attachment.contentType || '').match(/json|text/)) continue;
-            const decoded = Buffer.from(attachment.body, 'base64').toString('utf8');
-            inspectText(`${path}#${spec.title}#${attachment.name}`, decoded);
-          }
-        }
-      }
-    }
-  }
+  addPatternFinding(path, 'jwt_like_value', jwtPattern, text);
+  addPatternFinding(path, 'bearer_value', bearerPattern, text);
+  addPatternFinding(path, 'email_value', emailPattern, text);
+  addPatternFinding(path, 'uuid_identifier', uuidPattern, text);
+  addPatternFinding(path, 'phone_like_value', phonePattern, text);
 }
 
 function walk(path) {
@@ -62,17 +53,16 @@ function walk(path) {
     const full = join(path, entry);
     const stats = statSync(full);
     if (stats.isDirectory()) {
-      if (entry === 'html-report') continue;
       walk(full);
       continue;
     }
 
-    if (full.endsWith('jarvis-results.json')) {
-      inspectJsonReport(full);
-    } else if (/\.(json|md|txt)$/i.test(full)) {
+    if (/\.(json|md|txt)$/i.test(full)) {
       inspectText(full, readFileSync(full, 'utf8'));
     } else if (/\.(zip|trace)$/i.test(full)) {
       findings.push({ file: relative(root, full), type: 'unsanitized_trace_archive' });
+    } else if (strictPrivacy && /\.(png|jpe?g|webm|mp4)$/i.test(full)) {
+      findings.push({ file: relative(root, full), type: 'media_created_in_strict_privacy_mode' });
     }
   }
 }
@@ -83,6 +73,7 @@ if (existsSync(root)) walk(root);
 const report = {
   jarvis_run_id: process.env.JARVIS_RUN_ID || 'local',
   checked_at: new Date().toISOString(),
+  privacy_mode: process.env.JARVIS_PRIVACY_MODE || 'strict',
   checked_file_count: checkedFiles.length,
   findings,
   status: findings.length === 0 ? 'pass' : 'fail',
