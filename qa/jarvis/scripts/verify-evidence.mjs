@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const root = 'artifacts';
@@ -68,12 +68,22 @@ function walk(path) {
 }
 
 mkdirSync(root, { recursive: true });
+
+// Playwright can automatically create a DOM-rich error-context.md when a test fails.
+// In strict privacy mode that file is never evidence: remove the whole per-test output
+// directory before inspection so names, emails or health-screen text cannot survive the run.
+const automaticTestOutput = join(root, 'test-results');
+if (strictPrivacy && existsSync(automaticTestOutput)) {
+  rmSync(automaticTestOutput, { recursive: true, force: true });
+}
+
 if (existsSync(root)) walk(root);
 
 const report = {
   jarvis_run_id: process.env.JARVIS_RUN_ID || 'local',
   checked_at: new Date().toISOString(),
   privacy_mode: process.env.JARVIS_PRIVACY_MODE || 'strict',
+  automatic_failure_context_deleted: strictPrivacy,
   checked_file_count: checkedFiles.length,
   findings,
   status: findings.length === 0 ? 'pass' : 'fail',
