@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# One-time transformer. This comment intentionally retriggers the branch workflow.
+
 import subprocess
 import textwrap
 from pathlib import Path
@@ -78,7 +80,6 @@ def replace_tabs_with_strict_lazy_inline(path: Path, item_name: str) -> None:
     )
     source = source[:start] + replacement + source[nav_start:]
 
-    # The optimized inline architecture must not retain any dedicated-workspace route.
     forbidden = (
         "repository_workspace_common",
         f"pages/{path.stem.split('_Admin_')[0]}A_",
