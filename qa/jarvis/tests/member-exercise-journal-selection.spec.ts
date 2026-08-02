@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Frame, type Page } from '@playwright/test';
 
 import {
   loginSubmitAction,
@@ -35,6 +35,51 @@ async function signInMember(page: Page): Promise<void> {
   checkpoint('MEMBER_HOME_READY');
 }
 
+async function isDailyLogSurface(surface: Page | Frame): Promise<boolean> {
+  const foodDate = surface.getByText('Food Journal Date', { exact: true }).first();
+  const exerciseDate = surface.getByText('Exercise Journal Date', { exact: true }).first();
+  const foodButton = surface.getByRole('button', { name: 'Food Journal', exact: true }).first();
+  const exerciseButton = surface
+    .getByRole('button', { name: 'Exercise Journal', exact: true })
+    .first();
+
+  return (
+    (await foodDate.isVisible().catch(() => false)) ||
+    (await exerciseDate.isVisible().catch(() => false)) ||
+    (await foodButton.isVisible().catch(() => false)) ||
+    (await exerciseButton.isVisible().catch(() => false))
+  );
+}
+
+async function resolveDailyLogSurface(page: Page, timeoutMs = 120_000): Promise<AppSurface> {
+  const deadline = Date.now() + timeoutMs;
+  let reloaded = false;
+
+  while (Date.now() < deadline) {
+    const surfaces: Array<Page | Frame> = [
+      page,
+      ...page
+        .frames()
+        .filter(
+          (frame) =>
+            frame !== page.mainFrame() && !frame.isDetached() && frame.url() !== 'about:blank',
+        ),
+    ];
+
+    for (const surface of surfaces) {
+      if (await isDailyLogSurface(surface)) return surface;
+    }
+
+    if (!reloaded && Date.now() + 45_000 >= deadline) {
+      reloaded = true;
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 }).catch(() => undefined);
+    }
+    await page.waitForTimeout(500);
+  }
+
+  throw new Error('Daily Log application frame did not expose its journal controls.');
+}
+
 async function clickExerciseJournalSelector(surface: AppSurface): Promise<string> {
   const button = surface.getByRole('button', { name: 'Exercise Journal', exact: true }).first();
   if (await button.isVisible().catch(() => false)) {
@@ -48,10 +93,13 @@ async function clickExerciseJournalSelector(surface: AppSurface): Promise<string
     return 'tab';
   }
 
-  const text = surface.getByText('Exercise Journal', { exact: true }).first();
-  await expect(text).toBeVisible({ timeout: 30_000 });
-  await text.click();
-  return 'text';
+  const rawButton = surface.locator('button').filter({ hasText: 'Exercise Journal' }).first();
+  if (await rawButton.isVisible().catch(() => false)) {
+    await rawButton.click();
+    return 'raw_button';
+  }
+
+  throw new Error('Exercise Journal selector is not exposed as an interactive control.');
 }
 
 test('HM-MEMBER-EXERCISE-JOURNAL-001: dropdown rerun stays on Exercise Journal', async ({ page }, testInfo) => {
@@ -66,21 +114,13 @@ test('HM-MEMBER-EXERCISE-JOURNAL-001: dropdown rerun stays on Exercise Journal',
 
     checkpoint('DAILY_LOG_OPEN');
     await page.goto('/Daily_Log', { waitUntil: 'domcontentloaded' });
-    let dailyLog = await resolveAppSurface(
-      page,
-      /Food Journal|Exercise Journal|Daily Log/i,
-      120_000,
-    );
-    checkpoint('DAILY_LOG_SURFACE_READY');
+    let dailyLog = await resolveDailyLogSurface(page, 120_000);
+    checkpoint('DAILY_LOG_APP_FRAME_READY');
 
     const selectorKind = await clickExerciseJournalSelector(dailyLog);
     checkpoint(`EXERCISE_SELECTOR_CLICKED_${selectorKind.toUpperCase()}`);
 
-    dailyLog = await resolveAppSurface(
-      page,
-      /Exercise Journal Date|Select the date for this exercise journal entry/i,
-      120_000,
-    );
+    dailyLog = await resolveDailyLogSurface(page, 120_000);
     await expect(dailyLog.getByText('Exercise Journal Date', { exact: true }).first()).toBeVisible({
       timeout: 90_000,
     });
@@ -102,11 +142,7 @@ test('HM-MEMBER-EXERCISE-JOURNAL-001: dropdown rerun stays on Exercise Journal',
     checkpoint('STATUS_DROPDOWN_CHANGED');
     diagnostics.mark('T3_EXERCISE_DROPDOWN_CHANGED_WITHOUT_SAVE');
 
-    dailyLog = await resolveAppSurface(
-      page,
-      /Exercise Journal Date|Food Journal Date|Food Journal|Exercise Journal/i,
-      120_000,
-    );
+    dailyLog = await resolveDailyLogSurface(page, 120_000);
     const exerciseDateVisible = await dailyLog
       .getByText('Exercise Journal Date', { exact: true })
       .first()
