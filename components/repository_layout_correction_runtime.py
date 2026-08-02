@@ -7,7 +7,7 @@ from typing import Any
 import streamlit as st
 
 
-_MARKER = "_hm_repository_layout_correction_v1"
+_MARKER = "_hm_repository_layout_correction_v2"
 _REPOSITORY_PAGES = {
     "pages/15_Admin_Recipe_Manager.py": "recipe",
     "pages/16_Admin_Exercise_Manager.py": "exercise",
@@ -70,23 +70,36 @@ div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) div[data-testid="stButton"
   margin:0!important;
 }
 
-/* Retain the accepted custom + / minus control, but remove Streamlit's native marker. */
+/* Keep one custom inline + / minus marker and suppress every native indicator. */
 div[data-testid="stExpander"]{width:100%!important;max-width:100%!important;}
 div[data-testid="stExpander"] summary{
   list-style:none!important;
   width:100%!important;
   max-width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  font-size:0!important;
 }
 div[data-testid="stExpander"] summary::-webkit-details-marker{display:none!important;}
 div[data-testid="stExpander"] summary::marker{content:""!important;display:none!important;}
+div[data-testid="stExpander"] summary:before{
+  font-size:.82rem!important;
+  line-height:1!important;
+}
 div[data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"],
 div[data-testid="stExpander"] summary [data-testid*="ExpanderIcon"],
-div[data-testid="stExpander"] summary>svg{
+div[data-testid="stExpander"] summary [aria-hidden="true"],
+div[data-testid="stExpander"] summary [class*="material-symbols"],
+div[data-testid="stExpander"] summary>svg,
+div[data-testid="stExpander"] summary svg{
   display:none!important;
   width:0!important;
   min-width:0!important;
 }
 div[data-testid="stExpander"] summary p{
+  display:block!important;
+  font-size:.82rem!important;
+  line-height:1.25!important;
   white-space:nowrap!important;
   overflow:visible!important;
   text-overflow:clip!important;
@@ -95,22 +108,70 @@ div[data-testid="stExpander"] summary p{
   flex:1 1 auto!important;
 }
 
-/* Apply the same compact structure to Add and Edit content. */
-div[data-baseweb="tab-panel"] div[data-testid="stVerticalBlock"]{gap:.38rem!important;}
-div[data-baseweb="tab-panel"] h3{font-size:1rem!important;margin:.25rem 0 .35rem!important;}
-div[data-baseweb="tab-panel"] h4{
-  color:#064E3B!important;
-  font-size:.82rem!important;
+/* Use the same moderately compact, clearly grouped treatment for Add and Edit. */
+div[data-baseweb="tab-panel"] div[data-testid="stVerticalBlock"],
+div[data-testid="stExpander"] details[open] div[data-testid="stVerticalBlock"]{
+  gap:.30rem!important;
+}
+div[data-baseweb="tab-panel"] h3,
+div[data-testid="stExpander"] h3{
+  font-size:.96rem!important;
   line-height:1.2!important;
-  margin:.34rem 0 .08rem!important;
+  margin:.22rem 0 .30rem!important;
 }
-div[data-baseweb="tab-panel"] textarea{min-height:64px!important;}
+div[data-baseweb="tab-panel"] h4,
+div[data-testid="stExpander"] h4{
+  color:#064E3B!important;
+  background:#F8F3E7!important;
+  border-left:3px solid #E3C98E!important;
+  border-radius:6px!important;
+  font-size:.80rem!important;
+  line-height:1.2!important;
+  margin:.32rem 0 .10rem!important;
+  padding:.20rem .38rem!important;
+}
+div[data-baseweb="tab-panel"] label p,
+div[data-testid="stExpander"] label p{
+  font-size:.72rem!important;
+  line-height:1.15!important;
+  margin-bottom:.08rem!important;
+}
+div[data-baseweb="tab-panel"] input,
+div[data-testid="stExpander"] input,
+div[data-baseweb="tab-panel"] div[data-baseweb="select"]>div,
+div[data-testid="stExpander"] div[data-baseweb="select"]>div{
+  min-height:2.10rem!important;
+}
+div[data-baseweb="tab-panel"] textarea,
+div[data-testid="stExpander"] textarea{
+  min-height:58px!important;
+}
 div[data-baseweb="tab-panel"] div[data-testid="stForm"]{
-  padding:.65rem .75rem!important;
-  border-radius:14px!important;
+  padding:.58rem .68rem!important;
+  border-radius:12px!important;
 }
-div[data-baseweb="tab-panel"] div[data-testid="stFileUploader"]{
-  margin-top:.05rem!important;
+div[data-testid="stExpander"] details[open]>div{
+  padding:.38rem .68rem .62rem!important;
+}
+div[data-baseweb="tab-panel"] div[data-testid="stFileUploader"],
+div[data-testid="stExpander"] div[data-testid="stFileUploader"]{
+  margin-top:0!important;
+}
+div[data-baseweb="tab-panel"] div[data-testid="stButton"]>button,
+div[data-testid="stExpander"] div[data-testid="stButton"]>button,
+div[data-baseweb="tab-panel"] div[data-testid="stFormSubmitButton"]>button,
+div[data-testid="stExpander"] div[data-testid="stFormSubmitButton"]>button{
+  min-height:1.95rem!important;
+  padding:.20rem .52rem!important;
+}
+div[data-baseweb="tab-panel"] button p,
+div[data-testid="stExpander"] button p{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  font-size:.74rem!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
 }
 
 @media(max-width:760px){
