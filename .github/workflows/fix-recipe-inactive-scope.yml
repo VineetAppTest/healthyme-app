@@ -1,0 +1,38 @@
+name: Fix recipe inactive scope
+
+on:
+  push:
+    branches:
+      - fix/repository-direct-disclosure-and-form-layout
+    paths:
+      - 'scripts/fix_recipe_inactive_scope.py'
+      - '.github/workflows/fix-recipe-inactive-scope.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/repository-direct-disclosure-and-form-layout
+          fetch-depth: 0
+
+      - name: Correct recipe inactive scope
+        run: python scripts/fix_recipe_inactive_scope.py
+
+      - name: Remove one-time correction files
+        run: |
+          rm scripts/fix_recipe_inactive_scope.py
+          rm .github/workflows/fix-recipe-inactive-scope.yml
+
+      - name: Commit correction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pages/15_Admin_Recipe_Manager.py scripts/fix_recipe_inactive_scope.py .github/workflows/fix-recipe-inactive-scope.yml
+          git commit -m "Correct recipe inactive disclosure scope"
+          git push origin HEAD:fix/repository-direct-disclosure-and-form-layout
