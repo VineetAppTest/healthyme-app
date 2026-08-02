@@ -49,19 +49,13 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
         self.assertNotIn("hm-sup-card", text)
         self.assertIn("hm-sup-row", text)
         self.assertIn("hm-sup-meta", text)
-        self.assertIn('st.markdown("### Current Repository")', text)
-        self.assertIn('"Add Supplement"', text)
-        self.assertIn("hm_supplement_repository_add_open", text)
-        self.assertIn("if add_open:", text)
-        self.assertIn("if not add_open:", text)
-        self.assertNotIn('st.tabs(["Current Repository"', text)
-        self.assertNotIn("with repository_tab:", text)
-        self.assertNotIn("with add_tab:", text)
+        self.assertIn(
+            'repository_tab, add_tab = st.tabs(["Current Repository", "Add Supplement"])',
+            text,
+        )
+        self.assertLess(text.index("with repository_tab:"), text.index("with add_tab:"))
         self.assertIn("Inactive Repository Items", text)
-        self.assertNotIn("st.expander", text)
-        self.assertIn("render_repository_disclosure", text)
-        self.assertIn("repository_form_panel()", text)
-        self.assertIn("repository_inactive_panel()", text)
+        self.assertIn("with st.expander", text)
 
     def test_admin_notes_are_not_exposed_in_repository_forms(self):
         text = _text(SUPPLEMENT_PAGE)
