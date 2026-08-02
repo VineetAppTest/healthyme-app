@@ -7,9 +7,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SUPPLEMENT_PAGE = ROOT / "pages" / "39_Admin_Supplement_Manager.py"
+SUPPLEMENT_FORM_PAGE = ROOT / "pages" / "39A_Admin_Supplement_Form.py"
 PROFILE_PAGE = ROOT / "pages" / "38_Admin_Recommendation_Profile_Builder.py"
 REPOSITORY = ROOT / "components" / "supplement_repository.py"
 SOURCE_BRIDGE = ROOT / "components" / "supplement_repository_source.py"
+WORKSPACE_HELPER = ROOT / "components" / "repository_workspace_common.py"
 
 
 def _text(path: Path) -> str:
@@ -18,7 +20,14 @@ def _text(path: Path) -> str:
 
 class SupplementRepositorySeparationTests(unittest.TestCase):
     def test_changed_python_files_compile(self):
-        for path in [SUPPLEMENT_PAGE, PROFILE_PAGE, REPOSITORY, SOURCE_BRIDGE]:
+        for path in [
+            SUPPLEMENT_PAGE,
+            SUPPLEMENT_FORM_PAGE,
+            PROFILE_PAGE,
+            REPOSITORY,
+            SOURCE_BRIDGE,
+            WORKSPACE_HELPER,
+        ]:
             ast.parse(_text(path), filename=str(path))
 
     def test_supplement_manager_is_repository_only(self):
@@ -57,8 +66,19 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
         self.assertIn("Inactive Repository Items", text)
         self.assertNotIn("st.expander", text)
         self.assertIn("render_repository_disclosure", text)
-        self.assertIn("repository_form_panel()", text)
         self.assertIn("repository_inactive_panel()", text)
+
+    def test_add_and_edit_use_dedicated_workspace(self):
+        text = _text(SUPPLEMENT_PAGE)
+        form_page = _text(SUPPLEMENT_FORM_PAGE)
+        self.assertIn('st.switch_page("pages/39A_Admin_Supplement_Form.py")', text)
+        self.assertIn('st.session_state["hm_supplement_workspace_mode"] = "add"', text)
+        self.assertIn('st.session_state["hm_supplement_workspace_mode"] = "edit"', text)
+        self.assertIn('if st.session_state.get("_hm_supplement_workspace_embedded"):', text)
+        self.assertIn("workspace_panel()", text)
+        self.assertIn('with st.form("hm_v1023a_add_supplement_form", clear_on_submit=True)', text)
+        self.assertIn('st.session_state["_hm_supplement_workspace_embedded"] = True', form_page)
+        self.assertIn("39_Admin_Supplement_Manager.py", form_page)
 
     def test_admin_notes_are_not_exposed_in_repository_forms(self):
         text = _text(SUPPLEMENT_PAGE)
