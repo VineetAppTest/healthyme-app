@@ -3,6 +3,8 @@ from __future__ import annotations
 import ast
 import importlib.util
 import pathlib
+import sys
+import types
 import unittest
 
 
@@ -84,22 +86,6 @@ class GlobalHeaderTopSpacingTests(unittest.TestCase):
         self.assertLess(css_call, guard_call)
 
     def test_every_page_config_call_renders_static_and_reconnect_guards(self) -> None:
-        import streamlit as st
-
-        spec = importlib.util.spec_from_file_location(
-            "hm_toolbar_cleanup_runtime_contract",
-            TOOLBAR,
-        )
-        module = importlib.util.module_from_spec(spec)
-        assert spec.loader is not None
-        spec.loader.exec_module(module)
-
-        base_attr = module._BASE_CONFIG_ATTR
-        had_base = hasattr(st, base_attr)
-        previous_base = getattr(st, base_attr, None)
-        previous_config = st.set_page_config
-        previous_markdown = st.markdown
-        previous_html = st.html
         calls = []
 
         def fake_config(*args, **kwargs):
@@ -114,16 +100,31 @@ class GlobalHeaderTopSpacingTests(unittest.TestCase):
             calls.append(("html", body, kwargs))
             return "html"
 
+        fake_streamlit = types.ModuleType("streamlit")
+        fake_streamlit.set_page_config = fake_config
+        fake_streamlit.markdown = fake_markdown
+        fake_streamlit.html = fake_html
+
+        previous_streamlit = sys.modules.get("streamlit")
+        sys.modules["streamlit"] = fake_streamlit
         try:
-            st.set_page_config = fake_config
-            st.markdown = fake_markdown
-            st.html = fake_html
-            if hasattr(st, base_attr):
-                delattr(st, base_attr)
+            spec = importlib.util.spec_from_file_location(
+                "hm_toolbar_cleanup_runtime_contract",
+                TOOLBAR,
+            )
+            module = importlib.util.module_from_spec(spec)
+            assert spec.loader is not None
+            spec.loader.exec_module(module)
 
             module.install_streamlit_toolbar_cleanup()
-            self.assertEqual(st.set_page_config(page_title="HealthyMe"), "configured")
-            self.assertEqual(st.set_page_config(page_title="HealthyMe again"), "configured")
+            self.assertEqual(
+                fake_streamlit.set_page_config(page_title="HealthyMe"),
+                "configured",
+            )
+            self.assertEqual(
+                fake_streamlit.set_page_config(page_title="HealthyMe again"),
+                "configured",
+            )
 
             static_calls = [
                 call for call in calls
@@ -138,13 +139,10 @@ class GlobalHeaderTopSpacingTests(unittest.TestCase):
             for call in reconnect_calls:
                 self.assertTrue(call[2].get("unsafe_allow_javascript"))
         finally:
-            st.set_page_config = previous_config
-            st.markdown = previous_markdown
-            st.html = previous_html
-            if had_base:
-                setattr(st, base_attr, previous_base)
-            elif hasattr(st, base_attr):
-                delattr(st, base_attr)
+            if previous_streamlit is None:
+                sys.modules.pop("streamlit", None)
+            else:
+                sys.modules["streamlit"] = previous_streamlit
 
     def test_auth_and_navigation_are_not_modified(self) -> None:
         forbidden = (
