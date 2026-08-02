@@ -47,6 +47,9 @@ from components.admin_content_form_cleanup import (
 from components.notes_supplement_form_hygiene import (
     install_notes_supplement_form_hygiene,
 )
+from components.repository_create_form_success import (
+    install_repository_create_form_success,
+)
 from components.auth_provisioning_form_hygiene import (
     install_auth_provisioning_form_hygiene,
 )
@@ -64,6 +67,9 @@ from components.daily_log_widget_route_preservation import (
 )
 from components.member_home_global_header_runtime import (
     install_member_home_global_header_runtime,
+)
+from components.repository_layout_correction_runtime import (
+    install_repository_layout_correction_runtime,
 )
 
 
@@ -90,6 +96,9 @@ install_performance_measurement_gate()
 install_member_post_optimization_cleanup()
 install_admin_content_form_cleanup()
 install_notes_supplement_form_hygiene()
+# Repository create forms clear only after a confirmed save and surface the success
+# message next to the save action. Failed saves retain the entered information.
+install_repository_create_form_success()
 install_auth_provisioning_form_hygiene()
 install_recommendations_share_form_hygiene()
 install_member_saved_days_home_cleanup()
@@ -112,3 +121,7 @@ install_daily_log_widget_route_preservation()
 # Member Home has a page-specific profile control, but its row must follow the same
 # compact height and hero spacing as the global header used elsewhere.
 install_member_home_global_header_runtime()
+
+# Repository presentation is page-scoped and outermost so it can override legacy
+# card widths, native disclosure markers and form spacing without changing writes.
+install_repository_layout_correction_runtime()

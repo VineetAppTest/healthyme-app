@@ -143,9 +143,19 @@ st.markdown(
 <style>
 .block-container{padding-top:.45rem!important;max-width:1120px!important;}
 .hero-shell{margin:.45rem 0 .75rem!important;padding:1rem 1.15rem!important;}
-.hm-sup-row{border:1px solid #E3C98E;background:#FFFDF8;border-radius:14px;padding:.72rem .82rem;margin:.42rem 0;}
-.hm-sup-name{font-weight:900;color:#064E3B;font-size:.95rem;}
-.hm-sup-meta{display:flex;flex-wrap:wrap;gap:.12rem .7rem;color:#64748B;font-size:.76rem;margin-top:.15rem;}
+.hm-sup-row{border:1px solid #E3C98E;background:#FFFDF8;border-radius:14px;padding:.66rem .78rem;margin:.34rem 0;}
+.hm-sup-name{font-weight:900;color:#064E3B;font-size:.92rem;line-height:1.2;}
+.hm-sup-meta{display:flex;flex-wrap:wrap;gap:.1rem .65rem;color:#64748B;font-size:.74rem;margin-top:.12rem;line-height:1.3;}
+div[data-testid="stButton"]>button{min-height:2rem!important;padding:.24rem .58rem!important;border-radius:999px!important;font-size:.76rem!important;font-weight:850!important;white-space:nowrap!important;}
+div[data-testid="stExpander"] details{border:1px solid #E3C98E!important;border-radius:14px!important;background:#FFFDF8!important;overflow:hidden!important;}
+div[data-testid="stExpander"] summary{padding:.48rem .68rem!important;min-height:2.15rem!important;color:#064E3B!important;font-size:.82rem!important;font-weight:900!important;align-items:center!important;}
+div[data-testid="stExpander"] summary svg{display:none!important;}
+div[data-testid="stExpander"] summary:before{content:"+";display:inline-flex;align-items:center;justify-content:center;width:1.25rem;height:1.25rem;border-radius:999px;background:#DDF7F3;color:#006D6F;font-weight:950;margin-right:.42rem;flex:0 0 auto;}
+div[data-testid="stExpander"] details[open] summary:before{content:"−";}
+div[data-testid="stExpander"] summary p{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+div[data-testid="stExpander"] details[open]>div{padding:.25rem .7rem .72rem!important;}
+div[data-testid="stExpander"] div[data-testid="stVerticalBlock"]{gap:.38rem!important;}
+div[data-testid="stExpander"] textarea{min-height:68px!important;}
 </style>
 """,
     unsafe_allow_html=True,
@@ -171,15 +181,19 @@ with repository_tab:
         st.info("No active supplements are available.")
     for row in active_rows:
         supplement_id = str(row.get("id"))
-        st.markdown(_repository_details(row), unsafe_allow_html=True)
-        edit_col, delete_col = st.columns(2)
+        details_col, edit_col, delete_col = st.columns([5.8, 0.72, 0.82], gap="small")
+        with details_col:
+            st.markdown(_repository_details(row), unsafe_allow_html=True)
         with edit_col:
             if st.button(
                 "Edit",
                 key=f"supplement_repo_edit_{supplement_id}",
                 use_container_width=True,
             ):
-                st.session_state["hm_supplement_repository_edit_id"] = supplement_id
+                current = st.session_state.get("hm_supplement_repository_edit_id")
+                st.session_state["hm_supplement_repository_edit_id"] = (
+                    None if current == supplement_id else supplement_id
+                )
                 st.session_state.pop("hm_supplement_repository_delete_id", None)
                 st.rerun()
         with delete_col:
@@ -194,20 +208,22 @@ with repository_tab:
 
         if st.session_state.get("hm_supplement_repository_edit_id") == supplement_id:
             selected_timing, custom_timing = _split_timing(row.get("timing"))
-            with st.expander("Edit supplement", expanded=True):
-                edit_name = st.text_input(
-                    "Supplement Name",
-                    value=row.get("supplement_name", ""),
-                    key=f"supplement_repo_edit_name_{supplement_id}",
-                )
-                dose_col, frequency_col = st.columns(2)
-                with dose_col:
+            name = row.get("supplement_name") or "Untitled Supplement"
+            with st.expander(f"Edit Supplement · {name}", expanded=True):
+                basic_name, basic_dose, basic_frequency = st.columns(3, gap="small")
+                with basic_name:
+                    edit_name = st.text_input(
+                        "Supplement Name",
+                        value=row.get("supplement_name", ""),
+                        key=f"supplement_repo_edit_name_{supplement_id}",
+                    )
+                with basic_dose:
                     edit_dosage = st.text_input(
                         "Default Dosage",
                         value=row.get("dosage", ""),
                         key=f"supplement_repo_edit_dosage_{supplement_id}",
                     )
-                with frequency_col:
+                with basic_frequency:
                     frequency_value = (
                         row.get("frequency")
                         if row.get("frequency") in FREQUENCY_OPTIONS
@@ -219,23 +235,26 @@ with repository_tab:
                         index=FREQUENCY_OPTIONS.index(frequency_value),
                         key=f"supplement_repo_edit_frequency_{supplement_id}",
                     )
-                edit_timing = st.multiselect(
-                    "Default Timing",
-                    TIMING_OPTIONS,
-                    default=selected_timing,
-                    key=f"supplement_repo_edit_timing_{supplement_id}",
-                )
-                edit_custom_timing = st.text_input(
-                    "Additional Timing",
-                    value=custom_timing,
-                    key=f"supplement_repo_edit_custom_timing_{supplement_id}",
-                )
+                timing_col, custom_col = st.columns([1.35, 1], gap="small")
+                with timing_col:
+                    edit_timing = st.multiselect(
+                        "Default Timing",
+                        TIMING_OPTIONS,
+                        default=selected_timing,
+                        key=f"supplement_repo_edit_timing_{supplement_id}",
+                    )
+                with custom_col:
+                    edit_custom_timing = st.text_input(
+                        "Additional Timing",
+                        value=custom_timing,
+                        key=f"supplement_repo_edit_custom_timing_{supplement_id}",
+                    )
                 edit_instructions = st.text_area(
                     "Default Instructions",
                     value=row.get("instructions", ""),
                     key=f"supplement_repo_edit_instructions_{supplement_id}",
                 )
-                save_col, cancel_col = st.columns(2)
+                save_col, cancel_col, spacer = st.columns([1, 1, 3], gap="small")
                 with save_col:
                     if st.button(
                         "Save Changes",
@@ -266,7 +285,7 @@ with repository_tab:
                             st.error(str(exc))
                 with cancel_col:
                     if st.button(
-                        "Cancel",
+                        "Close",
                         key=f"supplement_repo_cancel_{supplement_id}",
                         use_container_width=True,
                     ):
@@ -279,7 +298,7 @@ with repository_tab:
             st.warning(
                 "Delete removes this supplement from future selection. Existing and historical member plans remain protected."
             )
-            confirm_col, cancel_col = st.columns(2)
+            confirm_col, cancel_col, spacer = st.columns([1.15, 0.8, 3], gap="small")
             with confirm_col:
                 if st.button(
                     "Confirm Delete",
@@ -318,7 +337,7 @@ with repository_tab:
             st.caption("No inactive repository items.")
         for row in inactive_rows:
             supplement_id = str(row.get("id"))
-            label_col, action_col = st.columns([4, 1])
+            label_col, action_col = st.columns([5.5, 1], gap="small")
             with label_col:
                 st.markdown(_repository_details(row), unsafe_allow_html=True)
             with action_col:
