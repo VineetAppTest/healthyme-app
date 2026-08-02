@@ -21,8 +21,8 @@ const runSuffix = (process.env.JARVIS_RUN_ID || 'local').replace(/[^a-zA-Z0-9]+/
 const exerciseTitle = `${namespace}_exercise_${runSuffix}`;
 
 function checkpoint(name: string, value?: boolean): void {
-  const suffix = value === undefined ? '' : `=${String(value)}`;
-  console.log(`CHECKPOINT ${routeId} ${name}${suffix}`);
+  const suffix = value === undefined ? '' : `_${value ? 'TRUE' : 'FALSE'}`;
+  console.log(`JARVIS_CHECKPOINT ${name}${suffix}`);
 }
 
 async function signInAdmin(page: Page): Promise<void> {
