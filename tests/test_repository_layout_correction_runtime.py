@@ -38,12 +38,19 @@ class RepositoryDirectPageUiTests(unittest.TestCase):
         self.assertIn('f"{symbol}  {label}"', source)
         self.assertNotIn("st.expander", source)
 
-    def test_add_and_edit_share_balanced_readable_dimensions(self):
+    def test_repository_rows_have_breathing_space(self):
+        source = text(HELPER)
+        self.assertIn(':has(.hm-repo-row)', source)
+        self.assertIn(':has(.hm-sup-row)', source)
+        self.assertIn('margin-bottom:.52rem!important', source)
+        self.assertIn('margin:.46rem 0 .22rem!important', source)
+
+    def test_add_and_edit_share_compact_readable_dimensions(self):
         source = text(HELPER)
         self.assertIn("max-width:940px!important", source)
-        self.assertIn("min-height:2.18rem!important", source)
-        self.assertIn("min-height:68px!important", source)
-        self.assertIn("font-size:.76rem!important", source)
+        self.assertIn("min-height:2rem!important", source)
+        self.assertIn("min-height:54px!important", source)
+        self.assertIn("font-size:.75rem!important", source)
         self.assertNotIn("min-height:1.72rem", source)
         self.assertNotIn("height:42px", source)
 
