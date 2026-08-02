@@ -68,6 +68,9 @@ from components.daily_log_widget_route_preservation import (
 from components.member_home_global_header_runtime import (
     install_member_home_global_header_runtime,
 )
+from components.repository_layout_correction_runtime import (
+    install_repository_layout_correction_runtime,
+)
 
 
 install_streamlit_toolbar_cleanup()
@@ -118,3 +121,7 @@ install_daily_log_widget_route_preservation()
 # Member Home has a page-specific profile control, but its row must follow the same
 # compact height and hero spacing as the global header used elsewhere.
 install_member_home_global_header_runtime()
+
+# Repository presentation is page-scoped and outermost so it can override legacy
+# card widths, native disclosure markers and form spacing without changing writes.
+install_repository_layout_correction_runtime()
