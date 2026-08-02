@@ -241,6 +241,7 @@ if add_open:
 # Do not build repository rows while Add is open. This keeps the run focused
 # on one large form and prevents hidden/background form rendering.
 if not add_open:
+    st.markdown("### Current Repository")
     counts = supplement_repository_counts()
     all_rows = list_supplement_repository(active_only=False)
     active_rows = [row for row in all_rows if row.get("status") == "Active"]

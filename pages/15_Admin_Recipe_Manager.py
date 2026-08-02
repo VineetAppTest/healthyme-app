@@ -376,6 +376,7 @@ if add_open:
 # Do not build repository rows while Add is open. This keeps the run focused
 # on one large form and prevents hidden/background form rendering.
 if not add_open:
+    st.markdown("### Current Repository")
     df = load()
     if df.empty:
         st.info("No recipes are available. Add the first recipe.")

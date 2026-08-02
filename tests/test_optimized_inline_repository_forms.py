@@ -47,6 +47,7 @@ class OptimizedInlineRepositoryFormTests(unittest.TestCase):
             self.assertNotIn("with add_tab:", source)
             self.assertIn("if add_open:", source)
             self.assertIn("if not add_open:", source)
+            self.assertIn('st.markdown("### Current Repository")', source)
 
     def test_add_and_edit_are_mutually_exclusive(self):
         for name, source_path in PAGES.items():
