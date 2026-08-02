@@ -26,30 +26,30 @@ class RepositoryLayoutCorrectionRuntimeTests(unittest.TestCase):
         self.assertIn("pages/39_Admin_Supplement_Manager.py", source)
         self.assertNotIn("pages/18_Daily_Log.py", source)
 
-    def test_repository_cards_are_narrower_and_vertically_aligned(self):
+    def test_repository_cards_are_sharper_and_vertically_aligned(self):
         source = text(RUNTIME)
         self.assertIn("align-items:center!important", source)
-        self.assertIn("flex:0 1 68%!important", source)
-        self.assertIn("flex:0 0 76px!important", source)
-        self.assertIn("flex:0 0 86px!important", source)
-        self.assertIn("min-height:2.55rem!important", source)
-        self.assertIn("margin:0!important", source)
+        self.assertIn("max-width:900px!important", source)
+        self.assertIn("flex:0 1 60%!important", source)
+        self.assertIn("flex:0 0 70px!important", source)
+        self.assertIn("flex:0 0 78px!important", source)
+        self.assertIn("min-height:2.18rem!important", source)
+        self.assertIn("padding:.3rem .52rem!important", source)
 
-    def test_native_disclosure_marker_is_removed_and_label_is_full(self):
+    def test_native_disclosure_glyph_wrapper_is_removed(self):
         source = text(RUNTIME)
         self.assertIn("summary::-webkit-details-marker{display:none!important;}", source)
         self.assertIn('summary::marker{content:""!important;display:none!important;}', source)
         self.assertIn('summary [data-testid="stExpanderToggleIcon"]', source)
+        self.assertIn("summary>span:first-child", source)
+        self.assertIn("summary>div:first-child:has(svg)", source)
         self.assertIn("overflow:visible!important", source)
         self.assertIn("text-overflow:clip!important", source)
-        self.assertIn("max-width:none!important", source)
 
     def test_add_and_edit_forms_use_approved_sections(self):
         source = text(RUNTIME)
         for heading in (
             "#### Core Details",
-            "#### Nutrition",
-            "#### Preparation",
             "#### Core Fields",
             "#### Guidance / Benefits",
             "#### Tags",
@@ -57,14 +57,20 @@ class RepositoryLayoutCorrectionRuntimeTests(unittest.TestCase):
             "#### Timing",
             "#### Instructions",
         ):
-            # Nutrition and Preparation are already emitted by the Recipe form and
-            # remain covered by the existing compact-UI test. The runtime must carry
-            # every newly normalised or injected heading.
-            if heading not in {"#### Nutrition", "#### Preparation"}:
-                self.assertIn(heading, source)
+            self.assertIn(heading, source)
 
-        self.assertIn('div[data-baseweb="tab-panel"] textarea{min-height:64px!important;}', source)
-        self.assertIn('div[data-baseweb="tab-panel"] h4{', source)
+    def test_add_and_edit_forms_are_materially_more_compact(self):
+        source = text(RUNTIME)
+        self.assertIn('div[data-baseweb="tab-panel"]{', source)
+        self.assertIn("max-width:940px!important", source)
+        self.assertIn("gap:.16rem!important", source)
+        self.assertIn("font-size:.62rem!important", source)
+        self.assertIn("min-height:1.72rem!important", source)
+        self.assertIn("min-height:42px!important", source)
+        self.assertIn("height:42px!important", source)
+        self.assertIn("padding:.42rem .52rem!important", source)
+        self.assertIn('border-left:3px solid #D4A72C!important', source)
+        self.assertIn('[data-testid="stFileUploaderDropzone"]', source)
 
     def test_runtime_is_installed_outermost(self):
         bootstrap = text(BOOTSTRAP)
