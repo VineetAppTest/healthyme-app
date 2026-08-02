@@ -44,11 +44,13 @@ class RepositoryCompactUiTests(unittest.TestCase):
             self.assertIn("render_repository_disclosure", source)
             self.assertNotIn("st.expander", source)
 
-    def test_add_and_edit_use_same_balanced_form_panel(self):
+    def test_add_and_edit_use_same_crisp_form_panel(self):
         helper = text(HELPER)
-        self.assertIn("min-height:2.18rem!important", helper)
-        self.assertIn("min-height:68px!important", helper)
-        self.assertIn("font-size:.76rem!important", helper)
+        self.assertIn("min-height:1.9rem!important", helper)
+        self.assertIn("min-height:52px!important", helper)
+        self.assertIn("height:52px!important", helper)
+        self.assertIn("font-size:.7rem!important", helper)
+        self.assertIn("font-size:.66rem!important", helper)
         self.assertNotIn("min-height:1.72rem", helper)
         self.assertNotIn("height:42px", helper)
 
