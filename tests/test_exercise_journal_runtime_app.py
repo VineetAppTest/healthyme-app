@@ -6,7 +6,7 @@ from streamlit.testing.v1 import AppTest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-RUNTIME_PATH = ROOT / "components" / "member_daily_log_section_runtime.py"
+RUNTIME_PATH = ROOT / "components" / "member_daily_log_native_tab_persistence.py"
 
 
 class ExerciseJournalRuntimeAppTests(unittest.TestCase):
@@ -22,20 +22,29 @@ import importlib.util
 import streamlit as st
 
 spec = importlib.util.spec_from_file_location(
-    "member_daily_log_section_runtime_app_test",
+    "member_daily_log_exclusive_runtime_app_test",
     {str(RUNTIME_PATH)!r},
 )
 runtime = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runtime)
-runtime.install_member_daily_log_section_runtime()
+runtime.install_member_daily_log_native_tab_persistence()
+
+
+def _render_food_journal(user_id):
+    st.text("FOOD_PANEL_VISIBLE")
+    st.selectbox("Food status", ["Not recorded", "Recorded"], key="food_status")
+
+
+def _render_exercise_journal(user_id):
+    st.text("EXERCISE_PANEL_VISIBLE")
+    st.selectbox("Exercise status", ["Planned", "Completed"], key="exercise_status")
+
 
 food_tab, exercise_tab = st.tabs(["Food Journal", "Exercise Journal"])
 with food_tab:
-    st.text("FOOD_PANEL_VISIBLE")
-    st.selectbox("Food status", ["Not recorded", "Recorded"], key="food_status")
+    _render_food_journal("member-1")
 with exercise_tab:
-    st.text("EXERCISE_PANEL_VISIBLE")
-    st.selectbox("Exercise status", ["Planned", "Completed"], key="exercise_status")
+    _render_exercise_journal("member-1")
 '''
         pages_dir = pathlib.Path(self.temp_dir.name) / "pages"
         pages_dir.mkdir(parents=True, exist_ok=True)

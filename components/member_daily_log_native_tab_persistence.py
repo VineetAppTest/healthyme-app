@@ -1,137 +1,137 @@
 from __future__ import annotations
 
+import contextlib
 import functools
 import inspect
+from types import FrameType
 
 import streamlit as st
 
 
-_MARKER = "_hm_member_daily_log_native_tab_persistence_v2"
+_MARKER = "_hm_member_daily_log_exclusive_rendering_v2"
+_RENDER_MARKER = "_hm_member_daily_log_renderer_gate_v2"
 _PAGE_SUFFIX = "pages/18_Daily_Log.py"
 _LABELS = ("Food Journal", "Exercise Journal")
+_SELECTOR_KEY = "hm_daily_log_active_journal"
 
 
-def _page_in_stack() -> bool:
+def _daily_log_frame() -> FrameType | None:
+    """Return the live Daily Log page frame, even through other wrappers."""
+
     for frame_info in inspect.stack():
-        page_file = str(frame_info.frame.f_globals.get("__file__") or "").replace("\\", "/")
+        frame = frame_info.frame
+        page_file = str(frame.f_globals.get("__file__") or "").replace("\\", "/")
         if page_file.endswith(_PAGE_SUFFIX):
-            return True
-    return False
+            return frame
+    return None
 
 
-def _is_bound_callable(value) -> bool:
-    return callable(value) and getattr(value, "__self__", None) is not None
+def _activate_journal(label: str) -> None:
+    if label in _LABELS:
+        st.session_state[_SELECTOR_KEY] = label
 
 
-def _unwrap_native_tabs(candidate):
-    """Walk HealthyMe wrappers without unbinding Streamlit's tabs method."""
-
-    current = candidate
-    seen: set[int] = set()
-    while callable(current) and id(current) not in seen:
-        seen.add(id(current))
-        if _is_bound_callable(current):
-            return current
-        next_callable = getattr(current, "__wrapped__", None)
-        if not callable(next_callable):
-            next_callable = getattr(current, "_hm_original_tabs", None)
-        if not callable(next_callable) or next_callable is current:
-            break
-        current = next_callable
-    return current
+def _selected_journal() -> str:
+    selected = str(st.session_state.get(_SELECTOR_KEY) or _LABELS[0])
+    if selected not in _LABELS:
+        selected = _LABELS[0]
+        st.session_state[_SELECTOR_KEY] = selected
+    return selected
 
 
-def _bound_native_tabs(current_tabs):
-    """Prefer Streamlit's bound main-container method, with a safe wrapper fallback."""
-
-    main_container = getattr(st, "_main", None)
-    native_tabs = getattr(main_container, "tabs", None)
-    if callable(native_tabs):
-        return native_tabs
-    resolved = _unwrap_native_tabs(current_tabs)
-    return resolved if callable(resolved) else current_tabs
-
-
-def _render_tab_persistence_guard() -> None:
-    st.html(
-        r"""
-<script>
-(() => {
-  let topWindow;
-  try { topWindow = window.top || window.parent || window; }
-  catch (_error) { topWindow = window; }
-  let doc;
-  try { doc = topWindow.document; }
-  catch (_error) { return; }
-
-  const storageKey = "hm_daily_log_active_native_tab_v1";
-  const labels = ["Food Journal", "Exercise Journal"];
-
-  function tabButtons() {
-    return Array.from(doc.querySelectorAll(
-      '[data-testid="stTabs"] [role="tab"], [data-baseweb="tab-list"] [role="tab"]'
-    )).filter((button) => labels.includes(String(button.textContent || "").trim()));
-  }
-
-  function remember(button) {
-    const label = String(button.textContent || "").trim();
-    if (!labels.includes(label)) return;
-    try { topWindow.sessionStorage.setItem(storageKey, label); }
-    catch (_error) {}
-  }
-
-  function bindAndRestore() {
-    const buttons = tabButtons();
-    if (buttons.length < 2) return false;
-    for (const button of buttons) {
-      if (button.dataset.hmDailyLogPersistenceBound !== "1") {
-        button.dataset.hmDailyLogPersistenceBound = "1";
-        button.addEventListener("click", () => remember(button), { passive: true });
-      }
-    }
-    let selected = "Food Journal";
-    try {
-      const stored = topWindow.sessionStorage.getItem(storageKey);
-      if (labels.includes(stored)) selected = stored;
-    } catch (_error) {}
-    const target = buttons.find(
-      (button) => String(button.textContent || "").trim() === selected
-    );
-    if (target && target.getAttribute("aria-selected") !== "true") target.click();
-    return true;
-  }
-
-  if (topWindow.__hmDailyLogTabObserverV1) {
-    try { topWindow.__hmDailyLogTabObserverV1.disconnect(); }
-    catch (_error) {}
-  }
-  const observer = new MutationObserver(() => bindAndRestore());
-  topWindow.__hmDailyLogTabObserverV1 = observer;
-  if (doc.body) observer.observe(doc.body, { childList: true, subtree: true });
-  bindAndRestore();
-  [40, 120, 300, 700, 1500].forEach((delay) => topWindow.setTimeout(bindAndRestore, delay));
-})();
-</script>
+def _render_selector() -> None:
+    selected = _selected_journal()
+    st.markdown(
+        """
+<style id="hm-daily-log-exclusive-selector-v2">
+div[data-testid="stElementContainer"]:has(style#hm-daily-log-exclusive-selector-v2){
+  display:none!important;height:0!important;min-height:0!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+}
+.hm-daily-log-exclusive-anchor{display:block;height:0;margin:0;padding:0;overflow:hidden;}
+.hm-daily-log-exclusive-anchor + div[data-testid="stHorizontalBlock"]{
+  gap:.55rem!important;margin:.05rem 0 .75rem 0!important;
+}
+.hm-daily-log-exclusive-anchor + div[data-testid="stHorizontalBlock"] button{
+  min-height:2.75rem!important;border-radius:14px!important;font-weight:900!important;
+}
+</style>
         """,
-        unsafe_allow_javascript=True,
+        unsafe_allow_html=True,
     )
+    st.markdown(
+        "<span class='hm-daily-log-exclusive-anchor'></span>",
+        unsafe_allow_html=True,
+    )
+    food_col, exercise_col = st.columns(2, gap="small")
+    with food_col:
+        st.button(
+            _LABELS[0],
+            key="hm_daily_log_food_journal_selector_v2",
+            type="primary" if selected == _LABELS[0] else "secondary",
+            use_container_width=True,
+            on_click=_activate_journal,
+            args=(_LABELS[0],),
+        )
+    with exercise_col:
+        st.button(
+            _LABELS[1],
+            key="hm_daily_log_exercise_journal_selector_v2",
+            type="primary" if selected == _LABELS[1] else "secondary",
+            use_container_width=True,
+            on_click=_activate_journal,
+            args=(_LABELS[1],),
+        )
+
+
+def _gate_renderer(frame_globals: dict, name: str, label: str) -> None:
+    renderer = frame_globals.get(name)
+    if not callable(renderer) or getattr(renderer, _RENDER_MARKER, False):
+        return
+
+    @functools.wraps(renderer)
+    def render_only_when_selected(*args, **kwargs):
+        if _selected_journal() != label:
+            return None
+        return renderer(*args, **kwargs)
+
+    setattr(render_only_when_selected, _RENDER_MARKER, True)
+    setattr(render_only_when_selected, "_hm_original_renderer", renderer)
+    frame_globals[name] = render_only_when_selected
+
+
+def _install_renderer_gates(frame: FrameType) -> None:
+    _gate_renderer(frame.f_globals, "_render_food_journal", _LABELS[0])
+    _gate_renderer(frame.f_globals, "_render_exercise_journal", _LABELS[1])
 
 
 def install_member_daily_log_native_tab_persistence() -> None:
+    """Replace Daily Log tabs with deterministic server-side exclusive rendering.
+
+    The historical function name is retained for bootstrap compatibility. The runtime
+    intentionally does not call Streamlit tabs: both page blocks receive null contexts,
+    while the renderer gates ensure that only the selected journal executes.
+    """
+
     current_tabs = st.tabs
     if getattr(current_tabs, _MARKER, False):
         return
-    native_tabs = _bound_native_tabs(current_tabs)
 
     @functools.wraps(current_tabs)
-    def native_daily_log_tabs(labels, *args, **kwargs):
+    def exclusive_daily_log_tabs(labels, *args, **kwargs):
         normalized = tuple(str(label) for label in labels)
-        if normalized == _LABELS and _page_in_stack():
-            result = native_tabs(labels, *args, **kwargs)
-            _render_tab_persistence_guard()
-            return result
-        return current_tabs(labels, *args, **kwargs)
+        if normalized != _LABELS:
+            return current_tabs(labels, *args, **kwargs)
 
-    setattr(native_daily_log_tabs, _MARKER, True)
-    setattr(native_daily_log_tabs, "_hm_original_tabs", current_tabs)
-    st.tabs = native_daily_log_tabs
+        page_frame = _daily_log_frame()
+        if page_frame is None:
+            return current_tabs(labels, *args, **kwargs)
+
+        _selected_journal()
+        _render_selector()
+        _install_renderer_gates(page_frame)
+        return [contextlib.nullcontext(), contextlib.nullcontext()]
+
+    setattr(exclusive_daily_log_tabs, _MARKER, True)
+    setattr(exclusive_daily_log_tabs, "_hm_original_tabs", current_tabs)
+    st.tabs = exclusive_daily_log_tabs

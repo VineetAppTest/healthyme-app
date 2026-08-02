@@ -42,22 +42,28 @@ class ExerciseJournalRepositoryFixContractTests(unittest.TestCase):
         self.assertIn("Exercise Repository persistence verification failed", repository)
         self.assertIn('status.get("mode") != "SUPABASE"', repository)
 
-    def test_member_daily_log_uses_native_tab_persistence(self):
+    def test_member_daily_log_uses_exclusive_server_rendering(self):
         runtime = source("components/member_daily_log_native_tab_persistence.py")
         self.assertIn('("Food Journal", "Exercise Journal")', runtime)
-        self.assertIn("sessionStorage", runtime)
-        self.assertIn("MutationObserver", runtime)
-        self.assertIn("_unwrap_native_tabs", runtime)
-        self.assertIn("return current_tabs(labels, *args, **kwargs)", runtime)
+        self.assertIn("_daily_log_frame", runtime)
+        self.assertIn("_install_renderer_gates", runtime)
+        self.assertIn("_render_food_journal", runtime)
+        self.assertIn("_render_exercise_journal", runtime)
+        self.assertIn("contextlib.nullcontext()", runtime)
+        self.assertNotIn("sessionStorage", runtime)
+        self.assertNotIn("MutationObserver", runtime)
+        self.assertNotIn("_bound_native_tabs", runtime)
 
     def test_runtime_install_order_preserves_admin_and_daily_log_authority(self):
         bootstrap = source("components/__init__.py")
         self.assertNotIn("install_member_daily_log_section_runtime()", bootstrap)
         admin_cleanup = bootstrap.index("install_admin_content_form_cleanup()")
         admin_repair = bootstrap.index("install_admin_exercise_repair_runtime()")
-        daily_native = bootstrap.index("install_member_daily_log_native_tab_persistence()")
+        daily_exclusive = bootstrap.index(
+            "install_member_daily_log_native_tab_persistence()"
+        )
         self.assertLess(admin_cleanup, admin_repair)
-        self.assertLess(admin_repair, daily_native)
+        self.assertLess(admin_repair, daily_exclusive)
 
     def test_member_repository_and_profile_builder_read_persistent_exercises(self):
         runtime = source("components/exercise_repository_runtime.py")
