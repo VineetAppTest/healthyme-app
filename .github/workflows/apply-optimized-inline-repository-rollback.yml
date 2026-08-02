@@ -27,7 +27,9 @@ jobs:
       - name: Apply rollback and optimized inline architecture
         run: python scripts/apply_optimized_inline_repository_rollback.py
       - name: Exclude workflow-file changes from the automated commit
-        run: git checkout HEAD -- .github/workflows
+        run: |
+          rm -f .github/workflows/optimized-inline-repository-forms-validation.yml
+          git checkout HEAD -- .github/workflows
       - name: Commit transformed application files
         run: |
           git config user.name "github-actions[bot]"
