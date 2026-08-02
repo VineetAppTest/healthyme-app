@@ -45,11 +45,13 @@ def _unwrap_navigation_callable(candidate: Any) -> Any:
 # Streamlit reruns reuse the same Python process. Always restore the process-level
 # routing primitives before installing the current production wrapper. Navigation
 # receives an additional unwrapping pass so a stale full-app adapter cannot become
-# the cached base and register the same URL path twice.
+# the cached base and register the same URL path twice. Explicit reruns are restored
+# as well so the current registered route can be carried into the next app run.
 _ROUTING_PRIMITIVES = {
     "Page": "_hm_h13r2_base_page",
     "navigation": "_hm_h13r2_base_navigation",
     "switch_page": "_hm_h13r2_base_switch_page",
+    "rerun": "_hm_h13r2_base_rerun",
 }
 for public_name, cache_name in _ROUTING_PRIMITIVES.items():
     current_callable = getattr(st, public_name)
@@ -62,6 +64,7 @@ for public_name, cache_name in _ROUTING_PRIMITIVES.items():
 
 _BASE_NAVIGATION = getattr(st, "_hm_h13r2_base_navigation")
 _BASE_SWITCH_PAGE = getattr(st, "_hm_h13r2_base_switch_page")
+_BASE_RERUN = getattr(st, "_hm_h13r2_base_rerun")
 
 
 def _install_member_local_daily_log_defaults() -> None:
@@ -213,8 +216,9 @@ from native_bridge import root_authorization_ui as _router_authorization_ui  # n
 from native_bridge import root_authorization_ui_h13r7e as _root_authorization_ui  # noqa: E402
 
 
-BUILD = "H13R9D-profile-timezone-daily-log-tab-polish-v1"
-ROLLBACK_BUILD = "H13R9C-profile-dropdown-daily-log-tabs-v1"
+BUILD = "H13R9E-native-rerun-route-retention-v1"
+ROLLBACK_BUILD = "H13R9D-profile-timezone-daily-log-tab-polish-v1"
+_PENDING_RERUN_PATH_KEY = "_hm_h13r9e_pending_rerun_path"
 
 
 def _native_identity_present() -> bool:
@@ -231,6 +235,23 @@ def _browser_path() -> str:
         return path.rstrip("/") or "/"
     except Exception:
         return ""
+
+
+def _registered_path_from_browser() -> str:
+    path = _browser_path().strip().strip("/")
+    if not path or path == "Login":
+        return ""
+    return path
+
+
+def _rerun_with_route_preservation(*args: Any, **kwargs: Any) -> Any:
+    """Carry the active registered route through an explicit app rerun."""
+
+    scope = str(kwargs.get("scope") or "app").strip().lower()
+    route_path = _registered_path_from_browser()
+    if scope != "fragment" and _native_identity_present() and route_path:
+        st.session_state[_PENDING_RERUN_PATH_KEY] = route_path
+    return _BASE_RERUN(*args, **kwargs)
 
 
 def _iter_pages(pages: Any) -> Iterable[Any]:
@@ -374,6 +395,26 @@ def _navigation_with_authenticated_root_canonicalization(
 ) -> Any:
     selected_page = _BASE_NAVIGATION(pages, *args, **kwargs)
 
+    # Explicit app reruns can re-enter the native router on its default Member Home
+    # route even though the browser was on a registered internal page. Restore the
+    # exact prior route before the root/Login canonicalization can take over.
+    pending_path = str(
+        st.session_state.pop(_PENDING_RERUN_PATH_KEY, "") or ""
+    ).strip().strip("/")
+    selected_path = str(getattr(selected_page, "url_path", "") or "").strip()
+    if pending_path and pending_path != selected_path:
+        pending_page = next(
+            (
+                page
+                for page in _iter_pages(pages)
+                if str(getattr(page, "url_path", "") or "") == pending_path
+            ),
+            None,
+        )
+        if pending_page is not None:
+            _BASE_SWITCH_PAGE(pending_page)
+            st.stop()
+
     # After the guarded browser refresh, an authenticated callback can re-enter at
     # the app root. Move through the registered Login page with an empty query set;
     # the existing role router then selects Member_Home or the correct Admin route.
@@ -388,7 +429,7 @@ def _navigation_with_authenticated_root_canonicalization(
         )
         if login_page is None:
             raise RuntimeError(
-                "H13R9D could not locate the registered Login page for OAuth canonicalization."
+                "H13R9E could not locate the registered Login page for OAuth canonicalization."
             )
         _BASE_SWITCH_PAGE(login_page, query_params={})
         st.stop()
@@ -396,6 +437,7 @@ def _navigation_with_authenticated_root_canonicalization(
     return selected_page
 
 
+st.rerun = _rerun_with_route_preservation
 st.navigation = _navigation_with_authenticated_root_canonicalization
 _install_one_time_post_oauth_reload()
 
@@ -408,5 +450,5 @@ CUTOVER_ENTRY = (
 
 runpy.run_path(
     str(CUTOVER_ENTRY),
-    run_name="__hm_h13r9d_profile_timezone_daily_log_tab_polish__",
+    run_name="__hm_h13r9e_native_rerun_route_retention__",
 )
