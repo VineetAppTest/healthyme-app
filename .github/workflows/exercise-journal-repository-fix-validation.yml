@@ -3,6 +3,7 @@ name: Exercise Journal and Repository Fix Validation
 on:
   pull_request:
     paths:
+      - "app.py"
       - "components/__init__.py"
       - "components/exercise_repository.py"
       - "components/exercise_repository_runtime.py"
@@ -10,6 +11,7 @@ on:
       - "components/member_daily_log_native_tab_persistence.py"
       - "components/admin_exercise_repair_runtime.py"
       - "pages/16_Admin_Exercise_Manager.py"
+      - "tests/test_exercise_native_router_rerun_retention.py"
       - "tests/test_exercise_repository_persistence.py"
       - "tests/test_exercise_journal_repository_fix_contract.py"
       - "tests/test_exercise_live_repair.py"
@@ -43,6 +45,7 @@ jobs:
       - name: Compile changed runtime
         run: |
           python -m py_compile \
+            app.py \
             components/exercise_repository.py \
             components/exercise_repository_runtime.py \
             components/member_daily_log_section_runtime.py \
@@ -50,7 +53,8 @@ jobs:
             components/admin_exercise_repair_runtime.py \
             components/__init__.py \
             pages/16_Admin_Exercise_Manager.py \
-            tests/test_exercise_live_repair.py
+            tests/test_exercise_live_repair.py \
+            tests/test_exercise_native_router_rerun_retention.py
 
       - name: Import complete HealthyMe component bootstrap
         run: python -c "import components; print('HealthyMe component bootstrap imported successfully')"
