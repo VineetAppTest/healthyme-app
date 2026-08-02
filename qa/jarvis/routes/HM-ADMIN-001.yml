@@ -1,0 +1,51 @@
+id: HM-ADMIN-001
+name: Admin login, landing and refresh persistence
+owner: Jarvis
+risk: authenticated_admin_read_only
+starting_state:
+  user_role: admin
+  authentication: signed_out
+  test_data_policy: dedicated_non_sensitive_admin
+  required_environment:
+    - JARVIS_BASE_URL
+    - JARVIS_ADMIN_EMAIL
+    - JARVIS_ADMIN_PASSWORD
+steps:
+  - checkpoint: T1
+    action: Open /Login and resolve the HealthyMe application surface
+    expected: Secure Login is visible in the direct page or Streamlit iframe
+  - checkpoint: T2
+    action: Enter the dedicated admin test credentials
+    expected: Email and Password accept input
+  - checkpoint: T3
+    action: Submit the approved Supabase sign-in action
+    expected: Authentication begins without a visible client error
+  - checkpoint: T4
+    action: Wait for the authorized admin landing surface
+    expected: Admin Dashboard and Main Workflows are visible
+  - checkpoint: T5
+    action: Confirm an authenticated interactive control
+    expected: Logout is visible and Admin Dashboard is usable
+  - checkpoint: T6
+    action: Confirm the member landing surface is absent
+    expected: Member Home is not shown to the admin identity
+  - checkpoint: T7
+    action: Refresh the host browser page
+    expected: Existing admin session restoration begins
+  - checkpoint: T8
+    action: Re-resolve the application surface after refresh
+    expected: Admin Dashboard and Logout remain visible without another login
+non_regression:
+  - Do not change authentication, routing, role or RLS logic
+  - Do not use a real administrator account
+  - Do not open member-detail or health-data pages
+  - Do not create, update, submit, allocate, deactivate or delete records
+  - Preserve the existing login and refresh mechanism
+artifacts:
+  - Full video
+  - Failure screenshot
+  - HTML report
+  - JSON result report
+  - Checkpoint timeline
+  - Frame-aware navigation timing
+  - Console, page, network and HTTP diagnostics

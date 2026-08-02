@@ -1,0 +1,21 @@
+{
+  "name": "healthyme-jarvis-qc",
+  "version": "0.3.0",
+  "private": true,
+  "description": "HealthyMe autonomous QC foundation using Playwright.",
+  "scripts": {
+    "preflight": "node scripts/preflight.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:public": "playwright test tests/public-login.spec.ts",
+    "test:member": "playwright test tests/member-login-refresh.spec.ts",
+    "test:admin": "playwright test tests/admin-login-refresh.spec.ts",
+    "verify:evidence": "node scripts/verify-evidence.mjs",
+    "report": "playwright show-report artifacts/html-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.0",
+    "@types/node": "24.1.0",
+    "typescript": "5.8.3"
+  }
+}

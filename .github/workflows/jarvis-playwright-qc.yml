@@ -1,0 +1,104 @@
+name: Jarvis Playwright QC
+
+on:
+  pull_request:
+    paths:
+      - "qa/jarvis/**"
+      - ".github/workflows/jarvis-playwright-qc.yml"
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Jarvis route suite"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - public
+          - member
+          - admin
+      base_url:
+        description: "Optional HealthyMe environment URL override"
+        required: false
+        default: ""
+        type: string
+      require_authenticated:
+        description: "Fail preflight when requested role credentials are unavailable"
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: jarvis-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  browser-qc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: qa/jarvis
+    env:
+      JARVIS_BASE_URL: ${{ inputs.base_url || vars.JARVIS_BASE_URL || 'https://healthymeappbyankita.streamlit.app' }}
+      JARVIS_MEMBER_EMAIL: ${{ secrets.JARVIS_MEMBER_EMAIL }}
+      JARVIS_MEMBER_PASSWORD: ${{ secrets.JARVIS_MEMBER_PASSWORD }}
+      JARVIS_ADMIN_EMAIL: ${{ secrets.JARVIS_ADMIN_EMAIL }}
+      JARVIS_ADMIN_PASSWORD: ${{ secrets.JARVIS_ADMIN_PASSWORD }}
+      JARVIS_SUITE: ${{ inputs.suite || 'all' }}
+      JARVIS_REQUIRE_AUTH: ${{ inputs.require_authenticated || 'false' }}
+      JARVIS_RUN_ID: jarvis-${{ github.run_id }}-${{ github.run_attempt }}
+      JARVIS_GIT_SHA: ${{ github.sha }}
+      JARVIS_GITHUB_EVENT: ${{ github.event_name }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: qa/jarvis/package-lock.json
+
+      - name: Install Jarvis dependencies
+        run: npm ci
+
+      - name: Check critical dependency vulnerabilities
+        run: npm audit --audit-level=critical
+
+      - name: Type-check Jarvis
+        run: npm run typecheck
+
+      - name: Run Jarvis preflight
+        run: npm run preflight
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Execute Jarvis routes
+        run: |
+          case "$JARVIS_SUITE" in
+            public) npm run test:public ;;
+            member) npm run test:member ;;
+            admin) npm run test:admin ;;
+            all) npm test ;;
+            *) echo "Unsupported suite: $JARVIS_SUITE" >&2; exit 1 ;;
+          esac
+
+      - name: Verify Jarvis evidence privacy
+        if: always()
+        run: npm run verify:evidence
+
+      - name: Upload Jarvis evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-playwright-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: qa/jarvis/artifacts/
+          if-no-files-found: warn
+          retention-days: 14

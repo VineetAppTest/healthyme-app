@@ -1,0 +1,37 @@
+id: HM-PUBLIC-001
+name: HealthyMe public login availability
+owner: Jarvis
+risk: read_only
+starting_state:
+  authentication: signed_out
+  required_environment:
+    - JARVIS_BASE_URL
+steps:
+  - checkpoint: T1
+    action: Open /Login on the configured HealthyMe environment
+    expected: Streamlit host responds and the application surface can be resolved
+  - checkpoint: T2
+    action: Enter the HealthyMe application document or Streamlit iframe
+    expected: HealthyMe or Secure Login content is present
+  - checkpoint: T3
+    action: Inspect the primary login controls
+    expected: Secure Login, Email and Password are visible
+  - checkpoint: T4
+    action: Inspect the configured sign-in action
+    expected: Continue with Supabase or Sign in securely is visible
+  - checkpoint: T5
+    action: Inspect the access boundary message
+    expected: No public sign-up is visible
+non_regression:
+  - Do not submit credentials
+  - Do not trigger Auth0 or Supabase authentication
+  - Do not change application state
+artifacts:
+  - Full video
+  - Failure screenshot
+  - Playwright trace on failure
+  - HTML report
+  - JSON result report
+  - Checkpoint timeline
+  - Frame-aware navigation timing
+  - Console, page, network and HTTP diagnostics
