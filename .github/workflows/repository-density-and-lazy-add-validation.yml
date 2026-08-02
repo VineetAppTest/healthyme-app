@@ -1,30 +1,13 @@
-name: Repository density and lazy Add validation
+name: Retired repository density and lazy Add validation
 
 on:
-  pull_request:
-    paths:
-      - components/repository_page_ui.py
-      - pages/15_Admin_Recipe_Manager.py
-      - pages/16_Admin_Exercise_Manager.py
-      - pages/39_Admin_Supplement_Manager.py
-      - tests/test_repository_density_and_lazy_add.py
-      - .github/workflows/repository-density-and-lazy-add-validation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  validate:
+  retired:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Compile affected files
-        run: |
-          python -m py_compile \
-            components/repository_page_ui.py \
-            pages/15_Admin_Recipe_Manager.py \
-            pages/16_Admin_Exercise_Manager.py \
-            pages/39_Admin_Supplement_Manager.py \
-            tests/test_repository_density_and_lazy_add.py
-      - name: Run density and lazy Add contracts
-        run: python -m unittest tests.test_repository_density_and_lazy_add -v
+      - run: echo "Retired by PR #338 after restoring the PR #327 repository baseline."

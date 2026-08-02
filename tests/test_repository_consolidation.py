@@ -4,6 +4,7 @@ import pathlib
 import unittest
 
 
+# PR #338 intentionally validates the restored PR #327 repository baseline.
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RECIPE = ROOT / "pages" / "15_Admin_Recipe_Manager.py"
 EXERCISE = ROOT / "pages" / "16_Admin_Exercise_Manager.py"
@@ -18,18 +19,9 @@ class RepositoryConsolidationContractTests(unittest.TestCase):
         cls.supplement = SUPPLEMENT.read_text(encoding="utf-8")
 
     def test_each_page_exposes_only_repository_and_add_sections(self):
-        expected = (
-            (self.recipe, "Recipe", "hm_recipe_repository_add_open"),
-            (self.exercise, "Exercise", "hm_exercise_repository_add_open"),
-            (self.supplement, "Supplement", "hm_supplement_repository_add_open"),
-        )
-        for source, item_name, state_key in expected:
-            self.assertIn('st.markdown("### Current Repository")', source)
-            self.assertIn(f'"Add {item_name}"', source)
-            self.assertIn(state_key, source)
-            self.assertIn("if add_open:", source)
-            self.assertIn("if not add_open:", source)
-            self.assertNotIn('st.tabs(["Current Repository"', source)
+        self.assertIn('st.tabs(["Current Repository", "Add Recipe"])', self.recipe)
+        self.assertIn('st.tabs(["Current Repository", "Add Exercise"])', self.exercise)
+        self.assertIn('st.tabs(["Current Repository", "Add Supplement"])', self.supplement)
 
     def test_import_feedback_and_direct_allocation_are_not_executable(self):
         for source in (self.recipe, self.exercise, self.supplement):
