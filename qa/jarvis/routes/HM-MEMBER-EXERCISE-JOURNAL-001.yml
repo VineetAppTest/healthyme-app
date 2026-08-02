@@ -1,0 +1,32 @@
+id: HM-MEMBER-EXERCISE-JOURNAL-001
+name: Exercise Journal remains selected after dropdown rerun
+owner: Jarvis
+risk: authenticated_read_only
+starting_state:
+  user_role: member
+  authentication: signed_out
+  test_data_policy: dedicated_non_sensitive_member
+  required_environment:
+    - JARVIS_BASE_URL
+    - JARVIS_MEMBER_EMAIL
+    - JARVIS_MEMBER_PASSWORD
+steps:
+  - checkpoint: T1
+    action: Sign in with the dedicated Jarvis member
+    expected: Member Home is visible
+  - checkpoint: T2
+    action: Open Daily Log and select Exercise Journal
+    expected: Exercise Journal Date and exercise controls are visible
+  - checkpoint: T3
+    action: Change the Status dropdown without saving
+    expected: The Streamlit rerun stays on Exercise Journal
+  - checkpoint: T4
+    action: Re-resolve the application surface
+    expected: Exercise Journal Date remains visible and Food Journal Date is absent
+non_regression:
+  - Do not save or alter a member exercise-log record
+  - Do not report member, recommendation or health data
+  - Do not change authentication, routing or journal state
+retention:
+  mode: runner_lifetime_only
+  github_artifact_upload: false
