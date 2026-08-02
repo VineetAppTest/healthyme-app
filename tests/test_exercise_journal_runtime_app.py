@@ -38,6 +38,11 @@ def _render_food_journal(user_id):
 def _render_exercise_journal(user_id):
     st.text("EXERCISE_PANEL_VISIBLE")
     st.selectbox("Exercise status", ["Planned", "Completed"], key="exercise_status")
+    if st.button("Save Progress", key="exercise_save_progress"):
+        # Reproduce an explicit save/load pipeline that removes the public
+        # page-scoped selector before calling st.rerun().
+        st.session_state.pop("hm_daily_log_active_journal", None)
+        st.rerun()
 
 
 food_tab, exercise_tab = st.tabs(["Food Journal", "Exercise Journal"])
@@ -63,20 +68,26 @@ with exercise_tab:
                 return button
         raise AssertionError(f"Button not found: {label}")
 
-    def test_exercise_selection_survives_dropdown_rerun_exclusively(self):
+    def _assert_exercise_only(self, app):
+        self.assertIn("EXERCISE_PANEL_VISIBLE", self._text_values(app))
+        self.assertNotIn("FOOD_PANEL_VISIBLE", self._text_values(app))
+        self.assertEqual([box.label for box in app.selectbox], ["Exercise status"])
+
+    def test_exercise_selection_survives_dropdown_and_explicit_save_reruns(self):
         app = self._app()
         self.assertIn("FOOD_PANEL_VISIBLE", self._text_values(app))
         self.assertNotIn("EXERCISE_PANEL_VISIBLE", self._text_values(app))
         self.assertEqual([box.label for box in app.selectbox], ["Food status"])
 
         app = self._button(app, "Exercise Journal").click().run()
-        self.assertIn("EXERCISE_PANEL_VISIBLE", self._text_values(app))
-        self.assertNotIn("FOOD_PANEL_VISIBLE", self._text_values(app))
-        self.assertEqual([box.label for box in app.selectbox], ["Exercise status"])
+        self._assert_exercise_only(app)
 
         app = app.selectbox[0].select("Completed").run()
-        self.assertIn("EXERCISE_PANEL_VISIBLE", self._text_values(app))
-        self.assertNotIn("FOOD_PANEL_VISIBLE", self._text_values(app))
+        self._assert_exercise_only(app)
+        self.assertEqual(app.selectbox[0].value, "Completed")
+
+        app = self._button(app, "Save Progress").click().run()
+        self._assert_exercise_only(app)
         self.assertEqual(app.selectbox[0].value, "Completed")
 
 
