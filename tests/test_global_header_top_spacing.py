@@ -19,7 +19,7 @@ class GlobalHeaderTopSpacingTests(unittest.TestCase):
     def test_changed_module_compiles(self) -> None:
         ast.parse(self.toolbar_source, filename=str(TOOLBAR))
 
-    def test_style_only_markup_uses_zero_height_renderer(self) -> None:
+    def test_normal_style_only_markup_uses_zero_height_renderer(self) -> None:
         self.assertIn("_STYLE_ONLY_MARKUP.fullmatch(body)", self.toolbar_source)
         self.assertIn("return html_renderer(body)", self.toolbar_source)
         self.assertIn("return current(body, *args, **kwargs)", self.toolbar_source)
@@ -29,9 +29,38 @@ class GlobalHeaderTopSpacingTests(unittest.TestCase):
         page_config_at = self.toolbar_source.index("current = st.set_page_config")
         self.assertLess(installer_at, page_config_at)
 
-    def test_toolbar_css_uses_shared_style_renderer(self) -> None:
-        self.assertIn("st.markdown(_TOOLBAR_CSS, unsafe_allow_html=True)", self.toolbar_source)
+    def test_owner_toolbar_css_uses_outer_global_renderer(self) -> None:
+        self.assertIn("def _render_global_toolbar_css()", self.toolbar_source)
+        self.assertIn(
+            'getattr(st.markdown, "_hm_original_markdown", st.markdown)',
+            self.toolbar_source,
+        )
+        self.assertIn("original_markdown(_TOOLBAR_CSS, unsafe_allow_html=True)", self.toolbar_source)
+        self.assertIn("_render_global_toolbar_css()", self.toolbar_source)
         self.assertIn("install_streamlit_toolbar_cleanup()", self.bootstrap_source)
+
+    def test_visible_owner_controls_are_suppressed(self) -> None:
+        expected_selectors = (
+            'button[aria-label="Share"]',
+            'button[aria-label*="favorite" i]',
+            'button[aria-label*="edit" i]',
+            'button[aria-label*="more" i]',
+            '[data-testid="stAppDeployButton"]',
+            '[data-testid="stShareButton"]',
+            '[data-testid="stFavoriteButton"]',
+            '[data-testid="stEditButton"]',
+            '[data-testid*="Toolbar"]',
+        )
+        for selector in expected_selectors:
+            self.assertIn(selector, self.toolbar_source)
+
+    def test_global_toolbar_stylesheet_does_not_restore_top_gap(self) -> None:
+        self.assertIn(
+            'div[data-testid="stElementContainer"]:has(style#hm-streamlit-toolbar-cleanup-v3)',
+            self.toolbar_source,
+        )
+        self.assertIn("display: none !important", self.toolbar_source)
+        self.assertIn("height: 0 !important", self.toolbar_source)
 
     def test_auth_and_navigation_are_not_modified(self) -> None:
         forbidden = (
