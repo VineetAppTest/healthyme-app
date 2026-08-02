@@ -1,91 +1,106 @@
 # Jarvis Team Onboarding
 
-Jarvis is HealthyMe's independent QC and diagnostic role. Victor defines and governs the approved route, Jarvis executes it and produces evidence, and Vineet remains the final approval authority.
+Jarvis is HealthyMe's independent QC and diagnostic role. Victor defines and governs approved routes, Jarvis executes them and produces evidence, and Vineet remains the final approval authority.
 
 ## Operating pattern
 
-`Approved requirement -> route contract -> controlled execution -> video and telemetry -> expected-versus-actual result -> Victor diagnosis -> Vineet approval`
+`Approved requirement -> route contract -> controlled execution -> video and telemetry -> expected-versus-actual result -> evidence-security check -> Victor diagnosis -> Vineet approval`
 
-Jarvis is not a second product owner and must not invent expected behaviour. Every automated journey must be backed by an approved route manifest under `routes/`.
+Jarvis does not invent expected behaviour. Every automated journey must be backed by an approved route manifest under `routes/`.
 
-## Onboarding status
+## Current onboarding status
 
 | Requirement | Status | Notes |
 |---|---|---|
 | Playwright browser runtime | Ready | Chromium is installed by GitHub Actions. |
-| Streamlit Cloud application driver | Ready | Direct pages and cross-origin Streamlit iframes are supported; one visible reload can recover a stalled cold start. |
-| Public read-only route | Ready | `HM-PUBLIC-001`. |
-| Member login and refresh route | Code ready | `HM-MEMBER-001`; dedicated member secrets are still required. |
+| Streamlit Cloud driver | Ready | Direct pages and cross-origin Streamlit iframes are supported. |
+| Public route | Commissioned | `HM-PUBLIC-001`. |
+| Member identity | Commissioned | Dedicated confirmed Supabase Auth user mapped to active `member`. |
+| Admin identity | Commissioned | Dedicated confirmed Supabase Auth user mapped to active `admin`. |
+| Member login and refresh route | Commissioned | `HM-MEMBER-001`; passed twice without retry. |
+| Admin login and refresh route | Commissioned | `HM-ADMIN-001`; passed twice without retry. |
+| Role separation | Ready | Member lands on Member Home; admin lands on Admin Dashboard and not Member Home. |
 | Video and failure screenshots | Ready | Video always; screenshot on failure. |
-| Playwright trace | Local-only | Disabled in CI because raw traces cannot be reliably sanitized; optional local use must never be uploaded. |
-| Browser and network diagnostics | Ready | Console, page errors, failed requests, HTTP errors and selected request timings. |
-| Frame-aware performance timing | Ready | Navigation entries are collected from the host and app frames. |
-| Environment preflight | Ready | Validates URL, suite selection and credential completeness; lightweight HTTP reachability is advisory because Chromium is authoritative. |
-| Unique Jarvis run identity | Ready | Every CI execution receives a `JARVIS_RUN_ID` stored in the evidence bundle. |
-| Evidence privacy controls | Ready | Authentication parameters, opaque provider payloads, JWTs and bearer tokens are redacted and post-run evidence is scanned before upload. |
+| Browser and network diagnostics | Ready | Console, page errors, failed requests, HTTP errors and selected timings. |
+| Environment preflight | Ready | Validates URL, suite and both role credential pairs. |
+| Unique run identity | Ready | Every CI execution receives a `JARVIS_RUN_ID`. |
+| Evidence privacy controls | Ready | Authentication material is redacted and evidence is scanned before upload. |
 | GitHub evidence bundle | Ready | Retained for 14 days. |
-| Dedicated test member | Pending owner setup | Must be created and controlled by Vineet. |
-| Supabase/Sentry correlation | Not yet active | The run ID remains evidence-only until HealthyMe provides a privacy-safe, same-origin correlation mechanism. |
-| Flutter/mobile execution | Not included | Requires Maestro or Appium in the Flutter repository. |
-| Automated visual-design judgment | Not included | Current routes use explicit assertions; screenshots/video support Victor's review. |
+| Supabase/Sentry correlation | Not active | Run ID remains evidence-only until same-origin backend instrumentation exists. |
+| Flutter/mobile execution | Not included | Requires a separate Maestro or Appium adapter. |
+| Mutation testing | Not authorised | Requires deterministic test data and reset/rollback controls. |
 
-## Required dedicated member account
+## Dedicated identities
 
-The account used by Jarvis must meet all of the following:
+Jarvis uses two separate identities:
 
-1. It is created only for automated QC.
-2. Its HealthyMe role is `member`.
-3. It contains no real member, health, consultation or personally sensitive data.
-4. It does not require OTP, CAPTCHA or manual approval during routine sign-in.
-5. Its account remains active and its password is not reused elsewhere.
-6. Its test state is documented and kept stable.
-7. Future mutation routes use data that can be reset deterministically.
+### Member Jarvis
 
-Do not use Vineet's, an administrator's or an actual member's account.
+- HealthyMe ID: `jarvis_member`
+- Role: `member`
+- Purpose: member login, Member Home, safe navigation and refresh persistence
+- Data policy: synthetic and non-sensitive only
 
-## GitHub configuration owned by Vineet
+### Admin Jarvis
+
+- HealthyMe ID: `jarvis_admin`
+- Role: `admin`
+- Purpose: admin login, Admin Dashboard shell, role separation and refresh persistence
+- Restriction: read-only route; no member-detail or health-data pages
+
+Jarvis must never use Vineet's account, a real member account, an operational administrator account or a super-admin identity.
+
+## GitHub configuration
 
 Repository: `VineetAppTest/healthyme-app`
 
-### Repository variable
+### Optional repository variable
 
-`JARVIS_BASE_URL`
+- `JARVIS_BASE_URL`
 
-Recommended value:
+The workflow already defaults to the HealthyMe production URL. Set this variable only when targeting another environment.
 
-`https://healthymeappbyankita.streamlit.app`
+### Required repository secrets
 
-The workflow has this production URL as a safe default, so the variable is optional unless Jarvis must target another environment.
+- `JARVIS_MEMBER_EMAIL`
+- `JARVIS_MEMBER_PASSWORD`
+- `JARVIS_ADMIN_EMAIL`
+- `JARVIS_ADMIN_PASSWORD`
 
-### Repository secrets
+Secrets must be stored only in GitHub Actions Secrets. They must never be pasted into route files, pull requests, issues, workflow variables, logs or chat.
 
-`JARVIS_MEMBER_EMAIL`
+## Available suites
 
-`JARVIS_MEMBER_PASSWORD`
+- `public`: login-surface availability only
+- `member`: member login, landing and refresh persistence
+- `admin`: admin login, landing, role separation and refresh persistence
+- `all`: public, member, admin and evidence-redaction contracts
 
-Secrets must be entered directly in GitHub repository settings. They must never be pasted into a route file, pull request, issue, workflow log or chat message. GitHub does not allow the secret value to be read back after storage.
+## Commissioning evidence
 
-## First authenticated commissioning run
+The secured two-role build completed two consecutive runs without retry.
 
-Run the `Jarvis Playwright QC` workflow manually with:
+### Run 1
 
-- Suite: `member`
-- Base URL: leave empty to use the repository/default URL
-- Require authenticated: `true`
+- Admin route: 21.3 seconds
+- Member route: 19.7 seconds
+- Public route: 8.6 seconds
+- Tests: 5 passed
+- Evidence-security findings: 0
 
-The commissioning run passes only when:
+### Run 2
 
-1. Preflight confirms both member secrets are configured.
-2. Chromium reaches HealthyMe and resolves the actual application surface.
-3. Secure Login is visible in the actual application frame.
-4. The dedicated account reaches Member Home.
-5. Logout is visible, proving the page is interactive.
-6. Browser refresh retains the authenticated member session.
-7. Video, report, timeline, browser diagnostics and evidence-security result are uploaded.
+- Admin route: 16.0 seconds
+- Member route: 15.1 seconds
+- Public route: 6.6 seconds
+- Tests: 5 passed
+- Evidence-security findings: 0
+
+Both runs confirmed all four secrets were available, both role pairs were enabled, dependencies had no reported vulnerabilities, TypeScript checks passed and evidence upload completed.
 
 ## Evidence standard
 
-Every Jarvis route must produce enough evidence for a developer to reproduce or narrow a failure:
+Every Jarvis route should produce enough evidence to reproduce or narrow a failure:
 
 - Route ID and Jarvis run ID
 - Git commit and execution environment
@@ -93,100 +108,66 @@ Every Jarvis route must produce enough evidence for a developer to reproduce or 
 - Timestamped checkpoints
 - Total elapsed time
 - Frame navigation timing
-- Browser console warnings/errors
-- Uncaught page errors
-- Failed requests
-- HTTP error responses
-- Timings for document, fetch and XHR responses
+- Console and page errors
+- Failed requests and HTTP error responses
+- Document, fetch and XHR timings
 - Full execution video
 - Failure screenshot
 - HTML and JSON results
 - Post-run evidence-security result
 
-Authentication query parameters, opaque provider payloads, JWTs, bearer tokens and sensitive nested values are redacted before diagnostic attachment. The workflow also scans generated text evidence and fails if it finds an unredacted sensitive value or trace archive.
+Authentication query parameters, provider payloads, JWTs, bearer tokens and sensitive nested values are redacted. Raw Playwright traces are excluded from CI because they cannot be reliably sanitized.
 
 ## Safety boundaries
 
-Jarvis may perform read-only navigation and dedicated-account authentication without additional approval when the route manifest is approved.
+Jarvis may perform dedicated-account authentication and read-only navigation when an approved route manifest exists.
 
-Jarvis must not perform any of the following until a separately approved test-data and reset mechanism exists:
+Jarvis must not perform these actions until a separately approved test-data and reset mechanism exists:
 
 - Submit health assessments
-- Publish recommendation profiles
+- Publish or allocate recommendation profiles
 - Send messages or emails
-- Create or modify schedules
+- Create, modify or cancel schedules
 - Upload member documents
-- Delete or deactivate records
+- Create, deactivate or delete users
 - Change roles or access
-- Execute payment, salary or irreversible business actions
-- Test against real member data
+- Modify packages, payments or business records
+- Test against real member health data
 
-A mutation route must define its starting data, expected database effect, cleanup/reset action and rollback behaviour.
+Every future mutation route must define its starting state, expected database effect, verification, cleanup/reset action and rollback behaviour.
 
 ## Known limitations
 
-### 1. Browser evidence is not full root-cause telemetry
+1. Browser evidence identifies where a visible journey slowed or failed, but does not prove a Supabase, database, Streamlit or server root cause.
+2. OTP, CAPTCHA, hardware keys, consent prompts and manual email-link approval interrupt unattended automation.
+3. Streamlit cold starts, iframe loading, hosting queues and provider redirects can affect timings independently of HealthyMe code.
+4. Major UI redesigns may require selector maintenance unless stable test IDs or accessibility names are provided.
+5. Video proves visible behaviour, not hidden database correctness.
+6. Playwright tests HealthyMe web only; Flutter needs Jarvis Mobile with Maestro or Appium.
+7. GitHub runner geography, CPU, bandwidth and browser differ from actual member devices.
+8. Evidence is retained for 14 days unless archived elsewhere.
+9. Third-party console and network noise still requires Victor's classification.
+10. Admin production automation remains deliberately limited because admin pages may expose real member information.
 
-Jarvis can identify where the visible journey slowed or failed and can capture browser/network evidence. It cannot prove a database, Supabase, Streamlit or server-side root cause until HealthyMe implements a privacy-safe, same-origin mechanism that records the same `JARVIS_RUN_ID` in backend telemetry.
+## Definition of Jarvis settled for current web scope
 
-### 2. Authentication challenges requiring a human are not autonomous
+Jarvis is operational for HealthyMe web authentication and landing-page QC when:
 
-OTP, CAPTCHA, hardware keys, consent prompts or manual email-link approval interrupt unattended automation. A test-only bypass or controlled test authentication mechanism would be required.
+- Public, member and admin routes are implemented.
+- Separate member and admin identities are configured.
+- Both authenticated routes pass twice without retry.
+- Role separation is confirmed.
+- Evidence-security checks pass with zero findings.
+- Vineet reviews the result and approves PR #310 for merge.
 
-### 3. Streamlit Cloud can introduce external delay
-
-Cold starts, hosting queues, iframe loading and provider redirects can affect timing independently of HealthyMe code. Jarvis records these separately where possible and performs one controlled recovery reload, but one run is not enough to establish a performance regression. Performance decisions should use repeated runs and a baseline percentile.
-
-### 4. Selectors still depend on an approved UI contract
-
-The driver tolerates the currently approved login wording alternatives, but major redesigns can require selector updates. Stable accessibility names or dedicated test IDs will reduce maintenance.
-
-### 5. Video explains visible behaviour, not hidden business correctness
-
-A correct-looking screen can still contain incorrect database state. Business-critical routes must later add API/database assertions against isolated test data.
-
-### 6. Playwright does not test the Flutter Android application
-
-Flutter needs its own Jarvis Mobile adapter using Maestro or Appium, an emulator/device and APK build artifacts.
-
-### 7. Automated visual quality is currently rule-based
-
-Jarvis can detect missing elements, overflow using explicit checks and screenshot differences once baselines exist. It does not yet independently judge whether a design is aesthetically good.
-
-### 8. GitHub-hosted runners differ from member devices
-
-Runner geography, CPU, bandwidth, browser version and screen size differ from Vineet's Android device and normal desktop browser. Device-specific failures require a device farm or local runner.
-
-### 9. Evidence retention is finite
-
-GitHub artifacts are retained for 14 days in the current workflow. Important release evidence must be preserved elsewhere if longer retention is required.
-
-### 10. Hosting and third-party noise must be classified
-
-Streamlit hosting, authentication providers and analytics services can emit console or network warnings unrelated to a HealthyMe defect. Jarvis records them, but Victor must classify platform noise separately from application failures.
-
-### 11. Raw traces are intentionally excluded from CI
-
-A Playwright trace can contain browser internals, URLs, form values and authentication context. Jarvis therefore sacrifices CI trace convenience in favour of privacy. Local traces are opt-in and must not be uploaded or shared.
-
-## Definition of Jarvis settled
-
-Jarvis is considered operational for HealthyMe web QC when all of the following are true:
-
-- Public route passes on two consecutive non-flaky runs of the final secured code.
-- Dedicated member secrets are configured.
-- Authenticated login/refresh route passes on two consecutive non-flaky runs.
-- Vineet reviews one complete evidence bundle.
-- Victor confirms route results are understandable and actionable.
-- Automated redaction and post-run evidence-security checks pass with no credential or sensitive-data leakage.
-- PR #310 is approved and merged.
+All technical commissioning conditions above are complete. PR approval and merge remain Vineet-controlled.
 
 ## Next capability layers
 
-1. Add Admin login and dashboard route using a separate dedicated admin account.
-2. Add server-side run-ID correlation to Streamlit/Sentry/Supabase diagnostics.
+1. Add safe protected-route navigation for member and admin workflows.
+2. Add privacy-safe run-ID correlation to Streamlit, Supabase and Sentry.
 3. Establish repeated latency baselines and regression thresholds.
-4. Add controlled test-data reset before any mutation journeys.
-5. Add visual layout assertions and approved screenshot baselines.
-6. Add Jarvis Mobile to `healthyme-flutter-member`.
-7. Reuse the framework for Wagewise only after its source-of-truth workflows are reconstructed.
+4. Build deterministic synthetic test data and reset controls before mutation journeys.
+5. Add approved screenshot baselines and visual layout assertions.
+6. Add Jarvis Mobile to the Flutter repository.
+7. Reuse the framework for Wagewise after its source-of-truth workflows are reconstructed.
