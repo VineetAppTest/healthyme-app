@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 import streamlit as st
 
 
-_MARKER = "_hm_exercise_saved_days_readonly_v1"
+_MARKER = "_hm_exercise_saved_days_readonly_v2"
 
 
 def _clean(value: object) -> str:
@@ -133,8 +133,16 @@ def install_exercise_saved_days_readonly_runtime() -> None:
         today = _india_today()
         from_key = f"{key_prefix}_saved_from"
         to_key = f"{key_prefix}_saved_to"
-        st.session_state.setdefault(from_key, today - dt.timedelta(days=6))
-        st.session_state.setdefault(to_key, today)
+        init_key = f"{key_prefix}_saved_filter_today_v2"
+        if not st.session_state.get(init_key):
+            # Start closed on today's date. Historical data appears only after the
+            # member deliberately expands the From/To range.
+            st.session_state[from_key] = today
+            st.session_state[to_key] = today
+            st.session_state[init_key] = True
+        else:
+            st.session_state.setdefault(from_key, today)
+            st.session_state.setdefault(to_key, today)
 
         with st.container(border=True):
             st.markdown("### View Saved Days")
