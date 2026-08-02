@@ -19,56 +19,46 @@ class MemberHomeGlobalHeaderRuntimeTests(unittest.TestCase):
         self.fake_st = _FakeStreamlit()
         self.original_runtime_st = runtime.st
         self.original_topbar = ui_common.topbar
-        self.original_utility = ui_common.utility_logout_bar
         runtime.st = self.fake_st
 
     def tearDown(self):
         runtime.st = self.original_runtime_st
         ui_common.topbar = self.original_topbar
-        ui_common.utility_logout_bar = self.original_utility
 
-    def test_member_home_replaces_local_row_with_shared_global_header(self):
-        events = []
+    def test_member_home_applies_global_spacing_and_preserves_profile_row(self):
+        calls = []
 
         def base_topbar(title, *args, **kwargs):
-            events.append(("topbar", title))
-
-        def shared_utility():
-            events.append(("utility", None))
+            calls.append(title)
 
         ui_common.topbar = base_topbar
-        ui_common.utility_logout_bar = shared_utility
 
         runtime.install_member_home_global_header_runtime()
         ui_common.topbar("Member Home", "Member subtitle", "Member experience")
 
-        self.assertEqual(
-            events,
-            [("utility", None), ("topbar", "Member Home")],
-        )
+        self.assertEqual(calls, ["Member Home"])
         rendered_css = "\n".join(self.fake_st.markdown_calls)
-        self.assertIn("hm-member-home-global-header-v1", rendered_css)
+        self.assertIn("hm-member-home-global-header-v2", rendered_css)
         self.assertIn("hm-member-identity-pill", rendered_css)
-        self.assertIn("display:none", rendered_css)
-        self.assertIn(".utility-bar", rendered_css)
+        self.assertIn("hm-top-profile-anchor", rendered_css)
+        self.assertIn("hm-top-logout-anchor", rendered_css)
+        self.assertIn("min-height:2.84rem", rendered_css)
+        self.assertIn("margin-bottom:.34rem", rendered_css)
         self.assertIn(".hero-shell", rendered_css)
+        self.assertNotIn("display:none!important;\n  visibility:hidden", rendered_css)
 
     def test_other_pages_keep_their_existing_header_sequence(self):
-        events = []
+        calls = []
 
         def base_topbar(title, *args, **kwargs):
-            events.append(("topbar", title))
-
-        def shared_utility():
-            events.append(("utility", None))
+            calls.append(title)
 
         ui_common.topbar = base_topbar
-        ui_common.utility_logout_bar = shared_utility
 
         runtime.install_member_home_global_header_runtime()
         ui_common.topbar("Daily Log", "Capture updates", "Member tracker")
 
-        self.assertEqual(events, [("topbar", "Daily Log")])
+        self.assertEqual(calls, ["Daily Log"])
         self.assertEqual(self.fake_st.markdown_calls, [])
 
     def test_installer_is_idempotent(self):
@@ -78,7 +68,6 @@ class MemberHomeGlobalHeaderRuntimeTests(unittest.TestCase):
             calls.append(title)
 
         ui_common.topbar = base_topbar
-        ui_common.utility_logout_bar = lambda: None
 
         runtime.install_member_home_global_header_runtime()
         installed = ui_common.topbar
