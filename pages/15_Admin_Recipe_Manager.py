@@ -7,6 +7,12 @@ import streamlit as st
 
 from components.guards import require_admin
 from components.storage_assets import upload_content_image
+from components.repository_page_ui import (
+    inject_repository_page_ui,
+    render_repository_disclosure,
+    repository_form_panel,
+    repository_inactive_panel,
+)
 from components.ui_common import (
     apply_luxe_theme,
     inject_global_styles,
@@ -27,6 +33,7 @@ inject_global_styles()
 apply_luxe_theme()
 require_admin()
 utility_logout_bar()
+inject_repository_page_ui()
 
 
 PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "recipes.csv"
@@ -108,7 +115,7 @@ def clean_image_value(value) -> str:
 
 def recipe_form(prefix: str, row=None) -> dict:
     row = row or {}
-    st.markdown("#### Core details")
+    st.markdown("#### Core Details")
     title_col, meal_col, diet_col = st.columns([1.4, 1, 1], gap="small")
     with title_col:
         title = st.text_input(
@@ -386,7 +393,14 @@ with repository_tab:
 
             if st.session_state.get("hm_recipe_repository_edit_index") == int(index):
                 title = _clean(row.get("title")) or "Untitled Recipe"
-                with st.expander(f"Edit Recipe · {title}", expanded=True):
+                if render_repository_disclosure(
+                    f"Edit Recipe · {title}",
+                    is_open=True,
+                    key=f"recipe_repo_edit_disclosure_{index}",
+                ):
+                    st.session_state.pop("hm_recipe_repository_edit_index", None)
+                    st.rerun()
+                with repository_form_panel():
                     edited = recipe_form(f"recipe_repo_edit_form_{index}", row.to_dict())
                     save_col, cancel_col, spacer = st.columns([1, 1, 3], gap="small")
                     with save_col:
@@ -449,39 +463,47 @@ with repository_tab:
                         )
                         st.rerun()
 
-        with st.expander(f"Inactive Repository Items ({len(inactive_df)})"):
-            if inactive_df.empty:
-                st.caption("No inactive repository items.")
-            for index, row in inactive_df.iterrows():
-                label_col, action_col = st.columns([5.5, 1], gap="small")
-                with label_col:
-                    st.markdown(
-                        f"**{_clean(row.get('title')) or 'Untitled Recipe'}**  \n{_recipe_summary(row)}"
-                    )
-                with action_col:
-                    if st.button(
-                        "Reactivate",
-                        key=f"recipe_repo_reactivate_{index}",
-                        use_container_width=True,
-                    ):
-                        df.at[index, "status"] = "active"
-                        save(df)
-                        _flash("Recipe reactivated.")
-                        st.rerun()
-
+        inactive_open = bool(st.session_state.get("hm_recipe_repository_inactive_open", False))
+    if render_repository_disclosure(
+        f"Inactive Repository Items ({len(inactive_df)})",
+        is_open=inactive_open,
+        key="recipe_repo_inactive_disclosure",
+    ):
+        st.session_state["hm_recipe_repository_inactive_open"] = not inactive_open
+        st.rerun()
+    if inactive_open:
+        with repository_inactive_panel():
+                if inactive_df.empty:
+                    st.caption("No inactive repository items.")
+                for index, row in inactive_df.iterrows():
+                    label_col, action_col = st.columns([5.5, 1], gap="small")
+                    with label_col:
+                        st.markdown(
+                            f"**{_clean(row.get('title')) or 'Untitled Recipe'}**  \n{_recipe_summary(row)}"
+                        )
+                    with action_col:
+                        if st.button(
+                            "Reactivate",
+                            key=f"recipe_repo_reactivate_{index}",
+                            use_container_width=True,
+                        ):
+                            df.at[index, "status"] = "active"
+                            save(df)
+                            _flash("Recipe reactivated.")
+                            st.rerun()
 with add_tab:
-    st.subheader("Add Recipe")
-    values = recipe_form("new_recipe_repository")
-    if st.button("Save Recipe", type="primary", use_container_width=True):
-        if not _clean(values.get("title")):
-            st.error("Recipe title is required.")
-        else:
-            df = load()
-            df.loc[len(df)] = [values.get(column, "") for column in RECIPE_COLUMNS]
-            save(df)
-            _flash("Recipe saved.")
-            st.rerun()
-
+    with repository_form_panel():
+        st.subheader("Add Recipe")
+        values = recipe_form("new_recipe_repository")
+        if st.button("Save Recipe", type="primary", use_container_width=True):
+            if not _clean(values.get("title")):
+                st.error("Recipe title is required.")
+            else:
+                df = load()
+                df.loc[len(df)] = [values.get(column, "") for column in RECIPE_COLUMNS]
+                save(df)
+                _flash("Recipe saved.")
+                st.rerun()
 render_page_nav(
     "Recipe Repository",
     back_page="pages/10_Admin_Dashboard.py",
