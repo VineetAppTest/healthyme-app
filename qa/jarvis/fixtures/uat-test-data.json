@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "classification": "synthetic_uat",
+  "mutation_namespace": "jarvis_uat",
+  "subjects": [
+    {
+      "alias": "UAT_MEMBER_A",
+      "healthyme_id": "jarvis_member",
+      "role": "member"
+    },
+    {
+      "alias": "UAT_ADMIN_A",
+      "healthyme_id": "jarvis_admin",
+      "role": "admin"
+    }
+  ],
+  "rules": {
+    "real_person_data": false,
+    "email_values_in_fixture": false,
+    "phone_values_in_fixture": false,
+    "free_text_health_details_in_fixture": false,
+    "mutation_records_must_use_namespace": true,
+    "cleanup_required": true
+  },
+  "cleanup": {
+    "ledger_location": "runner_temp",
+    "every_created_record_must_be_marked_cleaned": true,
+    "failed_cleanup_blocks_deploy_eligibility": true
+  }
+}
