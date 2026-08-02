@@ -380,6 +380,7 @@ with repository_tab:
                         None if current == int(index) else int(index)
                     )
                     st.session_state.pop("hm_recipe_repository_delete_index", None)
+                    st.session_state["hm_recipe_repository_add_open"] = False
                     st.rerun()
             with delete_col:
                 if st.button(
@@ -495,18 +496,29 @@ with repository_tab:
                             st.rerun()
 
 with add_tab:
-    with repository_form_panel():
-        st.subheader("Add Recipe")
-        values = recipe_form("new_recipe_repository")
-        if st.button("Save Recipe", type="primary", use_container_width=True):
-            if not _clean(values.get("title")):
-                st.error("Recipe title is required.")
-            else:
-                df = load()
-                df.loc[len(df)] = [values.get(column, "") for column in RECIPE_COLUMNS]
-                save(df)
-                _flash("Recipe saved.")
-                st.rerun()
+    add_open = bool(st.session_state.get("hm_recipe_repository_add_open", False))
+    if render_repository_disclosure(
+        "Add Recipe",
+        is_open=add_open,
+        key="recipe_repo_add_disclosure",
+    ):
+        st.session_state["hm_recipe_repository_add_open"] = not add_open
+        if not add_open:
+            st.session_state.pop("hm_recipe_repository_edit_index", None)
+            st.session_state.pop("hm_recipe_repository_delete_index", None)
+        st.rerun()
+    if add_open:
+        with repository_form_panel():
+            values = recipe_form("new_recipe_repository")
+            if st.button("Save Recipe", type="primary", use_container_width=True):
+                if not _clean(values.get("title")):
+                    st.error("Recipe title is required.")
+                else:
+                    df = load()
+                    df.loc[len(df)] = [values.get(column, "") for column in RECIPE_COLUMNS]
+                    save(df)
+                    _flash("Recipe saved.")
+                    st.rerun()
 render_page_nav(
     "Recipe Repository",
     back_page="pages/10_Admin_Dashboard.py",
