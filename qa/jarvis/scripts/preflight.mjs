@@ -3,8 +3,12 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const baseUrl = process.env.JARVIS_BASE_URL || 'https://healthymeappbyankita.streamlit.app';
 const suite = process.env.JARVIS_SUITE || 'all';
 const requireAuth = String(process.env.JARVIS_REQUIRE_AUTH || 'false').toLowerCase() === 'true';
-const emailConfigured = Boolean(process.env.JARVIS_MEMBER_EMAIL);
-const passwordConfigured = Boolean(process.env.JARVIS_MEMBER_PASSWORD);
+
+const memberEmailConfigured = Boolean(process.env.JARVIS_MEMBER_EMAIL);
+const memberPasswordConfigured = Boolean(process.env.JARVIS_MEMBER_PASSWORD);
+const adminEmailConfigured = Boolean(process.env.JARVIS_ADMIN_EMAIL);
+const adminPasswordConfigured = Boolean(process.env.JARVIS_ADMIN_PASSWORD);
+
 const errors = [];
 const warnings = [];
 
@@ -21,19 +25,39 @@ try {
   errors.push('JARVIS_BASE_URL is not a valid URL.');
 }
 
-if (!['all', 'public', 'member'].includes(suite)) {
-  errors.push(`Unsupported JARVIS_SUITE: ${suite}. Use all, public or member.`);
+if (!['all', 'public', 'member', 'admin'].includes(suite)) {
+  errors.push(`Unsupported JARVIS_SUITE: ${suite}. Use all, public, member or admin.`);
 }
 
-if (emailConfigured !== passwordConfigured) {
+if (memberEmailConfigured !== memberPasswordConfigured) {
   errors.push('Member credentials are only partially configured. Set both secrets or neither.');
+}
+if (adminEmailConfigured !== adminPasswordConfigured) {
+  errors.push('Admin credentials are only partially configured. Set both secrets or neither.');
 }
 
 const memberRouteRequested = suite === 'all' || suite === 'member';
-if (memberRouteRequested && !emailConfigured) {
+const adminRouteRequested = suite === 'all' || suite === 'admin';
+
+if (memberRouteRequested && !memberEmailConfigured) {
   const message = 'Authenticated member route is disabled until both member secrets are configured.';
   if (requireAuth) errors.push(message);
   else warnings.push(message);
+}
+
+if (adminRouteRequested && !adminEmailConfigured) {
+  const message = 'Authenticated admin route is disabled until both admin secrets are configured.';
+  if (requireAuth) errors.push(message);
+  else warnings.push(message);
+}
+
+if (
+  memberEmailConfigured &&
+  adminEmailConfigured &&
+  process.env.JARVIS_MEMBER_EMAIL?.trim().toLowerCase() ===
+    process.env.JARVIS_ADMIN_EMAIL?.trim().toLowerCase()
+) {
+  errors.push('Member and admin identities must use different email addresses.');
 }
 
 let reachability = {
@@ -53,7 +77,7 @@ if (parsedUrl && errors.length === 0) {
       redirect: 'follow',
       signal: AbortSignal.timeout(30_000),
       headers: {
-        'User-Agent': 'HealthyMe-Jarvis-QC/0.2',
+        'User-Agent': 'HealthyMe-Jarvis-QC/0.3',
       },
     });
     reachability = {
@@ -91,12 +115,15 @@ const report = {
   suite,
   require_authenticated_route: requireAuth,
   credentials: {
-    member_email_configured: emailConfigured,
-    member_password_configured: passwordConfigured,
+    member_email_configured: memberEmailConfigured,
+    member_password_configured: memberPasswordConfigured,
+    admin_email_configured: adminEmailConfigured,
+    admin_password_configured: adminPasswordConfigured,
   },
   routes: {
     public_enabled: suite === 'all' || suite === 'public',
-    member_enabled: memberRouteRequested && emailConfigured && passwordConfigured,
+    member_enabled: memberRouteRequested && memberEmailConfigured && memberPasswordConfigured,
+    admin_enabled: adminRouteRequested && adminEmailConfigured && adminPasswordConfigured,
   },
   reachability,
   warnings,
