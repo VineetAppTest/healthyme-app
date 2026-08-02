@@ -1,0 +1,37 @@
+name: Repository consolidation validation
+
+on:
+  pull_request:
+    paths:
+      - "pages/15_Admin_Recipe_Manager.py"
+      - "pages/16_Admin_Exercise_Manager.py"
+      - "pages/39_Admin_Supplement_Manager.py"
+      - "tests/test_repository_consolidation.py"
+      - ".github/workflows/repository-consolidation-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile repository pages and contracts
+        run: |
+          python -m py_compile \
+            pages/15_Admin_Recipe_Manager.py \
+            pages/16_Admin_Exercise_Manager.py \
+            pages/39_Admin_Supplement_Manager.py \
+            tests/test_repository_consolidation.py
+
+      - name: Run repository consolidation contracts
+        run: python -m unittest tests.test_repository_consolidation -v
