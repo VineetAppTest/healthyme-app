@@ -17,8 +17,9 @@ class ExerciseJournalRepositoryFixContractTests(unittest.TestCase):
         self.assertNotIn("PATH =", page)
         self.assertIn("add_exercise_repository_item", page)
         self.assertIn("update_exercise_repository_item", page)
-        self.assertIn("delete_exercise_repository_item", page)
-        self.assertIn("import_exercise_repository_items", page)
+        self.assertIn("set_exercise_repository_status", page)
+        self.assertNotIn("delete_exercise_repository_item", page)
+        self.assertNotIn("import_exercise_repository_items", page)
 
     def test_admin_success_messages_remain_compatible_with_final_repair_runtime(self):
         page = source("pages/16_Admin_Exercise_Manager.py")
@@ -26,12 +27,13 @@ class ExerciseJournalRepositoryFixContractTests(unittest.TestCase):
         for message in (
             "Exercise saved.",
             "Exercise updated.",
-            "Exercise deleted.",
         ):
             self.assertIn(message, page)
             self.assertIn(message, repair)
-        self.assertIn("CSV imported.", page)
-        self.assertIn('text.startswith("CSV imported.")', repair)
+        self.assertIn("Historical references were retained.", page)
+        self.assertIn("Exercise reactivated.", page)
+        self.assertIn("_flash", page)
+        self.assertIn("_show_flash", page)
         self.assertIn("_render_pending_success", repair)
 
     def test_repository_preserves_numeric_ids_and_verifies_fresh_state(self):
