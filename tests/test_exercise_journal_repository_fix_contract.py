@@ -21,15 +21,21 @@ class ExerciseJournalRepositoryFixContractTests(unittest.TestCase):
         self.assertNotIn("delete_exercise_repository_item", page)
         self.assertNotIn("import_exercise_repository_items", page)
 
-    def test_admin_success_messages_remain_compatible_with_final_repair_runtime(self):
+    def test_admin_success_messages_support_workspace_and_legacy_repair(self):
         page = source("pages/16_Admin_Exercise_Manager.py")
         repair = source("components/admin_exercise_repair_runtime.py")
-        for message in (
-            "Exercise saved.",
-            "Exercise updated.",
-        ):
-            self.assertIn(message, page)
-            self.assertIn(message, repair)
+
+        # The dedicated Add workspace owns its local success-and-clear confirmation.
+        self.assertIn(
+            "Exercise saved successfully. The form has been cleared.",
+            page,
+        )
+        # Edit continues to return to the repository through the established flash path.
+        self.assertIn("Exercise updated.", page)
+        self.assertIn("Exercise updated.", repair)
+
+        # Keep the retired inline-form contract in the repair runtime as a rollback guard.
+        self.assertIn("Exercise saved.", repair)
         self.assertIn("Historical references were retained.", page)
         self.assertIn("Exercise reactivated.", page)
         self.assertIn("_flash", page)
