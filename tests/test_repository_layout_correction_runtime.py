@@ -35,11 +35,16 @@ class RepositoryLayoutCorrectionRuntimeTests(unittest.TestCase):
         self.assertIn("min-height:2.55rem!important", source)
         self.assertIn("margin:0!important", source)
 
-    def test_native_disclosure_marker_is_removed_and_label_is_full(self):
+    def test_only_custom_disclosure_marker_remains_and_label_is_full(self):
         source = text(RUNTIME)
         self.assertIn("summary::-webkit-details-marker{display:none!important;}", source)
         self.assertIn('summary::marker{content:""!important;display:none!important;}', source)
+        self.assertIn('font-size:0!important;', source)
+        self.assertIn('summary:before{', source)
+        self.assertIn('font-size:.82rem!important;', source)
         self.assertIn('summary [data-testid="stExpanderToggleIcon"]', source)
+        self.assertIn('summary [aria-hidden="true"]', source)
+        self.assertIn('summary [class*="material-symbols"]', source)
         self.assertIn("overflow:visible!important", source)
         self.assertIn("text-overflow:clip!important", source)
         self.assertIn("max-width:none!important", source)
@@ -57,14 +62,20 @@ class RepositoryLayoutCorrectionRuntimeTests(unittest.TestCase):
             "#### Timing",
             "#### Instructions",
         ):
-            # Nutrition and Preparation are already emitted by the Recipe form and
-            # remain covered by the existing compact-UI test. The runtime must carry
-            # every newly normalised or injected heading.
             if heading not in {"#### Nutrition", "#### Preparation"}:
                 self.assertIn(heading, source)
 
-        self.assertIn('div[data-baseweb="tab-panel"] textarea{min-height:64px!important;}', source)
-        self.assertIn('div[data-baseweb="tab-panel"] h4{', source)
+    def test_add_and_edit_forms_have_balanced_compact_density(self):
+        source = text(RUNTIME)
+        self.assertIn('gap:.30rem!important;', source)
+        self.assertIn('background:#F8F3E7!important;', source)
+        self.assertIn('border-left:3px solid #E3C98E!important;', source)
+        self.assertIn('font-size:.72rem!important;', source)
+        self.assertIn('min-height:2.10rem!important;', source)
+        self.assertIn('min-height:58px!important;', source)
+        self.assertIn('padding:.58rem .68rem!important;', source)
+        self.assertIn('visibility:visible!important;', source)
+        self.assertIn('white-space:nowrap!important;', source)
 
     def test_runtime_is_installed_outermost(self):
         bootstrap = text(BOOTSTRAP)
