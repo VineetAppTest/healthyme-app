@@ -1,0 +1,33 @@
+name: Repository compact UI validation
+
+on:
+  pull_request:
+    paths:
+      - 'pages/15_Admin_Recipe_Manager.py'
+      - 'pages/16_Admin_Exercise_Manager.py'
+      - 'pages/39_Admin_Supplement_Manager.py'
+      - 'tests/test_repository_compact_ui.py'
+      - '.github/workflows/repository-compact-ui-validation.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile repository pages
+        run: |
+          python -m py_compile \
+            pages/15_Admin_Recipe_Manager.py \
+            pages/16_Admin_Exercise_Manager.py \
+            pages/39_Admin_Supplement_Manager.py \
+            tests/test_repository_compact_ui.py
+
+      - name: Run compact UI contracts
+        run: python -m unittest tests.test_repository_compact_ui -v
