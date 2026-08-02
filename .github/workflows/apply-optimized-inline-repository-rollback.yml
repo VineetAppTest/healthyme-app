@@ -26,11 +26,9 @@ jobs:
           python-version: '3.11'
       - name: Apply rollback and optimized inline architecture
         run: python scripts/apply_optimized_inline_repository_rollback.py
-      - name: Remove one-time transformer
-        run: |
-          rm -f scripts/apply_optimized_inline_repository_rollback.py
-          rm -f .github/workflows/apply-optimized-inline-repository-rollback.yml
-      - name: Commit transformed files
+      - name: Exclude workflow-file changes from the automated commit
+        run: git checkout HEAD -- .github/workflows
+      - name: Commit transformed application files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
