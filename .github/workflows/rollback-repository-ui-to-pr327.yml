@@ -1,0 +1,49 @@
+name: Roll back repository UI to PR327 baseline
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/rollback-repository-ui-to-pr327.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Restore PR327 repository baseline
+        run: |
+          git checkout 99c615430d6901280f686644b47e7ed39fbbd108 -- \
+            components/__init__.py \
+            pages/15_Admin_Recipe_Manager.py \
+            pages/16_Admin_Exercise_Manager.py \
+            pages/39_Admin_Supplement_Manager.py \
+            tests/test_repository_consolidation.py \
+            tests/test_supplement_repository_separation.py
+
+          git rm -f --ignore-unmatch \
+            components/repository_create_form_success.py \
+            components/repository_layout_correction_runtime.py \
+            components/repository_page_ui.py \
+            tests/test_optimized_inline_repository_forms.py \
+            tests/test_repository_compact_ui.py \
+            tests/test_repository_create_form_success.py \
+            tests/test_repository_density_and_lazy_add.py \
+            tests/test_repository_layout_correction_runtime.py
+
+      - name: Commit rollback
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components pages tests
+          git commit -m "Restore PR327 repository UI baseline"
+          git push origin HEAD:${{ github.head_ref }}
