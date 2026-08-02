@@ -16,13 +16,14 @@ on:
           - all
           - public
           - member
+          - admin
       base_url:
         description: "Optional HealthyMe environment URL override"
         required: false
         default: ""
         type: string
       require_authenticated:
-        description: "Fail preflight when member credentials are unavailable"
+        description: "Fail preflight when requested role credentials are unavailable"
         required: true
         default: false
         type: boolean
@@ -37,7 +38,7 @@ permissions:
 jobs:
   browser-qc:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: qa/jarvis
@@ -45,6 +46,8 @@ jobs:
       JARVIS_BASE_URL: ${{ inputs.base_url || vars.JARVIS_BASE_URL || 'https://healthymeappbyankita.streamlit.app' }}
       JARVIS_MEMBER_EMAIL: ${{ secrets.JARVIS_MEMBER_EMAIL }}
       JARVIS_MEMBER_PASSWORD: ${{ secrets.JARVIS_MEMBER_PASSWORD }}
+      JARVIS_ADMIN_EMAIL: ${{ secrets.JARVIS_ADMIN_EMAIL }}
+      JARVIS_ADMIN_PASSWORD: ${{ secrets.JARVIS_ADMIN_PASSWORD }}
       JARVIS_SUITE: ${{ inputs.suite || 'all' }}
       JARVIS_REQUIRE_AUTH: ${{ inputs.require_authenticated || 'false' }}
       JARVIS_RUN_ID: jarvis-${{ github.run_id }}-${{ github.run_attempt }}
@@ -82,6 +85,7 @@ jobs:
           case "$JARVIS_SUITE" in
             public) npm run test:public ;;
             member) npm run test:member ;;
+            admin) npm run test:admin ;;
             all) npm test ;;
             *) echo "Unsupported suite: $JARVIS_SUITE" >&2; exit 1 ;;
           esac
