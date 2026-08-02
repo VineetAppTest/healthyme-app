@@ -62,6 +62,9 @@ from components.member_daily_log_native_tab_persistence import (
 from components.daily_log_widget_route_preservation import (
     install_daily_log_widget_route_preservation,
 )
+from components.member_home_global_header_runtime import (
+    install_member_home_global_header_runtime,
+)
 
 
 install_streamlit_toolbar_cleanup()
@@ -105,3 +108,7 @@ install_member_daily_log_native_tab_persistence()
 # in app.py. Install this last so every accepted Daily Log widget wrapper composes a
 # route-preservation callback without affecting Back or Dashboard navigation.
 install_daily_log_widget_route_preservation()
+
+# Member Home previously bypassed the shared utility header. Install this outermost
+# so it replaces the local row after every earlier topbar presentation wrapper.
+install_member_home_global_header_runtime()
