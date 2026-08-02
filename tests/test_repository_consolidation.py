@@ -4,7 +4,6 @@ import pathlib
 import unittest
 
 
-# PR #338 intentionally validates the restored PR #327 repository baseline.
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RECIPE = ROOT / "pages" / "15_Admin_Recipe_Manager.py"
 EXERCISE = ROOT / "pages" / "16_Admin_Exercise_Manager.py"
