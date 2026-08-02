@@ -1,4 +1,5 @@
 import pathlib
+import tempfile
 import unittest
 
 from streamlit.testing.v1 import AppTest
@@ -9,6 +10,12 @@ RUNTIME_PATH = ROOT / "components" / "member_daily_log_section_runtime.py"
 
 
 class ExerciseJournalRuntimeAppTests(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
     def _app(self):
         script = f'''
 import importlib.util
@@ -30,7 +37,11 @@ with exercise_tab:
     st.text("EXERCISE_PANEL_VISIBLE")
     st.selectbox("Exercise status", ["Planned", "Completed"], key="exercise_status")
 '''
-        return AppTest.from_string(script, default_timeout=10).run()
+        pages_dir = pathlib.Path(self.temp_dir.name) / "pages"
+        pages_dir.mkdir(parents=True, exist_ok=True)
+        page_path = pages_dir / "18_Daily_Log.py"
+        page_path.write_text(script, encoding="utf-8")
+        return AppTest.from_file(str(page_path), default_timeout=10).run()
 
     @staticmethod
     def _text_values(app):
