@@ -8,100 +8,129 @@ import streamlit as st
 
 _REPOSITORY_PAGE_CSS = """
 <style>
+/* Give each repository record a clear visual break and keep actions centred. */
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row),
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row){
+  align-items:center!important;
+  margin-bottom:.52rem!important;
+}
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row) .hm-repo-row,
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) .hm-sup-row{
+  margin:0!important;
+}
+
 /* Direct repository controls: no Streamlit expander marker can be rendered. */
 div[data-testid="stVerticalBlock"]:has(.hm-repository-disclosure-anchor){
-  gap:.14rem!important;
-  max-width:940px!important;
+  gap:.1rem!important;
+  max-width:980px!important;
+  margin:.34rem 0 .5rem!important;
 }
 div[data-testid="stVerticalBlock"]:has(.hm-repository-disclosure-anchor) div[data-testid="stButton"]>button{
   justify-content:flex-start!important;
-  min-height:2.25rem!important;
-  padding:.36rem .72rem!important;
+  min-height:2.15rem!important;
+  padding:.3rem .68rem!important;
   border:1px solid #E3C98E!important;
   border-radius:14px!important;
   background:#FFFDF8!important;
   color:#064E3B!important;
-  font-size:.84rem!important;
+  font-size:.8rem!important;
   font-weight:900!important;
+  line-height:1.15!important;
   text-align:left!important;
   white-space:nowrap!important;
   overflow:visible!important;
 }
 
-/* Add and Edit use this exact same bordered workspace. */
+/* Add and Edit use this exact same crisp bordered workspace. */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor){
-  max-width:940px!important;
-  margin:.18rem 0 .55rem!important;
+  max-width:980px!important;
+  margin:.12rem 0 .48rem!important;
   border:1px solid #E3C98E!important;
-  border-radius:14px!important;
+  border-radius:13px!important;
   background:#FFFDF8!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor)>div{
-  padding:.72rem .82rem!important;
+  padding:.48rem .62rem!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) div[data-testid="stVerticalBlock"]{
-  gap:.34rem!important;
+  gap:.2rem!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) div[data-testid="stHorizontalBlock"]{
-  gap:.55rem!important;
+  gap:.42rem!important;
+  margin-bottom:0!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) h3{
-  font-size:1rem!important;
-  line-height:1.2!important;
-  margin:.08rem 0 .22rem!important;
+  font-size:.9rem!important;
+  line-height:1.15!important;
+  margin:.02rem 0 .12rem!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) h4{
   color:#064E3B!important;
   background:#F8F3E7!important;
   border-left:3px solid #D4A72C!important;
-  border-radius:6px!important;
-  font-size:.8rem!important;
-  line-height:1.15!important;
-  margin:.35rem 0 .08rem!important;
-  padding:.22rem .42rem!important;
+  border-radius:5px!important;
+  font-size:.73rem!important;
+  line-height:1.1!important;
+  margin:.22rem 0 .03rem!important;
+  padding:.16rem .34rem!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) [data-testid="stWidgetLabel"] p{
-  font-size:.72rem!important;
-  line-height:1.1!important;
-  margin-bottom:.04rem!important;
+  font-size:.66rem!important;
+  line-height:1.05!important;
+  margin-bottom:.01rem!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) [data-baseweb="input"]>div,
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) [data-baseweb="select"]>div{
-  min-height:2.18rem!important;
+  min-height:1.9rem!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) input{
-  min-height:2.18rem!important;
-  padding:.28rem .5rem!important;
-  font-size:.76rem!important;
+  min-height:1.9rem!important;
+  padding:.2rem .42rem!important;
+  font-size:.7rem!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) textarea{
-  min-height:68px!important;
-  height:68px!important;
-  padding:.4rem .5rem!important;
-  font-size:.76rem!important;
-  line-height:1.25!important;
+  min-height:52px!important;
+  height:52px!important;
+  padding:.3rem .42rem!important;
+  font-size:.7rem!important;
+  line-height:1.18!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) [data-testid="stFileUploaderDropzone"]{
-  min-height:3rem!important;
-  padding:.42rem .52rem!important;
+  min-height:2.45rem!important;
+  padding:.28rem .42rem!important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) [data-testid="stFileUploaderDropzone"] small{
+  font-size:.62rem!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) div[data-testid="stButton"]>button,
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) div[data-testid="stFormSubmitButton"]>button{
-  min-height:2rem!important;
+  min-height:2.05rem!important;
   padding:.26rem .55rem!important;
-  font-size:.74rem!important;
+  font-size:.72rem!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+/* Do not allow inherited/global button rules to hide action text. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-form-anchor) button p{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  color:inherit!important;
+  font-size:.72rem!important;
+  line-height:1.1!important;
+  margin:0!important;
 }
 
 /* Read-only inactive items use a compact bordered panel. */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-inactive-anchor){
-  max-width:940px!important;
-  margin:.12rem 0 .45rem!important;
+  max-width:980px!important;
+  margin:.12rem 0 .5rem!important;
   border:1px solid #E3C98E!important;
-  border-radius:14px!important;
+  border-radius:13px!important;
   background:#FFFDF8!important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-repository-inactive-anchor)>div{
-  padding:.55rem .7rem!important;
+  padding:.48rem .62rem!important;
 }
 
 @media(max-width:760px){
@@ -128,11 +157,7 @@ def render_repository_disclosure(
     is_open: bool,
     key: str,
 ) -> bool:
-    """Render one page-owned inline disclosure control.
-
-    Circled Unicode symbols keep the accepted circular + / minus treatment while
-    avoiding Streamlit's native expander marker entirely.
-    """
+    """Render one page-owned inline disclosure control."""
 
     symbol = "⊖" if is_open else "⊕"
     with st.container():
