@@ -275,6 +275,7 @@ with repository_tab:
                     None if current == exercise_id else exercise_id
                 )
                 st.session_state.pop("hm_exercise_repository_delete_id", None)
+                st.session_state["hm_exercise_repository_add_open"] = False
                 st.rerun()
         with delete_col:
             if st.button(
@@ -406,16 +407,27 @@ with repository_tab:
                         except Exception as exc:
                             st.error(str(exc))
 with add_tab:
-    with repository_form_panel():
-        st.subheader("Add Exercise")
-        values = exercise_form("new_exercise_repository")
-        if st.button("Save Exercise", type="primary", use_container_width=True):
-            try:
-                add_exercise_repository_item(values, actor_id=_actor_id())
-                _flash("Exercise saved.")
-                st.rerun()
-            except Exception as exc:
-                st.error(str(exc))
+    add_open = bool(st.session_state.get("hm_exercise_repository_add_open", False))
+    if render_repository_disclosure(
+        "Add Exercise",
+        is_open=add_open,
+        key="exercise_repo_add_disclosure",
+    ):
+        st.session_state["hm_exercise_repository_add_open"] = not add_open
+        if not add_open:
+            st.session_state.pop("hm_exercise_repository_edit_id", None)
+            st.session_state.pop("hm_exercise_repository_delete_id", None)
+        st.rerun()
+    if add_open:
+        with repository_form_panel():
+            values = exercise_form("new_exercise_repository")
+            if st.button("Save Exercise", type="primary", use_container_width=True):
+                try:
+                    add_exercise_repository_item(values, actor_id=_actor_id())
+                    _flash("Exercise saved.")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
 render_page_nav(
     "Exercise Repository",
     back_page="pages/10_Admin_Dashboard.py",

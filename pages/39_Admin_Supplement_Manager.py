@@ -202,6 +202,7 @@ with repository_tab:
                     None if current == supplement_id else supplement_id
                 )
                 st.session_state.pop("hm_supplement_repository_delete_id", None)
+                st.session_state["hm_supplement_repository_add_open"] = False
                 st.rerun()
         with delete_col:
             if st.button(
@@ -383,57 +384,68 @@ with repository_tab:
                         except Exception as exc:
                             st.error(str(exc))
 with add_tab:
-    with repository_form_panel():
-        st.subheader("Add Supplement")
-        with st.form("hm_v1023a_add_supplement_form", clear_on_submit=True):
-            st.markdown("#### Basic Details")
-            name = st.text_input(
-                "Supplement Name", placeholder="e.g. Magnesium Glycinate"
-            )
-            dose_col, frequency_col = st.columns(2)
-            with dose_col:
-                dosage = st.text_input("Default Dosage", placeholder="e.g. 400 mg")
-            with frequency_col:
-                frequency = st.selectbox(
-                    "Default Frequency",
-                    FREQUENCY_OPTIONS,
-                    index=0,
-                    key="hm_v1023a_add_frequency",
+    add_open = bool(st.session_state.get("hm_supplement_repository_add_open", False))
+    if render_repository_disclosure(
+        "Add Supplement",
+        is_open=add_open,
+        key="supplement_repo_add_disclosure",
+    ):
+        st.session_state["hm_supplement_repository_add_open"] = not add_open
+        if not add_open:
+            st.session_state.pop("hm_supplement_repository_edit_id", None)
+            st.session_state.pop("hm_supplement_repository_delete_id", None)
+        st.rerun()
+    if add_open:
+        with repository_form_panel():
+            with st.form("hm_v1023a_add_supplement_form", clear_on_submit=True):
+                st.markdown("#### Basic Details")
+                name = st.text_input(
+                    "Supplement Name", placeholder="e.g. Magnesium Glycinate"
                 )
-            st.markdown("#### Timing")
-            timing_options = st.multiselect(
-                "Default Timing", TIMING_OPTIONS, default=[]
-            )
-            custom_timing = st.text_input(
-                "Additional Timing",
-                placeholder="Optional custom timing; separate multiple values with commas.",
-            )
-            st.markdown("#### Instructions")
-            instructions = st.text_area(
-                "Default Instructions",
-                placeholder="Reusable guidance that can be adjusted during member allocation.",
-            )
-            submitted = st.form_submit_button(
-                "Add to Repository", use_container_width=True
-            )
-            if submitted:
-                try:
-                    add_supplement_repository_item(
-                        {
-                            "supplement_name": name,
-                            "dosage": dosage,
-                            "frequency": frequency,
-                            "timing": _timing_from_choices(
-                                timing_options, custom_timing
-                            ),
-                            "instructions": instructions,
-                        },
-                        actor_id=_actor_id(),
+                dose_col, frequency_col = st.columns(2)
+                with dose_col:
+                    dosage = st.text_input("Default Dosage", placeholder="e.g. 400 mg")
+                with frequency_col:
+                    frequency = st.selectbox(
+                        "Default Frequency",
+                        FREQUENCY_OPTIONS,
+                        index=0,
+                        key="hm_v1023a_add_frequency",
                     )
-                    _flash("Supplement added to repository.")
-                    st.rerun()
-                except Exception as exc:
-                    st.error(str(exc))
+                st.markdown("#### Timing")
+                timing_options = st.multiselect(
+                    "Default Timing", TIMING_OPTIONS, default=[]
+                )
+                custom_timing = st.text_input(
+                    "Additional Timing",
+                    placeholder="Optional custom timing; separate multiple values with commas.",
+                )
+                st.markdown("#### Instructions")
+                instructions = st.text_area(
+                    "Default Instructions",
+                    placeholder="Reusable guidance that can be adjusted during member allocation.",
+                )
+                submitted = st.form_submit_button(
+                    "Add to Repository", use_container_width=True
+                )
+                if submitted:
+                    try:
+                        add_supplement_repository_item(
+                            {
+                                "supplement_name": name,
+                                "dosage": dosage,
+                                "frequency": frequency,
+                                "timing": _timing_from_choices(
+                                    timing_options, custom_timing
+                                ),
+                                "instructions": instructions,
+                            },
+                            actor_id=_actor_id(),
+                        )
+                        _flash("Supplement added to repository.")
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(str(exc))
 render_page_nav(
     "Supplement Repository",
     back_page="pages/10_Admin_Dashboard.py",
