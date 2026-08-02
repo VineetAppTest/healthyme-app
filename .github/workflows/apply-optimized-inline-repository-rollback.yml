@@ -1,9 +1,10 @@
 name: Apply optimized inline repository rollback
 
 on:
-  push:
+  pull_request:
     branches:
-      - fix/optimized-inline-repository-forms
+      - main
+    types: [opened, synchronize, reopened]
     paths:
       - scripts/apply_optimized_inline_repository_rollback.py
       - .github/workflows/apply-optimized-inline-repository-rollback.yml
@@ -18,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: fix/optimized-inline-repository-forms
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -35,4 +36,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Restore optimized inline repository forms"
-          git push origin HEAD:fix/optimized-inline-repository-forms
+          git push origin HEAD:${{ github.head_ref }}
