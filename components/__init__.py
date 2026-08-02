@@ -69,8 +69,6 @@ install_legacy_schedule_reminder_delivery()
 install_member_home_schedule_presentation()
 
 # Retain the accepted Exercise Journal table and Food Journal widget corrections.
-# Its legacy Daily Log tab wrapper remains underneath the final native-tab adapter and
-# is bypassed only for the Food/Exercise tab pair.
 install_member_exercise_journal_table()
 
 install_member_message_display_cleanup()
@@ -87,8 +85,9 @@ install_member_home_side_by_side_runtime()
 install_member_saved_days_dispatch_runtime()
 
 # Final page-specific repairs are deliberately outermost. Admin Exercise keeps the
-# accepted hidden-section selector while receiving a deterministic post-rerun success
-# message and no blank legacy-calorie field. Daily Log alone bypasses both historical
-# tab monkey-patches and uses Streamlit's native tabs with browser-session persistence.
+# accepted hidden-section selector while receiving deterministic post-rerun success.
+# Daily Log intercepts only the exact Food/Exercise pair, installs renderer gates in
+# pages/18_Daily_Log.py, and executes only the selected journal. It does not call
+# Streamlit tabs or rely on browser-side tab restoration.
 install_admin_exercise_repair_runtime()
 install_member_daily_log_native_tab_persistence()
