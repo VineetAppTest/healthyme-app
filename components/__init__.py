@@ -2,6 +2,10 @@
 
 from components.streamlit_toolbar_cleanup import install_streamlit_toolbar_cleanup
 from components.file_uploader_presentation import install_file_uploader_presentation
+from components.exercise_repository_runtime import install_exercise_repository_runtime
+from components.member_daily_log_section_runtime import (
+    install_member_daily_log_section_runtime,
+)
 from components.login_expiry_recovery import install_login_expiry_recovery
 from components.package_hardening_bootstrap import install_package_hardening
 from components.member_email_bootstrap import install_member_email_notifications
@@ -59,6 +63,11 @@ install_streamlit_toolbar_cleanup()
 # preserving the original uploader values, callbacks and file objects.
 install_file_uploader_presentation()
 
+# Exercise Repository now reads and writes the existing Supabase-backed application
+# state. The exact legacy CSV path remains a compatibility read surface, but its values
+# are supplied from the persistent repository and Member Exercise caching is disabled.
+install_exercise_repository_runtime()
+
 # Expired authorization recovery is installed before app.py captures the accepted
 # authorizer callable. It changes only the dead-end expired-request presentation.
 install_login_expiry_recovery()
@@ -77,6 +86,12 @@ install_member_home_schedule_presentation()
 # Daily Log and the standalone Member Exercise route share one editable table renderer.
 # Member changes are written only to that day's exercise log, never to the source profile.
 install_member_exercise_journal_table()
+
+# Daily Log uses a session-backed journal selector instead of native st.tabs. The
+# selected Exercise Journal therefore survives dropdown reruns and the inactive Food
+# Journal renderer remains silent. Install before Admin cleanup so its page-aware
+# success and hidden-section wrappers remain the outer authority on Admin routes.
+install_member_daily_log_section_runtime()
 
 # Member Home already renders scheduling in its dedicated Upcoming Schedule area.
 # Remove only the repeated scheduling cards from the generic message feed; stored
