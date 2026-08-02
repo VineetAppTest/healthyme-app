@@ -7,14 +7,6 @@ import streamlit as st
 
 from components.guards import require_admin
 from components.storage_assets import upload_content_image
-from components.repository_workspace_common import (
-    actor_id as workspace_actor_id,
-    clear_widget_prefix,
-    clear_workspace,
-    inject_workspace_ui,
-    workspace_mode,
-    workspace_panel,
-)
 from components.repository_page_ui import (
     inject_repository_page_ui,
     render_repository_disclosure,
@@ -326,100 +318,6 @@ def _safe_delete_recipe(df: pd.DataFrame, index: int) -> None:
     save(df)
 
 
-
-def _render_recipe_workspace() -> None:
-    mode, item_id = workspace_mode("recipe")
-    df = load()
-    row = {}
-    index = None
-    if mode == "edit":
-        try:
-            index = int(item_id)
-        except (TypeError, ValueError):
-            st.error("The selected recipe could not be identified.")
-            if st.button("Back to Recipe Repository"):
-                clear_workspace("recipe")
-                st.switch_page("pages/15_Admin_Recipe_Manager.py")
-            return
-        if index not in df.index:
-            st.error("The selected recipe is no longer available.")
-            if st.button("Back to Recipe Repository"):
-                clear_workspace("recipe")
-                st.switch_page("pages/15_Admin_Recipe_Manager.py")
-            return
-        row = df.loc[index].to_dict()
-
-    inject_workspace_ui()
-    title = "Edit Recipe" if mode == "edit" else "Add Recipe"
-    subtitle = (
-        f"Update {_clean(row.get('title')) or 'the selected recipe'}."
-        if mode == "edit"
-        else "Create a reusable recipe definition for future meal plans."
-    )
-    topbar(title, subtitle, "Recipe workspace")
-    prefix = f"recipe_workspace_{mode}_{index if index is not None else 'new'}"
-    success_key = "hm_recipe_workspace_success"
-
-    with workspace_panel():
-        values = recipe_form(prefix, row)
-        action_col, cancel_col, message_col = st.columns([1.05, .8, 2.8], gap="small")
-        with action_col:
-            submitted = st.button(
-                "Save Changes" if mode == "edit" else "Save Recipe",
-                type="primary",
-                use_container_width=True,
-                key=f"{prefix}_save",
-            )
-        with cancel_col:
-            cancelled = st.button(
-                "Cancel",
-                use_container_width=True,
-                key=f"{prefix}_cancel",
-            )
-        with message_col:
-            message = st.session_state.pop(success_key, None)
-            if message:
-                st.success(message)
-
-        if cancelled:
-            clear_workspace("recipe")
-            clear_widget_prefix(prefix)
-            st.switch_page("pages/15_Admin_Recipe_Manager.py")
-
-        if submitted:
-            if not _clean(values.get("title")):
-                st.error("Recipe title is required.")
-            elif mode == "edit" and index is not None:
-                for column in RECIPE_COLUMNS:
-                    df.at[index, column] = values.get(column, "")
-                save(df)
-                _flash("Recipe updated.")
-                clear_workspace("recipe")
-                clear_widget_prefix(prefix)
-                st.switch_page("pages/15_Admin_Recipe_Manager.py")
-            else:
-                df.loc[len(df)] = [values.get(column, "") for column in RECIPE_COLUMNS]
-                save(df)
-                clear_widget_prefix(prefix)
-                st.session_state[success_key] = "Recipe saved successfully. The form has been cleared."
-                st.rerun()
-
-    render_page_nav(
-        title,
-        back_page="pages/15_Admin_Recipe_Manager.py",
-        dashboard_page="pages/10_Admin_Dashboard.py",
-        show_evaluation=False,
-        show_dashboard=True,
-        location="bottom",
-    )
-    render_back_to_top()
-
-
-if st.session_state.get("_hm_recipe_workspace_embedded"):
-    _render_recipe_workspace()
-    st.stop()
-
-
 st.markdown(
     """
 <style>
@@ -451,9 +349,33 @@ topbar(
 )
 _show_flash()
 
-repository_tab, add_tab = st.tabs(["Current Repository", "Add Recipe"])
+add_open = bool(st.session_state.get("hm_recipe_repository_add_open", False))
+if render_repository_disclosure(
+    "Add Recipe",
+    is_open=add_open,
+    key="recipe_repo_add_disclosure",
+):
+    st.session_state["hm_recipe_repository_add_open"] = not add_open
+    if not add_open:
+        st.session_state.pop("hm_recipe_repository_edit_index", None)
+        st.session_state.pop("hm_recipe_repository_delete_index", None)
+    st.rerun()
+if add_open:
+    with repository_form_panel():
+        values = recipe_form("new_recipe_repository")
+        if st.button("Save Recipe", type="primary", use_container_width=True):
+            if not _clean(values.get("title")):
+                st.error("Recipe title is required.")
+            else:
+                df = load()
+                df.loc[len(df)] = [values.get(column, "") for column in RECIPE_COLUMNS]
+                save(df)
+                _flash("Recipe saved.")
+                st.rerun()
 
-with repository_tab:
+# Do not build repository rows while Add is open. This keeps the run focused
+# on one large form and prevents hidden/background form rendering.
+if not add_open:
     df = load()
     if df.empty:
         st.info("No recipes are available. Add the first recipe.")
@@ -477,10 +399,13 @@ with repository_tab:
                     key=f"recipe_repo_edit_{index}",
                     use_container_width=True,
                 ):
-                    st.session_state["hm_recipe_workspace_mode"] = "edit"
-                    st.session_state["hm_recipe_workspace_id"] = int(index)
+                    current = st.session_state.get("hm_recipe_repository_edit_index")
+                    st.session_state["hm_recipe_repository_edit_index"] = (
+                        None if current == int(index) else int(index)
+                    )
                     st.session_state.pop("hm_recipe_repository_delete_index", None)
-                    st.switch_page("pages/15A_Admin_Recipe_Form.py")
+                    st.session_state["hm_recipe_repository_add_open"] = False
+                    st.rerun()
             with delete_col:
                 if st.button(
                     "Delete",
@@ -490,6 +415,47 @@ with repository_tab:
                     st.session_state["hm_recipe_repository_delete_index"] = int(index)
                     st.session_state.pop("hm_recipe_repository_edit_index", None)
                     st.rerun()
+
+            if st.session_state.get("hm_recipe_repository_edit_index") == int(index):
+                title = _clean(row.get("title")) or "Untitled Recipe"
+                if render_repository_disclosure(
+                    f"Edit Recipe · {title}",
+                    is_open=True,
+                    key=f"recipe_repo_edit_disclosure_{index}",
+                ):
+                    st.session_state.pop("hm_recipe_repository_edit_index", None)
+                    st.rerun()
+                with repository_form_panel():
+                    edited = recipe_form(f"recipe_repo_edit_form_{index}", row.to_dict())
+                    save_col, cancel_col, spacer = st.columns([1, 1, 3], gap="small")
+                    with save_col:
+                        if st.button(
+                            "Save Changes",
+                            key=f"recipe_repo_save_{index}",
+                            type="primary",
+                            use_container_width=True,
+                        ):
+                            if not _clean(edited.get("title")):
+                                st.error("Recipe title is required.")
+                            else:
+                                for column in RECIPE_COLUMNS:
+                                    df.at[index, column] = edited.get(column, "")
+                                save(df)
+                                st.session_state.pop(
+                                    "hm_recipe_repository_edit_index", None
+                                )
+                                _flash("Recipe updated.")
+                                st.rerun()
+                    with cancel_col:
+                        if st.button(
+                            "Close",
+                            key=f"recipe_repo_cancel_{index}",
+                            use_container_width=True,
+                        ):
+                            st.session_state.pop(
+                                "hm_recipe_repository_edit_index", None
+                            )
+                            st.rerun()
 
             if st.session_state.get("hm_recipe_repository_delete_index") == int(index):
                 st.warning(
@@ -553,12 +519,6 @@ with repository_tab:
                             _flash("Recipe reactivated.")
                             st.rerun()
 
-with add_tab:
-    st.caption("Add and Edit now open in a dedicated workspace so this repository stays fast and easy to scan.")
-    if st.button("Add Recipe", type="primary", use_container_width=False):
-        st.session_state["hm_recipe_workspace_mode"] = "add"
-        st.session_state.pop("hm_recipe_workspace_id", None)
-        st.switch_page("pages/15A_Admin_Recipe_Form.py")
 render_page_nav(
     "Recipe Repository",
     back_page="pages/10_Admin_Dashboard.py",
