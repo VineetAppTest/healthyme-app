@@ -1,0 +1,39 @@
+id: HM-ADMIN-EXERCISE-REPOSITORY-001
+name: Exercise Repository save feedback and persistence
+owner: Jarvis
+risk: controlled_uat_mutation
+starting_state:
+  user_role: admin
+  authentication: signed_out
+  test_data_policy: synthetic_uat_only
+  required_environment:
+    - JARVIS_BASE_URL
+    - JARVIS_ADMIN_EMAIL
+    - JARVIS_ADMIN_PASSWORD
+    - JARVIS_MUTATION_ENABLED
+    - JARVIS_MUTATION_APPROVED
+steps:
+  - checkpoint: T1
+    action: Sign in with the dedicated Jarvis admin
+    expected: Admin Dashboard is visible
+  - checkpoint: T2
+    action: Open Exercise Repository and Add Exercise
+    expected: Add New Exercise form is visible
+  - checkpoint: T3
+    action: Create one jarvis_uat synthetic exercise
+    expected: Exercise saved confirmation is visible
+  - checkpoint: T4
+    action: Open Current Repository and refresh the page
+    expected: The synthetic exercise remains visible after rerun and refresh
+  - checkpoint: T5
+    action: Delete the synthetic exercise through Edit / Delete
+    expected: The created test record is removed and the cleanup ledger passes
+non_regression:
+  - UAT only; production mutation is blocked
+  - Use the jarvis_uat namespace
+  - Never include member, health or identifiable information
+  - Register and clean every attempted synthetic record
+  - Do not modify application implementation
+retention:
+  mode: runner_lifetime_only
+  github_artifact_upload: false
