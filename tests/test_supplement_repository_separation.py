@@ -47,15 +47,15 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
         )
         self.assertNotIn("hm-sup-boundary", text)
         self.assertNotIn("hm-sup-card", text)
-        self.assertIn("hm-sup-list-details", text)
-        self.assertIn("hm-sup-list-divider", text)
-        self.assertIn('add_column, repository_column = st.columns([0.78, 1.22]', text)
-        self.assertLess(text.index("with add_column:"), text.index("with repository_column:"))
-        self.assertIn('f"+ Inactive Repository Items ({counts[\'inactive\']})"', text)
-        self.assertIn('f"- Inactive Repository Items ({counts[\'inactive\']})"', text)
-        self.assertNotIn("Expand — Inactive Repository Items", text)
-        self.assertNotIn("Close — Inactive Repository Items", text)
-        self.assertNotIn("with st.expander", text)
+        self.assertIn("hm-sup-row", text)
+        self.assertIn("hm-sup-meta", text)
+        self.assertIn(
+            'repository_tab, add_tab = st.tabs(["Current Repository", "Add Supplement"])',
+            text,
+        )
+        self.assertLess(text.index("with repository_tab:"), text.index("with add_tab:"))
+        self.assertIn("Inactive Repository Items", text)
+        self.assertIn("with st.expander", text)
 
     def test_admin_notes_are_not_exposed_in_repository_forms(self):
         text = _text(SUPPLEMENT_PAGE)
@@ -67,13 +67,14 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
     def test_repository_actions_remain_available(self):
         text = _text(SUPPLEMENT_PAGE)
         for token in (
-            'st.button("Edit"',
-            '"Deactivate",',
+            '"Edit",',
+            '"Delete",',
             '"Reactivate",',
             "update_supplement_repository_item(",
             "set_supplement_repository_status(",
         ):
             self.assertIn(token, text)
+        self.assertIn("Historical references were retained.", text)
 
     def test_repository_migration_preserves_member_rows(self):
         text = _text(REPOSITORY)
