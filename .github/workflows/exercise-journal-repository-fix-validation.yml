@@ -1,0 +1,57 @@
+name: Exercise Journal and Repository Fix Validation
+
+on:
+  pull_request:
+    paths:
+      - "components/__init__.py"
+      - "components/exercise_repository.py"
+      - "components/exercise_repository_runtime.py"
+      - "components/member_daily_log_section_runtime.py"
+      - "pages/16_Admin_Exercise_Manager.py"
+      - "tests/test_exercise_repository_persistence.py"
+      - "tests/test_exercise_journal_repository_fix_contract.py"
+      - "tests/test_form_reset_closure_inventory_v2.py"
+      - ".github/workflows/exercise-journal-repository-fix-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile changed runtime
+        run: |
+          python -m py_compile \
+            components/exercise_repository.py \
+            components/exercise_repository_runtime.py \
+            components/member_daily_log_section_runtime.py \
+            components/__init__.py \
+            pages/16_Admin_Exercise_Manager.py
+
+      - name: Import complete HealthyMe component bootstrap
+        run: python -c "import components; print('HealthyMe component bootstrap imported successfully')"
+
+      - name: Run focused persistence and regression contracts
+        run: |
+          python -m unittest discover -s tests -p "test_exercise_*" -v
+
+      - name: Preserve repository-wide form classification
+        run: python -m unittest tests.test_form_reset_closure_inventory_v2 -v
