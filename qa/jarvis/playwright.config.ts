@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.JARVIS_BASE_URL || 'https://healthymeappbyankita.streamlit.app';
-const localTraceEnabled =
-  !process.env.CI && String(process.env.JARVIS_ENABLE_LOCAL_TRACE || 'false').toLowerCase() === 'true';
+const privacyMode = process.env.JARVIS_PRIVACY_MODE || 'strict';
+const diagnosticMediaEnabled = privacyMode === 'diagnostic';
 
 export default defineConfig({
   testDir: './tests',
@@ -13,20 +13,16 @@ export default defineConfig({
   },
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
+  retries: 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [
-    ['list'],
-    ['html', { outputFolder: 'artifacts/html-report', open: 'never' }],
-    ['json', { outputFile: 'artifacts/jarvis-results.json' }],
-  ],
+  reporter: [['./reporters/safe-reporter.ts']],
   use: {
     baseURL,
     actionTimeout: 30_000,
     navigationTimeout: 90_000,
-    screenshot: 'only-on-failure',
-    trace: localTraceEnabled ? 'retain-on-failure' : 'off',
-    video: 'on',
+    screenshot: diagnosticMediaEnabled ? 'only-on-failure' : 'off',
+    trace: 'off',
+    video: diagnosticMediaEnabled ? 'retain-on-failure' : 'off',
     viewport: { width: 1440, height: 1000 },
   },
   projects: [

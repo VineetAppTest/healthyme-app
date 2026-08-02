@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { Page, Request, TestInfo } from '@playwright/test';
 
 type TimelineEvent = {
@@ -13,6 +14,7 @@ type BrowserDiagnostic = {
   detail: Record<string, unknown>;
 };
 
+const STRICT_PRIVACY = (process.env.JARVIS_PRIVACY_MODE || 'strict') === 'strict';
 const SENSITIVE_QUERY_KEYS = new Set([
   'access_token',
   'authorization_id',
@@ -29,6 +31,10 @@ const SENSITIVE_QUERY_KEYS = new Set([
   'token',
 ]);
 
+function fingerprint(raw: string): string {
+  return createHash('sha256').update(raw).digest('hex').slice(0, 16);
+}
+
 function isSensitiveKey(raw: string): boolean {
   const key = raw.toLowerCase();
   return (
@@ -39,28 +45,42 @@ function isSensitiveKey(raw: string): boolean {
   );
 }
 
+function sanitizePath(pathname: string): string {
+  return pathname
+    .split('/')
+    .map((segment) => {
+      if (!segment) return segment;
+      if (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment)) return '<redacted-id>';
+      if (/@/.test(segment)) return '<redacted-email>';
+      if (/^\d{4,}$/.test(segment)) return '<redacted-id>';
+      if (segment.length > 80) return '<redacted-value>';
+      return segment;
+    })
+    .join('/');
+}
+
 export function redactUrl(raw: string): string {
   try {
     const value = new URL(raw);
     const authenticationPath = /\/(auth|login|logout|oauth|callback)(\/|$)/i.test(value.pathname);
+    value.pathname = sanitizePath(value.pathname);
     for (const [key] of value.searchParams.entries()) {
-      if (authenticationPath || isSensitiveKey(key)) {
+      if (STRICT_PRIVACY || authenticationPath || isSensitiveKey(key)) {
         value.searchParams.set(key, '<redacted>');
       }
     }
     value.hash = value.hash ? '#<redacted>' : '';
     return value.toString();
   } catch {
-    return raw.replace(
-      /(access_token|authorization_id|code|code_challenge|id_token|nonce|password|payload|provider|refresh_token|state|token)=([^&\s]+)/gi,
-      '$1=<redacted>',
-    );
+    return redactTextPatterns(raw);
   }
 }
 
-export function redactText(raw: string): string {
+function redactTextPatterns(raw: string): string {
   return raw
-    .replace(/https?:\/\/[^\s"'<>]+/gi, (match) => redactUrl(match))
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '<redacted-email>')
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi, '<redacted-id>')
+    .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, '<redacted-phone>')
     .replace(/(Bearer\s+)[A-Za-z0-9._~-]+/gi, '$1<redacted>')
     .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '<redacted-jwt>')
     .replace(
@@ -69,13 +89,13 @@ export function redactText(raw: string): string {
     );
 }
 
+export function redactText(raw: string): string {
+  return redactTextPatterns(raw).replace(/https?:\/\/[^\s"'<>]+/gi, (match) => redactUrl(match));
+}
+
 export function sanitizeValue(value: unknown): unknown {
-  if (typeof value === 'string') {
-    return redactText(value);
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => sanitizeValue(item));
-  }
+  if (typeof value === 'string') return redactText(value);
+  if (Array.isArray(value)) return value.map((item) => sanitizeValue(item));
   if (value && typeof value === 'object') {
     const output: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value)) {
@@ -100,14 +120,18 @@ export class JarvisDiagnostics {
   ) {
     page.on('console', (message) => {
       if (!['warning', 'error'].includes(message.type())) return;
+      const rawText = message.text();
       this.browserEvents.push({
         type: 'console',
         at: new Date().toISOString(),
         detail: {
           level: message.type(),
-          text: redactText(message.text()),
+          ...(STRICT_PRIVACY
+            ? { message_fingerprint: fingerprint(rawText) }
+            : { text: redactText(rawText) }),
           location: {
-            ...message.location(),
+            line_number: message.location().lineNumber,
+            column_number: message.location().columnNumber,
             url: redactUrl(message.location().url || ''),
           },
         },
@@ -118,11 +142,16 @@ export class JarvisDiagnostics {
       this.browserEvents.push({
         type: 'page_error',
         at: new Date().toISOString(),
-        detail: {
-          name: error.name,
-          message: redactText(error.message),
-          stack: redactText(error.stack || ''),
-        },
+        detail: STRICT_PRIVACY
+          ? {
+              name: error.name,
+              message_fingerprint: fingerprint(error.message),
+            }
+          : {
+              name: error.name,
+              message: redactText(error.message),
+              stack: redactText(error.stack || ''),
+            },
       });
     });
 
@@ -131,6 +160,7 @@ export class JarvisDiagnostics {
     });
 
     page.on('requestfailed', (request) => {
+      const failure = request.failure()?.errorText || '';
       this.browserEvents.push({
         type: 'request_failed',
         at: new Date().toISOString(),
@@ -138,7 +168,9 @@ export class JarvisDiagnostics {
           method: request.method(),
           resource_type: request.resourceType(),
           url: redactUrl(request.url()),
-          failure: sanitizeValue(request.failure()) as Record<string, unknown> | null,
+          ...(STRICT_PRIVACY
+            ? { failure_fingerprint: fingerprint(failure) }
+            : { failure: redactText(failure) }),
           elapsed_ms: Date.now() - (this.requestStartedAt.get(request) || Date.now()),
         },
       });
@@ -159,10 +191,7 @@ export class JarvisDiagnostics {
         this.browserEvents.push({
           type: 'http_error',
           at: new Date().toISOString(),
-          detail: {
-            ...common,
-            status_text: response.statusText(),
-          },
+          detail: { ...common, status_text: response.statusText() },
         });
       } else if (['document', 'fetch', 'xhr'].includes(request.resourceType())) {
         this.browserEvents.push({
@@ -206,7 +235,7 @@ export class JarvisDiagnostics {
 
       frameNavigationEntries.push({
         frame_index: index,
-        frame_name: frame.name(),
+        frame_name: STRICT_PRIVACY ? '<withheld>' : frame.name(),
         frame_url: redactUrl(frame.url()),
         navigation_entries: entries.map((entry) => ({
           ...entry,
@@ -220,12 +249,13 @@ export class JarvisDiagnostics {
       route_id: this.routeId,
       git_sha: process.env.JARVIS_GIT_SHA || '',
       github_event: process.env.JARVIS_GITHUB_EVENT || '',
-      base_url: redactUrl(process.env.JARVIS_BASE_URL || ''),
+      environment: process.env.JARVIS_ENVIRONMENT || 'uat',
+      access_mode: process.env.JARVIS_ACCESS_MODE || 'read_only',
+      privacy_mode: process.env.JARVIS_PRIVACY_MODE || 'strict',
       project: testInfo.project.name,
       retry: testInfo.retry,
       worker_index: testInfo.workerIndex,
       expected_status: testInfo.expectedStatus,
-      attachment_phase: 'before Playwright finalizes the test result',
     };
 
     await testInfo.attach('jarvis-run-metadata.json', {

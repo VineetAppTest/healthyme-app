@@ -4,14 +4,19 @@
   "private": true,
   "description": "HealthyMe autonomous QC foundation using Playwright.",
   "scripts": {
+    "validate:policy": "node scripts/validate-policy.mjs",
     "preflight": "node scripts/preflight.mjs",
+    "prepare:uat": "node scripts/prepare-uat-run.mjs",
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
     "test:public": "playwright test tests/public-login.spec.ts",
     "test:member": "playwright test tests/member-login-refresh.spec.ts",
     "test:admin": "playwright test tests/admin-login-refresh.spec.ts",
     "verify:evidence": "node scripts/verify-evidence.mjs",
-    "report": "playwright show-report artifacts/html-report"
+    "summary:safe": "node scripts/write-safe-summary.mjs",
+    "verify:cleanup": "node scripts/verify-test-data-cleanup.mjs",
+    "cleanup:evidence": "node scripts/cleanup-ephemeral-evidence.mjs",
+    "gate:deploy": "node scripts/evaluate-deploy-gate.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.62.0",
