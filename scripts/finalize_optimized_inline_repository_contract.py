@@ -12,14 +12,18 @@ PAGES = (
 
 
 def add_current_repository_heading() -> None:
-    marker = "if not add_open:\n"
-    replacement = 'if not add_open:\n    st.markdown("### Current Repository")\n'
+    marker = (
+        "# Do not build repository rows while Add is open. This keeps the run focused\n"
+        "# on one large form and prevents hidden/background form rendering.\n"
+        "if not add_open:\n"
+    )
+    replacement = marker + '    st.markdown("### Current Repository")\n'
     for path in PAGES:
         source = path.read_text(encoding="utf-8")
         if 'st.markdown("### Current Repository")' in source:
             continue
         if source.count(marker) != 1:
-            raise RuntimeError(f"{path}: expected exactly one lazy repository branch")
+            raise RuntimeError(f"{path}: exact lazy repository marker is missing")
         source = source.replace(marker, replacement, 1)
         path.write_text(source, encoding="utf-8")
 
