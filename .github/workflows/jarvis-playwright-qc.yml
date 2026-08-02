@@ -22,8 +22,52 @@ on:
         required: false
         default: ""
         type: string
+      environment:
+        description: "Environment classification"
+        required: true
+        default: "uat"
+        type: choice
+        options:
+          - uat
+          - production
+      access_mode:
+        description: "Read-only or controlled mutation"
+        required: true
+        default: "read_only"
+        type: choice
+        options:
+          - read_only
+          - mutation
+      privacy_mode:
+        description: "Strict creates no media; diagnostic keeps failure media only on the ephemeral runner"
+        required: true
+        default: "strict"
+        type: choice
+        options:
+          - strict
+          - diagnostic
       require_authenticated:
         description: "Fail preflight when requested role credentials are unavailable"
+        required: true
+        default: false
+        type: boolean
+      mutation_approved:
+        description: "Explicit approval for a route-manifested UAT mutation run"
+        required: true
+        default: false
+        type: boolean
+      production_read_only_approved:
+        description: "Explicit approval for read-only production validation"
+        required: true
+        default: false
+        type: boolean
+      deploy_intent:
+        description: "Evaluate deployment eligibility; Jarvis never deploys"
+        required: true
+        default: false
+        type: boolean
+      owner_deploy_approval:
+        description: "Record Vineet approval for deployment eligibility"
         required: true
         default: false
         type: boolean
@@ -49,7 +93,16 @@ jobs:
       JARVIS_ADMIN_EMAIL: ${{ secrets.JARVIS_ADMIN_EMAIL }}
       JARVIS_ADMIN_PASSWORD: ${{ secrets.JARVIS_ADMIN_PASSWORD }}
       JARVIS_SUITE: ${{ inputs.suite || 'all' }}
+      JARVIS_ENVIRONMENT: ${{ inputs.environment || 'uat' }}
+      JARVIS_ACCESS_MODE: ${{ inputs.access_mode || 'read_only' }}
+      JARVIS_PRIVACY_MODE: ${{ inputs.privacy_mode || 'strict' }}
       JARVIS_REQUIRE_AUTH: ${{ inputs.require_authenticated || 'false' }}
+      JARVIS_MUTATION_ENABLED: ${{ vars.JARVIS_MUTATION_ENABLED || 'false' }}
+      JARVIS_MUTATION_APPROVED: ${{ inputs.mutation_approved || 'false' }}
+      JARVIS_PRODUCTION_READ_ONLY_APPROVED: ${{ inputs.production_read_only_approved || 'false' }}
+      JARVIS_DEPLOY_INTENT: ${{ inputs.deploy_intent || 'false' }}
+      JARVIS_OWNER_DEPLOY_APPROVAL: ${{ inputs.owner_deploy_approval || 'false' }}
+      JARVIS_MUTATION_NAMESPACE: jarvis_uat
       JARVIS_RUN_ID: jarvis-${{ github.run_id }}-${{ github.run_attempt }}
       JARVIS_GIT_SHA: ${{ github.sha }}
       JARVIS_GITHUB_EVENT: ${{ github.event_name }}
@@ -74,13 +127,19 @@ jobs:
       - name: Type-check Jarvis
         run: npm run typecheck
 
-      - name: Run Jarvis preflight
+      - name: Validate Jarvis UAT policy and synthetic fixture
+        run: npm run validate:policy
+
+      - name: Run Jarvis security preflight
         run: npm run preflight
+
+      - name: Prepare ephemeral UAT run context
+        run: npm run prepare:uat
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Execute Jarvis routes
+      - name: Execute approved Jarvis routes
         run: |
           case "$JARVIS_SUITE" in
             public) npm run test:public ;;
@@ -90,15 +149,23 @@ jobs:
             *) echo "Unsupported suite: $JARVIS_SUITE" >&2; exit 1 ;;
           esac
 
-      - name: Verify Jarvis evidence privacy
+      - name: Verify evidence contains no identifiable information
         if: always()
         run: npm run verify:evidence
 
-      - name: Upload Jarvis evidence
+      - name: Write de-identified GitHub job summary
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jarvis-playwright-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: qa/jarvis/artifacts/
-          if-no-files-found: warn
-          retention-days: 14
+        run: npm run summary:safe
+
+      - name: Verify synthetic UAT data cleanup
+        if: always()
+        run: npm run verify:cleanup
+
+      - name: Delete all temporary Jarvis evidence
+        if: always()
+        run: npm run cleanup:evidence
+
+      - name: Evaluate deployment gate without deploying
+        id: deploy_gate
+        if: always()
+        run: npm run gate:deploy
