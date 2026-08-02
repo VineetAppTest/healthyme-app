@@ -55,7 +55,10 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
         )
         self.assertLess(text.index("with repository_tab:"), text.index("with add_tab:"))
         self.assertIn("Inactive Repository Items", text)
-        self.assertIn("with st.expander", text)
+        self.assertNotIn("st.expander", text)
+        self.assertIn("render_repository_disclosure", text)
+        self.assertIn("repository_form_panel()", text)
+        self.assertIn("repository_inactive_panel()", text)
 
     def test_admin_notes_are_not_exposed_in_repository_forms(self):
         text = _text(SUPPLEMENT_PAGE)
