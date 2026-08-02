@@ -109,6 +109,6 @@ install_member_daily_log_native_tab_persistence()
 # route-preservation callback without affecting Back or Dashboard navigation.
 install_daily_log_widget_route_preservation()
 
-# Member Home previously bypassed the shared utility header. Install this outermost
-# so it replaces the local row after every earlier topbar presentation wrapper.
+# Member Home has a page-specific profile control, but its row must follow the same
+# compact height and hero spacing as the global header used elsewhere.
 install_member_home_global_header_runtime()
