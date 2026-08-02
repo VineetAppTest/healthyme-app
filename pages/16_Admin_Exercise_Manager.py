@@ -10,6 +10,12 @@ from components.exercise_repository import (
 )
 from components.guards import require_admin
 from components.storage_assets import upload_content_image
+from components.repository_page_ui import (
+    inject_repository_page_ui,
+    render_repository_disclosure,
+    repository_form_panel,
+    repository_inactive_panel,
+)
 from components.ui_common import (
     apply_luxe_theme,
     inject_global_styles,
@@ -30,6 +36,7 @@ inject_global_styles()
 apply_luxe_theme()
 require_admin()
 utility_logout_bar()
+inject_repository_page_ui()
 
 
 def _actor_id() -> str:
@@ -66,7 +73,7 @@ def is_valid_image_url(value) -> bool:
 
 def exercise_form(prefix: str, row=None) -> dict:
     row = row or {}
-    st.markdown("#### Core display fields")
+    st.markdown("#### Core Fields")
     left, right = st.columns(2, gap="small")
     with left:
         title = st.text_input(
@@ -98,6 +105,7 @@ def exercise_form(prefix: str, row=None) -> dict:
             key=f"{prefix}_status",
         )
 
+    st.markdown("#### Guidance / Benefits")
     description = st.text_area(
         "Short description",
         value=_clean(row.get("description")),
@@ -116,6 +124,7 @@ def exercise_form(prefix: str, row=None) -> dict:
             "Benefits", value=_clean(row.get("benefits")), key=f"{prefix}_benefits"
         )
 
+    st.markdown("#### Tags")
     goal_col, condition_col = st.columns(2, gap="small")
     with goal_col:
         goal_tags = st.text_input(
@@ -279,7 +288,14 @@ with repository_tab:
 
         if st.session_state.get("hm_exercise_repository_edit_id") == exercise_id:
             title = _clean(row.get("title")) or "Untitled Exercise"
-            with st.expander(f"Edit Exercise · {title}", expanded=True):
+            if render_repository_disclosure(
+                f"Edit Exercise · {title}",
+                is_open=True,
+                key=f"exercise_repo_edit_disclosure_{exercise_id}",
+            ):
+                st.session_state.pop("hm_exercise_repository_edit_id", None)
+                st.rerun()
+            with repository_form_panel():
                 edited = exercise_form(
                     f"exercise_repo_edit_form_{exercise_id}",
                     row,
@@ -354,44 +370,52 @@ with repository_tab:
                     )
                     st.rerun()
 
-    with st.expander(f"Inactive Repository Items ({len(inactive_rows)})"):
-        if not inactive_rows:
-            st.caption("No inactive repository items.")
-        for row in inactive_rows:
-            exercise_id = str(row.get("id"))
-            label_col, action_col = st.columns([5.5, 1], gap="small")
-            with label_col:
-                st.markdown(
-                    f"**{_clean(row.get('title')) or 'Untitled Exercise'}**  \n{_exercise_summary(row)}"
-                )
-            with action_col:
-                if st.button(
-                    "Reactivate",
-                    key=f"exercise_repo_reactivate_{exercise_id}",
-                    use_container_width=True,
-                ):
-                    try:
-                        set_exercise_repository_status(
-                            exercise_id,
-                            True,
-                            actor_id=_actor_id(),
-                        )
-                        _flash("Exercise reactivated.")
-                        st.rerun()
-                    except Exception as exc:
-                        st.error(str(exc))
-
+    inactive_open = bool(st.session_state.get("hm_exercise_repository_inactive_open", False))
+    if render_repository_disclosure(
+        f"Inactive Repository Items ({len(inactive_rows)})",
+        is_open=inactive_open,
+        key="exercise_repo_inactive_disclosure",
+    ):
+        st.session_state["hm_exercise_repository_inactive_open"] = not inactive_open
+        st.rerun()
+    if inactive_open:
+        with repository_inactive_panel():
+            if not inactive_rows:
+                st.caption("No inactive repository items.")
+            for row in inactive_rows:
+                exercise_id = str(row.get("id"))
+                label_col, action_col = st.columns([5.5, 1], gap="small")
+                with label_col:
+                    st.markdown(
+                        f"**{_clean(row.get('title')) or 'Untitled Exercise'}**  \n{_exercise_summary(row)}"
+                    )
+                with action_col:
+                    if st.button(
+                        "Reactivate",
+                        key=f"exercise_repo_reactivate_{exercise_id}",
+                        use_container_width=True,
+                    ):
+                        try:
+                            set_exercise_repository_status(
+                                exercise_id,
+                                True,
+                                actor_id=_actor_id(),
+                            )
+                            _flash("Exercise reactivated.")
+                            st.rerun()
+                        except Exception as exc:
+                            st.error(str(exc))
 with add_tab:
-    st.subheader("Add Exercise")
-    values = exercise_form("new_exercise_repository")
-    if st.button("Save Exercise", type="primary", use_container_width=True):
-        try:
-            add_exercise_repository_item(values, actor_id=_actor_id())
-            _flash("Exercise saved.")
-            st.rerun()
-        except Exception as exc:
-            st.error(str(exc))
-
+    with repository_form_panel():
+        st.subheader("Add Exercise")
+        values = exercise_form("new_exercise_repository")
+        if st.button("Save Exercise", type="primary", use_container_width=True):
+            try:
+                add_exercise_repository_item(values, actor_id=_actor_id())
+                _flash("Exercise saved.")
+                st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
 render_page_nav(
     "Exercise Repository",
     back_page="pages/10_Admin_Dashboard.py",

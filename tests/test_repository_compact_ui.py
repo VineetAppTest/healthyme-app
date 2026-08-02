@@ -11,6 +11,7 @@ PAGES = {
     "Exercise": ROOT / "pages" / "16_Admin_Exercise_Manager.py",
     "Supplement": ROOT / "pages" / "39_Admin_Supplement_Manager.py",
 }
+HELPER = ROOT / "components" / "repository_page_ui.py"
 
 
 def text(path: Path) -> str:
@@ -18,8 +19,8 @@ def text(path: Path) -> str:
 
 
 class RepositoryCompactUiTests(unittest.TestCase):
-    def test_pages_compile(self):
-        for path in PAGES.values():
+    def test_pages_and_helper_compile(self):
+        for path in [*PAGES.values(), HELPER]:
             ast.parse(text(path), filename=str(path))
 
     def test_repository_actions_are_compact_and_inline(self):
@@ -31,36 +32,50 @@ class RepositoryCompactUiTests(unittest.TestCase):
             self.assertIn('border-radius:999px!important', source)
             self.assertIn('white-space:nowrap!important', source)
 
-    def test_edit_disclosures_are_single_line_plus_minus_controls(self):
+    def test_edit_disclosures_are_page_owned_single_controls(self):
+        helper = text(HELPER)
+        self.assertIn('symbol = "⊖" if is_open else "⊕"', helper)
+        self.assertIn('f"{symbol}  {label}"', helper)
+        self.assertNotIn("st.expander", helper)
+
         for name, path in PAGES.items():
             source = text(path)
-            self.assertIn(f'with st.expander(f"Edit {name} ·', source)
-            self.assertIn('summary:before{content:"+"', source)
-            self.assertIn('details[open] summary:before{content:"−"', source)
-            self.assertIn('summary p{white-space:nowrap!important', source)
+            self.assertIn(f'f"Edit {name} ·', source)
+            self.assertIn("render_repository_disclosure", source)
+            self.assertNotIn("st.expander", source)
 
-    def test_edit_panels_are_compact_and_structured(self):
+    def test_add_and_edit_use_same_balanced_form_panel(self):
+        helper = text(HELPER)
+        self.assertIn("min-height:2.18rem!important", helper)
+        self.assertIn("min-height:68px!important", helper)
+        self.assertIn("font-size:.76rem!important", helper)
+        self.assertNotIn("min-height:1.72rem", helper)
+        self.assertNotIn("height:42px", helper)
+
         recipe = text(PAGES["Recipe"])
         exercise = text(PAGES["Exercise"])
         supplement = text(PAGES["Supplement"])
-
         for source in (recipe, exercise, supplement):
-            self.assertIn('div[data-testid="stExpander"] textarea{min-height:68px!important;}', source)
+            self.assertGreaterEqual(source.count("repository_form_panel()"), 2)
             self.assertIn('gap="small"', source)
             self.assertIn('"Save Changes",', source)
             self.assertIn('"Close",', source)
 
         self.assertIn('st.markdown("#### Nutrition")', recipe)
         self.assertIn('st.markdown("#### Preparation")', recipe)
-        self.assertIn('detail_left, detail_right = st.columns(2, gap="small")', exercise)
-        self.assertIn('basic_name, basic_dose, basic_frequency = st.columns(3, gap="small")', supplement)
+        self.assertIn('st.markdown("#### Guidance / Benefits")', exercise)
+        self.assertIn('st.markdown("#### Tags")', exercise)
+        self.assertGreaterEqual(supplement.count('st.markdown("#### Basic Details")'), 2)
+        self.assertGreaterEqual(supplement.count('st.markdown("#### Timing")'), 2)
+        self.assertGreaterEqual(supplement.count('st.markdown("#### Instructions")'), 2)
 
-    def test_inactive_repository_uses_same_disclosure_pattern(self):
+    def test_inactive_repository_uses_direct_disclosure_pattern(self):
         for path in PAGES.values():
             source = text(path)
-            self.assertIn('with st.expander(f"Inactive Repository Items (', source)
-            self.assertIn('summary:before{content:"+"', source)
-            self.assertIn('details[open] summary:before{content:"−"', source)
+            self.assertIn('f"Inactive Repository Items (', source)
+            self.assertIn("render_repository_disclosure", source)
+            self.assertIn("repository_inactive_panel()", source)
+            self.assertNotIn("st.expander", source)
 
     def test_safe_delete_and_form_hygiene_remain(self):
         recipe = text(PAGES["Recipe"])
