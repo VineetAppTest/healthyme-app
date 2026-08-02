@@ -12,12 +12,18 @@ import {
   registerSyntheticRecord,
 } from '../support/test-data-ledger';
 
+const routeId = 'HM-ADMIN-EXERCISE-REPOSITORY-001';
 const email = process.env.JARVIS_ADMIN_EMAIL || '';
 const password = process.env.JARVIS_ADMIN_PASSWORD || '';
 const mutationRun = (process.env.JARVIS_ACCESS_MODE || 'read_only') === 'mutation';
 const namespace = process.env.JARVIS_MUTATION_NAMESPACE || 'jarvis_uat';
 const runSuffix = (process.env.JARVIS_RUN_ID || 'local').replace(/[^a-zA-Z0-9]+/g, '_').slice(-28);
 const exerciseTitle = `${namespace}_exercise_${runSuffix}`;
+
+function checkpoint(name: string, value?: boolean): void {
+  const suffix = value === undefined ? '' : `=${String(value)}`;
+  console.log(`CHECKPOINT ${routeId} ${name}${suffix}`);
+}
 
 async function signInAdmin(page: Page): Promise<void> {
   await page.goto('/Login', { waitUntil: 'domcontentloaded' });
@@ -85,15 +91,17 @@ test('HM-ADMIN-EXERCISE-REPOSITORY-001: save feedback, persistence and cleanup',
   test.skip(!email || !password, 'Dedicated Jarvis admin credentials are required.');
   test.skip(!mutationRun, 'Controlled mutation mode is required for this route.');
 
-  const diagnostics = new JarvisDiagnostics(page, 'HM-ADMIN-EXERCISE-REPOSITORY-001');
+  const diagnostics = new JarvisDiagnostics(page, routeId);
   const findings: string[] = [];
   let registered = false;
   let cleaned = false;
   diagnostics.mark('T0_TEST_STARTED');
+  checkpoint('TEST_STARTED');
 
   try {
     await signInAdmin(page);
     diagnostics.mark('T1_ADMIN_AUTHENTICATED');
+    checkpoint('ADMIN_AUTHENTICATED');
 
     let manager = await openExerciseManager(page);
     await manager.getByRole('button', { name: 'Add Exercise', exact: true }).click();
@@ -108,6 +116,7 @@ test('HM-ADMIN-EXERCISE-REPOSITORY-001: save feedback, persistence and cleanup',
       syntheticId: exerciseTitle,
     });
     registered = true;
+    checkpoint('SYNTHETIC_RECORD_REGISTERED');
 
     await manager.getByRole('button', { name: 'Save Exercise', exact: true }).click();
     manager = await resolveAppSurface(
@@ -120,6 +129,7 @@ test('HM-ADMIN-EXERCISE-REPOSITORY-001: save feedback, persistence and cleanup',
       .isVisible()
       .catch(() => false);
     diagnostics.mark('T2_SAVE_FEEDBACK_CHECKED', { success_visible: successVisible });
+    checkpoint('SAVE_SUCCESS_VISIBLE', successVisible);
     if (!successVisible) findings.push('SAVE_SUCCESS_MESSAGE_MISSING');
 
     let editSurface = await openEditSection(page);
@@ -127,6 +137,7 @@ test('HM-ADMIN-EXERCISE-REPOSITORY-001: save feedback, persistence and cleanup',
     diagnostics.mark('T3_IMMEDIATE_REPOSITORY_CHECK', {
       synthetic_record_visible: visibleBeforeRefresh,
     });
+    checkpoint('IMMEDIATE_REPOSITORY_VISIBLE', visibleBeforeRefresh);
     if (!visibleBeforeRefresh) findings.push('SYNTHETIC_EXERCISE_NOT_VISIBLE_AFTER_SAVE');
 
     await page.reload({ waitUntil: 'domcontentloaded' });
@@ -135,14 +146,16 @@ test('HM-ADMIN-EXERCISE-REPOSITORY-001: save feedback, persistence and cleanup',
     diagnostics.mark('T4_REFRESH_PERSISTENCE_CHECK', {
       synthetic_record_visible: visibleAfterRefresh,
     });
+    checkpoint('REFRESH_PERSISTENCE_VISIBLE', visibleAfterRefresh);
     if (!visibleAfterRefresh) findings.push('SYNTHETIC_EXERCISE_NOT_PERSISTENT_AFTER_REFRESH');
   } finally {
     if (registered) {
       cleaned = await removeSyntheticExercise(page).catch(() => false);
       if (cleaned) markSyntheticRecordCleaned(exerciseTitle);
     }
-    markMutationRouteComplete('HM-ADMIN-EXERCISE-REPOSITORY-001');
+    markMutationRouteComplete(routeId);
     diagnostics.mark('T5_SYNTHETIC_CLEANUP', { cleaned });
+    checkpoint('SYNTHETIC_CLEANUP_CONFIRMED', cleaned);
     await diagnostics.attach(testInfo);
   }
 
