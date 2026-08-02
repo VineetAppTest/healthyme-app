@@ -8,11 +8,12 @@ from types import FrameType
 import streamlit as st
 
 
-_MARKER = "_hm_member_daily_log_exclusive_rendering_v2"
-_RENDER_MARKER = "_hm_member_daily_log_renderer_gate_v2"
+_MARKER = "_hm_member_daily_log_exclusive_rendering_v3"
+_RENDER_MARKER = "_hm_member_daily_log_renderer_gate_v3"
 _PAGE_SUFFIX = "pages/18_Daily_Log.py"
 _LABELS = ("Food Journal", "Exercise Journal")
 _SELECTOR_KEY = "hm_daily_log_active_journal"
+_PERSISTED_SELECTOR_KEY = "_hm_member_daily_log_selected_journal_v3"
 
 
 def _daily_log_frame() -> FrameType | None:
@@ -28,14 +29,28 @@ def _daily_log_frame() -> FrameType | None:
 
 def _activate_journal(label: str) -> None:
     if label in _LABELS:
+        # Keep one protected authority outside the public Daily Log widget prefix.
+        # Some explicit save/load rerun paths clear page-scoped keys; the protected
+        # value restores the selected journal before either renderer is dispatched.
+        st.session_state[_PERSISTED_SELECTOR_KEY] = label
         st.session_state[_SELECTOR_KEY] = label
 
 
 def _selected_journal() -> str:
-    selected = str(st.session_state.get(_SELECTOR_KEY) or _LABELS[0])
-    if selected not in _LABELS:
+    persisted = str(st.session_state.get(_PERSISTED_SELECTOR_KEY) or "")
+    visible = str(st.session_state.get(_SELECTOR_KEY) or "")
+
+    if persisted in _LABELS:
+        selected = persisted
+    elif visible in _LABELS:
+        selected = visible
+    else:
         selected = _LABELS[0]
-        st.session_state[_SELECTOR_KEY] = selected
+
+    # Repair both keys on every rerun. The protected key remains authoritative,
+    # while the public key stays compatible with the historical Daily Log layer.
+    st.session_state[_PERSISTED_SELECTOR_KEY] = selected
+    st.session_state[_SELECTOR_KEY] = selected
     return selected
 
 
@@ -43,8 +58,8 @@ def _render_selector() -> None:
     selected = _selected_journal()
     st.markdown(
         """
-<style id="hm-daily-log-exclusive-selector-v2">
-div[data-testid="stElementContainer"]:has(style#hm-daily-log-exclusive-selector-v2){
+<style id="hm-daily-log-exclusive-selector-v3">
+div[data-testid="stElementContainer"]:has(style#hm-daily-log-exclusive-selector-v3){
   display:none!important;height:0!important;min-height:0!important;
   margin:0!important;padding:0!important;overflow:hidden!important;
 }
@@ -67,7 +82,7 @@ div[data-testid="stElementContainer"]:has(style#hm-daily-log-exclusive-selector-
     with food_col:
         st.button(
             _LABELS[0],
-            key="hm_daily_log_food_journal_selector_v2",
+            key="hm_daily_log_food_journal_selector_v3",
             type="primary" if selected == _LABELS[0] else "secondary",
             use_container_width=True,
             on_click=_activate_journal,
@@ -76,7 +91,7 @@ div[data-testid="stElementContainer"]:has(style#hm-daily-log-exclusive-selector-
     with exercise_col:
         st.button(
             _LABELS[1],
-            key="hm_daily_log_exercise_journal_selector_v2",
+            key="hm_daily_log_exercise_journal_selector_v3",
             type="primary" if selected == _LABELS[1] else "secondary",
             use_container_width=True,
             on_click=_activate_journal,

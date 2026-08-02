@@ -78,12 +78,18 @@ class ExerciseLiveRepairTests(unittest.TestCase):
             page_globals["_render_exercise_journal"]("member-1")
             self.assertEqual(rendered, [("food", "member-1")])
 
-            fake_st.session_state[member_runtime._SELECTOR_KEY] = "Exercise Journal"
+            member_runtime._activate_journal("Exercise Journal")
+            # Reproduce the explicit save/load pipeline losing the public page key.
+            fake_st.session_state.pop(member_runtime._SELECTOR_KEY, None)
             page_globals["_render_food_journal"]("member-1")
             page_globals["_render_exercise_journal"]("member-1")
             self.assertEqual(
                 rendered,
                 [("food", "member-1"), ("exercise", "member-1")],
+            )
+            self.assertEqual(
+                fake_st.session_state[member_runtime._SELECTOR_KEY],
+                "Exercise Journal",
             )
 
             fake_st.tabs(["One", "Two"])
