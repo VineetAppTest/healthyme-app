@@ -56,6 +56,9 @@ from components.admin_exercise_repair_runtime import (
 from components.member_daily_log_native_tab_persistence import (
     install_member_daily_log_native_tab_persistence,
 )
+from components.daily_log_widget_route_preservation import (
+    install_daily_log_widget_route_preservation,
+)
 
 
 install_streamlit_toolbar_cleanup()
@@ -91,3 +94,8 @@ install_member_saved_days_dispatch_runtime()
 # Streamlit tabs or rely on browser-side tab restoration.
 install_admin_exercise_repair_runtime()
 install_member_daily_log_native_tab_persistence()
+
+# Streamlit widget changes rerun internally and bypass the explicit st.rerun wrapper
+# in app.py. Install this last so every accepted Daily Log widget wrapper composes a
+# route-preservation callback without affecting Back or Dashboard navigation.
+install_daily_log_widget_route_preservation()

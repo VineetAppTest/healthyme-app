@@ -5,12 +5,14 @@ on:
     paths:
       - "app.py"
       - "components/__init__.py"
+      - "components/daily_log_widget_route_preservation.py"
       - "components/exercise_repository.py"
       - "components/exercise_repository_runtime.py"
       - "components/member_daily_log_section_runtime.py"
       - "components/member_daily_log_native_tab_persistence.py"
       - "components/admin_exercise_repair_runtime.py"
       - "pages/16_Admin_Exercise_Manager.py"
+      - "tests/test_exercise_daily_log_widget_route_preservation.py"
       - "tests/test_exercise_native_router_rerun_retention.py"
       - "tests/test_exercise_repository_persistence.py"
       - "tests/test_exercise_journal_repository_fix_contract.py"
@@ -46,6 +48,7 @@ jobs:
         run: |
           python -m py_compile \
             app.py \
+            components/daily_log_widget_route_preservation.py \
             components/exercise_repository.py \
             components/exercise_repository_runtime.py \
             components/member_daily_log_section_runtime.py \
@@ -53,6 +56,7 @@ jobs:
             components/admin_exercise_repair_runtime.py \
             components/__init__.py \
             pages/16_Admin_Exercise_Manager.py \
+            tests/test_exercise_daily_log_widget_route_preservation.py \
             tests/test_exercise_live_repair.py \
             tests/test_exercise_native_router_rerun_retention.py
 
