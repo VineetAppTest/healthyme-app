@@ -39,10 +39,6 @@ class ExerciseLiveRepairTests(unittest.TestCase):
             calls.append(("native", tuple(labels)))
             return [contextlib.nullcontext() for _ in labels]
 
-        @types.FunctionType(native_tabs.__code__, globals(), name="legacy_tabs")
-        def _placeholder():
-            pass
-
         def legacy_tabs(labels, *args, **kwargs):
             calls.append(("legacy", tuple(labels)))
             return native_tabs(labels, *args, **kwargs)
