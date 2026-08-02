@@ -1,20 +1,18 @@
-name: Dedicated repository workspaces validation
+name: Optimized inline repository forms validation
 
 on:
   pull_request:
     paths:
-      - components/repository_workspace_common.py
       - pages/15_Admin_Recipe_Manager.py
-      - pages/15A_Admin_Recipe_Form.py
       - pages/16_Admin_Exercise_Manager.py
-      - pages/16A_Admin_Exercise_Form.py
       - pages/39_Admin_Supplement_Manager.py
-      - pages/39A_Admin_Supplement_Form.py
-      - tests/test_dedicated_repository_workspaces.py
+      - components/repository_page_ui.py
+      - tests/test_optimized_inline_repository_forms.py
       - tests/test_repository_density_and_lazy_add.py
       - tests/test_repository_compact_ui.py
       - tests/test_supplement_repository_separation.py
-      - .github/workflows/dedicated-repository-workspaces-validation.yml
+      - tests/test_exercise_journal_repository_fix_contract.py
+      - .github/workflows/optimized-inline-repository-forms-validation.yml
 
 jobs:
   validate:
@@ -24,19 +22,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Compile workspace sources
+      - name: Compile repository pages
         run: |
           python -m py_compile \
-            components/repository_workspace_common.py \
             pages/15_Admin_Recipe_Manager.py \
-            pages/15A_Admin_Recipe_Form.py \
             pages/16_Admin_Exercise_Manager.py \
-            pages/16A_Admin_Exercise_Form.py \
             pages/39_Admin_Supplement_Manager.py \
-            pages/39A_Admin_Supplement_Form.py
-      - name: Run dedicated workspace contracts
+            components/repository_page_ui.py
+      - name: Run optimized inline contracts
         run: |
-          python -m unittest tests.test_dedicated_repository_workspaces -v
+          python -m unittest tests.test_optimized_inline_repository_forms -v
           python -m unittest tests.test_repository_density_and_lazy_add -v
           python -m unittest tests.test_repository_compact_ui -v
           python -m unittest tests.test_supplement_repository_separation -v
+          python -m unittest tests.test_exercise_journal_repository_fix_contract -v
