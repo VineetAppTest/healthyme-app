@@ -4,8 +4,10 @@ on:
   pull_request:
     paths:
       - "components/streamlit_toolbar_cleanup.py"
+      - "components/member_home_global_header_runtime.py"
       - "components/__init__.py"
       - "tests/test_global_header_top_spacing.py"
+      - "tests/test_member_home_global_header_runtime.py"
       - ".github/workflows/global-header-top-spacing-validation.yml"
   workflow_dispatch:
 
@@ -21,11 +23,19 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Compile global header module
+      - name: Install Streamlit runtime
+        run: pip install -r requirements.txt
+
+      - name: Compile global header modules
         run: |
           python -m py_compile \
             components/streamlit_toolbar_cleanup.py \
-            tests/test_global_header_top_spacing.py
+            components/member_home_global_header_runtime.py \
+            tests/test_global_header_top_spacing.py \
+            tests/test_member_home_global_header_runtime.py
 
-      - name: Run global header spacing contracts
-        run: python -m unittest tests.test_global_header_top_spacing -v
+      - name: Run global header contracts
+        run: |
+          python -m unittest \
+            tests.test_global_header_top_spacing \
+            tests.test_member_home_global_header_runtime -v
