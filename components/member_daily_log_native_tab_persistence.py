@@ -6,7 +6,7 @@ import inspect
 import streamlit as st
 
 
-_MARKER = "_hm_member_daily_log_native_tab_persistence_v1"
+_MARKER = "_hm_member_daily_log_native_tab_persistence_v2"
 _PAGE_SUFFIX = "pages/18_Daily_Log.py"
 _LABELS = ("Food Journal", "Exercise Journal")
 
@@ -19,11 +19,19 @@ def _page_in_stack() -> bool:
     return False
 
 
+def _is_bound_callable(value) -> bool:
+    return callable(value) and getattr(value, "__self__", None) is not None
+
+
 def _unwrap_native_tabs(candidate):
+    """Walk HealthyMe wrappers without unbinding Streamlit's tabs method."""
+
     current = candidate
     seen: set[int] = set()
     while callable(current) and id(current) not in seen:
         seen.add(id(current))
+        if _is_bound_callable(current):
+            return current
         next_callable = getattr(current, "__wrapped__", None)
         if not callable(next_callable):
             next_callable = getattr(current, "_hm_original_tabs", None)
@@ -31,6 +39,17 @@ def _unwrap_native_tabs(candidate):
             break
         current = next_callable
     return current
+
+
+def _bound_native_tabs(current_tabs):
+    """Prefer Streamlit's bound main-container method, with a safe wrapper fallback."""
+
+    main_container = getattr(st, "_main", None)
+    native_tabs = getattr(main_container, "tabs", None)
+    if callable(native_tabs):
+        return native_tabs
+    resolved = _unwrap_native_tabs(current_tabs)
+    return resolved if callable(resolved) else current_tabs
 
 
 def _render_tab_persistence_guard() -> None:
@@ -102,7 +121,7 @@ def install_member_daily_log_native_tab_persistence() -> None:
     current_tabs = st.tabs
     if getattr(current_tabs, _MARKER, False):
         return
-    native_tabs = _unwrap_native_tabs(current_tabs)
+    native_tabs = _bound_native_tabs(current_tabs)
 
     @functools.wraps(current_tabs)
     def native_daily_log_tabs(labels, *args, **kwargs):
