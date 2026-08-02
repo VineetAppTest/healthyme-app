@@ -32,6 +32,12 @@ class RepositoryCompactUiTests(unittest.TestCase):
             self.assertIn('border-radius:999px!important', source)
             self.assertIn('white-space:nowrap!important', source)
 
+    def test_repository_rows_have_separation(self):
+        helper = text(HELPER)
+        self.assertIn(':has(.hm-repo-row)', helper)
+        self.assertIn(':has(.hm-sup-row)', helper)
+        self.assertIn('margin-bottom:.52rem!important', helper)
+
     def test_edit_disclosures_are_page_owned_single_controls(self):
         helper = text(HELPER)
         self.assertIn('symbol = "⊖" if is_open else "⊕"', helper)
@@ -44,11 +50,11 @@ class RepositoryCompactUiTests(unittest.TestCase):
             self.assertIn("render_repository_disclosure", source)
             self.assertNotIn("st.expander", source)
 
-    def test_add_and_edit_use_same_balanced_form_panel(self):
+    def test_add_and_edit_use_same_compact_form_panel(self):
         helper = text(HELPER)
-        self.assertIn("min-height:2.18rem!important", helper)
-        self.assertIn("min-height:68px!important", helper)
-        self.assertIn("font-size:.76rem!important", helper)
+        self.assertIn("min-height:2rem!important", helper)
+        self.assertIn("min-height:54px!important", helper)
+        self.assertIn("font-size:.75rem!important", helper)
         self.assertNotIn("min-height:1.72rem", helper)
         self.assertNotIn("height:42px", helper)
 
