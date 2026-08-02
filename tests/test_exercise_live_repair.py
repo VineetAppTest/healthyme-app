@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import pathlib
 import types
 import unittest
@@ -78,6 +79,53 @@ class ExerciseLiveRepairTests(unittest.TestCase):
         finally:
             member_runtime.st = original_st
             member_runtime._page_in_stack = original_page_check
+
+    def test_native_tab_unwrap_stops_at_bound_streamlit_method(self):
+        calls = []
+
+        class LayoutsMixin:
+            def raw_tabs(self, tabs, *args, **kwargs):
+                calls.append(tuple(tabs))
+                return [contextlib.nullcontext() for _ in tabs]
+
+            @functools.wraps(raw_tabs)
+            def tabs(self, tabs, *args, **kwargs):
+                return self.raw_tabs(tabs, *args, **kwargs)
+
+        layout = LayoutsMixin()
+        bound_tabs = layout.tabs
+
+        @functools.wraps(bound_tabs)
+        def healthyme_wrapper(labels, *args, **kwargs):
+            return bound_tabs(labels, *args, **kwargs)
+
+        resolved = member_runtime._unwrap_native_tabs(healthyme_wrapper)
+        self.assertIs(getattr(resolved, "__self__", None), layout)
+        result = resolved(["Food Journal", "Exercise Journal"])
+        self.assertEqual(len(result), 2)
+        self.assertEqual(calls, [("Food Journal", "Exercise Journal")])
+
+    def test_bound_main_container_tabs_are_preferred(self):
+        calls = []
+
+        class MainContainer:
+            def tabs(self, labels, *args, **kwargs):
+                calls.append(tuple(labels))
+                return [contextlib.nullcontext() for _ in labels]
+
+        def wrapped_tabs(labels, *args, **kwargs):
+            raise AssertionError("wrapper chain should not be used for Daily Log native tabs")
+
+        fake_st = types.SimpleNamespace(_main=MainContainer())
+        original_st = member_runtime.st
+        try:
+            member_runtime.st = fake_st
+            resolved = member_runtime._bound_native_tabs(wrapped_tabs)
+            result = resolved(["Food Journal", "Exercise Journal"])
+            self.assertEqual(len(result), 2)
+            self.assertEqual(calls, [("Food Journal", "Exercise Journal")])
+        finally:
+            member_runtime.st = original_st
 
     def test_admin_success_survives_rerun_and_blank_field_is_not_rendered(self):
         rendered_success = []
