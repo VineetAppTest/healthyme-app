@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import importlib.util
 import pathlib
 import unittest
 
@@ -56,11 +57,94 @@ class GlobalHeaderTopSpacingTests(unittest.TestCase):
 
     def test_global_toolbar_stylesheet_does_not_restore_top_gap(self) -> None:
         self.assertIn(
-            'div[data-testid="stElementContainer"]:has(style#hm-streamlit-toolbar-cleanup-v3)',
+            'div[data-testid="stElementContainer"]:has(style#hm-streamlit-toolbar-cleanup-v4)',
             self.toolbar_source,
         )
         self.assertIn("display: none !important", self.toolbar_source)
         self.assertIn("height: 0 !important", self.toolbar_source)
+
+    def test_idle_reconnect_guard_targets_top_document_and_future_controls(self) -> None:
+        expected_tokens = (
+            "window.top || window",
+            "doc.head || doc.documentElement",
+            "__healthymeToolbarReconnectGuardV4",
+            "MutationObserver",
+            "observer.observe(doc.documentElement, { childList: true, subtree: true })",
+            "previous.observer.disconnect()",
+            "hostWindow.setTimeout(apply, delay)",
+            "unsafe_allow_javascript=True",
+        )
+        for token in expected_tokens:
+            self.assertIn(token, self.toolbar_source)
+
+    def test_reconnect_guard_is_rendered_after_static_css(self) -> None:
+        wrapper_start = self.toolbar_source.index("def set_page_config_without_owner_toolbar")
+        css_call = self.toolbar_source.index("_render_global_toolbar_css()", wrapper_start)
+        guard_call = self.toolbar_source.index("_render_toolbar_reconnect_guard()", wrapper_start)
+        self.assertLess(css_call, guard_call)
+
+    def test_every_page_config_call_renders_static_and_reconnect_guards(self) -> None:
+        import streamlit as st
+
+        spec = importlib.util.spec_from_file_location(
+            "hm_toolbar_cleanup_runtime_contract",
+            TOOLBAR,
+        )
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+
+        base_attr = module._BASE_CONFIG_ATTR
+        had_base = hasattr(st, base_attr)
+        previous_base = getattr(st, base_attr, None)
+        previous_config = st.set_page_config
+        previous_markdown = st.markdown
+        previous_html = st.html
+        calls = []
+
+        def fake_config(*args, **kwargs):
+            calls.append(("config", args, kwargs))
+            return "configured"
+
+        def fake_markdown(body, *args, **kwargs):
+            calls.append(("markdown", body, kwargs))
+            return "markdown"
+
+        def fake_html(body, *args, **kwargs):
+            calls.append(("html", body, kwargs))
+            return "html"
+
+        try:
+            st.set_page_config = fake_config
+            st.markdown = fake_markdown
+            st.html = fake_html
+            if hasattr(st, base_attr):
+                delattr(st, base_attr)
+
+            module.install_streamlit_toolbar_cleanup()
+            self.assertEqual(st.set_page_config(page_title="HealthyMe"), "configured")
+            self.assertEqual(st.set_page_config(page_title="HealthyMe again"), "configured")
+
+            static_calls = [
+                call for call in calls
+                if call[0] == "markdown" and "hm-streamlit-toolbar-cleanup-v4" in call[1]
+            ]
+            reconnect_calls = [
+                call for call in calls
+                if call[0] == "html" and "hm-streamlit-toolbar-reconnect-guard-v4" in call[1]
+            ]
+            self.assertEqual(len(static_calls), 2)
+            self.assertEqual(len(reconnect_calls), 2)
+            for call in reconnect_calls:
+                self.assertTrue(call[2].get("unsafe_allow_javascript"))
+        finally:
+            st.set_page_config = previous_config
+            st.markdown = previous_markdown
+            st.html = previous_html
+            if had_base:
+                setattr(st, base_attr, previous_base)
+            elif hasattr(st, base_attr):
+                delattr(st, base_attr)
 
     def test_auth_and_navigation_are_not_modified(self) -> None:
         forbidden = (
