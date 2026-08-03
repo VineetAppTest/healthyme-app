@@ -13,6 +13,7 @@ from components.flash import set_system_message, render_system_message
 from components.normalized_store import check_normalized_tables
 from components.identity_projection_observation import (
     get_identity_projection_snapshot,
+    get_identity_observation_window_status,
     observe_identity_projection,
 )
 
@@ -101,6 +102,65 @@ st.caption(
 card_end()
 
 card_start()
+st.subheader("Gate 6 observation window")
+window_ok, window_status, window_msg = get_identity_observation_window_status(
+    window_hours=24,
+    minimum_observations=3,
+    minimum_span_minutes=60,
+)
+if window_ok and window_status.get("automated_retirement_preconditions_ready"):
+    st.success(window_msg)
+elif window_ok:
+    st.warning(window_msg)
+else:
+    st.error(window_msg)
+
+if window_ok:
+    stat_grid([
+        {
+            "label": "Observations",
+            "value": str(window_status.get("observation_count", 0)),
+            "note": f"Minimum {window_status.get('minimum_observations', 3)}",
+        },
+        {
+            "label": "Window Span",
+            "value": f"{float(window_status.get('span_minutes', 0) or 0):.1f} min",
+            "note": f"Minimum {window_status.get('minimum_span_minutes', 60)} min",
+        },
+        {
+            "label": "Auth-linked Members",
+            "value": f"{window_status.get('active_members_with_auth_user_id', 0)}/{window_status.get('active_member_count', 0)}",
+            "note": "Active members",
+        },
+        {
+            "label": "Automated Readiness",
+            "value": "Ready" if window_status.get("automated_retirement_preconditions_ready") else "Blocked",
+            "note": "Manual route/device smoke still required",
+        },
+    ])
+    st.json({
+        "database_observation_ready": window_status.get("database_observation_ready"),
+        "automated_retirement_preconditions_ready": window_status.get("automated_retirement_preconditions_ready"),
+        "healthy_observation_count": window_status.get("healthy_observation_count"),
+        "repair_count": window_status.get("repair_count"),
+        "first_observed_at": window_status.get("first_observed_at"),
+        "latest_observed_at": window_status.get("latest_observed_at"),
+        "active_members_using_email_fallback": window_status.get("active_members_using_email_fallback"),
+        "active_members_missing_workflow": window_status.get("active_members_missing_workflow"),
+        "flutter_anon_executable_function_count": window_status.get("flutter_anon_executable_function_count"),
+        "flutter_authenticated_missing_function_count": window_status.get("flutter_authenticated_missing_function_count"),
+        "flutter_shared_workflow_fallback_functions": window_status.get("flutter_shared_workflow_fallback_functions", []),
+        "blockers": window_status.get("blockers", []),
+    })
+else:
+    st.json({"error": window_msg})
+
+st.caption(
+    "Automated readiness is evidence only. Projection retirement still requires signed-in Admin, Member and Flutter device smoke evidence and a separate approved retirement PR."
+)
+card_end()
+
+card_start()
 st.subheader("Backup and non-identity transfer tools")
 st.markdown(
     """
@@ -156,7 +216,8 @@ st.markdown(
     2. Confirm Identity Authority is <b>Canonical</b>.<br>
     3. Confirm Projection is <b>Aligned</b>.<br>
     4. Confirm Admin and Member routes resolve the current role after refresh.<br>
-    5. Record a projection observation after controlled User or Workflow changes.
+    5. Confirm Flutter member dashboard, LAF and NSP on an authenticated device.<br>
+    6. Record projection observations across the accepted observation window.
     """,
     unsafe_allow_html=True,
 )
