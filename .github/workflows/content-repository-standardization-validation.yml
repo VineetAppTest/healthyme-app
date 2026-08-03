@@ -51,7 +51,8 @@ jobs:
       - name: Apply deterministic final retirement gate
         if: github.event_name == 'pull_request' && github.head_ref == 'agent/final-content-repository-retirement-gate'
         run: |
-          if grep -q "def sync_repository_to_state" components/recommendation_contract.py; then
+          if grep -q "def sync_repository_to_state" components/recommendation_contract.py \
+             || grep -q 'BASE_DIR / "data" / "recipes.csv"' components/content_repository_migration.py; then
             python scripts/apply_content_repository_final_retirement.py
           fi
 
@@ -61,7 +62,7 @@ jobs:
           if ! git diff --quiet; then
             git config user.name "healthyme-jarvis"
             git config user.email "actions@users.noreply.github.com"
-            git add components/recommendation_contract.py
+            git add components/recommendation_contract.py components/content_repository_migration.py
             git commit -m "Remove final legacy repository compatibility dependencies"
             git push origin HEAD:${{ github.head_ref }}
           fi
