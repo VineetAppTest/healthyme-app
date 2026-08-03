@@ -132,18 +132,29 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
             if folder.exists():
                 paths.extend(folder.rglob("*.py"))
 
-        hits: list[str] = []
+        hit_details: dict[str, list[str]] = {}
         for path in paths:
             source = path.read_text(encoding="utf-8", errors="ignore")
-            if any(token in source for token in tokens):
-                hits.append(str(path.relative_to(ROOT)))
+            matches: list[str] = []
+            for line_number, line in enumerate(source.splitlines(), start=1):
+                matched_tokens = [token for token in tokens if token in line]
+                if matched_tokens:
+                    compact = " ".join(line.strip().split())
+                    matches.append(
+                        f"L{line_number} [{', '.join(matched_tokens)}] {compact[:220]}"
+                    )
+            if matches:
+                hit_details[str(path.relative_to(ROOT))] = matches
 
         document = DOC.read_text(encoding="utf-8")
-        missing = [path for path in sorted(set(hits)) if f"`{path}`" not in document]
+        missing = [path for path in sorted(hit_details) if f"`{path}`" not in document]
+        missing_details = "\n".join(
+            f"{path}:\n  " + "\n  ".join(hit_details[path]) for path in missing
+        )
         self.assertEqual(
             missing,
             [],
-            "Unclassified Users/Workflow/session runtime paths: " + ", ".join(missing),
+            "Unclassified Users/Workflow/session runtime paths:\n" + missing_details,
         )
 
     def test_trace_does_not_claim_session_or_auth_cutover(self) -> None:
