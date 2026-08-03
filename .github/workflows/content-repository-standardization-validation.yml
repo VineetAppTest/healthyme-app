@@ -8,7 +8,9 @@ on:
       - "supabase/migrations/*content_repository*.sql"
       - "tests/test_content_repository_standardization.py"
       - "tests/test_content_repository_privilege_hardening.py"
+      - "tests/test_content_repository_controlled_backfill.py"
       - "docs/content_repository_standardization.md"
+      - "docs/content_repository_source_inventory_2026-08-03.md"
       - ".github/workflows/content-repository-standardization-validation.yml"
   workflow_dispatch:
 
@@ -40,9 +42,11 @@ jobs:
             components/content_repository_store.py \
             components/content_repository_migration.py \
             tests/test_content_repository_standardization.py \
-            tests/test_content_repository_privilege_hardening.py
+            tests/test_content_repository_privilege_hardening.py \
+            tests/test_content_repository_controlled_backfill.py
 
       - name: Run repository foundation tests
         run: |
           python -m unittest tests.test_content_repository_standardization -v
           python -m unittest tests.test_content_repository_privilege_hardening -v
+          python -m unittest tests.test_content_repository_controlled_backfill -v
