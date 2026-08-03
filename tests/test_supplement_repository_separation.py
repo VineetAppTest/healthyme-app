@@ -76,11 +76,24 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
             self.assertIn(token, text)
         self.assertIn("Historical references were retained.", text)
 
-    def test_repository_migration_preserves_member_rows(self):
+    def test_repository_uses_canonical_content_store_only(self):
         text = _text(REPOSITORY)
-        self.assertIn('db.get("member_supplements", [])', text)
-        self.assertNotIn('db["member_supplements"]', text)
-        self.assertIn('"member_regimens_unchanged": True', text)
+        self.assertIn("list_repository_items", text)
+        self.assertIn("get_repository_item", text)
+        self.assertIn("save_repository_item", text)
+        self.assertIn("set_repository_item_status", text)
+        self.assertNotIn("load_db", text)
+        self.assertNotIn("save_db", text)
+        self.assertNotIn("member_supplements", text)
+        self.assertNotIn("supplement_repository_audit", text)
+        self.assertNotIn("supplement_repository_v1_migration", text)
+
+    def test_repository_preserves_supplement_identity_contract(self):
+        text = _text(REPOSITORY)
+        self.assertIn('f"suprepo_{uuid.uuid4().hex[:8]}"', text)
+        self.assertIn('get_repository_item("supplement", source_id)', text)
+        self.assertIn('legacy_reference=canonical.get("legacy_reference") or ""', text)
+        self.assertIn("_clear_streamlit_data_cache", text)
 
     def test_profile_builder_installs_repository_source_before_modular_import(self):
         text = _text(PROFILE_PAGE)
