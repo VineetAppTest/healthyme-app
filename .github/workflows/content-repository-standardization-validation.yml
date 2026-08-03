@@ -5,8 +5,9 @@ on:
     paths:
       - "components/content_repository_store.py"
       - "components/content_repository_migration.py"
-      - "supabase/migrations/20260803094700_create_standard_content_repository.sql"
+      - "supabase/migrations/*content_repository*.sql"
       - "tests/test_content_repository_standardization.py"
+      - "tests/test_content_repository_privilege_hardening.py"
       - "docs/content_repository_standardization.md"
       - ".github/workflows/content-repository-standardization-validation.yml"
   workflow_dispatch:
@@ -38,7 +39,10 @@ jobs:
           python -m py_compile \
             components/content_repository_store.py \
             components/content_repository_migration.py \
-            tests/test_content_repository_standardization.py
+            tests/test_content_repository_standardization.py \
+            tests/test_content_repository_privilege_hardening.py
 
       - name: Run repository foundation tests
-        run: python -m unittest tests.test_content_repository_standardization -v
+        run: |
+          python -m unittest tests.test_content_repository_standardization -v
+          python -m unittest tests.test_content_repository_privilege_hardening -v
