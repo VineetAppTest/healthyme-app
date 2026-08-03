@@ -7,6 +7,8 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "supabase" / "migrations" / "20260803184500_identity_manual_smoke_gate8.sql"
+HARDEN_GRANTS = ROOT / "supabase" / "migrations" / "20260803185000_identity_manual_smoke_gate8_harden_service_role_grants.sql"
+CONTRACT_ONLY = ROOT / "supabase" / "migrations" / "20260803185500_identity_manual_smoke_gate8_contract_only_writes.sql"
 COMPONENT = ROOT / "components" / "identity_projection_observation.py"
 PAGE = ROOT / "pages" / "28_Admin_Database_Status.py"
 DOC = ROOT / "docs" / "identity_manual_smoke_gate8_2026-08-03.md"
@@ -16,14 +18,19 @@ EVIDENCE = ROOT / "docs" / "evidence" / "identity_gate8_manual_smoke_baseline_20
 class IdentityManualSmokeGate8Tests(unittest.TestCase):
     def test_evidence_table_is_private_and_constrained(self) -> None:
         source = MIGRATION.read_text(encoding="utf-8")
+        harden = HARDEN_GRANTS.read_text(encoding="utf-8")
+        contract_only = CONTRACT_ONLY.read_text(encoding="utf-8")
         self.assertIn("create table if not exists public.hm_identity_manual_smoke_evidence", source)
         self.assertIn("alter table public.hm_identity_manual_smoke_evidence enable row level security", source)
         self.assertIn("revoke all on table public.hm_identity_manual_smoke_evidence from public, anon, authenticated", source)
-        self.assertIn("grant select, insert on table public.hm_identity_manual_smoke_evidence to service_role", source)
         self.assertIn("evidence_bundle in ('streamlit_admin', 'streamlit_member', 'flutter_member')", source)
         self.assertIn("status in ('pass', 'fail')", source)
         self.assertIn("request_id text not null unique", source)
         self.assertIn("request_payload jsonb not null", source)
+        self.assertIn("revoke all on table public.hm_identity_manual_smoke_evidence from public, anon, authenticated", harden)
+        self.assertIn("revoke all on table public.hm_identity_manual_smoke_evidence from service_role", contract_only)
+        self.assertIn("grant select on table public.hm_identity_manual_smoke_evidence to service_role", contract_only)
+        self.assertNotIn("grant insert", contract_only.lower())
 
     def test_record_contract_requires_every_bundle_step_for_a_pass(self) -> None:
         source = MIGRATION.read_text(encoding="utf-8")
@@ -97,6 +104,7 @@ class IdentityManualSmokeGate8Tests(unittest.TestCase):
             "Default evidence age limit",
             "projection retirement approved: `false`",
             "No temporary smoke evidence persisted",
+            "direct table `INSERT`: denied",
             "The page contains no projection-retirement action",
             "static tests or SQL probes as signed-in UI/device smoke",
             "Sessions, password retirement and default-Admin redesign remain separate batches",
