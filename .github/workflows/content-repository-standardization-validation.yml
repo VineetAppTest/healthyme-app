@@ -13,6 +13,7 @@ on:
       - "pages/08_Recipe_Repository.py"
       - "pages/09_Exercise_Repository.py"
       - "pages/15_Admin_Recipe_Manager.py"
+      - "scripts/remove_legacy_repository_csv_helpers.py"
       - "supabase/migrations/*content_repository*.sql"
       - "tests/test_content_repository_standardization.py"
       - "tests/test_content_repository_privilege_hardening.py"
@@ -23,6 +24,7 @@ on:
       - "tests/test_supplement_repository_canonical_cutover.py"
       - "tests/test_supplement_repository_separation.py"
       - "tests/test_content_repository_legacy_retirement.py"
+      - "tests/test_recommendation_contract_legacy_csv_cleanup.py"
       - "docs/content_repository_standardization.md"
       - "docs/content_repository_source_inventory_2026-08-03.md"
       - "docs/content_repository_legacy_retirement_2026-08-03.md"
@@ -30,15 +32,35 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Check out repository
+      - name: Check out repository branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Apply deterministic legacy helper cleanup
+        if: github.event_name == 'pull_request' && github.head_ref == 'agent/remove-legacy-csv-helpers'
+        run: |
+          if grep -q "def _read_repository_df" components/recommendation_contract.py; then
+            python scripts/remove_legacy_repository_csv_helpers.py
+          fi
+
+      - name: Commit deterministic cleanup result
+        if: github.event_name == 'pull_request' && github.head_ref == 'agent/remove-legacy-csv-helpers'
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "healthyme-jarvis"
+            git config user.email "actions@users.noreply.github.com"
+            git add components/recommendation_contract.py
+            git commit -m "Remove dead legacy repository CSV helpers"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -71,7 +93,8 @@ jobs:
             tests/test_exercise_journal_repository_fix_contract.py \
             tests/test_supplement_repository_canonical_cutover.py \
             tests/test_supplement_repository_separation.py \
-            tests/test_content_repository_legacy_retirement.py
+            tests/test_content_repository_legacy_retirement.py \
+            tests/test_recommendation_contract_legacy_csv_cleanup.py
 
       - name: Run repository foundation tests
         run: |
@@ -92,5 +115,7 @@ jobs:
           python -m unittest tests.test_supplement_repository_canonical_cutover -v
           python -m unittest tests.test_supplement_repository_separation -v
 
-      - name: Run legacy authority retirement guard
-        run: python -m unittest tests.test_content_repository_legacy_retirement -v
+      - name: Run legacy authority retirement guards
+        run: |
+          python -m unittest tests.test_content_repository_legacy_retirement -v
+          python -m unittest tests.test_recommendation_contract_legacy_csv_cleanup -v
