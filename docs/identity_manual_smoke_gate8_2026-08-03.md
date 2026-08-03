@@ -14,28 +14,33 @@ It does **not** retire, freeze, delete or stop updating the shared Users/Workflo
 
 The following related actions are delivered together:
 
-1. create a service-role-only manual smoke evidence store;
+1. create a private manual smoke evidence store;
 2. define three mandatory signed-in smoke bundles;
 3. require step-level checklists for every bundle;
 4. bind evidence to an exact revision and deployment/build reference;
 5. distinguish production, staging and test evidence;
 6. reject a passing record when any mandatory step is false or missing;
 7. make request replay idempotent and reject request-ID reuse with different evidence;
-8. expire old evidence after a controlled age window;
-9. aggregate automated, fallback-closure, manual-smoke and rollback evidence;
-10. expose the decision gate and evidence form in Admin Database Status;
-11. document rollback triggers and pre-retirement requirements;
-12. add production verification, tests and CI guards.
+8. require evidence writes to use the validated RPC rather than direct table inserts;
+9. expire old evidence after a controlled age window;
+10. aggregate automated, fallback-closure, manual-smoke and rollback evidence;
+11. expose the decision gate and evidence form in Admin Database Status;
+12. document rollback triggers and pre-retirement requirements;
+13. add production verification, tests and CI guards.
 
-## Production migration
+## Production migrations
 
 Applied to Supabase project `arptwzvlugxrqtvbrmtl`:
 
-- `identity_manual_smoke_gate8`
+- `identity_manual_smoke_gate8`;
+- `identity_manual_smoke_gate8_harden_service_role_grants`;
+- `identity_manual_smoke_gate8_contract_only_writes`.
 
-Repository migration:
+Repository migrations:
 
-- `supabase/migrations/20260803184500_identity_manual_smoke_gate8.sql`
+- `supabase/migrations/20260803184500_identity_manual_smoke_gate8.sql`;
+- `supabase/migrations/20260803185000_identity_manual_smoke_gate8_harden_service_role_grants.sql`;
+- `supabase/migrations/20260803185500_identity_manual_smoke_gate8_contract_only_writes.sql`.
 
 ## Manual smoke bundles
 
@@ -96,7 +101,9 @@ Credentials, access tokens and other secrets must never be stored in notes or ev
 - has RLS enabled;
 - has no public policies;
 - is not accessible by `PUBLIC`, `anon` or `authenticated`;
-- is readable and insertable only by `service_role`;
+- is directly readable by `service_role` for diagnostics;
+- does not allow direct `service_role` inserts;
+- accepts writes only through `hm_admin_record_identity_smoke_evidence(...)`;
 - stores the original request payload for idempotency comparison;
 - retains historical pass and fail records;
 - uses the latest record for each bundle when calculating readiness.
@@ -188,6 +195,12 @@ A sequential transaction inserted temporary passing records for all three bundle
 - no automated blocker remained.
 
 The transaction was rolled back. No temporary smoke evidence persisted.
+
+A separate rolled-back contract-only probe set the caller role to `service_role` and verified:
+
+- direct table `SELECT`: allowed;
+- direct table `INSERT`: denied;
+- the validated smoke evidence RPC: allowed and functional.
 
 A first single-statement probe correctly demonstrated PostgreSQL statement-snapshot behavior: function-side inserts are not visible to other reads in the same SQL statement. The accepted verification therefore uses sequential statements within one transaction. This is a test-method detail, not a runtime defect.
 
