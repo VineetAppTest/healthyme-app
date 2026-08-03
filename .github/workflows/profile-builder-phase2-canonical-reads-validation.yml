@@ -11,6 +11,7 @@ on:
       - 'components/pbm_rows.py'
       - 'pages/38_Admin_Recommendation_Profile_Builder.py'
       - 'tests/test_profile_builder_phase2_canonical_reads.py'
+      - 'tests/test_profile_builder_phase2_legacy_snapshot_save.py'
       - 'docs/profile_builder_phase2_canonical_reads.md'
       - '.github/workflows/profile-builder-phase2-canonical-reads-validation.yml'
   workflow_dispatch:
@@ -42,10 +43,15 @@ jobs:
             components/pbm_core.py \
             components/pbm_rows.py \
             pages/38_Admin_Recommendation_Profile_Builder.py \
-            tests/test_profile_builder_phase2_canonical_reads.py
+            tests/test_profile_builder_phase2_canonical_reads.py \
+            tests/test_profile_builder_phase2_legacy_snapshot_save.py
 
       - name: Run Phase 2 canonical source contracts
-        run: python -m unittest tests.test_profile_builder_phase2_canonical_reads -v
+        run: |
+          python -m unittest \
+            tests.test_profile_builder_phase2_canonical_reads \
+            tests.test_profile_builder_phase2_legacy_snapshot_save \
+            -v
 
       - name: Run Phase 1 repository contract regression
         run: python -m unittest tests.test_profile_builder_repository_contract -v
