@@ -7,6 +7,7 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "users_workflow_single_authority_target_design_batch2a_2026-08-03.md"
 GATE3_DOC = ROOT / "docs" / "users_gate3_write_cutover_2026-08-03.md"
+GATE4_DOC = ROOT / "docs" / "workflow_gate4_write_cutover_2026-08-03.md"
 STORAGE = ROOT / "components" / "storage_backend.py"
 NORMALIZED = ROOT / "components" / "normalized_store.py"
 DB = ROOT / "components" / "db.py"
@@ -97,26 +98,31 @@ class UsersWorkflowTargetDesignBatch2ATests(unittest.TestCase):
             source.index("### Gate 7 — Projection retirement"),
         )
 
-    def test_current_runtime_reflects_staged_gate3_cutover(self) -> None:
+    def test_current_runtime_reflects_staged_gate4_cutover(self) -> None:
         storage = STORAGE.read_text(encoding="utf-8")
         normalized = NORMALIZED.read_text(encoding="utf-8")
         db_source = DB.read_text(encoding="utf-8")
         role_source = ROLE_MODEL.read_text(encoding="utf-8")
         gate3 = GATE3_DOC.read_text(encoding="utf-8")
+        gate4 = GATE4_DOC.read_text(encoding="utf-8")
 
         self.assertIn("def _overlay_normalized_users_workflow", storage)
-        self.assertIn("commit_users_and_state", storage)
-        self.assertIn("sync_workflow_to_normalized", storage)
-        self.assertNotIn("sync_users_workflow_to_normalized(db)", storage)
-        self.assertIn("if users_changed and not configured:", storage)
+        self.assertIn("commit_identity_and_state", storage)
+        self.assertIn("workflow_changed = _workflow_projection_changed(previous, db)", storage)
+        self.assertNotIn("sync_workflow_to_normalized", storage)
+        self.assertIn("if identity_changed and not configured:", storage)
         self.assertIn("raise RuntimeError", storage)
         self.assertIn("LOCAL_DB_PATH.write_text", storage)
+        self.assertIn("def commit_users_and_state", normalized)
+        self.assertIn("def commit_identity_and_state", normalized)
         self.assertIn("def sync_users_workflow_to_normalized", normalized)
+        self.assertNotIn('.table("hm_workflow").upsert(', normalized)
         self.assertIn("def ensure_default_admin", db_source)
         self.assertIn("def create_login_session", db_source)
         self.assertIn("Loaded user from legacy local store", role_source)
         self.assertIn("Gate 3 cuts over the **User write authority only**", gate3)
-        self.assertIn("Workflow remains on its existing dedicated synchronization path", gate3)
+        self.assertIn("Gate 4 cuts over the **Streamlit/shared-state Workflow write authority**", gate4)
+        self.assertIn("Sessions, password retirement, default-Admin redesign", gate4)
 
 
 if __name__ == "__main__":
