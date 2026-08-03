@@ -73,7 +73,11 @@ def install_exercise_repository_runtime() -> None:
     setattr(exercise_repository_cache_policy, _MARKER, True)
     for attribute in ("clear",):
         if hasattr(current_cache_data, attribute):
-            setattr(exercise_repository_cache_policy, attribute, getattr(current_cache_data, attribute))
+            setattr(
+                exercise_repository_cache_policy,
+                attribute,
+                getattr(current_cache_data, attribute),
+            )
     st.cache_data = exercise_repository_cache_policy
 
     import components.recommendation_contract as recommendation_contract
@@ -82,11 +86,17 @@ def install_exercise_repository_runtime() -> None:
     if not getattr(original_list_repository_items, _MARKER, False):
 
         @functools.wraps(original_list_repository_items)
-        def persistent_list_repository_items(resource_type: str, active_only: bool = True):
+        def persistent_list_repository_items(
+            resource_type: str,
+            active_only: bool = True,
+        ):
             resource_text = str(resource_type or "").strip().lower()
             if resource_text in {"exercise", "exercises", "workout", "workouts"}:
                 return list_exercise_repository(active_only=active_only)
-            return original_list_repository_items(resource_type, active_only=active_only)
+            return original_list_repository_items(
+                resource_type,
+                active_only=active_only,
+            )
 
         setattr(persistent_list_repository_items, _MARKER, True)
         recommendation_contract.list_repository_items = persistent_list_repository_items
@@ -94,3 +104,21 @@ def install_exercise_repository_runtime() -> None:
         source_contract = sys.modules.get("components.profile_builder_source_contract")
         if source_contract is not None:
             source_contract.list_repository_items = persistent_list_repository_items
+
+    original_sync_repository_to_state = recommendation_contract.sync_repository_to_state
+    if not getattr(original_sync_repository_to_state, _MARKER, False):
+
+        @functools.wraps(original_sync_repository_to_state)
+        def canonical_sync_repository_to_state(resource_type: str):
+            resource_text = str(resource_type or "").strip().lower()
+            if resource_text in {"exercise", "exercises", "workout", "workouts"}:
+                # Compatibility call retained as a read-only snapshot. Canonical
+                # Exercise rows must never be mirrored into app-state as a second
+                # repository authority.
+                return list_exercise_repository(active_only=False)
+            return original_sync_repository_to_state(resource_type)
+
+        setattr(canonical_sync_repository_to_state, _MARKER, True)
+        recommendation_contract.sync_repository_to_state = (
+            canonical_sync_repository_to_state
+        )

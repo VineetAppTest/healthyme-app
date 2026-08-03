@@ -8,6 +8,7 @@ on:
       - "components/recipe_repository.py"
       - "components/recipe_repository_runtime.py"
       - "components/exercise_repository.py"
+      - "components/exercise_repository_runtime.py"
       - "components/supplement_repository.py"
       - "pages/15_Admin_Recipe_Manager.py"
       - "supabase/migrations/*content_repository*.sql"
@@ -19,8 +20,10 @@ on:
       - "tests/test_exercise_journal_repository_fix_contract.py"
       - "tests/test_supplement_repository_canonical_cutover.py"
       - "tests/test_supplement_repository_separation.py"
+      - "tests/test_content_repository_legacy_retirement.py"
       - "docs/content_repository_standardization.md"
       - "docs/content_repository_source_inventory_2026-08-03.md"
+      - "docs/content_repository_legacy_retirement_2026-08-03.md"
       - ".github/workflows/content-repository-standardization-validation.yml"
   workflow_dispatch:
 
@@ -54,6 +57,7 @@ jobs:
             components/recipe_repository.py \
             components/recipe_repository_runtime.py \
             components/exercise_repository.py \
+            components/exercise_repository_runtime.py \
             components/supplement_repository.py \
             pages/15_Admin_Recipe_Manager.py \
             tests/test_content_repository_standardization.py \
@@ -63,7 +67,8 @@ jobs:
             tests/test_exercise_repository_canonical_cutover.py \
             tests/test_exercise_journal_repository_fix_contract.py \
             tests/test_supplement_repository_canonical_cutover.py \
-            tests/test_supplement_repository_separation.py
+            tests/test_supplement_repository_separation.py \
+            tests/test_content_repository_legacy_retirement.py
 
       - name: Run repository foundation tests
         run: |
@@ -83,3 +88,6 @@ jobs:
         run: |
           python -m unittest tests.test_supplement_repository_canonical_cutover -v
           python -m unittest tests.test_supplement_repository_separation -v
+
+      - name: Run legacy authority retirement guard
+        run: python -m unittest tests.test_content_repository_legacy_retirement -v
