@@ -6,6 +6,7 @@ on:
       - "pages/15_Admin_Recipe_Manager.py"
       - "pages/16_Admin_Exercise_Manager.py"
       - "pages/39_Admin_Supplement_Manager.py"
+      - "components/recipe_repository.py"
       - "tests/test_repository_consolidation.py"
       - ".github/workflows/repository-consolidation-validation.yml"
   workflow_dispatch:
@@ -28,6 +29,7 @@ jobs:
       - name: Compile repository pages and contracts
         run: |
           python -m py_compile \
+            components/recipe_repository.py \
             pages/15_Admin_Recipe_Manager.py \
             pages/16_Admin_Exercise_Manager.py \
             pages/39_Admin_Supplement_Manager.py \
