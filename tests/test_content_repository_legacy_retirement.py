@@ -15,8 +15,11 @@ MEMBER_EXERCISE = ROOT / "pages" / "09_Exercise_Repository.py"
 RECOMMENDATION_CONTRACT = ROOT / "components" / "recommendation_contract.py"
 ADMIN_EXERCISE = ROOT / "pages" / "16_Admin_Exercise_Manager.py"
 ADMIN_SUPPLEMENT = ROOT / "pages" / "39_Admin_Supplement_Manager.py"
-RECIPES_CSV = ROOT / "data" / "recipes.csv"
-EXERCISES_CSV = ROOT / "data" / "exercises.csv"
+ACTIVE_RECIPES_CSV = ROOT / "data" / "recipes.csv"
+ACTIVE_EXERCISES_CSV = ROOT / "data" / "exercises.csv"
+ARCHIVE_ROOT = ROOT / "docs" / "archive" / "content_repository_legacy"
+ARCHIVED_RECIPES_CSV = ARCHIVE_ROOT / "recipes.csv"
+ARCHIVED_EXERCISES_CSV = ARCHIVE_ROOT / "exercises.csv"
 
 
 class ContentRepositoryLegacyRetirementTests(unittest.TestCase):
@@ -35,14 +38,13 @@ class ContentRepositoryLegacyRetirementTests(unittest.TestCase):
         self.assertIn("list_recipe_repository(active_only=active_only)", contract)
         self.assertIn("list_exercise_repository(active_only=active_only)", contract)
 
-    def test_compatibility_sync_is_read_only_in_core_contract(self) -> None:
+    def test_compatibility_sync_is_fully_retired_from_core_contract(self) -> None:
         source = RECOMMENDATION_CONTRACT.read_text(encoding="utf-8")
-        sync_block = source.split("def sync_repository_to_state", 1)[1].split(
-            "def sync_all_repositories_to_state", 1
-        )[0]
-        self.assertIn("read-only canonical snapshot", sync_block)
-        self.assertIn("list_repository_items(resource_type, active_only=False)", sync_block)
-        self.assertNotIn("save_state", sync_block)
+        self.assertNotIn("def sync_repository_to_state", source)
+        self.assertNotIn("def sync_all_repositories_to_state", source)
+        self.assertNotIn("sync_all_repositories_to_state()", source)
+        self.assertIn("list_recipe_repository(active_only=False)", source)
+        self.assertIn("list_exercise_repository(active_only=False)", source)
 
     def test_live_repository_modules_have_no_legacy_state_authority(self) -> None:
         for path in (
@@ -68,11 +70,13 @@ class ContentRepositoryLegacyRetirementTests(unittest.TestCase):
             self.assertNotIn("load_state", source)
             self.assertNotIn("save_state", source)
 
-    def test_legacy_csv_files_are_retained_only_as_rollback_evidence(self) -> None:
-        self.assertTrue(RECIPES_CSV.exists())
-        self.assertTrue(EXERCISES_CSV.exists())
-        self.assertGreater(RECIPES_CSV.stat().st_size, 0)
-        self.assertGreater(EXERCISES_CSV.stat().st_size, 0)
+    def test_legacy_csv_files_are_archived_outside_active_data_paths(self) -> None:
+        self.assertFalse(ACTIVE_RECIPES_CSV.exists())
+        self.assertFalse(ACTIVE_EXERCISES_CSV.exists())
+        self.assertTrue(ARCHIVED_RECIPES_CSV.exists())
+        self.assertTrue(ARCHIVED_EXERCISES_CSV.exists())
+        self.assertGreater(ARCHIVED_RECIPES_CSV.stat().st_size, 0)
+        self.assertGreater(ARCHIVED_EXERCISES_CSV.stat().st_size, 0)
 
 
 if __name__ == "__main__":
