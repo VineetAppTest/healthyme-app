@@ -46,7 +46,7 @@ class RecommendationContractLegacyCsvCleanupTests(unittest.TestCase):
     def test_obsolete_sync_and_mirror_contracts_are_removed(self) -> None:
         source = CONTRACT.read_text(encoding="utf-8")
         for forbidden in (
-            "def sync_repository_to_state(",
+            "def list_repository_items(",
             "def sync_all_repositories_to_state(",
             "sync_all_repositories_to_state()",
             '"repo_key":',

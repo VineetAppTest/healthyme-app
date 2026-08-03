@@ -51,5 +51,6 @@ No historical allocation, recommendation snapshot or audit record should be dele
 
 - Removed `sync_repository_to_state` and `sync_all_repositories_to_state`; neither function persisted data after canonical cutover.
 - Removed the discarded sync call from recommendation-share enrichment.
+- Removed the obsolete repository-sync button from the Unified Recommendations workbench; its allocation migration and publish controls remain.
 - Recommendation diagnostics now count Recipe and Exercise records directly from the canonical repository modules.
 - Legacy CSV files and app-state repository arrays remain retained as rollback evidence; this checkpoint does not delete or mutate them.
