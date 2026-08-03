@@ -10,6 +10,30 @@ PROJECTION_RPC = "hm_identity_projection_snapshot"
 OBSERVATION_RPC = "hm_admin_observe_identity_projection"
 WINDOW_STATUS_RPC = "hm_identity_observation_window_status"
 CLOSURE_STATUS_RPC = "hm_identity_fallback_closure_status"
+SMOKE_RECORD_RPC = "hm_admin_record_identity_smoke_evidence"
+RETIREMENT_READINESS_RPC = "hm_identity_projection_retirement_readiness"
+
+SMOKE_BUNDLE_CHECKLISTS = {
+    "streamlit_admin": (
+        ("login", "Admin login succeeds"),
+        ("refresh_persistence", "Admin remains signed in after refresh"),
+        ("admin_protected_route", "Admin protected route opens with the correct role"),
+        ("logout", "Admin logout completes"),
+    ),
+    "streamlit_member": (
+        ("login", "Member login succeeds"),
+        ("refresh_persistence", "Member remains signed in after refresh"),
+        ("member_protected_route", "Member protected route opens with the correct role"),
+        ("logout", "Member logout completes"),
+    ),
+    "flutter_member": (
+        ("login", "Flutter member login succeeds"),
+        ("dashboard", "Dashboard loads the authenticated member"),
+        ("laf", "LAF opens and reads the expected saved data"),
+        ("nsp", "NSP pages open and read the expected saved data"),
+        ("submit_for_review", "Submit for Review completes successfully"),
+    ),
+}
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -65,6 +89,10 @@ def _rpc_dict(rpc_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(data, dict):
         raise RuntimeError(f"{rpc_name} returned an invalid response.")
     return data
+
+
+def identity_smoke_checklist_for_bundle(bundle: str):
+    return SMOKE_BUNDLE_CHECKLISTS.get(str(bundle or "").strip().lower(), ())
 
 
 def get_identity_projection_snapshot() -> Tuple[bool, Dict[str, Any], str]:
@@ -137,6 +165,103 @@ def get_identity_fallback_closure_status() -> Tuple[bool, Dict[str, Any], str]:
         return True, data, message
     except Exception as exc:
         return False, {}, f"Identity fallback-closure status failed: {exc}"
+
+
+def get_identity_projection_retirement_readiness(
+    *, evidence_max_age_hours: int = 72
+) -> Tuple[bool, Dict[str, Any], str]:
+    """Aggregate automated, manual-smoke and rollback evidence.
+
+    A ready result permits a separate retirement decision. It never approves or
+    performs projection retirement.
+    """
+    try:
+        data = _rpc_dict(
+            RETIREMENT_READINESS_RPC,
+            {"p_evidence_max_age_hours": max(int(evidence_max_age_hours), 1)},
+        )
+        ready = bool(data.get("ready_for_retirement_decision", False))
+        blockers = list(data.get("blockers") or [])
+        if ready:
+            message = (
+                "All Gate 8 evidence is present. Projection retirement still requires "
+                "a separate explicit decision and PR."
+            )
+        elif blockers:
+            message = "Gate 8 blockers: " + ", ".join(str(item) for item in blockers)
+        else:
+            message = "Gate 8 retirement-decision evidence is incomplete."
+        return True, data, message
+    except Exception as exc:
+        return False, {}, f"Identity retirement-readiness status failed: {exc}"
+
+
+def record_identity_smoke_evidence(
+    *,
+    evidence_bundle: str,
+    status: str,
+    tested_revision: str,
+    build_reference: str,
+    environment: str,
+    checklist: Dict[str, bool],
+    notes: str = "",
+    evidence_reference: str = "",
+    tested_at: datetime | None = None,
+    source: str = "streamlit_database_status",
+) -> Tuple[bool, Dict[str, Any], str]:
+    """Record one genuine signed-in smoke bundle through the service-role contract."""
+    bundle = str(evidence_bundle or "").strip().lower()
+    smoke_status = str(status or "").strip().lower()
+    required = identity_smoke_checklist_for_bundle(bundle)
+    if not required:
+        return False, {}, "Unsupported smoke evidence bundle."
+    if smoke_status not in {"pass", "fail"}:
+        return False, {}, "Smoke evidence status must be pass or fail."
+    normalized_checklist = {
+        key: bool(checklist.get(key, False)) for key, _ in required
+    }
+    if smoke_status == "pass" and not all(normalized_checklist.values()):
+        return False, {}, "Every mandatory checklist step must pass before recording a passing bundle."
+    if not str(tested_revision or "").strip():
+        return False, {}, "Tested revision is required."
+    if not str(build_reference or "").strip():
+        return False, {}, "Build or deployment reference is required."
+
+    try:
+        actor_id, actor_email = _actor_context()
+        request_id = f"identity-smoke-{bundle}-{uuid.uuid4()}"
+        data = _rpc_dict(
+            SMOKE_RECORD_RPC,
+            {
+                "p_request_id": request_id,
+                "p_evidence_bundle": bundle,
+                "p_status": smoke_status,
+                "p_tested_revision": str(tested_revision).strip(),
+                "p_build_reference": str(build_reference).strip(),
+                "p_environment": str(environment or "production").strip().lower(),
+                "p_checklist": normalized_checklist,
+                "p_notes": str(notes or "").strip() or None,
+                "p_evidence_reference": str(evidence_reference or "").strip() or None,
+                "p_tester_id": actor_id or None,
+                "p_tester_email": actor_email or None,
+                "p_tested_at": tested_at.isoformat() if tested_at else None,
+                "p_metadata": {
+                    "gate": 8,
+                    "source": source,
+                    "genuine_signed_in_evidence_required": True,
+                },
+            },
+        )
+        if not data.get("ok"):
+            return False, {}, "Identity smoke evidence contract returned an invalid response."
+        record = data.get("record") or {}
+        message = (
+            f"{bundle.replace('_', ' ').title()} smoke evidence recorded as "
+            f"{str(record.get('status', smoke_status)).upper()}."
+        )
+        return True, data, message
+    except Exception as exc:
+        return False, {}, f"Identity smoke evidence recording failed: {exc}"
 
 
 def observe_identity_projection(
