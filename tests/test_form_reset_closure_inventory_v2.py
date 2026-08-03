@@ -42,6 +42,7 @@ CLASSIFIED_RUNTIME_PATHS = {
     "pages/39_Admin_Supplement_Manager.py",
     "pages/41_Admin_Packages.py",
     "pages/42_Admin_Exercise_Member_Allocation.py",
+    "pages/43_Admin_Supplement_Member_Allocation.py",
     # Member schedule/journal and repositories are editable records or navigation surfaces.
     "pages/01_Login.py",
     "pages/02_Member_Home.py",
