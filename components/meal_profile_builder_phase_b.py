@@ -4,15 +4,16 @@ import copy
 from typing import Any, Iterable
 
 
-CONTRACT_VERSION = "2026-08-04-phase-b-v1"
+CONTRACT_VERSION = "2026-08-04-acceptance-v1"
 MEAL_EDITABLE_ITEM_TYPES = ("meal",)
 LEGACY_READ_ONLY_ITEM_TYPES = ("exercise", "supplement")
+ALLOCATION_WORKSPACE_SECTION = "Allocate Exercise & Supplement"
+VIEW_PROFILES_SECTION = "View Profiles"
 MEAL_PROFILE_BUILDER_SECTIONS = (
     "Profile Setup",
     "Meal Structure",
-    "Preview & End-to-End Flow",
-    "Publish Control",
-    "Active Profile Preview",
+    ALLOCATION_WORKSPACE_SECTION,
+    VIEW_PROFILES_SECTION,
 )
 
 
@@ -62,9 +63,16 @@ def meal_profile_builder_manifest() -> dict[str, Any]:
             "existing Exercise and Supplement rows remain readable and publishable; "
             "Setup and Meal saves must not rewrite or delete them"
         ),
+        "navigation_rule": (
+            "Preview and Publish render inside Meal Structure; Exercise and Supplement "
+            "allocation launch from one compact workspace while retaining independent stores"
+        ),
+        "allocation_routes": [
+            "pages/42_Admin_Exercise_Member_Allocation.py",
+            "pages/43_Admin_Supplement_Member_Allocation.py",
+        ],
         "next_workflows": [
-            "exercise_member_allocation",
-            "supplement_member_allocation",
-            "current_member_plan_consolidation",
+            "production_acceptance",
+            "flutter_after_production_acceptance",
         ],
     }

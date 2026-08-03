@@ -5,24 +5,27 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 VIEWER = ROOT / "components" / "recommendation_profile_viewer.py"
 BUILDER = ROOT / "components" / "profile_builder_modular.py"
+CONTRACT = ROOT / "components" / "meal_profile_builder_phase_b.py"
 LEGACY_PAGE = ROOT / "pages" / "48_Admin_View_Profiles.py"
 
 
 class ViewProfilesExcelSSOTContractTest(unittest.TestCase):
     def test_changed_python_files_compile(self):
-        for path in (VIEWER, BUILDER, LEGACY_PAGE):
+        for path in (VIEWER, BUILDER, CONTRACT, LEGACY_PAGE):
             compile(path.read_text(encoding="utf-8"), str(path), "exec")
 
-    def test_view_profiles_is_the_tab_after_active(self):
-        source = BUILDER.read_text(encoding="utf-8")
-        self.assertIn('VIEW_PROFILES_SECTION = "View Profiles"', source)
-        self.assertIn("visible_sections.append(VIEW_PROFILES_SECTION)", source)
-        self.assertIn('elif section == "Active Profile Preview":', source)
-        self.assertIn("render_active_profile_preview_contract()", source)
-        self.assertIn("render_view_profiles()", source)
+    def test_view_profiles_is_final_compact_builder_tab(self):
+        builder = BUILDER.read_text(encoding="utf-8")
+        contract = CONTRACT.read_text(encoding="utf-8")
+        self.assertIn('VIEW_PROFILES_SECTION = "View Profiles"', contract)
+        self.assertIn("MEAL_PROFILE_BUILDER_SECTIONS", builder)
+        self.assertIn("VIEW_PROFILES_SECTION", builder)
+        self.assertIn("render_view_profiles()", builder)
+        self.assertNotIn('elif section == "Active Profile Preview":', builder)
+        self.assertNotIn("render_active_profile_preview_contract()", builder)
         self.assertLess(
-            source.index('elif section == "Active Profile Preview":'),
-            source.index("render_view_profiles()"),
+            contract.index('ALLOCATION_WORKSPACE_SECTION = "Allocate Exercise & Supplement"'),
+            contract.index('VIEW_PROFILES_SECTION = "View Profiles"'),
         )
 
     def test_legacy_standalone_route_redirects_into_builder_tab(self):

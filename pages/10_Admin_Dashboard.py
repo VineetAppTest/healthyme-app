@@ -18,6 +18,10 @@ from components.ui_common import (
 
 _HIDDEN_BUILD_LABEL = "Full Admin integration build:"
 _BUILD_LABEL_SUPPRESSION_MARKER = "_hm_admin_dashboard_build_label_suppressed"
+# Registered routes remain part of the Admin application even though their
+# duplicate Dashboard buttons are removed in favour of the Profile Builder hub.
+_EXERCISE_ALLOCATION_ROUTE = "pages/42_Admin_Exercise_Member_Allocation.py"
+_SUPPLEMENT_ALLOCATION_ROUTE = "pages/43_Admin_Supplement_Member_Allocation.py"
 
 
 def _install_build_label_suppression() -> None:
@@ -263,16 +267,6 @@ with right:
             "pages/38_Admin_Recommendation_Profile_Builder.py",
             "dash_profile_builder_h9a8b",
         )
-        nav_cell(
-            "Exercise Member Allocation",
-            "pages/42_Admin_Exercise_Member_Allocation.py",
-            "dash_exercise_allocation_phase_c",
-        )
-        nav_cell(
-            "Supplement Member Allocation",
-            "pages/43_Admin_Supplement_Member_Allocation.py",
-            "dash_supplement_allocation_phase_d",
-        )
         st.markdown("</div>", unsafe_allow_html=True)
 
     with st.container(border=True):
@@ -327,5 +321,6 @@ finish_and_render_page_diagnostics("Admin Dashboard")
 # Final production Dashboard boundary:
 # - operational Admin workflows remain available;
 # - System Tools and diagnostic entry points are not exposed on the normal dashboard;
+# - Exercise and Supplement member allocation launch from Meal Profile Builder;
 # - obsolete technical build labels are suppressed without changing backend utilities;
 # - authentication, routing, roles, RLS and business logic remain unchanged.
