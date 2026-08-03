@@ -8,8 +8,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_FILE = ROOT / "components" / "meal_profile_builder_phase_b.py"
 MODULAR_FILE = ROOT / "components" / "profile_builder_modular.py"
+ALLOCATION_FILE = ROOT / "components" / "profile_builder_allocation_workspace.py"
 WRITE_BOUNDARY_FILE = ROOT / "components" / "meal_profile_builder_write_boundary.py"
 PAGE_FILE = ROOT / "pages" / "38_Admin_Recommendation_Profile_Builder.py"
+DASHBOARD_FILE = ROOT / "pages" / "10_Admin_Dashboard.py"
+EXERCISE_PAGE = ROOT / "pages" / "42_Admin_Exercise_Member_Allocation.py"
+SUPPLEMENT_PAGE = ROOT / "pages" / "43_Admin_Supplement_Member_Allocation.py"
 MODULES_FILE = ROOT / "components" / "pbm_modules.py"
 PUBLISH_FILE = ROOT / "components" / "profile_publish_control_v2.py"
 SETUP_FILE = ROOT / "components" / "pbm_setup.py"
@@ -17,13 +21,13 @@ DOC_FILE = ROOT / "docs" / "meal_profile_builder_phase_b_2026-08-04.md"
 
 _SPEC = importlib.util.spec_from_file_location("meal_profile_builder_phase_b", CONTRACT_FILE)
 if _SPEC is None or _SPEC.loader is None:
-    raise RuntimeError("Unable to load Meal Profile Builder Phase B contract.")
+    raise RuntimeError("Unable to load Meal Profile Builder contract.")
 contract = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(contract)
 
 
 class MealProfileBuilderPhaseBTests(unittest.TestCase):
-    def test_manifest_limits_live_builder_to_meals(self) -> None:
+    def test_manifest_limits_live_builder_writes_to_meals(self) -> None:
         manifest = contract.meal_profile_builder_manifest()
         self.assertEqual(manifest["editable_item_types"], ["meal"])
         self.assertEqual(
@@ -34,12 +38,12 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
             [
                 "Profile Setup",
                 "Meal Structure",
-                "Preview & End-to-End Flow",
-                "Publish Control",
-                "Active Profile Preview",
+                "Allocate Exercise & Supplement",
+                "View Profiles",
             ],
         )
         self.assertIn("must not rewrite or delete", manifest["history_rule"])
+        self.assertIn("Preview and Publish render inside Meal Structure", manifest["navigation_rule"])
 
     def test_item_split_preserves_legacy_rows_and_defensive_copies(self) -> None:
         rows = [
@@ -56,15 +60,56 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         grouped["legacy_exercise"][0]["reference_label"] = "Changed"
         self.assertEqual(rows[1]["reference_label"], "Walk")
 
-    def test_live_navigation_has_no_exercise_or_supplement_edit_section(self) -> None:
+    def test_live_navigation_has_four_compact_sections(self) -> None:
         source = MODULAR_FILE.read_text(encoding="utf-8")
         self.assertIn("MEAL_PROFILE_BUILDER_SECTIONS", source)
+        self.assertIn("ALLOCATION_WORKSPACE_SECTION", source)
+        self.assertIn("VIEW_PROFILES_SECTION", source)
         self.assertNotIn('render_module("exercise"', source)
         self.assertNotIn('render_module("supplement"', source)
         self.assertIn('render_module("meal", options)', source)
+        self.assertIn('_render_meal_actions(can_publish)', source)
+        self.assertIn('render_profile_builder_allocation_workspace()', source)
+        self.assertNotIn('section == "Preview & End-to-End Flow"', source)
+        self.assertNotIn('section == "Publish Control"', source)
+        self.assertNotIn('section == "Active Profile Preview"', source)
         self.assertIn('"exercise": []', source)
         self.assertIn('"supplement": []', source)
-        self.assertIn("st.session_state[\"pbm_section\"] = \"Profile Setup\"", source)
+
+    def test_preview_and_publish_are_meal_actions(self) -> None:
+        source = MODULAR_FILE.read_text(encoding="utf-8")
+        self.assertIn('"Preview Meal Plan"', source)
+        self.assertIn('"Publish Meal Plan"', source)
+        self.assertIn('pbm_meal_action_panel', source)
+        meal_index = source.index('render_module("meal", options)')
+        action_index = source.index('_render_meal_actions(can_publish)', meal_index)
+        self.assertLess(meal_index, action_index)
+
+    def test_allocation_workspace_routes_without_claiming_write_authority(self) -> None:
+        source = ALLOCATION_FILE.read_text(encoding="utf-8")
+        self.assertIn("assigned_member_id", source)
+        self.assertIn("phase_c_member", source)
+        self.assertIn("phase_d_member", source)
+        self.assertIn("pages/42_Admin_Exercise_Member_Allocation.py", source)
+        self.assertIn("pages/43_Admin_Supplement_Member_Allocation.py", source)
+        for forbidden in (
+            "save_exercise_member_allocation",
+            "stop_exercise_member_allocation",
+            "save_supplement_member_allocation",
+            "stop_supplement_member_allocation",
+            "save_state",
+        ):
+            self.assertNotIn(forbidden, source)
+        self.assertTrue(EXERCISE_PAGE.is_file())
+        self.assertTrue(SUPPLEMENT_PAGE.is_file())
+
+    def test_dashboard_uses_profile_builder_as_allocation_entry(self) -> None:
+        source = DASHBOARD_FILE.read_text(encoding="utf-8")
+        self.assertIn('"Recommendation Profile Builder"', source)
+        self.assertIn('"Exercises"', source)
+        self.assertIn('"Supplements"', source)
+        self.assertNotIn('nav_cell(\n            "Exercise Member Allocation"', source)
+        self.assertNotIn('nav_cell(\n            "Supplement Member Allocation"', source)
 
     def test_stable_route_installs_write_boundary_before_renderer_import(self) -> None:
         source = PAGE_FILE.read_text(encoding="utf-8")
@@ -104,7 +149,7 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         modular = MODULAR_FILE.read_text(encoding="utf-8")
         setup = SETUP_FILE.read_text(encoding="utf-8")
         self.assertIn("existing stable route", page)
-        self.assertIn("This workflow now owns Profile Setup and Meal Structure only", modular)
+        self.assertIn("Meals are edited here", modular)
         self.assertIn("does not create, replace or delete Meal, Exercise or Supplement rows", setup)
 
     def test_documented_phase_order_and_safety_boundary(self) -> None:
@@ -119,7 +164,7 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_phase_b_contract_has_no_runtime_or_storage_dependency(self) -> None:
+    def test_contract_has_no_runtime_or_storage_dependency(self) -> None:
         source = CONTRACT_FILE.read_text(encoding="utf-8").lower()
         for forbidden in (
             "streamlit",
