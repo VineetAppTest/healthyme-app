@@ -1,0 +1,48 @@
+name: Profile Builder repository contract validation
+
+on:
+  pull_request:
+    paths:
+      - 'components/profile_builder_repository_contract.py'
+      - 'components/recommendation_contract.py'
+      - 'components/exercise_repository.py'
+      - 'components/supplement_repository.py'
+      - 'tests/test_profile_builder_repository_contract.py'
+      - 'docs/profile_builder_canonical_repository_contract.md'
+      - '.github/workflows/profile-builder-repository-contract-validation.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install application dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile canonical contract and focused tests
+        run: |
+          python -m py_compile \
+            components/profile_builder_repository_contract.py \
+            tests/test_profile_builder_repository_contract.py
+
+      - name: Run canonical repository contract tests
+        run: python -m unittest tests.test_profile_builder_repository_contract -v
+
+      - name: Confirm live Profile Builder is not wired in Phase 1
+        run: |
+          if grep -R "profile_builder_repository_contract" \
+            pages/38_Admin_Recommendation_Profile_Builder.py \
+            components/profile_builder_source_contract.py; then
+            echo "Phase 1 must not wire the live Profile Builder."
+            exit 1
+          fi
