@@ -4,6 +4,7 @@ import os
 import pathlib
 from typing import Any, Dict, Optional, Tuple
 
+from components.identity_projection_observation import get_identity_projection_snapshot
 from components.normalized_store import (
     commit_identity_and_state,
     ensure_workflow_projection,
@@ -25,6 +26,8 @@ LAST_STATUS = {
     "fallback_active": True,
     "last_error": "",
     "last_action": "",
+    "identity_authority_available": False,
+    "identity_fail_closed": True,
 }
 
 DEFAULT_STORES = {
@@ -47,7 +50,6 @@ DEFAULT_STORES = {
     "login_sessions": {},
     "resource_assignments": {"recipes": {}, "exercises": {}},
     "messages": [],
-    # v102.3A: persistent member-specific supplement regimen storage.
     "member_supplements": [],
     "supplement_audit_logs": [],
 }
@@ -112,50 +114,64 @@ def normalize_state(db: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     return base
 
 
+def _strip_noncanonical_identity(db: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove shared/local identity authority when canonical reads are unavailable."""
+    db["users"] = []
+    db["workflow"] = {}
+    return db
+
+
 def _users_projection_changed(previous: Optional[Dict[str, Any]], current: Dict[str, Any]) -> bool:
-    """Detect any shared User projection change before selecting the save contract."""
     if previous is None:
         return bool(current.get("users"))
     try:
-        before = json.dumps(
-            previous.get("users", []), sort_keys=True, separators=(",", ":"), default=str
-        )
-        after = json.dumps(
-            current.get("users", []), sort_keys=True, separators=(",", ":"), default=str
-        )
+        before = json.dumps(previous.get("users", []), sort_keys=True, separators=(",", ":"), default=str)
+        after = json.dumps(current.get("users", []), sort_keys=True, separators=(",", ":"), default=str)
         return before != after
     except Exception:
         return previous.get("users", []) != current.get("users", [])
 
 
 def _workflow_projection_changed(previous: Optional[Dict[str, Any]], current: Dict[str, Any]) -> bool:
-    """Detect canonical or shared-only Workflow projection changes."""
     if previous is None:
         return bool(current.get("workflow"))
     try:
-        before = json.dumps(
-            previous.get("workflow", {}), sort_keys=True, separators=(",", ":"), default=str
-        )
-        after = json.dumps(
-            current.get("workflow", {}), sort_keys=True, separators=(",", ":"), default=str
-        )
+        before = json.dumps(previous.get("workflow", {}), sort_keys=True, separators=(",", ":"), default=str)
+        after = json.dumps(current.get("workflow", {}), sort_keys=True, separators=(",", ":"), default=str)
         return before != after
     except Exception:
         return previous.get("workflow", {}) != current.get("workflow", {})
 
 
 def _overlay_normalized_users_workflow(db: Dict[str, Any]) -> Dict[str, Any]:
-    """Overlay canonical hm_users/hm_workflow when the tables are available."""
+    """Overlay canonical identity or remove noncanonical identity fail-closed."""
     try:
         ok, users, workflow, msg = load_users_workflow_from_normalized()
         if ok:
             db["users"] = users
             db["workflow"] = workflow
-            _set_status(normalized_users_workflow=True, normalized_last_action=msg)
-        else:
-            _set_status(normalized_users_workflow=False, normalized_last_action=msg)
+            _set_status(
+                normalized_users_workflow=True,
+                normalized_last_action=msg,
+                identity_authority_available=True,
+                identity_fail_closed=False,
+            )
+            return db
+        _strip_noncanonical_identity(db)
+        _set_status(
+            normalized_users_workflow=False,
+            normalized_last_action=msg,
+            identity_authority_available=False,
+            identity_fail_closed=True,
+        )
     except Exception as exc:
-        _set_status(normalized_users_workflow=False, normalized_last_action=str(exc))
+        _strip_noncanonical_identity(db)
+        _set_status(
+            normalized_users_workflow=False,
+            normalized_last_action=str(exc),
+            identity_authority_available=False,
+            identity_fail_closed=True,
+        )
     return db
 
 
@@ -204,9 +220,7 @@ def _load_from_supabase() -> Tuple[bool, Dict[str, Any], str]:
 def _save_to_supabase(db: Dict[str, Any]) -> Tuple[bool, str]:
     try:
         client = _supabase_client()
-        client.table("healthyme_app_state").upsert(
-            {"id": APP_STATE_ID, "data": normalize_state(db)}
-        ).execute()
+        client.table("healthyme_app_state").upsert({"id": APP_STATE_ID, "data": normalize_state(db)}).execute()
         return True, ""
     except Exception as exc:
         return False, str(exc)
@@ -217,7 +231,7 @@ def using_supabase() -> bool:
 
 
 def load_state(force_refresh: bool = False) -> Dict[str, Any]:
-    """Load app state with per-session cache."""
+    """Load app state while keeping Users and Workflow canonical-only."""
     if not force_refresh:
         cached = _get_cache()
         if cached is not None:
@@ -227,21 +241,21 @@ def load_state(force_refresh: bool = False) -> Dict[str, Any]:
     if configured:
         ok, db, msg = _load_from_supabase()
         if ok:
-            db = normalize_state(db)
-            db = _overlay_normalized_users_workflow(db)
+            db = _overlay_normalized_users_workflow(normalize_state(db))
+            identity_ok = bool(_get_cached_status().get("identity_authority_available"))
             _set_cache(db)
             _set_status(
                 mode="SUPABASE",
                 supabase_configured=True,
                 supabase_connected=True,
                 fallback_active=False,
-                last_error="",
-                last_action=msg or "Loaded from Supabase.",
+                last_error="" if identity_ok else _get_cached_status().get("normalized_last_action", "Canonical identity unavailable."),
+                last_action=(msg or "Loaded from Supabase.") if identity_ok else "Loaded non-identity state; canonical identity read failed closed.",
             )
             return db
 
-        db = normalize_state(_read_initial_local_state())
-        db = _overlay_normalized_users_workflow(db)
+        db = _overlay_normalized_users_workflow(normalize_state(_read_initial_local_state()))
+        identity_ok = bool(_get_cached_status().get("identity_authority_available"))
         _set_cache(db)
         _set_status(
             mode="LOCAL_FALLBACK",
@@ -249,30 +263,32 @@ def load_state(force_refresh: bool = False) -> Dict[str, Any]:
             supabase_connected=False,
             fallback_active=True,
             last_error=msg,
-            last_action="Supabase failed; loaded local fallback.",
+            last_action=(
+                "Supabase app-state failed; loaded local non-identity state with canonical identity."
+                if identity_ok
+                else "Supabase and canonical identity reads failed; identity was removed fail-closed."
+            ),
         )
         return db
 
-    db = normalize_state(_read_initial_local_state())
+    db = _strip_noncanonical_identity(normalize_state(_read_initial_local_state()))
     _set_cache(db)
     _set_status(
         mode="LOCAL_FALLBACK",
         supabase_configured=False,
         supabase_connected=False,
         fallback_active=True,
+        identity_authority_available=False,
+        identity_fail_closed=True,
+        normalized_users_workflow=False,
         last_error="Supabase secrets are not configured.",
-        last_action="Loaded local fallback.",
+        last_action="Loaded local non-identity state; local Users and Workflow were removed fail-closed.",
     )
     return db
 
 
 def save_state(db: Dict[str, Any]) -> None:
-    """Save state with fail-closed canonical User and Workflow writes after Gate 4.
-
-    Whenever either identity projection changes, changed Users, changed Workflow
-    rows and the full compatibility state commit through one database transaction.
-    Non-identity saves retain the existing lightweight app-state path.
-    """
+    """Save state with fail-closed canonical User and Workflow writes."""
     db = ensure_workflow_projection(normalize_state(db))
     configured = supabase_configured()
     previous = _get_cache()
@@ -318,11 +334,7 @@ def save_state(db: Dict[str, Any]) -> None:
                 raise RuntimeError(identity_commit_message)
             state_saved = True
 
-        if state_saved:
-            ok, msg = True, ""
-        else:
-            ok, msg = _save_to_supabase(db)
-
+        ok, msg = (True, "") if state_saved else _save_to_supabase(db)
         if ok:
             _set_cache(db)
             _set_status(
@@ -337,6 +349,8 @@ def save_state(db: Dict[str, Any]) -> None:
                 canonical_identity_last_action=identity_commit_message,
                 normalized_users_workflow=True,
                 normalized_last_action=identity_commit_message,
+                identity_authority_available=True,
+                identity_fail_closed=False,
             )
             return
 
@@ -349,16 +363,13 @@ def save_state(db: Dict[str, Any]) -> None:
             last_action="Supabase save failed; saved local fallback.",
         )
 
-    # Local fallback remains available only when neither identity projection changed.
     LOCAL_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     LOCAL_DB_PATH.write_text(json.dumps(db, indent=2), encoding="utf-8")
     _set_cache(db)
 
 
 def get_storage_status(force_check: bool = False) -> Dict[str, Any]:
-    """Return storage status without an active call unless force_check=True."""
     configured = supabase_configured()
-
     if not force_check:
         status = _get_cached_status()
         status["supabase_configured"] = configured
@@ -378,31 +389,36 @@ def get_storage_status(force_check: bool = False) -> Dict[str, Any]:
             "supabase_configured": False,
             "supabase_connected": False,
             "fallback_active": True,
+            "identity_authority_available": False,
+            "identity_fail_closed": True,
             "last_error": "Supabase secrets are not configured.",
-            "last_action": "Forced health check: local fallback.",
+            "last_action": "Forced health check: local identity authority disabled.",
         }
         _set_status(**status)
         return status
 
     ok, db, msg = _load_from_supabase()
     if ok:
+        db = _overlay_normalized_users_workflow(normalize_state(db))
+        identity_ok = bool(_get_cached_status().get("identity_authority_available"))
+        projection_ok, projection, projection_msg = get_identity_projection_snapshot()
         status = {
             "mode": "SUPABASE",
             "supabase_configured": True,
             "supabase_connected": True,
             "fallback_active": False,
-            "last_error": "",
+            "identity_authority_available": identity_ok,
+            "identity_fail_closed": not identity_ok,
+            "identity_projection_checked": projection_ok,
+            "identity_projection_healthy": bool(projection.get("healthy")) if projection_ok else False,
+            "identity_projection_message": projection_msg,
+            "identity_projection_snapshot": projection,
+            "last_error": "" if identity_ok else _get_cached_status().get("normalized_last_action", "Canonical identity unavailable."),
             "last_action": msg or "Supabase forced health check passed.",
             "users_count": len(db.get("users", [])),
-            "members_count": len(
-                [u for u in db.get("users", []) if u.get("role") == "member"]
-            ),
-            "normalized_users_workflow": _get_cached_status().get(
-                "normalized_users_workflow", False
-            ),
-            "normalized_last_action": _get_cached_status().get(
-                "normalized_last_action", ""
-            ),
+            "members_count": len([u for u in db.get("users", []) if u.get("role") == "member"]),
+            "normalized_users_workflow": identity_ok,
+            "normalized_last_action": _get_cached_status().get("normalized_last_action", ""),
         }
         _set_cache(db)
         _set_status(**status)
@@ -413,6 +429,8 @@ def get_storage_status(force_check: bool = False) -> Dict[str, Any]:
         "supabase_configured": True,
         "supabase_connected": False,
         "fallback_active": True,
+        "identity_authority_available": False,
+        "identity_fail_closed": True,
         "last_error": msg,
         "last_action": "Supabase forced health check failed.",
         "users_count": 0,
@@ -428,13 +446,10 @@ def export_current_state_bytes() -> bytes:
 
 
 def push_local_data_to_supabase() -> Tuple[bool, str]:
-    """Push local non-identity state without replacing canonical identity data."""
     if not supabase_configured():
         return False, "Supabase secrets are not configured."
     local_state = normalize_state(_read_initial_local_state())
-    normalized_ok, canonical_users, canonical_workflow, normalized_msg = (
-        load_users_workflow_from_normalized()
-    )
+    normalized_ok, canonical_users, canonical_workflow, normalized_msg = load_users_workflow_from_normalized()
     if not normalized_ok:
         return False, f"Local push blocked because canonical identity data could not be loaded: {normalized_msg}"
     local_state["users"] = canonical_users
@@ -448,13 +463,12 @@ def push_local_data_to_supabase() -> Tuple[bool, str]:
             supabase_configured=True,
             supabase_connected=True,
             fallback_active=False,
+            identity_authority_available=True,
+            identity_fail_closed=False,
             last_error="",
             last_action="Local non-identity data pushed to Supabase with canonical Users and Workflow preserved.",
         )
-        return (
-            True,
-            "Local non-identity data pushed to Supabase; canonical Users and Workflow were preserved.",
-        )
+        return True, "Local non-identity data pushed to Supabase; canonical Users and Workflow were preserved."
     _set_status(
         mode="LOCAL_FALLBACK",
         supabase_configured=True,
