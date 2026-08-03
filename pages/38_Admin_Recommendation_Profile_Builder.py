@@ -13,8 +13,8 @@ from components.profile_builder_access import (
     profile_builder_role_utility_bar,
     require_profile_builder_access,
 )
-from components.supplement_repository_source import (
-    install_profile_builder_supplement_repository_source,
+from components.profile_builder_canonical_repository_runtime import (
+    install_profile_builder_canonical_repository_runtime,
 )
 from components.ui_common import (
     apply_luxe_theme,
@@ -24,10 +24,10 @@ from components.ui_common import (
 )
 
 
-# Install request-local read reuse and the repository-only supplement source before
-# importing the modular builder so its direct function bindings use both contracts.
+# Install the canonical ID-based module save bridge before importing the modular
+# Builder so its direct function bindings use the Phase 2 repository contract.
+install_profile_builder_canonical_repository_runtime()
 install_profile_builder_performance()
-install_profile_builder_supplement_repository_source()
 from components.profile_builder_modular import render_modular_profile_builder
 
 
