@@ -6,6 +6,8 @@ on:
       - "components/identity_projection_observation.py"
       - "pages/28_Admin_Database_Status.py"
       - "supabase/migrations/20260803184500_identity_manual_smoke_gate8.sql"
+      - "supabase/migrations/20260803185000_identity_manual_smoke_gate8_harden_service_role_grants.sql"
+      - "supabase/migrations/20260803185500_identity_manual_smoke_gate8_contract_only_writes.sql"
       - "docs/identity_manual_smoke_gate8_2026-08-03.md"
       - "docs/evidence/identity_gate8_manual_smoke_baseline_2026-08-03.json"
       - "tests/test_identity_manual_smoke_gate8.py"
