@@ -15,8 +15,11 @@ MEMBER_EXERCISE = ROOT / "pages" / "09_Exercise_Repository.py"
 RECOMMENDATION_CONTRACT = ROOT / "components" / "recommendation_contract.py"
 ADMIN_EXERCISE = ROOT / "pages" / "16_Admin_Exercise_Manager.py"
 ADMIN_SUPPLEMENT = ROOT / "pages" / "39_Admin_Supplement_Manager.py"
-RECIPES_CSV = ROOT / "data" / "recipes.csv"
-EXERCISES_CSV = ROOT / "data" / "exercises.csv"
+ACTIVE_RECIPES_CSV = ROOT / "data" / "recipes.csv"
+ACTIVE_EXERCISES_CSV = ROOT / "data" / "exercises.csv"
+ARCHIVE_ROOT = ROOT / "docs" / "archive" / "content_repository_legacy"
+ARCHIVED_RECIPES_CSV = ARCHIVE_ROOT / "recipes.csv"
+ARCHIVED_EXERCISES_CSV = ARCHIVE_ROOT / "exercises.csv"
 
 
 class ContentRepositoryLegacyRetirementTests(unittest.TestCase):
@@ -79,11 +82,13 @@ class ContentRepositoryLegacyRetirementTests(unittest.TestCase):
             self.assertNotIn("load_state", source)
             self.assertNotIn("save_state", source)
 
-    def test_legacy_csv_files_are_retained_only_as_rollback_evidence(self) -> None:
-        self.assertTrue(RECIPES_CSV.exists())
-        self.assertTrue(EXERCISES_CSV.exists())
-        self.assertGreater(RECIPES_CSV.stat().st_size, 0)
-        self.assertGreater(EXERCISES_CSV.stat().st_size, 0)
+    def test_legacy_csv_files_are_archived_outside_active_data_paths(self) -> None:
+        self.assertFalse(ACTIVE_RECIPES_CSV.exists())
+        self.assertFalse(ACTIVE_EXERCISES_CSV.exists())
+        self.assertTrue(ARCHIVED_RECIPES_CSV.exists())
+        self.assertTrue(ARCHIVED_EXERCISES_CSV.exists())
+        self.assertGreater(ARCHIVED_RECIPES_CSV.stat().st_size, 0)
+        self.assertGreater(ARCHIVED_EXERCISES_CSV.stat().st_size, 0)
 
 
 if __name__ == "__main__":
