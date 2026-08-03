@@ -4,7 +4,7 @@ import copy
 from typing import Any, Iterable
 
 
-CONTRACT_VERSION = "2026-08-04-streamlit-acceptance-v1"
+CONTRACT_VERSION = "2026-08-04-acceptance-v1"
 MEAL_EDITABLE_ITEM_TYPES = ("meal",)
 LEGACY_READ_ONLY_ITEM_TYPES = ("exercise", "supplement")
 ALLOCATION_WORKSPACE_SECTION = "Allocate Exercise & Supplement"
@@ -72,7 +72,7 @@ def meal_profile_builder_manifest() -> dict[str, Any]:
             "pages/43_Admin_Supplement_Member_Allocation.py",
         ],
         "next_workflows": [
-            "streamlit_production_acceptance",
-            "flutter_after_streamlit_acceptance",
+            "production_acceptance",
+            "flutter_after_production_acceptance",
         ],
     }
