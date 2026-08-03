@@ -1,0 +1,38 @@
+name: Supplement Member Allocation Phase D validation
+
+on:
+  pull_request:
+    paths:
+      - "components/supplement_member_allocation.py"
+      - "pages/43_Admin_Supplement_Member_Allocation.py"
+      - "pages/42_Admin_Exercise_Member_Allocation.py"
+      - "pages/10_Admin_Dashboard.py"
+      - "tests/test_supplement_member_allocation.py"
+      - "tests/test_form_reset_closure_inventory_v2.py"
+      - "components/member_planning_separation_contract.py"
+      - "components/exercise_member_allocation.py"
+      - ".github/workflows/supplement-member-allocation-phase-d-validation.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile Phase D files
+        run: |
+          python -m py_compile \
+            components/supplement_member_allocation.py \
+            pages/43_Admin_Supplement_Member_Allocation.py \
+            pages/10_Admin_Dashboard.py
+      - name: Run Supplement allocation and separation regressions
+        run: |
+          python -m unittest -v \
+            tests.test_supplement_member_allocation \
+            tests.test_exercise_member_allocation \
+            tests.test_member_planning_separation_contract \
+            tests.test_meal_profile_builder_phase_b \
+            tests.test_form_reset_closure_inventory_v2
