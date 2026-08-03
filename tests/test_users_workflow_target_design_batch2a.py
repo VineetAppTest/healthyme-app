@@ -8,10 +8,12 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "users_workflow_single_authority_target_design_batch2a_2026-08-03.md"
 GATE3_DOC = ROOT / "docs" / "users_gate3_write_cutover_2026-08-03.md"
 GATE4_DOC = ROOT / "docs" / "workflow_gate4_write_cutover_2026-08-03.md"
+GATE5A6A_DOC = ROOT / "docs" / "identity_read_observation_gate5a6a_2026-08-03.md"
 STORAGE = ROOT / "components" / "storage_backend.py"
 NORMALIZED = ROOT / "components" / "normalized_store.py"
 DB = ROOT / "components" / "db.py"
 ROLE_MODEL = ROOT / "components" / "admin_role_model.py"
+OBSERVATION = ROOT / "components" / "identity_projection_observation.py"
 
 
 class UsersWorkflowTargetDesignBatch2ATests(unittest.TestCase):
@@ -98,15 +100,20 @@ class UsersWorkflowTargetDesignBatch2ATests(unittest.TestCase):
             source.index("### Gate 7 — Projection retirement"),
         )
 
-    def test_current_runtime_reflects_staged_gate4_cutover(self) -> None:
+    def test_current_runtime_reflects_staged_gate5a6a(self) -> None:
         storage = STORAGE.read_text(encoding="utf-8")
         normalized = NORMALIZED.read_text(encoding="utf-8")
         db_source = DB.read_text(encoding="utf-8")
         role_source = ROLE_MODEL.read_text(encoding="utf-8")
+        observation = OBSERVATION.read_text(encoding="utf-8")
         gate3 = GATE3_DOC.read_text(encoding="utf-8")
         gate4 = GATE4_DOC.read_text(encoding="utf-8")
+        gate5a6a = GATE5A6A_DOC.read_text(encoding="utf-8")
 
         self.assertIn("def _overlay_normalized_users_workflow", storage)
+        self.assertIn("def _strip_noncanonical_identity", storage)
+        self.assertIn("identity_authority_available=False", storage)
+        self.assertIn("identity_fail_closed=True", storage)
         self.assertIn("commit_identity_and_state", storage)
         self.assertIn("workflow_changed = _workflow_projection_changed(previous, db)", storage)
         self.assertNotIn("sync_workflow_to_normalized", storage)
@@ -119,10 +126,16 @@ class UsersWorkflowTargetDesignBatch2ATests(unittest.TestCase):
         self.assertNotIn('.table("hm_workflow").upsert(', normalized)
         self.assertIn("def ensure_default_admin", db_source)
         self.assertIn("def create_login_session", db_source)
-        self.assertIn("Loaded user from legacy local store", role_source)
+        self.assertNotIn("from components.db import find_user_by_email", role_source)
+        self.assertNotIn("Loaded user from legacy local store", role_source)
+        self.assertIn("Failure never falls back to shared JSON or local files", role_source)
+        self.assertIn("def get_identity_projection_snapshot", observation)
+        self.assertIn("def observe_identity_projection", observation)
         self.assertIn("Gate 3 cuts over the **User write authority only**", gate3)
         self.assertIn("Gate 4 cuts over the **Streamlit/shared-state Workflow write authority**", gate4)
-        self.assertIn("keep Session migration, password retirement and default-Admin redesign separate", gate4)
+        self.assertIn("fail-closed Streamlit User and Workflow reads", gate5a6a)
+        self.assertIn("No automatic repair runs during application load or save", gate5a6a)
+        self.assertIn("Sessions, password retirement and default-Admin redesign remain separate workstreams", gate5a6a)
 
 
 if __name__ == "__main__":
