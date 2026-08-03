@@ -5,9 +5,13 @@ on:
     paths:
       - "pages/39_Admin_Supplement_Manager.py"
       - "pages/38_Admin_Recommendation_Profile_Builder.py"
+      - "components/content_repository_store.py"
       - "components/supplement_repository.py"
       - "components/supplement_repository_source.py"
+      - "components/profile_builder_repository_contract.py"
       - "tests/test_supplement_repository_separation.py"
+      - "tests/test_supplement_repository_canonical_cutover.py"
+      - "tests/test_profile_builder_repository_contract.py"
       - ".github/workflows/supplement-repository-separation-validation.yml"
   workflow_dispatch:
 
@@ -24,13 +28,25 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install application dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
       - name: Compile focused Python files
         run: |
           python -m py_compile \
             pages/39_Admin_Supplement_Manager.py \
             pages/38_Admin_Recommendation_Profile_Builder.py \
+            components/content_repository_store.py \
             components/supplement_repository.py \
             components/supplement_repository_source.py \
-            tests/test_supplement_repository_separation.py
-      - name: Run focused separation contracts
+            components/profile_builder_repository_contract.py \
+            tests/test_supplement_repository_separation.py \
+            tests/test_supplement_repository_canonical_cutover.py \
+            tests/test_profile_builder_repository_contract.py
+      - name: Run Supplement separation contracts
         run: python -m unittest tests.test_supplement_repository_separation -v
+      - name: Run Supplement canonical cutover contracts
+        run: python -m unittest tests.test_supplement_repository_canonical_cutover -v
+      - name: Run Profile Builder repository contracts
+        run: python -m unittest tests.test_profile_builder_repository_contract -v
