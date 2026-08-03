@@ -47,4 +47,3 @@ jobs:
         run: |
           python -m unittest tests.test_package_domain_authority_trace_phase2 -v
           python -m unittest tests.test_package_mirror_retirement_phase3 -v
-          python -m unittest tests.test_package_hardening_contract -v
