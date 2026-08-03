@@ -48,13 +48,11 @@ class PackageDomainAuthorityTracePhase2Tests(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_remaining_dual_write_is_explicit_and_is_not_the_authority(self) -> None:
-        source = PACKAGE.read_text(encoding="utf-8")
-        self.assertIn("def _sync_legacy_package_state()", source)
-        self.assertIn('db["packages"] =', source)
-        self.assertIn('db["member_packages"] =', source)
-        self.assertIn("db_api.save_db(db)", source)
-        self.assertIn("Normalized tables remain authoritative", source)
+    def test_phase2_document_records_the_pre_cutover_dual_write(self) -> None:
+        source = DOC.read_text(encoding="utf-8")
+        self.assertIn("_sync_legacy_package_state()", source)
+        self.assertIn("remaining dual-write", source.lower())
+        self.assertIn("No mirror retirement or data deletion is included", source)
 
     def test_legacy_named_db_api_is_redirected_to_canonical_contract(self) -> None:
         source = BOOTSTRAP.read_text(encoding="utf-8")
@@ -125,7 +123,6 @@ class PackageDomainAuthorityTracePhase2Tests(unittest.TestCase):
         )
         allowed = {
             pathlib.Path("components/db.py"),
-            pathlib.Path("components/package_hardening.py"),
             pathlib.Path("components/performance_diagnostics.py"),
         }
         hits: list[str] = []
