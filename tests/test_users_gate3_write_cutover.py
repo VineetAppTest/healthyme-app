@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import ast
+import json
 import pathlib
 import unittest
+from typing import Any, Dict, Optional
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -9,6 +12,24 @@ MIGRATION = ROOT / "supabase" / "migrations" / "20260803161100_users_gate3_trans
 NORMALIZED = ROOT / "components" / "normalized_store.py"
 STORAGE = ROOT / "components" / "storage_backend.py"
 DOC = ROOT / "docs" / "users_gate3_write_cutover_2026-08-03.md"
+
+
+def _isolated_function(path: pathlib.Path, function_name: str):
+    """Compile one pure helper without importing the Streamlit components package."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    node = next(
+        item for item in tree.body if isinstance(item, ast.FunctionDef) and item.name == function_name
+    )
+    module = ast.Module(body=[node], type_ignores=[])
+    ast.fix_missing_locations(module)
+    namespace = {
+        "Any": Any,
+        "Dict": Dict,
+        "Optional": Optional,
+        "json": json,
+    }
+    exec(compile(module, str(path), "exec"), namespace)
+    return namespace[function_name]
 
 
 class UsersGate3WriteCutoverTests(unittest.TestCase):
@@ -50,9 +71,8 @@ class UsersGate3WriteCutoverTests(unittest.TestCase):
         self.assertIn("manual_users_workflow_sync", source)
 
     def test_shared_only_user_fields_do_not_enter_canonical_patch(self) -> None:
-        import components.normalized_store as store
-
-        patch = store._canonical_user_patch(
+        canonical_user_patch = _isolated_function(NORMALIZED, "_canonical_user_patch")
+        patch = canonical_user_patch(
             {
                 "id": "u1",
                 "name": "Member",
@@ -80,17 +100,18 @@ class UsersGate3WriteCutoverTests(unittest.TestCase):
         self.assertIn("sync_workflow_to_normalized", source)
         self.assertNotIn("sync_users_workflow_to_normalized", source)
         self.assertIn("users_changed = _users_projection_changed(previous, db)", source)
+        self.assertIn("if users_changed and not configured:", source)
+        self.assertIn("local identity fallback is disabled", source)
         self.assertIn("force_state_commit=True", source)
         self.assertIn("raise RuntimeError(user_commit_message)", source)
         self.assertIn("Canonical User write rejected; state was not saved.", source)
 
     def test_projection_change_detection_covers_shared_only_metadata(self) -> None:
-        import components.storage_backend as storage
-
+        users_projection_changed = _isolated_function(STORAGE, "_users_projection_changed")
         before = {"users": [{"id": "u1", "name": "A", "auth0_user_id": ""}]}
         after = {"users": [{"id": "u1", "name": "A", "auth0_user_id": "legacy|1"}]}
-        self.assertTrue(storage._users_projection_changed(before, after))
-        self.assertFalse(storage._users_projection_changed(after, after))
+        self.assertTrue(users_projection_changed(before, after))
+        self.assertFalse(users_projection_changed(after, after))
 
     def test_local_push_cannot_replace_canonical_users(self) -> None:
         source = STORAGE.read_text(encoding="utf-8")
