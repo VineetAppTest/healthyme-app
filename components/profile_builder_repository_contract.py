@@ -4,11 +4,11 @@ import copy
 from typing import Any, Callable
 
 from components.exercise_repository import list_exercise_repository
-from components.recommendation_contract import list_repository_items
+from components.recipe_repository import list_recipe_repository
 from components.supplement_repository import list_supplement_repository
 
 
-CONTRACT_VERSION = "2026-08-03-v1"
+CONTRACT_VERSION = "2026-08-03-v2"
 SUPPORTED_KINDS = ("recipe", "exercise", "supplement")
 
 _CONTRACT_MANIFEST: dict[str, Any] = {
@@ -22,20 +22,20 @@ _CONTRACT_MANIFEST: dict[str, Any] = {
     "repositories": {
         "recipe": {
             "source_type": "recipe_repository",
-            "storage_authority": "data/recipes.csv compatibility repository",
+            "storage_authority": "canonical Supabase Content Repository",
             "id_strategy": (
-                "numeric compatibility row ID; physical deletion and reindexing are prohibited "
-                "until the durable Recipe migration"
+                "persistent numeric repository ID; identity is immutable and physical "
+                "deletion or reindexing is prohibited"
             ),
         },
         "exercise": {
             "source_type": "exercise_repository",
-            "storage_authority": "Supabase-backed application state: exercises",
+            "storage_authority": "canonical Supabase Content Repository",
             "id_strategy": "persistent numeric repository ID",
         },
         "supplement": {
             "source_type": "supplement_repository",
-            "storage_authority": "Supabase-backed application state: supplement_repository",
+            "storage_authority": "canonical Supabase Content Repository",
             "id_strategy": "persistent suprepo_* repository ID",
             "excluded_from_new_snapshot": [
                 "member allocation",
@@ -203,7 +203,7 @@ def normalise_profile_builder_repository_source(
 
 def _load_repository_rows(kind: str, active_only: bool) -> list[dict[str, Any]]:
     if kind == "recipe":
-        return list_repository_items("recipes", active_only=active_only)
+        return list_recipe_repository(active_only=active_only)
     if kind == "exercise":
         return list_exercise_repository(active_only=active_only)
     if kind == "supplement":
