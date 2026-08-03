@@ -146,6 +146,47 @@ class ExerciseMemberAllocationTests(unittest.TestCase):
                 allocation_id="allocation-1",
             )
 
+    def test_unknown_allocation_id_does_not_create_a_new_row(self):
+        with self.assertRaisesRegex(ValueError, "allocation was not found"):
+            allocation.save_exercise_member_allocation(
+                member_id="member-1",
+                source_id="12",
+                allocation_id="missing-allocation",
+            )
+        self.assertEqual(
+            self.db["member_exercise_allocations"].get("member-1", []), []
+        )
+
+    def test_update_preserves_frozen_snapshot_title(self):
+        self.db["member_exercise_allocations"]["member-1"] = [
+            {
+                "id": "allocation-1",
+                "member_id": "member-1",
+                "exercise_id": "12",
+                "exercise_name": "Chair Squat",
+                "status": "active",
+                "source_snapshot": {
+                    "source_id": "12",
+                    "title": "Chair Squat",
+                },
+            }
+        ]
+        renamed = {**ACTIVE_SOURCE, "title": "Renamed Repository Exercise"}
+        with mock.patch.object(
+            allocation,
+            "list_exercise_repository",
+            side_effect=lambda active_only=True: [copy.deepcopy(renamed)],
+        ):
+            saved = allocation.save_exercise_member_allocation(
+                member_id="member-1",
+                source_id="12",
+                allocation_id="allocation-1",
+                instructions="Updated instructions",
+            )
+
+        self.assertEqual(saved["exercise_name"], "Chair Squat")
+        self.assertEqual(saved["source_snapshot"]["title"], "Chair Squat")
+
     def test_stop_retains_row_and_history(self):
         self.db["member_exercise_allocations"]["member-1"] = [
             {
