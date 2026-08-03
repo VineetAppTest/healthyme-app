@@ -1,0 +1,51 @@
+name: Workflow Gate 4 write cutover validation
+
+on:
+  pull_request:
+    paths:
+      - "components/normalized_store.py"
+      - "components/storage_backend.py"
+      - "supabase/migrations/20260803165000_workflow_gate4_identity_state_commit.sql"
+      - "docs/workflow_gate4_write_cutover_2026-08-03.md"
+      - "tests/test_workflow_gate4_write_cutover.py"
+      - "tests/test_users_gate3_write_cutover.py"
+      - "tests/test_users_workflow_target_design_batch2a.py"
+      - "tests/test_users_workflow_authority_trace_batch2.py"
+      - ".github/workflows/workflow-gate4-write-cutover-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile Gate 4 modules and tests
+        run: |
+          python -m py_compile components/normalized_store.py
+          python -m py_compile components/storage_backend.py
+          python -m py_compile tests/test_workflow_gate4_write_cutover.py
+          python -m py_compile tests/test_users_gate3_write_cutover.py
+          python -m py_compile tests/test_users_workflow_target_design_batch2a.py
+          python -m py_compile tests/test_users_workflow_authority_trace_batch2.py
+
+      - name: Validate Workflow Gate 4 cutover
+        run: python -m unittest tests.test_workflow_gate4_write_cutover -v
+
+      - name: Revalidate User Gate 3
+        run: python -m unittest tests.test_users_gate3_write_cutover -v
+
+      - name: Revalidate target design
+        run: python -m unittest tests.test_users_workflow_target_design_batch2a -v
+
+      - name: Revalidate authority trace
+        run: python -m unittest tests.test_users_workflow_authority_trace_batch2 -v
