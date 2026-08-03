@@ -91,7 +91,7 @@ def save_package(
     sessions = max(_integer(session_count, 1), 1)
     cost = max(_number(cost_per_session), 0.0)
     total = max(_number(total_value, sessions * cost), 0.0)
-    result = _rpc(
+    return _rpc(
         "hm_admin_save_package",
         {
             "p_package_id": _text(package_id),
@@ -105,8 +105,6 @@ def save_package(
             "p_actor_id": _text(actor_id),
         },
     )
-    _sync_legacy_package_state()
-    return result
 
 
 def get_subscription_metrics(subscription_id: object) -> dict[str, Any]:
@@ -201,7 +199,6 @@ def assign_or_replace_member_package(
             "p_actor_id": _text(actor_id),
         },
     )
-    _sync_legacy_package_state()
     if result.get("assigned"):
         _notify_package_assignment(result, actor_id=actor_id)
     return result
@@ -215,7 +212,7 @@ def adjust_subscription_sessions(
     reason: object,
     actor_id: object = "admin",
 ) -> dict[str, Any]:
-    result = _rpc(
+    return _rpc(
         "hm_admin_adjust_package_sessions",
         {
             "p_subscription_id": _text(subscription_id),
@@ -225,8 +222,6 @@ def adjust_subscription_sessions(
             "p_actor_id": _text(actor_id),
         },
     )
-    _sync_legacy_package_state()
-    return result
 
 
 def update_subscription(
@@ -255,7 +250,6 @@ def update_subscription(
             "p_actor_id": _text(actor_id),
         },
     )
-    _sync_legacy_package_state()
     _notify_subscription_update(result, actor_id=actor_id)
     return result
 
@@ -422,37 +416,6 @@ def _subscription_currency(subscription_id: object) -> str:
         .execute()
     )
     return _text((rows[0] if rows else {}).get("currency"))
-
-
-def _sync_legacy_package_state() -> None:
-    """Mirror normalized masters/snapshots for rollback and older read paths."""
-    try:
-        from components import db as db_api
-
-        packages = list_packages(active_only=False)
-        subscriptions = list_member_subscriptions()
-        db = db_api.load_db()
-        db["packages"] = [
-            {
-                **row,
-                "number_of_people": 1,
-                "inclusions_informational_only": True,
-            }
-            for row in packages
-        ]
-        db["member_packages"] = [
-            {
-                **{key: value for key, value in row.items() if key != "metrics"},
-                "number_of_people": 1,
-                "inclusions_informational_only": True,
-            }
-            for row in subscriptions
-        ]
-        db_api.save_db(db)
-    except Exception:
-        # Normalized tables remain authoritative. A failed compatibility mirror must
-        # not roll back the accepted normalized write.
-        pass
 
 
 def _notify_package_assignment(result: dict[str, Any], *, actor_id: object) -> None:

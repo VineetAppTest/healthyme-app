@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+import ast
 import pathlib
 import unittest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-DOC = ROOT / "docs" / "package_domain_authority_trace_phase2_2026-08-03.md"
+DOC = ROOT / "docs" / "package_mirror_retirement_phase3_2026-08-03.md"
 PACKAGE = ROOT / "components" / "package_hardening.py"
 BOOTSTRAP = ROOT / "components" / "package_hardening_bootstrap.py"
 ADMIN_UI = ROOT / "components" / "package_hardening_ui.py"
-ADMIN_PAGE = ROOT / "pages" / "41_Admin_Packages.py"
 ADMIN_SCHEDULING = ROOT / "components" / "admin_scheduling_consolidated.py"
 MEMBER_PAGE = ROOT / "pages" / "33_My_Schedule.py"
 MEMBER_SCHEDULE_UI = ROOT / "components" / "package_hardening_schedule_ui.py"
@@ -18,67 +18,79 @@ MEMBER_CONTRACT_SQL = (
 )
 
 
-class PackageDomainAuthorityTracePhase2Tests(unittest.TestCase):
-    def test_trace_document_freezes_authority_and_safety_boundary(self) -> None:
+class PackageMirrorRetirementPhase3Tests(unittest.TestCase):
+    def test_document_freezes_retirement_and_rollback_boundary(self) -> None:
         source = DOC.read_text(encoding="utf-8")
         for required in (
-            "dedicated Supabase Package structures are the accepted runtime authority",
-            "compatibility mirrors only",
-            "Package catalogue | 3 | 3 | 0 | 0",
-            "Member subscriptions | 3 | 3 | 0 | 0",
-            "No Dart Package client implementation was identified",
-            "No mirror retirement or data deletion is included",
+            "no longer refresh",
+            "retained unchanged as rollback evidence",
+            "After a future canonical Package mutation, divergence",
+            "No database migration or SQL change",
+            "Physical cleanup remains a later, separately approved data migration",
         ):
             self.assertIn(required, source)
 
-    def test_canonical_adapter_owns_package_tables_and_admin_rpcs(self) -> None:
+    def test_package_adapter_has_no_mirror_function_or_assignment(self) -> None:
         source = PACKAGE.read_text(encoding="utf-8")
-        for required in (
-            '.table("hm_packages")',
-            '.table("hm_member_package_subscriptions")',
-            '.table("hm_package_usage_events")',
-            '.table("hm_package_payments")',
-            '.table("hm_package_subscription_events")',
-            '"hm_admin_save_package"',
-            '"hm_admin_assign_member_package"',
-            '"hm_admin_adjust_package_sessions"',
-            '"hm_admin_update_package_subscription"',
-            '"hm_package_member_summary"',
-            '"hm_package_subscription_metrics"',
-        ):
-            self.assertIn(required, source)
+        forbidden = (
+            "_sync_legacy_package_state",
+            'db["packages"] =',
+            "db['packages'] =",
+            'db["member_packages"] =',
+            "db['member_packages'] =",
+        )
+        for token in forbidden:
+            self.assertNotIn(token, source)
 
-    def test_phase2_document_records_the_pre_cutover_dual_write(self) -> None:
-        source = DOC.read_text(encoding="utf-8")
-        self.assertIn("_sync_legacy_package_state()", source)
-        self.assertIn("remaining dual-write", source.lower())
-        self.assertIn("No mirror retirement or data deletion is included", source)
+    def test_each_canonical_write_function_avoids_app_state_package_writes(self) -> None:
+        source = PACKAGE.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        functions = {
+            node.name: ast.get_source_segment(source, node) or ""
+            for node in tree.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        expected_rpcs = {
+            "save_package": "hm_admin_save_package",
+            "assign_or_replace_member_package": "hm_admin_assign_member_package",
+            "adjust_subscription_sessions": "hm_admin_adjust_package_sessions",
+            "update_subscription": "hm_admin_update_package_subscription",
+        }
+        for function_name, rpc_name in expected_rpcs.items():
+            body = functions[function_name]
+            self.assertIn(rpc_name, body)
+            self.assertNotIn("load_db", body)
+            self.assertNotIn("save_db", body)
+            self.assertNotIn('"packages"', body)
+            self.assertNotIn('"member_packages"', body)
 
-    def test_legacy_named_db_api_is_redirected_to_canonical_contract(self) -> None:
+    def test_member_communications_remain_separate_from_package_authority(self) -> None:
+        source = PACKAGE.read_text(encoding="utf-8")
+        self.assertIn("def _notify_package_assignment", source)
+        self.assertIn("def _notify_subscription_update", source)
+        self.assertIn("queue_member_event_email", source)
+        self.assertIn("append_message=True", source)
+        self.assertIn("append_notification=True", source)
+
+    def test_legacy_named_api_still_redirects_to_canonical_readers(self) -> None:
         source = BOOTSTRAP.read_text(encoding="utf-8")
-        for assignment in (
+        for required in (
+            "hardening.list_packages",
+            "hardening.list_member_subscriptions",
+            "hardening.get_member_package_summary",
+            "hardening.member_session_ledger",
             "db_api.list_packages_v1024b14 = list_packages_v1024b14",
-            "db_api.create_package_v1024b14 = create_package_v1024b14",
-            "db_api.update_package_v1024b14 = update_package_v1024b14",
             "db_api.get_member_active_package_v1024b14 = get_member_active_package_v1024b14",
             "db_api.list_member_packages_v1024b14 = list_member_packages_v1024b14",
-            "db_api.get_member_session_ledger_v1024b13 = get_member_session_ledger_v1024b13",
         ):
-            self.assertIn(assignment, source)
-        self.assertIn("hardening.list_packages", source)
-        self.assertIn("hardening.list_member_subscriptions", source)
-        self.assertIn("hardening.get_member_package_summary", source)
-        self.assertIn("hardening.member_session_ledger", source)
+            self.assertIn(required, source)
 
-    def test_streamlit_admin_and_member_pages_use_canonical_package_modules(self) -> None:
+    def test_admin_and_member_surfaces_remain_on_canonical_contract(self) -> None:
         admin_ui = ADMIN_UI.read_text(encoding="utf-8")
-        admin_page = ADMIN_PAGE.read_text(encoding="utf-8")
         admin_scheduling = ADMIN_SCHEDULING.read_text(encoding="utf-8")
         member_page = MEMBER_PAGE.read_text(encoding="utf-8")
         member_ui = MEMBER_SCHEDULE_UI.read_text(encoding="utf-8")
 
-        self.assertIn("components.package_hardening_ui", admin_page)
-        self.assertIn("render_package_hardening_admin_page", admin_page)
         for required in (
             "list_packages",
             "list_member_subscriptions",
@@ -88,25 +100,23 @@ class PackageDomainAuthorityTracePhase2Tests(unittest.TestCase):
             "update_subscription",
         ):
             self.assertIn(required, admin_ui)
-        self.assertIn("from components.package_hardening import member_session_ledger, schedule_capacity", admin_scheduling)
+        self.assertIn("member_session_ledger", admin_scheduling)
+        self.assertIn("schedule_capacity", admin_scheduling)
         self.assertIn("install_package_hardening_schedule_ui", member_page)
         self.assertIn("get_member_package_summary", member_ui)
         self.assertIn("member_session_ledger", member_ui)
-        self.assertIn("schedule_capacity", member_ui)
 
-    def test_flutter_boundary_is_the_authenticated_member_rpc(self) -> None:
-        sql = MEMBER_CONTRACT_SQL.read_text(encoding="utf-8")
+    def test_authenticated_member_rpc_boundary_is_unchanged(self) -> None:
+        source = MEMBER_CONTRACT_SQL.read_text(encoding="utf-8")
         for required in (
             "create or replace function public.hm_member_schedule_contract()",
             "from public.hm_member_package_subscriptions",
             "public.hm_package_subscription_metrics",
-            "from public.healthyme_app_state",
             "grant execute on function public.hm_member_schedule_contract() to authenticated",
-            "contract_version",
         ):
-            self.assertIn(required, sql)
+            self.assertIn(required, source)
 
-    def test_no_untraced_runtime_direct_package_mirror_access(self) -> None:
+    def test_no_new_runtime_package_mirror_reader(self) -> None:
         tokens = (
             'get("packages"',
             "get('packages'",
@@ -138,11 +148,11 @@ class PackageDomainAuthorityTracePhase2Tests(unittest.TestCase):
         self.assertEqual(
             hits,
             [],
-            "Untraced direct Package mirror access found: " + ", ".join(sorted(hits)),
+            "Unexpected Package mirror reader found: " + ", ".join(sorted(hits)),
         )
 
-    def test_no_untraced_dart_package_client_in_this_repository(self) -> None:
-        package_tokens = (
+    def test_future_dart_package_clients_require_trace_update(self) -> None:
+        tokens = (
             "hm_member_schedule_contract",
             "hm_member_package_subscriptions",
             "hm_packages",
@@ -152,12 +162,12 @@ class PackageDomainAuthorityTracePhase2Tests(unittest.TestCase):
         hits: list[str] = []
         for path in ROOT.rglob("*.dart"):
             source = path.read_text(encoding="utf-8", errors="ignore").lower()
-            if any(token.lower() in source for token in package_tokens):
+            if any(token.lower() in source for token in tokens):
                 hits.append(str(path.relative_to(ROOT)))
         self.assertEqual(
             hits,
             [],
-            "Flutter/Dart Package clients must be added to the authority trace: "
+            "Flutter/Dart Package clients require authority-trace coverage: "
             + ", ".join(sorted(hits)),
         )
 
