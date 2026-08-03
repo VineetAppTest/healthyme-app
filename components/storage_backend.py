@@ -5,9 +5,9 @@ import pathlib
 from typing import Any, Dict, Optional, Tuple
 
 from components.normalized_store import (
-    commit_users_and_state,
+    commit_identity_and_state,
+    ensure_workflow_projection,
     load_users_workflow_from_normalized,
-    sync_workflow_to_normalized,
 )
 
 BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
@@ -117,11 +117,31 @@ def _users_projection_changed(previous: Optional[Dict[str, Any]], current: Dict[
     if previous is None:
         return bool(current.get("users"))
     try:
-        before = json.dumps(previous.get("users", []), sort_keys=True, separators=(",", ":"), default=str)
-        after = json.dumps(current.get("users", []), sort_keys=True, separators=(",", ":"), default=str)
+        before = json.dumps(
+            previous.get("users", []), sort_keys=True, separators=(",", ":"), default=str
+        )
+        after = json.dumps(
+            current.get("users", []), sort_keys=True, separators=(",", ":"), default=str
+        )
         return before != after
     except Exception:
         return previous.get("users", []) != current.get("users", [])
+
+
+def _workflow_projection_changed(previous: Optional[Dict[str, Any]], current: Dict[str, Any]) -> bool:
+    """Detect canonical or shared-only Workflow projection changes."""
+    if previous is None:
+        return bool(current.get("workflow"))
+    try:
+        before = json.dumps(
+            previous.get("workflow", {}), sort_keys=True, separators=(",", ":"), default=str
+        )
+        after = json.dumps(
+            current.get("workflow", {}), sort_keys=True, separators=(",", ":"), default=str
+        )
+        return before != after
+    except Exception:
+        return previous.get("workflow", {}) != current.get("workflow", {})
 
 
 def _overlay_normalized_users_workflow(db: Dict[str, Any]) -> Dict[str, Any]:
@@ -184,7 +204,9 @@ def _load_from_supabase() -> Tuple[bool, Dict[str, Any], str]:
 def _save_to_supabase(db: Dict[str, Any]) -> Tuple[bool, str]:
     try:
         client = _supabase_client()
-        client.table("healthyme_app_state").upsert({"id": APP_STATE_ID, "data": normalize_state(db)}).execute()
+        client.table("healthyme_app_state").upsert(
+            {"id": APP_STATE_ID, "data": normalize_state(db)}
+        ).execute()
         return True, ""
     except Exception as exc:
         return False, str(exc)
@@ -245,51 +267,55 @@ def load_state(force_refresh: bool = False) -> Dict[str, Any]:
 
 
 def save_state(db: Dict[str, Any]) -> None:
-    """Save state with fail-closed canonical User writes after Gate 3.
+    """Save state with fail-closed canonical User and Workflow writes after Gate 4.
 
-    User projection changes are committed atomically with the full compatibility
-    state through `hm_admin_commit_users_and_state`. Workflow remains on its
-    existing dedicated synchronization path until its independent cutover.
+    Whenever either identity projection changes, changed Users, changed Workflow
+    rows and the full compatibility state commit through one database transaction.
+    Non-identity saves retain the existing lightweight app-state path.
     """
-    db = normalize_state(db)
+    db = ensure_workflow_projection(normalize_state(db))
     configured = supabase_configured()
     previous = _get_cache()
     users_changed = _users_projection_changed(previous, db)
+    workflow_changed = _workflow_projection_changed(previous, db)
+    identity_changed = users_changed or workflow_changed
 
-    if users_changed and not configured:
-        message = "Canonical User storage is unavailable; User changes were not saved."
+    if identity_changed and not configured:
+        message = "Canonical User/Workflow storage is unavailable; identity changes were not saved."
         _set_status(
             mode="LOCAL_FALLBACK",
             supabase_configured=False,
             supabase_connected=False,
             fallback_active=True,
             last_error=message,
-            last_action="Canonical User write rejected; local identity fallback is disabled.",
-            canonical_user_write=False,
+            last_action="Canonical identity write rejected; local User/Workflow fallback is disabled.",
+            canonical_user_write=False if users_changed else None,
+            canonical_workflow_write=False if workflow_changed else None,
         )
         raise RuntimeError(message)
 
     if configured:
         state_saved = False
-        user_commit_message = "No User projection change detected."
-        if users_changed:
-            user_ok, committed, user_commit_message, _ = commit_users_and_state(
+        identity_commit_message = "No User or Workflow projection change detected."
+        if identity_changed:
+            identity_ok, committed, identity_commit_message, _ = commit_identity_and_state(
                 db,
                 state_id=APP_STATE_ID,
-                source="streamlit_save_state_gate3",
+                source="streamlit_save_state_gate4",
                 force_state_commit=True,
             )
-            if not user_ok or not committed:
+            if not identity_ok or not committed:
                 _set_status(
                     mode="SUPABASE",
                     supabase_configured=True,
                     supabase_connected=True,
                     fallback_active=False,
-                    last_error=user_commit_message,
-                    last_action="Canonical User write rejected; state was not saved.",
-                    canonical_user_write=False,
+                    last_error=identity_commit_message,
+                    last_action="Canonical identity write rejected; state was not saved.",
+                    canonical_user_write=False if users_changed else None,
+                    canonical_workflow_write=False if workflow_changed else None,
                 )
-                raise RuntimeError(user_commit_message)
+                raise RuntimeError(identity_commit_message)
             state_saved = True
 
         if state_saved:
@@ -298,7 +324,6 @@ def save_state(db: Dict[str, Any]) -> None:
             ok, msg = _save_to_supabase(db)
 
         if ok:
-            workflow_ok, workflow_msg = sync_workflow_to_normalized(db)
             _set_cache(db)
             _set_status(
                 mode="SUPABASE",
@@ -308,9 +333,10 @@ def save_state(db: Dict[str, Any]) -> None:
                 last_error="",
                 last_action="Saved to Supabase.",
                 canonical_user_write=True if users_changed else None,
-                canonical_user_last_action=user_commit_message,
-                normalized_users_workflow=bool(workflow_ok),
-                normalized_last_action=workflow_msg,
+                canonical_workflow_write=True if workflow_changed else None,
+                canonical_identity_last_action=identity_commit_message,
+                normalized_users_workflow=True,
+                normalized_last_action=identity_commit_message,
             )
             return
 
@@ -323,7 +349,7 @@ def save_state(db: Dict[str, Any]) -> None:
             last_action="Supabase save failed; saved local fallback.",
         )
 
-    # Local fallback remains available only when the User projection is unchanged.
+    # Local fallback remains available only when neither identity projection changed.
     LOCAL_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     LOCAL_DB_PATH.write_text(json.dumps(db, indent=2), encoding="utf-8")
     _set_cache(db)
@@ -368,9 +394,15 @@ def get_storage_status(force_check: bool = False) -> Dict[str, Any]:
             "last_error": "",
             "last_action": msg or "Supabase forced health check passed.",
             "users_count": len(db.get("users", [])),
-            "members_count": len([u for u in db.get("users", []) if u.get("role") == "member"]),
-            "normalized_users_workflow": _get_cached_status().get("normalized_users_workflow", False),
-            "normalized_last_action": _get_cached_status().get("normalized_last_action", ""),
+            "members_count": len(
+                [u for u in db.get("users", []) if u.get("role") == "member"]
+            ),
+            "normalized_users_workflow": _get_cached_status().get(
+                "normalized_users_workflow", False
+            ),
+            "normalized_last_action": _get_cached_status().get(
+                "normalized_last_action", ""
+            ),
         }
         _set_cache(db)
         _set_status(**status)
@@ -396,14 +428,18 @@ def export_current_state_bytes() -> bytes:
 
 
 def push_local_data_to_supabase() -> Tuple[bool, str]:
-    """Push local state without allowing local Users to become an identity authority."""
+    """Push local non-identity state without replacing canonical identity data."""
     if not supabase_configured():
         return False, "Supabase secrets are not configured."
     local_state = normalize_state(_read_initial_local_state())
-    normalized_ok, canonical_users, _, normalized_msg = load_users_workflow_from_normalized()
+    normalized_ok, canonical_users, canonical_workflow, normalized_msg = (
+        load_users_workflow_from_normalized()
+    )
     if not normalized_ok:
-        return False, f"Local push blocked because canonical Users could not be loaded: {normalized_msg}"
+        return False, f"Local push blocked because canonical identity data could not be loaded: {normalized_msg}"
     local_state["users"] = canonical_users
+    local_state["workflow"] = canonical_workflow
+    local_state = ensure_workflow_projection(local_state)
     ok, msg = _save_to_supabase(local_state)
     if ok:
         _set_cache(local_state)
@@ -413,9 +449,12 @@ def push_local_data_to_supabase() -> Tuple[bool, str]:
             supabase_connected=True,
             fallback_active=False,
             last_error="",
-            last_action="Local non-identity data pushed to Supabase with canonical Users preserved.",
+            last_action="Local non-identity data pushed to Supabase with canonical Users and Workflow preserved.",
         )
-        return True, "Local non-identity data pushed to Supabase; canonical Users were preserved."
+        return (
+            True,
+            "Local non-identity data pushed to Supabase; canonical Users and Workflow were preserved.",
+        )
     _set_status(
         mode="LOCAL_FALLBACK",
         supabase_configured=True,
