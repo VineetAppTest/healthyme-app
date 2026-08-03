@@ -6,12 +6,13 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 COMPONENTS_INIT = ROOT / "components" / "__init__.py"
-EXERCISE_RUNTIME = ROOT / "components" / "exercise_repository_runtime.py"
-RECIPE_RUNTIME = ROOT / "components" / "recipe_repository_runtime.py"
 RECIPE_REPOSITORY = ROOT / "components" / "recipe_repository.py"
 EXERCISE_REPOSITORY = ROOT / "components" / "exercise_repository.py"
 SUPPLEMENT_REPOSITORY = ROOT / "components" / "supplement_repository.py"
 ADMIN_RECIPE = ROOT / "pages" / "15_Admin_Recipe_Manager.py"
+MEMBER_RECIPE = ROOT / "pages" / "08_Recipe_Repository.py"
+MEMBER_EXERCISE = ROOT / "pages" / "09_Exercise_Repository.py"
+RECOMMENDATION_CONTRACT = ROOT / "components" / "recommendation_contract.py"
 ADMIN_EXERCISE = ROOT / "pages" / "16_Admin_Exercise_Manager.py"
 ADMIN_SUPPLEMENT = ROOT / "pages" / "39_Admin_Supplement_Manager.py"
 RECIPES_CSV = ROOT / "data" / "recipes.csv"
@@ -19,25 +20,29 @@ EXERCISES_CSV = ROOT / "data" / "exercises.csv"
 
 
 class ContentRepositoryLegacyRetirementTests(unittest.TestCase):
-    def test_recipe_and_exercise_compatibility_syncs_are_read_only(self) -> None:
-        recipe_runtime = RECIPE_RUNTIME.read_text(encoding="utf-8")
-        exercise_runtime = EXERCISE_RUNTIME.read_text(encoding="utf-8")
+    def test_member_pages_read_canonical_modules_without_runtime_shims(self) -> None:
+        recipe = MEMBER_RECIPE.read_text(encoding="utf-8")
+        exercise = MEMBER_EXERCISE.read_text(encoding="utf-8")
+        bootstrap = COMPONENTS_INIT.read_text(encoding="utf-8")
+        contract = RECOMMENDATION_CONTRACT.read_text(encoding="utf-8")
 
-        for source, repository_call in (
-            (recipe_runtime, "list_recipe_repository(active_only=False)"),
-            (exercise_runtime, "list_exercise_repository(active_only=False)"),
-        ):
-            self.assertIn("original_sync_repository_to_state", source)
-            self.assertIn("canonical_sync_repository_to_state", source)
-            self.assertIn(repository_call, source)
-            self.assertIn("read-only snapshot", source)
-            self.assertNotIn("save_state", source)
+        self.assertIn("list_recipe_repository", recipe)
+        self.assertIn("list_exercise_repository", exercise)
+        self.assertNotIn("pd.read_csv", recipe)
+        self.assertNotIn("pd.read_csv", exercise)
+        self.assertNotIn("install_recipe_repository_runtime", bootstrap)
+        self.assertNotIn("install_exercise_repository_runtime", bootstrap)
+        self.assertIn("list_recipe_repository(active_only=active_only)", contract)
+        self.assertIn("list_exercise_repository(active_only=active_only)", contract)
 
-    def test_runtime_install_order_composes_both_read_only_guards(self) -> None:
-        source = COMPONENTS_INIT.read_text(encoding="utf-8")
-        exercise_install = source.index("install_exercise_repository_runtime()")
-        recipe_install = source.index("install_recipe_repository_runtime()")
-        self.assertLess(exercise_install, recipe_install)
+    def test_compatibility_sync_is_read_only_in_core_contract(self) -> None:
+        source = RECOMMENDATION_CONTRACT.read_text(encoding="utf-8")
+        sync_block = source.split("def sync_repository_to_state", 1)[1].split(
+            "def sync_all_repositories_to_state", 1
+        )[0]
+        self.assertIn("read-only canonical snapshot", sync_block)
+        self.assertIn("list_repository_items(resource_type, active_only=False)", sync_block)
+        self.assertNotIn("save_state", sync_block)
 
     def test_live_repository_modules_have_no_legacy_state_authority(self) -> None:
         for path in (

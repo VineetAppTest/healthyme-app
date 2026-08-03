@@ -5,12 +5,10 @@ import unittest
 from unittest import mock
 
 import components.recipe_repository as repository
-import components.recipe_repository_runtime as runtime
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RECIPE = ROOT / "components" / "recipe_repository.py"
-RUNTIME = ROOT / "components" / "recipe_repository_runtime.py"
 ADMIN_PAGE = ROOT / "pages" / "15_Admin_Recipe_Manager.py"
 MEMBER_PAGE = ROOT / "pages" / "08_Recipe_Repository.py"
 
@@ -168,22 +166,13 @@ class RecipeRepositoryCanonicalCutoverTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "inactive")
 
-    def test_legacy_dataframe_preserves_numeric_source_ids(self) -> None:
-        rows = [
-            repository._from_canonical(canonical_row("0", title="First")),
-            repository._from_canonical(canonical_row("1", title="Second")),
-        ]
-        with mock.patch.object(runtime, "list_recipe_repository", return_value=rows):
-            frame = runtime._recipe_dataframe()
-        self.assertEqual(list(frame.index), [0, 1])
-        self.assertEqual(frame.loc[1, "title"], "Second")
-
-    def test_runtime_redirects_legacy_readers_and_blocks_recipe_mirroring(self) -> None:
-        source = RUNTIME.read_text(encoding="utf-8")
-        self.assertIn('"/data/recipes.csv"', source)
-        self.assertIn('"pages/08_Recipe_Repository.py"', source)
+    def test_member_page_reads_canonical_repository_directly(self) -> None:
+        source = MEMBER_PAGE.read_text(encoding="utf-8")
         self.assertIn("list_recipe_repository", source)
-        self.assertIn("must never be mirrored back into app-state", source)
+        self.assertIn("def load_recipes():", source)
+        self.assertIn("frame.index = identities", source)
+        self.assertNotIn("pd.read_csv", source)
+        self.assertNotIn("DATA_PATH", source)
 
     def test_admin_page_has_no_csv_write_path(self) -> None:
         source = ADMIN_PAGE.read_text(encoding="utf-8")
@@ -200,13 +189,11 @@ class RecipeRepositoryCanonicalCutoverTests(unittest.TestCase):
         self.assertIn("update_recipe_repository_item(", source)
         self.assertIn("set_recipe_repository_status(", source)
 
-    def test_member_page_remains_compatible_through_runtime(self) -> None:
+    def test_member_page_preserves_assignment_identity_contract(self) -> None:
         source = MEMBER_PAGE.read_text(encoding="utf-8")
-        self.assertIn("pd.read_csv(DATA_PATH)", source)
-        self.assertIn("load_recipes", source)
-        runtime_source = RUNTIME.read_text(encoding="utf-8")
-        self.assertIn("repository_backed_read_csv", runtime_source)
-        self.assertIn("recipe_repository_cache_policy", runtime_source)
+        self.assertIn("df.index.astype(str).isin(assigned_ids)", source)
+        self.assertIn("int(selected_id) in df.index", source)
+        self.assertNotIn("recipe_repository_runtime", source)
 
 
 if __name__ == "__main__":

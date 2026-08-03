@@ -2,11 +2,11 @@ from components.ui_common import render_page_nav, render_back_to_top
 # v100.5 direct topbar import hotfix
 
 import html
-import pathlib
 import pandas as pd
 import streamlit as st
 
 from components.guards import require_member
+from components.exercise_repository import EXERCISE_COLUMNS, list_exercise_repository
 from components.ui_common import (
     inject_global_styles,
     apply_luxe_theme,
@@ -29,10 +29,6 @@ require_member(); utility_logout_bar()
 
 topbar("Exercise Repository", "", "Member content")
 
-DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "exercises.csv"
-
-EXERCISE_COLUMNS = ['title', 'description', 'category', 'difficulty', 'goal_tags', 'condition_tags', 'duration_or_reps', 'hidden_calories_v96', 'equipment', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'instructions', 'benefits', 'status']
-
 FALLBACK_IMAGES = [
     "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80",
     "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=900&q=80",
@@ -41,15 +37,19 @@ FALLBACK_IMAGES = [
 ]
 
 
-@st.cache_data(show_spinner=False)
-def load_exercises(_mtime=0):
-    if not DATA_PATH.exists():
-        return pd.DataFrame(columns=EXERCISE_COLUMNS)
-    df = pd.read_csv(DATA_PATH)
-    for c in EXERCISE_COLUMNS:
-        if c not in df.columns:
-            df[c] = ""
-    return df[EXERCISE_COLUMNS]
+def load_exercises():
+    rows = list_exercise_repository(active_only=False)
+    frame = pd.DataFrame(
+        [{column: row.get(column, "") for column in EXERCISE_COLUMNS} for row in rows],
+        columns=EXERCISE_COLUMNS,
+    )
+    if rows:
+        identities = []
+        for index, row in enumerate(rows):
+            source_id = str(row.get("id", index)).strip()
+            identities.append(int(source_id) if source_id.isdigit() else source_id)
+        frame.index = identities
+    return frame
 
 
 def esc(value):
@@ -692,7 +692,7 @@ if not wf.get("admin_completed"):
     st.warning("Your personalized plan will unlock after expert evaluation is completed.")
     st.stop()
 
-df = load_exercises(DATA_PATH.stat().st_mtime if DATA_PATH.exists() else 0)
+df = load_exercises()
 df = df[df["status"].fillna("active").astype(str).str.lower().eq("active")].copy()
 user_id = st.session_state["user_id"]
 published_plan_ids = _published_exercise_ids_for_member(user_id)
