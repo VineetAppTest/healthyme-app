@@ -245,7 +245,7 @@ with right:
         st.markdown("<div class='hm-dash-card'>", unsafe_allow_html=True)
         section_header(
             "Content & Allocation",
-            "Manage repositories and member-specific planning workflows.",
+            "Manage recipes, exercises, supplements and recommendation profiles.",
         )
         nav_cell("Recipes", "pages/15_Admin_Recipe_Manager.py", "dash_recipes_v102_4b4")
         nav_cell(
@@ -259,7 +259,7 @@ with right:
             "dash_supplements_v102_4b4",
         )
         nav_cell(
-            "Meal Profile Builder",
+            "Recommendation Profile Builder",
             "pages/38_Admin_Recommendation_Profile_Builder.py",
             "dash_profile_builder_h9a8b",
         )
