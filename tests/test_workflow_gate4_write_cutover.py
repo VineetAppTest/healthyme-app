@@ -137,12 +137,58 @@ class WorkflowGate4WriteCutoverTests(unittest.TestCase):
         self.assertEqual("in_progress", result["workflow"]["member1"]["workflow_status"])
         self.assertEqual("not_started", result["workflow"]["admin1"]["workflow_status"])
 
+    def test_canonical_overlay_preserves_shared_only_fields_and_removes_orphans(self) -> None:
+        namespace = _isolated_functions(
+            NORMALIZED,
+            ("_workflow_base", "_merge_canonical_users", "_merge_canonical_workflow"),
+        )
+        users = namespace["_merge_canonical_users"](
+            [
+                {"id": "u1", "name": "Old", "auth0_user_id": "auth0|1"},
+                {"id": "orphan", "name": "Orphan"},
+            ],
+            [{"id": "u1", "name": "Canonical", "email": "u1@example.com"}],
+        )
+        self.assertEqual(1, len(users))
+        self.assertEqual("Canonical", users[0]["name"])
+        self.assertEqual("auth0|1", users[0]["auth0_user_id"])
+
+        workflow = namespace["_merge_canonical_workflow"](
+            {
+                "u1": {
+                    "laf_completed": False,
+                    "body_mind_unlocked": True,
+                    "workflow_status": "stale",
+                },
+                "orphan": {"body_mind_unlocked": True},
+            },
+            {
+                "u1": {
+                    "laf_completed": True,
+                    "nsp1_completed": False,
+                    "nsp2_completed": False,
+                    "submitted_for_review": False,
+                    "admin_completed": False,
+                    "final_report_ready": False,
+                    "workflow_status": "in_progress",
+                }
+            },
+        )
+        self.assertEqual({"u1"}, set(workflow))
+        self.assertTrue(workflow["u1"]["laf_completed"])
+        self.assertTrue(workflow["u1"]["body_mind_unlocked"])
+        self.assertEqual("in_progress", workflow["u1"]["workflow_status"])
+
     def test_normalized_store_uses_combined_contract_without_direct_workflow_upsert(self) -> None:
         source = NORMALIZED.read_text(encoding="utf-8")
         self.assertIn("def commit_identity_and_state(", source)
         self.assertIn('client.rpc("hm_admin_commit_identity_and_state"', source)
         self.assertIn("def _changed_workflow_entries(", source)
         self.assertIn("def _canonical_workflow_patch(", source)
+        self.assertIn("def _merge_canonical_users(", source)
+        self.assertIn("def _merge_canonical_workflow(", source)
+        self.assertIn('.table("healthyme_app_state")', source)
+        self.assertIn("preserving shared-only projection fields", source)
         self.assertIn("def sync_workflow_to_normalized(", source)
         self.assertIn("workflow_compatibility_sync", source)
         self.assertNotIn('.table("hm_workflow").upsert(', source)
