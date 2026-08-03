@@ -2,16 +2,31 @@ from __future__ import annotations
 
 import copy
 import uuid
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import streamlit as st
 
 from components.pbm_core import (
-    EXERCISE_TIME_OF_DAY, SOURCE_FIELDS, SUPPLEMENT_TIMELINE,
-    SELECT_EXERCISE, SELECT_RECIPE, SELECT_SUPPLEMENT,
-    clean, frequency_from_source, image_reference, new_row,
-    row_has_content, rows_for, source_snapshot,
-    timeline_from_source, with_placeholder,
+    EXERCISE_TIME_OF_DAY,
+    SOURCE_FIELDS,
+    SUPPLEMENT_TIMELINE,
+    SELECT_EXERCISE,
+    SELECT_RECIPE,
+    SELECT_SUPPLEMENT,
+    clean,
+    frequency_from_source,
+    image_reference,
+    new_row,
+    row_has_content,
+    rows_for,
+    source_snapshot_for_item,
+    timeline_from_source,
+)
+from components.profile_builder_canonical_sources import (
+    apply_source_selection,
+    current_source_option_id,
+    source_option_labels,
+    source_options_for_row,
 )
 
 
@@ -24,8 +39,14 @@ def set_default(key: str, value) -> None:
         st.session_state[key] = value
 
 
-def apply_source_defaults(kind: str, row: Dict, label: str) -> None:
-    snapshot = source_snapshot(kind, label)
+def _clear_source_detail_widget_state(row: Dict[str, Any]) -> None:
+    prefix = widget_key(row, "source_")
+    for key in list(st.session_state.keys()):
+        if str(key).startswith(prefix):
+            st.session_state.pop(key, None)
+
+
+def apply_source_defaults(kind: str, row: Dict, snapshot: Dict[str, Any]) -> None:
     if not snapshot:
         return
     if kind == "meal":
@@ -61,8 +82,67 @@ def apply_source_defaults(kind: str, row: Dict, label: str) -> None:
             st.session_state[widget_key(row, "instruction")] = instruction
 
 
+def _source_kind(kind: str) -> str:
+    return "recipe" if kind == "meal" else kind
+
+
+def _source_placeholder(kind: str) -> str:
+    return {
+        "meal": SELECT_RECIPE,
+        "exercise": SELECT_EXERCISE,
+        "supplement": SELECT_SUPPLEMENT,
+    }[kind]
+
+
+def _source_label(kind: str) -> str:
+    return {
+        "meal": "Recipe",
+        "exercise": "Exercise",
+        "supplement": "Supplement",
+    }[kind]
+
+
+def render_source_selector(
+    column,
+    kind: str,
+    row: Dict[str, Any],
+    options: Dict[str, Any],
+) -> Dict[str, Any]:
+    source_kind = _source_kind(kind)
+    active_options = list(options.get(f"{source_kind}_sources") or [])
+    row_options = source_options_for_row(source_kind, row, active_options)
+    option_ids = [""] + [
+        clean(option.get("option_id"))
+        for option in row_options
+        if clean(option.get("option_id"))
+    ]
+    labels = source_option_labels(row_options)
+    placeholder = _source_placeholder(kind)
+    selected_default = current_source_option_id(source_kind, row, row_options)
+    source_key = widget_key(row, "source_option_id")
+    if source_key not in st.session_state or st.session_state[source_key] not in option_ids:
+        st.session_state[source_key] = selected_default if selected_default in option_ids else ""
+
+    selected_option_id = column.selectbox(
+        _source_label(kind),
+        option_ids,
+        format_func=lambda value: placeholder if not value else labels.get(value, value),
+        key=source_key,
+    )
+    changed, snapshot = apply_source_selection(
+        source_kind,
+        row,
+        selected_option_id,
+        row_options,
+    )
+    if changed:
+        _clear_source_detail_widget_state(row)
+        apply_source_defaults(kind, row, snapshot)
+    return snapshot
+
+
 def source_detail_groups(kind: str):
-    """Return the accepted source-detail rows without duplicate instruction fields."""
+    """Return accepted source-detail rows without duplicate instruction fields."""
     fields = [field for field in SOURCE_FIELDS[kind] if field[0] != "instructions"]
     if kind == "exercise":
         return (fields[:3], fields[3:6])
@@ -72,13 +152,13 @@ def source_detail_groups(kind: str):
 
 
 def render_source_details(kind: str, row: Dict) -> None:
-    snapshot = source_snapshot(kind, clean(row.get("reference_label")))
+    snapshot = source_snapshot_for_item(kind, row)
     if not snapshot:
         return
 
     st.markdown(
         "<div class='hm-source-box'><b>Pulled Source Details</b> "
-        "<span>Repository information is shown below; non-duplicate context remains editable.</span></div>",
+        "<span>Repository information is tied to the selected source ID; non-duplicate context remains editable.</span></div>",
         unsafe_allow_html=True,
     )
     defaults = dict(snapshot)
@@ -94,10 +174,6 @@ def render_source_details(kind: str, row: Dict) -> None:
             default = overrides.get(field, defaults.get(field, ""))
             set_default(key, clean(default))
 
-            # Accepted compact layout:
-            # - Exercise: all six cells are compact and equal-sized.
-            # - Supplements: Source Timing and Admin Notes are compact and equal-sized.
-            # - Meals: Image Reference matches Ingredients/Steps textarea height.
             use_area = field_type == "area"
             if kind in {"exercise", "supplement"}:
                 use_area = False
@@ -136,21 +212,11 @@ def remove_row(ui_id: str) -> None:
             st.session_state.pop(key, None)
 
 
-def render_row(kind: str, row: Dict, options: Dict[str, List[str]]) -> None:
+def render_row(kind: str, row: Dict, options: Dict[str, Any]) -> None:
     ui_id = row["ui_id"]
     if kind == "meal":
         columns = st.columns([.42, .20, .32, .06], gap="small")
-        source_key = widget_key(row, "reference_label")
-        set_default(source_key, row.get("reference_label") or SELECT_RECIPE)
-        selected = columns[0].selectbox(
-            "Recipe",
-            with_placeholder(options["recipe"], SELECT_RECIPE),
-            key=source_key,
-        )
-        selected = "" if selected == SELECT_RECIPE else selected
-        if selected != row.get("reference_label"):
-            row["reference_label"] = selected
-            apply_source_defaults(kind, row, selected)
+        render_source_selector(columns[0], kind, row, options)
         portion_key = widget_key(row, "portion")
         set_default(portion_key, row.get("portion", ""))
         row["portion"] = columns[1].text_input("Portion", key=portion_key)
@@ -160,17 +226,7 @@ def render_row(kind: str, row: Dict, options: Dict[str, List[str]]) -> None:
         remove = columns[3].button("×", key=f"pbm_remove_{ui_id}", help="Remove row")
     elif kind == "exercise":
         columns = st.columns([.35, .22, .37, .06], gap="small")
-        source_key = widget_key(row, "reference_label")
-        set_default(source_key, row.get("reference_label") or SELECT_EXERCISE)
-        selected = columns[0].selectbox(
-            "Exercise",
-            with_placeholder(options["exercise"], SELECT_EXERCISE),
-            key=source_key,
-        )
-        selected = "" if selected == SELECT_EXERCISE else selected
-        if selected != row.get("reference_label"):
-            row["reference_label"] = selected
-            apply_source_defaults(kind, row, selected)
+        render_source_selector(columns[0], kind, row, options)
         time_key = widget_key(row, "scheduled_time")
         current = row.get("scheduled_time")
         current = "As advised" if current == "Night / As advised" else current
@@ -189,17 +245,7 @@ def render_row(kind: str, row: Dict, options: Dict[str, List[str]]) -> None:
         remove = columns[3].button("×", key=f"pbm_remove_{ui_id}", help="Remove row")
     else:
         columns = st.columns([.22, .12, .24, .16, .20, .06], gap="small")
-        source_key = widget_key(row, "reference_label")
-        set_default(source_key, row.get("reference_label") or SELECT_SUPPLEMENT)
-        selected = columns[0].selectbox(
-            "Supplement",
-            with_placeholder(options["supplement"], SELECT_SUPPLEMENT),
-            key=source_key,
-        )
-        selected = "" if selected == SELECT_SUPPLEMENT else selected
-        if selected != row.get("reference_label"):
-            row["reference_label"] = selected
-            apply_source_defaults(kind, row, selected)
+        render_source_selector(columns[0], kind, row, options)
         frequency_key = widget_key(row, "frequency")
         set_default(frequency_key, int(row.get("frequency") or 0))
         row["frequency"] = columns[1].number_input(
