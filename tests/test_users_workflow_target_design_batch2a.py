@@ -122,7 +122,7 @@ class UsersWorkflowTargetDesignBatch2ATests(unittest.TestCase):
         self.assertIn("Loaded user from legacy local store", role_source)
         self.assertIn("Gate 3 cuts over the **User write authority only**", gate3)
         self.assertIn("Gate 4 cuts over the **Streamlit/shared-state Workflow write authority**", gate4)
-        self.assertIn("Sessions, password retirement, default-Admin redesign", gate4)
+        self.assertIn("keep Session migration, password retirement and default-Admin redesign separate", gate4)
 
 
 if __name__ == "__main__":
