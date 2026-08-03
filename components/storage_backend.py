@@ -256,6 +256,19 @@ def save_state(db: Dict[str, Any]) -> None:
     previous = _get_cache()
     users_changed = _users_projection_changed(previous, db)
 
+    if users_changed and not configured:
+        message = "Canonical User storage is unavailable; User changes were not saved."
+        _set_status(
+            mode="LOCAL_FALLBACK",
+            supabase_configured=False,
+            supabase_connected=False,
+            fallback_active=True,
+            last_error=message,
+            last_action="Canonical User write rejected; local identity fallback is disabled.",
+            canonical_user_write=False,
+        )
+        raise RuntimeError(message)
+
     if configured:
         state_saved = False
         user_commit_message = "No User projection change detected."
@@ -310,8 +323,7 @@ def save_state(db: Dict[str, Any]) -> None:
             last_action="Supabase save failed; saved local fallback.",
         )
 
-    # Local fallback remains available for non-production/development state, but
-    # production identity changes above fail closed before this branch.
+    # Local fallback remains available only when the User projection is unchanged.
     LOCAL_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     LOCAL_DB_PATH.write_text(json.dumps(db, indent=2), encoding="utf-8")
     _set_cache(db)
