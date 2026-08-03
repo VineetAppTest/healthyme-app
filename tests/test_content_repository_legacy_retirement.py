@@ -35,14 +35,25 @@ class ContentRepositoryLegacyRetirementTests(unittest.TestCase):
         self.assertIn("list_recipe_repository(active_only=active_only)", contract)
         self.assertIn("list_exercise_repository(active_only=active_only)", contract)
 
-    def test_compatibility_sync_is_read_only_in_core_contract(self) -> None:
+    def test_legacy_sync_api_is_removed_from_live_code(self) -> None:
         source = RECOMMENDATION_CONTRACT.read_text(encoding="utf-8")
-        sync_block = source.split("def sync_repository_to_state", 1)[1].split(
-            "def sync_all_repositories_to_state", 1
-        )[0]
-        self.assertIn("read-only canonical snapshot", sync_block)
-        self.assertIn("list_repository_items(resource_type, active_only=False)", sync_block)
-        self.assertNotIn("save_state", sync_block)
+        self.assertNotIn("def sync_repository_to_state(", source)
+        self.assertNotIn("def sync_all_repositories_to_state(", source)
+        self.assertNotIn("sync_all_repositories_to_state()", source)
+
+        for folder in (ROOT / "components", ROOT / "pages"):
+            for path in folder.rglob("*.py"):
+                live_source = path.read_text(encoding="utf-8")
+                self.assertNotIn("sync_repository_to_state(", live_source, str(path))
+                self.assertNotIn("sync_all_repositories_to_state(", live_source, str(path))
+
+    def test_repository_diagnostics_use_canonical_sources(self) -> None:
+        source = RECOMMENDATION_CONTRACT.read_text(encoding="utf-8")
+        self.assertIn("recipe_repo = list_recipe_repository(active_only=False)", source)
+        self.assertIn("exercise_repo = list_exercise_repository(active_only=False)", source)
+        self.assertNotIn('recipe_repo = list(db.get("recipes", [])', source)
+        self.assertNotIn('exercise_repo = list(db.get("exercises", [])', source)
+        self.assertNotIn("repository mirror is empty", source)
 
     def test_live_repository_modules_have_no_legacy_state_authority(self) -> None:
         for path in (
