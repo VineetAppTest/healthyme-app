@@ -112,11 +112,22 @@ class IdentityObservationWindowGate6Tests(unittest.TestCase):
             "ee18476f5ef5dd93f4e9fb11bb351997460b079a",
             flutter_paths["lib/repositories/nsp_repository.dart"]["blob_sha"],
         )
+        checkpoint = evidence["production_database_checkpoint"]
+        self.assertEqual(3, checkpoint["observation_count"])
+        self.assertEqual(3, checkpoint["healthy_observation_count"])
+        self.assertEqual(0, checkpoint["repair_count"])
+        self.assertEqual(28.25, checkpoint["observation_span_minutes"])
         self.assertEqual(
             ["hm_flutter_get_laf", "hm_flutter_get_nsp"],
-            evidence["production_database_checkpoint"][
-                "flutter_shared_workflow_fallback_functions"
+            checkpoint["flutter_shared_workflow_fallback_functions"],
+        )
+        self.assertEqual(
+            [
+                "insufficient_observation_span",
+                "active_member_auth_email_fallback_remains",
+                "flutter_shared_workflow_fallback_remains",
             ],
+            checkpoint["automated_blockers"],
         )
         self.assertEqual(
             {"pending"}, set(evidence["signed_in_smoke_evidence"].values())
@@ -126,15 +137,15 @@ class IdentityObservationWindowGate6Tests(unittest.TestCase):
     def test_document_records_current_evidence_and_safety_boundary(self) -> None:
         source = DOC.read_text(encoding="utf-8")
         for required in (
-            "Two genuine healthy production observations",
-            "approximately `16.94` minutes",
+            "Three genuine healthy production observations",
+            "approximately `28.25` minutes",
             "active members still using controlled email fallback: `1`",
             "hm_flutter_get_laf()",
             "hm_flutter_get_nsp()",
-            "insufficient_observation_count",
+            "The observation-count blocker has cleared",
             "insufficient_observation_span",
             "signed-in browser or Android-device smoke",
-            "Projection retirement is therefore not approved",
+            "Projection retirement is still not approved",
             "Sessions, password retirement and default-Admin redesign remain separate batches",
         ):
             self.assertIn(required, source)
