@@ -13,7 +13,6 @@ from components.recommendation_contract import (
     recommendation_contract_diagnostics,
     save_member_resource_allocations,
     save_unified_recommendation_share,
-    sync_all_repositories_to_state,
 )
 from components.ui_common import (
     inject_global_styles,
@@ -38,7 +37,7 @@ utility_logout_bar()
 
 topbar(
     "Unified Recommendations",
-    "H9A.5E contract workbench: repository → member allocation → published recommendation snapshot.",
+    "Canonical repository → member allocation → published recommendation snapshot.",
     "Admin recommendations",
 )
 
@@ -87,7 +86,7 @@ def _kpi(label, value):
 st.markdown(
     """
 <div class='hm-h9a5e-note'>
-<b>Purpose:</b> this page creates the missing single allocation gate. It mirrors CSV repositories into app-state, converts old direct allocations into canonical allocations, and publishes a member-facing recommendation snapshot that Flutter can read.
+<b>Purpose:</b> this page reads Recipe and Exercise definitions from the canonical Content Repository, converts old direct allocations into the unified allocation layer, and publishes a member-facing recommendation snapshot that Flutter can read.
 </div>
 """,
     unsafe_allow_html=True,
@@ -108,17 +107,10 @@ with k3:
 with k4:
     _kpi("Active Exercises", len(active_exercises))
 
-sync_col, migrate_col = st.columns(2, gap="large")
-with sync_col:
-    if st.button("Sync recipe/exercise repositories to app-state", type="primary", use_container_width=True):
-        counts = sync_all_repositories_to_state()
-        st.success(f"Repository mirror updated. Recipes: {counts['recipes']}; Exercises: {counts['exercises']}.")
-        st.rerun()
-with migrate_col:
-    if st.button("Migrate old direct allocations to unified layer", use_container_width=True):
-        counts = migrate_legacy_resource_assignments(actor_id=_actor_id())
-        st.success(f"Legacy allocations migrated. Recipes: {counts['recipes']}; Exercises: {counts['exercises']}.")
-        st.rerun()
+if st.button("Migrate old direct allocations to unified layer", use_container_width=True):
+    counts = migrate_legacy_resource_assignments(actor_id=_actor_id())
+    st.success(f"Legacy allocations migrated. Recipes: {counts['recipes']}; Exercises: {counts['exercises']}.")
+    st.rerun()
 
 members = list_members()
 if not members:

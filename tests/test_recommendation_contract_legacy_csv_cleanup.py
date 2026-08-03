@@ -37,11 +37,24 @@ class RecommendationContractLegacyCsvCleanupTests(unittest.TestCase):
             "pd.isna(value)",
             "list_recipe_repository(active_only=active_only)",
             "list_exercise_repository(active_only=active_only)",
-            "def sync_repository_to_state(",
+            "def list_repository_items(",
             "def save_member_resource_allocations(",
             "def save_unified_recommendation_share(",
         ):
             self.assertIn(required, source)
+
+    def test_obsolete_sync_and_mirror_contracts_are_removed(self) -> None:
+        source = CONTRACT.read_text(encoding="utf-8")
+        for forbidden in (
+            "def sync_repository_to_state(",
+            "def sync_all_repositories_to_state(",
+            "sync_all_repositories_to_state()",
+            '"repo_key":',
+            "repository mirror is empty",
+        ):
+            self.assertNotIn(forbidden, source)
+        self.assertIn("recipe_repo = list_recipe_repository(active_only=False)", source)
+        self.assertIn("exercise_repo = list_exercise_repository(active_only=False)", source)
 
     def test_rollback_evidence_files_are_not_deleted(self) -> None:
         for path in (RECIPES_CSV, EXERCISES_CSV):
