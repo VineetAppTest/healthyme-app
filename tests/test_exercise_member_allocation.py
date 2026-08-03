@@ -1,9 +1,17 @@
 from __future__ import annotations
 
 import copy
+import sys
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
+
+ROOT = Path(__file__).resolve().parents[1]
+if "components" not in sys.modules:
+    components_package = types.ModuleType("components")
+    components_package.__path__ = [str(ROOT / "components")]
+    sys.modules["components"] = components_package
 
 from components import exercise_member_allocation as allocation
 
