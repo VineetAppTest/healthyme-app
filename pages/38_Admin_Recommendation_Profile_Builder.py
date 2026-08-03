@@ -4,6 +4,9 @@ from components.admin_performance_optimization import (
     admin_profile_builder_render_scope,
     install_profile_builder_performance,
 )
+from components.meal_profile_builder_write_boundary import (
+    install_meal_profile_builder_write_boundary,
+)
 from components.performance_diagnostics import (
     begin_page_measurement,
     finish_and_render_page_diagnostics,
@@ -13,9 +16,6 @@ from components.profile_builder_access import (
     profile_builder_role_utility_bar,
     require_profile_builder_access,
 )
-from components.supplement_repository_source import (
-    install_profile_builder_supplement_repository_source,
-)
 from components.ui_common import (
     apply_luxe_theme,
     inject_global_styles,
@@ -24,19 +24,22 @@ from components.ui_common import (
 )
 
 
-# Install request-local read reuse and the repository-only supplement source before
-# importing the modular builder so its direct function bindings use both contracts.
+# Keep the existing stable route while the workflow becomes meals-only. Install
+# the write boundary before importing the modular renderer so its bound save
+# function cannot replace legacy Exercise or Supplement rows.
 install_profile_builder_performance()
-install_profile_builder_supplement_repository_source()
+install_meal_profile_builder_write_boundary()
 from components.profile_builder_modular import render_modular_profile_builder
 
 
 st.set_page_config(
-    page_title="Recommendation Profile Builder",
+    page_title="Meal Profile Builder",
     page_icon="💚",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+# Keep the established diagnostics identity because the registered route is
+# unchanged; this preserves historical performance comparisons across Phase B.
 begin_page_measurement("Recommendation Profile Builder")
 inject_global_styles()
 apply_luxe_theme()
@@ -50,7 +53,7 @@ with admin_profile_builder_render_scope():
 # given a navigation control that points to the wider Admin application.
 if current_profile_builder_role() in {"admin", "super_admin"}:
     render_page_nav(
-        "Recommendation Profile Builder",
+        "Meal Profile Builder",
         back_page="pages/10_Admin_Dashboard.py",
         dashboard_page="pages/10_Admin_Dashboard.py",
         show_evaluation=False,

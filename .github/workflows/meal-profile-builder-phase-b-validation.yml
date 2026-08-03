@@ -1,0 +1,55 @@
+name: Meal Profile Builder Phase B validation
+
+on:
+  pull_request:
+    paths:
+      - "components/meal_profile_builder_phase_b.py"
+      - "components/meal_profile_builder_write_boundary.py"
+      - "components/profile_builder_modular.py"
+      - "pages/38_Admin_Recommendation_Profile_Builder.py"
+      - "docs/meal_profile_builder_phase_b_2026-08-04.md"
+      - "tests/test_meal_profile_builder_phase_b.py"
+      - ".github/workflows/meal-profile-builder-phase-b-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install application dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile Phase B runtime and guards
+        run: |
+          python -m py_compile \
+            components/meal_profile_builder_phase_b.py \
+            components/meal_profile_builder_write_boundary.py \
+            components/profile_builder_modular.py \
+            pages/38_Admin_Recommendation_Profile_Builder.py \
+            tests/test_meal_profile_builder_phase_b.py
+
+      - name: Validate meals-only live ownership
+        run: python -m unittest tests.test_meal_profile_builder_phase_b -v
+
+      - name: Revalidate Member Planning separation contract
+        run: python -m unittest tests.test_member_planning_separation_contract -v
+
+      - name: Revalidate Profile Builder repository contract
+        run: python -m unittest tests.test_profile_builder_repository_contract -v
+
+      - name: Revalidate Profile Builder form hygiene
+        run: python -m unittest tests.test_profile_builder_form_hygiene -v
