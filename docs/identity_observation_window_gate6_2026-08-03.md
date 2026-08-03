@@ -67,7 +67,7 @@ Automated readiness never substitutes for signed-in route and device evidence.
 
 ## Production projection evidence
 
-At the Gate 6 checkpoint:
+At the Gate 6 pre-PR checkpoint:
 
 - canonical Users: `15`;
 - shared Users: `15`;
@@ -79,16 +79,17 @@ At the Gate 6 checkpoint:
 - missing, orphaned or duplicate shared identities: `0`;
 - persisted repair observations: `0`.
 
-Two genuine healthy production observations were retained initially:
+Three genuine healthy production observations are retained:
 
 1. Gate 5A/6A production baseline at `2026-08-03T11:32:02.340453Z`;
-2. post-PR-#372 merge checkpoint at `2026-08-03T11:48:58.640454Z`.
+2. post-PR-#372 merge checkpoint at `2026-08-03T11:48:58.640454Z`;
+3. Gate 6 pre-PR checkpoint at `2026-08-03T12:00:17.454812Z`.
 
-Initial observed span:
+Observed span:
 
-- approximately `16.94` minutes.
+- approximately `28.25` minutes.
 
-The observation window is therefore healthy but not yet long enough or numerous enough for the default automated threshold.
+The observation-count threshold is satisfied. The observation window remains below the default `60`-minute duration threshold.
 
 ## Active-member coverage
 
@@ -144,14 +145,13 @@ Assessment response payloads continue to live in the shared application-state do
 
 ## Current automated blockers
 
-The initial Gate 6 status correctly reports:
+The Gate 6 status now reports:
 
-1. `insufficient_observation_count`;
-2. `insufficient_observation_span`;
-3. `active_member_auth_email_fallback_remains`;
-4. `flutter_shared_workflow_fallback_remains`.
+1. `insufficient_observation_span`;
+2. `active_member_auth_email_fallback_remains`;
+3. `flutter_shared_workflow_fallback_remains`.
 
-Projection retirement is therefore not approved.
+The observation-count blocker has cleared. Projection retirement is still not approved.
 
 ## Signed-in smoke evidence
 
