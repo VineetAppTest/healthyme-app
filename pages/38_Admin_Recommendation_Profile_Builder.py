@@ -13,9 +13,6 @@ from components.profile_builder_access import (
     profile_builder_role_utility_bar,
     require_profile_builder_access,
 )
-from components.supplement_repository_source import (
-    install_profile_builder_supplement_repository_source,
-)
 from components.ui_common import (
     apply_luxe_theme,
     inject_global_styles,
@@ -24,20 +21,18 @@ from components.ui_common import (
 )
 
 
-# Install request-local read reuse and the repository-only supplement source before
-# importing the modular builder so its direct function bindings use both contracts.
+# Keep the existing stable route while the workflow becomes meals-only.
 install_profile_builder_performance()
-install_profile_builder_supplement_repository_source()
 from components.profile_builder_modular import render_modular_profile_builder
 
 
 st.set_page_config(
-    page_title="Recommendation Profile Builder",
+    page_title="Meal Profile Builder",
     page_icon="💚",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
-begin_page_measurement("Recommendation Profile Builder")
+begin_page_measurement("Meal Profile Builder")
 inject_global_styles()
 apply_luxe_theme()
 require_profile_builder_access()
@@ -50,7 +45,7 @@ with admin_profile_builder_render_scope():
 # given a navigation control that points to the wider Admin application.
 if current_profile_builder_role() in {"admin", "super_admin"}:
     render_page_nav(
-        "Recommendation Profile Builder",
+        "Meal Profile Builder",
         back_page="pages/10_Admin_Dashboard.py",
         dashboard_page="pages/10_Admin_Dashboard.py",
         show_evaluation=False,
@@ -58,4 +53,4 @@ if current_profile_builder_role() in {"admin", "super_admin"}:
         location="bottom",
     )
 render_back_to_top()
-finish_and_render_page_diagnostics("Recommendation Profile Builder")
+finish_and_render_page_diagnostics("Meal Profile Builder")
