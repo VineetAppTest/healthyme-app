@@ -25,8 +25,7 @@ class UsersGate3WriteCutoverTests(unittest.TestCase):
             "public.hm_admin_commit_users_and_state(text, text, jsonb, jsonb, "
             "text, text, text, jsonb)"
         )
-        for role in ("public", "anon", "authenticated"):
-            self.assertIn(f"from {role}", source.lower())
+        self.assertIn("from public, anon, authenticated;", source.lower())
         self.assertIn(f"grant execute on function {signature}".lower(), source.lower())
         self.assertIn("to service_role", source.lower())
 
