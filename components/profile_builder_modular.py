@@ -7,10 +7,6 @@ from components.meal_profile_builder_phase_b import (
     MEAL_PROFILE_BUILDER_SECTIONS,
     VIEW_PROFILES_SECTION,
 )
-from components.member_plan_builder_allocations import render_member_plan_allocations
-from components.member_plan_builder_export import render_view_member_plan
-from components.member_plan_builder_meals import render_member_plan_meals
-from components.member_plan_builder_setup import render_member_plan_setup
 from components.pbm_core import ensure_state, safe_key
 from components.profile_builder_access import (
     current_profile_builder_role,
@@ -22,6 +18,16 @@ from components.profile_builder_form_hygiene import (
 from components.recommendation_profile_store import load_profile_builder_sources
 
 
+# Install the established success-only reset layer before the rebuilt renderer
+# modules bind any Profile Builder save or publish functions.
+install_profile_builder_form_hygiene()
+
+from components.member_plan_builder_allocations import render_member_plan_allocations
+from components.member_plan_builder_export import render_view_member_plan
+from components.member_plan_builder_meals import render_member_plan_meals
+from components.member_plan_builder_setup import render_member_plan_setup
+
+
 APP_BUILD_VERSION = "v101.00"
 APP_BUILD_LABEL = "Simplified Member Plan Builder"
 SECTION_LABELS = {
@@ -30,9 +36,6 @@ SECTION_LABELS = {
     ALLOCATION_WORKSPACE_SECTION: "Exercise & Supplement",
     VIEW_PROFILES_SECTION: "View Member Plan",
 }
-
-
-install_profile_builder_form_hygiene()
 
 
 def _render_css() -> None:
