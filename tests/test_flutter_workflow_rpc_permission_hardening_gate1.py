@@ -91,7 +91,7 @@ class FlutterWorkflowRpcPermissionHardeningGate1Tests(unittest.TestCase):
             "20260803093059_restrict_flutter_member_rpc_execution",
             "anon execute: false for all nine Gate 1 functions",
             "production row counts remain 15 Users and 15 Workflow rows",
-            "cross-member mutation is rejected",
+            "a different member ID is rejected before mutation",
             "Gate 2 may create the canonical contract foundation",
             "This gate does not",
         ):
