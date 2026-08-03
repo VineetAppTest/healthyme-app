@@ -68,6 +68,11 @@ def _to_date(value: object, fallback: dt.date) -> dt.date:
         return fallback
 
 
+def _clear_add_form(member_id: str) -> None:
+    for suffix in ("source", "start", "end", "instructions", "notes"):
+        st.session_state.pop(f"phase_c_{suffix}_{member_id}", None)
+
+
 st.markdown(
     """
 <style>
@@ -87,6 +92,10 @@ Historical and stopped allocations remain readable.
 """,
     unsafe_allow_html=True,
 )
+
+flash_message = st.session_state.pop("phase_c_flash", "")
+if flash_message:
+    st.success(flash_message)
 
 members = list_members()
 if not members:
@@ -172,7 +181,8 @@ with tab_add:
                     status="active",
                     actor_id=_actor_id(),
                 )
-                st.success(
+                _clear_add_form(member_id)
+                st.session_state["phase_c_flash"] = (
                     f"Exercise allocation saved with ID {saved.get('id')}."
                 )
                 st.rerun()
