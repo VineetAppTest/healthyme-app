@@ -59,10 +59,11 @@ When Users changed:
 1. call `commit_users_and_state(...)`;
 2. reject the save if the canonical contract fails;
 3. do not report success through `data/db.json`;
-4. cache the accepted complete state;
-5. synchronize Workflow separately through the existing temporary path.
+4. reject the save when canonical Supabase configuration is unavailable rather than creating a local identity authority;
+5. cache the accepted complete state;
+6. synchronize Workflow separately through the existing temporary path.
 
-When Users did not change, the existing general app-state save continues. This avoids forcing every food log, schedule, message or journal save through an identity contract.
+When Users did not change, the existing general app-state save continues. This avoids forcing every food log, schedule, message or journal save through an identity contract. Local fallback remains available only for state saves whose User projection is unchanged.
 
 ## Canonical adapter
 
