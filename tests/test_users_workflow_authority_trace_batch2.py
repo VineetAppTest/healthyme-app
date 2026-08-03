@@ -6,6 +6,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "users_workflow_authority_trace_batch2_2026-08-03.md"
+GATE3_DOC = ROOT / "docs" / "users_gate3_write_cutover_2026-08-03.md"
 STORAGE = ROOT / "components" / "storage_backend.py"
 NORMALIZED = ROOT / "components" / "normalized_store.py"
 DB = ROOT / "components" / "db.py"
@@ -27,19 +28,25 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_storage_backend_exposes_current_overlay_and_dual_write_order(self) -> None:
-        source = STORAGE.read_text(encoding="utf-8")
-        self.assertIn("def _overlay_normalized_users_workflow", source)
-        self.assertIn("load_users_workflow_from_normalized", source)
-        self.assertIn('db["users"] = users', source)
-        self.assertIn('db["workflow"] = workflow', source)
-        self.assertIn("def save_state", source)
-        self.assertLess(
-            source.index("ok, msg = _save_to_supabase(db)"),
-            source.index("sync_users_workflow_to_normalized(db)"),
-        )
-        self.assertIn("LOCAL_DB_PATH.write_text", source)
-        self.assertIn("def push_local_data_to_supabase", source)
+    def test_historical_trace_and_current_staged_cutover_are_both_guarded(self) -> None:
+        historical = DOC.read_text(encoding="utf-8")
+        current = STORAGE.read_text(encoding="utf-8")
+        gate3 = GATE3_DOC.read_text(encoding="utf-8")
+
+        self.assertIn("app-state-first dual-write", historical)
+        self.assertIn("def _overlay_normalized_users_workflow", current)
+        self.assertIn("load_users_workflow_from_normalized", current)
+        self.assertIn('db["users"] = users', current)
+        self.assertIn('db["workflow"] = workflow', current)
+        self.assertIn("def save_state", current)
+        self.assertIn("commit_users_and_state", current)
+        self.assertIn("sync_workflow_to_normalized", current)
+        self.assertNotIn("sync_users_workflow_to_normalized(db)", current)
+        self.assertIn("if users_changed and not configured:", current)
+        self.assertIn("LOCAL_DB_PATH.write_text", current)
+        self.assertIn("def push_local_data_to_supabase", current)
+        self.assertIn("Gate 3 cuts over the **User write authority only**", gate3)
+        self.assertIn("Workflow remains on its existing dedicated synchronization path", gate3)
 
     def test_normalized_store_owns_dedicated_table_adapter(self) -> None:
         source = NORMALIZED.read_text(encoding="utf-8")
@@ -55,7 +62,7 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_compatibility_db_still_owns_user_workflow_and_login_session_writes(self) -> None:
+    def test_compatibility_db_still_owns_user_workflow_and_login_session_operations(self) -> None:
         source = DB.read_text(encoding="utf-8")
         for required in (
             "def ensure_default_admin",
@@ -146,8 +153,10 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
             if matches:
                 hit_details[str(path.relative_to(ROOT))] = matches
 
-        document = DOC.read_text(encoding="utf-8")
-        missing = [path for path in sorted(hit_details) if f"`{path}`" not in document]
+        historical_document = DOC.read_text(encoding="utf-8")
+        current_document = GATE3_DOC.read_text(encoding="utf-8")
+        combined_documents = historical_document + "\n" + current_document
+        missing = [path for path in sorted(hit_details) if f"`{path}`" not in combined_documents]
         missing_details = "\n".join(
             f"{path}:\n  " + "\n  ".join(hit_details[path]) for path in missing
         )
