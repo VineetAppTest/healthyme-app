@@ -3,7 +3,12 @@ import json
 import os
 import pathlib
 from typing import Any, Dict, Optional, Tuple
-from components.normalized_store import load_users_workflow_from_normalized, sync_users_workflow_to_normalized
+
+from components.normalized_store import (
+    commit_users_and_state,
+    load_users_workflow_from_normalized,
+    sync_workflow_to_normalized,
+)
 
 BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
 LOCAL_DB_PATH = BASE_DIR / "data" / "db.json"
@@ -47,12 +52,15 @@ DEFAULT_STORES = {
     "supplement_audit_logs": [],
 }
 
+
 def _session_state():
     try:
         import streamlit as st
+
         return st.session_state
     except Exception:
         return None
+
 
 def _set_status(**kwargs):
     LAST_STATUS.update(kwargs)
@@ -60,16 +68,19 @@ def _set_status(**kwargs):
     if ss is not None:
         ss[STATUS_KEY] = dict(LAST_STATUS)
 
+
 def _get_cached_status():
     ss = _session_state()
     if ss is not None and STATUS_KEY in ss:
         return dict(ss[STATUS_KEY])
     return dict(LAST_STATUS)
 
+
 def _set_cache(db: Dict[str, Any]):
     ss = _session_state()
     if ss is not None:
         ss[CACHE_KEY] = copy.deepcopy(db)
+
 
 def _get_cache():
     ss = _session_state()
@@ -77,10 +88,12 @@ def _get_cache():
         return copy.deepcopy(ss[CACHE_KEY])
     return None
 
+
 def clear_state_cache():
     ss = _session_state()
     if ss is not None and CACHE_KEY in ss:
         del ss[CACHE_KEY]
+
 
 def _read_initial_local_state() -> Dict[str, Any]:
     for path in [LOCAL_DB_PATH, SAMPLE_DB_PATH]:
@@ -91,18 +104,28 @@ def _read_initial_local_state() -> Dict[str, Any]:
             pass
     return copy.deepcopy(DEFAULT_STORES)
 
+
 def normalize_state(db: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     base = copy.deepcopy(DEFAULT_STORES)
     if isinstance(db, dict):
         base.update(db)
     return base
 
-def _overlay_normalized_users_workflow(db: Dict[str, Any]) -> Dict[str, Any]:
-    """Overlay normalized hm_users/hm_workflow when the tables are available.
 
-    This keeps the app compatible with the older JSONB app state while allowing
-    high-traffic users/workflow to come from faster dedicated tables.
-    """
+def _users_projection_changed(previous: Optional[Dict[str, Any]], current: Dict[str, Any]) -> bool:
+    """Detect any shared User projection change before selecting the save contract."""
+    if previous is None:
+        return bool(current.get("users"))
+    try:
+        before = json.dumps(previous.get("users", []), sort_keys=True, separators=(",", ":"), default=str)
+        after = json.dumps(current.get("users", []), sort_keys=True, separators=(",", ":"), default=str)
+        return before != after
+    except Exception:
+        return previous.get("users", []) != current.get("users", [])
+
+
+def _overlay_normalized_users_workflow(db: Dict[str, Any]) -> Dict[str, Any]:
+    """Overlay canonical hm_users/hm_workflow when the tables are available."""
     try:
         ok, users, workflow, msg = load_users_workflow_from_normalized()
         if ok:
@@ -115,25 +138,34 @@ def _overlay_normalized_users_workflow(db: Dict[str, Any]) -> Dict[str, Any]:
         _set_status(normalized_users_workflow=False, normalized_last_action=str(exc))
     return db
 
+
 def _get_secret(name: str, default: str = "") -> str:
     value = os.environ.get(name)
     if value:
         return value
     try:
         import streamlit as st
+
         value = st.secrets.get(name, default)
         return str(value) if value is not None else default
     except Exception:
         return default
 
+
 def supabase_configured() -> bool:
-    return bool(_get_secret("SUPABASE_URL") and (_get_secret("SUPABASE_SERVICE_ROLE_KEY") or _get_secret("SUPABASE_ANON_KEY")))
+    return bool(
+        _get_secret("SUPABASE_URL")
+        and (_get_secret("SUPABASE_SERVICE_ROLE_KEY") or _get_secret("SUPABASE_ANON_KEY"))
+    )
+
 
 def _supabase_client():
     from supabase import create_client
+
     url = _get_secret("SUPABASE_URL")
     key = _get_secret("SUPABASE_SERVICE_ROLE_KEY") or _get_secret("SUPABASE_ANON_KEY")
     return create_client(url, key)
+
 
 def _load_from_supabase() -> Tuple[bool, Dict[str, Any], str]:
     try:
@@ -148,6 +180,7 @@ def _load_from_supabase() -> Tuple[bool, Dict[str, Any], str]:
     except Exception as exc:
         return False, {}, str(exc)
 
+
 def _save_to_supabase(db: Dict[str, Any]) -> Tuple[bool, str]:
     try:
         client = _supabase_client()
@@ -156,18 +189,13 @@ def _save_to_supabase(db: Dict[str, Any]) -> Tuple[bool, str]:
     except Exception as exc:
         return False, str(exc)
 
+
 def using_supabase() -> bool:
     return _get_cached_status().get("mode") == "SUPABASE"
 
-def load_state(force_refresh: bool = False) -> Dict[str, Any]:
-    """Load app state with per-session cache.
 
-    This is the stability-speed fix:
-    - First page load reads Supabase/local once.
-    - Subsequent load_db() calls in the same Streamlit session return cached state.
-    - save_state() refreshes the cache.
-    - Detailed Supabase health check is only on Database Status page.
-    """
+def load_state(force_refresh: bool = False) -> Dict[str, Any]:
+    """Load app state with per-session cache."""
     if not force_refresh:
         cached = _get_cache()
         if cached is not None:
@@ -190,7 +218,6 @@ def load_state(force_refresh: bool = False) -> Dict[str, Any]:
             )
             return db
 
-        # Safe fallback; no crash.
         db = normalize_state(_read_initial_local_state())
         db = _overlay_normalized_users_workflow(db)
         _set_cache(db)
@@ -205,7 +232,6 @@ def load_state(force_refresh: bool = False) -> Dict[str, Any]:
         return db
 
     db = normalize_state(_read_initial_local_state())
-    # No Supabase secrets means normalized tables cannot be used.
     _set_cache(db)
     _set_status(
         mode="LOCAL_FALLBACK",
@@ -217,14 +243,49 @@ def load_state(force_refresh: bool = False) -> Dict[str, Any]:
     )
     return db
 
+
 def save_state(db: Dict[str, Any]) -> None:
+    """Save state with fail-closed canonical User writes after Gate 3.
+
+    User projection changes are committed atomically with the full compatibility
+    state through `hm_admin_commit_users_and_state`. Workflow remains on its
+    existing dedicated synchronization path until its independent cutover.
+    """
     db = normalize_state(db)
     configured = supabase_configured()
+    previous = _get_cache()
+    users_changed = _users_projection_changed(previous, db)
 
     if configured:
-        ok, msg = _save_to_supabase(db)
+        state_saved = False
+        user_commit_message = "No User projection change detected."
+        if users_changed:
+            user_ok, committed, user_commit_message, _ = commit_users_and_state(
+                db,
+                state_id=APP_STATE_ID,
+                source="streamlit_save_state_gate3",
+                force_state_commit=True,
+            )
+            if not user_ok or not committed:
+                _set_status(
+                    mode="SUPABASE",
+                    supabase_configured=True,
+                    supabase_connected=True,
+                    fallback_active=False,
+                    last_error=user_commit_message,
+                    last_action="Canonical User write rejected; state was not saved.",
+                    canonical_user_write=False,
+                )
+                raise RuntimeError(user_commit_message)
+            state_saved = True
+
+        if state_saved:
+            ok, msg = True, ""
+        else:
+            ok, msg = _save_to_supabase(db)
+
         if ok:
-            norm_ok, norm_msg = sync_users_workflow_to_normalized(db)
+            workflow_ok, workflow_msg = sync_workflow_to_normalized(db)
             _set_cache(db)
             _set_status(
                 mode="SUPABASE",
@@ -233,10 +294,13 @@ def save_state(db: Dict[str, Any]) -> None:
                 fallback_active=False,
                 last_error="",
                 last_action="Saved to Supabase.",
-                normalized_users_workflow=bool(norm_ok),
-                normalized_last_action=norm_msg,
+                canonical_user_write=True if users_changed else None,
+                canonical_user_last_action=user_commit_message,
+                normalized_users_workflow=bool(workflow_ok),
+                normalized_last_action=workflow_msg,
             )
             return
+
         _set_status(
             mode="LOCAL_FALLBACK",
             supabase_configured=True,
@@ -246,16 +310,15 @@ def save_state(db: Dict[str, Any]) -> None:
             last_action="Supabase save failed; saved local fallback.",
         )
 
+    # Local fallback remains available for non-production/development state, but
+    # production identity changes above fail closed before this branch.
     LOCAL_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     LOCAL_DB_PATH.write_text(json.dumps(db, indent=2), encoding="utf-8")
     _set_cache(db)
 
-def get_storage_status(force_check: bool = False) -> Dict[str, Any]:
-    """Return storage status.
 
-    By default this is lightweight and does NOT call Supabase.
-    Database Status page can pass force_check=True for an active health check.
-    """
+def get_storage_status(force_check: bool = False) -> Dict[str, Any]:
+    """Return storage status without an active call unless force_check=True."""
     configured = supabase_configured()
 
     if not force_check:
@@ -314,14 +377,21 @@ def get_storage_status(force_check: bool = False) -> Dict[str, Any]:
     _set_status(**status)
     return status
 
+
 def export_current_state_bytes() -> bytes:
     state = load_state()
     return json.dumps(state, indent=2).encode("utf-8")
 
+
 def push_local_data_to_supabase() -> Tuple[bool, str]:
+    """Push local state without allowing local Users to become an identity authority."""
     if not supabase_configured():
         return False, "Supabase secrets are not configured."
     local_state = normalize_state(_read_initial_local_state())
+    normalized_ok, canonical_users, _, normalized_msg = load_users_workflow_from_normalized()
+    if not normalized_ok:
+        return False, f"Local push blocked because canonical Users could not be loaded: {normalized_msg}"
+    local_state["users"] = canonical_users
     ok, msg = _save_to_supabase(local_state)
     if ok:
         _set_cache(local_state)
@@ -331,9 +401,9 @@ def push_local_data_to_supabase() -> Tuple[bool, str]:
             supabase_connected=True,
             fallback_active=False,
             last_error="",
-            last_action="Local data pushed to Supabase.",
+            last_action="Local non-identity data pushed to Supabase with canonical Users preserved.",
         )
-        return True, "Local data pushed to Supabase successfully."
+        return True, "Local non-identity data pushed to Supabase; canonical Users were preserved."
     _set_status(
         mode="LOCAL_FALLBACK",
         supabase_configured=True,
@@ -343,6 +413,7 @@ def push_local_data_to_supabase() -> Tuple[bool, str]:
         last_action="Push local to Supabase failed.",
     )
     return False, msg
+
 
 def pull_supabase_to_local_backup() -> Tuple[bool, str]:
     if not supabase_configured():
