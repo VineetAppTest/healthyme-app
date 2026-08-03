@@ -24,10 +24,11 @@ from components.ui_common import (
 )
 
 
-# Install the canonical ID-based module save bridge before importing the modular
-# Builder so its direct function bindings use the Phase 2 repository contract.
-install_profile_builder_canonical_repository_runtime()
+# Install request-local store wrappers before the canonical modules bind those
+# functions. Then install the canonical ID-based save bridge before importing the
+# modular Builder so all direct bindings use the Phase 2 repository contract.
 install_profile_builder_performance()
+install_profile_builder_canonical_repository_runtime()
 from components.profile_builder_modular import render_modular_profile_builder
 
 
