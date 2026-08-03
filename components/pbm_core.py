@@ -10,11 +10,15 @@ from typing import Any, Dict, List, Tuple
 
 import streamlit as st
 
-from components.profile_builder_source_contract import source_snapshot_for_label
+from components.profile_builder_canonical_sources import (
+    prepare_row_source,
+    source_snapshot_for_legacy_label,
+    source_snapshot_for_row as canonical_source_snapshot_for_row,
+)
 from components.recommendation_profile_store import load_member_options, load_profile
 
-APP_BUILD_VERSION = "v100.42"
-APP_BUILD_LABEL = "Existing Profile Editing"
+APP_BUILD_VERSION = "v100.44"
+APP_BUILD_LABEL = "Canonical Repository Reads"
 SECTIONS = ["Profile Setup", "Meal Structure", "Exercise Regime", "Supplement Regime", "Preview & End-to-End Flow", "Publish Control", "Active Profile Preview"]
 NAV_LABELS = {"Profile Setup": "Setup", "Meal Structure": "Meals", "Exercise Regime": "Exercise", "Supplement Regime": "Supplements", "Preview & End-to-End Flow": "Preview", "Publish Control": "Publish", "Active Profile Preview": "Active"}
 MEAL_SLOTS = ["Wake-up / Early Morning", "Breakfast", "Mid-morning Snack", "Lunch", "Evening Snack / Tea", "Dinner", "Bedtime"]
@@ -40,7 +44,7 @@ PROFILE_DEFAULTS: Dict[str, Any] = {
 SOURCE_FIELDS = {
     "meal": [("meal_type", "Meal Type", "text"), ("diet_type", "Diet Type", "text"), ("prep_time", "Prep Time", "text"), ("calories", "Calories", "text"), ("ingredients", "Ingredients", "area"), ("steps", "Steps", "area"), ("image_reference", "Image Reference", "text")],
     "exercise": [("category", "Category", "text"), ("difficulty", "Difficulty", "text"), ("duration_or_reps", "Duration/Reps", "text"), ("equipment", "Equipment", "text"), ("instructions", "Source Instructions", "area"), ("benefits", "Benefits", "area"), ("image_reference", "Image Reference", "text")],
-    "supplement": [("timing", "Source Timing", "text"), ("instructions", "Source Instructions", "area"), ("admin_notes", "Admin Notes", "area")],
+    "supplement": [("timing", "Source Timing", "text"), ("instructions", "Source Instructions", "area")],
 }
 
 
@@ -101,9 +105,14 @@ def with_placeholder(values: List[str], placeholder: str) -> List[str]:
 
 
 def source_snapshot(kind: str, label: str) -> Dict[str, Any]:
+    """Legacy label-only lookup retained for older non-row call sites."""
     if not label or label.startswith("-- Select"):
         return {}
-    return dict(source_snapshot_for_label("recipe" if kind == "meal" else kind, label) or {})
+    return dict(source_snapshot_for_legacy_label("recipe" if kind == "meal" else kind, label) or {})
+
+
+def source_snapshot_for_item(kind: str, row: Dict[str, Any]) -> Dict[str, Any]:
+    return dict(canonical_source_snapshot_for_row(kind, row) or {})
 
 
 def image_reference(snapshot: Dict[str, Any]) -> str:
@@ -138,7 +147,27 @@ def timeline_from_source(value: object) -> List[str]:
 
 
 def new_row(kind: str, day: int, slot: str) -> Dict[str, Any]:
-    return {"ui_id": uuid.uuid4().hex, "item_type": kind, "day_number": day, "slot_name": slot, "item_order": 1, "reference_label": "", "portion": "", "instruction": "", "scheduled_time": "", "intensity": "", "dosage_frequency": "", "frequency": 0, "timeline": [], "dosage": "", "source_admin_overrides": {}}
+    return {
+        "ui_id": uuid.uuid4().hex,
+        "item_type": kind,
+        "day_number": day,
+        "slot_name": slot,
+        "item_order": 1,
+        "reference_label": "",
+        "source_id": "",
+        "source_type": "",
+        "source_contract_version": "",
+        "source_snapshot": {},
+        "portion": "",
+        "instruction": "",
+        "scheduled_time": "",
+        "intensity": "",
+        "dosage_frequency": "",
+        "frequency": 0,
+        "timeline": [],
+        "dosage": "",
+        "source_admin_overrides": {},
+    }
 
 
 def normalise_item(row: Dict[str, Any]) -> Dict[str, Any]:
@@ -149,7 +178,20 @@ def normalise_item(row: Dict[str, Any]) -> Dict[str, Any]:
     item["slot_name"] = clean(item.get("slot_name"))
     item["item_order"] = int(item.get("item_order") or 1)
     snapshot = as_dict(item.get("source_snapshot"))
+    item["source_snapshot"] = snapshot
+    original = as_dict(snapshot.get("source_original_snapshot"))
+    identity_snapshot = original or snapshot
+    item["source_id"] = clean(item.get("source_id") or identity_snapshot.get("source_id"))
+    item["source_type"] = clean(item.get("source_type") or identity_snapshot.get("source_type"))
+    item["source_contract_version"] = clean(identity_snapshot.get("contract_version"))
+    item["reference_label"] = clean(
+        item.get("reference_label")
+        or item.get("source_label")
+        or identity_snapshot.get("title")
+        or identity_snapshot.get("supplement_name")
+    )
     item["source_admin_overrides"] = as_dict(snapshot.get("admin_source_overrides"))
+    prepare_row_source(item.get("item_type", ""), item)
     if item["item_type"] == "supplement":
         item["frequency"], item["dosage"] = parse_dosage_frequency(item.get("dosage_frequency"))
         item["timeline"] = parse_timeline(item.get("scheduled_time"))
@@ -238,7 +280,7 @@ def rows_for(kind: str, day: int, slot: str) -> List[Dict[str, Any]]:
 
 
 def row_has_content(row: Dict[str, Any]) -> bool:
-    return any(clean(row.get(field)) for field in ("reference_label", "portion", "instruction", "scheduled_time", "dosage_frequency"))
+    return any(clean(row.get(field)) for field in ("reference_label", "source_id", "portion", "instruction", "scheduled_time", "dosage_frequency"))
 
 
 def storage_rows(kind: str) -> List[Dict[str, Any]]:
