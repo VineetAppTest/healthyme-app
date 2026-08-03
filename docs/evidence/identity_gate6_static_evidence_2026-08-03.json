@@ -1,0 +1,84 @@
+{
+  "evidence_date": "2026-08-03",
+  "healthyme_app": {
+    "repository": "VineetAppTest/healthyme-app",
+    "revision": "bf54ed509b61a3fe6526afdab705fd1365da190d",
+    "contracts": [
+      {
+        "path": "components/storage_backend.py",
+        "blob_sha": "cb0e389c041fada9f1e7aaa8c2db00098ee9e221",
+        "status": "pass",
+        "evidence": "Canonical Users and Workflow are overlaid into runtime state; canonical read failure clears identity projections and marks identity unavailable."
+      },
+      {
+        "path": "components/admin_role_model.py",
+        "blob_sha": "7c4858ce5f8908b6a12a288f6a2fbedcd2b796ae",
+        "status": "pass",
+        "evidence": "Admin/native role resolution uses canonical hm_users and has no shared/local User fallback."
+      },
+      {
+        "path": "components/guards.py",
+        "blob_sha": "3406cbf5d171993b73497bfa8b07abba5fe0052b",
+        "status": "pass",
+        "evidence": "Admin and Member guards require restored role resolution and then call current_user_is_admin/current_user_is_member."
+      },
+      {
+        "path": "app.py",
+        "blob_sha": "77120b0b974694075a3c1c93ec44804a41572201",
+        "status": "pass",
+        "evidence": "The accepted Streamlit native authorization bridge remains the application routing entry point."
+      }
+    ]
+  },
+  "flutter_member": {
+    "repository": "VineetAppTest/healthyme-flutter-member",
+    "revision": "a2de87cb37bea2dfecacbbb04cf03069f505077a",
+    "contracts": [
+      {
+        "path": "lib/repositories/member_repository.dart",
+        "blob_sha": "71aa4ece9ae020cbe355b13ad21c03185f6cb627",
+        "status": "pass",
+        "evidence": "The member dashboard reads hm_users by authenticated email and hm_workflow by resolved member ID."
+      },
+      {
+        "path": "lib/repositories/laf_repository.dart",
+        "blob_sha": "b100ae6e66e1bc8f0457310e44dd9841281929e5",
+        "status": "pass",
+        "evidence": "LAF uses authenticated hm_flutter_get_laf, save-draft and submit RPCs without accepting a member ID parameter."
+      },
+      {
+        "path": "lib/repositories/nsp_repository.dart",
+        "blob_sha": "ee18476f5ef5dd93f4e9fb11bb351997460b079a",
+        "status": "pass",
+        "evidence": "NSP uses authenticated self-scoped get, save, submit and assessment-review RPCs without accepting a member ID parameter."
+      }
+    ]
+  },
+  "production_database_checkpoint": {
+    "canonical_users": 15,
+    "canonical_workflow": 15,
+    "shared_users": 15,
+    "shared_workflow": 15,
+    "projection_healthy": true,
+    "active_members": 7,
+    "active_members_with_auth_user_id": 6,
+    "active_members_using_email_fallback": 1,
+    "active_members_missing_workflow": 0,
+    "flutter_checked_rpc_count": 10,
+    "flutter_anon_executable_rpc_count": 0,
+    "flutter_authenticated_missing_rpc_count": 0,
+    "flutter_shared_workflow_fallback_functions": [
+      "hm_flutter_get_laf",
+      "hm_flutter_get_nsp"
+    ]
+  },
+  "signed_in_smoke_evidence": {
+    "streamlit_admin_login_refresh_logout_and_admin_route": "pending",
+    "streamlit_member_login_refresh_logout_and_member_route": "pending",
+    "flutter_device_login_dashboard_laf_nsp_and_submit_review": "pending"
+  },
+  "decision": {
+    "projection_retirement_ready": false,
+    "reason": "Observation-window duration/count, one active-member Auth email fallback, Flutter shared Workflow fallback, and signed-in route/device smoke evidence remain outstanding."
+  }
+}
