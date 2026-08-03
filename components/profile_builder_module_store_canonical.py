@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import uuid
 from typing import Any, Dict, List, Tuple
 
@@ -19,6 +20,53 @@ from components.profile_builder_module_store import (
     check_profile_builder_store,
     profile_source_snapshot_columns_ready,
 )
+
+
+def _as_dict(value: object) -> Dict[str, Any]:
+    return copy.deepcopy(value) if isinstance(value, dict) else {}
+
+
+def _legacy_snapshot_payload(
+    item: Dict[str, Any],
+    reference_label: str,
+) -> Dict[str, Any]:
+    """Preserve an unresolved legacy snapshot without inventing a source ID.
+
+    Legacy label-only rows can remain ambiguous when duplicate repository names
+    exist. Their historical snapshot must survive a module save even though Phase 2
+    deliberately refuses to bind them to an uncertain canonical repository item.
+    """
+    stored = _as_dict(item.get("source_snapshot"))
+    original = _as_dict(stored.get("source_original_snapshot")) or stored
+    if not original:
+        return {}
+
+    overrides = {
+        _clean(field): value
+        for field, value in dict(item.get("source_admin_overrides") or {}).items()
+        if _clean(field) and _clean(value)
+    }
+    effective = copy.deepcopy(original)
+    for field, value in overrides.items():
+        if field not in {"image_reference", "instructions"}:
+            effective[field] = value
+    effective["source_original_snapshot"] = copy.deepcopy(original)
+    effective["admin_source_overrides"] = overrides
+
+    image = _as_dict(original.get("image"))
+    return {
+        "source_type": _clean(
+            item.get("source_type") or original.get("source_type")
+        ),
+        "source_id": _clean(item.get("source_id") or original.get("source_id")),
+        "source_label": reference_label
+        or _clean(original.get("title") or original.get("supplement_name")),
+        "source_snapshot": effective,
+        "source_image_url": _clean(image.get("image_url")),
+        "source_image_bucket": _clean(image.get("image_bucket")),
+        "source_image_path": _clean(image.get("image_path")),
+        "source_image_access_type": _clean(image.get("image_access_type")),
+    }
 
 
 def _normalise_item_rows(
@@ -80,6 +128,8 @@ def _normalise_item_rows(
         }
         if snapshot_ready and reference_label:
             source_payload = source_storage_payload_for_row(item_type, item)
+            if not source_payload:
+                source_payload = _legacy_snapshot_payload(item, reference_label)
             if source_payload:
                 row.update(source_payload)
                 snapshot_count += 1
@@ -160,7 +210,7 @@ def save_profile_module(
                 "event_type": f"{item_type}_module_saved",
                 "event_note": (
                     f"Saved {len(rows)} {item_type} row(s) in place on the "
-                    f"{profile_status} profile with {snapshot_count} canonical source snapshot(s). "
+                    f"{profile_status} profile with {snapshot_count} source snapshot(s). "
                     "Other modules and member allocation were not changed."
                 ),
                 "created_by_user_id": _clean(created_by_user_id),
