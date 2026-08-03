@@ -29,7 +29,7 @@ jobs:
             pages/42_Admin_Exercise_Member_Allocation.py
       - name: Run Exercise allocation and separation regressions
         run: |
-          pytest -q \
+          python -m pytest -q \
             tests/test_exercise_member_allocation.py \
             tests/test_member_planning_separation_contract.py \
             tests/test_meal_profile_builder_phase_b.py
