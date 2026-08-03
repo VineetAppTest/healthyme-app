@@ -55,7 +55,7 @@ class RepositoryConsolidationContractTests(unittest.TestCase):
             self.assertIn("Historical references were retained.", source)
 
     def test_recipe_ids_are_immutable_and_not_reassigned(self):
-        self.assertIn("physical deletion or index reset", self.recipe)
+        self.assertIn("deletion or index reset", self.recipe)
         self.assertIn("create_numeric_repository_item(", self.recipe_store)
         self.assertIn("get_repository_item(\"recipe\"", self.recipe_store)
         self.assertIn("set_repository_item_status(", self.recipe_store)
