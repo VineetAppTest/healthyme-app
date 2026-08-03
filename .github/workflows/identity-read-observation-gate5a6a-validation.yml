@@ -1,0 +1,51 @@
+name: Identity read observation Gate 5A 6A validation
+
+on:
+  pull_request:
+    paths:
+      - "components/storage_backend.py"
+      - "components/admin_role_model.py"
+      - "components/identity_projection_observation.py"
+      - "pages/28_Admin_Database_Status.py"
+      - "supabase/migrations/20260803172500_identity_projection_observation_gate5a6a.sql"
+      - "docs/identity_read_observation_gate5a6a_2026-08-03.md"
+      - "tests/test_identity_read_observation_gate5a6a.py"
+      - "tests/test_users_workflow_target_design_batch2a.py"
+      - ".github/workflows/identity-read-observation-gate5a6a-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile changed Python
+        run: |
+          python -m py_compile components/storage_backend.py
+          python -m py_compile components/admin_role_model.py
+          python -m py_compile components/identity_projection_observation.py
+          python -m py_compile pages/28_Admin_Database_Status.py
+          python -m py_compile tests/test_identity_read_observation_gate5a6a.py
+          python -m py_compile tests/test_users_workflow_target_design_batch2a.py
+
+      - name: Validate canonical reads and projection observation
+        run: python -m unittest tests.test_identity_read_observation_gate5a6a -v
+
+      - name: Revalidate target design progression
+        run: python -m unittest tests.test_users_workflow_target_design_batch2a -v
+
+      - name: Revalidate User Gate 3
+        run: python -m unittest tests.test_users_gate3_write_cutover -v
+
+      - name: Revalidate Workflow Gate 4
+        run: python -m unittest tests.test_workflow_gate4_write_cutover -v
