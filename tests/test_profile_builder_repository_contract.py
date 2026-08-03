@@ -12,7 +12,7 @@ CONTRACT_FILE = ROOT / "components" / "profile_builder_repository_contract.py"
 
 
 class ProfileBuilderRepositoryContractTests(unittest.TestCase):
-    def test_recipe_uses_compatibility_repository_and_preserves_numeric_id(self):
+    def test_recipe_uses_canonical_repository_and_preserves_numeric_id(self):
         rows = [
             {
                 "id": "12",
@@ -23,13 +23,15 @@ class ProfileBuilderRepositoryContractTests(unittest.TestCase):
             }
         ]
         with (
-            patch.object(contract, "list_repository_items", return_value=rows) as recipe,
+            patch.object(
+                contract, "list_recipe_repository", return_value=rows
+            ) as recipe,
             patch.object(contract, "list_exercise_repository") as exercise,
             patch.object(contract, "list_supplement_repository") as supplement,
         ):
             sources = contract.list_profile_builder_repository_sources("recipe")
 
-        recipe.assert_called_once_with("recipes", active_only=True)
+        recipe.assert_called_once_with(active_only=True)
         exercise.assert_not_called()
         supplement.assert_not_called()
         self.assertEqual(sources[0]["source_id"], "12")
@@ -46,7 +48,7 @@ class ProfileBuilderRepositoryContractTests(unittest.TestCase):
             }
         ]
         with (
-            patch.object(contract, "list_repository_items") as recipe,
+            patch.object(contract, "list_recipe_repository") as recipe,
             patch.object(
                 contract, "list_exercise_repository", return_value=rows
             ) as exercise,
@@ -163,13 +165,18 @@ class ProfileBuilderRepositoryContractTests(unittest.TestCase):
         self.assertEqual(source["source_id"], "8")
         self.assertFalse(source["selectable"])
 
-    def test_manifest_freezes_repository_id_and_history_rules(self):
+    def test_manifest_freezes_canonical_id_and_history_rules(self):
         manifest = contract.canonical_repository_contract_manifest()
         self.assertEqual(manifest["contract_version"], contract.CONTRACT_VERSION)
         self.assertIn("source_id is authoritative", manifest["identity_rule"])
         self.assertIn("immutable", manifest["history_rule"])
+        for kind in ("recipe", "exercise", "supplement"):
+            self.assertEqual(
+                manifest["repositories"][kind]["storage_authority"],
+                "canonical Supabase Content Repository",
+            )
         self.assertIn(
-            "physical deletion and reindexing are prohibited",
+            "physical deletion or reindexing is prohibited",
             manifest["repositories"]["recipe"]["id_strategy"],
         )
         self.assertIn(
@@ -197,8 +204,9 @@ class ProfileBuilderRepositoryContractTests(unittest.TestCase):
                 "exercise", {"id": "1"}
             )
 
-    def test_contract_has_no_member_regimen_or_runtime_patch_dependency(self):
+    def test_contract_has_no_csv_member_regimen_or_runtime_patch_dependency(self):
         source = CONTRACT_FILE.read_text(encoding="utf-8")
+        self.assertNotIn("recommendation_contract", source)
         self.assertNotIn("list_member_supplements", source)
         self.assertNotIn("install_exercise_repository_runtime", source)
         self.assertNotIn("install_profile_builder_supplement_repository_source", source)
