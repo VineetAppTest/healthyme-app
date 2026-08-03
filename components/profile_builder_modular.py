@@ -6,9 +6,12 @@ import streamlit as st
 import components.pbm_core as _pbm_core
 import components.pbm_rows as _pbm_rows
 from components.active_profile_preview_contract import render_active_profile_preview_contract
+from components.meal_profile_builder_phase_b import (
+    MEAL_PROFILE_BUILDER_SECTIONS,
+    split_profile_items,
+)
 from components.pbm_core import (
     NAV_LABELS,
-    SECTIONS,
     ensure_state,
     safe,
     safe_key,
@@ -18,8 +21,8 @@ from components.profile_builder_access import (
     current_profile_builder_user_can_publish,
 )
 
-APP_BUILD_VERSION = "v100.43"
-APP_BUILD_LABEL = "Scoped Nutritionist Editing"
+APP_BUILD_VERSION = "v100.44"
+APP_BUILD_LABEL = "Meal Profile Builder · Phase B"
 VIEW_PROFILES_SECTION = "View Profiles"
 
 
@@ -107,6 +110,51 @@ def _render_css() -> None:
     )
 
 
+def _loaded_row_groups():
+    return split_profile_items(st.session_state.get("pbm_items") or [])
+
+
+def _render_phase_b_boundary() -> None:
+    groups = _loaded_row_groups()
+    legacy_count = len(groups["legacy_exercise"]) + len(groups["legacy_supplement"])
+    legacy_text = (
+        f" The loaded profile currently retains {legacy_count} historical Exercise/Supplement row(s); "
+        "they remain read-only here and are not changed by Setup or Meal saves."
+        if legacy_count
+        else " Exercise and Supplement allocation will be delivered through their independent workflows."
+    )
+    st.markdown(
+        "<div class='hm-preview'><b>Phase B ownership boundary</b><br>"
+        "This workflow now owns Profile Setup and Meal Structure only."
+        f"{safe(legacy_text)}</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_preview_with_legacy_boundary() -> None:
+    groups = _loaded_row_groups()
+    exercise_count = len(groups["legacy_exercise"])
+    supplement_count = len(groups["legacy_supplement"])
+    if exercise_count or supplement_count:
+        st.info(
+            "This profile includes retained Exercise and/or Supplement rows from the earlier combined builder. "
+            "They are shown in Preview for historical continuity but cannot be edited from Meal Profile Builder."
+        )
+    render_preview()
+
+
+def _render_publish_with_legacy_boundary() -> None:
+    groups = _loaded_row_groups()
+    exercise_count = len(groups["legacy_exercise"])
+    supplement_count = len(groups["legacy_supplement"])
+    if exercise_count or supplement_count:
+        st.info(
+            "Publishing preserves the loaded profile's existing Exercise and Supplement rows. "
+            "Meal Profile Builder does not rewrite or delete those rows."
+        )
+    render_profile_publish_control()
+
+
 def render_modular_profile_builder() -> None:
     ensure_state()
     _render_css()
@@ -114,10 +162,10 @@ def render_modular_profile_builder() -> None:
     role = current_profile_builder_role()
     visible_sections = [
         section
-        for section in SECTIONS
+        for section in MEAL_PROFILE_BUILDER_SECTIONS
         if can_publish or section != "Publish Control"
     ]
-    # View Profiles is intentionally the final tab, immediately after Active.
+    # View Profiles remains the final read-only tab.
     visible_sections.append(VIEW_PROFILES_SECTION)
     if st.session_state.get("pbm_section") not in visible_sections:
         st.session_state["pbm_section"] = "Profile Setup"
@@ -125,24 +173,27 @@ def render_modular_profile_builder() -> None:
     sources, _source_message = load_profile_builder_sources()
     options = {
         "recipe": list(sources.get("recipe") or []),
-        "exercise": list(sources.get("exercise") or []),
-        "supplement": list(sources.get("supplement") or []),
+        # Exercise and Supplement sources are intentionally unavailable to new
+        # builder rows after the Phase B ownership cutover.
+        "exercise": [],
+        "supplement": [],
         "age_band": list(sources.get("age_band") or []),
         "health_concern": list(sources.get("health_concern") or []),
         "diet_type": list(sources.get("diet_type") or []),
     }
     role_note = (
-        "Nutritionist editing access · Publish remains Admin/Super Admin only"
+        "Nutritionist meal-planning access · Publish remains Admin/Super Admin only"
         if role == "nutritionist"
-        else "Admin recommendations"
+        else "Admin meal planning"
     )
     st.markdown(
         f"<div class='hero-shell'><div class='hero-kicker'>{safe(role_note)}</div>"
-        f"<div class='hero-title'>Recommendation Profile Builder</div>"
-        f"<div class='hero-subtitle'>Create new profiles or edit existing allocated and unallocated profiles in place, with module-specific saves.</div><div><span class='meta-pill'>"
+        f"<div class='hero-title'>Meal Profile Builder</div>"
+        f"<div class='hero-subtitle'>Create or edit profile setup and seven-day meal structure. Exercise and Supplement allocation are separated from this workflow.</div><div><span class='meta-pill'>"
         f"{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span></div></div>",
         unsafe_allow_html=True,
     )
+    _render_phase_b_boundary()
     st.markdown("<div class='hm-tab-nav'>", unsafe_allow_html=True)
     columns = st.columns(len(visible_sections), gap="small")
     for column, section in zip(columns, visible_sections):
@@ -160,14 +211,10 @@ def render_modular_profile_builder() -> None:
         render_setup(options)
     elif section == "Meal Structure":
         render_module("meal", options)
-    elif section == "Exercise Regime":
-        render_module("exercise", options)
-    elif section == "Supplement Regime":
-        render_module("supplement", options)
     elif section == "Preview & End-to-End Flow":
-        render_preview()
+        _render_preview_with_legacy_boundary()
     elif section == "Publish Control":
-        render_profile_publish_control()
+        _render_publish_with_legacy_boundary()
     elif section == "Active Profile Preview":
         render_active_profile_preview_contract()
     else:
