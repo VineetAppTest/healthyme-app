@@ -77,12 +77,16 @@ class ExerciseJournalRepositoryFixContractTests(unittest.TestCase):
         self.assertLess(admin_repair, daily_exclusive)
 
     def test_member_repository_and_profile_builder_read_persistent_exercises(self):
-        runtime = source("components/exercise_repository_runtime.py")
-        self.assertIn('_LEGACY_SUFFIX = "/data/exercises.csv"', runtime)
-        self.assertIn("list_exercise_repository", runtime)
-        self.assertIn("persistent_list_repository_items", runtime)
-        self.assertIn("recommendation_contract.list_repository_items", runtime)
-        self.assertIn("st.cache_data = exercise_repository_cache_policy", runtime)
+        page = source("pages/09_Exercise_Repository.py")
+        contract = source("components/recommendation_contract.py")
+        bootstrap = source("components/__init__.py")
+        self.assertIn("list_exercise_repository", page)
+        self.assertIn("def load_exercises():", page)
+        self.assertIn("frame.index = identities", page)
+        self.assertNotIn("pd.read_csv", page)
+        self.assertNotIn("DATA_PATH", page)
+        self.assertIn("list_exercise_repository(active_only=active_only)", contract)
+        self.assertNotIn("install_exercise_repository_runtime", bootstrap)
 
     def test_exercise_uses_standard_content_repository_without_new_table(self):
         repository = source("components/exercise_repository.py")

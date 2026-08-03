@@ -8,10 +8,11 @@ on:
       - "components/daily_log_widget_route_preservation.py"
       - "components/exercise_saved_days_readonly_runtime.py"
       - "components/exercise_repository.py"
-      - "components/exercise_repository_runtime.py"
+      - "components/recommendation_contract.py"
       - "components/member_daily_log_section_runtime.py"
       - "components/member_daily_log_native_tab_persistence.py"
       - "components/admin_exercise_repair_runtime.py"
+      - "pages/09_Exercise_Repository.py"
       - "pages/16_Admin_Exercise_Manager.py"
       - "tests/test_exercise_daily_log_widget_route_preservation.py"
       - "tests/test_exercise_saved_days_readonly.py"
@@ -46,18 +47,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Compile changed runtime
+      - name: Compile changed runtime and direct repository readers
         run: |
           python -m py_compile \
             app.py \
             components/daily_log_widget_route_preservation.py \
             components/exercise_saved_days_readonly_runtime.py \
             components/exercise_repository.py \
-            components/exercise_repository_runtime.py \
+            components/recommendation_contract.py \
             components/member_daily_log_section_runtime.py \
             components/member_daily_log_native_tab_persistence.py \
             components/admin_exercise_repair_runtime.py \
             components/__init__.py \
+            pages/09_Exercise_Repository.py \
             pages/16_Admin_Exercise_Manager.py \
             tests/test_exercise_daily_log_widget_route_preservation.py \
             tests/test_exercise_saved_days_readonly.py \

@@ -2,11 +2,11 @@ from components.ui_common import render_page_nav, render_back_to_top
 # v100.5 direct topbar import hotfix
 
 import html
-import pathlib
 import pandas as pd
 import streamlit as st
 
 from components.guards import require_member
+from components.recipe_repository import RECIPE_COLUMNS, list_recipe_repository
 from components.ui_common import (
     inject_global_styles,
     apply_luxe_theme,
@@ -29,10 +29,6 @@ require_member(); utility_logout_bar()
 
 topbar("Recipe Repository", "", "Member content")
 
-DATA_PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "recipes.csv"
-
-RECIPE_COLUMNS = ['title', 'description', 'meal_type', 'diet_type', 'goal_tags', 'condition_tags', 'prep_time', 'calories', 'protein', 'fat', 'carbohydrates', 'additional_nutrition', 'servings', 'portion_size', 'image_url', 'image_bucket', 'image_path', 'image_access_type', 'ingredients', 'steps', 'nutrition', 'status']
-
 FALLBACK_IMAGES = [
     "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=900&q=80",
     "https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=900&q=80",
@@ -41,15 +37,19 @@ FALLBACK_IMAGES = [
 ]
 
 
-@st.cache_data(show_spinner=False)
-def load_recipes(_mtime=0):
-    if not DATA_PATH.exists():
-        return pd.DataFrame(columns=RECIPE_COLUMNS)
-    df = pd.read_csv(DATA_PATH)
-    for c in RECIPE_COLUMNS:
-        if c not in df.columns:
-            df[c] = ""
-    return df[RECIPE_COLUMNS]
+def load_recipes():
+    rows = list_recipe_repository(active_only=False)
+    frame = pd.DataFrame(
+        [{column: row.get(column, "") for column in RECIPE_COLUMNS} for row in rows],
+        columns=RECIPE_COLUMNS,
+    )
+    if rows:
+        identities = []
+        for index, row in enumerate(rows):
+            source_id = str(row.get("id", index)).strip()
+            identities.append(int(source_id) if source_id.isdigit() else source_id)
+        frame.index = identities
+    return frame
 
 
 def esc(value):
@@ -700,7 +700,7 @@ if not wf.get("admin_completed"):
     st.warning("Your personalized plan will unlock after expert evaluation is completed.")
     st.stop()
 
-df = load_recipes(DATA_PATH.stat().st_mtime if DATA_PATH.exists() else 0)
+df = load_recipes()
 df = df[df["status"].fillna("active").astype(str).str.lower().eq("active")].copy()
 user_id = st.session_state["user_id"]
 published_plan_ids = _published_recipe_ids_for_member(user_id)

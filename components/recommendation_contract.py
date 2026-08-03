@@ -4,9 +4,7 @@ This module keeps Recipe, Exercise, Supplement and Recommendation Share aligned 
 we are still using the existing JSON/app-state storage model.
 
 Design intent:
-- CSV repository files remain the admin catalogue for recipes/exercises for now.
-- App state mirrors those catalogues under `recipes` and `exercises` so Supabase-backed
-  readers can see them.
+- Recipe and Exercise definitions are read from the canonical Supabase Content Repository.
 - Direct allocation and recommendation-share allocation converge into
   `member_recipe_allocations` and `member_exercise_allocations`.
 - Published `recommendation_shares[member_id]` contains resolved names/details, not
@@ -24,6 +22,8 @@ from typing import Any
 import pandas as pd
 
 from components.storage_backend import load_state, save_state
+from components.exercise_repository import list_exercise_repository
+from components.recipe_repository import list_recipe_repository
 
 
 BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
@@ -159,20 +159,9 @@ def _read_repository_df(resource_type: str) -> pd.DataFrame:
 
 def list_repository_items(resource_type: str, active_only: bool = True) -> list[dict[str, Any]]:
     resource_type = _resource_type(resource_type)
-    df = _read_repository_df(resource_type)
-    rows: list[dict[str, Any]] = []
-    for idx, row in df.iterrows():
-        status = _clean(row.get("status")) or "active"
-        if active_only and status.lower() != "active":
-            continue
-        item = {k: _clean(row.get(k)) for k in df.columns}
-        item["id"] = str(idx)
-        item["source_id"] = str(idx)
-        item["status"] = status
-        item["title"] = _clean(item.get("title")) or RESOURCE_KEYS[resource_type]["title_fallback"]
-        item["resource_type"] = resource_type
-        rows.append(item)
-    return rows
+    if resource_type == "recipes":
+        return list_recipe_repository(active_only=active_only)
+    return list_exercise_repository(active_only=active_only)
 
 
 def _repo_lookup(resource_type: str) -> dict[str, dict[str, Any]]:
@@ -180,18 +169,8 @@ def _repo_lookup(resource_type: str) -> dict[str, dict[str, Any]]:
 
 
 def sync_repository_to_state(resource_type: str) -> list[dict[str, Any]]:
-    """Mirror CSV repository data into app-state JSON for Supabase/member readers."""
-    resource_type = _resource_type(resource_type)
-    rows = list_repository_items(resource_type, active_only=False)
-    db = load_state()
-    db[RESOURCE_KEYS[resource_type]["repo_key"]] = rows
-    db.setdefault("recommendation_contract_audit", []).append({
-        "ts": _now_iso(),
-        "action": f"sync_{resource_type}_repository",
-        "count": len(rows),
-    })
-    save_state(db)
-    return rows
+    """Return a read-only canonical snapshot for legacy callers."""
+    return list_repository_items(resource_type, active_only=False)
 
 
 def sync_all_repositories_to_state() -> dict[str, int]:
