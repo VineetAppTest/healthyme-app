@@ -1,8 +1,8 @@
 """Canonical Supabase persistence for HealthyMe Content Repositories.
 
-This module is intentionally not wired into the live Recipe, Exercise or
-Supplement pages in Phase A. It defines the single read/write contract used by
-controlled backfill and later repository-by-repository cutover under issue #347.
+Recipe, Exercise and Supplement share this read/write contract. Repository-specific
+modules translate the common envelope into the legacy row shapes expected by the
+current Streamlit and member-facing consumers.
 """
 
 from __future__ import annotations
@@ -13,8 +13,10 @@ from typing import Any, Dict, Iterable, List, Mapping, Tuple
 
 CONTENT_TABLE = "hm_content_repository_items"
 EVENT_TABLE = "hm_content_repository_events"
+NUMERIC_CREATE_RPC = "hm_create_numeric_content_repository_item"
 VALID_REPOSITORY_TYPES = {"recipe", "exercise", "supplement"}
 VALID_STATUSES = {"active", "inactive"}
+NUMERIC_REPOSITORY_TYPES = {"recipe", "exercise"}
 
 _COMMON_LEGACY_FIELDS = {
     "id",
@@ -48,7 +50,9 @@ def _clean(value: object, default: str = "") -> str:
 def _normalise_repository_type(value: object) -> str:
     repository_type = _clean(value).lower()
     if repository_type not in VALID_REPOSITORY_TYPES:
-        raise ValueError(f"Unsupported Content Repository type: {repository_type or '<blank>'}.")
+        raise ValueError(
+            f"Unsupported Content Repository type: {repository_type or '<blank>'}."
+        )
     return repository_type
 
 
@@ -78,7 +82,10 @@ def _client():
 
 
 def _rows(response: object) -> List[dict]:
-    return list(getattr(response, "data", None) or [])
+    data = getattr(response, "data", None)
+    if isinstance(data, Mapping):
+        return [dict(data)]
+    return [dict(row) for row in list(data or [])]
 
 
 def _display_name(repository_type: str, row: Mapping[str, Any]) -> str:
@@ -104,13 +111,19 @@ def normalise_legacy_item(
     """
     kind = _normalise_repository_type(repository_type)
     source = dict(row or {})
-    source_id = _clean(source.get("source_id") or source.get("id") or fallback_source_id)
+    source_id = _clean(
+        source.get("source_id") or source.get("id") or fallback_source_id
+    )
     if not source_id:
-        raise ValueError(f"{kind.title()} repository item is missing a stable source ID.")
+        raise ValueError(
+            f"{kind.title()} repository item is missing a stable source ID."
+        )
 
     display_name = _display_name(kind, source)
     if not display_name:
-        raise ValueError(f"{kind.title()} repository item {source_id} has no display name.")
+        raise ValueError(
+            f"{kind.title()} repository item {source_id} has no display name."
+        )
 
     payload = {
         key: copy.deepcopy(value)
@@ -124,7 +137,9 @@ def normalise_legacy_item(
         "display_name": display_name,
         "status": _normalise_status(source.get("status")),
         "payload": payload,
-        "source_system": _clean(source.get("source_system") or source.get("source"), "legacy"),
+        "source_system": _clean(
+            source.get("source_system") or source.get("source"), "legacy"
+        ),
         "legacy_reference": _clean(source.get("legacy_reference")),
         "created_at": _clean(source.get("created_at")),
         "created_by": _clean(source.get("created_by")),
@@ -145,7 +160,9 @@ def validate_unique_identities(items: Iterable[Mapping[str, Any]]) -> None:
     for item in items:
         identity = repository_identity(item)
         if not identity[1]:
-            raise ValueError(f"{identity[0].title()} repository item has a blank source ID.")
+            raise ValueError(
+                f"{identity[0].title()} repository item has a blank source ID."
+            )
         if identity in seen:
             raise ValueError(
                 f"Duplicate Content Repository identity: {identity[0]}:{identity[1]}."
@@ -159,7 +176,10 @@ def check_content_repository_store() -> Dict[str, Any]:
         client = _client()
         client.table(CONTENT_TABLE).select("id", count="exact").limit(1).execute()
         client.table(EVENT_TABLE).select("id", count="exact").limit(1).execute()
-        return {"ok": True, "message": "Standard Content Repository tables are ready."}
+        return {
+            "ok": True,
+            "message": "Standard Content Repository tables are ready.",
+        }
     except Exception as exc:
         return {
             "ok": False,
@@ -194,7 +214,10 @@ def list_repository_items(
         ) from exc
 
 
-def get_repository_item(repository_type: str, source_id: object) -> Dict[str, Any] | None:
+def get_repository_item(
+    repository_type: str,
+    source_id: object,
+) -> Dict[str, Any] | None:
     kind = _normalise_repository_type(repository_type)
     clean_source_id = _clean(source_id)
     if not clean_source_id:
@@ -226,6 +249,7 @@ def _verified_item(
     source_id: str,
     expected: Mapping[str, Any],
 ) -> Dict[str, Any]:
+    # This is deliberately a fresh query after every create/update/status write.
     stored = get_repository_item(repository_type, source_id)
     if not stored:
         raise RepositoryPersistenceError(
@@ -233,9 +257,12 @@ def _verified_item(
         )
 
     comparisons = {
-        "display_name": _clean(stored.get("display_name")) == _clean(expected.get("display_name")),
-        "status": _normalise_status(stored.get("status")) == _normalise_status(expected.get("status")),
-        "payload": dict(stored.get("payload") or {}) == dict(expected.get("payload") or {}),
+        "display_name": _clean(stored.get("display_name"))
+        == _clean(expected.get("display_name")),
+        "status": _normalise_status(stored.get("status"))
+        == _normalise_status(expected.get("status")),
+        "payload": dict(stored.get("payload") or {})
+        == dict(expected.get("payload") or {}),
         "source_system": _clean(stored.get("source_system"))
         == _clean(expected.get("source_system"), "healthyme"),
         "legacy_reference": _clean(stored.get("legacy_reference"))
@@ -248,6 +275,71 @@ def _verified_item(
             f"mismatched fields: {', '.join(failed)}."
         )
     return stored
+
+
+def create_numeric_repository_item(
+    repository_type: str,
+    display_name: object,
+    payload: Mapping[str, Any],
+    *,
+    status: object = "active",
+    actor_id: object = "admin",
+    source_system: object = "healthyme",
+) -> Dict[str, Any]:
+    """Atomically create one numeric-ID Recipe or Exercise definition.
+
+    PostgreSQL serializes ID allocation per repository type through an advisory
+    transaction lock. The returned ID is confirmed through a separate fresh read.
+    """
+    kind = _normalise_repository_type(repository_type)
+    if kind not in NUMERIC_REPOSITORY_TYPES:
+        raise ValueError(
+            f"Numeric Content Repository creation is not supported for {kind}."
+        )
+
+    clean_display_name = _clean(display_name)
+    clean_actor = _clean(actor_id, "admin")
+    if not clean_display_name:
+        raise ValueError("Content Repository display name is required.")
+
+    expected = {
+        "repository_type": kind,
+        "display_name": clean_display_name,
+        "status": _normalise_status(status),
+        "payload": _normalise_payload(payload),
+        "source_system": _clean(source_system, "healthyme"),
+        "legacy_reference": "",
+    }
+
+    try:
+        result = (
+            _client()
+            .rpc(
+                NUMERIC_CREATE_RPC,
+                {
+                    "p_repository_type": kind,
+                    "p_display_name": expected["display_name"],
+                    "p_payload": expected["payload"],
+                    "p_status": expected["status"],
+                    "p_actor_id": clean_actor,
+                    "p_source_system": expected["source_system"],
+                },
+            )
+            .execute()
+        )
+        rows = _rows(result)
+        if len(rows) != 1 or not _clean(rows[0].get("source_id")):
+            raise RepositoryPersistenceError(
+                "Supabase did not return one allocated Content Repository ID."
+            )
+        source_id = _clean(rows[0].get("source_id"))
+        return _verified_item(kind, source_id, expected)
+    except RepositoryPersistenceError:
+        raise
+    except Exception as exc:
+        raise RepositoryPersistenceError(
+            f"Could not create a numeric {kind.title()} Repository item in Supabase: {exc}"
+        ) from exc
 
 
 def save_repository_item(
@@ -336,7 +428,9 @@ def set_repository_item_status(
     clean_source_id = _clean(source_id)
     existing = get_repository_item(kind, clean_source_id)
     if not existing:
-        raise ValueError(f"Content Repository item {kind}:{clean_source_id} was not found.")
+        raise ValueError(
+            f"Content Repository item {kind}:{clean_source_id} was not found."
+        )
     return save_repository_item(
         kind,
         clean_source_id,

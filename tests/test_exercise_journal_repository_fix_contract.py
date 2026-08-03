@@ -36,13 +36,22 @@ class ExerciseJournalRepositoryFixContractTests(unittest.TestCase):
         self.assertIn("_show_flash", page)
         self.assertIn("_render_pending_success", repair)
 
-    def test_repository_preserves_numeric_ids_and_verifies_fresh_state(self):
+    def test_repository_preserves_numeric_ids_and_verifies_fresh_supabase_state(self):
         repository = source("components/exercise_repository.py")
+        store = source("components/content_repository_store.py")
+        migration = source(
+            "supabase/migrations/20260803104500_create_numeric_content_repository_item_rpc.sql"
+        )
         self.assertIn("_next_numeric_id", repository)
-        self.assertIn("legacy_ids_preserved", repository)
-        self.assertIn("load_state(force_refresh=True)", repository)
-        self.assertIn("Exercise Repository persistence verification failed", repository)
-        self.assertIn('status.get("mode") != "SUPABASE"', repository)
+        self.assertIn("create_numeric_repository_item", repository)
+        self.assertIn("list_repository_items", repository)
+        self.assertIn("save_repository_item", repository)
+        self.assertIn("set_repository_item_status", repository)
+        self.assertNotIn("load_state", repository)
+        self.assertNotIn("save_state", repository)
+        self.assertIn("_verified_item", store)
+        self.assertIn("get_repository_item(repository_type, source_id)", store)
+        self.assertIn("pg_advisory_xact_lock", migration)
 
     def test_member_daily_log_uses_exclusive_server_rendering(self):
         runtime = source("components/member_daily_log_native_tab_persistence.py")
@@ -75,13 +84,18 @@ class ExerciseJournalRepositoryFixContractTests(unittest.TestCase):
         self.assertIn("recommendation_contract.list_repository_items", runtime)
         self.assertIn("st.cache_data = exercise_repository_cache_policy", runtime)
 
-    def test_no_new_database_table_or_sql_migration_is_required(self):
+    def test_exercise_uses_standard_content_repository_without_new_table(self):
         repository = source("components/exercise_repository.py")
-        self.assertIn('"exercises"', repository)
-        self.assertIn("load_state", repository)
-        self.assertIn("save_state", repository)
-        self.assertNotIn("create table", repository.lower())
-        self.assertNotIn("alter table", repository.lower())
+        store = source("components/content_repository_store.py")
+        migration = source(
+            "supabase/migrations/20260803104500_create_numeric_content_repository_item_rpc.sql"
+        )
+        self.assertIn('list_repository_items("exercise"', repository)
+        self.assertIn('save_repository_item(\n        "exercise"', repository)
+        self.assertIn('set_repository_item_status(\n        "exercise"', repository)
+        self.assertIn('CONTENT_TABLE = "hm_content_repository_items"', store)
+        self.assertNotIn("create table", migration.lower())
+        self.assertNotIn("alter table", migration.lower())
 
 
 if __name__ == "__main__":
