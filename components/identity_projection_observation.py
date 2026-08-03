@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import os
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
 
 PROJECTION_RPC = "hm_identity_projection_snapshot"
 OBSERVATION_RPC = "hm_admin_observe_identity_projection"
+WINDOW_STATUS_RPC = "hm_identity_observation_window_status"
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -54,15 +56,20 @@ def _actor_context() -> Tuple[str, str]:
         return "", ""
 
 
+def _rpc_dict(rpc_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    result = _service_client().rpc(rpc_name, params).execute()
+    data = getattr(result, "data", None)
+    if isinstance(data, list) and data:
+        data = data[0]
+    if not isinstance(data, dict):
+        raise RuntimeError(f"{rpc_name} returned an invalid response.")
+    return data
+
+
 def get_identity_projection_snapshot() -> Tuple[bool, Dict[str, Any], str]:
     """Return a read-only canonical-versus-shared projection snapshot."""
     try:
-        result = _service_client().rpc(PROJECTION_RPC, {}).execute()
-        data = getattr(result, "data", None)
-        if isinstance(data, list) and data:
-            data = data[0]
-        if not isinstance(data, dict):
-            return False, {}, "Identity projection snapshot returned an invalid response."
+        data = _rpc_dict(PROJECTION_RPC, {})
         healthy = bool(data.get("healthy", False))
         message = (
             "Canonical identity projection is aligned."
@@ -72,6 +79,46 @@ def get_identity_projection_snapshot() -> Tuple[bool, Dict[str, Any], str]:
         return True, data, message
     except Exception as exc:
         return False, {}, f"Identity projection snapshot failed: {exc}"
+
+
+def get_identity_observation_window_status(
+    *,
+    window_hours: int = 24,
+    minimum_observations: int = 3,
+    minimum_span_minutes: int = 60,
+) -> Tuple[bool, Dict[str, Any], str]:
+    """Return Gate 6 database observation and automated retirement preconditions.
+
+    This is evidence only. A positive automated result never substitutes for
+    signed-in Streamlit and Flutter device smoke evidence.
+    """
+    try:
+        safe_window_hours = max(int(window_hours), 1)
+        safe_minimum_observations = max(int(minimum_observations), 1)
+        safe_minimum_span_minutes = max(int(minimum_span_minutes), 0)
+        window_start = datetime.now(timezone.utc) - timedelta(hours=safe_window_hours)
+        data = _rpc_dict(
+            WINDOW_STATUS_RPC,
+            {
+                "p_window_start": window_start.isoformat(),
+                "p_min_observations": safe_minimum_observations,
+                "p_min_span_minutes": safe_minimum_span_minutes,
+            },
+        )
+        ready = bool(data.get("automated_retirement_preconditions_ready", False))
+        blockers = list(data.get("blockers") or [])
+        if ready:
+            message = (
+                "Automated projection-retirement preconditions are satisfied; "
+                "signed-in route and device evidence is still required."
+            )
+        elif blockers:
+            message = "Gate 6 blockers: " + ", ".join(str(item) for item in blockers)
+        else:
+            message = "Gate 6 automated evidence is incomplete."
+        return True, data, message
+    except Exception as exc:
+        return False, {}, f"Identity observation-window status failed: {exc}"
 
 
 def observe_identity_projection(
@@ -87,7 +134,7 @@ def observe_identity_projection(
     try:
         actor_id, actor_email = _actor_context()
         request_id = f"identity-projection-{uuid.uuid4()}"
-        result = _service_client().rpc(
+        data = _rpc_dict(
             OBSERVATION_RPC,
             {
                 "p_request_id": request_id,
@@ -100,11 +147,8 @@ def observe_identity_projection(
                     "explicit_repair": bool(apply_repair),
                 },
             },
-        ).execute()
-        data = getattr(result, "data", None)
-        if isinstance(data, list) and data:
-            data = data[0]
-        if not isinstance(data, dict) or not data.get("ok"):
+        )
+        if not data.get("ok"):
             return False, {}, "Identity projection observation returned an invalid response."
         repaired = bool(data.get("repair_applied", False))
         healthy_after = bool(data.get("healthy_after", False))
