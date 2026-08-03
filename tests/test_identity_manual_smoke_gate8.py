@@ -59,9 +59,11 @@ class IdentityManualSmokeGate8Tests(unittest.TestCase):
         self.assertIn("rollback_projection_ready", source)
         self.assertIn("'ready_for_retirement_decision'", source)
         self.assertIn("'projection_retirement_approved', false", source)
-        self.assertIn("streamlit_admin_smoke_missing", source)
-        self.assertIn("streamlit_member_smoke_missing", source)
-        self.assertIn("flutter_member_smoke_missing", source)
+        self.assertIn(
+            "values ('streamlit_admin'::text), ('streamlit_member'::text), ('flutter_member'::text)",
+            source,
+        )
+        self.assertIn("evidence_bundle || '_smoke_missing'", source)
         self.assertIn("evidence_max_age_hours", source)
         self.assertIn("Download and retain the complete current database backup before retirement", source)
 
@@ -76,7 +78,8 @@ class IdentityManualSmokeGate8Tests(unittest.TestCase):
             "def record_identity_smoke_evidence",
             "Every mandatory checklist step must pass before recording a passing bundle",
             "genuine_signed_in_evidence_required",
-            "Projection retirement still requires a separate explicit decision and PR",
+            "All Gate 8 evidence is present. Projection retirement still requires ",
+            "a separate explicit decision and PR.",
         ):
             self.assertIn(required, source)
 
