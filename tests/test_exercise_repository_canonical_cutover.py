@@ -141,13 +141,16 @@ class ExerciseRepositoryCanonicalCutoverTests(unittest.TestCase):
         ):
             result = repository.update_exercise_repository_item(
                 "2",
-                {"title": "Updated Stretches", "equipment": "None"},
+                {
+                    "title": "Updated Stretches",
+                    "equipment": "No equipment",
+                },
                 actor_id="admin_vineet",
             )
 
         args, kwargs = save_item.call_args
         self.assertEqual(args[0:3], ("exercise", "2", "Updated Stretches"))
-        self.assertEqual(args[3]["equipment"], "None")
+        self.assertEqual(args[3]["equipment"], "No equipment")
         self.assertEqual(
             kwargs["legacy_reference"],
             "healthyme_app_state.data.exercises:2",
@@ -191,7 +194,10 @@ class ExerciseRepositoryCanonicalCutoverTests(unittest.TestCase):
             sql,
         )
         self.assertIn("to service_role", sql)
-        self.assertIn('NUMERIC_CREATE_RPC = "hm_create_numeric_content_repository_item"', store)
+        self.assertIn(
+            'NUMERIC_CREATE_RPC = "hm_create_numeric_content_repository_item"',
+            store,
+        )
         self.assertIn("return _verified_item(kind, source_id, expected)", store)
 
 
