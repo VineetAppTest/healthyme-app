@@ -14,7 +14,6 @@ Design intent:
 from __future__ import annotations
 
 import datetime as _dt
-import pathlib
 import re
 import uuid
 from typing import Any
@@ -25,10 +24,6 @@ from components.storage_backend import load_state, save_state
 from components.exercise_repository import list_exercise_repository
 from components.recipe_repository import list_recipe_repository
 
-
-BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
-RECIPES_PATH = BASE_DIR / "data" / "recipes.csv"
-EXERCISES_PATH = BASE_DIR / "data" / "exercises.csv"
 
 RESOURCE_KEYS = {
     "recipes": {
@@ -48,51 +43,6 @@ RESOURCE_KEYS = {
         "title_fallback": "Untitled Exercise",
     },
 }
-
-
-RECIPE_COLUMNS = [
-    "title",
-    "description",
-    "meal_type",
-    "diet_type",
-    "goal_tags",
-    "condition_tags",
-    "prep_time",
-    "calories",
-    "protein",
-    "fat",
-    "carbohydrates",
-    "additional_nutrition",
-    "servings",
-    "portion_size",
-    "image_url",
-    "image_bucket",
-    "image_path",
-    "image_access_type",
-    "ingredients",
-    "steps",
-    "nutrition",
-    "status",
-]
-
-EXERCISE_COLUMNS = [
-    "title",
-    "description",
-    "category",
-    "difficulty",
-    "goal_tags",
-    "condition_tags",
-    "duration_or_reps",
-    "hidden_calories_v96",
-    "equipment",
-    "image_url",
-    "image_bucket",
-    "image_path",
-    "image_access_type",
-    "instructions",
-    "benefits",
-    "status",
-]
 
 
 MEAL_SLOT_ORDER = ["Breakfast", "Lunch", "Snacks", "Dinner", "Bedtime"]
@@ -135,26 +85,6 @@ def _resource_type(value: str) -> str:
     if value in {"exercise", "exercises", "workout", "workouts"}:
         return "exercises"
     raise ValueError("resource_type must be recipes or exercises")
-
-
-def _repo_path(resource_type: str) -> pathlib.Path:
-    return RECIPES_PATH if _resource_type(resource_type) == "recipes" else EXERCISES_PATH
-
-
-def _expected_columns(resource_type: str) -> list[str]:
-    return RECIPE_COLUMNS if _resource_type(resource_type) == "recipes" else EXERCISE_COLUMNS
-
-
-def _read_repository_df(resource_type: str) -> pd.DataFrame:
-    path = _repo_path(resource_type)
-    cols = _expected_columns(resource_type)
-    if not path.exists():
-        return pd.DataFrame(columns=cols)
-    df = pd.read_csv(path)
-    for col in cols:
-        if col not in df.columns:
-            df[col] = ""
-    return df[cols]
 
 
 def list_repository_items(resource_type: str, active_only: bool = True) -> list[dict[str, Any]]:
@@ -325,7 +255,7 @@ def get_member_resource_allocations(member_id: str, resource_type: str) -> list[
     rows = list(db.get(cfg["allocation_key"], {}).get(str(member_id), []) or [])
     if rows:
         return [dict(r) for r in rows if str(r.get("status", "active")).lower() == "active"]
-    # Backward compatible fallback: read old resource_assignments and resolve from CSV.
+    # Backward compatible fallback: resolve old assignment IDs from the canonical repository.
     legacy_ids = db.get("resource_assignments", {}).get(cfg["legacy_assignment_key"], {}).get(str(member_id), []) or []
     if legacy_ids:
         return save_member_resource_allocations(str(member_id), resource_type, [str(x) for x in legacy_ids], actor_id="system", source="legacy_resource_assignments")
