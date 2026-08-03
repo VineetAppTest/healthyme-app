@@ -1,0 +1,42 @@
+name: Users Gate 3 write cutover validation
+
+on:
+  pull_request:
+    paths:
+      - "components/normalized_store.py"
+      - "components/storage_backend.py"
+      - "supabase/migrations/20260803161100_users_gate3_transactional_state_commit.sql"
+      - "docs/users_gate3_write_cutover_2026-08-03.md"
+      - "tests/test_users_gate3_write_cutover.py"
+      - ".github/workflows/users-gate3-write-cutover-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile cutover modules and tests
+        run: |
+          python -m py_compile components/normalized_store.py
+          python -m py_compile components/storage_backend.py
+          python -m py_compile tests/test_users_gate3_write_cutover.py
+
+      - name: Validate Gate 3 User write cutover
+        run: python -m unittest tests.test_users_gate3_write_cutover -v
+
+      - name: Revalidate Gate 2 foundation
+        run: python -m unittest tests.test_users_workflow_gate2_contract_foundation -v
+
+      - name: Revalidate Users and Workflow authority trace
+        run: python -m unittest tests.test_users_workflow_authority_trace_batch2 -v
