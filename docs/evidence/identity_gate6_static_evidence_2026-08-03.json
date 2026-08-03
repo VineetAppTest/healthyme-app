@@ -60,6 +60,14 @@
     "shared_users": 15,
     "shared_workflow": 15,
     "projection_healthy": true,
+    "observation_count": 3,
+    "healthy_observation_count": 3,
+    "repair_count": 0,
+    "first_observed_at": "2026-08-03T11:32:02.340453Z",
+    "latest_observed_at": "2026-08-03T12:00:17.454812Z",
+    "observation_span_minutes": 28.25,
+    "minimum_observation_count": 3,
+    "minimum_observation_span_minutes": 60,
     "active_members": 7,
     "active_members_with_auth_user_id": 6,
     "active_members_using_email_fallback": 1,
@@ -70,6 +78,11 @@
     "flutter_shared_workflow_fallback_functions": [
       "hm_flutter_get_laf",
       "hm_flutter_get_nsp"
+    ],
+    "automated_blockers": [
+      "insufficient_observation_span",
+      "active_member_auth_email_fallback_remains",
+      "flutter_shared_workflow_fallback_remains"
     ]
   },
   "signed_in_smoke_evidence": {
@@ -79,6 +92,6 @@
   },
   "decision": {
     "projection_retirement_ready": false,
-    "reason": "Observation-window duration/count, one active-member Auth email fallback, Flutter shared Workflow fallback, and signed-in route/device smoke evidence remain outstanding."
+    "reason": "Observation-window duration, one active-member Auth email fallback, Flutter shared Workflow fallback, and signed-in route/device smoke evidence remain outstanding."
   }
 }
