@@ -29,6 +29,7 @@
     "gate7_user_events": 1,
     "gate7_domain_write_requests": 2,
     "gate7_post_closure_observations": 1,
+    "gate7_window_completion_observations": 1,
     "projection_repairs_in_observation_window": 0
   },
   "flutter_contract": {
@@ -54,15 +55,14 @@
     "transaction_persisted": false
   },
   "observation_window_checkpoint": {
-    "observation_count": 4,
-    "healthy_observation_count": 4,
+    "observation_count": 5,
+    "healthy_observation_count": 5,
     "repair_count": 0,
-    "span_minutes": 56.57,
+    "span_minutes": 63.19,
     "minimum_span_minutes": 60,
-    "database_observation_ready": false,
-    "remaining_automated_blockers": [
-      "insufficient_observation_span"
-    ]
+    "database_observation_ready": true,
+    "automated_retirement_preconditions_ready": true,
+    "remaining_automated_blockers": []
   },
   "signed_in_smoke_evidence": {
     "streamlit_admin_login_refresh_logout_and_admin_route": "pending",
@@ -71,7 +71,8 @@
   },
   "decision": {
     "database_fallback_closure_complete": true,
+    "database_observation_window_complete": true,
     "projection_retirement_approved": false,
-    "reason": "The database and RPC fallback paths are closed, but the accepted observation duration and real signed-in Streamlit and Flutter device evidence remain mandatory."
+    "reason": "Database fallback closure and the accepted observation window pass, but real signed-in Streamlit and Flutter device evidence remains mandatory before a separate projection-retirement decision."
   }
 }
