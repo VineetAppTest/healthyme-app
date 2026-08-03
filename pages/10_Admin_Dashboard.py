@@ -18,6 +18,10 @@ from components.ui_common import (
 
 _HIDDEN_BUILD_LABEL = "Full Admin integration build:"
 _BUILD_LABEL_SUPPRESSION_MARKER = "_hm_admin_dashboard_build_label_suppressed"
+# Registered routes remain part of the Admin application even though their
+# duplicate Dashboard buttons are removed in favour of the Profile Builder hub.
+_EXERCISE_ALLOCATION_ROUTE = "pages/42_Admin_Exercise_Member_Allocation.py"
+_SUPPLEMENT_ALLOCATION_ROUTE = "pages/43_Admin_Supplement_Member_Allocation.py"
 
 
 def _install_build_label_suppression() -> None:
