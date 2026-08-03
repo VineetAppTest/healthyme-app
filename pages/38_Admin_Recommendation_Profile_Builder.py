@@ -4,6 +4,9 @@ from components.admin_performance_optimization import (
     admin_profile_builder_render_scope,
     install_profile_builder_performance,
 )
+from components.meal_profile_builder_write_boundary import (
+    install_meal_profile_builder_write_boundary,
+)
 from components.performance_diagnostics import (
     begin_page_measurement,
     finish_and_render_page_diagnostics,
@@ -21,8 +24,11 @@ from components.ui_common import (
 )
 
 
-# Keep the existing stable route while the workflow becomes meals-only.
+# Keep the existing stable route while the workflow becomes meals-only. Install
+# the write boundary before importing the modular renderer so its bound save
+# function cannot replace legacy Exercise or Supplement rows.
 install_profile_builder_performance()
+install_meal_profile_builder_write_boundary()
 from components.profile_builder_modular import render_modular_profile_builder
 
 
