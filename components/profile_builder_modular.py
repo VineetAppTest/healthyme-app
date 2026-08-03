@@ -17,9 +17,12 @@ from components.profile_builder_access import (
     current_profile_builder_role,
     current_profile_builder_user_can_publish,
 )
+from components.profile_builder_canonical_sources import (
+    load_profile_builder_phase2_sources,
+)
 
-APP_BUILD_VERSION = "v100.43"
-APP_BUILD_LABEL = "Scoped Nutritionist Editing"
+APP_BUILD_VERSION = "v100.44"
+APP_BUILD_LABEL = "Canonical Repository Reads"
 VIEW_PROFILES_SECTION = "View Profiles"
 
 
@@ -30,11 +33,11 @@ def _epoch_widget_key(row, field):
 def _meaningful_row(row):
     kind = row.get("item_type")
     if kind == "meal":
-        fields = ("reference_label", "portion", "instruction")
+        fields = ("reference_label", "source_id", "portion", "instruction")
     elif kind == "exercise":
-        fields = ("reference_label", "instruction", "intensity")
+        fields = ("reference_label", "source_id", "instruction", "intensity")
     else:
-        fields = ("reference_label", "instruction", "dosage_frequency", "dosage")
+        fields = ("reference_label", "source_id", "instruction", "dosage_frequency", "dosage")
     return any(str(row.get(field) or "").strip() for field in fields)
 
 
@@ -84,7 +87,6 @@ install_profile_builder_form_hygiene()
 from components.pbm_modules import render_module, render_preview
 from components.pbm_setup import render_setup
 from components.profile_publish_control_v2 import render_profile_publish_control
-from components.recommendation_profile_store import load_profile_builder_sources
 from components.recommendation_profile_viewer import render_view_profiles
 
 
@@ -117,16 +119,18 @@ def render_modular_profile_builder() -> None:
         for section in SECTIONS
         if can_publish or section != "Publish Control"
     ]
-    # View Profiles is intentionally the final tab, immediately after Active.
     visible_sections.append(VIEW_PROFILES_SECTION)
     if st.session_state.get("pbm_section") not in visible_sections:
         st.session_state["pbm_section"] = "Profile Setup"
 
-    sources, _source_message = load_profile_builder_sources()
+    sources, repository_options, _source_message = load_profile_builder_phase2_sources()
     options = {
         "recipe": list(sources.get("recipe") or []),
         "exercise": list(sources.get("exercise") or []),
         "supplement": list(sources.get("supplement") or []),
+        "recipe_sources": list(repository_options.get("recipe") or []),
+        "exercise_sources": list(repository_options.get("exercise") or []),
+        "supplement_sources": list(repository_options.get("supplement") or []),
         "age_band": list(sources.get("age_band") or []),
         "health_concern": list(sources.get("health_concern") or []),
         "diet_type": list(sources.get("diet_type") or []),
