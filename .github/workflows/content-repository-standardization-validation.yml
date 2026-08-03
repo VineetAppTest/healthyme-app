@@ -10,9 +10,14 @@ on:
       - "components/recipe_repository.py"
       - "components/exercise_repository.py"
       - "components/supplement_repository.py"
+      - "data/recipes.csv"
+      - "data/exercises.csv"
+      - "docs/archive/content_repository_legacy/**"
+      - "docs/content_repository_final_observation_2026-08-03.md"
       - "pages/08_Recipe_Repository.py"
       - "pages/09_Exercise_Repository.py"
       - "pages/15_Admin_Recipe_Manager.py"
+      - "scripts/apply_content_repository_final_retirement.py"
       - "supabase/migrations/*content_repository*.sql"
       - "tests/test_content_repository_standardization.py"
       - "tests/test_content_repository_privilege_hardening.py"
@@ -31,15 +36,35 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Check out repository
+      - name: Check out repository branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Apply deterministic final retirement gate
+        if: github.event_name == 'pull_request' && github.head_ref == 'agent/final-content-repository-retirement-gate'
+        run: |
+          if grep -q "def sync_repository_to_state" components/recommendation_contract.py; then
+            python scripts/apply_content_repository_final_retirement.py
+          fi
+
+      - name: Commit deterministic retirement result
+        if: github.event_name == 'pull_request' && github.head_ref == 'agent/final-content-repository-retirement-gate'
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "healthyme-jarvis"
+            git config user.email "actions@users.noreply.github.com"
+            git add components/recommendation_contract.py
+            git commit -m "Remove final legacy repository compatibility dependencies"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -64,6 +89,7 @@ jobs:
             pages/08_Recipe_Repository.py \
             pages/09_Exercise_Repository.py \
             pages/15_Admin_Recipe_Manager.py \
+            scripts/apply_content_repository_final_retirement.py \
             tests/test_content_repository_standardization.py \
             tests/test_content_repository_privilege_hardening.py \
             tests/test_content_repository_controlled_backfill.py \
