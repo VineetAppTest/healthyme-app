@@ -71,6 +71,9 @@ from components.member_home_global_header_runtime import (
 from components.repository_layout_correction_runtime import (
     install_repository_layout_correction_runtime,
 )
+from components.repository_exclusive_tabs_runtime import (
+    install_repository_exclusive_tabs_runtime,
+)
 
 
 install_streamlit_toolbar_cleanup()
@@ -125,3 +128,8 @@ install_member_home_global_header_runtime()
 # Repository presentation is page-scoped and outermost so it can override legacy
 # card widths, native disclosure markers and form spacing without changing writes.
 install_repository_layout_correction_runtime()
+
+# Repository Current/Add selection must be exclusive. Install after presentation so
+# the active section inherits the accepted styles while the inactive section performs
+# no widget rendering and skips its repository read.
+install_repository_exclusive_tabs_runtime()
