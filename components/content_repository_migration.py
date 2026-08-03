@@ -45,27 +45,61 @@ def _recipe_rows(path: pathlib.Path = LEGACY_RECIPE_PATH) -> List[dict]:
     return canonical
 
 
-def _exercise_rows() -> List[dict]:
-    from components.exercise_repository import list_exercise_repository
+def _legacy_app_state() -> Dict[str, Any]:
+    """Read the current Supabase app-state authority without normalising it."""
+    from components.storage_backend import (
+        get_storage_status,
+        load_state,
+        supabase_configured,
+    )
 
-    return [
-        normalise_legacy_item("exercise", row)
-        for row in list_exercise_repository(active_only=False)
-    ]
+    state = load_state(force_refresh=True)
+    status = get_storage_status()
+    if supabase_configured() and status.get("mode") != "SUPABASE":
+        raise RuntimeError(
+            "Content Repository migration inventory refused the local fallback. "
+            "Restore the Supabase connection before planning or committing the backfill."
+        )
+    return dict(state or {})
 
 
-def _supplement_rows() -> List[dict]:
-    from components.supplement_repository import list_supplement_repository
+def _exercise_rows(state: Mapping[str, Any]) -> List[dict]:
+    canonical: List[dict] = []
+    for index, row in enumerate(list(state.get("exercises") or [])):
+        enriched = {
+            **dict(row or {}),
+            "source_system": str((row or {}).get("source") or "healthyme_app_state:exercises"),
+            "legacy_reference": f"healthyme_app_state.data.exercises:{index}",
+        }
+        canonical.append(normalise_legacy_item("exercise", enriched))
+    return canonical
 
-    return [
-        normalise_legacy_item("supplement", row)
-        for row in list_supplement_repository(active_only=False)
-    ]
+
+def _supplement_rows(state: Mapping[str, Any]) -> List[dict]:
+    canonical: List[dict] = []
+    for index, row in enumerate(list(state.get("supplement_repository") or [])):
+        enriched = {
+            **dict(row or {}),
+            "source_system": str(
+                (row or {}).get("source")
+                or "healthyme_app_state:supplement_repository"
+            ),
+            "legacy_reference": (
+                f"healthyme_app_state.data.supplement_repository:{index}"
+            ),
+        }
+        canonical.append(normalise_legacy_item("supplement", enriched))
+    return canonical
 
 
 def build_legacy_repository_items() -> List[dict]:
-    """Load all three current authorities without changing them."""
-    items = [*_recipe_rows(), *_exercise_rows(), *_supplement_rows()]
+    """Load all three current authorities without writing to any of them."""
+    state = _legacy_app_state()
+    items = [
+        *_recipe_rows(),
+        *_exercise_rows(state),
+        *_supplement_rows(state),
+    ]
     validate_unique_identities(items)
     return items
 
