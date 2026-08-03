@@ -15,12 +15,14 @@ class ProfileBuilderFormHygieneContractTest(unittest.TestCase):
     def test_hygiene_is_installed_before_renderer_bindings(self):
         source = BUILDER.read_text(encoding="utf-8")
         install_at = source.index("install_profile_builder_form_hygiene()")
-        module_import_at = source.index("from components.pbm_modules import")
-        setup_import_at = source.index("from components.pbm_setup import")
-        publish_import_at = source.index("from components.profile_publish_control_v2 import")
-        self.assertLess(install_at, module_import_at)
-        self.assertLess(install_at, setup_import_at)
-        self.assertLess(install_at, publish_import_at)
+        renderer_imports = (
+            "from components.member_plan_builder_setup import",
+            "from components.member_plan_builder_meals import",
+            "from components.member_plan_builder_allocations import",
+            "from components.member_plan_builder_export import",
+        )
+        for import_text in renderer_imports:
+            self.assertLess(install_at, source.index(import_text))
 
     def test_successful_setup_and_module_saves_reload_canonical_profile(self):
         source = HYGIENE.read_text(encoding="utf-8")
