@@ -38,7 +38,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
-begin_page_measurement("Meal Profile Builder")
+# Keep the established diagnostics identity because the registered route is
+# unchanged; this preserves historical performance comparisons across Phase B.
+begin_page_measurement("Recommendation Profile Builder")
 inject_global_styles()
 apply_luxe_theme()
 require_profile_builder_access()
@@ -59,4 +61,4 @@ if current_profile_builder_role() in {"admin", "super_admin"}:
         location="bottom",
     )
 render_back_to_top()
-finish_and_render_page_diagnostics("Meal Profile Builder")
+finish_and_render_page_diagnostics("Recommendation Profile Builder")
