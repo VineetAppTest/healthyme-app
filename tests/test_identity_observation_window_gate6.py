@@ -83,7 +83,7 @@ class IdentityObservationWindowGate6Tests(unittest.TestCase):
         self.assertIn('st.subheader("Gate 6 observation window")', source)
         self.assertIn("Automated Readiness", source)
         self.assertIn("flutter_shared_workflow_fallback_functions", source)
-        self.assertIn("manual route/device evidence", source)
+        self.assertIn("Manual route/device smoke still required", source)
         self.assertNotIn("Retire Shared Projection", source)
         self.assertNotIn("Freeze Shared Projection", source)
 
