@@ -10,6 +10,7 @@ SUPPLEMENT_PAGE = ROOT / "pages" / "39_Admin_Supplement_Manager.py"
 PROFILE_PAGE = ROOT / "pages" / "38_Admin_Recommendation_Profile_Builder.py"
 REPOSITORY = ROOT / "components" / "supplement_repository.py"
 SOURCE_BRIDGE = ROOT / "components" / "supplement_repository_source.py"
+CANONICAL_SOURCE = ROOT / "components" / "profile_builder_canonical_sources.py"
 
 
 def _text(path: Path) -> str:
@@ -18,7 +19,13 @@ def _text(path: Path) -> str:
 
 class SupplementRepositorySeparationTests(unittest.TestCase):
     def test_changed_python_files_compile(self):
-        for path in [SUPPLEMENT_PAGE, PROFILE_PAGE, REPOSITORY, SOURCE_BRIDGE]:
+        for path in [
+            SUPPLEMENT_PAGE,
+            PROFILE_PAGE,
+            REPOSITORY,
+            SOURCE_BRIDGE,
+            CANONICAL_SOURCE,
+        ]:
             ast.parse(_text(path), filename=str(path))
 
     def test_supplement_manager_is_repository_only(self):
@@ -82,11 +89,22 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
         self.assertNotIn('db["member_supplements"]', text)
         self.assertIn('"member_regimens_unchanged": True', text)
 
-    def test_profile_builder_installs_repository_source_before_modular_import(self):
+    def test_profile_builder_installs_canonical_source_before_modular_import(self):
         text = _text(PROFILE_PAGE)
-        install_at = text.index("install_profile_builder_supplement_repository_source()")
+        install_at = text.index(
+            "install_profile_builder_canonical_repository_runtime()"
+        )
         modular_import_at = text.index("from components.profile_builder_modular import")
         self.assertLess(install_at, modular_import_at)
+        self.assertNotIn(
+            "install_profile_builder_supplement_repository_source",
+            text,
+        )
+
+        canonical_text = _text(CANONICAL_SOURCE)
+        self.assertIn("list_profile_builder_repository_sources", canonical_text)
+        self.assertIn('SUPPORTED_KINDS = ("recipe", "exercise", "supplement")', canonical_text)
+        self.assertNotIn("list_member_supplements", canonical_text)
 
     def test_source_bridge_does_not_change_global_member_regimen_helpers(self):
         text = _text(SOURCE_BRIDGE)
