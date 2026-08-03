@@ -1,0 +1,47 @@
+name: Streamlit live production entry smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/streamlit-live-production-entry-smoke.yml"
+      - "tests/production_entry_smoke.py"
+      - "docs/streamlit_live_production_acceptance_2026-08-04.md"
+
+permissions:
+  contents: read
+
+jobs:
+  production-entry-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      HEALTHYME_PRODUCTION_URL: https://healthymeappbyankita.streamlit.app
+      HEALTHYME_SMOKE_EVIDENCE_PATH: artifacts/production_entry_smoke.json
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install smoke dependency
+        run: python -m pip install --disable-pip-version-check requests
+
+      - name: Compile production probe
+        run: python -m py_compile tests/production_entry_smoke.py
+
+      - name: Probe deployed root and login routes
+        run: python tests/production_entry_smoke.py
+
+      - name: Upload production-entry evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamlit-production-entry-evidence
+          path: artifacts/production_entry_smoke.json
+          if-no-files-found: error
+          retention-days: 7
