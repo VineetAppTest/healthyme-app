@@ -114,6 +114,10 @@ A rolled-back service-role contract probe returned `ok=true` and `changed_user_c
 
 A separate rolled-back direct service-role User update appended exactly one `service_role_direct` event. The transaction was rolled back and no User or event remained changed.
 
+## Phase D classified compatibility reader
+
+- `components/supplement_member_allocation.py` reads the already-overlaid Users collection only to validate the selected active member and copy the member name and email into the existing Supplement allocation record. It does not write Users or Workflow and does not change the Gate 3 authority.
+
 ## Safety boundary
 
 Gate 3 does not:
