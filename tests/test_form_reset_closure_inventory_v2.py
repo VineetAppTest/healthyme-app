@@ -61,6 +61,10 @@ CLASSIFIED_RUNTIME_PATHS = {
     "components/member_exercise_journal.py",
     "components/member_exercise_journal_layout_v4.py",
     "components/member_exercise_journal_table.py",
+    # Rebuilt Member Plan Builder forms clear add/edit state only after confirmed saves.
+    "components/member_plan_builder_allocations.py",
+    "components/member_plan_builder_meals.py",
+    "components/member_plan_builder_setup.py",
     "components/member_schedule_tabbed_page.py",
     "components/notes_supplement_form_hygiene.py",
     "components/package_hardening_form_hygiene.py",
