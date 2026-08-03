@@ -1,11 +1,8 @@
 """HealthyMe Streamlit Supabase admin role model.
 
-Sprint 3A + 3B scope:
-- make Supabase pilot login role-aware for Streamlit admin access
-- keep Auth0 production login working during parallel run
-- centralize admin/member role checks before route-guard cutover
-
-This module is server-side Streamlit code only. It may use the Supabase
+The role model resolves authorization only from canonical `hm_users`.
+Shared JSON, local database files and stale session snapshots are not identity
+fallbacks. This module is server-side Streamlit code and may use the Supabase
 service-role key when configured. Do not copy it into Flutter/mobile code.
 """
 
@@ -16,7 +13,6 @@ from typing import Any, Dict, Optional, Tuple
 
 import streamlit as st
 
-from components.db import find_user_by_email
 from components.normalized_store import find_user_by_email_fast
 
 SECRET_SECTIONS = ("auth", "auth0", "authentication", "healthyme", "supabase")
@@ -145,7 +141,7 @@ def _lookup_hm_user_service_role(email: str = "", auth_user_id: str = "") -> Opt
             if rows:
                 return _row_to_app_user(rows[0])
     except Exception:
-        # Older databases may not have auth_user_id yet. Email fallback below is intentional.
+        # Email fallback remains canonical and supports unmigrated Auth links.
         pass
 
     if not clean_email:
@@ -169,37 +165,33 @@ def _lookup_hm_user_service_role(email: str = "", auth_user_id: str = "") -> Opt
 
 
 def resolve_app_user(email: str = "", auth_user_id: str = "") -> Tuple[bool, Optional[Dict[str, Any]], str]:
-    """Resolve a Supabase/Auth0 identity to a HealthyMe app user.
+    """Resolve a native identity only through canonical `hm_users`.
 
     Lookup order:
-    1. hm_users.auth_user_id through service-role client when available
-    2. hm_users.email through service-role client when available
-    3. existing fast normalized lookup by email
-    4. legacy local app-store lookup by email
+    1. `hm_users.auth_user_id` through the service-role client;
+    2. `hm_users.email` through the service-role client;
+    3. the canonical fast email lookup.
+
+    Failure never falls back to shared JSON or local files.
     """
     clean_email = normalize_email(email)
     clean_auth_user_id = clean_text(auth_user_id)
 
     app_user = _lookup_hm_user_service_role(clean_email, clean_auth_user_id)
     if app_user:
-        return True, app_user, "Loaded user from Supabase role model."
+        return True, app_user, "Loaded user from canonical Supabase role model."
 
     if clean_email:
         ok, fast_user, message = find_user_by_email_fast(clean_email)
         if ok and fast_user:
             fast_user = dict(fast_user)
             fast_user["role"] = normalize_role(fast_user.get("role"))
-            return True, fast_user, "Loaded user from normalized hm_users."
+            return True, fast_user, "Loaded user from canonical hm_users."
         if ok and not fast_user:
             return True, None, message or "No active HealthyMe user found."
+        return False, None, message or "Canonical HealthyMe user lookup failed."
 
-        local_user = find_user_by_email(clean_email)
-        if local_user:
-            local_user = dict(local_user)
-            local_user["role"] = normalize_role(local_user.get("role"))
-            return True, local_user, "Loaded user from legacy local store."
-
-    return False, None, "No authorized HealthyMe user mapping found."
+    return False, None, "No authorized canonical HealthyMe user mapping found."
 
 
 def apply_app_user_to_session(app_user: Dict[str, Any], *, email: str = "", auth_provider: str = "supabase", auth_user_id: str = "") -> bool:
@@ -216,7 +208,7 @@ def apply_app_user_to_session(app_user: Dict[str, Any], *, email: str = "", auth
     st.session_state["auth_login_method"] = auth_provider
     st.session_state["auth_provider"] = "oidc" if auth_provider == "auth0" else auth_provider
     st.session_state["_hm_auth_role_resolved"] = True
-    st.session_state["_hm_role_model"] = "sprint3a_3b"
+    st.session_state["_hm_role_model"] = "canonical_gate5a"
 
     if auth_provider == "supabase":
         st.session_state["supabase_auth_email"] = clean_email
