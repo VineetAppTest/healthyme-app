@@ -1,0 +1,45 @@
+name: Content repository standardization validation
+
+on:
+  pull_request:
+    paths:
+      - "components/content_repository_store.py"
+      - "components/content_repository_migration.py"
+      - "supabase/migrations/20260803094700_create_standard_content_repository.sql"
+      - "tests/test_content_repository_standardization.py"
+      - "docs/content_repository_standardization.md"
+      - ".github/workflows/content-repository-standardization-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Compile repository foundation
+        run: |
+          python -m py_compile \
+            components/content_repository_store.py \
+            components/content_repository_migration.py \
+            tests/test_content_repository_standardization.py
+
+      - name: Run repository foundation tests
+        run: pytest -q tests/test_content_repository_standardization.py
