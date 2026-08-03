@@ -1,0 +1,34 @@
+name: Users and Workflow target design validation
+
+on:
+  pull_request:
+    paths:
+      - "docs/users_workflow_single_authority_target_design_batch2a_2026-08-03.md"
+      - "tests/test_users_workflow_target_design_batch2a.py"
+      - ".github/workflows/users-workflow-target-design-validation.yml"
+      - "components/storage_backend.py"
+      - "components/normalized_store.py"
+      - "components/db.py"
+      - "components/admin_role_model.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile target design contract
+        run: python -m py_compile tests/test_users_workflow_target_design_batch2a.py
+
+      - name: Validate Users and Workflow target design
+        run: python -m unittest tests.test_users_workflow_target_design_batch2a -v
