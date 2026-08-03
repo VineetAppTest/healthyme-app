@@ -202,8 +202,10 @@ class ProfileBuilderRepositoryContractTests(unittest.TestCase):
         self.assertNotIn("list_member_supplements", source)
         self.assertNotIn("install_exercise_repository_runtime", source)
         self.assertNotIn("install_profile_builder_supplement_repository_source", source)
-        self.assertNotIn("start_date\"", source)
-        self.assertNotIn("end_date\"", source)
+        self.assertNotIn('row.get("start_date")', source)
+        self.assertNotIn('row.get("end_date")', source)
+        self.assertNotIn('row.get("admin_notes")', source)
+        self.assertNotIn('row.get("member_id")', source)
 
 
 if __name__ == "__main__":
