@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "components" / "recommendation_contract.py"
+MIGRATION_UTILITY = ROOT / "components" / "content_repository_migration.py"
 
 
 def remove_exact_block(source: str, start_marker: str, end_marker: str) -> str:
@@ -13,7 +14,7 @@ def remove_exact_block(source: str, start_marker: str, end_marker: str) -> str:
     return source[:start] + source[end:]
 
 
-def main() -> None:
+def retire_recommendation_contract() -> None:
     source = CONTRACT.read_text(encoding="utf-8")
 
     if "def sync_repository_to_state(" in source:
@@ -66,6 +67,30 @@ def main() -> None:
             raise RuntimeError(f"Required final repository contract token was lost: {token}")
 
     CONTRACT.write_text(source, encoding="utf-8")
+
+
+def point_historical_migration_to_archive() -> None:
+    source = MIGRATION_UTILITY.read_text(encoding="utf-8")
+    source = source.replace(
+        'LEGACY_RECIPE_PATH = BASE_DIR / "data" / "recipes.csv"',
+        'LEGACY_RECIPE_PATH = (\n'
+        '    BASE_DIR / "docs" / "archive" / "content_repository_legacy" / "recipes.csv"\n'
+        ')',
+    )
+
+    if 'BASE_DIR / "data" / "recipes.csv"' in source:
+        raise RuntimeError("Historical migration utility still points at active Recipe CSV")
+    if '"legacy_reference": f"data/recipes.csv:{index}"' not in source:
+        raise RuntimeError("Original Recipe provenance reference was lost")
+    if 'content_repository_legacy" / "recipes.csv"' not in source:
+        raise RuntimeError("Archived Recipe evidence path was not installed")
+
+    MIGRATION_UTILITY.write_text(source, encoding="utf-8")
+
+
+def main() -> None:
+    retire_recommendation_contract()
+    point_historical_migration_to_archive()
 
 
 if __name__ == "__main__":
