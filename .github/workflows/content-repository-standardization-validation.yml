@@ -5,12 +5,16 @@ on:
     paths:
       - "components/content_repository_store.py"
       - "components/content_repository_migration.py"
+      - "components/recipe_repository.py"
+      - "components/recipe_repository_runtime.py"
       - "components/exercise_repository.py"
       - "components/supplement_repository.py"
+      - "pages/15_Admin_Recipe_Manager.py"
       - "supabase/migrations/*content_repository*.sql"
       - "tests/test_content_repository_standardization.py"
       - "tests/test_content_repository_privilege_hardening.py"
       - "tests/test_content_repository_controlled_backfill.py"
+      - "tests/test_recipe_repository_canonical_cutover.py"
       - "tests/test_exercise_repository_canonical_cutover.py"
       - "tests/test_exercise_journal_repository_fix_contract.py"
       - "tests/test_supplement_repository_canonical_cutover.py"
@@ -47,11 +51,15 @@ jobs:
           python -m py_compile \
             components/content_repository_store.py \
             components/content_repository_migration.py \
+            components/recipe_repository.py \
+            components/recipe_repository_runtime.py \
             components/exercise_repository.py \
             components/supplement_repository.py \
+            pages/15_Admin_Recipe_Manager.py \
             tests/test_content_repository_standardization.py \
             tests/test_content_repository_privilege_hardening.py \
             tests/test_content_repository_controlled_backfill.py \
+            tests/test_recipe_repository_canonical_cutover.py \
             tests/test_exercise_repository_canonical_cutover.py \
             tests/test_exercise_journal_repository_fix_contract.py \
             tests/test_supplement_repository_canonical_cutover.py \
@@ -62,6 +70,9 @@ jobs:
           python -m unittest tests.test_content_repository_standardization -v
           python -m unittest tests.test_content_repository_privilege_hardening -v
           python -m unittest tests.test_content_repository_controlled_backfill -v
+
+      - name: Run Recipe canonical cutover tests
+        run: python -m unittest tests.test_recipe_repository_canonical_cutover -v
 
       - name: Run Exercise canonical cutover tests
         run: |

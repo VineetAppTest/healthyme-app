@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-import pathlib
-
-import pandas as pd
 import streamlit as st
 
 from components.guards import require_admin
+from components.recipe_repository import (
+    add_recipe_repository_item,
+    list_recipe_repository,
+    set_recipe_repository_status,
+    update_recipe_repository_item,
+)
 from components.storage_assets import upload_content_image
 from components.ui_common import (
     apply_luxe_theme,
@@ -29,49 +32,12 @@ require_admin()
 utility_logout_bar()
 
 
-PATH = pathlib.Path(__file__).resolve().parents[1] / "data" / "recipes.csv"
-RECIPE_COLUMNS = [
-    "title",
-    "description",
-    "meal_type",
-    "diet_type",
-    "goal_tags",
-    "condition_tags",
-    "prep_time",
-    "calories",
-    "protein",
-    "fat",
-    "carbohydrates",
-    "additional_nutrition",
-    "servings",
-    "portion_size",
-    "image_url",
-    "image_bucket",
-    "image_path",
-    "image_access_type",
-    "ingredients",
-    "steps",
-    "nutrition",
-    "status",
-]
-
-
-def ensure_columns(df: pd.DataFrame) -> pd.DataFrame:
-    output = df.copy()
-    for column in RECIPE_COLUMNS:
-        if column not in output.columns:
-            output[column] = ""
-    return output[RECIPE_COLUMNS]
-
-
-def load() -> pd.DataFrame:
-    if not PATH.exists():
-        return pd.DataFrame(columns=RECIPE_COLUMNS)
-    return ensure_columns(pd.read_csv(PATH))
-
-
-def save(df: pd.DataFrame) -> None:
-    ensure_columns(df).to_csv(PATH, index=False)
+def _actor_id() -> str:
+    return (
+        st.session_state.get("user_id")
+        or st.session_state.get("oidc_email")
+        or "admin"
+    )
 
 
 def _clean(value) -> str:
@@ -303,12 +269,10 @@ def _recipe_summary(row) -> str:
     return " · ".join(part for part in details if part) or "No summary details recorded."
 
 
-def _safe_delete_recipe(df: pd.DataFrame, index: int) -> None:
-    # Phase 1 deliberately uses reversible safe deletion. The Recipe Repository still
-    # uses CSV row positions as legacy identifiers, so physical deletion or index reset
-    # could break existing references. Phase 2 will migrate these rows to durable IDs.
-    df.at[index, "status"] = "inactive"
-    save(df)
+def _safe_delete_recipe(item_id: str) -> None:
+    # Deletion remains reversible. Canonical source IDs are immutable, so no physical
+    # deletion or index reset can reassign a historical Recipe identity.
+    set_recipe_repository_status(item_id, False, actor_id=_actor_id())
 
 
 st.markdown(
@@ -345,142 +309,145 @@ _show_flash()
 repository_tab, add_tab = st.tabs(["Current Repository", "Add Recipe"])
 
 with repository_tab:
-    df = load()
-    if df.empty:
+    all_rows = list_recipe_repository(active_only=False)
+    active_rows = [row for row in all_rows if _status(row.get("status")) == "active"]
+    inactive_rows = [row for row in all_rows if _status(row.get("status")) == "inactive"]
+
+    if not all_rows:
         st.info("No recipes are available. Add the first recipe.")
-    else:
-        active_df = df[df["status"].map(_status).eq("active")]
-        inactive_df = df[df["status"].map(_status).eq("inactive")]
+    elif not active_rows:
+        st.info("No active recipes are available.")
 
-        if active_df.empty:
-            st.info("No active recipes are available.")
-        for index, row in active_df.iterrows():
-            details_col, edit_col, delete_col = st.columns([5.8, 0.72, 0.82], gap="small")
-            with details_col:
-                st.markdown(
-                    f"<div class='hm-repo-row'><div class='hm-repo-title'>{_clean(row.get('title')) or 'Untitled Recipe'}</div>"
-                    f"<div class='hm-repo-meta'>{_recipe_summary(row)}</div></div>",
-                    unsafe_allow_html=True,
+    for row in active_rows:
+        recipe_id = str(row.get("id"))
+        details_col, edit_col, delete_col = st.columns([5.8, 0.72, 0.82], gap="small")
+        with details_col:
+            st.markdown(
+                f"<div class='hm-repo-row'><div class='hm-repo-title'>{_clean(row.get('title')) or 'Untitled Recipe'}</div>"
+                f"<div class='hm-repo-meta'>{_recipe_summary(row)}</div></div>",
+                unsafe_allow_html=True,
+            )
+        with edit_col:
+            if st.button(
+                "Edit",
+                key=f"recipe_repo_edit_{recipe_id}",
+                use_container_width=True,
+            ):
+                current = st.session_state.get("hm_recipe_repository_edit_id")
+                st.session_state["hm_recipe_repository_edit_id"] = (
+                    None if current == recipe_id else recipe_id
                 )
-            with edit_col:
-                if st.button(
-                    "Edit",
-                    key=f"recipe_repo_edit_{index}",
-                    use_container_width=True,
-                ):
-                    current = st.session_state.get("hm_recipe_repository_edit_index")
-                    st.session_state["hm_recipe_repository_edit_index"] = (
-                        None if current == int(index) else int(index)
-                    )
-                    st.session_state.pop("hm_recipe_repository_delete_index", None)
-                    st.rerun()
-            with delete_col:
-                if st.button(
-                    "Delete",
-                    key=f"recipe_repo_delete_{index}",
-                    use_container_width=True,
-                ):
-                    st.session_state["hm_recipe_repository_delete_index"] = int(index)
-                    st.session_state.pop("hm_recipe_repository_edit_index", None)
-                    st.rerun()
+                st.session_state.pop("hm_recipe_repository_delete_id", None)
+                st.rerun()
+        with delete_col:
+            if st.button(
+                "Delete",
+                key=f"recipe_repo_delete_{recipe_id}",
+                use_container_width=True,
+            ):
+                st.session_state["hm_recipe_repository_delete_id"] = recipe_id
+                st.session_state.pop("hm_recipe_repository_edit_id", None)
+                st.rerun()
 
-            if st.session_state.get("hm_recipe_repository_edit_index") == int(index):
-                title = _clean(row.get("title")) or "Untitled Recipe"
-                with st.expander(f"Edit Recipe · {title}", expanded=True):
-                    edited = recipe_form(f"recipe_repo_edit_form_{index}", row.to_dict())
-                    save_col, cancel_col, spacer = st.columns([1, 1, 3], gap="small")
-                    with save_col:
-                        if st.button(
-                            "Save Changes",
-                            key=f"recipe_repo_save_{index}",
-                            type="primary",
-                            use_container_width=True,
-                        ):
-                            if not _clean(edited.get("title")):
-                                st.error("Recipe title is required.")
-                            else:
-                                for column in RECIPE_COLUMNS:
-                                    df.at[index, column] = edited.get(column, "")
-                                save(df)
-                                st.session_state.pop(
-                                    "hm_recipe_repository_edit_index", None
-                                )
-                                _flash("Recipe updated.")
-                                st.rerun()
-                    with cancel_col:
-                        if st.button(
-                            "Close",
-                            key=f"recipe_repo_cancel_{index}",
-                            use_container_width=True,
-                        ):
-                            st.session_state.pop(
-                                "hm_recipe_repository_edit_index", None
-                            )
-                            st.rerun()
-
-            if st.session_state.get("hm_recipe_repository_delete_index") == int(index):
-                st.warning(
-                    "Delete removes this recipe from future selection. Existing and historical member plans remain protected."
-                )
-                confirm_col, cancel_col, spacer = st.columns([1.15, 0.8, 3], gap="small")
-                with confirm_col:
+        if st.session_state.get("hm_recipe_repository_edit_id") == recipe_id:
+            title = _clean(row.get("title")) or "Untitled Recipe"
+            with st.expander(f"Edit Recipe · {title}", expanded=True):
+                edited = recipe_form(f"recipe_repo_edit_form_{recipe_id}", row)
+                save_col, cancel_col, spacer = st.columns([1, 1, 3], gap="small")
+                with save_col:
                     if st.button(
-                        "Confirm Delete",
-                        key=f"recipe_repo_confirm_delete_{index}",
+                        "Save Changes",
+                        key=f"recipe_repo_save_{recipe_id}",
                         type="primary",
                         use_container_width=True,
                     ):
-                        _safe_delete_recipe(df, int(index))
-                        st.session_state.pop(
-                            "hm_recipe_repository_delete_index", None
-                        )
+                        try:
+                            update_recipe_repository_item(
+                                recipe_id,
+                                edited,
+                                actor_id=_actor_id(),
+                            )
+                            st.session_state.pop("hm_recipe_repository_edit_id", None)
+                            _flash("Recipe updated.")
+                            st.rerun()
+                        except Exception as exc:
+                            st.error(str(exc))
+                with cancel_col:
+                    if st.button(
+                        "Close",
+                        key=f"recipe_repo_cancel_{recipe_id}",
+                        use_container_width=True,
+                    ):
+                        st.session_state.pop("hm_recipe_repository_edit_id", None)
+                        st.rerun()
+
+        if st.session_state.get("hm_recipe_repository_delete_id") == recipe_id:
+            st.warning(
+                "Delete removes this recipe from future selection. Existing and historical member plans remain protected."
+            )
+            confirm_col, cancel_col, spacer = st.columns([1.15, 0.8, 3], gap="small")
+            with confirm_col:
+                if st.button(
+                    "Confirm Delete",
+                    key=f"recipe_repo_confirm_delete_{recipe_id}",
+                    type="primary",
+                    use_container_width=True,
+                ):
+                    try:
+                        _safe_delete_recipe(recipe_id)
+                        st.session_state.pop("hm_recipe_repository_delete_id", None)
                         _flash(
                             "Recipe removed from the active repository. Historical references were retained."
                         )
                         st.rerun()
-                with cancel_col:
-                    if st.button(
-                        "Cancel",
-                        key=f"recipe_repo_cancel_delete_{index}",
-                        use_container_width=True,
-                    ):
-                        st.session_state.pop(
-                            "hm_recipe_repository_delete_index", None
-                        )
-                        st.rerun()
+                    except Exception as exc:
+                        st.error(str(exc))
+            with cancel_col:
+                if st.button(
+                    "Cancel",
+                    key=f"recipe_repo_cancel_delete_{recipe_id}",
+                    use_container_width=True,
+                ):
+                    st.session_state.pop("hm_recipe_repository_delete_id", None)
+                    st.rerun()
 
-        with st.expander(f"Inactive Repository Items ({len(inactive_df)})"):
-            if inactive_df.empty:
-                st.caption("No inactive repository items.")
-            for index, row in inactive_df.iterrows():
-                label_col, action_col = st.columns([5.5, 1], gap="small")
-                with label_col:
-                    st.markdown(
-                        f"**{_clean(row.get('title')) or 'Untitled Recipe'}**  \n{_recipe_summary(row)}"
-                    )
-                with action_col:
-                    if st.button(
-                        "Reactivate",
-                        key=f"recipe_repo_reactivate_{index}",
-                        use_container_width=True,
-                    ):
-                        df.at[index, "status"] = "active"
-                        save(df)
+    with st.expander(f"Inactive Repository Items ({len(inactive_rows)})"):
+        if not inactive_rows:
+            st.caption("No inactive repository items.")
+        for row in inactive_rows:
+            recipe_id = str(row.get("id"))
+            label_col, action_col = st.columns([5.5, 1], gap="small")
+            with label_col:
+                st.markdown(
+                    f"**{_clean(row.get('title')) or 'Untitled Recipe'}**  \n{_recipe_summary(row)}"
+                )
+            with action_col:
+                if st.button(
+                    "Reactivate",
+                    key=f"recipe_repo_reactivate_{recipe_id}",
+                    use_container_width=True,
+                ):
+                    try:
+                        set_recipe_repository_status(
+                            recipe_id,
+                            True,
+                            actor_id=_actor_id(),
+                        )
                         _flash("Recipe reactivated.")
                         st.rerun()
+                    except Exception as exc:
+                        st.error(str(exc))
 
 with add_tab:
     st.subheader("Add Recipe")
     values = recipe_form("new_recipe_repository")
     if st.button("Save Recipe", type="primary", use_container_width=True):
-        if not _clean(values.get("title")):
-            st.error("Recipe title is required.")
-        else:
-            df = load()
-            df.loc[len(df)] = [values.get(column, "") for column in RECIPE_COLUMNS]
-            save(df)
+        try:
+            add_recipe_repository_item(values, actor_id=_actor_id())
             _flash("Recipe saved.")
             st.rerun()
+        except Exception as exc:
+            st.error(str(exc))
 
 render_page_nav(
     "Recipe Repository",

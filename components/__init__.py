@@ -3,6 +3,7 @@
 from components.streamlit_toolbar_cleanup import install_streamlit_toolbar_cleanup
 from components.file_uploader_presentation import install_file_uploader_presentation
 from components.exercise_repository_runtime import install_exercise_repository_runtime
+from components.recipe_repository_runtime import install_recipe_repository_runtime
 from components.login_expiry_recovery import install_login_expiry_recovery
 from components.package_hardening_bootstrap import install_package_hardening
 from components.member_email_bootstrap import install_member_email_notifications
@@ -82,6 +83,7 @@ from components.repository_disclosure_fallback_cleanup import (
 install_streamlit_toolbar_cleanup()
 install_file_uploader_presentation()
 install_exercise_repository_runtime()
+install_recipe_repository_runtime()
 install_login_expiry_recovery()
 install_package_hardening()
 install_member_email_notifications()
