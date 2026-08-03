@@ -1,0 +1,35 @@
+name: Exercise Member Allocation Phase C validation
+
+on:
+  pull_request:
+    paths:
+      - "components/exercise_member_allocation.py"
+      - "pages/42_Admin_Exercise_Member_Allocation.py"
+      - "pages/10_Admin_Dashboard.py"
+      - "tests/test_exercise_member_allocation.py"
+      - "components/member_planning_separation_contract.py"
+      - "components/meal_profile_builder_phase_b.py"
+      - ".github/workflows/exercise-member-allocation-phase-c-validation.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install focused test dependencies
+        run: python -m pip install --upgrade pip pandas
+      - name: Compile Phase C files
+        run: |
+          python -m py_compile \
+            components/exercise_member_allocation.py \
+            pages/42_Admin_Exercise_Member_Allocation.py
+      - name: Run Exercise allocation and separation regressions
+        run: |
+          python -m unittest -v \
+            tests.test_exercise_member_allocation \
+            tests.test_member_planning_separation_contract \
+            tests.test_meal_profile_builder_phase_b
