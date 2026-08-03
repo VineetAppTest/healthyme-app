@@ -39,7 +39,7 @@ class RepositoryExclusiveTabsRuntimeTests(unittest.TestCase):
         self.assertIn("_SUPPRESSED", source)
         self.assertIn('patch("load", empty_recipe_frame)', source)
         self.assertIn('patch("list_exercise_repository"', source)
-        self.assertIn('patch("supplement_repository_counts"', source)
+        self.assertIn('"supplement_repository_counts"', source)
         self.assertIn('patch("list_supplement_repository"', source)
         self.assertIn("return [_NullBlock()", source)
         self.assertIn("return False", source)
@@ -49,6 +49,9 @@ class RepositoryExclusiveTabsRuntimeTests(unittest.TestCase):
         self.assertIn("summary > :not(p):not(:has(p))", source)
         self.assertIn("color:transparent!important", source)
         self.assertIn("margin:.38rem 0 .38rem!important", source)
+        self.assertIn("background:#F8F3E7!important", source)
+        self.assertIn("border-left:3px solid #E3C98E!important", source)
+        self.assertIn("font-size:.80rem!important", source)
         self.assertIn("min-height:58px!important", source)
         self.assertIn("hm-repository-exclusive-switch", source)
 
