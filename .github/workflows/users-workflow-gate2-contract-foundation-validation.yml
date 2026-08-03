@@ -1,0 +1,34 @@
+name: Users and Workflow Gate 2 contract foundation validation
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/20260803152500_users_workflow_gate2_status_contract.sql"
+      - "supabase/migrations/20260803152600_users_workflow_gate2_audit_tables.sql"
+      - "supabase/migrations/20260803152700_users_workflow_gate2_user_contract.sql"
+      - "supabase/migrations/20260803152800_users_workflow_gate2_workflow_contract.sql"
+      - "docs/users_workflow_gate2_contract_foundation_2026-08-03.md"
+      - "tests/test_users_workflow_gate2_contract_foundation.py"
+      - ".github/workflows/users-workflow-gate2-contract-foundation-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile Gate 2 contract tests
+        run: python -m py_compile tests/test_users_workflow_gate2_contract_foundation.py
+
+      - name: Validate Users and Workflow Gate 2 foundation
+        run: python -m unittest tests.test_users_workflow_gate2_contract_foundation -v
