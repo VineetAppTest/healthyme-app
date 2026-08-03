@@ -1,0 +1,62 @@
+name: Identity blocker closure Gate 7 validation
+
+on:
+  pull_request:
+    paths:
+      - "components/identity_projection_observation.py"
+      - "pages/28_Admin_Database_Status.py"
+      - "supabase/migrations/20260803183000_identity_blocker_closure_gate7.sql"
+      - "docs/identity_blocker_closure_gate7_2026-08-03.md"
+      - "docs/evidence/identity_gate7_fallback_closure_evidence_2026-08-03.json"
+      - "tests/test_identity_blocker_closure_gate7.py"
+      - "tests/test_identity_observation_window_gate6.py"
+      - "tests/test_identity_read_observation_gate5a6a.py"
+      - "tests/test_workflow_gate4_write_cutover.py"
+      - "tests/test_users_gate3_write_cutover.py"
+      - "tests/test_users_workflow_target_design_batch2a.py"
+      - "tests/test_users_workflow_authority_trace_batch2.py"
+      - ".github/workflows/identity-blocker-closure-gate7-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile Gate 7 modules and evidence
+        run: |
+          python -m py_compile components/identity_projection_observation.py
+          python -m py_compile pages/28_Admin_Database_Status.py
+          python -m py_compile tests/test_identity_blocker_closure_gate7.py
+          python -m json.tool docs/evidence/identity_gate7_fallback_closure_evidence_2026-08-03.json >/dev/null
+
+      - name: Validate Gate 7 fallback closure
+        run: python -m unittest tests.test_identity_blocker_closure_gate7 -v
+
+      - name: Revalidate Gate 6 observation window
+        run: python -m unittest tests.test_identity_observation_window_gate6 -v
+
+      - name: Revalidate Gate 5A and 6A read observation
+        run: python -m unittest tests.test_identity_read_observation_gate5a6a -v
+
+      - name: Revalidate Workflow Gate 4
+        run: python -m unittest tests.test_workflow_gate4_write_cutover -v
+
+      - name: Revalidate User Gate 3
+        run: python -m unittest tests.test_users_gate3_write_cutover -v
+
+      - name: Revalidate target design
+        run: python -m unittest tests.test_users_workflow_target_design_batch2a -v
+
+      - name: Revalidate authority trace
+        run: python -m unittest tests.test_users_workflow_authority_trace_batch2 -v
