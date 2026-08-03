@@ -39,7 +39,7 @@ class Issue260ProfileBuilderUICleanupTests(unittest.TestCase):
         self.assertIn("render_view_profiles()", self.builder_source)
 
     def test_profile_source_loading_and_workflows_remain(self) -> None:
-        self.assertIn("load_profile_builder_sources()", self.builder_source)
+        self.assertIn("load_profile_builder_phase2_sources()", self.builder_source)
         self.assertIn("render_setup(options)", self.builder_source)
         self.assertIn('render_module("meal", options)', self.builder_source)
         self.assertIn("render_profile_publish_control()", self.builder_source)
