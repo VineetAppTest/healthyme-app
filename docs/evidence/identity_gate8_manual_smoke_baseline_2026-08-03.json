@@ -1,0 +1,83 @@
+{
+  "evidence_date": "2026-08-03",
+  "healthyme_app": {
+    "repository": "VineetAppTest/healthyme-app",
+    "base_revision": "c104a7d654c6302a8c7ac25a3d5559da60e037f6",
+    "migration": "supabase/migrations/20260803184500_identity_manual_smoke_gate8.sql"
+  },
+  "automated_evidence": {
+    "automated_ready": true,
+    "fallback_closure_ready": true,
+    "rollback_projection_ready": true,
+    "canonical_users": 15,
+    "shared_users": 15,
+    "canonical_workflow": 15,
+    "shared_workflow": 15,
+    "projection_healthy": true,
+    "user_mismatches": 0,
+    "workflow_mismatches": 0,
+    "healthy_observation_count": 5,
+    "observation_span_minutes": 63.19,
+    "repair_count": 0
+  },
+  "manual_smoke_baseline": {
+    "persisted_evidence_rows": 0,
+    "passing_bundle_count": 0,
+    "required_bundle_count": 3,
+    "streamlit_admin": "missing",
+    "streamlit_member": "missing",
+    "flutter_member": "missing",
+    "manual_smoke_ready": false
+  },
+  "current_decision": {
+    "ready_for_retirement_decision": false,
+    "projection_retirement_approved": false,
+    "blockers": [
+      "flutter_member_smoke_missing",
+      "streamlit_admin_smoke_missing",
+      "streamlit_member_smoke_missing"
+    ]
+  },
+  "rolled_back_sequential_probe": {
+    "streamlit_admin_record": "pass",
+    "streamlit_member_record": "pass",
+    "flutter_member_record": "pass",
+    "identical_request_replay": "idempotent",
+    "manual_smoke_ready_inside_transaction": true,
+    "ready_for_retirement_decision_inside_transaction": true,
+    "projection_retirement_approved_inside_transaction": false,
+    "rows_inside_transaction": 3,
+    "rows_after_rollback": 0,
+    "transaction_persisted": false
+  },
+  "required_bundles": {
+    "streamlit_admin": [
+      "login",
+      "refresh_persistence",
+      "admin_protected_route",
+      "logout"
+    ],
+    "streamlit_member": [
+      "login",
+      "refresh_persistence",
+      "member_protected_route",
+      "logout"
+    ],
+    "flutter_member": [
+      "login",
+      "dashboard",
+      "laf",
+      "nsp",
+      "submit_for_review"
+    ]
+  },
+  "safety_boundary": {
+    "manual_evidence_seeded": false,
+    "projection_retired": false,
+    "projection_retirement_action_added": false,
+    "streamlit_auth_or_session_changed": false,
+    "flutter_source_changed": false,
+    "business_data_changed": false
+  },
+  "next_action": "Deploy Gate 8 and record genuine signed-in production evidence for all three bundles before considering a separate projection-retirement decision PR."
+}
