@@ -15,6 +15,9 @@ from components.identity_projection_observation import (
     get_identity_projection_snapshot,
     get_identity_observation_window_status,
     get_identity_fallback_closure_status,
+    get_identity_projection_retirement_readiness,
+    identity_smoke_checklist_for_bundle,
+    record_identity_smoke_evidence,
     observe_identity_projection,
 )
 
@@ -217,6 +220,119 @@ st.caption(
 card_end()
 
 card_start()
+st.subheader("Gate 8 retirement-decision evidence")
+readiness_ok, readiness, readiness_msg = get_identity_projection_retirement_readiness(
+    evidence_max_age_hours=72
+)
+if readiness_ok and readiness.get("ready_for_retirement_decision"):
+    st.success(readiness_msg)
+elif readiness_ok:
+    st.warning(readiness_msg)
+else:
+    st.error(readiness_msg)
+
+if readiness_ok:
+    stat_grid([
+        {
+            "label": "Automated Checks",
+            "value": "Pass" if readiness.get("automated_ready") else "Blocked",
+            "note": "Observation and canonical authority",
+        },
+        {
+            "label": "Manual Smokes",
+            "value": f"{readiness.get('passing_bundle_count', 0)}/{readiness.get('required_bundle_count', 3)}",
+            "note": "Recent production bundles",
+        },
+        {
+            "label": "Rollback Projection",
+            "value": "Ready" if readiness.get("rollback_projection_ready") else "Blocked",
+            "note": "Shared projection retained and aligned",
+        },
+        {
+            "label": "Decision Gate",
+            "value": "Ready" if readiness.get("ready_for_retirement_decision") else "Blocked",
+            "note": "Retirement is never automatic",
+        },
+    ])
+    st.json({
+        "ready_for_retirement_decision": readiness.get("ready_for_retirement_decision"),
+        "projection_retirement_approved": readiness.get("projection_retirement_approved"),
+        "manual_smoke_ready": readiness.get("manual_smoke_ready"),
+        "latest_evidence": readiness.get("latest_evidence", {}),
+        "blockers": readiness.get("blockers", []),
+        "rollback_requirements": readiness.get("rollback_requirements", []),
+    })
+else:
+    st.json({"error": readiness_msg})
+
+st.warning(
+    "Record evidence only after completing the real signed-in production checks. "
+    "Static tests, SQL probes and screenshots without an authenticated end-to-end run do not qualify."
+)
+
+bundle_labels = {
+    "Streamlit Admin": "streamlit_admin",
+    "Streamlit Member": "streamlit_member",
+    "Flutter Member": "flutter_member",
+}
+with st.form("identity_gate8_smoke_evidence_form", clear_on_submit=False):
+    selected_label = st.selectbox("Evidence bundle", list(bundle_labels.keys()))
+    selected_bundle = bundle_labels[selected_label]
+    smoke_status = st.selectbox("Result", ["pass", "fail"], format_func=lambda value: value.upper())
+    tested_revision = st.text_input(
+        "Tested revision",
+        help="HealthyMe commit SHA for Streamlit, or Flutter repository commit SHA for the APK.",
+    )
+    build_reference = st.text_input(
+        "Build or deployment reference",
+        help="Production deployment identifier, APK version/hash, or another exact build reference.",
+    )
+    environment = st.selectbox("Environment", ["production", "staging", "test"])
+    evidence_reference = st.text_input(
+        "Evidence reference (optional)",
+        help="Issue comment, secure video reference, test run ID, or approved evidence location. Do not paste credentials.",
+    )
+    notes = st.text_area("Notes (optional)")
+
+    checklist = {}
+    st.markdown("**Mandatory checks**")
+    for step_key, step_label in identity_smoke_checklist_for_bundle(selected_bundle):
+        checklist[step_key] = st.checkbox(
+            step_label,
+            key=f"identity_gate8_{selected_bundle}_{step_key}",
+        )
+
+    confirm_genuine = st.checkbox(
+        "I completed these checks in the selected environment using the referenced build."
+    )
+    submitted = st.form_submit_button(
+        "Record Signed-in Smoke Evidence",
+        type="primary",
+        use_container_width=True,
+        disabled=not confirm_genuine,
+    )
+
+if submitted:
+    ok, _, msg = record_identity_smoke_evidence(
+        evidence_bundle=selected_bundle,
+        status=smoke_status,
+        tested_revision=tested_revision,
+        build_reference=build_reference,
+        environment=environment,
+        checklist=checklist,
+        notes=notes,
+        evidence_reference=evidence_reference,
+        tested_at=datetime.datetime.now(datetime.timezone.utc),
+    )
+    set_system_message(msg, "success" if ok else "error")
+    st.rerun()
+
+st.caption(
+    "A complete Gate 8 result means the system is ready for a separate retirement decision. It never removes the projection and never authorizes a merge by itself."
+)
+card_end()
+
+card_start()
 st.subheader("Backup and non-identity transfer tools")
 st.markdown(
     """
@@ -272,9 +388,9 @@ st.markdown(
     2. Confirm Identity Authority is <b>Canonical</b>.<br>
     3. Confirm Projection is <b>Aligned</b>.<br>
     4. Confirm Gate 7 identity fallback closure is <b>Closed</b>.<br>
-    5. Confirm Admin and Member routes resolve the current role after refresh.<br>
-    6. Confirm Flutter member dashboard, LAF and NSP on an authenticated device.<br>
-    7. Record projection observations across the accepted observation window.
+    5. Confirm the Gate 8 Admin, Member and Flutter evidence bundles are genuine, recent production passes.<br>
+    6. Download and retain the complete database backup before any projection-retirement PR.<br>
+    7. Treat any login, role-route, LAF, NSP or Submit-for-Review regression as an immediate rollback trigger.
     """,
     unsafe_allow_html=True,
 )
