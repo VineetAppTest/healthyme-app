@@ -6,12 +6,15 @@ on:
       - "components/content_repository_store.py"
       - "components/content_repository_migration.py"
       - "components/exercise_repository.py"
+      - "components/supplement_repository.py"
       - "supabase/migrations/*content_repository*.sql"
       - "tests/test_content_repository_standardization.py"
       - "tests/test_content_repository_privilege_hardening.py"
       - "tests/test_content_repository_controlled_backfill.py"
       - "tests/test_exercise_repository_canonical_cutover.py"
       - "tests/test_exercise_journal_repository_fix_contract.py"
+      - "tests/test_supplement_repository_canonical_cutover.py"
+      - "tests/test_supplement_repository_separation.py"
       - "docs/content_repository_standardization.md"
       - "docs/content_repository_source_inventory_2026-08-03.md"
       - ".github/workflows/content-repository-standardization-validation.yml"
@@ -39,17 +42,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Compile repository foundation and Exercise cutover
+      - name: Compile repository foundation and live cutovers
         run: |
           python -m py_compile \
             components/content_repository_store.py \
             components/content_repository_migration.py \
             components/exercise_repository.py \
+            components/supplement_repository.py \
             tests/test_content_repository_standardization.py \
             tests/test_content_repository_privilege_hardening.py \
             tests/test_content_repository_controlled_backfill.py \
             tests/test_exercise_repository_canonical_cutover.py \
-            tests/test_exercise_journal_repository_fix_contract.py
+            tests/test_exercise_journal_repository_fix_contract.py \
+            tests/test_supplement_repository_canonical_cutover.py \
+            tests/test_supplement_repository_separation.py
 
       - name: Run repository foundation tests
         run: |
@@ -61,3 +67,8 @@ jobs:
         run: |
           python -m unittest tests.test_exercise_repository_canonical_cutover -v
           python -m unittest tests.test_exercise_journal_repository_fix_contract -v
+
+      - name: Run Supplement canonical cutover tests
+        run: |
+          python -m unittest tests.test_supplement_repository_canonical_cutover -v
+          python -m unittest tests.test_supplement_repository_separation -v
