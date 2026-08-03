@@ -10,6 +10,7 @@ SUPPLEMENT_PAGE = ROOT / "pages" / "39_Admin_Supplement_Manager.py"
 PROFILE_PAGE = ROOT / "pages" / "38_Admin_Recommendation_Profile_Builder.py"
 REPOSITORY = ROOT / "components" / "supplement_repository.py"
 SOURCE_BRIDGE = ROOT / "components" / "supplement_repository_source.py"
+MEAL_WRITE_BOUNDARY = ROOT / "components" / "meal_profile_builder_write_boundary.py"
 
 
 def _text(path: Path) -> str:
@@ -18,7 +19,13 @@ def _text(path: Path) -> str:
 
 class SupplementRepositorySeparationTests(unittest.TestCase):
     def test_changed_python_files_compile(self):
-        for path in [SUPPLEMENT_PAGE, PROFILE_PAGE, REPOSITORY, SOURCE_BRIDGE]:
+        for path in [
+            SUPPLEMENT_PAGE,
+            PROFILE_PAGE,
+            REPOSITORY,
+            SOURCE_BRIDGE,
+            MEAL_WRITE_BOUNDARY,
+        ]:
             ast.parse(_text(path), filename=str(path))
 
     def test_supplement_manager_is_repository_only(self):
@@ -95,11 +102,15 @@ class SupplementRepositorySeparationTests(unittest.TestCase):
         self.assertIn('legacy_reference=canonical.get("legacy_reference") or ""', text)
         self.assertIn("_clear_streamlit_data_cache", text)
 
-    def test_profile_builder_installs_repository_source_before_modular_import(self):
-        text = _text(PROFILE_PAGE)
-        install_at = text.index("install_profile_builder_supplement_repository_source()")
-        modular_import_at = text.index("from components.profile_builder_modular import")
+    def test_meal_builder_excludes_supplement_source_and_installs_boundary_first(self):
+        page = _text(PROFILE_PAGE)
+        boundary = _text(MEAL_WRITE_BOUNDARY)
+        self.assertNotIn("install_profile_builder_supplement_repository_source", page)
+        install_at = page.index("install_meal_profile_builder_write_boundary()")
+        modular_import_at = page.index("from components.profile_builder_modular import")
         self.assertLess(install_at, modular_import_at)
+        self.assertIn("Meal Profile Builder can save Meal rows only", boundary)
+        self.assertIn("Exercise and Supplement allocation", boundary)
 
     def test_source_bridge_does_not_change_global_member_regimen_helpers(self):
         text = _text(SOURCE_BRIDGE)
