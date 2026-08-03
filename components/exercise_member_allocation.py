@@ -192,6 +192,8 @@ def save_exercise_member_allocation(
         if existing_index is not None
         else {}
     )
+    if clean_allocation_id and existing_index is None:
+        raise ValueError("Exercise allocation was not found.")
 
     if existing:
         existing_source_id = _clean(existing.get("source_id"))
@@ -208,6 +210,12 @@ def save_exercise_member_allocation(
     if not source:
         raise ValueError("Exercise repository source was not found.")
 
+    display_title = (
+        _clean((existing.get("source_snapshot") or {}).get("title"))
+        or _clean(existing.get("exercise_name"))
+        or _clean(source.get("title"))
+        or "Exercise"
+    )
     now = _now_iso()
     saved = {
         **existing,
@@ -216,8 +224,8 @@ def save_exercise_member_allocation(
         "source_type": SOURCE_TYPE,
         "source_id": source_ref["source_id"],
         "exercise_id": source_ref["source_id"],
-        "exercise_name": _clean(source.get("title")) or "Exercise",
-        "title": _clean(source.get("title")) or "Exercise",
+        "exercise_name": display_title,
+        "title": display_title,
         "start_date": start,
         "end_date": end,
         "instructions": _clean(instructions),
