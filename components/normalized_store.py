@@ -183,6 +183,37 @@ def _values_equal(field: str, desired: Any, existing: Any) -> bool:
     return str(desired or "") == str(existing or "")
 
 
+def _merge_canonical_users(
+    shared_users: List[Dict[str, Any]], canonical_users: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Preserve shared-only User metadata while canonical fields win."""
+    shared_by_id = {
+        str(row.get("id", "") or ""): dict(row)
+        for row in shared_users or []
+        if str(row.get("id", "") or "")
+    }
+    merged: List[Dict[str, Any]] = []
+    for canonical in canonical_users or []:
+        user_id = str(canonical.get("id", "") or "")
+        row = dict(shared_by_id.get(user_id, {}))
+        row.update(canonical)
+        merged.append(row)
+    return merged
+
+
+def _merge_canonical_workflow(
+    shared_workflow: Dict[str, Dict[str, Any]],
+    canonical_workflow: Dict[str, Dict[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
+    """Preserve shared-only Workflow fields while canonical lifecycle fields win."""
+    merged: Dict[str, Dict[str, Any]] = {}
+    for user_id, canonical in (canonical_workflow or {}).items():
+        row = dict((shared_workflow or {}).get(user_id, {}) or {})
+        row.update(canonical)
+        merged[str(user_id)] = _workflow_base(row)
+    return merged
+
+
 def _changed_user_entries(client: Any, db: Dict[str, Any]) -> List[Dict[str, Any]]:
     response = client.table("hm_users").select("*").execute()
     canonical = {
@@ -382,10 +413,19 @@ def load_users_workflow_from_normalized() -> Tuple[bool, List[dict], Dict[str, d
         c = _client()
         users_res = c.table("hm_users").select("*").execute()
         wf_res = c.table("hm_workflow").select("*").execute()
+        state_res = (
+            c.table("healthyme_app_state")
+            .select("data")
+            .eq("id", APP_STATE_ID)
+            .limit(1)
+            .execute()
+        )
+        state_rows = getattr(state_res, "data", None) or []
+        shared_state = state_rows[0].get("data") or {} if state_rows else {}
 
-        users = []
+        canonical_users = []
         for row in users_res.data or []:
-            users.append(
+            canonical_users.append(
                 {
                     "id": row.get("id"),
                     "name": row.get("name", ""),
@@ -398,11 +438,11 @@ def load_users_workflow_from_normalized() -> Tuple[bool, List[dict], Dict[str, d
                 }
             )
 
-        workflow = {}
+        canonical_workflow = {}
         for row in wf_res.data or []:
             uid = row.get("user_id")
             if uid:
-                workflow[uid] = _workflow_base(
+                canonical_workflow[uid] = _workflow_base(
                     {
                         "laf_completed": bool(row.get("laf_completed", False)),
                         "nsp1_completed": bool(row.get("nsp1_completed", False)),
@@ -413,7 +453,16 @@ def load_users_workflow_from_normalized() -> Tuple[bool, List[dict], Dict[str, d
                         "workflow_status": row.get("workflow_status", "not_started"),
                     }
                 )
-        return True, users, workflow, "Loaded users/workflow from normalized tables."
+
+        users = _merge_canonical_users(
+            list(shared_state.get("users", []) or []),
+            canonical_users,
+        )
+        workflow = _merge_canonical_workflow(
+            dict(shared_state.get("workflow", {}) or {}),
+            canonical_workflow,
+        )
+        return True, users, workflow, "Loaded canonical users/workflow while preserving shared-only projection fields."
     except Exception as exc:
         return False, [], {}, f"Could not load normalized users/workflow: {exc}"
 
