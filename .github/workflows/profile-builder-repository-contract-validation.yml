@@ -5,6 +5,7 @@ on:
     paths:
       - 'components/profile_builder_repository_contract.py'
       - 'components/recommendation_contract.py'
+      - 'components/recipe_repository.py'
       - 'components/exercise_repository.py'
       - 'components/supplement_repository.py'
       - 'tests/test_profile_builder_repository_contract.py'
@@ -32,6 +33,7 @@ jobs:
       - name: Compile canonical contract and focused tests
         run: |
           python -m py_compile \
+            components/recipe_repository.py \
             components/profile_builder_repository_contract.py \
             tests/test_profile_builder_repository_contract.py
 
