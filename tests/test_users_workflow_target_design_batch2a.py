@@ -68,7 +68,7 @@ class UsersWorkflowTargetDesignBatch2ATests(unittest.TestCase):
             "falls back to shared-state Workflow",
             "updates shared-state Workflow during LAF saves",
             "preserve canonical direct reads",
-            "remove shared Workflow fallback after coverage gate",
+            "Remove the shared-state Workflow fallback from `hm_flutter_get_laf()` only after",
         ):
             self.assertIn(required, source)
 
