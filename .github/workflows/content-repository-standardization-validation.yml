@@ -23,6 +23,7 @@ on:
       - "tests/test_supplement_repository_canonical_cutover.py"
       - "tests/test_supplement_repository_separation.py"
       - "tests/test_content_repository_legacy_retirement.py"
+      - "tests/test_recommendation_contract_legacy_csv_cleanup.py"
       - "docs/content_repository_standardization.md"
       - "docs/content_repository_source_inventory_2026-08-03.md"
       - "docs/content_repository_legacy_retirement_2026-08-03.md"
@@ -71,7 +72,8 @@ jobs:
             tests/test_exercise_journal_repository_fix_contract.py \
             tests/test_supplement_repository_canonical_cutover.py \
             tests/test_supplement_repository_separation.py \
-            tests/test_content_repository_legacy_retirement.py
+            tests/test_content_repository_legacy_retirement.py \
+            tests/test_recommendation_contract_legacy_csv_cleanup.py
 
       - name: Run repository foundation tests
         run: |
@@ -92,5 +94,7 @@ jobs:
           python -m unittest tests.test_supplement_repository_canonical_cutover -v
           python -m unittest tests.test_supplement_repository_separation -v
 
-      - name: Run legacy authority retirement guard
-        run: python -m unittest tests.test_content_repository_legacy_retirement -v
+      - name: Run legacy authority retirement guards
+        run: |
+          python -m unittest tests.test_content_repository_legacy_retirement -v
+          python -m unittest tests.test_recommendation_contract_legacy_csv_cleanup -v
