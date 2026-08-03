@@ -191,3 +191,5 @@ def test_page_boundary_is_exercise_only():
     assert "recommendation_shares" not in page
     assert "member_supplements" not in page
     assert "save_unified_recommendation_share" not in page
+    assert "_clear_add_form(member_id)" in page
+    assert "st.session_state.pop" in page
