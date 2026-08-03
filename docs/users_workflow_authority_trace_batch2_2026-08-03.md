@@ -124,9 +124,19 @@ All these operations currently mutate the shared object and depend on `save_stat
 
 `components/normalized_store.py` provides `find_user_by_email_fast()` for a direct `hm_users` login-time lookup. Its contract explicitly allows the caller to fall back when the normalized lookup fails.
 
+`components/admin_role_model.py` performs service-role `hm_users` lookups by `auth_user_id` and email for Admin/native role resolution. It can fall back to the normalized fast-user result and is therefore part of the login and routing authority boundary.
+
 `app.py` uses Streamlit native identity through `st.user` and routes through the native authorization bridge. The accepted Streamlit route behaviour must remain unchanged during this audit.
 
 `native_bridge/root_authorization_ui.py` and `native_bridge/root_authorization_ui_h13r7e.py` provide the accepted Supabase-backed authorization UI and native identity handoff. They must not be altered by a Users/Workflow storage cutover.
+
+## Durable and legacy session handling
+
+`components/supabase_durable_session_store.py` is the direct adapter for `hm_streamlit_auth_sessions`. It owns the dedicated session table name and service-side durable-session operations.
+
+`components/db.py` separately creates, resolves and deactivates shared-state `login_sessions`.
+
+The shared-state `auth_sessions` collection is a third historical session representation. Session migration scopes must remain independent from Users and Workflow authority work.
 
 ## Flutter member boundary
 
@@ -152,6 +162,51 @@ All three dedicated tables have RLS enabled.
 - `hm_streamlit_auth_sessions` has forced RLS and no ordinary table policy; service-side session handling is expected.
 
 Multiple legacy/member RPCs reference `hm_users` or `hm_workflow`. Some older functions still have broader `anon` execution grants. This trace records the condition but does not change grants because permission hardening must be separated from authority migration and tested against the live Flutter build.
+
+## Complete classified runtime source map
+
+The repository-wide guard scans runtime Python for direct references to dedicated identity/workflow/session tables and shared Users, Workflow or session collections. Every discovered source is classified below.
+
+### Core authority and routing
+
+- `components/storage_backend.py` — shared-state load/save, dedicated overlay, full normalized sync and local fallback.
+- `components/normalized_store.py` — direct `hm_users`/`hm_workflow` adapter, bulk sync and fast login lookup.
+- `components/db.py` — compatibility User/Workflow business writes and shared `login_sessions`.
+- `components/admin_role_model.py` — direct `hm_users` role resolution by Auth identity or email.
+- `components/supabase_durable_session_store.py` — direct `hm_streamlit_auth_sessions` adapter.
+- `app.py` — accepted Streamlit native identity and role routing.
+- `native_bridge/root_authorization_ui.py` — accepted authorization UI bridge.
+- `native_bridge/root_authorization_ui_h13r7e.py` — accepted production authorization UI bridge.
+
+### Assessment and workflow lifecycle
+
+- `components/assessment_instances.py` — reads shared Users for member context and writes shared Workflow during assessment-instance lifecycle changes.
+- `pages/03_LAF_Form.py` — reads the current User from the overlaid shared-state API for LAF context.
+- `pages/12_Partial_Assessment_Report.py` — reads Users for partial-report member context.
+- `pages/14_Final_Assessment_Report.py` — reads Users for final-report member context.
+
+### Reporting, recommendations, email and scheduling
+
+- `components/member_email.py` — reads Users to resolve member email delivery targets.
+- `components/recommendation_contract.py` — reads Users while building member recommendation contracts and diagnostics.
+- `components/recommendation_profile_store.py` — directly reads active members from `hm_users` for Profile Builder assignment options; it currently has a mock fallback when that read fails.
+- `components/report_engine.py` — reads shared Users and Workflow to generate report context and status.
+- `components/schedule_timezone.py` — reads Users for member identity, labels and timezone-aware schedule presentation.
+
+### Supabase Auth lifecycle and provisioning
+
+- `components/supabase_auth_lifecycle_h10.py` — reads `hm_users` for Auth linkage lifecycle, duplicate-email and cutover diagnostics.
+- `components/supabase_provisioning.py` — reads shared Users, reads `hm_users`, and can update `hm_users.auth_user_id` during provisioning/linking.
+- `components/supabase_provisioning_h6.py` — earlier provisioning/readiness implementation that reads shared Users and directly reads/updates `hm_users` Auth linkage.
+- `pages/33_Admin_Supabase_Auth_Pilot_Readiness.py` — displays `hm_users` and `hm_workflow` RLS readiness.
+- `pages/34_Admin_Supabase_Auth_Provisioning_Workbench.py` — Admin UI for the provisioning contract and `hm_users` linkage updates.
+- `pages/35_Admin_Supabase_Auth_Cutover_Readiness.py` — Admin cutover diagnostics for email, `auth_user_id`, active state and duplicates.
+
+### Admin data and operational utilities
+
+- `pages/17_Admin_User_Manager.py` — directly reads the overlaid shared Users collection for duplicate checks and User management display; writes flow through `components/db.py`.
+- `pages/28_Admin_Database_Status.py` — exposes the current manual action that synchronises shared Users/Workflow into `hm_users`/`hm_workflow`.
+- `pages/29_Admin_Demo_Mode.py` — directly creates demo Users and mutates Workflow in shared state before `save_db()` dual-write.
 
 ## Critical divergence risks
 
@@ -187,20 +242,13 @@ Both `components/db.py` and `components/normalized_store.py` derive `workflow_st
 
 `hm_streamlit_auth_sessions`, shared `auth_sessions` and shared `login_sessions` have different token, expiry and revocation semantics. Users/Workflow cutover must not silently retire or reinterpret any session store.
 
-## Classified HealthyMe runtime sources
+### 9. Direct dedicated reads have different fallback rules
 
-The repository-wide contract test requires every runtime Python source that directly mentions the dedicated identity/workflow tables or shared Users/Workflow/session collections to be classified in this document.
+Admin role resolution, Profile Builder member options, Auth lifecycle diagnostics and Flutter member loading do not all share one fail-closed/fallback policy. A future authority design must classify which reads are security-critical and which may degrade safely.
 
-Initial classified sources:
+### 10. Provisioning can write one authority directly
 
-- `components/storage_backend.py` — shared-state load/save, normalized overlay, normalized sync and local fallback;
-- `components/normalized_store.py` — dedicated User/Workflow reads, full sync and fast email lookup;
-- `components/db.py` — compatibility User, Workflow and `login_sessions` business API;
-- `app.py` — accepted native Streamlit identity and role routing;
-- `native_bridge/root_authorization_ui.py` — accepted authorization UI bridge;
-- `native_bridge/root_authorization_ui_h13r7e.py` — accepted production authorization UI bridge.
-
-Any additional source discovered by CI must be added here with its purpose before this trace is accepted.
+The provisioning components can update `hm_users.auth_user_id` without updating the shared Users copy because that field does not exist in the legacy shared schema. This is a justified dedicated-only field, but it makes a naive record-level parity rule incorrect.
 
 ## Controlled next decision after this trace
 
