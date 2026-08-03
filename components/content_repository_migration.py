@@ -23,7 +23,9 @@ from components.content_repository_store import (
 
 
 BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
-LEGACY_RECIPE_PATH = BASE_DIR / "data" / "recipes.csv"
+LEGACY_RECIPE_PATH = (
+    BASE_DIR / "docs" / "archive" / "content_repository_legacy" / "recipes.csv"
+)
 
 
 def _recipe_rows(path: pathlib.Path = LEGACY_RECIPE_PATH) -> List[dict]:
