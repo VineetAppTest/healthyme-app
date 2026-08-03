@@ -4,11 +4,11 @@ import copy
 from typing import Any, Iterable
 
 
-CONTRACT_VERSION = "2026-08-04-acceptance-v1"
+CONTRACT_VERSION = "2026-08-04-member-plan-builder-rebuild-v1"
 MEAL_EDITABLE_ITEM_TYPES = ("meal",)
 LEGACY_READ_ONLY_ITEM_TYPES = ("exercise", "supplement")
 ALLOCATION_WORKSPACE_SECTION = "Allocate Exercise & Supplement"
-VIEW_PROFILES_SECTION = "View Profiles"
+VIEW_PROFILES_SECTION = "View Member Plan"
 MEAL_PROFILE_BUILDER_SECTIONS = (
     "Profile Setup",
     "Meal Structure",
@@ -29,7 +29,9 @@ def is_legacy_read_only_type(item_type: object) -> bool:
     return _clean(item_type) in LEGACY_READ_ONLY_ITEM_TYPES
 
 
-def split_profile_items(items: Iterable[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+def split_profile_items(
+    items: Iterable[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
     """Classify loaded rows without mutating historical profile content."""
     output = {
         "meal": [],
@@ -58,21 +60,24 @@ def meal_profile_builder_manifest() -> dict[str, Any]:
         "legacy_read_only_item_types": list(LEGACY_READ_ONLY_ITEM_TYPES),
         "visible_sections": list(MEAL_PROFILE_BUILDER_SECTIONS),
         "route": "pages/38_Admin_Recommendation_Profile_Builder.py",
-        "write_rule": "only meal rows may be replaced from Meal Profile Builder",
+        "write_rule": "only meal rows may be replaced from Member Plan Builder",
         "history_rule": (
-            "existing Exercise and Supplement rows remain readable and publishable; "
-            "Setup and Meal saves must not rewrite or delete them"
+            "existing Profile Builder Exercise and Supplement rows remain readable; "
+            "new Exercise and Supplement writes remain in their independent allocation stores"
         ),
         "navigation_rule": (
-            "Preview and Publish render inside Meal Structure; Exercise and Supplement "
-            "allocation launch from one compact workspace while retaining independent stores"
+            "Setup auto-loads the selected plan and supports complete Meal Plan cloning; "
+            "Meals use fixed seven-day slots with inline repository portion guidance, "
+            "Save renders the tabular review, Publish activates the current saved Draft, "
+            "Exercise and Supplement render on one compact page, and View Member Plan "
+            "retains the existing read-only view with an Excel download"
         ),
         "allocation_routes": [
             "pages/42_Admin_Exercise_Member_Allocation.py",
             "pages/43_Admin_Supplement_Member_Allocation.py",
         ],
         "next_workflows": [
-            "production_acceptance",
-            "flutter_after_production_acceptance",
+            "authenticated_streamlit_acceptance",
+            "flutter_after_streamlit_acceptance",
         ],
     }
