@@ -98,17 +98,6 @@ def _repo_lookup(resource_type: str) -> dict[str, dict[str, Any]]:
     return {str(row.get("id")): row for row in list_repository_items(resource_type, active_only=False)}
 
 
-def sync_repository_to_state(resource_type: str) -> list[dict[str, Any]]:
-    """Return a read-only canonical snapshot for legacy callers."""
-    return list_repository_items(resource_type, active_only=False)
-
-
-def sync_all_repositories_to_state() -> dict[str, int]:
-    recipes = sync_repository_to_state("recipes")
-    exercises = sync_repository_to_state("exercises")
-    return {"recipes": len(recipes), "exercises": len(exercises)}
-
-
 def _member_lookup(db: dict[str, Any], member_id: str) -> dict[str, Any]:
     member_id = str(member_id or "").strip()
     for user in db.get("users", []) or []:
@@ -361,7 +350,6 @@ def _enrich_exercise_plan(member_id: str, payload: dict[str, Any]) -> list[dict[
 
 
 def enrich_recommendation_share_payload(member_id: str, payload: dict[str, Any], actor_id: str = "admin") -> dict[str, Any]:
-    sync_all_repositories_to_state()
     out = _json_safe(dict(payload or {}))
     out["member_id"] = str(member_id)
     out["meal_plan"] = _enrich_meal_plan(str(member_id), out)
@@ -466,8 +454,8 @@ def get_latest_unified_recommendation_share(member_id: str, include_draft: bool 
 
 def recommendation_contract_diagnostics(member_id: str | None = None) -> dict[str, Any]:
     db = load_state()
-    recipe_repo = list(db.get("recipes", []) or [])
-    exercise_repo = list(db.get("exercises", []) or [])
+    recipe_repo = list_recipe_repository(active_only=False)
+    exercise_repo = list_exercise_repository(active_only=False)
     result: dict[str, Any] = {
         "recipes_repository_count": len(recipe_repo),
         "exercises_repository_count": len(exercise_repo),
@@ -501,7 +489,7 @@ def recommendation_contract_diagnostics(member_id: str | None = None) -> dict[st
             if not exercise_real:
                 result["issues"].append(f"{mid}: published share {share.get('id', '')} has no real exercise item")
     if not recipe_repo:
-        result["issues"].append("recipes repository mirror is empty")
+        result["issues"].append("canonical Recipe repository is empty")
     if not exercise_repo:
-        result["issues"].append("exercises repository mirror is empty")
+        result["issues"].append("canonical Exercise repository is empty")
     return result
