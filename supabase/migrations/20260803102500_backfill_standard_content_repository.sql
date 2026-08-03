@@ -1,11 +1,7 @@
 -- Controlled backfill for HealthyMe standard Content Repository.
 --
--- Preconditions:
---   * the canonical destination is empty;
---   * the live Exercise and Supplement JSON authorities exactly match the
---     revalidated source snapshot;
---   * Recipe source checksum remains
---     a61af93dec4052ed2b3c8160657be594e5bab68a8e63b554fbd6eb745edce48f.
+-- This migration inserts the frozen 2 Recipe, 3 Exercise and 5 Supplement
+-- definitions into the canonical repository without switching any live page.
 --
 -- Corrected canonical checksums (legacy_reference included for all sources):
 --   Recipe:     a61af93dec4052ed2b3c8160657be594e5bab68a8e63b554fbd6eb745edce48f
@@ -13,18 +9,20 @@
 --   Supplement: 4bb7bcb320b0cb1c83981d38531f14db9c020b0a61b1d74b3765f0b09865bf96
 --   Total:      52ac68b76032cfdacba2686cf85c7d3b4d954f8d54589ba67890a0af11c40f5e
 --
--- No legacy source row is updated or deleted by this migration.
+-- Frozen raw app-state hashes:
+--   Exercise:   fdd4b6945284c46dadcf60b4000a02f2e75daf31efd10b55358cfa4813fa65e0
+--   Supplement: dd25cd82f88ad07afdea2e91cfc80f9ccaca60598566fcc34d9697036408790c
+--
+-- No legacy source row is updated or deleted.
 
 do $backfill_precheck$
 declare
     current_exercises jsonb;
     current_supplements jsonb;
-    expected_exercises constant jsonb :=
-        $exercise_source$[{"id":"0","title":"Brisk Walking","source":"exercise_repository","status":"active","benefits":"","category":"Cardio","equipment":"","goal_tags":"general","image_url":"","source_id":"0","created_at":"","created_by":"","difficulty":"Beginner","image_path":"","updated_at":"","updated_by":"","description":"Easy cardio starter","image_bucket":"","instructions":"Walk at brisk pace","resource_type":"exercises","condition_tags":"general","duration_or_reps":"20 min","image_access_type":"public","hidden_calories_v96":""},{"id":"1","title":"Cat-Cow Stretch","source":"exercise_repository","status":"active","benefits":"","category":"Mobility","equipment":"","goal_tags":"general","image_url":"","source_id":"1","created_at":"","created_by":"","difficulty":"Beginner","image_path":"","updated_at":"","updated_by":"","description":"Gentle spine mobility","image_bucket":"","instructions":"Move slowly with breath","resource_type":"exercises","condition_tags":"general","duration_or_reps":"10 reps","image_access_type":"public","hidden_calories_v96":""},{"id":"2","title":"Stretches","source":"exercise_repository","status":"active","benefits":"","category":"","equipment":"NA","goal_tags":"","image_url":"","source_id":"2","created_at":"2026-08-02T13:30:35.827878+00:00","created_by":"admin_vineet","difficulty":"","image_path":"","updated_at":"2026-08-02T13:30:35.827878+00:00","updated_by":"admin_vineet","description":"","image_bucket":"","instructions":"","resource_type":"exercises","condition_tags":"","duration_or_reps":"Morning","image_access_type":"public","hidden_calories_v96":""}]$exercise_source$::jsonb;
-    expected_supplements constant jsonb :=
-        $supplement_source$[{"id":"suprepo_4b3c1e53","title":"Sodium","dosage":"200","source":"legacy_member_regimen_backfill","status":"Active","timing":"Morning, Evening","frequency":"Twice","source_id":"suprepo_4b3c1e53","created_at":"2026-08-01T19:13:24","created_by":"system","updated_at":"2026-08-01T19:13:24","updated_by":"system","admin_notes":"","instructions":"","supplement_name":"Sodium","legacy_source_id":"b49d1267"},{"id":"suprepo_2ceffd32","title":"Omega-3","dosage":"1000-1700mg","source":"legacy_member_regimen_backfill","status":"Active","timing":"Morning","frequency":"Once","source_id":"suprepo_2ceffd32","created_at":"2026-08-01T19:13:24","created_by":"system","updated_at":"2026-08-01T19:13:24","updated_by":"system","admin_notes":"","instructions":"","supplement_name":"Omega-3","legacy_source_id":"a130bcda"},{"id":"suprepo_e36aa236","title":"Magnesium","dosage":"400","source":"legacy_member_regimen_backfill","status":"Active","timing":"Morning","frequency":"Once","source_id":"suprepo_e36aa236","created_at":"2026-08-01T19:13:24","created_by":"system","updated_at":"2026-08-01T19:13:24","updated_by":"system","admin_notes":"","instructions":"Test","supplement_name":"Magnesium","legacy_source_id":"5e8182e8"},{"id":"suprepo_c88d2def","title":"Magnesium Test","dosage":"400","source":"legacy_member_regimen_backfill","status":"Active","timing":"Morning","frequency":"once","source_id":"suprepo_c88d2def","created_at":"2026-08-01T19:13:24","created_by":"system","updated_at":"2026-08-01T19:13:24","updated_by":"system","admin_notes":"Test","instructions":"Test","supplement_name":"Magnesium Test","legacy_source_id":"d1575c71"},{"id":"suprepo_f687a40a","title":"Potassium","dosage":"100","source":"legacy_member_regimen_backfill","status":"Active","timing":"Morning, Evening, Before Bed, None","frequency":"thrice","source_id":"suprepo_f687a40a","created_at":"2026-08-01T19:13:24","created_by":"system","updated_at":"2026-08-01T19:13:24","updated_by":"system","admin_notes":"","instructions":"Test","supplement_name":"Potassium","legacy_source_id":"9afc6016"}]$supplement_source$::jsonb;
     destination_items integer;
     destination_events integer;
+    exercise_hash text;
+    supplement_hash text;
 begin
     select count(*) into destination_items
       from public.hm_content_repository_items;
@@ -38,19 +36,42 @@ begin
             destination_events;
     end if;
 
-    select data -> 'exercises',
-           data -> 'supplement_repository'
-      into current_exercises,
-           current_supplements
+    select
+        data -> 'exercises',
+        data -> 'supplement_repository'
+      into
+        current_exercises,
+        current_supplements
       from public.healthyme_app_state
-     where id = 'healthyme_app_state_v1';
+     where id = 'healthyme_app_state_v1'
+       for share;
 
-    if current_exercises is distinct from expected_exercises then
+    if current_exercises is null or current_supplements is null then
+        raise exception
+            'Content Repository backfill refused: legacy app-state sources are missing.';
+    end if;
+
+    if jsonb_array_length(current_exercises) <> 3
+       or jsonb_array_length(current_supplements) <> 5 then
+        raise exception
+            'Content Repository backfill refused: source counts changed after inventory.';
+    end if;
+
+    exercise_hash := encode(
+        digest(convert_to(current_exercises::text, 'UTF8'), 'sha256'),
+        'hex'
+    );
+    supplement_hash := encode(
+        digest(convert_to(current_supplements::text, 'UTF8'), 'sha256'),
+        'hex'
+    );
+
+    if exercise_hash <> 'fdd4b6945284c46dadcf60b4000a02f2e75daf31efd10b55358cfa4813fa65e0' then
         raise exception
             'Content Repository backfill refused: Exercise source changed after inventory.';
     end if;
 
-    if current_supplements is distinct from expected_supplements then
+    if supplement_hash <> 'dd25cd82f88ad07afdea2e91cfc80f9ccaca60598566fcc34d9697036408790c' then
         raise exception
             'Content Repository backfill refused: Supplement source changed after inventory.';
     end if;
@@ -72,6 +93,7 @@ create temporary table hm_content_repository_backfill_expected (
     primary key (repository_type, source_id)
 ) on commit drop;
 
+-- Recipe remains file-backed at this point, so its two frozen rows are explicit.
 insert into hm_content_repository_backfill_expected (
     repository_type,
     source_id,
@@ -85,16 +107,228 @@ insert into hm_content_repository_backfill_expected (
     updated_at,
     updated_by
 ) values
-    ('recipe', '0', 'Moong Chilla', 'active', $json_recipe_0${"title":"Moong Chilla","description":"High-protein Indian breakfast","meal_type":"Breakfast","diet_type":"Vegetarian","goal_tags":"weight_loss;general","condition_tags":"general","prep_time":"15","calories":"","servings":"","portion_size":"","image_url":"","image_bucket":"","image_path":"","image_access_type":"public","ingredients":"Moong dal batter, spices","steps":"Cook batter on tawa","nutrition":""}$json_recipe_0$::jsonb, 'recipe_csv', 'data/recipes.csv:0', clock_timestamp(), 'system:content_repository_backfill', clock_timestamp(), 'system:content_repository_backfill'),
-    ('recipe', '1', 'Paneer Salad', 'active', $json_recipe_1${"title":"Paneer Salad","description":"Quick protein lunch","meal_type":"Lunch","diet_type":"Vegetarian","goal_tags":"muscle_gain;general","condition_tags":"general","prep_time":"10","calories":"","servings":"","portion_size":"","image_url":"","image_bucket":"","image_path":"","image_access_type":"public","ingredients":"Paneer, veggies","steps":"Mix and serve","nutrition":""}$json_recipe_1$::jsonb, 'recipe_csv', 'data/recipes.csv:1', clock_timestamp(), 'system:content_repository_backfill', clock_timestamp(), 'system:content_repository_backfill'),
-    ('exercise', '0', 'Brisk Walking', 'active', $json_exercise_0${"title":"Brisk Walking","benefits":"","category":"Cardio","equipment":"","goal_tags":"general","image_url":"","difficulty":"Beginner","image_path":"","description":"Easy cardio starter","image_bucket":"","instructions":"Walk at brisk pace","condition_tags":"general","duration_or_reps":"20 min","image_access_type":"public","hidden_calories_v96":""}$json_exercise_0$::jsonb, 'exercise_repository', 'healthyme_app_state.data.exercises:0', clock_timestamp(), 'system:content_repository_backfill', clock_timestamp(), 'system:content_repository_backfill'),
-    ('exercise', '1', 'Cat-Cow Stretch', 'active', $json_exercise_1${"title":"Cat-Cow Stretch","benefits":"","category":"Mobility","equipment":"","goal_tags":"general","image_url":"","difficulty":"Beginner","image_path":"","description":"Gentle spine mobility","image_bucket":"","instructions":"Move slowly with breath","condition_tags":"general","duration_or_reps":"10 reps","image_access_type":"public","hidden_calories_v96":""}$json_exercise_1$::jsonb, 'exercise_repository', 'healthyme_app_state.data.exercises:1', clock_timestamp(), 'system:content_repository_backfill', clock_timestamp(), 'system:content_repository_backfill'),
-    ('exercise', '2', 'Stretches', 'active', $json_exercise_2${"title":"Stretches","benefits":"","category":"","equipment":"NA","goal_tags":"","image_url":"","difficulty":"","image_path":"","description":"","image_bucket":"","instructions":"","condition_tags":"","duration_or_reps":"Morning","image_access_type":"public","hidden_calories_v96":""}$json_exercise_2$::jsonb, 'exercise_repository', 'healthyme_app_state.data.exercises:2', '2026-08-02T13:30:35.827878+00:00'::timestamptz, 'admin_vineet', '2026-08-02T13:30:35.827878+00:00'::timestamptz, 'system:content_repository_backfill'),
-    ('supplement', 'suprepo_4b3c1e53', 'Sodium', 'active', $json_supplement_suprepo_4b3c1e53${"title":"Sodium","dosage":"200","timing":"Morning, Evening","frequency":"Twice","admin_notes":"","instructions":"","supplement_name":"Sodium","legacy_source_id":"b49d1267"}$json_supplement_suprepo_4b3c1e53$::jsonb, 'legacy_member_regimen_backfill', 'healthyme_app_state.data.supplement_repository:0', '2026-08-01T19:13:24+00:00'::timestamptz, 'system', '2026-08-01T19:13:24+00:00'::timestamptz, 'system:content_repository_backfill'),
-    ('supplement', 'suprepo_2ceffd32', 'Omega-3', 'active', $json_supplement_suprepo_2ceffd32${"title":"Omega-3","dosage":"1000-1700mg","timing":"Morning","frequency":"Once","admin_notes":"","instructions":"","supplement_name":"Omega-3","legacy_source_id":"a130bcda"}$json_supplement_suprepo_2ceffd32$::jsonb, 'legacy_member_regimen_backfill', 'healthyme_app_state.data.supplement_repository:1', '2026-08-01T19:13:24+00:00'::timestamptz, 'system', '2026-08-01T19:13:24+00:00'::timestamptz, 'system:content_repository_backfill'),
-    ('supplement', 'suprepo_e36aa236', 'Magnesium', 'active', $json_supplement_suprepo_e36aa236${"title":"Magnesium","dosage":"400","timing":"Morning","frequency":"Once","admin_notes":"","instructions":"Test","supplement_name":"Magnesium","legacy_source_id":"5e8182e8"}$json_supplement_suprepo_e36aa236$::jsonb, 'legacy_member_regimen_backfill', 'healthyme_app_state.data.supplement_repository:2', '2026-08-01T19:13:24+00:00'::timestamptz, 'system', '2026-08-01T19:13:24+00:00'::timestamptz, 'system:content_repository_backfill'),
-    ('supplement', 'suprepo_c88d2def', 'Magnesium Test', 'active', $json_supplement_suprepo_c88d2def${"title":"Magnesium Test","dosage":"400","timing":"Morning","frequency":"once","admin_notes":"Test","instructions":"Test","supplement_name":"Magnesium Test","legacy_source_id":"d1575c71"}$json_supplement_suprepo_c88d2def$::jsonb, 'legacy_member_regimen_backfill', 'healthyme_app_state.data.supplement_repository:3', '2026-08-01T19:13:24+00:00'::timestamptz, 'system', '2026-08-01T19:13:24+00:00'::timestamptz, 'system:content_repository_backfill'),
-    ('supplement', 'suprepo_f687a40a', 'Potassium', 'active', $json_supplement_suprepo_f687a40a${"title":"Potassium","dosage":"100","timing":"Morning, Evening, Before Bed, None","frequency":"thrice","admin_notes":"","instructions":"Test","supplement_name":"Potassium","legacy_source_id":"9afc6016"}$json_supplement_suprepo_f687a40a$::jsonb, 'legacy_member_regimen_backfill', 'healthyme_app_state.data.supplement_repository:4', '2026-08-01T19:13:24+00:00'::timestamptz, 'system', '2026-08-01T19:13:24+00:00'::timestamptz, 'system:content_repository_backfill');
+(
+    'recipe',
+    '0',
+    'Moong Chilla',
+    'active',
+    $recipe_0${
+        "title":"Moong Chilla",
+        "description":"High-protein Indian breakfast",
+        "meal_type":"Breakfast",
+        "diet_type":"Vegetarian",
+        "goal_tags":"weight_loss;general",
+        "condition_tags":"general",
+        "prep_time":"15",
+        "calories":"",
+        "servings":"",
+        "portion_size":"",
+        "image_url":"",
+        "image_bucket":"",
+        "image_path":"",
+        "image_access_type":"public",
+        "ingredients":"Moong dal batter, spices",
+        "steps":"Cook batter on tawa",
+        "nutrition":""
+    }$recipe_0$::jsonb,
+    'recipe_csv',
+    'data/recipes.csv:0',
+    clock_timestamp(),
+    'system:content_repository_backfill',
+    clock_timestamp(),
+    'system:content_repository_backfill'
+),
+(
+    'recipe',
+    '1',
+    'Paneer Salad',
+    'active',
+    $recipe_1${
+        "title":"Paneer Salad",
+        "description":"Quick protein lunch",
+        "meal_type":"Lunch",
+        "diet_type":"Vegetarian",
+        "goal_tags":"muscle_gain;general",
+        "condition_tags":"general",
+        "prep_time":"10",
+        "calories":"",
+        "servings":"",
+        "portion_size":"",
+        "image_url":"",
+        "image_bucket":"",
+        "image_path":"",
+        "image_access_type":"public",
+        "ingredients":"Paneer, veggies",
+        "steps":"Mix and serve",
+        "nutrition":""
+    }$recipe_1$::jsonb,
+    'recipe_csv',
+    'data/recipes.csv:1',
+    clock_timestamp(),
+    'system:content_repository_backfill',
+    clock_timestamp(),
+    'system:content_repository_backfill'
+);
+
+-- Exercise is transformed directly from the locked, hash-verified app-state source.
+with source_rows as (
+    select source_row, ordinal_position
+      from public.healthyme_app_state state
+      cross join lateral jsonb_array_elements(state.data -> 'exercises')
+          with ordinality as rows(source_row, ordinal_position)
+     where state.id = 'healthyme_app_state_v1'
+)
+insert into hm_content_repository_backfill_expected (
+    repository_type,
+    source_id,
+    display_name,
+    status,
+    payload,
+    source_system,
+    legacy_reference,
+    created_at,
+    created_by,
+    updated_at,
+    updated_by
+)
+select
+    'exercise',
+    coalesce(
+        nullif(btrim(source_row ->> 'source_id'), ''),
+        nullif(btrim(source_row ->> 'id'), '')
+    ),
+    coalesce(
+        nullif(btrim(source_row ->> 'title'), ''),
+        nullif(btrim(source_row ->> 'name'), '')
+    ),
+    case lower(coalesce(nullif(btrim(source_row ->> 'status'), ''), 'active'))
+        when 'inactive' then 'inactive'
+        when 'stopped' then 'inactive'
+        when 'archived' then 'inactive'
+        when 'disabled' then 'inactive'
+        else 'active'
+    end,
+    source_row - array[
+        'id',
+        'source_id',
+        'resource_type',
+        'status',
+        'source',
+        'source_system',
+        'legacy_reference',
+        'created_at',
+        'created_by',
+        'updated_at',
+        'updated_by',
+        'content_version'
+    ]::text[],
+    coalesce(
+        nullif(btrim(source_row ->> 'source'), ''),
+        'healthyme_app_state:exercises'
+    ),
+    'healthyme_app_state.data.exercises:' || (ordinal_position - 1)::text,
+    case
+        when nullif(btrim(source_row ->> 'created_at'), '') is null
+            then clock_timestamp()
+        when source_row ->> 'created_at' ~ '(Z|[+-][0-9]{2}:[0-9]{2})$'
+            then (source_row ->> 'created_at')::timestamptz
+        else (source_row ->> 'created_at')::timestamp at time zone 'UTC'
+    end,
+    coalesce(
+        nullif(btrim(source_row ->> 'created_by'), ''),
+        'system:content_repository_backfill'
+    ),
+    case
+        when nullif(btrim(source_row ->> 'updated_at'), '') is null
+            then clock_timestamp()
+        when source_row ->> 'updated_at' ~ '(Z|[+-][0-9]{2}:[0-9]{2})$'
+            then (source_row ->> 'updated_at')::timestamptz
+        else (source_row ->> 'updated_at')::timestamp at time zone 'UTC'
+    end,
+    'system:content_repository_backfill'
+from source_rows
+order by ordinal_position;
+
+-- Supplement is transformed directly from the same locked, hash-verified state.
+with source_rows as (
+    select source_row, ordinal_position
+      from public.healthyme_app_state state
+      cross join lateral jsonb_array_elements(state.data -> 'supplement_repository')
+          with ordinality as rows(source_row, ordinal_position)
+     where state.id = 'healthyme_app_state_v1'
+)
+insert into hm_content_repository_backfill_expected (
+    repository_type,
+    source_id,
+    display_name,
+    status,
+    payload,
+    source_system,
+    legacy_reference,
+    created_at,
+    created_by,
+    updated_at,
+    updated_by
+)
+select
+    'supplement',
+    coalesce(
+        nullif(btrim(source_row ->> 'source_id'), ''),
+        nullif(btrim(source_row ->> 'id'), '')
+    ),
+    coalesce(
+        nullif(btrim(source_row ->> 'supplement_name'), ''),
+        nullif(btrim(source_row ->> 'title'), ''),
+        nullif(btrim(source_row ->> 'name'), '')
+    ),
+    case lower(coalesce(nullif(btrim(source_row ->> 'status'), ''), 'active'))
+        when 'inactive' then 'inactive'
+        when 'stopped' then 'inactive'
+        when 'archived' then 'inactive'
+        when 'disabled' then 'inactive'
+        else 'active'
+    end,
+    source_row - array[
+        'id',
+        'source_id',
+        'resource_type',
+        'status',
+        'source',
+        'source_system',
+        'legacy_reference',
+        'created_at',
+        'created_by',
+        'updated_at',
+        'updated_by',
+        'content_version'
+    ]::text[],
+    coalesce(
+        nullif(btrim(source_row ->> 'source'), ''),
+        'healthyme_app_state:supplement_repository'
+    ),
+    'healthyme_app_state.data.supplement_repository:'
+        || (ordinal_position - 1)::text,
+    case
+        when nullif(btrim(source_row ->> 'created_at'), '') is null
+            then clock_timestamp()
+        when source_row ->> 'created_at' ~ '(Z|[+-][0-9]{2}:[0-9]{2})$'
+            then (source_row ->> 'created_at')::timestamptz
+        else (source_row ->> 'created_at')::timestamp at time zone 'UTC'
+    end,
+    coalesce(
+        nullif(btrim(source_row ->> 'created_by'), ''),
+        'system:content_repository_backfill'
+    ),
+    case
+        when nullif(btrim(source_row ->> 'updated_at'), '') is null
+            then clock_timestamp()
+        when source_row ->> 'updated_at' ~ '(Z|[+-][0-9]{2}:[0-9]{2})$'
+            then (source_row ->> 'updated_at')::timestamptz
+        else (source_row ->> 'updated_at')::timestamp at time zone 'UTC'
+    end,
+    'system:content_repository_backfill'
+from source_rows
+order by ordinal_position;
 
 insert into public.hm_content_repository_items (
     repository_type,
@@ -238,6 +472,7 @@ begin
          where event_type <> 'created'
             or before_record is not null
             or after_record is null
+            or actor_id <> 'system:content_repository_backfill'
     ) then
         raise exception
             'Content Repository backfill verification failed: audit events are not clean created events.';
@@ -249,6 +484,20 @@ begin
     ) <> 10 then
         raise exception
             'Content Repository backfill verification failed: each item requires one created event.';
+    end if;
+
+    if exists (
+        select 1
+          from public.hm_content_repository_events event
+          join public.hm_content_repository_items item
+            on item.id = event.repository_item_id
+         where event.repository_type <> item.repository_type
+            or event.source_id <> item.source_id
+            or event.after_record ->> 'source_id' <> item.source_id
+            or event.after_record ->> 'repository_type' <> item.repository_type
+    ) then
+        raise exception
+            'Content Repository backfill verification failed: audit identity mismatch.';
     end if;
 end;
 $backfill_postcheck$;
