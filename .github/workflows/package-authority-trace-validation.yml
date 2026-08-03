@@ -4,7 +4,9 @@ on:
   pull_request:
     paths:
       - "docs/package_domain_authority_trace_phase2_2026-08-03.md"
+      - "docs/package_mirror_retirement_phase3_2026-08-03.md"
       - "tests/test_package_domain_authority_trace_phase2.py"
+      - "tests/test_package_mirror_retirement_phase3.py"
       - "components/package_hardening.py"
       - "components/package_hardening_bootstrap.py"
       - "components/package_hardening_ui.py"
@@ -35,8 +37,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Compile authority trace test
-        run: python -m py_compile tests/test_package_domain_authority_trace_phase2.py
+      - name: Compile Package authority contracts
+        run: |
+          python -m py_compile components/package_hardening.py
+          python -m py_compile tests/test_package_domain_authority_trace_phase2.py
+          python -m py_compile tests/test_package_mirror_retirement_phase3.py
 
-      - name: Validate Package authority trace
-        run: python -m unittest tests.test_package_domain_authority_trace_phase2 -v
+      - name: Validate Package authority and mirror retirement
+        run: |
+          python -m unittest tests.test_package_domain_authority_trace_phase2 -v
+          python -m unittest tests.test_package_mirror_retirement_phase3 -v
+          python -m unittest tests.test_package_hardening_contract -v
