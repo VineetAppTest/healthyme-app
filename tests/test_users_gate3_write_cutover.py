@@ -12,6 +12,7 @@ MIGRATION = ROOT / "supabase" / "migrations" / "20260803161100_users_gate3_trans
 NORMALIZED = ROOT / "components" / "normalized_store.py"
 STORAGE = ROOT / "components" / "storage_backend.py"
 DOC = ROOT / "docs" / "users_gate3_write_cutover_2026-08-03.md"
+GATE4_DOC = ROOT / "docs" / "workflow_gate4_write_cutover_2026-08-03.md"
 
 
 def _isolated_function(path: pathlib.Path, function_name: str):
@@ -59,7 +60,7 @@ class UsersGate3WriteCutoverTests(unittest.TestCase):
         self.assertIn("'service_role_direct'", source)
         self.assertIn("create trigger hm_users_capture_direct_event", source)
 
-    def test_normalized_store_uses_canonical_contract_and_preserves_auth_linkage(self) -> None:
+    def test_normalized_store_retains_gate3_contract_and_auth_linkage_protection(self) -> None:
         source = NORMALIZED.read_text(encoding="utf-8")
         self.assertIn("def commit_users_and_state(", source)
         self.assertIn('client.rpc("hm_admin_commit_users_and_state"', source)
@@ -94,32 +95,33 @@ class UsersGate3WriteCutoverTests(unittest.TestCase):
         self.assertNotIn("auth_user_id", patch)
         self.assertNotIn("auth_migrated_at", patch)
 
-    def test_storage_selects_fail_closed_user_path_and_workflow_only_sync(self) -> None:
+    def test_gate4_supersedes_storage_selection_without_weakening_user_fail_closed(self) -> None:
         source = STORAGE.read_text(encoding="utf-8")
-        self.assertIn("commit_users_and_state", source)
-        self.assertIn("sync_workflow_to_normalized", source)
-        self.assertNotIn("sync_users_workflow_to_normalized", source)
+        self.assertIn("commit_identity_and_state", source)
         self.assertIn("users_changed = _users_projection_changed(previous, db)", source)
-        self.assertIn("if users_changed and not configured:", source)
-        self.assertIn("local identity fallback is disabled", source)
+        self.assertIn("workflow_changed = _workflow_projection_changed(previous, db)", source)
+        self.assertIn("identity_changed = users_changed or workflow_changed", source)
+        self.assertIn("if identity_changed and not configured:", source)
+        self.assertIn("local User/Workflow fallback is disabled", source)
         self.assertIn("force_state_commit=True", source)
-        self.assertIn("raise RuntimeError(user_commit_message)", source)
-        self.assertIn("Canonical User write rejected; state was not saved.", source)
+        self.assertIn("raise RuntimeError(identity_commit_message)", source)
+        self.assertNotIn("sync_workflow_to_normalized", source)
 
-    def test_projection_change_detection_covers_shared_only_metadata(self) -> None:
+    def test_projection_change_detection_covers_shared_only_user_metadata(self) -> None:
         users_projection_changed = _isolated_function(STORAGE, "_users_projection_changed")
         before = {"users": [{"id": "u1", "name": "A", "auth0_user_id": ""}]}
         after = {"users": [{"id": "u1", "name": "A", "auth0_user_id": "legacy|1"}]}
         self.assertTrue(users_projection_changed(before, after))
         self.assertFalse(users_projection_changed(after, after))
 
-    def test_local_push_cannot_replace_canonical_users(self) -> None:
+    def test_local_push_cannot_replace_canonical_identity(self) -> None:
         source = STORAGE.read_text(encoding="utf-8")
-        self.assertIn("Local push blocked because canonical Users could not be loaded", source)
+        self.assertIn("canonical identity data could not be loaded", source)
         self.assertIn('local_state["users"] = canonical_users', source)
-        self.assertIn("canonical Users were preserved", source)
+        self.assertIn('local_state["workflow"] = canonical_workflow', source)
+        self.assertIn("canonical Users and Workflow were preserved", source)
 
-    def test_document_records_production_evidence_and_scope(self) -> None:
+    def test_gate3_document_remains_historical_and_gate4_records_supersession(self) -> None:
         source = DOC.read_text(encoding="utf-8")
         for required in (
             "canonical Users: `15`",
@@ -131,6 +133,9 @@ class UsersGate3WriteCutoverTests(unittest.TestCase):
             "Gate 4 may cut over **Workflow writes only**",
         ):
             self.assertIn(required, source)
+        gate4 = GATE4_DOC.read_text(encoding="utf-8")
+        self.assertIn("Gate 4 cuts over the **Streamlit/shared-state Workflow write authority**", gate4)
+        self.assertIn("combined User + Workflow + state transactional contract", gate4)
 
 
 if __name__ == "__main__":
