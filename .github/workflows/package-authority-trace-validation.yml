@@ -1,0 +1,42 @@
+name: Package authority trace validation
+
+on:
+  pull_request:
+    paths:
+      - "docs/package_domain_authority_trace_phase2_2026-08-03.md"
+      - "tests/test_package_domain_authority_trace_phase2.py"
+      - "components/package_hardening.py"
+      - "components/package_hardening_bootstrap.py"
+      - "components/package_hardening_ui.py"
+      - "components/package_hardening_schedule_ui.py"
+      - "components/admin_scheduling_consolidated.py"
+      - "components/admin_performance_optimization.py"
+      - "components/db.py"
+      - "pages/33_My_Schedule.py"
+      - "pages/41_Admin_Packages.py"
+      - "sql/package_hardening_123_04_member_contract_and_usage_audit.sql"
+      - "**/*.dart"
+      - ".github/workflows/package-authority-trace-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile authority trace test
+        run: python -m py_compile tests/test_package_domain_authority_trace_phase2.py
+
+      - name: Validate Package authority trace
+        run: python -m unittest tests.test_package_domain_authority_trace_phase2 -v
