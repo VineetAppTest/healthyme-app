@@ -1,0 +1,39 @@
+name: Users and Workflow authority trace validation
+
+on:
+  pull_request:
+    paths:
+      - "docs/users_workflow_authority_trace_batch2_2026-08-03.md"
+      - "tests/test_users_workflow_authority_trace_batch2.py"
+      - "components/storage_backend.py"
+      - "components/normalized_store.py"
+      - "components/db.py"
+      - "components/**/*.py"
+      - "pages/**/*.py"
+      - "native_bridge/**/*.py"
+      - "production_cutover/**/*.py"
+      - "app.py"
+      - ".github/workflows/users-workflow-authority-trace-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile authority trace contract
+        run: python -m py_compile tests/test_users_workflow_authority_trace_batch2.py
+
+      - name: Validate Users and Workflow authority trace
+        run: python -m unittest tests.test_users_workflow_authority_trace_batch2 -v
