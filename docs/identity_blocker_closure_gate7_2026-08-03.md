@@ -6,9 +6,9 @@ Follows: merged PR #373, `Add identity observation window and smoke-evidence gat
 
 ## Decision
 
-Gate 7 closes the remaining database and RPC fallback paths that were objectively identified by Gate 6.
+Gate 7 closes the remaining database and RPC fallback paths identified by Gate 6 and completes the accepted database observation window.
 
-It does **not** retire the shared Users or Workflow projection. Projection retirement still requires the completed observation window and genuine signed-in Streamlit and Flutter device evidence.
+It does **not** retire the shared Users or Workflow projection. Projection retirement still requires genuine signed-in Streamlit and Flutter device evidence and a separate explicitly approved PR.
 
 ## Clubbed actions
 
@@ -23,7 +23,7 @@ The following related actions are delivered together:
 7. retire obsolete direct authenticated Workflow writes;
 8. remove anonymous identity-table privileges;
 9. expose a permanent fallback-closure status contract;
-10. record one genuine healthy post-closure observation;
+10. retain healthy post-closure and window-completion observations;
 11. add Admin visibility, evidence, tests and CI.
 
 ## Production migration
@@ -46,7 +46,7 @@ The candidate had:
 - no competing HealthyMe member match;
 - no conflicting existing `auth_user_id` linkage.
 
-The migration does not hardcode an Auth UUID or silently guess a member. It proceeds only when the production conditions above are uniquely true.
+The migration does not hardcode an Auth UUID or silently guess a member. It proceeds only when the conditions above are uniquely true.
 
 The existing `hm_admin_commit_identity_and_state(...)` contract performs the update so that:
 
@@ -169,27 +169,33 @@ Post-migration production verification confirmed:
 - Gate 7 User events: `1`;
 - Gate 7 domain-write request rows: `2`;
 - Gate 7 post-closure observations: `1`;
+- Gate 7 window-completion observations: `1`;
 - projection repairs in the observation window: `0`.
 
 Machine-readable evidence:
 
 - `docs/evidence/identity_gate7_fallback_closure_evidence_2026-08-03.json`
 
-## Observation window
+## Completed observation window
 
-At the first post-closure checkpoint:
+The threshold was not reduced or bypassed.
 
-- observations: `4`;
-- healthy observations: `4`;
+A window-completion observation was recorded only after real elapsed time exceeded 60 minutes.
+
+Final production result:
+
+- observations: `5`;
+- healthy observations: `5`;
 - repairs: `0`;
-- span: approximately `56.57` minutes;
-- required span: `60` minutes.
+- first observation: `2026-08-03T11:32:02.340453Z`;
+- latest observation: `2026-08-03T12:35:13.516001Z`;
+- retained observation span: approximately `63.19` minutes;
+- required span: `60` minutes;
+- database observation ready: `true`;
+- automated retirement preconditions ready: `true`;
+- automated blockers: `[]`.
 
-The only automated Gate 6 blocker was:
-
-- `insufficient_observation_span`.
-
-Gate 7 does not reduce or waive that threshold.
+Automated readiness remains evidence only. It does not substitute for signed-in browser and device validation.
 
 ## Signed-in smoke boundary
 
@@ -215,11 +221,11 @@ Gate 7 does not:
 
 ## Next controlled gate
 
-After merge and deployment observation:
+After merge:
 
-1. complete and record the accepted observation duration;
-2. capture signed-in Streamlit Admin and Member route/refresh/logout evidence;
+1. capture signed-in Streamlit Admin route/refresh/logout evidence;
+2. capture signed-in Streamlit Member route/refresh/logout evidence;
 3. capture Flutter device login/dashboard/LAF/NSP/submit-review evidence;
-4. prepare a separate projection-retirement decision PR only when every acceptance item passes.
+4. prepare a separate projection-retirement decision PR only when every manual acceptance item passes.
 
 Sessions, password retirement and default-Admin redesign remain separate batches.
