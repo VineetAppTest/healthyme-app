@@ -76,6 +76,12 @@ div[data-testid="stExpander"] h4{
   display:block!important;
   position:relative!important;
   z-index:1!important;
+  color:#064E3B!important;
+  background:#F8F3E7!important;
+  border-left:3px solid #E3C98E!important;
+  border-radius:6px!important;
+  font-size:.80rem!important;
+  line-height:1.2!important;
   margin:.38rem 0 .38rem!important;
   padding:.20rem .38rem!important;
 }
