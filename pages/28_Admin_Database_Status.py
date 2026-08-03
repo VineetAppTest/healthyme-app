@@ -14,6 +14,7 @@ from components.normalized_store import check_normalized_tables
 from components.identity_projection_observation import (
     get_identity_projection_snapshot,
     get_identity_observation_window_status,
+    get_identity_fallback_closure_status,
     observe_identity_projection,
 )
 
@@ -161,6 +162,61 @@ st.caption(
 card_end()
 
 card_start()
+st.subheader("Gate 7 identity fallback closure")
+closure_ok, closure_status, closure_msg = get_identity_fallback_closure_status()
+if closure_ok and closure_status.get("closed"):
+    st.success(closure_msg)
+elif closure_ok:
+    st.warning(closure_msg)
+else:
+    st.error(closure_msg)
+
+if closure_ok:
+    active_members = int(closure_status.get("active_member_count", 0) or 0)
+    missing_auth = int(closure_status.get("active_members_missing_auth_user_id", 0) or 0)
+    stat_grid([
+        {
+            "label": "Auth-ID Linked",
+            "value": f"{max(active_members - missing_auth, 0)}/{active_members}",
+            "note": "Active members",
+        },
+        {
+            "label": "Workflow Coverage",
+            "value": "Complete" if not closure_status.get("active_members_missing_workflow") else "Missing",
+            "note": "Canonical member Workflow",
+        },
+        {
+            "label": "Fallbacks",
+            "value": "Closed" if not closure_status.get("blockers") else "Open",
+            "note": "Email, RLS and RPC reads",
+        },
+        {
+            "label": "Direct Writes",
+            "value": "Blocked" if not closure_status.get("direct_workflow_write_policies") else "Present",
+            "note": "Authenticated hm_workflow",
+        },
+    ])
+    st.json({
+        "closed": closure_status.get("closed"),
+        "active_members_missing_auth_user_id": closure_status.get("active_members_missing_auth_user_id"),
+        "active_members_missing_workflow": closure_status.get("active_members_missing_workflow"),
+        "current_member_id_uses_email_fallback": closure_status.get("current_member_id_uses_email_fallback"),
+        "flutter_shared_workflow_fallback_functions": closure_status.get("flutter_shared_workflow_fallback_functions", []),
+        "email_fallback_policies": closure_status.get("email_fallback_policies", []),
+        "direct_workflow_write_policies": closure_status.get("direct_workflow_write_policies", []),
+        "anon_privilege_count": closure_status.get("anon_privilege_count"),
+        "authenticated_nonselect_privilege_count": closure_status.get("authenticated_nonselect_privilege_count"),
+        "blockers": closure_status.get("blockers", []),
+    })
+else:
+    st.json({"error": closure_msg})
+
+st.caption(
+    "Gate 7 closes database and RPC fallback paths only. Signed-in Streamlit route checks and Flutter device smoke remain separate acceptance evidence."
+)
+card_end()
+
+card_start()
 st.subheader("Backup and non-identity transfer tools")
 st.markdown(
     """
@@ -215,9 +271,10 @@ st.markdown(
     1. Confirm Database Mode is <b>SUPABASE</b>.<br>
     2. Confirm Identity Authority is <b>Canonical</b>.<br>
     3. Confirm Projection is <b>Aligned</b>.<br>
-    4. Confirm Admin and Member routes resolve the current role after refresh.<br>
-    5. Confirm Flutter member dashboard, LAF and NSP on an authenticated device.<br>
-    6. Record projection observations across the accepted observation window.
+    4. Confirm Gate 7 identity fallback closure is <b>Closed</b>.<br>
+    5. Confirm Admin and Member routes resolve the current role after refresh.<br>
+    6. Confirm Flutter member dashboard, LAF and NSP on an authenticated device.<br>
+    7. Record projection observations across the accepted observation window.
     """,
     unsafe_allow_html=True,
 )

@@ -9,6 +9,7 @@ from typing import Any, Dict, Tuple
 PROJECTION_RPC = "hm_identity_projection_snapshot"
 OBSERVATION_RPC = "hm_admin_observe_identity_projection"
 WINDOW_STATUS_RPC = "hm_identity_observation_window_status"
+CLOSURE_STATUS_RPC = "hm_identity_fallback_closure_status"
 
 
 def _get_secret(name: str, default: str = "") -> str:
@@ -119,6 +120,23 @@ def get_identity_observation_window_status(
         return True, data, message
     except Exception as exc:
         return False, {}, f"Identity observation-window status failed: {exc}"
+
+
+def get_identity_fallback_closure_status() -> Tuple[bool, Dict[str, Any], str]:
+    """Return Gate 7 Auth-ID, Workflow fallback, RLS and privilege closure."""
+    try:
+        data = _rpc_dict(CLOSURE_STATUS_RPC, {})
+        closed = bool(data.get("closed", False))
+        blockers = list(data.get("blockers") or [])
+        if closed:
+            message = "Identity fallback closure is complete."
+        elif blockers:
+            message = "Gate 7 blockers: " + ", ".join(str(item) for item in blockers)
+        else:
+            message = "Gate 7 fallback-closure evidence is incomplete."
+        return True, data, message
+    except Exception as exc:
+        return False, {}, f"Identity fallback-closure status failed: {exc}"
 
 
 def observe_identity_projection(

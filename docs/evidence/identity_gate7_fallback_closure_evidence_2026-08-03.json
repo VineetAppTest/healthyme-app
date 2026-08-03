@@ -1,0 +1,78 @@
+{
+  "evidence_date": "2026-08-03",
+  "healthyme_app": {
+    "repository": "VineetAppTest/healthyme-app",
+    "base_revision": "6fffe2f651b813f18cc87ba2d1d2b7c52e16669f",
+    "migration": "supabase/migrations/20260803183000_identity_blocker_closure_gate7.sql"
+  },
+  "production_closure": {
+    "closed": true,
+    "active_member_count": 7,
+    "active_members_missing_auth_user_id": 0,
+    "active_members_missing_workflow": 0,
+    "current_member_id_uses_email_fallback": false,
+    "flutter_shared_workflow_fallback_functions": [],
+    "email_fallback_policies": [],
+    "direct_workflow_write_policies": [],
+    "anon_identity_table_privilege_count": 0,
+    "authenticated_identity_table_nonselect_privilege_count": 0,
+    "blockers": []
+  },
+  "projection_and_audit": {
+    "canonical_users": 15,
+    "shared_users": 15,
+    "canonical_workflow": 15,
+    "shared_workflow": 15,
+    "projection_healthy": true,
+    "user_mismatches": 0,
+    "workflow_mismatches": 0,
+    "gate7_user_events": 1,
+    "gate7_domain_write_requests": 2,
+    "gate7_post_closure_observations": 1,
+    "gate7_window_completion_observations": 1,
+    "projection_repairs_in_observation_window": 0
+  },
+  "flutter_contract": {
+    "repository": "VineetAppTest/healthyme-flutter-member",
+    "revision": "a2de87cb37bea2dfecacbbb04cf03069f505077a",
+    "source_changed": false,
+    "public_method_or_payload_changed": false,
+    "current_member_resolution": "auth_user_id only",
+    "laf_workflow_authority": "hm_workflow only",
+    "nsp_workflow_authority": "hm_workflow only",
+    "laf_response_payload_authority": "healthyme_app_state.laf_responses retained",
+    "nsp_response_payload_authority": "healthyme_app_state.nsp1_responses and nsp2_responses retained",
+    "direct_authenticated_workflow_writes": "blocked"
+  },
+  "rolled_back_authenticated_probe": {
+    "auth_id_member_resolution": "pass",
+    "direct_user_self_read": "pass",
+    "direct_workflow_self_read": "pass",
+    "laf_workflow_and_response_payload": "pass",
+    "nsp_workflow_and_response_payloads": "pass",
+    "workflow_insert_privilege": false,
+    "workflow_update_privilege": false,
+    "transaction_persisted": false
+  },
+  "observation_window_checkpoint": {
+    "observation_count": 5,
+    "healthy_observation_count": 5,
+    "repair_count": 0,
+    "span_minutes": 63.19,
+    "minimum_span_minutes": 60,
+    "database_observation_ready": true,
+    "automated_retirement_preconditions_ready": true,
+    "remaining_automated_blockers": []
+  },
+  "signed_in_smoke_evidence": {
+    "streamlit_admin_login_refresh_logout_and_admin_route": "pending",
+    "streamlit_member_login_refresh_logout_and_member_route": "pending",
+    "flutter_device_login_dashboard_laf_nsp_and_submit_review": "pending"
+  },
+  "decision": {
+    "database_fallback_closure_complete": true,
+    "database_observation_window_complete": true,
+    "projection_retirement_approved": false,
+    "reason": "Database fallback closure and the accepted observation window pass, but real signed-in Streamlit and Flutter device evidence remains mandatory before a separate projection-retirement decision."
+  }
+}
