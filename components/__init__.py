@@ -74,6 +74,9 @@ from components.repository_layout_correction_runtime import (
 from components.repository_exclusive_tabs_runtime import (
     install_repository_exclusive_tabs_runtime,
 )
+from components.repository_disclosure_fallback_cleanup import (
+    install_repository_disclosure_fallback_cleanup,
+)
 
 
 install_streamlit_toolbar_cleanup()
@@ -133,3 +136,7 @@ install_repository_layout_correction_runtime()
 # the active section inherits the accepted styles while the inactive section performs
 # no widget rendering and skips its repository read.
 install_repository_exclusive_tabs_runtime()
+
+# Streamlit can render its hidden material-icon ligature as keyboard_arrow text on
+# mobile. Keep the accepted circular + / minus marker and suppress only that fallback.
+install_repository_disclosure_fallback_cleanup()
