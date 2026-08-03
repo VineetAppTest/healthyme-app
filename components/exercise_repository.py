@@ -1,26 +1,17 @@
 from __future__ import annotations
 
-import csv
-import datetime as dt
 import html
-import pathlib
 import re
 from typing import Any
 
-from components.storage_backend import (
-    get_storage_status,
-    load_state,
-    save_state,
-    supabase_configured,
+from components.content_repository_store import (
+    create_numeric_repository_item,
+    get_repository_item,
+    list_repository_items,
+    save_repository_item,
+    set_repository_item_status,
 )
 
-
-BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
-LEGACY_CSV_PATH = BASE_DIR / "data" / "exercises.csv"
-
-_MIGRATION_KEY = "exercise_repository_v1_migration"
-_REPOSITORY_KEY = "exercises"
-_AUDIT_KEY = "exercise_repository_audit"
 
 EXERCISE_COLUMNS = [
     "title",
@@ -42,10 +33,6 @@ EXERCISE_COLUMNS = [
 ]
 
 
-def _now_iso() -> str:
-    return dt.datetime.now(dt.timezone.utc).isoformat()
-
-
 def _clean(value: Any) -> str:
     text = html.unescape(str(value or "")).strip()
     if text.lower() in {"nan", "none", "null"}:
@@ -55,14 +42,20 @@ def _clean(value: Any) -> str:
 
 
 def _status(value: Any) -> str:
-    return "inactive" if _clean(value).lower() in {"inactive", "stopped", "archived"} else "active"
+    return (
+        "inactive"
+        if _clean(value).lower() in {"inactive", "stopped", "archived"}
+        else "active"
+    )
 
 
-def _normalise(row: dict[str, Any] | None, *, fallback_id: str = "") -> dict[str, Any]:
+def _normalise(
+    row: dict[str, Any] | None,
+    *,
+    fallback_id: str = "",
+) -> dict[str, Any]:
     source = dict(row or {})
     item_id = _clean(source.get("id") or source.get("source_id") or fallback_id)
-    if not item_id:
-        item_id = "0"
     return {
         "id": item_id,
         "source_id": item_id,
@@ -89,105 +82,41 @@ def _normalise(row: dict[str, Any] | None, *, fallback_id: str = "") -> dict[str
         "created_by": _clean(source.get("created_by")),
         "updated_at": _clean(source.get("updated_at")),
         "updated_by": _clean(source.get("updated_by")),
-        "source": _clean(source.get("source")) or "exercise_repository",
+        "source": _clean(source.get("source") or source.get("source_system"))
+        or "exercise_repository",
+        "content_version": source.get("content_version") or "",
+        "legacy_reference": _clean(source.get("legacy_reference")),
     }
 
 
-def _ensure_store(db: dict[str, Any]) -> dict[str, Any]:
-    if not isinstance(db.get(_REPOSITORY_KEY), list):
-        db[_REPOSITORY_KEY] = []
-    if not isinstance(db.get(_AUDIT_KEY), list):
-        db[_AUDIT_KEY] = []
-    return db
-
-
-def _read_legacy_rows() -> list[dict[str, Any]]:
-    if not LEGACY_CSV_PATH.exists():
-        return []
-    try:
-        with LEGACY_CSV_PATH.open("r", encoding="utf-8-sig", newline="") as handle:
-            return [dict(row) for row in csv.DictReader(handle)]
-    except Exception:
-        return []
-
-
-def _write_audit(
-    db: dict[str, Any],
-    action: str,
-    row: dict[str, Any] | None,
-    actor_id: str,
-    changes: dict[str, Any] | None = None,
-) -> None:
-    row = dict(row or {})
-    db[_AUDIT_KEY].append(
+def _from_canonical(row: dict[str, Any] | None) -> dict[str, Any]:
+    source = dict(row or {})
+    payload = dict(source.get("payload") or {})
+    return _normalise(
         {
-            "ts": _now_iso(),
-            "action": action,
-            "exercise_repository_id": _clean(row.get("id")),
-            "exercise_title": _clean(row.get("title")),
-            "actor_id": actor_id or "admin",
-            "changes": changes or {},
+            **payload,
+            "id": source.get("source_id"),
+            "source_id": source.get("source_id"),
+            "title": source.get("display_name") or payload.get("title"),
+            "status": source.get("status"),
+            "created_at": source.get("created_at"),
+            "created_by": source.get("created_by"),
+            "updated_at": source.get("updated_at"),
+            "updated_by": source.get("updated_by"),
+            "source": source.get("source_system"),
+            "content_version": source.get("content_version"),
+            "legacy_reference": source.get("legacy_reference"),
         }
     )
-    db[_AUDIT_KEY] = db[_AUDIT_KEY][-500:]
 
 
-def _migrate_legacy_repository(db: dict[str, Any]) -> bool:
-    changed = False
-    normalised_rows: list[dict[str, Any]] = []
-    for index, raw in enumerate(list(db.get(_REPOSITORY_KEY) or [])):
-        row = _normalise(raw, fallback_id=str(index))
-        normalised_rows.append(row)
-        if row != raw:
-            changed = True
-    db[_REPOSITORY_KEY] = normalised_rows
-
-    if db.get(_MIGRATION_KEY):
-        return changed
-
-    imported = 0
-    source = "existing_supabase_state"
-    if not db[_REPOSITORY_KEY]:
-        source = "legacy_csv"
-        now = _now_iso()
-        for index, raw in enumerate(_read_legacy_rows()):
-            row = _normalise(
-                {
-                    **raw,
-                    "id": str(index),
-                    "source_id": str(index),
-                    "created_at": now,
-                    "created_by": "system",
-                    "updated_at": now,
-                    "updated_by": "system",
-                    "source": "legacy_csv_migration",
-                },
-                fallback_id=str(index),
-            )
-            if not row.get("title"):
-                continue
-            db[_REPOSITORY_KEY].append(row)
-            imported += 1
-
-    db[_MIGRATION_KEY] = {
-        "completed_at": _now_iso(),
-        "source": source,
-        "imported_count": imported,
-        "existing_count": len(db[_REPOSITORY_KEY]),
-        "legacy_ids_preserved": True,
+def _exercise_payload(row: dict[str, Any]) -> dict[str, Any]:
+    normalised = _normalise(row)
+    return {
+        column: normalised.get(column, "")
+        for column in EXERCISE_COLUMNS
+        if column != "status"
     }
-    _write_audit(db, "repository_migrated", None, "system", changes=db[_MIGRATION_KEY])
-    return True
-
-
-def _next_numeric_id(rows: list[dict[str, Any]]) -> str:
-    numeric_ids = []
-    for row in rows:
-        try:
-            numeric_ids.append(int(str(row.get("id", "")).strip()))
-        except Exception:
-            continue
-    return str(max(numeric_ids, default=-1) + 1)
 
 
 def _clear_streamlit_data_cache() -> None:
@@ -197,34 +126,6 @@ def _clear_streamlit_data_cache() -> None:
         st.cache_data.clear()
     except Exception:
         pass
-
-
-def _verify_persistence(expected_ids: set[str], *, absent_ids: set[str] | None = None) -> None:
-    status = get_storage_status()
-    if supabase_configured() and status.get("mode") != "SUPABASE":
-        raise RuntimeError(
-            "Exercise Repository could not be confirmed in Supabase. No success was recorded; retry after the storage connection is healthy."
-        )
-
-    verified = _ensure_store(load_state(force_refresh=True))
-    actual_ids = {str((row or {}).get("id", "")) for row in verified.get(_REPOSITORY_KEY, [])}
-    missing = expected_ids - actual_ids
-    unexpected = set(absent_ids or set()) & actual_ids
-    if missing or unexpected:
-        raise RuntimeError(
-            "Exercise Repository persistence verification failed. The submitted change was not confirmed after a fresh Supabase read."
-        )
-
-
-def _persist(
-    db: dict[str, Any],
-    *,
-    expected_ids: set[str],
-    absent_ids: set[str] | None = None,
-) -> None:
-    save_state(db)
-    _verify_persistence(expected_ids, absent_ids=absent_ids)
-    _clear_streamlit_data_cache()
 
 
 def _validate_unique_title(
@@ -247,15 +148,22 @@ def _validate_unique_title(
     return clean_title
 
 
-def list_exercise_repository(active_only: bool = True) -> list[dict[str, Any]]:
-    db = _ensure_store(load_state(force_refresh=True))
-    changed = _migrate_legacy_repository(db)
-    if changed:
-        save_state(db)
+def _next_numeric_id(rows: list[dict[str, Any]]) -> str:
+    """Compatibility helper retained for callers/tests; creation is DB-atomic."""
+    numeric_ids: list[int] = []
+    for row in rows:
+        try:
+            numeric_ids.append(int(str(row.get("id", "")).strip()))
+        except Exception:
+            continue
+    return str(max(numeric_ids, default=-1) + 1)
 
-    rows = [dict(_normalise(row)) for row in db[_REPOSITORY_KEY]]
-    if active_only:
-        rows = [row for row in rows if row.get("status") == "active"]
+
+def list_exercise_repository(active_only: bool = True) -> list[dict[str, Any]]:
+    rows = [
+        _from_canonical(row)
+        for row in list_repository_items("exercise", active_only=active_only)
+    ]
     rows.sort(
         key=lambda row: (
             0 if row.get("status") == "active" else 1,
@@ -275,30 +183,26 @@ def add_exercise_repository_item(
     data: dict[str, Any],
     actor_id: str = "admin",
 ) -> dict[str, Any]:
-    db = _ensure_store(load_state(force_refresh=True))
-    _migrate_legacy_repository(db)
-    title = _validate_unique_title(db[_REPOSITORY_KEY], (data or {}).get("title", ""))
-    now = _now_iso()
-    item_id = _next_numeric_id(db[_REPOSITORY_KEY])
+    existing = list_exercise_repository(active_only=False)
+    title = _validate_unique_title(existing, (data or {}).get("title", ""))
     row = _normalise(
         {
             **dict(data or {}),
-            "id": item_id,
-            "source_id": item_id,
             "title": title,
             "status": (data or {}).get("status") or "active",
-            "created_at": now,
-            "created_by": actor_id or "admin",
-            "updated_at": now,
-            "updated_by": actor_id or "admin",
             "source": "exercise_repository",
-        },
-        fallback_id=item_id,
+        }
     )
-    db[_REPOSITORY_KEY].append(row)
-    _write_audit(db, "created", row, actor_id)
-    _persist(db, expected_ids={item_id})
-    return dict(row)
+    stored = create_numeric_repository_item(
+        "exercise",
+        title,
+        _exercise_payload(row),
+        status=row["status"],
+        actor_id=actor_id or "admin",
+        source_system="exercise_repository",
+    )
+    _clear_streamlit_data_cache()
+    return _from_canonical(stored)
 
 
 def update_exercise_repository_item(
@@ -306,43 +210,40 @@ def update_exercise_repository_item(
     updates: dict[str, Any],
     actor_id: str = "admin",
 ) -> dict[str, Any]:
-    db = _ensure_store(load_state(force_refresh=True))
-    _migrate_legacy_repository(db)
-    item_id = _clean(item_id)
-    allowed = set(EXERCISE_COLUMNS) - {"status"}
+    clean_id = _clean(item_id)
+    canonical = get_repository_item("exercise", clean_id)
+    if not canonical:
+        raise ValueError("Exercise repository item was not found.")
 
-    for index, raw in enumerate(db[_REPOSITORY_KEY]):
-        row = _normalise(raw, fallback_id=str(index))
-        if str(row.get("id")) != item_id:
-            continue
+    existing_rows = list_exercise_repository(active_only=False)
+    current = _from_canonical(canonical)
+    next_title = _validate_unique_title(
+        existing_rows,
+        (updates or {}).get("title", current.get("title", "")),
+        ignore_id=clean_id,
+    )
 
-        before = dict(row)
-        next_title = _validate_unique_title(
-            db[_REPOSITORY_KEY],
-            (updates or {}).get("title", row.get("title", "")),
-            ignore_id=item_id,
-        )
-        for key in allowed:
-            if key in (updates or {}):
-                row[key] = _clean((updates or {}).get(key))
-        row["title"] = next_title
-        if "status" in (updates or {}):
-            row["status"] = _status((updates or {}).get("status"))
-        row["updated_at"] = _now_iso()
-        row["updated_by"] = actor_id or "admin"
-        row = _normalise(row, fallback_id=item_id)
-        db[_REPOSITORY_KEY][index] = row
+    merged = dict(current)
+    allowed = set(EXERCISE_COLUMNS)
+    for key in allowed:
+        if key in (updates or {}):
+            merged[key] = (updates or {}).get(key)
+    merged["title"] = next_title
+    merged["status"] = _status(merged.get("status"))
+    merged = _normalise(merged, fallback_id=clean_id)
 
-        changes = {
-            key: {"from": before.get(key, ""), "to": row.get(key, "")}
-            for key in EXERCISE_COLUMNS
-            if before.get(key, "") != row.get(key, "")
-        }
-        _write_audit(db, "updated", row, actor_id, changes=changes)
-        _persist(db, expected_ids={item_id})
-        return dict(row)
-
-    raise ValueError("Exercise repository item was not found.")
+    stored = save_repository_item(
+        "exercise",
+        clean_id,
+        next_title,
+        _exercise_payload(merged),
+        status=merged["status"],
+        actor_id=actor_id or "admin",
+        source_system=canonical.get("source_system") or "exercise_repository",
+        legacy_reference=canonical.get("legacy_reference") or "",
+    )
+    _clear_streamlit_data_cache()
+    return _from_canonical(stored)
 
 
 def set_exercise_repository_status(
@@ -350,74 +251,62 @@ def set_exercise_repository_status(
     active: bool,
     actor_id: str = "admin",
 ) -> dict[str, Any]:
-    return update_exercise_repository_item(
-        item_id,
-        {"status": "active" if active else "inactive"},
-        actor_id=actor_id,
+    clean_id = _clean(item_id)
+    stored = set_repository_item_status(
+        "exercise",
+        clean_id,
+        active=bool(active),
+        actor_id=actor_id or "admin",
     )
+    _clear_streamlit_data_cache()
+    return _from_canonical(stored)
 
 
 def delete_exercise_repository_item(
     item_id: str,
     actor_id: str = "admin",
 ) -> dict[str, Any]:
-    db = _ensure_store(load_state(force_refresh=True))
-    _migrate_legacy_repository(db)
-    item_id = _clean(item_id)
-    for index, raw in enumerate(db[_REPOSITORY_KEY]):
-        row = _normalise(raw, fallback_id=str(index))
-        if str(row.get("id")) != item_id:
-            continue
-        removed = db[_REPOSITORY_KEY].pop(index)
-        _write_audit(db, "deleted", row, actor_id)
-        remaining_ids = {str((item or {}).get("id", "")) for item in db[_REPOSITORY_KEY]}
-        _persist(db, expected_ids=remaining_ids, absent_ids={item_id})
-        return dict(_normalise(removed, fallback_id=item_id))
-    raise ValueError("Exercise repository item was not found.")
+    """Compatibility alias: deletion is a safe inactive-status transition."""
+    return set_exercise_repository_status(item_id, False, actor_id=actor_id)
 
 
 def import_exercise_repository_items(
     rows: list[dict[str, Any]],
     actor_id: str = "admin",
 ) -> dict[str, int]:
-    db = _ensure_store(load_state(force_refresh=True))
-    _migrate_legacy_repository(db)
+    existing = list_exercise_repository(active_only=False)
     existing_titles = {
         _clean(row.get("title")).casefold()
-        for row in db[_REPOSITORY_KEY]
+        for row in existing
         if _clean(row.get("title"))
     }
     imported = 0
     skipped = 0
-    new_ids: set[str] = set()
-    now = _now_iso()
 
     for raw in rows or []:
         title = _clean((raw or {}).get("title"))
         if not title or title.casefold() in existing_titles:
             skipped += 1
             continue
-        item_id = _next_numeric_id(db[_REPOSITORY_KEY])
         row = _normalise(
             {
                 **dict(raw or {}),
-                "id": item_id,
-                "source_id": item_id,
                 "title": title,
-                "created_at": now,
-                "created_by": actor_id or "admin",
-                "updated_at": now,
-                "updated_by": actor_id or "admin",
+                "status": (raw or {}).get("status") or "active",
                 "source": "exercise_csv_import",
-            },
-            fallback_id=item_id,
+            }
         )
-        db[_REPOSITORY_KEY].append(row)
-        _write_audit(db, "imported", row, actor_id)
+        create_numeric_repository_item(
+            "exercise",
+            title,
+            _exercise_payload(row),
+            status=row["status"],
+            actor_id=actor_id or "admin",
+            source_system="exercise_csv_import",
+        )
         existing_titles.add(title.casefold())
-        new_ids.add(item_id)
         imported += 1
 
     if imported:
-        _persist(db, expected_ids=new_ids)
+        _clear_streamlit_data_cache()
     return {"imported": imported, "skipped": skipped}
