@@ -1,0 +1,50 @@
+name: Current Member Plan Phase E validation
+
+on:
+  pull_request:
+    paths:
+      - "components/current_member_plan.py"
+      - "components/current_member_plan_view.py"
+      - "pages/36_Todays_Journey.py"
+      - "pages/37_Member_Plan.py"
+      - "tests/test_current_member_plan.py"
+      - "components/member_planning_separation_contract.py"
+      - "components/exercise_member_allocation.py"
+      - "components/supplement_member_allocation.py"
+      - ".github/workflows/current-member-plan-phase-e-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install application dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Compile Phase E files
+        run: |
+          python -m py_compile \
+            components/current_member_plan.py \
+            components/current_member_plan_view.py \
+            pages/36_Todays_Journey.py \
+            pages/37_Member_Plan.py \
+            tests/test_current_member_plan.py
+      - name: Run Current Member Plan and separation regressions
+        run: |
+          python -m unittest -v \
+            tests.test_current_member_plan \
+            tests.test_supplement_member_allocation \
+            tests.test_exercise_member_allocation \
+            tests.test_member_planning_separation_contract \
+            tests.test_meal_profile_builder_phase_b \
+            tests.test_form_reset_closure_inventory_v2
