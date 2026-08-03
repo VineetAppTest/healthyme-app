@@ -7,6 +7,7 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "users_workflow_authority_trace_batch2_2026-08-03.md"
 GATE3_DOC = ROOT / "docs" / "users_gate3_write_cutover_2026-08-03.md"
+GATE4_DOC = ROOT / "docs" / "workflow_gate4_write_cutover_2026-08-03.md"
 STORAGE = ROOT / "components" / "storage_backend.py"
 NORMALIZED = ROOT / "components" / "normalized_store.py"
 DB = ROOT / "components" / "db.py"
@@ -28,10 +29,11 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_historical_trace_and_current_staged_cutover_are_both_guarded(self) -> None:
+    def test_historical_trace_and_current_staged_cutovers_are_guarded(self) -> None:
         historical = DOC.read_text(encoding="utf-8")
         current = STORAGE.read_text(encoding="utf-8")
         gate3 = GATE3_DOC.read_text(encoding="utf-8")
+        gate4 = GATE4_DOC.read_text(encoding="utf-8")
 
         self.assertIn("app-state-first dual-write", historical)
         self.assertIn("def _overlay_normalized_users_workflow", current)
@@ -39,21 +41,24 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
         self.assertIn('db["users"] = users', current)
         self.assertIn('db["workflow"] = workflow', current)
         self.assertIn("def save_state", current)
-        self.assertIn("commit_users_and_state", current)
-        self.assertIn("sync_workflow_to_normalized", current)
-        self.assertNotIn("sync_users_workflow_to_normalized(db)", current)
-        self.assertIn("if users_changed and not configured:", current)
+        self.assertIn("commit_identity_and_state", current)
+        self.assertIn("workflow_changed = _workflow_projection_changed(previous, db)", current)
+        self.assertNotIn("sync_workflow_to_normalized", current)
+        self.assertIn("if identity_changed and not configured:", current)
         self.assertIn("LOCAL_DB_PATH.write_text", current)
         self.assertIn("def push_local_data_to_supabase", current)
         self.assertIn("Gate 3 cuts over the **User write authority only**", gate3)
-        self.assertIn("Workflow remains on its existing dedicated synchronization path", gate3)
+        self.assertIn("Gate 4 cuts over the **Streamlit/shared-state Workflow write authority**", gate4)
+        self.assertIn("combined User + Workflow + state transactional contract", gate4)
 
-    def test_normalized_store_owns_dedicated_table_adapter(self) -> None:
+    def test_normalized_store_owns_canonical_identity_adapters(self) -> None:
         source = NORMALIZED.read_text(encoding="utf-8")
         for required in (
             '.table("hm_users")',
             '.table("hm_workflow")',
             "def load_users_workflow_from_normalized",
+            "def commit_users_and_state",
+            "def commit_identity_and_state",
             "def sync_users_workflow_to_normalized",
             "def upsert_user_to_normalized",
             "def find_user_by_email_fast",
@@ -61,8 +66,9 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
             '"workflow_status": "not_started"',
         ):
             self.assertIn(required, source)
+        self.assertNotIn('.table("hm_workflow").upsert(', source)
 
-    def test_compatibility_db_still_owns_user_workflow_and_login_session_operations(self) -> None:
+    def test_compatibility_db_still_owns_business_operations_and_login_sessions(self) -> None:
         source = DB.read_text(encoding="utf-8")
         for required in (
             "def ensure_default_admin",
@@ -103,7 +109,7 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
-    def test_every_runtime_authority_path_is_classified_in_document(self) -> None:
+    def test_every_runtime_authority_path_is_classified_in_documents(self) -> None:
         tokens = (
             "hm_users",
             "hm_workflow",
@@ -153,9 +159,10 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
             if matches:
                 hit_details[str(path.relative_to(ROOT))] = matches
 
-        historical_document = DOC.read_text(encoding="utf-8")
-        current_document = GATE3_DOC.read_text(encoding="utf-8")
-        combined_documents = historical_document + "\n" + current_document
+        combined_documents = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in (DOC, GATE3_DOC, GATE4_DOC)
+        )
         missing = [path for path in sorted(hit_details) if f"`{path}`" not in combined_documents]
         missing_details = "\n".join(
             f"{path}:\n  " + "\n  ".join(hit_details[path]) for path in missing
@@ -171,6 +178,9 @@ class UsersWorkflowAuthorityTraceBatch2Tests(unittest.TestCase):
         self.assertIn("Session migration scopes", source)
         self.assertIn("must not silently retire or reinterpret any session store", source)
         self.assertIn("Do not remove either shared collection immediately", source)
+        gate4 = GATE4_DOC.read_text(encoding="utf-8")
+        self.assertIn("change login, logout, refresh, routing or durable sessions", gate4)
+        self.assertIn("Existing Flutter Workflow functions are unchanged by this gate", gate4)
 
 
 if __name__ == "__main__":

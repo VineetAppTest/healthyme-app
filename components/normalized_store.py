@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 import os
 import uuid
 from typing import Any, Dict, List, Tuple
@@ -17,6 +16,14 @@ USER_CANONICAL_FIELDS = (
     "auth_provider",
     "auth_user_id",
     "auth_migrated_at",
+)
+WORKFLOW_CANONICAL_FIELDS = (
+    "laf_completed",
+    "nsp1_completed",
+    "nsp2_completed",
+    "submitted_for_review",
+    "admin_completed",
+    "final_report_ready",
 )
 
 
@@ -58,7 +65,7 @@ def _service_client():
     url = _get_secret("SUPABASE_URL")
     key = _get_secret("SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
-        raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY is required for canonical User writes.")
+        raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY is required for canonical identity writes.")
     return create_client(url, key)
 
 
@@ -89,6 +96,24 @@ def _workflow_base(wf=None):
         else "not_started"
     )
     return base
+
+
+def ensure_workflow_projection(db: Dict[str, Any]) -> Dict[str, Any]:
+    """Keep one compatibility Workflow projection for every known User.
+
+    Shared-only fields such as Body-Mind flags remain in the projection, while
+    canonical status is recalculated from the six database-owned lifecycle flags.
+    """
+    workflow = db.setdefault("workflow", {})
+    user_ids = {
+        str(user.get("id", "") or "").strip()
+        for user in db.get("users", []) or []
+        if str(user.get("id", "") or "").strip()
+    }
+    user_ids.update(str(user_id) for user_id in list(workflow.keys()) if str(user_id).strip())
+    for user_id in sorted(user_ids):
+        workflow[user_id] = _workflow_base(workflow.get(user_id, {}))
+    return db
 
 
 def _actor_context() -> Tuple[str, str]:
@@ -138,17 +163,64 @@ def _canonical_user_patch(user: Dict[str, Any]) -> Dict[str, Any]:
     return patch
 
 
+def _canonical_workflow_patch(workflow: Dict[str, Any]) -> Dict[str, Any]:
+    normalized = _workflow_base(workflow)
+    return {
+        field: bool(normalized.get(field, False))
+        for field in WORKFLOW_CANONICAL_FIELDS
+    }
+
+
 def _values_equal(field: str, desired: Any, existing: Any) -> bool:
-    if field in {"must_reset_password", "is_active"}:
+    if field in {
+        "must_reset_password",
+        "is_active",
+        *WORKFLOW_CANONICAL_FIELDS,
+    }:
         return bool(desired) == bool(existing)
     if field in {"email", "role", "auth_provider"}:
         return str(desired or "").strip().lower() == str(existing or "").strip().lower()
     return str(desired or "") == str(existing or "")
 
 
+def _merge_canonical_users(
+    shared_users: List[Dict[str, Any]], canonical_users: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Preserve shared-only User metadata while canonical fields win."""
+    shared_by_id = {
+        str(row.get("id", "") or ""): dict(row)
+        for row in shared_users or []
+        if str(row.get("id", "") or "")
+    }
+    merged: List[Dict[str, Any]] = []
+    for canonical in canonical_users or []:
+        user_id = str(canonical.get("id", "") or "")
+        row = dict(shared_by_id.get(user_id, {}))
+        row.update(canonical)
+        merged.append(row)
+    return merged
+
+
+def _merge_canonical_workflow(
+    shared_workflow: Dict[str, Dict[str, Any]],
+    canonical_workflow: Dict[str, Dict[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
+    """Preserve shared-only Workflow fields while canonical lifecycle fields win."""
+    merged: Dict[str, Dict[str, Any]] = {}
+    for user_id, canonical in (canonical_workflow or {}).items():
+        row = dict((shared_workflow or {}).get(user_id, {}) or {})
+        row.update(canonical)
+        merged[str(user_id)] = _workflow_base(row)
+    return merged
+
+
 def _changed_user_entries(client: Any, db: Dict[str, Any]) -> List[Dict[str, Any]]:
     response = client.table("hm_users").select("*").execute()
-    canonical = {str(row.get("id")): row for row in (getattr(response, "data", None) or []) if row.get("id")}
+    canonical = {
+        str(row.get("id")): row
+        for row in (getattr(response, "data", None) or [])
+        if row.get("id")
+    }
     entries: List[Dict[str, Any]] = []
     for user in db.get("users", []) or []:
         user_id = str(user.get("id", "") or "").strip()
@@ -157,7 +229,34 @@ def _changed_user_entries(client: Any, db: Dict[str, Any]) -> List[Dict[str, Any
         patch = _canonical_user_patch(user)
         existing = canonical.get(user_id)
         if existing is None or any(
-            not _values_equal(field, value, existing.get(field)) for field, value in patch.items()
+            not _values_equal(field, value, existing.get(field))
+            for field, value in patch.items()
+        ):
+            entries.append({"user_id": user_id, "patch": patch})
+    return entries
+
+
+def _changed_workflow_entries(client: Any, db: Dict[str, Any]) -> List[Dict[str, Any]]:
+    response = client.table("hm_workflow").select("*").execute()
+    canonical = {
+        str(row.get("user_id")): row
+        for row in (getattr(response, "data", None) or [])
+        if row.get("user_id")
+    }
+    entries: List[Dict[str, Any]] = []
+    workflow = db.get("workflow", {}) or {}
+    user_ids = {
+        str(user.get("id", "") or "").strip()
+        for user in db.get("users", []) or []
+        if str(user.get("id", "") or "").strip()
+    }
+    user_ids.update(str(user_id) for user_id in workflow.keys() if str(user_id).strip())
+    for user_id in sorted(user_ids):
+        patch = _canonical_workflow_patch(workflow.get(user_id, {}))
+        existing = canonical.get(user_id)
+        if existing is None or any(
+            not _values_equal(field, value, existing.get(field))
+            for field, value in patch.items()
         ):
             entries.append({"user_id": user_id, "patch": patch})
     return entries
@@ -170,11 +269,7 @@ def commit_users_and_state(
     source: str = "streamlit_user_cutover",
     force_state_commit: bool = False,
 ) -> Tuple[bool, bool, str, Dict[str, Any]]:
-    """Atomically commit changed canonical Users and the complete compatibility state.
-
-    Returns (ok, committed, message, response). `committed=False` means no
-    canonical User or shared User projection change required this contract.
-    """
+    """Gate 3 compatibility contract for User-only callers."""
     if not _service_role_configured():
         return False, False, "SUPABASE_SERVICE_ROLE_KEY is required for canonical User writes.", {}
     try:
@@ -211,6 +306,58 @@ def commit_users_and_state(
         )
     except Exception as exc:
         return False, False, f"Canonical User/state commit failed: {exc}", {}
+
+
+def commit_identity_and_state(
+    db: Dict[str, Any],
+    *,
+    state_id: str = APP_STATE_ID,
+    source: str = "streamlit_identity_cutover",
+    force_state_commit: bool = False,
+) -> Tuple[bool, bool, str, Dict[str, Any]]:
+    """Atomically commit changed Users, Workflow and the full compatibility state."""
+    if not _service_role_configured():
+        return False, False, "SUPABASE_SERVICE_ROLE_KEY is required for canonical identity writes.", {}
+    try:
+        db = ensure_workflow_projection(db)
+        client = _service_client()
+        changed_users = _changed_user_entries(client, db)
+        changed_workflows = _changed_workflow_entries(client, db)
+        if not changed_users and not changed_workflows and not force_state_commit:
+            return True, False, "No canonical User or Workflow changes detected.", {}
+        actor_id, actor_email = _actor_context()
+        request_id = f"identity-state-{uuid.uuid4()}"
+        params = {
+            "p_request_id": request_id,
+            "p_state_id": state_id,
+            "p_state_data": db,
+            "p_users": changed_users,
+            "p_workflows": changed_workflows,
+            "p_actor_id": actor_id or None,
+            "p_actor_email": actor_email or None,
+            "p_source": source,
+            "p_metadata": {
+                "cutover_gate": 4,
+                "changed_user_candidates": len(changed_users),
+                "changed_workflow_candidates": len(changed_workflows),
+            },
+        }
+        result = client.rpc("hm_admin_commit_identity_and_state", params).execute()
+        data = getattr(result, "data", None)
+        if isinstance(data, list) and data:
+            data = data[0]
+        if not isinstance(data, dict) or not data.get("ok"):
+            return False, False, "Canonical identity/state contract returned an invalid response.", {}
+        user_count = int(data.get("changed_user_count", 0) or 0)
+        workflow_count = int(data.get("changed_workflow_count", 0) or 0)
+        return (
+            True,
+            True,
+            f"Canonical identity/state commit accepted; {user_count} User and {workflow_count} Workflow row(s) changed.",
+            data,
+        )
+    except Exception as exc:
+        return False, False, f"Canonical identity/state commit failed: {exc}", {}
 
 
 def check_normalized_tables() -> Dict[str, Any]:
@@ -266,10 +413,19 @@ def load_users_workflow_from_normalized() -> Tuple[bool, List[dict], Dict[str, d
         c = _client()
         users_res = c.table("hm_users").select("*").execute()
         wf_res = c.table("hm_workflow").select("*").execute()
+        state_res = (
+            c.table("healthyme_app_state")
+            .select("data")
+            .eq("id", APP_STATE_ID)
+            .limit(1)
+            .execute()
+        )
+        state_rows = getattr(state_res, "data", None) or []
+        shared_state = state_rows[0].get("data") or {} if state_rows else {}
 
-        users = []
+        canonical_users = []
         for row in users_res.data or []:
-            users.append(
+            canonical_users.append(
                 {
                     "id": row.get("id"),
                     "name": row.get("name", ""),
@@ -282,11 +438,11 @@ def load_users_workflow_from_normalized() -> Tuple[bool, List[dict], Dict[str, d
                 }
             )
 
-        workflow = {}
+        canonical_workflow = {}
         for row in wf_res.data or []:
             uid = row.get("user_id")
             if uid:
-                workflow[uid] = _workflow_base(
+                canonical_workflow[uid] = _workflow_base(
                     {
                         "laf_completed": bool(row.get("laf_completed", False)),
                         "nsp1_completed": bool(row.get("nsp1_completed", False)),
@@ -297,58 +453,40 @@ def load_users_workflow_from_normalized() -> Tuple[bool, List[dict], Dict[str, d
                         "workflow_status": row.get("workflow_status", "not_started"),
                     }
                 )
-        return True, users, workflow, "Loaded users/workflow from normalized tables."
+
+        users = _merge_canonical_users(
+            list(shared_state.get("users", []) or []),
+            canonical_users,
+        )
+        workflow = _merge_canonical_workflow(
+            dict(shared_state.get("workflow", {}) or {}),
+            canonical_workflow,
+        )
+        return True, users, workflow, "Loaded canonical users/workflow while preserving shared-only projection fields."
     except Exception as exc:
         return False, [], {}, f"Could not load normalized users/workflow: {exc}"
 
 
 def sync_workflow_to_normalized(db: Dict[str, Any]) -> Tuple[bool, str]:
-    status = check_normalized_tables()
-    if not status.get("hm_workflow"):
-        return False, status.get("message", "Normalized Workflow table not ready.")
-    try:
-        c = _client()
-        rows = []
-        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        user_ids = {str(u.get("id")) for u in db.get("users", []) or [] if u.get("id")}
-        for user_id in user_ids:
-            wf = _workflow_base(db.get("workflow", {}).get(user_id, {}))
-            rows.append(
-                {
-                    "user_id": user_id,
-                    "laf_completed": bool(wf.get("laf_completed")),
-                    "nsp1_completed": bool(wf.get("nsp1_completed")),
-                    "nsp2_completed": bool(wf.get("nsp2_completed")),
-                    "submitted_for_review": bool(wf.get("submitted_for_review")),
-                    "admin_completed": bool(wf.get("admin_completed")),
-                    "final_report_ready": bool(wf.get("final_report_ready")),
-                    "workflow_status": wf.get("workflow_status", "not_started"),
-                    "updated_at": now,
-                }
-            )
-        if rows:
-            c.table("hm_workflow").upsert(rows).execute()
-        return True, f"Synced {len(rows)} Workflow record(s) to hm_workflow."
-    except Exception as exc:
-        return False, f"Could not sync Workflow to hm_workflow: {exc}"
+    """Compatibility alias after Gate 4; no direct table upsert remains."""
+    ok, _, message, _ = commit_identity_and_state(
+        ensure_workflow_projection(db),
+        state_id=APP_STATE_ID,
+        source="workflow_compatibility_sync",
+        force_state_commit=True,
+    )
+    return bool(ok), message
 
 
 def sync_users_workflow_to_normalized(db: Dict[str, Any]) -> Tuple[bool, str]:
-    """Compatibility/manual action after Gate 3.
-
-    User rows use the transactional audited contract; Workflow remains on the
-    legacy synchronization path until its independent cutover gate.
-    """
-    user_ok, _, user_msg, _ = commit_users_and_state(
-        db,
+    """Manual compatibility action routed through the Gate 4 transaction."""
+    ok, _, message, _ = commit_identity_and_state(
+        ensure_workflow_projection(db),
         state_id=APP_STATE_ID,
         source="manual_users_workflow_sync",
         force_state_commit=True,
     )
-    if not user_ok:
-        return False, user_msg
-    workflow_ok, workflow_msg = sync_workflow_to_normalized(db)
-    return bool(workflow_ok), f"{user_msg} {workflow_msg}"
+    return bool(ok), message
 
 
 def upsert_user_to_normalized(user: dict, workflow: dict = None) -> Tuple[bool, str]:
