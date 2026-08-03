@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "components" / "repository_exclusive_tabs_runtime.py"
+DISCLOSURE_CLEANUP = ROOT / "components" / "repository_disclosure_fallback_cleanup.py"
 BOOTSTRAP = ROOT / "components" / "__init__.py"
 
 
@@ -17,6 +18,7 @@ def text(path: Path) -> str:
 class RepositoryExclusiveTabsRuntimeTests(unittest.TestCase):
     def test_runtime_and_bootstrap_compile(self):
         ast.parse(text(RUNTIME), filename=str(RUNTIME))
+        ast.parse(text(DISCLOSURE_CLEANUP), filename=str(DISCLOSURE_CLEANUP))
         ast.parse(text(BOOTSTRAP), filename=str(BOOTSTRAP))
 
     def test_runtime_is_limited_to_repository_pages(self):
@@ -55,6 +57,18 @@ class RepositoryExclusiveTabsRuntimeTests(unittest.TestCase):
         self.assertIn("min-height:58px!important", source)
         self.assertIn("hm-repository-exclusive-switch", source)
 
+    def test_keyboard_arrow_fallback_is_hidden_only_on_repository_pages(self):
+        source = text(DISCLOSURE_CLEANUP)
+        self.assertIn("keyboard_arrow_down", source)
+        self.assertIn('[data-testid="stIconMaterial"]', source)
+        self.assertIn('span[translate="no"]', source)
+        self.assertIn('span[class*="material-symbols"]', source)
+        self.assertIn("pages/15_Admin_Recipe_Manager.py", source)
+        self.assertIn("pages/16_Admin_Exercise_Manager.py", source)
+        self.assertIn("pages/39_Admin_Supplement_Manager.py", source)
+        self.assertNotIn("pages/18_Daily_Log.py", source)
+        self.assertIn('options[0] == "Current Repository"', source)
+
     def test_bootstrap_installs_runtime_after_layout_runtime(self):
         bootstrap = text(BOOTSTRAP)
         self.assertIn(
@@ -65,6 +79,14 @@ class RepositoryExclusiveTabsRuntimeTests(unittest.TestCase):
         self.assertGreater(
             bootstrap.rfind("install_repository_exclusive_tabs_runtime()"),
             bootstrap.rfind("install_repository_layout_correction_runtime()"),
+        )
+        self.assertIn(
+            "from components.repository_disclosure_fallback_cleanup import (",
+            bootstrap,
+        )
+        self.assertGreater(
+            bootstrap.rfind("install_repository_disclosure_fallback_cleanup()"),
+            bootstrap.rfind("install_repository_exclusive_tabs_runtime()"),
         )
 
 
