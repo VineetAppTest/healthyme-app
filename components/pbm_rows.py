@@ -41,8 +41,9 @@ def set_default(key: str, value) -> None:
 
 def _clear_source_detail_widget_state(row: Dict[str, Any]) -> None:
     prefix = widget_key(row, "source_")
+    selector_key = widget_key(row, "source_option_id")
     for key in list(st.session_state.keys()):
-        if str(key).startswith(prefix):
+        if str(key).startswith(prefix) and str(key) != selector_key:
             st.session_state.pop(key, None)
 
 
