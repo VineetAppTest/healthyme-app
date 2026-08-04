@@ -81,6 +81,27 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         self.assertIn('if clean(row.get("item_type")).lower() == "meal"', source)
         self.assertIn("save_profile_module(", source)
 
+    def test_setup_selector_is_compact_aligned_and_state_safe(self) -> None:
+        source = SETUP_FILE.read_text(encoding="utf-8")
+        self.assertNotIn(
+            "Select a plan and it loads automatically. Keep only the information needed",
+            source,
+        )
+        self.assertIn('label_visibility="collapsed"', source)
+        self.assertIn('vertical_alignment="bottom"', source)
+        self.assertIn("_queue_plan_selector(profile_id)", source)
+        self.assertIn("_queue_plan_selector(new_id)", source)
+        self.assertIn("_apply_queued_plan_selector(selector_options, loaded_id)", source)
+        apply_at = source.index("_apply_queued_plan_selector(selector_options, loaded_id)")
+        widget_at = source.index("selected_id = select_col.selectbox(")
+        self.assertLess(apply_at, widget_at)
+        handler = source[
+            source.index("def _handle_plan_selection") : source.index(
+                "def _clone_complete_plan"
+            )
+        ]
+        self.assertNotIn("st.session_state[_SELECTOR_KEY] =", handler)
+
     def test_meals_use_fixed_slots_portion_guidance_review_and_direct_publish(self) -> None:
         source = MEALS_FILE.read_text(encoding="utf-8")
         self.assertIn("for slot in MEAL_SLOTS", source)
