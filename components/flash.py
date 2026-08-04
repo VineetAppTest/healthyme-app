@@ -3,17 +3,48 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 FLASH_KEY = "_hm_system_message"
+JOURNAL_AUTOSAVE_SILENT_MESSAGE_KEY = "_hm_journal_autosave_silent_message"
+JOURNAL_AUTOSAVE_SILENT_RERUN_KEY = "_hm_journal_autosave_silent_rerun"
+
+
+def _consume_journal_autosave_feedback(level):
+    """Handle journal-autosave feedback at the canonical message boundary.
+
+    Daily Log imports ``set_system_message`` directly. Keeping the silent guard
+    inside this function makes autosave independent of import and wrapper order.
+    Only autosave success feedback is suppressed. Errors, warnings and info
+    messages remain visible and retain their normal rerun behaviour.
+    """
+
+    silent_kind = st.session_state.get(JOURNAL_AUTOSAVE_SILENT_MESSAGE_KEY)
+    if not silent_kind:
+        return False
+
+    normalized_level = str(level or "info").strip().lower()
+    st.session_state.pop(JOURNAL_AUTOSAVE_SILENT_MESSAGE_KEY, None)
+    if normalized_level == "success":
+        return True
+
+    # Never hide a real error or warning, and do not suppress its rerun.
+    st.session_state.pop(JOURNAL_AUTOSAVE_SILENT_RERUN_KEY, None)
+    return False
+
 
 def set_system_message(message, level="success", celebrate=False):
     """Store a system message to show near the top on next rerun.
 
     celebrate=True should be used only for major task completion, not routine autosaves.
     """
+    normalized_level = level if level in ["success", "error", "warning", "info"] else "info"
+    if _consume_journal_autosave_feedback(normalized_level):
+        return
+
     st.session_state[FLASH_KEY] = {
         "message": str(message),
-        "level": level if level in ["success", "error", "warning", "info"] else "info",
+        "level": normalized_level,
         "celebrate": bool(celebrate),
     }
+
 
 def render_system_message():
     """Render top-visible system message, optionally celebrate, and scroll it into view."""
