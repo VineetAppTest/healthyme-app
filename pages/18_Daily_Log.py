@@ -115,6 +115,55 @@ def _time_text(value):
     return "" if value is None else value.strftime("%I:%M %p")
 
 
+def _render_fluid_time_selector(prior_value, date_key, idx):
+    parsed = _parse_time(prior_value)
+    prior_hour = f"{((parsed.hour - 1) % 12) + 1:02d}" if parsed else "HH"
+    prior_minute = f"{parsed.minute:02d}" if parsed else "MM"
+    prior_period = ("AM" if parsed.hour < 12 else "PM") if parsed else "AM/PM"
+
+    hour_options = ["HH"] + [f"{value:02d}" for value in range(1, 13)]
+    minute_options = ["MM"] + [f"{value:02d}" for value in range(60)]
+    period_options = ["AM/PM", "AM", "PM"]
+
+    st.markdown(
+        f"<div class='hm-fluid-time-label'>Fluid timing {idx + 1}</div>",
+        unsafe_allow_html=True,
+    )
+    hour_col, minute_col, period_col = st.columns([1, 1, 1.2], gap="small")
+    with hour_col:
+        st.markdown(
+            "<span class='hm-fluid-time-grid-anchor'></span>",
+            unsafe_allow_html=True,
+        )
+        selected_hour = st.selectbox(
+            "Hour",
+            hour_options,
+            index=hour_options.index(prior_hour),
+            key=f"hm_h9a4c_fluid_hour_{date_key}_{idx}",
+        )
+    with minute_col:
+        selected_minute = st.selectbox(
+            "Minute",
+            minute_options,
+            index=minute_options.index(prior_minute),
+            key=f"hm_h9a4c_fluid_minute_{date_key}_{idx}",
+        )
+    with period_col:
+        selected_period = st.selectbox(
+            "AM/PM",
+            period_options,
+            index=period_options.index(prior_period),
+            key=f"hm_h9a4c_fluid_period_{date_key}_{idx}",
+        )
+
+    if selected_hour == "HH" or selected_minute == "MM" or selected_period == "AM/PM":
+        return None
+    return datetime.strptime(
+        f"{selected_hour}:{selected_minute} {selected_period}",
+        "%I:%M %p",
+    ).time()
+
+
 def _food_item_has_data(item):
     item = _as_dict(item)
     return _has_value(item.get("food") or item.get("name")) or _has_value(
@@ -443,6 +492,11 @@ def _render_css():
         .hm-h9a4c-cardline{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:.75rem .85rem;margin:.45rem 0;}
         .hm-exercise-placeholder{border:1px dashed #D8C18B;background:#FFFDF8;border-radius:16px;padding:1rem;margin:.5rem 0;color:#334155;}
         .hm-snacking-subtitle{color:#64748B;font-size:.82rem;font-weight:720;margin:.35rem 0 .15rem 0;}
+        .hm-fluid-time-label{color:#334155;font-size:.84rem;font-weight:760;margin:0 0 .18rem 0;}
+        .hm-fluid-time-grid-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-fluid-time-grid-anchor){gap:.38rem!important;align-items:flex-end!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-fluid-time-grid-anchor) label p{font-size:.74rem!important;font-weight:820!important;white-space:nowrap!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-fluid-time-grid-anchor) [data-baseweb="select"] > div{min-height:2.42rem!important;padding-left:.36rem!important;padding-right:.28rem!important;}
         div[data-testid="stTabs"] [role="tablist"]{gap:.55rem;margin:.15rem 0 1rem 0;border-bottom:1px solid #E3D4BA;padding-bottom:.45rem;}
         div[data-testid="stTabs"] button[role="tab"]{border:1.4px solid #D8A84E!important;border-radius:999px!important;background:#FFFFFF!important;color:#064E3B!important;font-weight:950!important;padding:.62rem 1.18rem!important;box-shadow:0 7px 16px rgba(6,78,59,.07)!important;min-height:2.65rem!important;}
         div[data-testid="stTabs"] button[aria-selected="true"]{background:linear-gradient(135deg,#064E3B 0%,#0F766E 100%)!important;color:#FFFFFF!important;border-color:#064E3B!important;box-shadow:0 12px 22px rgba(6,78,59,.18)!important;}
@@ -859,10 +913,10 @@ def _render_food_journal(user_id):
                         key=f"hm_h9a4c_fluid_type_{date_key}_{idx}",
                     )
                 with time_col:
-                    fluid_time = st.time_input(
-                        f"Fluid timing {idx + 1}",
-                        value=_parse_time(prior.get("time")),
-                        key=f"hm_h9a4c_fluid_time_{date_key}_{idx}",
+                    fluid_time = _render_fluid_time_selector(
+                        prior.get("time"),
+                        date_key,
+                        idx,
                     )
                 quantity_col, notes_col = st.columns(2)
                 with quantity_col:

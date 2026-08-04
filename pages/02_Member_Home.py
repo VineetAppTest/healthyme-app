@@ -139,6 +139,23 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-te
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor){margin:.45rem 0 .85rem 0!important;}
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{border:1.4px solid #D8A84E!important;border-radius:16px!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:950!important;}
 .hm-upcoming-schedule-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+.hm-home-section-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin:.42rem 0 .48rem 0;padding:.44rem .12rem .38rem .12rem;color:#064E3B;font-size:1rem;font-weight:950;}
+.hm-home-section-head span{display:inline-flex;align-items:center;padding:.14rem .42rem;border:1px solid #D9C28F;border-radius:999px;background:#FFF7E6;color:#7A5A16;font-size:.68rem;font-weight:850;white-space:nowrap;}
+.hm-home-section-divider{height:1px;background:linear-gradient(90deg,transparent 0%,#D8A84E 12%,#D8A84E 88%,transparent 100%);margin:.88rem 0 .72rem 0;}
+.hm-home-grid-anchor,.hm-message-grid-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-home-grid-anchor),div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-message-grid-anchor){height:100%!important;padding:.58rem .64rem .64rem!important;border:1px solid #E3C98E!important;border-radius:14px!important;background:#FFFDF8!important;box-shadow:0 5px 14px rgba(15,23,42,.035)!important;}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-home-grid-anchor) > div,div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-message-grid-anchor) > div{padding:0!important;gap:.32rem!important;}
+.hm-b13-message-card{border:0!important;background:transparent!important;border-radius:0!important;padding:0!important;margin:0!important;min-height:6.65rem;box-shadow:none!important;}
+.hm-b13-message-subject{font-size:.88rem!important;font-weight:900!important;margin-bottom:.10rem!important;}
+.hm-b13-message-date{font-size:.70rem!important;margin-bottom:.24rem!important;}
+.hm-b13-message-body{font-size:.79rem!important;line-height:1.34!important;margin:0!important;}
+.hm-v101-schedule-card{border:0!important;background:transparent!important;border-radius:0!important;padding:0!important;margin:0!important;min-height:5.85rem;box-shadow:none!important;}
+.hm-v101-schedule-title{font-size:.88rem!important;margin-bottom:.14rem!important;}
+.hm-v101-schedule-line{font-size:.76rem!important;line-height:1.28!important;margin:.06rem 0!important;}
+.hm-v101-schedule-pill{font-size:.64rem!important;padding:.12rem .34rem!important;}
+.hm-v104b11-ack-note{font-size:.72rem!important;line-height:1.34!important;padding:.38rem .46rem!important;margin-top:.34rem!important;}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-message-grid-anchor) button{min-height:2.08rem!important;height:2.08rem!important;padding:.28rem .46rem!important;font-size:.74rem!important;border-radius:9px!important;}
+@media(max-width:900px){.hm-home-section-head{font-size:.94rem;}}
 .hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:.62rem .72rem;margin:.52rem 0 .62rem 0;}
 .hm-v990-progress-head{display:flex;align-items:center;justify-content:space-between;gap:.65rem;flex-wrap:wrap;margin:0 0 .38rem 0;}
 .hm-v990-progress-title{color:#064E3B;font-size:.88rem;font-weight:920;margin:0;}
@@ -210,19 +227,13 @@ def _render_member_utility_bar():
             st.rerun()
 
 
-def _render_messages(user_id):
+def _render_messages(user_id, show_divider=False):
     auto_archive_expired_nutritionist_messages(user_id)
-    messages = get_member_messages(user_id, limit=3)
+    messages = get_member_messages(user_id, limit=6)
     if not messages:
-        return
-    st.markdown(
-        "<div class='hm-b13-message-shell'>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        "<div class='hm-b13-message-title'>Messages from Nutritionist</div>",
-        unsafe_allow_html=True,
-    )
+        return False
+
+    unique_messages = []
     seen_msg_keys = set()
     for msg in messages:
         msg_key = (
@@ -232,75 +243,97 @@ def _render_messages(user_id):
         if msg_key in seen_msg_keys:
             continue
         seen_msg_keys.add(msg_key)
+        unique_messages.append(msg)
+        if len(unique_messages) == 6:
+            break
+
+    if not unique_messages:
+        return False
+    if show_divider:
         st.markdown(
-            f"""
-            <div class='hm-b13-message-card'>
-              <div class='hm-b13-message-subject'>{_esc(msg.get('subject','Message'))}</div>
-              <div class='hm-b13-message-date'>{_esc(format_local_ts(msg.get('ts','')))}</div>
-              <p class='hm-b13-message-body'>{_esc(msg.get('message',''))}</p>
-            </div>
-            """,
+            "<div class='hm-home-section-divider'></div>",
             unsafe_allow_html=True,
         )
-        if st.button(
-            "Read & Archive",
-            key=f"read_msg_{msg.get('id','')}",
-            use_container_width=True,
-        ):
-            ok = mark_member_message_read(user_id, msg.get("id", ""))
-            if ok:
-                set_system_message(
-                    "Message archived. You can find it in Daily Food Journal → "
-                    "Nutritionist Notes Archive.",
-                    "success",
-                )
-            else:
-                set_system_message(
-                    "Message could not be archived. Please refresh and try again.",
-                    "error",
-                )
-            st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='hm-home-section-head'><div>Messages from Nutritionist</div><span>{len(unique_messages)} recent</span></div>",
+        unsafe_allow_html=True,
+    )
+
+    for row_start in range(0, len(unique_messages), 3):
+        cols = st.columns(3, gap="small")
+        for col, msg in zip(cols, unique_messages[row_start : row_start + 3]):
+            with col:
+                with st.container(border=True):
+                    st.markdown(
+                        f"""
+                        <span class='hm-message-grid-anchor'></span>
+                        <div class='hm-b13-message-card'>
+                          <div class='hm-b13-message-subject'>{_esc(msg.get('subject','Message'))}</div>
+                          <div class='hm-b13-message-date'>{_esc(format_local_ts(msg.get('ts','')))}</div>
+                          <p class='hm-b13-message-body'>{_esc(msg.get('message',''))}</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    if st.button(
+                        "Read & Archive",
+                        key=f"read_msg_{msg.get('id','')}",
+                        use_container_width=True,
+                    ):
+                        ok = mark_member_message_read(user_id, msg.get("id", ""))
+                        if ok:
+                            set_system_message(
+                                "Message archived. You can find it in Daily Food Journal → "
+                                "Nutritionist Notes Archive.",
+                                "success",
+                            )
+                        else:
+                            set_system_message(
+                                "Message could not be archived. Please refresh and try again.",
+                                "error",
+                            )
+                        st.rerun()
+    return True
 
 
 def _render_upcoming_schedules(user_id):
     queue_schedule_acknowledgement_reminders_v104b11(user_id)
-    upcoming_schedules = list_upcoming_member_schedules(user_id, limit=5)
+    upcoming_schedules = list_upcoming_member_schedules(user_id, limit=6)
     if not upcoming_schedules:
-        return
+        return False
 
-    # The read helper already removes ended/closed meetings before this section is built.
-    # Collapsing the section therefore changes presentation only, not expiry behaviour.
-    with st.expander(
-        f"Upcoming Schedule ({len(upcoming_schedules)})",
-        expanded=True,
-    ):
-        st.markdown(
-            "<span class='hm-upcoming-schedule-anchor'></span>",
-            unsafe_allow_html=True,
-        )
-        for schedule in upcoming_schedules:
-            time_text = str(schedule.get("start_time", "") or "")
-            if schedule.get("end_time"):
-                time_text += f" - {schedule.get('end_time')}"
-            notice = schedule_acknowledgement_notice_v104b11(schedule)
-            notice_html = (
-                "<div class='hm-v101-schedule-line hm-v104b11-ack-note'>"
-                f"{_esc(notice)}</div>"
-                if notice
-                else ""
-            )
-            st.markdown(
-                f"""
-                <div class='hm-v101-schedule-card'>
-                  <div class='hm-v101-schedule-title'>{_esc(schedule.get('title','Scheduled session'))}<span class='hm-v101-schedule-pill'>{_esc(schedule_display_status_label_v104b11(schedule))}</span></div>
-                  <div class='hm-v101-schedule-line'>{_esc(schedule.get('schedule_date',''))} · {_esc(time_text)}</div>
-                  <div class='hm-v101-schedule-line'>Mode: {_esc(schedule.get('mode','-'))} · Link/location: {_esc(schedule.get('location_or_link') or '-')}</div>
-                  {notice_html}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    st.markdown(
+        f"<div class='hm-home-section-head'><div>Upcoming Schedule</div><span>{len(upcoming_schedules)} upcoming</span></div>",
+        unsafe_allow_html=True,
+    )
+    for row_start in range(0, len(upcoming_schedules), 3):
+        cols = st.columns(3, gap="small")
+        for col, schedule in zip(cols, upcoming_schedules[row_start : row_start + 3]):
+            with col:
+                with st.container(border=True):
+                    time_text = str(schedule.get("start_time", "") or "")
+                    if schedule.get("end_time"):
+                        time_text += f" - {schedule.get('end_time')}"
+                    notice = schedule_acknowledgement_notice_v104b11(schedule)
+                    notice_html = (
+                        "<div class='hm-v101-schedule-line hm-v104b11-ack-note'>"
+                        f"{_esc(notice)}</div>"
+                        if notice
+                        else ""
+                    )
+                    st.markdown(
+                        f"""
+                        <span class='hm-home-grid-anchor'></span>
+                        <div class='hm-v101-schedule-card'>
+                          <div class='hm-v101-schedule-title'>{_esc(schedule.get('title','Scheduled session'))}<span class='hm-v101-schedule-pill'>{_esc(schedule_display_status_label_v104b11(schedule))}</span></div>
+                          <div class='hm-v101-schedule-line'>{_esc(schedule.get('schedule_date',''))} · {_esc(time_text)}</div>
+                          <div class='hm-v101-schedule-line'>Mode: {_esc(schedule.get('mode','-'))} · Link/location: {_esc(schedule.get('location_or_link') or '-')}</div>
+                          {notice_html}
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+    return True
 
 
 def _render_task_button(label, key, page, disabled=False):
@@ -445,8 +478,8 @@ for _repo_detail_key in [
     st.session_state.pop(_repo_detail_key, None)
 
 render_system_message()
-_render_messages(user_id)
-_render_upcoming_schedules(user_id)
+_has_upcoming_schedule = _render_upcoming_schedules(user_id)
+_render_messages(user_id, show_divider=_has_upcoming_schedule)
 
 instance_status = str(
     current_instance.get("status")
