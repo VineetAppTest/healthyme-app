@@ -1,6 +1,9 @@
 """HealthyMe shared components package."""
 
 from components.streamlit_toolbar_cleanup import install_streamlit_toolbar_cleanup
+from components.streamlit_app_header_regression_guard import (
+    install_streamlit_app_header_regression_guard,
+)
 from components.file_uploader_presentation import install_file_uploader_presentation
 from components.login_expiry_recovery import install_login_expiry_recovery
 from components.package_hardening_bootstrap import install_package_hardening
@@ -40,6 +43,7 @@ from components.member_saved_days_home_cleanup import (
 from components.member_home_side_by_side_runtime import (
     install_member_home_side_by_side_runtime,
 )
+from components.member_task_pending_age import install_member_task_pending_age
 from components.member_saved_days_dispatch_runtime import (
     install_member_saved_days_dispatch_runtime,
 )
@@ -82,6 +86,7 @@ from components.repository_disclosure_fallback_cleanup import (
 
 
 install_streamlit_toolbar_cleanup()
+install_streamlit_app_header_regression_guard()
 install_file_uploader_presentation()
 install_login_expiry_recovery()
 install_package_hardening()
@@ -111,6 +116,9 @@ install_auth_provisioning_form_hygiene()
 install_recommendations_share_form_hygiene()
 install_member_saved_days_home_cleanup()
 install_member_home_side_by_side_runtime()
+# Add a real task-age badge after the accepted Member Home layout wrapper so it can
+# replace the older CSS-only ACTION REQUIRED label without disturbing task routing.
+install_member_task_pending_age()
 install_member_saved_days_dispatch_runtime()
 
 # Final page-specific repairs are deliberately outermost. Admin Exercise keeps the
