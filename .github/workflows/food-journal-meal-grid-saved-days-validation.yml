@@ -1,0 +1,36 @@
+name: Food Journal Meal Grid and Saved Days Validation
+
+on:
+  pull_request:
+    paths:
+      - "pages/18_Daily_Log.py"
+      - "components/member_saved_days_dispatch_runtime.py"
+      - "components/member_saved_days_home_cleanup.py"
+      - "tests/test_food_journal_meal_grid_saved_days_cleanup.py"
+      - ".github/workflows/food-journal-meal-grid-saved-days-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install project dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile changed surfaces
+        run: |
+          python -m py_compile \
+            pages/18_Daily_Log.py \
+            components/member_saved_days_dispatch_runtime.py \
+            components/member_saved_days_home_cleanup.py \
+            tests/test_food_journal_meal_grid_saved_days_cleanup.py
+      - name: Validate meal grid and Saved Days contracts
+        run: python -m unittest tests.test_food_journal_meal_grid_saved_days_cleanup -v
