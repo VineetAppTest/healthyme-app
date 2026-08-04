@@ -7,14 +7,14 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 _DEFAULT_MEMBER_TIMEZONE = "Asia/Kolkata"
-_PATCH_MARKER = "_hm_member_home_schedule_presentation_v2"
-_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v5"
+_PATCH_MARKER = "_hm_member_home_schedule_presentation_v3"
+_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v6"
 _MEMBER_HOME_STYLE_MARKER = 'id="hm-member-home-local-style-v2"'
 _CLOSED_STATUSES = {"cancelled", "completed", "rescheduled"}
 _ACTION_ROWS_KEY = "_hm_member_home_schedule_action_rows"
 _ACTION_INDEX_KEY = "_hm_member_home_schedule_action_index"
 _MEMBER_HOME_COMPACT_CSS = """
-/* hm-member-home-compact-polish-v5 */
+/* hm-member-home-compact-polish-v6 */
 div[data-testid="stElementContainer"]:has(#hm-member-home-local-style-v2){
   display:none!important;height:0!important;min-height:0!important;
   margin:0!important;padding:0!important;overflow:hidden!important;
@@ -79,17 +79,16 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
   transform:rotate(90deg);
 }
 .hm-v101-schedule-card{
-  width:47%!important;max-width:460px!important;
-  margin:.34rem 0 .16rem 0!important;
-  padding:.52rem .68rem!important;border-radius:12px!important;
+  width:100%!important;max-width:none!important;
+  margin:0!important;padding:0!important;border-radius:0!important;
 }
 .hm-upcoming-schedule-anchor,.hm-member-schedule-action-anchor{
   display:none!important;height:0!important;min-height:0!important;
   margin:0!important;padding:0!important;overflow:hidden!important;
 }
 .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"]{
-  width:47%!important;max-width:460px!important;
-  gap:.42rem!important;margin:0 0 .54rem 0!important;
+  width:100%!important;max-width:none!important;
+  gap:.34rem!important;margin:.24rem 0 0 0!important;
 }
 .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"] button{
   min-height:2.18rem!important;height:2.18rem!important;
@@ -99,7 +98,7 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
 @media(max-width:900px){
   .hm-v101-schedule-card,
   .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"]{
-    width:68%!important;max-width:560px!important;
+    width:100%!important;max-width:none!important;
   }
 }
 @media(max-width:640px){
@@ -113,7 +112,7 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
   .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"]{
     width:100%!important;max-width:none!important;
   }
-  .hm-v101-schedule-card{padding:.62rem .72rem!important;}
+  .hm-v101-schedule-card{padding:0!important;}
 }
 """
 
@@ -317,7 +316,7 @@ def _install_member_home_compact_polish() -> None:
         if (
             isinstance(body, str)
             and _MEMBER_HOME_STYLE_MARKER in body
-            and "hm-member-home-compact-polish-v5" not in body
+            and "hm-member-home-compact-polish-v6" not in body
         ):
             body = body.replace(
                 "</style>",

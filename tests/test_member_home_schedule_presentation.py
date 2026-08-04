@@ -96,22 +96,43 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, helper)
 
-    def test_member_home_upcoming_schedule_is_collapsible_after_filtering(self):
+    def test_member_home_uses_compact_three_by_two_schedule_and_message_grids(self):
         source = (ROOT / "pages/02_Member_Home.py").read_text()
         ast.parse(source)
-        self.assertIn("with st.expander(", source)
-        self.assertIn('f"Upcoming Schedule ({len(upcoming_schedules)})"', source)
+        self.assertIn("list_upcoming_member_schedules(user_id, limit=6)", source)
+        self.assertIn("get_member_messages(user_id, limit=6)", source)
+        self.assertIn("for row_start in range(0, len(upcoming_schedules), 3):", source)
+        self.assertIn("for row_start in range(0, len(unique_messages), 3):", source)
+        self.assertGreaterEqual(source.count('st.columns(3, gap="small")'), 2)
+        self.assertIn("hm-home-section-divider", source)
+        self.assertIn("hm-home-grid-anchor", source)
+        self.assertIn("hm-message-grid-anchor", source)
         self.assertLess(
-            source.index("list_upcoming_member_schedules(user_id, limit=5)"),
-            source.index("with st.expander("),
+            source.rindex("_has_upcoming_schedule = _render_upcoming_schedules(user_id)"),
+            source.rindex("_render_messages(user_id, show_divider=_has_upcoming_schedule)"),
         )
-        self.assertIn("expanded=True", source)
+        schedule_slice = source[
+            source.index("def _render_upcoming_schedules") :
+            source.index("def _render_task_button")
+        ]
+        self.assertNotIn("with st.expander(", schedule_slice)
         for forbidden in (
             "update_member_schedule_status(",
             "session_counted =",
             "save_db(",
         ):
             self.assertNotIn(forbidden, source)
+
+    def test_other_fluid_time_uses_balanced_hour_minute_period_controls(self):
+        source = (ROOT / "pages/18_Daily_Log.py").read_text()
+        ast.parse(source)
+        self.assertIn("def _render_fluid_time_selector", source)
+        self.assertIn('st.columns([1, 1, 1.2], gap="small")', source)
+        self.assertIn('["HH"] + [f"{value:02d}" for value in range(1, 13)]', source)
+        self.assertIn('["MM"] + [f"{value:02d}" for value in range(60)]', source)
+        self.assertIn('["AM/PM", "AM", "PM"]', source)
+        self.assertIn("hm-fluid-time-grid-anchor", source)
+        self.assertNotIn("fluid_time = st.time_input(", source)
 
     def test_every_eligible_home_schedule_has_acknowledge_and_reschedule_actions(self):
         helper = (ROOT / "components/member_home_schedule_presentation.py").read_text()
