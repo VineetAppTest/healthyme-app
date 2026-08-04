@@ -113,6 +113,29 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, source)
 
+    def test_every_eligible_home_schedule_has_acknowledge_and_reschedule_actions(self):
+        helper = (ROOT / "components/member_home_schedule_presentation.py").read_text()
+        page = (ROOT / "pages/02_Member_Home.py").read_text()
+        db_source = (ROOT / "components/db.py").read_text()
+
+        self.assertIn('"Acknowledge"', helper)
+        self.assertIn('"Acknowledged"', helper)
+        self.assertIn('"Reschedule"', helper)
+        self.assertIn('"Reschedule pending"', helper)
+        self.assertIn("acknowledge_member_schedule", helper)
+        self.assertIn('st.switch_page("pages/33_My_Schedule.py")', helper)
+        self.assertIn(
+            'st.session_state["hm_member_schedule_active_section"] = "Upcoming Schedule"',
+            helper,
+        )
+        self.assertIn("hm_tz_show_reschedule_", helper)
+        self.assertIn("hm-member-schedule-action-anchor", helper)
+
+        # The action row is always present for eligible sessions. Only the advisory
+        # copy remains tied to the existing 48-hour reminder window.
+        self.assertIn("schedule_acknowledgement_notice_v104b11(schedule)", page)
+        self.assertIn("if not _hm_v104b11_is_within_hours(row, hours=48)", db_source)
+
     def test_member_home_header_renders_before_slow_workflow_reads(self):
         source = (ROOT / "pages/02_Member_Home.py").read_text()
         self.assertIn("hm-member-home-local-style-v2", source)
