@@ -51,6 +51,45 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
 
         self.assertEqual([row["id"] for row in visible], ["next-day", "evening-open"])
 
+    def test_duplicate_schedule_ids_are_rendered_once(self):
+        rows = [
+            {
+                "id": "same-schedule",
+                "status": "scheduled",
+                "start_at_utc": "2026-08-08T04:30:00Z",
+                "end_at_utc": "2026-08-08T05:00:00Z",
+                "created_at": "2026-08-04T10:00:00Z",
+            },
+            {
+                "id": "same-schedule",
+                "status": "scheduled",
+                "start_at_utc": "2026-08-08T04:30:00Z",
+                "end_at_utc": "2026-08-08T05:00:00Z",
+                "created_at": "2026-08-04T09:00:00Z",
+            },
+            {
+                "id": "different-schedule",
+                "status": "scheduled",
+                "start_at_utc": "2026-08-07T04:30:00Z",
+                "end_at_utc": "2026-08-07T05:00:00Z",
+            },
+        ]
+
+        visible = prepare_member_home_upcoming_schedules(
+            rows,
+            now_utc=dt.datetime(2026, 8, 4, tzinfo=UTC),
+            limit=6,
+        )
+
+        self.assertEqual(
+            [row["id"] for row in visible],
+            ["same-schedule", "different-schedule"],
+        )
+        self.assertEqual(
+            visible[0]["created_at"],
+            "2026-08-04T10:00:00Z",
+        )
+
     def test_closed_schedule_is_not_returned(self):
         rows = [
             {
@@ -151,6 +190,8 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         )
         self.assertIn("hm_tz_show_reschedule_", helper)
         self.assertIn("hm-member-schedule-action-anchor", helper)
+        self.assertIn("_ACTION_RENDERED_IDS_KEY", helper)
+        self.assertIn("seen_schedule_keys", helper)
 
         # The action row is always present for eligible sessions. Only the advisory
         # copy remains tied to the existing 48-hour reminder window.

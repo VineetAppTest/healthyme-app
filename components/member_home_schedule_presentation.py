@@ -13,6 +13,7 @@ _MEMBER_HOME_STYLE_MARKER = 'id="hm-member-home-local-style-v2"'
 _CLOSED_STATUSES = {"cancelled", "completed", "rescheduled"}
 _ACTION_ROWS_KEY = "_hm_member_home_schedule_action_rows"
 _ACTION_INDEX_KEY = "_hm_member_home_schedule_action_index"
+_ACTION_RENDERED_IDS_KEY = "_hm_member_home_schedule_action_rendered_ids"
 _MEMBER_HOME_COMPACT_CSS = """
 /* hm-member-home-compact-polish-v6 */
 div[data-testid="stElementContainer"]:has(#hm-member-home-local-style-v2){
@@ -234,7 +235,31 @@ def prepare_member_home_upcoming_schedules(
         ),
         reverse=True,
     )
-    return visible[:limit] if limit else visible
+
+    # One schedule is one Member Home card. Some legacy/read projections may
+    # surface the same stored schedule more than once; keep the newest sorted
+    # occurrence and never register duplicate action widgets for the same ID.
+    deduplicated: list[dict[str, Any]] = []
+    seen_schedule_keys: set[tuple[str, ...]] = set()
+    for row in visible:
+        schedule_id = _text(row.get("id"))
+        schedule_key = (
+            ("id", schedule_id)
+            if schedule_id
+            else (
+                "legacy",
+                _text(row.get("member_id")),
+                _text(row.get("schedule_date")),
+                _text(row.get("start_time")),
+                _text(row.get("title")),
+            )
+        )
+        if schedule_key in seen_schedule_keys:
+            continue
+        seen_schedule_keys.add(schedule_key)
+        deduplicated.append(row)
+
+    return deduplicated[:limit] if limit else deduplicated
 
 
 def _next_schedule_action_row() -> dict[str, Any] | None:
@@ -259,6 +284,13 @@ def _render_member_home_schedule_actions(row: dict[str, Any]) -> None:
     schedule_id = _text(row.get("id"))
     if not schedule_id:
         return
+
+    rendered_ids = set(st.session_state.get(_ACTION_RENDERED_IDS_KEY) or ())
+    if schedule_id in rendered_ids:
+        return
+    rendered_ids.add(schedule_id)
+    st.session_state[_ACTION_RENDERED_IDS_KEY] = rendered_ids
+
     status = _text(row.get("status") or "scheduled").lower()
     if status not in {"scheduled", "acknowledged"}:
         return
@@ -353,6 +385,7 @@ def install_member_home_schedule_presentation() -> None:
         visible = prepare_member_home_upcoming_schedules(rows, limit=limit)
         st.session_state[_ACTION_ROWS_KEY] = [dict(row or {}) for row in visible]
         st.session_state[_ACTION_INDEX_KEY] = 0
+        st.session_state[_ACTION_RENDERED_IDS_KEY] = set()
         return visible
 
     setattr(latest_visible_member_home_schedules, _PATCH_MARKER, True)
