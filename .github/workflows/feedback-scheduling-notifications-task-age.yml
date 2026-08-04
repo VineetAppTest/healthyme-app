@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "components/admin_schedule_feedback_aug04.py"
+      - "components/admin_schedule_disclosure_polish.py"
+      - "components/member_plan_builder_exercise.py"
       - "components/member_allocation_notifications.py"
       - "components/member_task_pending_age.py"
       - "components/streamlit_app_header_regression_guard.py"
@@ -30,6 +32,8 @@ jobs:
         run: |
           python -m py_compile \
             components/admin_schedule_feedback_aug04.py \
+            components/admin_schedule_disclosure_polish.py \
+            components/member_plan_builder_exercise.py \
             components/member_allocation_notifications.py \
             components/member_task_pending_age.py \
             components/streamlit_app_header_regression_guard.py \
