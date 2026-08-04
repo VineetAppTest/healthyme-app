@@ -151,10 +151,10 @@ def _render_feedback_styles() -> None:
   margin:0 0 .48rem 0!important;
 }
 .hm-sched-day-empty{
-  border:1px solid #E3C98E;
-  border-radius:13px;
-  background:#FFFDF8;
-  color:#64748B;
+  border:1.4px solid #D8A84E;
+  border-radius:12px;
+  background:#FFF7E6;
+  color:#334155;
   font-size:.82rem;
   font-weight:750;
   padding:.66rem .78rem;
@@ -211,7 +211,7 @@ div[data-testid="stExpander"]:has(.hm-sched-day-anchor) [data-testid="stExpander
   background:#FFF4DE;
   color:#064E3B;
   font-weight:900;
-  text-align:left;
+  text-align:center;
   padding:.50rem .48rem;
   border-bottom:1px solid #E3C98E;
   vertical-align:top;
@@ -221,7 +221,8 @@ div[data-testid="stExpander"]:has(.hm-sched-day-anchor) [data-testid="stExpander
   font-weight:650;
   padding:.50rem .48rem;
   border-bottom:1px solid #F1E2BD;
-  vertical-align:top;
+  vertical-align:middle;
+  text-align:center;
   overflow-wrap:anywhere;
 }
 .hm-sched-day-table tr:last-child td{border-bottom:0;}

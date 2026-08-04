@@ -235,58 +235,57 @@ def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
         key=f"mpb_start_date_{epoch}",
     )
 
-    row2 = st.columns(3, gap="small")
-    profile["region"] = row2[0].text_input(
-        "Region / Food Culture",
-        value=clean(profile.get("region")),
-        key=f"mpb_region_{epoch}",
-    )
-    diet_options = with_placeholder(list(options.get("diet_type") or []), SELECT_DIET)
-    current_diet = clean(profile.get("diet_type")) or SELECT_DIET
-    if current_diet not in diet_options:
-        diet_options.append(current_diet)
-    profile["diet_type"] = row2[1].selectbox(
-        "Diet Type",
-        diet_options,
-        index=diet_options.index(current_diet),
-        key=f"mpb_diet_{epoch}",
-    )
-    age_options = with_placeholder(list(options.get("age_band") or []), SELECT_AGE)
-    current_age = clean(profile.get("age_band")) or SELECT_AGE
-    if current_age not in age_options:
-        age_options.append(current_age)
-    profile["age_band"] = row2[2].selectbox(
-        "Age Band",
-        age_options,
-        index=age_options.index(current_age),
-        key=f"mpb_age_{epoch}",
-    )
-
-    concerns = list(options.get("health_concern") or [])
-    for concern in profile.get("health_concerns") or []:
-        if concern not in concerns:
-            concerns.append(concern)
-    profile["health_concerns"] = st.multiselect(
-        "Health Concerns",
-        concerns,
-        default=list(profile.get("health_concerns") or []),
-        key=f"mpb_concerns_{epoch}",
-    )
-
     with st.expander("More setup details", expanded=False):
-        profile["profile_note"] = st.text_area(
+        row2 = st.columns(3, gap="small")
+        profile["region"] = row2[0].text_input(
+            "Region / Food Culture",
+            value=clean(profile.get("region")),
+            key=f"mpb_region_{epoch}",
+        )
+        diet_options = with_placeholder(list(options.get("diet_type") or []), SELECT_DIET)
+        current_diet = clean(profile.get("diet_type")) or SELECT_DIET
+        if current_diet not in diet_options:
+            diet_options.append(current_diet)
+        profile["diet_type"] = row2[1].selectbox(
+            "Diet Type",
+            diet_options,
+            index=diet_options.index(current_diet),
+            key=f"mpb_diet_{epoch}",
+        )
+        age_options = with_placeholder(list(options.get("age_band") or []), SELECT_AGE)
+        current_age = clean(profile.get("age_band")) or SELECT_AGE
+        if current_age not in age_options:
+            age_options.append(current_age)
+        profile["age_band"] = row2[2].selectbox(
+            "Age Band",
+            age_options,
+            index=age_options.index(current_age),
+            key=f"mpb_age_{epoch}",
+        )
+
+        concerns = list(options.get("health_concern") or [])
+        for concern in profile.get("health_concerns") or []:
+            if concern not in concerns:
+                concerns.append(concern)
+        profile["health_concerns"] = st.multiselect(
+            "Health Concerns",
+            concerns,
+            default=list(profile.get("health_concerns") or []),
+            key=f"mpb_concerns_{epoch}",
+        )
+
+        note_col, change_col = st.columns(2, gap="small")
+        profile["profile_note"] = note_col.text_area(
             "Nutritionist Note",
             value=clean(profile.get("profile_note")),
-            height=90,
+            height=72,
             key=f"mpb_note_{epoch}",
         )
-        profile["change_note"] = st.text_input(
+        profile["change_note"] = change_col.text_area(
             "Change Note",
             value=clean(profile.get("change_note")),
+            height=72,
             key=f"mpb_change_note_{epoch}",
-        )
-        st.caption(
-            "Clone Complete Plan copies Setup and all seven-day Meal rows into a new Draft. Exercise and Supplement allocations retain their independent IDs and history."
         )
 
     if st.button(

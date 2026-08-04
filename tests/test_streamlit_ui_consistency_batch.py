@@ -8,24 +8,21 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class StreamlitUiConsistencyBatchTests(unittest.TestCase):
-    def test_food_journal_keeps_exact_five_part_row(self):
+    def test_food_journal_uses_two_row_time_and_food_structure(self):
         source = (ROOT / "pages/18_Daily_Log.py").read_text()
-        start = source.index(".hm-meal-entry-grid-anchor")
-        end = source.index(".hm-toggle-body:empty", start)
-        css = source[start:end]
-
-        self.assertIn(
-            "grid-template-columns:minmax(4.75rem,.72fr) minmax(5.10rem,.78fr) minmax(5.55rem,.92fr) minmax(15rem,2.15fr) minmax(9rem,1.35fr)!important",
-            css,
-        )
-        self.assertIn('>div[data-testid="stColumn"]', css)
-        self.assertIn('>div[data-testid="column"]', css)
-        self.assertIn("@media(max-width:780px)", css)
+        self.assertIn("hm-meal-time-grid-anchor", source)
+        self.assertIn("hm-meal-food-grid-anchor", source)
         render_start = source.index("def _render_meal_fields")
         render_end = source.index("def _render_meal_toggle", render_start)
         renderer = source[render_start:render_end]
-        for label in ('"Hour"', '"Minutes"', '"AM/PM"', 'f"Food Item {idx + 1}"', 'f"Portion {idx + 1}"'):
-            self.assertIn(label, renderer)
+        self.assertIn("time_cols = st.columns([1, 1, 1.15, 3]", renderer)
+        self.assertIn("food_col, portion_col = st.columns([2.2, 1.25]", renderer)
+        self.assertIn('"Hour"', renderer)
+        self.assertIn('"Minutes"', renderer)
+        self.assertIn('"AM/PM"', renderer)
+        self.assertIn('f"Food Item {idx + 1}"', renderer)
+        self.assertIn('f"Portion {idx + 1}"', renderer)
+        self.assertIn("hm_daily_log_add_food_item_", renderer)
 
     def test_food_autosave_uses_direct_payload_boundary(self):
         page = (ROOT / "pages/18_Daily_Log.py").read_text()
@@ -43,16 +40,19 @@ class StreamlitUiConsistencyBatchTests(unittest.TestCase):
         self.assertNotIn("set_system_message", direct_api)
 
     def test_repository_controls_are_sharp_aligned_and_untruncated(self):
-        source = (ROOT / "components/repository_layout_correction_runtime.py").read_text()
-
-        self.assertIn('div[data-testid="stSegmentedControl"]', source)
-        self.assertIn("border-radius:9px!important", source)
-        self.assertIn('>div[data-testid="stColumn"]', source)
-        self.assertIn('>div[data-testid="column"]', source)
-        self.assertIn("justify-content:center!important;gap:0!important", source)
-        self.assertIn("details[open] summary:before", source)
-        self.assertIn("white-space:normal!important", source)
-        self.assertIn("text-overflow:clip!important", source)
+        runtime = (ROOT / "components/repository_layout_correction_runtime.py").read_text()
+        for page_path in (
+            "pages/15_Admin_Recipe_Manager.py",
+            "pages/16_Admin_Exercise_Manager.py",
+            "pages/39_Admin_Supplement_Manager.py",
+        ):
+            page = (ROOT / page_path).read_text()
+            self.assertIn('button[role="tab"][aria-selected="true"]', page)
+            self.assertIn('vertical_alignment="center"', page)
+            self.assertIn('summary [data-testid="stIconMaterial"]', page)
+        self.assertIn("details[open] summary:before", runtime)
+        self.assertIn("white-space:normal!important", runtime)
+        self.assertIn("text-overflow:clip!important", runtime)
 
     def test_profile_builder_disclosures_share_full_label_contract(self):
         source = (ROOT / "components/profile_builder_modular.py").read_text()
@@ -66,18 +66,18 @@ class StreamlitUiConsistencyBatchTests(unittest.TestCase):
         self.assertIn("overflow:visible!important", css)
         self.assertNotIn("text-overflow:ellipsis", css)
 
-    def test_member_plan_meals_use_native_dataframe_format(self):
+    def test_member_plan_uses_consistent_weekly_tables(self):
         source = (ROOT / "components/member_plan_builder_view_compact.py").read_text()
+        self.assertIn("def _render_weekly_table", source)
+        self.assertIn("<th>Start Date</th>", source)
+        self.assertIn("<th>Type</th>", source)
+        self.assertIn("<th>Day</th>", source)
+        self.assertIn('("Timing", "Meal", "Liquid", "Remarks")', source)
+        self.assertIn('("Timing", "Activity", "Duration/Sets", "Remarks")', source)
+        self.assertIn('("Timing", "Supplement", "Dosage", "Remarks")', source)
+        self.assertNotIn("Active-plan integrity verified", source)
 
-        self.assertIn("def _meal_plan_rows", source)
-        self.assertIn('"Start Date": start_date', source)
-        self.assertIn('"Type": "Meal"', source)
-        self.assertIn('"Day": f"Day {day}"', source)
-        self.assertIn("pd.DataFrame(_meal_plan_rows(start_date, items))", source)
-        self.assertIn("use_container_width=True", source)
-        self.assertIn("hide_index=True", source)
-        render_start = source.index("def render_view_member_plan_compact")
-        self.assertNotIn("_render_profile_table(", source[render_start:])
+
 
 
 if __name__ == "__main__":

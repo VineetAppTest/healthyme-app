@@ -227,18 +227,18 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
 
     def test_member_home_header_renders_before_slow_workflow_reads(self):
         source = (ROOT / "pages/02_Member_Home.py").read_text()
-        self.assertIn("hm-member-home-local-style-v2", source)
-        self.assertIn("padding-top:0!important", source)
-        render_start = source.index(
-            "# Render the local spacing override and first visible controls"
-        )
+        self.assertIn("hm-member-home-local-style-v3", source)
+        self.assertIn("hm-member-home-root-anchor", source)
+        self.assertIn("# Render one structural header shell", source)
+        self.assertNotIn("html,body,#root{margin-top:0", source)
+        render_start = source.index("# Render one structural header shell")
         workflow_read = source.index("get_workflow(user_id)")
         self.assertLess(render_start, workflow_read)
-        self.assertLess(source.index("\n_render_member_home_css()\n"), workflow_read)
-        self.assertLess(source.index("\n_render_member_utility_bar()\n"), workflow_read)
-        self.assertLess(source.index('topbar(\n    "Member Home"'), workflow_read)
-        self.assertEqual(source.count("\n_render_member_home_css()\n"), 1)
-        self.assertEqual(source.count("\n_render_member_utility_bar()\n"), 1)
+        self.assertLess(source.index("_render_member_home_css()", render_start), workflow_read)
+        self.assertLess(source.index("_render_member_utility_bar()", render_start), workflow_read)
+        self.assertLess(source.index('topbar(\n        "Member Home"', render_start), workflow_read)
+        self.assertEqual(source.count("    _render_member_home_css()"), 1)
+        self.assertEqual(source.count("    _render_member_utility_bar()"), 1)
 
     def test_installer_and_export_discovery_are_active(self):
         bootstrap = (ROOT / "components/__init__.py").read_text()

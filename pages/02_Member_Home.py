@@ -110,16 +110,18 @@ def _member_email():
 def _render_member_home_css():
     st.markdown(
         """
-<style id="hm-member-home-local-style-v2">
-/* Member Home only: injected before page reads so the first visible row starts at the top. */
-html,body,#root{margin-top:0!important;padding-top:0!important;}
+<style id="hm-member-home-local-style-v3">
+/* One structural shell owns the identity row and hero spacing. */
 header[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"]{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;}
-html body [data-testid="stAppViewContainer"],html body [data-testid="stAppViewContainer"] > .main,html body [data-testid="stMain"],html body section.main{padding-top:0!important;padding-block-start:0!important;margin-top:0!important;top:0!important;}
-html body [data-testid="stMainBlockContainer"],html body [data-testid="stAppViewBlockContainer"],html body section.main > div.block-container,html body .main .block-container,html body .stMainBlockContainer,html body .block-container{padding-top:0!important;padding-block-start:0!important;margin-top:0!important;}
+.hm-member-home-root-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+div[data-testid="stElementContainer"]:has(.hm-member-home-root-anchor),div.element-container:has(.hm-member-home-root-anchor),div[data-testid="stElementContainer"]:has(style#hm-member-home-local-style-v3),div.element-container:has(style#hm-member-home-local-style-v3){display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+div[data-testid="stAppViewContainer"] .block-container:has(.hm-member-home-root-anchor){padding-top:.55rem!important;padding-block-start:.55rem!important;margin-top:0!important;}
+div[data-testid="stVerticalBlock"]:has(.hm-member-home-root-anchor):has(.hm-member-identity-pill):has(.hero-shell){gap:.28rem!important;margin:0!important;padding:0!important;}
+div[data-testid="stVerticalBlock"]:has(.hm-member-home-root-anchor) .hero-shell{margin-top:0!important;}
 .hm-member-identity-pill{height:2.46rem;min-height:2.46rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.76);border:1px solid #E9DFCC;border-radius:999px;padding:.24rem .64rem;margin:0!important;}
 .hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;white-space:nowrap;}
 .hm-top-profile-anchor,.hm-top-logout-anchor,.hm-task-action-anchor,.hm-home-action-anchor,.hm-member-home-balanced-card{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){align-items:center!important;gap:.72rem!important;margin:0 0 .52rem 0!important;padding-top:0!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){align-items:center!important;gap:.72rem!important;margin:0!important;padding:0!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"]{display:flex!important;align-items:center!important;min-height:2.46rem!important;}
 .hm-top-profile-anchor + div,.hm-top-logout-anchor + div{display:flex!important;align-items:center!important;justify-content:center!important;height:2.46rem!important;min-height:2.46rem!important;margin:0!important;padding:0!important;}
 .hm-top-profile-anchor + div [data-testid="stButton"] > button,.hm-top-profile-anchor + div .stButton > button{width:2.34rem!important;min-width:2.34rem!important;max-width:2.34rem!important;height:2.34rem!important;min-height:2.34rem!important;max-height:2.34rem!important;border-radius:999px!important;padding:0!important;font-size:.92rem!important;background:#FFFFFF!important;color:#064E3B!important;border:1.4px solid #D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.055)!important;margin:0 auto!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
@@ -150,8 +152,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-home-grid-anchor) > div,
 .hm-b13-message-date{font-size:.70rem!important;margin-bottom:.24rem!important;}
 .hm-b13-message-body{font-size:.79rem!important;line-height:1.34!important;margin:0!important;}
 .hm-v101-schedule-card{border:0!important;background:transparent!important;border-radius:0!important;padding:0!important;margin:0!important;min-height:5.85rem;box-shadow:none!important;}
-.hm-v101-schedule-title{font-size:.88rem!important;margin-bottom:.14rem!important;}
-.hm-v101-schedule-line{font-size:.76rem!important;line-height:1.28!important;margin:.06rem 0!important;}
+.hm-v101-schedule-title{font-size:.78rem!important;margin-bottom:.14rem!important;}
+.hm-v101-schedule-line{font-size:.70rem!important;line-height:1.28!important;margin:.06rem 0!important;}
 .hm-v101-schedule-pill{font-size:.64rem!important;padding:.12rem .34rem!important;}
 .hm-v104b11-ack-note{font-size:.72rem!important;line-height:1.34!important;padding:.38rem .46rem!important;margin-top:.34rem!important;}
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-message-grid-anchor) button{min-height:2.08rem!important;height:2.08rem!important;padding:.28rem .46rem!important;font-size:.74rem!important;border-radius:9px!important;}
@@ -451,14 +453,19 @@ def _home_action(
         st.switch_page(page)
 
 
-# Render the local spacing override and first visible controls before slower page reads.
-_render_member_home_css()
-_render_member_utility_bar()
-topbar(
-    "Member Home",
-    "Continue your wellness assessment and access your tools.",
-    "Member experience",
-)
+# Render one structural header shell before slower page reads.
+with st.container():
+    st.markdown(
+        "<span class='hm-member-home-root-anchor'></span>",
+        unsafe_allow_html=True,
+    )
+    _render_member_home_css()
+    _render_member_utility_bar()
+    topbar(
+        "Member Home",
+        "Continue your wellness assessment and access your tools.",
+        "Member experience",
+    )
 
 user_id = st.session_state["user_id"]
 wf = get_workflow(user_id) or {}

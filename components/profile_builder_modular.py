@@ -83,13 +83,13 @@ def _render_css() -> None:
 div[data-testid="stVerticalBlockBorderWrapper"]{border-color:#E3C98E!important;border-radius:14px!important;background:#FFFDF8!important;box-shadow:0 5px 14px rgba(15,23,42,.028)!important;margin:.34rem 0!important}
 div[data-testid="stExpander"]{border:0!important;border-radius:10px!important;background:transparent!important}
 div[data-testid="stExpander"] details{border:1.2px solid #D8A84E!important;border-radius:10px!important;background:#FFFDF8!important;overflow:hidden!important}
-div[data-testid="stExpander"] details summary{list-style:none!important;min-height:2.42rem!important;padding:.42rem .58rem!important;display:flex!important;align-items:center!important;gap:.48rem!important;border-radius:9px!important}
+div[data-testid="stExpander"] details summary{list-style:none!important;min-height:2.42rem!important;padding:.42rem .58rem!important;display:flex!important;align-items:center!important;gap:.48rem!important;border-radius:9px!important;font-size:0!important}
 div[data-testid="stExpander"] details summary::-webkit-details-marker{display:none!important}
 div[data-testid="stExpander"] details summary::marker{content:""!important;display:none!important}
 div[data-testid="stExpander"] details summary:before{content:"+"!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:1.34rem!important;height:1.34rem!important;flex:0 0 1.34rem!important;border-radius:6px!important;background:#DDF7F3!important;color:#006D6F!important;font-size:.82rem!important;font-weight:950!important;line-height:1!important}
 div[data-testid="stExpander"] details[open] summary:before{content:"−"!important}
 div[data-testid="stExpander"] details summary p{display:block!important;width:100%!important;max-width:none!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;color:#064E3B!important;font-size:.80rem!important;font-weight:900!important;line-height:1.2!important;margin:0!important;text-align:left!important}
-div[data-testid="stExpander"] details summary svg,div[data-testid="stExpander"] details summary [data-testid="stExpanderToggleIcon"]{display:none!important;width:0!important;min-width:0!important}
+div[data-testid="stExpander"] details summary svg,div[data-testid="stExpander"] details summary [data-testid="stExpanderToggleIcon"],div[data-testid="stExpander"] details summary [data-testid="stIconMaterial"],div[data-testid="stExpander"] details summary [class*="material-symbol"],div[data-testid="stExpander"] details summary span[aria-hidden="true"]{display:none!important;width:0!important;min-width:0!important;font-size:0!important}
 @media(max-width:980px){.mpb-nav [data-testid="stButton"]>button{font-size:.72rem!important}.mpb-meal-guide{display:none}}
 </style>
 """,
