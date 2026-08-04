@@ -2,9 +2,10 @@ name: Apply Member Home Grid Patch
 
 on:
   pull_request:
-    types: [opened, reopened]
+    types: [opened, reopened, synchronize]
     paths:
       - "scripts/apply_member_home_grid_patch.py"
+      - "scripts/fix_member_home_grid_patch_test.py"
       - ".github/workflows/apply-member-home-grid-patch.yml"
 
 permissions:
@@ -27,7 +28,9 @@ jobs:
       - name: Install project dependencies
         run: python -m pip install -r requirements.txt
       - name: Apply exact UI patch
-        run: python scripts/apply_member_home_grid_patch.py
+        run: |
+          python scripts/apply_member_home_grid_patch.py
+          python scripts/fix_member_home_grid_patch_test.py
       - name: Compile modified surfaces
         run: |
           python -m py_compile \
