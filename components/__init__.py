@@ -6,6 +6,9 @@ from components.login_expiry_recovery import install_login_expiry_recovery
 from components.package_hardening_bootstrap import install_package_hardening
 from components.member_email_bootstrap import install_member_email_notifications
 from components.member_email_followups import install_member_email_followups
+from components.member_allocation_notifications import (
+    install_member_allocation_notifications,
+)
 from components.member_email_legacy_reminders import (
     install_legacy_schedule_reminder_delivery,
 )
@@ -84,6 +87,7 @@ install_login_expiry_recovery()
 install_package_hardening()
 install_member_email_notifications()
 install_member_email_followups()
+install_member_allocation_notifications()
 install_legacy_schedule_reminder_delivery()
 install_member_home_schedule_presentation()
 
