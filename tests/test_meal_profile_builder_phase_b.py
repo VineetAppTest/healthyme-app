@@ -114,9 +114,19 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         self.assertIn('activate_profile(profile, "ACTIVATE")', source)
         self.assertNotIn('"Preview Meal Plan"', source)
 
-    def test_allocations_render_in_one_page_and_keep_independent_stores(self) -> None:
+    def test_allocations_render_one_selected_route_and_keep_independent_stores(self) -> None:
         source = ALLOCATION_FILE.read_text(encoding="utf-8")
-        self.assertIn('st.tabs(["Exercise", "Supplement"])', source)
+        self.assertIn('allocation_type = st.radio(', source)
+        self.assertIn('["Exercise", "Supplement"]', source)
+        self.assertIn('if allocation_type == "Exercise":', source)
+        self.assertIn("_render_exercise(member_id)", source)
+        self.assertIn("_render_supplement(member_id)", source)
+        self.assertNotIn('st.tabs(["Exercise", "Supplement"])', source)
+        exercise_branch = source[source.index('if allocation_type == "Exercise":') :]
+        self.assertIn(
+            'if allocation_type == "Exercise":\n        _render_exercise(member_id)\n    else:\n        _render_supplement(member_id)',
+            exercise_branch,
+        )
         self.assertIn("save_exercise_member_allocation", source)
         self.assertIn("stop_exercise_member_allocation", source)
         self.assertIn("save_supplement_member_allocation", source)
