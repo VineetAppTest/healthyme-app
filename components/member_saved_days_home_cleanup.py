@@ -157,71 +157,16 @@ def _render_filtered_meal_summary(days: list[dict]) -> None:
 
 
 def _install_saved_days_window() -> None:
-    current_date_input = st.date_input
-    current_button = st.button
-    current_columns = st.columns
-    current_markdown = st.markdown
-    if getattr(current_button, _MARKER, False):
-        return
+    """Retired compatibility hook.
 
-    summary_state = {"rendered": False}
+    Saved Days now owns its date defaults, four-column cards, hydration rows and
+    Open saved day action directly in ``pages/18_Daily_Log.py``. The former runtime
+    wrapper injected a second Meal Section, forced the four-column grid into one
+    column and intercepted the Open action. Keep this function as a no-op because
+    older bootstraps still import and call it.
+    """
 
-    @functools.wraps(current_date_input)
-    def date_input_with_visible_saved_filters(label, *args, **kwargs):
-        caller = inspect.currentframe().f_back
-        key = str(kwargs.get("key") or "")
-        if _is_daily_log_frame(caller) and _frame_function(caller) == "_render_saved_days":
-            today = _india_today()
-            if key == _SAVED_FROM_KEY:
-                st.session_state.setdefault(key, today - dt.timedelta(days=6))
-            elif key == _SAVED_TO_KEY:
-                st.session_state.setdefault(key, today)
-        return current_date_input(label, *args, **kwargs)
-
-    @functools.wraps(current_columns)
-    def columns_with_full_width_saved_summary(spec, *args, **kwargs):
-        caller = inspect.currentframe().f_back
-        if _is_daily_log_frame(caller) and _frame_function(caller) == "_render_saved_days":
-            count = spec if isinstance(spec, int) else len(spec)
-            if count == 4:
-                return [st.container(), contextlib.nullcontext(), contextlib.nullcontext(), contextlib.nullcontext()]
-        return current_columns(spec, *args, **kwargs)
-
-    @functools.wraps(current_markdown)
-    def markdown_with_saved_summary_reset(body, *args, **kwargs):
-        caller = inspect.currentframe().f_back
-        if (
-            _is_daily_log_frame(caller)
-            and _frame_function(caller) == "_render_saved_days"
-            and str(body or "").strip() == "### View Saved Days"
-        ):
-            summary_state["rendered"] = False
-        return current_markdown(body, *args, **kwargs)
-
-    @functools.wraps(current_button)
-    def button_without_saved_day_loading(label, *args, **kwargs):
-        caller = inspect.currentframe().f_back
-        key = str(kwargs.get("key") or "")
-        if not (
-            _is_daily_log_frame(caller)
-            and _frame_function(caller) == "_render_saved_days"
-            and key.startswith(_SAVED_BUTTON_PREFIX)
-        ):
-            return current_button(label, *args, **kwargs)
-        if not summary_state["rendered"]:
-            filtered_days = list((caller.f_locals if caller is not None else {}).get("filtered_days") or [])
-            _render_filtered_meal_summary(filtered_days)
-            summary_state["rendered"] = True
-        return False
-
-    setattr(date_input_with_visible_saved_filters, _MARKER, True)
-    setattr(columns_with_full_width_saved_summary, _MARKER, True)
-    setattr(markdown_with_saved_summary_reset, _MARKER, True)
-    setattr(button_without_saved_day_loading, _MARKER, True)
-    st.date_input = date_input_with_visible_saved_filters
-    st.columns = columns_with_full_width_saved_summary
-    st.markdown = markdown_with_saved_summary_reset
-    st.button = button_without_saved_day_loading
+    return None
 
 
 def _install_member_home_cleanup() -> None:
