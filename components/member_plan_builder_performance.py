@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from typing import Dict, List
 
 import streamlit as st
 
@@ -21,6 +22,46 @@ def _cached_source_contract():
 @st.cache_data(ttl=180, show_spinner=False)
 def _cached_profile_sources():
     return _ORIGINAL_LOAD_PROFILE_SOURCES()
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def load_member_plan_setup_options() -> Dict[str, List[str]]:
+    groups = ("age_band", "health_concern", "diet_type")
+    options = {
+        group: list(profile_store.DEFAULT_SOURCES.get(group) or [])
+        for group in groups
+    }
+    try:
+        if not profile_store.check_profile_builder_store().get("ok"):
+            return options
+        result = (
+            profile_store._client()
+            .table(profile_store.MASTER_TABLE)
+            .select("option_group,option_value,sort_order,is_active")
+            .eq("is_active", True)
+            .in_("option_group", list(groups))
+            .order("option_group")
+            .order("sort_order")
+            .execute()
+        )
+        grouped: Dict[str, List[str]] = {group: [] for group in groups}
+        for row in profile_store._rows(result):
+            group = str(row.get("option_group") or "").strip()
+            value = str(row.get("option_value") or "").strip()
+            if group in grouped and value:
+                grouped[group].append(value)
+        for group, values in grouped.items():
+            if values:
+                options[group] = values
+    except Exception:
+        pass
+    return options
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def load_member_plan_recipe_options() -> List[str]:
+    sources, _snapshots, _message = _cached_source_contract()
+    return list(sources.get("recipe") or [])
 
 
 def _build_source_contract_cached():
@@ -49,3 +90,5 @@ def install_member_plan_builder_performance_cache() -> None:
 def clear_member_plan_builder_source_caches() -> None:
     _cached_source_contract.clear()
     _cached_profile_sources.clear()
+    load_member_plan_setup_options.clear()
+    load_member_plan_recipe_options.clear()
