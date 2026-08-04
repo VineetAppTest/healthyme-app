@@ -7,12 +7,14 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 _DEFAULT_MEMBER_TIMEZONE = "Asia/Kolkata"
-_PATCH_MARKER = "_hm_member_home_schedule_presentation_v1"
-_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v4"
+_PATCH_MARKER = "_hm_member_home_schedule_presentation_v2"
+_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v5"
 _MEMBER_HOME_STYLE_MARKER = 'id="hm-member-home-local-style-v2"'
 _CLOSED_STATUSES = {"cancelled", "completed", "rescheduled"}
+_ACTION_ROWS_KEY = "_hm_member_home_schedule_action_rows"
+_ACTION_INDEX_KEY = "_hm_member_home_schedule_action_index"
 _MEMBER_HOME_COMPACT_CSS = """
-/* hm-member-home-compact-polish-v4 */
+/* hm-member-home-compact-polish-v5 */
 div[data-testid="stElementContainer"]:has(#hm-member-home-local-style-v2){
   display:none!important;height:0!important;min-height:0!important;
   margin:0!important;padding:0!important;overflow:hidden!important;
@@ -78,12 +80,27 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
 }
 .hm-v101-schedule-card{
   width:47%!important;max-width:460px!important;
-  margin:.34rem 0 .52rem 0!important;
+  margin:.34rem 0 .16rem 0!important;
   padding:.52rem .68rem!important;border-radius:12px!important;
 }
-.hm-upcoming-schedule-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+.hm-upcoming-schedule-anchor,.hm-member-schedule-action-anchor{
+  display:none!important;height:0!important;min-height:0!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+}
+.hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"]{
+  width:47%!important;max-width:460px!important;
+  gap:.42rem!important;margin:0 0 .54rem 0!important;
+}
+.hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"] button{
+  min-height:2.18rem!important;height:2.18rem!important;
+  padding:.30rem .55rem!important;border-radius:10px!important;
+  font-size:.78rem!important;font-weight:900!important;
+}
 @media(max-width:900px){
-  .hm-v101-schedule-card{width:68%!important;max-width:560px!important;}
+  .hm-v101-schedule-card,
+  .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"]{
+    width:68%!important;max-width:560px!important;
+  }
 }
 @media(max-width:640px){
   div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){
@@ -92,10 +109,11 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
   div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
     width:min(285px,calc(100vw - 2rem))!important;
   }
-  .hm-v101-schedule-card{
+  .hm-v101-schedule-card,
+  .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"]{
     width:100%!important;max-width:none!important;
-    padding:.62rem .72rem!important;
   }
+  .hm-v101-schedule-card{padding:.62rem .72rem!important;}
 }
 """
 
@@ -220,8 +238,73 @@ def prepare_member_home_upcoming_schedules(
     return visible[:limit] if limit else visible
 
 
+def _next_schedule_action_row() -> dict[str, Any] | None:
+    """Return the schedule matching the next Member Home card render."""
+
+    import streamlit as st
+
+    rows = st.session_state.get(_ACTION_ROWS_KEY) or []
+    index = int(st.session_state.get(_ACTION_INDEX_KEY, 0) or 0)
+    if index >= len(rows):
+        return None
+    st.session_state[_ACTION_INDEX_KEY] = index + 1
+    return dict(rows[index] or {})
+
+
+def _render_member_home_schedule_actions(row: dict[str, Any]) -> None:
+    """Render consistent acknowledgement and reschedule actions under a card."""
+
+    import streamlit as st
+    from components import db as db_api
+
+    schedule_id = _text(row.get("id"))
+    if not schedule_id:
+        return
+    status = _text(row.get("status") or "scheduled").lower()
+    if status not in {"scheduled", "acknowledged"}:
+        return
+    pending_reschedule = (
+        _text(row.get("reschedule_request_status")).lower() == "pending"
+    )
+
+    st.markdown(
+        "<span class='hm-member-schedule-action-anchor'></span>",
+        unsafe_allow_html=True,
+    )
+    acknowledge_col, reschedule_col = st.columns(2, gap="small")
+    with acknowledge_col:
+        if status == "scheduled":
+            if st.button(
+                "Acknowledge",
+                key=f"hm_home_ack_schedule_{schedule_id}",
+                use_container_width=True,
+            ):
+                updated = db_api.acknowledge_member_schedule(schedule_id, row.get("member_id"))
+                if updated:
+                    st.rerun()
+                st.error("This schedule could not be acknowledged. Please refresh and retry.")
+        else:
+            st.button(
+                "Acknowledged",
+                key=f"hm_home_acknowledged_schedule_{schedule_id}",
+                use_container_width=True,
+                disabled=True,
+            )
+    with reschedule_col:
+        reschedule_label = "Reschedule pending" if pending_reschedule else "Reschedule"
+        if st.button(
+            reschedule_label,
+            key=f"hm_home_reschedule_schedule_{schedule_id}",
+            use_container_width=True,
+            disabled=pending_reschedule,
+        ):
+            st.session_state["hm_member_schedule_active_section"] = "Upcoming Schedule"
+            st.session_state[f"hm_tz_show_reschedule_{schedule_id}"] = True
+            st.switch_page("pages/33_My_Schedule.py")
+
+
 def _install_member_home_compact_polish() -> None:
-    """Append Member Home-only CSS to the existing local style block."""
+    """Append Member Home-only CSS and schedule actions to card rendering."""
 
     import streamlit as st
 
@@ -234,14 +317,19 @@ def _install_member_home_compact_polish() -> None:
         if (
             isinstance(body, str)
             and _MEMBER_HOME_STYLE_MARKER in body
-            and "hm-member-home-compact-polish-v4" not in body
+            and "hm-member-home-compact-polish-v5" not in body
         ):
             body = body.replace(
                 "</style>",
                 f"{_MEMBER_HOME_COMPACT_CSS}</style>",
                 1,
             )
-        return current_markdown(body, *args, **kwargs)
+        result = current_markdown(body, *args, **kwargs)
+        if isinstance(body, str) and "hm-v101-schedule-card" in body:
+            row = _next_schedule_action_row()
+            if row:
+                _render_member_home_schedule_actions(row)
+        return result
 
     setattr(polished_markdown, _MARKDOWN_PATCH_MARKER, True)
     polished_markdown._hm_original_markdown = current_markdown
@@ -249,8 +337,9 @@ def _install_member_home_compact_polish() -> None:
 
 
 def install_member_home_schedule_presentation() -> None:
-    """Install Member Home schedule filtering and presentation-only polish."""
+    """Install Member Home schedule filtering, actions and compact presentation."""
 
+    import streamlit as st
     from components import db as db_api
 
     _install_member_home_compact_polish()
@@ -262,7 +351,10 @@ def install_member_home_schedule_presentation() -> None:
     @wraps(current)
     def latest_visible_member_home_schedules(member_id: object, limit: int = 3):
         rows = current(member_id, limit=0)
-        return prepare_member_home_upcoming_schedules(rows, limit=limit)
+        visible = prepare_member_home_upcoming_schedules(rows, limit=limit)
+        st.session_state[_ACTION_ROWS_KEY] = [dict(row or {}) for row in visible]
+        st.session_state[_ACTION_INDEX_KEY] = 0
+        return visible
 
     setattr(latest_visible_member_home_schedules, _PATCH_MARKER, True)
     latest_visible_member_home_schedules._hm_original = current
