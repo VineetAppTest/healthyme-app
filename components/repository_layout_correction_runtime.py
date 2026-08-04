@@ -7,7 +7,7 @@ from typing import Any
 import streamlit as st
 
 
-_MARKER = "_hm_repository_layout_correction_v2"
+_MARKER = "_hm_repository_layout_correction_v3"
 _REPOSITORY_PAGES = {
     "pages/15_Admin_Recipe_Manager.py": "recipe",
     "pages/16_Admin_Exercise_Manager.py": "exercise",
@@ -193,6 +193,67 @@ div[data-testid="stExpander"] button p{
     flex:0 0 70px!important;width:70px!important;min-width:70px!important;
   }
 }
+
+
+/* v3: current Streamlit DOM + sharper repository controls. */
+div[data-testid="stSegmentedControl"] [role="radiogroup"],
+div[data-testid="stSegmentedControl"] [data-baseweb="button-group"]{
+  border:1px solid #D8A84E!important;border-radius:9px!important;
+  overflow:hidden!important;background:#FFFFFF!important;box-shadow:none!important;
+}
+div[data-testid="stSegmentedControl"] button,
+div[data-testid="stSegmentedControl"] label{
+  min-height:2.34rem!important;border-radius:0!important;box-shadow:none!important;
+  font-weight:850!important;align-items:center!important;justify-content:center!important;
+}
+div[data-testid="stSegmentedControl"] button:first-child,
+div[data-testid="stSegmentedControl"] label:first-child{border-radius:8px 0 0 8px!important;}
+div[data-testid="stSegmentedControl"] button:last-child,
+div[data-testid="stSegmentedControl"] label:last-child{border-radius:0 8px 8px 0!important;}
+
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="column"],
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="column"],
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="stColumn"],
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"]{
+  display:flex!important;align-items:center!important;align-self:stretch!important;
+}
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="column"]>div[data-testid="stVerticalBlock"],
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="column"]>div[data-testid="stVerticalBlock"],
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row)>div[data-testid="stColumn"]>div[data-testid="stVerticalBlock"],
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row)>div[data-testid="stColumn"]>div[data-testid="stVerticalBlock"]{
+  width:100%!important;height:100%!important;min-height:2.68rem!important;
+  display:flex!important;justify-content:center!important;gap:0!important;
+}
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row) div[data-testid="stElementContainer"],
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) div[data-testid="stElementContainer"]{
+  margin:0!important;padding:0!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row) div[data-testid="stButton"]>button,
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) div[data-testid="stButton"]>button{
+  min-height:2.18rem!important;height:2.18rem!important;border-radius:9px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+div[data-testid="stHorizontalBlock"]:has(.hm-repo-row) .hm-repo-row,
+div[data-testid="stHorizontalBlock"]:has(.hm-sup-row) .hm-sup-row{
+  min-height:2.68rem!important;border-radius:10px!important;}
+
+div[data-testid="stExpander"] details{
+  border:1.2px solid #D8A84E!important;border-radius:10px!important;
+  background:#FFFDF8!important;overflow:hidden!important;}
+div[data-testid="stExpander"] summary{
+  min-height:2.42rem!important;padding:.48rem .62rem!important;gap:.48rem!important;
+  display:flex!important;align-items:center!important;border-radius:9px!important;}
+div[data-testid="stExpander"] summary:before{
+  content:"+"!important;display:inline-flex!important;align-items:center!important;
+  justify-content:center!important;width:1.34rem!important;height:1.34rem!important;
+  border-radius:6px!important;background:#DDF7F3!important;color:#006D6F!important;
+  font-size:.82rem!important;font-weight:950!important;line-height:1!important;
+  margin:0!important;flex:0 0 1.34rem!important;}
+div[data-testid="stExpander"] details[open] summary:before{content:"−"!important;}
+div[data-testid="stExpander"] summary p{
+  display:block!important;width:100%!important;max-width:none!important;
+  margin:0!important;color:#064E3B!important;font-size:.82rem!important;
+  font-weight:900!important;line-height:1.2!important;white-space:normal!important;
+  overflow:visible!important;text-overflow:clip!important;text-align:left!important;}
 </style>
 """
 

@@ -5,14 +5,14 @@ import functools
 import hashlib
 import inspect
 import json
-from typing import Any
+from typing import Any, Callable
 
 import streamlit as st
 
 from components import flash
 
 
-_MARKER = "_hm_member_journal_server_autosave_v2"
+_MARKER = "_hm_member_journal_server_autosave_v3"
 _FLASH_MARKER = "_hm_member_journal_silent_flash_v2"
 _RERUN_MARKER = "_hm_member_journal_silent_rerun_v2"
 _DAILY_LOG_PAGE = "18_Daily_Log.py"
@@ -147,6 +147,64 @@ def _food_baseline_key(date_key: str) -> str:
     return f"_hm_food_autosave_baseline_{member_id}_{date_key}"
 
 
+def _food_payload_baseline_key(user_id: object, date_key: object) -> str:
+    return (
+        "_hm_food_payload_autosave_baseline_"
+        f"{str(user_id or 'member').strip()}_{str(date_key or '').strip()}"
+    )
+
+
+def mark_food_payload_saved(
+    user_id: object,
+    date_key: object,
+    payload: dict[str, Any],
+) -> None:
+    """Record the payload committed by the explicit Save Day action."""
+
+    st.session_state[_food_payload_baseline_key(user_id, date_key)] = _signature(
+        dict(payload or {})
+    )
+
+
+def autosave_food_payload(
+    user_id: object,
+    date_key: object,
+    payload: dict[str, Any],
+    save_func: Callable[[object, object, dict[str, Any]], Any],
+    *,
+    meaningful: bool,
+) -> tuple[bool, str]:
+    """Persist a changed Food Journal payload without feedback or rerunning.
+
+    The old runtime made the visible Save Day button appear clicked when widget
+    state changed. That reused the manual handler but also moved browser focus.
+    This direct boundary hashes the already-built payload, writes only when it
+    changes, and never calls ``st.rerun`` or queues a success message.
+    """
+
+    current_payload = dict(payload or {})
+    signature = _signature(current_payload)
+    baseline_key = _food_payload_baseline_key(user_id, date_key)
+    baseline = st.session_state.get(baseline_key)
+    if baseline is None:
+        st.session_state[baseline_key] = signature
+        return False, ""
+    if signature == baseline:
+        return False, ""
+    if not meaningful:
+        # Preserve the no-empty-day contract while accepting this as the new UI
+        # baseline so partial/cleared fields do not repeatedly attempt a save.
+        st.session_state[baseline_key] = signature
+        return False, ""
+    try:
+        save_func(user_id, date_key, current_payload)
+    except Exception as exc:
+        return False, f"Food Journal autosave failed: {exc}"
+    st.session_state[baseline_key] = signature
+    st.session_state["_hm_last_journal_autosave"] = "food"
+    return True, ""
+
+
 def _exercise_baseline_key(button_key: str) -> str:
     member_id = str(st.session_state.get("user_id") or "member")
     return f"_hm_exercise_autosave_baseline_{member_id}_{button_key}"
@@ -247,13 +305,9 @@ def install_member_journal_server_autosave() -> None:
         button_key = str(kwargs.get("key") or "")
 
         if text == _FOOD_BUTTON:
-            date_key = _food_date_key()
-            if clicked:
-                st.session_state[_food_baseline_key(date_key)] = _signature(
-                    _food_state(date_key)
-                )
-                return True
-            return _should_autosave_food()
+            # Food autosave is now called directly with the completed payload from
+            # Daily Log. Never synthesize a Save Day click from widget changes.
+            return clicked
 
         if text == _EXERCISE_BUTTON and button_key:
             if clicked:

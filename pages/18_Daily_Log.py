@@ -31,6 +31,10 @@ from components.food_saved_days_presentation import (
     saved_days_card_css,
 )
 from components.member_timezone import member_local_today
+from components.member_journal_server_autosave import (
+    autosave_food_payload,
+    mark_food_payload_saved,
+)
 
 
 BUILD_NOTE = "v102.4B26 · Daily Log label alignment and meal spacing cleanup"
@@ -517,15 +521,45 @@ def _render_css():
         div[data-testid="stElementContainer"]:has(.hm-toggle-anchor) + div[data-testid="stElementContainer"] button p,
         div.element-container:has(.hm-toggle-anchor) + div.element-container button p{width:100%!important;text-align:left!important;justify-content:flex-start!important;}
         .hm-meal-entry-grid-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor){gap:.38rem!important;align-items:flex-end!important;}
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) label p{font-size:.74rem!important;font-weight:820!important;white-space:nowrap!important;}
+        /* Exact desktop contract: Hour | Minutes | AM/PM | Food Item | Portion.
+           Override Streamlit's flex widths at the row boundary so global responsive
+           column rules cannot shrink or reorder these five controls. */
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor){
+          display:grid!important;
+          grid-template-columns:minmax(4.75rem,.72fr) minmax(5.10rem,.78fr) minmax(5.55rem,.92fr) minmax(15rem,2.15fr) minmax(9rem,1.35fr)!important;
+          gap:.48rem!important;
+          align-items:end!important;
+          width:100%!important;
+          overflow:visible!important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div[data-testid="stColumn"],
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div[data-testid="column"]{
+          width:100%!important;min-width:0!important;max-width:none!important;
+          flex:none!important;align-self:end!important;overflow:visible!important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) label p{
+          font-size:.74rem!important;font-weight:820!important;white-space:nowrap!important;
+          overflow:visible!important;text-overflow:clip!important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) [data-testid="stSelectbox"],
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) [data-testid="stTextInput"]{
+          width:100%!important;min-width:0!important;margin-bottom:0!important;
+        }
         div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) [data-baseweb="select"] > div,
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) input{min-height:2.42rem!important;padding-left:.36rem!important;padding-right:.28rem!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) input{
+          width:100%!important;min-width:0!important;min-height:2.42rem!important;
+          padding-left:.42rem!important;padding-right:.34rem!important;
+        }
         .hm-meal-grid-spacer{display:block;height:1px;min-height:1px;}
-        @media(max-width:900px){
-          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor){display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;}
-          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(4),
-          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(5){grid-column:span 3!important;}
+        @media(max-width:780px){
+          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor){
+            grid-template-columns:repeat(6,minmax(0,1fr))!important;
+          }
+          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(1),
+          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(2),
+          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(3){grid-column:span 2!important;}
+          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(4){grid-column:span 4!important;}
+          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(5){grid-column:span 2!important;}
         }
         .hm-toggle-body:empty{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;}
         .hm-toggle-body{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:1rem 1rem 1.18rem!important;margin:.16rem 0 .76rem 0;overflow:visible!important;}
@@ -1142,11 +1176,22 @@ def _render_food_journal(user_id):
                 )
                 st.rerun()
             save_daily_food_journal_day(user_id, date_key, payload)
+            mark_food_payload_saved(user_id, date_key, payload)
             set_system_message(
                 f"Saved food journal for {log_date.strftime('%d %b %Y')}.",
                 "success",
             )
             st.rerun()
+
+    _autosaved, _autosave_error = autosave_food_payload(
+        user_id,
+        date_key,
+        payload,
+        save_daily_food_journal_day,
+        meaningful=_day_has_meaningful_entry(payload),
+    )
+    if _autosave_error:
+        st.error(_autosave_error)
 
     with st.container(border=True):
         st.markdown("### Full Day Report")
