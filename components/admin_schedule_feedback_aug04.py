@@ -35,18 +35,20 @@ def _consume_pending_reset(scheduling_module: Any) -> None:
     _clear_transaction_prefix(f"hm_admin_sched_create_v{old_version}_")
 
 
-def _member_name(db: dict[str, Any], schedule: dict[str, Any]) -> str:
+def _member_name(schedule: dict[str, Any]) -> str:
     direct = _text(schedule.get("member_name"))
     if direct:
         return direct
     member_id = _text(schedule.get("member_id"))
     member_email = _text(schedule.get("member_email")).lower()
-    for row in db.get("users", []) or []:
-        if _text(row.get("id")) == member_id or (
-            member_email and _text(row.get("email")).lower() == member_email
-        ):
-            return _text(row.get("name")) or _text(row.get("email")) or member_id
-    return member_email or member_id or "Member"
+    member = db_api.get_user_by_id(member_id) or {}
+    return (
+        _text(member.get("name"))
+        or _text(member.get("email"))
+        or member_email
+        or member_id
+        or "Member"
+    )
 
 
 def _admin_schedule_for_date(
@@ -87,7 +89,7 @@ def _admin_schedule_for_date(
         output.append(
             {
                 "Schedule date": schedule_date,
-                "Name of Member": _member_name(db, raw),
+                "Name of Member": _member_name(raw),
                 "Schedule Time": schedule_time or "—",
                 "Subject": _text(raw.get("title") or raw.get("schedule_type"))
                 or "Scheduled session",
