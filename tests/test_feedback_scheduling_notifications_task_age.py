@@ -105,7 +105,8 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertIn("today - due_date", source)
         self.assertIn("Task is pending for {delta} {unit}", source)
         self.assertIn("hm-task-alert-row", source)
-        self.assertEqual(source.count("ACTION REQUIRED"), 1)
+        rendered_badge = "<span class='hm-task-alert-pill'>ACTION REQUIRED</span>"
+        self.assertEqual(source.count(rendered_badge), 1)
         self.assertIn("_RUNTIME_STYLE", source)
         self.assertIn("hm-member-task-pending-age-runtime-v2", source)
         self.assertIn(".hm-v990-task-progress::before", source)
