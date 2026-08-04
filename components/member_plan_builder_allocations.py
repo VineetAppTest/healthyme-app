@@ -470,8 +470,14 @@ def render_member_plan_allocations() -> None:
     if flash:
         st.success(flash)
 
-    exercise_tab, supplement_tab = st.tabs(["Exercise", "Supplement"])
-    with exercise_tab:
+    allocation_type = st.radio(
+        "Allocation Type",
+        ["Exercise", "Supplement"],
+        horizontal=True,
+        key="mpb_allocation_type",
+        label_visibility="collapsed",
+    )
+    if allocation_type == "Exercise":
         _render_exercise(member_id)
-    with supplement_tab:
+    else:
         _render_supplement(member_id)
