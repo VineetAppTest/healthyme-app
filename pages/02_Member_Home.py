@@ -302,37 +302,41 @@ def _render_upcoming_schedules(user_id):
     if not upcoming_schedules:
         return False
 
-    st.markdown(
-        f"<div class='hm-home-section-head'><div>Upcoming Schedule</div><span>{len(upcoming_schedules)} upcoming</span></div>",
-        unsafe_allow_html=True,
-    )
-    for row_start in range(0, len(upcoming_schedules), 3):
-        cols = st.columns(3, gap="small")
-        for col, schedule in zip(cols, upcoming_schedules[row_start : row_start + 3]):
-            with col:
-                with st.container(border=True):
-                    time_text = str(schedule.get("start_time", "") or "")
-                    if schedule.get("end_time"):
-                        time_text += f" - {schedule.get('end_time')}"
-                    notice = schedule_acknowledgement_notice_v104b11(schedule)
-                    notice_html = (
-                        "<div class='hm-v101-schedule-line hm-v104b11-ack-note'>"
-                        f"{_esc(notice)}</div>"
-                        if notice
-                        else ""
-                    )
-                    st.markdown(
-                        f"""
-                        <span class='hm-home-grid-anchor'></span>
-                        <div class='hm-v101-schedule-card'>
-                          <div class='hm-v101-schedule-title'>{_esc(schedule.get('title','Scheduled session'))}<span class='hm-v101-schedule-pill'>{_esc(schedule_display_status_label_v104b11(schedule))}</span></div>
-                          <div class='hm-v101-schedule-line'>{_esc(schedule.get('schedule_date',''))} · {_esc(time_text)}</div>
-                          <div class='hm-v101-schedule-line'>Mode: {_esc(schedule.get('mode','-'))} · Link/location: {_esc(schedule.get('location_or_link') or '-')}</div>
-                          {notice_html}
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+    with st.expander(
+        f"Upcoming Schedule · {len(upcoming_schedules)} upcoming",
+        expanded=True,
+    ):
+        st.markdown(
+            "<span class='hm-upcoming-schedule-anchor'></span>",
+            unsafe_allow_html=True,
+        )
+        for row_start in range(0, len(upcoming_schedules), 3):
+            cols = st.columns(3, gap="small")
+            for col, schedule in zip(cols, upcoming_schedules[row_start : row_start + 3]):
+                with col:
+                    with st.container(border=True):
+                        time_text = str(schedule.get("start_time", "") or "")
+                        if schedule.get("end_time"):
+                            time_text += f" - {schedule.get('end_time')}"
+                        notice = schedule_acknowledgement_notice_v104b11(schedule)
+                        notice_html = (
+                            "<div class='hm-v101-schedule-line hm-v104b11-ack-note'>"
+                            f"{_esc(notice)}</div>"
+                            if notice
+                            else ""
+                        )
+                        st.markdown(
+                            f"""
+                            <span class='hm-home-grid-anchor'></span>
+                            <div class='hm-v101-schedule-card'>
+                              <div class='hm-v101-schedule-title'>{_esc(schedule.get('title','Scheduled session'))}<span class='hm-v101-schedule-pill'>{_esc(schedule_display_status_label_v104b11(schedule))}</span></div>
+                              <div class='hm-v101-schedule-line'>{_esc(schedule.get('schedule_date',''))} · {_esc(time_text)}</div>
+                              <div class='hm-v101-schedule-line'>Mode: {_esc(schedule.get('mode','-'))} · Link/location: {_esc(schedule.get('location_or_link') or '-')}</div>
+                              {notice_html}
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
     return True
 
 

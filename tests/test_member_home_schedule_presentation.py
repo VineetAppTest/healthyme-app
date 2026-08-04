@@ -19,25 +19,25 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         rows = [
             {
                 "id": "morning",
-                "status": "acknowledged",
+                "status": "scheduled",
                 "start_at_utc": "2026-07-30T05:15:00Z",
                 "end_at_utc": "2026-07-30T06:15:00Z",
             },
             {
                 "id": "evening-ended",
-                "status": "acknowledged",
+                "status": "scheduled",
                 "start_at_utc": "2026-07-30T16:00:00Z",
                 "end_at_utc": "2026-07-30T16:30:00Z",
             },
             {
                 "id": "evening-open",
-                "status": "acknowledged",
+                "status": "scheduled",
                 "start_at_utc": "2026-07-30T16:45:00Z",
                 "end_at_utc": "2026-07-30T17:15:00Z",
             },
             {
                 "id": "next-day",
-                "status": "acknowledged",
+                "status": "scheduled",
                 "start_at_utc": "2026-07-31T05:15:00Z",
                 "end_at_utc": "2026-07-31T06:00:00Z",
             },
@@ -89,6 +89,30 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
             visible[0]["created_at"],
             "2026-08-04T10:00:00Z",
         )
+
+    def test_acknowledged_schedule_disappears_from_member_home(self):
+        rows = [
+            {
+                "id": "acknowledged",
+                "status": "acknowledged",
+                "start_at_utc": "2026-08-08T04:30:00Z",
+                "end_at_utc": "2026-08-08T05:00:00Z",
+            },
+            {
+                "id": "scheduled",
+                "status": "scheduled",
+                "start_at_utc": "2026-08-09T04:30:00Z",
+                "end_at_utc": "2026-08-09T05:00:00Z",
+            },
+        ]
+
+        visible = prepare_member_home_upcoming_schedules(
+            rows,
+            now_utc=dt.datetime(2026, 8, 4, tzinfo=UTC),
+            limit=6,
+        )
+
+        self.assertEqual([row["id"] for row in visible], ["scheduled"])
 
     def test_closed_schedule_is_not_returned(self):
         rows = [
@@ -154,7 +178,9 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
             source.index("def _render_upcoming_schedules") :
             source.index("def _render_task_button")
         ]
-        self.assertNotIn("with st.expander(", schedule_slice)
+        self.assertIn("with st.expander(", schedule_slice)
+        self.assertIn("hm-upcoming-schedule-anchor", schedule_slice)
+        self.assertIn("expanded=True", schedule_slice)
         for forbidden in (
             "update_member_schedule_status(",
             "session_counted =",
@@ -192,6 +218,7 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         self.assertIn("hm-member-schedule-action-anchor", helper)
         self.assertIn("_ACTION_RENDERED_IDS_KEY", helper)
         self.assertIn("seen_schedule_keys", helper)
+        self.assertIn('status == "acknowledged"', helper)
 
         # The action row is always present for eligible sessions. Only the advisory
         # copy remains tied to the existing 48-hour reminder window.
