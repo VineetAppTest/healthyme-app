@@ -17,9 +17,10 @@ class ProfileBuilderFormHygieneContractTest(unittest.TestCase):
         install_at = source.index("install_profile_builder_form_hygiene()")
         renderer_imports = (
             "from components.member_plan_builder_setup import",
-            "from components.member_plan_builder_meals import",
-            "from components.member_plan_builder_allocations import",
-            "from components.member_plan_builder_export import",
+            "from components.member_plan_builder_meals_compact import",
+            "from components.member_plan_builder_exercise import",
+            "from components.member_plan_builder_supplement import",
+            "from components.member_plan_builder_view_compact import",
         )
         for import_text in renderer_imports:
             self.assertLess(install_at, source.index(import_text))
