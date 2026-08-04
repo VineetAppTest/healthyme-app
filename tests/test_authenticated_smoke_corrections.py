@@ -42,8 +42,10 @@ class AuthenticatedSmokeCorrectionTests(unittest.TestCase):
         self.assertIn('("Timing", "Activity", "Duration/Sets", "Remarks")', source)
         self.assertIn('("Timing", "Supplement", "Dosage", "Remarks")', source)
         self.assertNotIn("Active-plan integrity verified", source)
-        self.assertNotIn("finish_and_render_page_diagnostics", page)
-        self.assertNotIn("Full Admin integration build", page)
+        self.assertIn('begin_page_measurement("Recommendation Profile Builder")', page)
+        self.assertIn('finish_and_render_page_diagnostics("Recommendation Profile Builder")', page)
+        self.assertIn('_HIDDEN_BUILD_LABEL = "Full Admin integration build:"', page)
+        self.assertIn("_install_build_label_suppression()", page)
 
     def test_repository_controls_use_sharp_tabs_and_centered_row_actions(self):
         for path in (
