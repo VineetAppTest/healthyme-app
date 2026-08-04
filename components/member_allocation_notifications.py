@@ -6,7 +6,6 @@ import uuid
 from typing import Any
 
 from components.content_repository_store import get_repository_item
-from components.db import get_user_by_id
 from components.storage_backend import load_state, save_state
 
 
@@ -115,7 +114,11 @@ def _upsert_visible_delivery(
     if not member_id or not allocation_id:
         return
     state = load_state()
-    member = get_user_by_id(member_id) or {}
+    member_email = _text(
+        saved.get("member_email")
+        or saved.get("assigned_member_email")
+        or saved.get("email")
+    )
     timestamp = _now_iso()
     source_updated_at = _text(saved.get("updated_at") or saved.get("stopped_at"))
     dedupe_key = f"{domain}_allocation_visible|{allocation_id}|{source_updated_at}"
@@ -136,7 +139,7 @@ def _upsert_visible_delivery(
         "id": str(uuid.uuid4())[:8],
         "ts": timestamp,
         "member_id": member_id,
-        "member_email": _text(member.get("email")),
+        "member_email": member_email,
         "sender_role": "admin",
         "actor_id": _text(actor_id) or "admin",
         "subject": subject,
@@ -174,7 +177,7 @@ def _upsert_visible_delivery(
             "kind": kind,
             "user_id": member_id,
             "member_id": member_id,
-            "member_email": _text(member.get("email")),
+            "member_email": member_email,
             "message": message,
             "status": "queued",
             "email_required": False,
