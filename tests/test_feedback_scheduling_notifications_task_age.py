@@ -57,6 +57,13 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertLess(next_version, rerun)
         self.assertIn("A fresh form is ready for the next schedule", source)
 
+    def test_schedule_side_panel_is_read_only_against_identity_authority(self):
+        source = SCHEDULE.read_text(encoding="utf-8")
+        self.assertIn("from components.storage_backend import load_state", source)
+        self.assertNotIn("get_user_by_id", source)
+        self.assertNotIn('get("users"', source)
+        self.assertNotIn("save_state", source)
+
     def test_allocations_write_visible_member_messages_with_benefits(self):
         source = NOTIFICATIONS.read_text(encoding="utf-8")
         bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
@@ -68,6 +75,13 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertIn("supplement_api.save_supplement_member_allocation", source)
         self.assertIn("supplement_api.stop_supplement_member_allocation", source)
         self.assertIn("install_member_allocation_notifications()", bootstrap)
+
+    def test_notification_delivery_does_not_invoke_identity_write_paths(self):
+        source = NOTIFICATIONS.read_text(encoding="utf-8")
+        self.assertNotIn("get_user_by_id", source)
+        self.assertNotIn('get("users"', source)
+        self.assertNotIn('setdefault("users"', source)
+        self.assertIn('saved.get("member_email")', source)
 
     def test_pending_age_is_real_adjacent_content_not_css_only(self):
         source = TASK_AGE.read_text(encoding="utf-8")
