@@ -31,9 +31,10 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertIn("type_col, title_col = st.columns([0.85, 1.35]", source)
         self.assertIn("date_col, start_col, end_col = st.columns(3", source)
 
-        schedule_panel = source.index("_render_day_schedule(")
+        schedule_panel = source.index("selected_day_rows = _admin_schedule_for_date(")
         mode_row = source.index("mode_col, location_col = st.columns")
         self.assertLess(schedule_panel, mode_row)
+        self.assertIn("_render_day_schedule(selected_day_rows, schedule_date)", source)
 
         self.assertIn("with st.expander(", source)
         self.assertIn("Admin schedule · {len(rows)} {meeting_word}", source)
@@ -48,7 +49,7 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
             "Subject",
         ):
             self.assertIn(label, source)
-        self.assertIn("_admin_schedule_for_date(schedule_date, practitioner_id)", source)
+        self.assertIn("_admin_schedule_for_date(", source)
         self.assertIn("schedule_time_context", source)
         self.assertIn("install_admin_schedule_feedback(admin_scheduling)", page)
         self.assertNotIn(
