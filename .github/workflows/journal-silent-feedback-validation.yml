@@ -1,0 +1,42 @@
+name: Journal Silent Feedback Validation
+
+on:
+  pull_request:
+    paths:
+      - "components/flash.py"
+      - "components/member_journal_server_autosave.py"
+      - "pages/18_Daily_Log.py"
+      - "tests/test_flash_journal_silent_feedback.py"
+      - "tests/test_member_journal_server_autosave.py"
+      - ".github/workflows/journal-silent-feedback-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install project dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile silent feedback surfaces
+        run: |
+          python -m py_compile \
+            components/flash.py \
+            components/member_journal_server_autosave.py \
+            pages/18_Daily_Log.py \
+            tests/test_flash_journal_silent_feedback.py \
+            tests/test_member_journal_server_autosave.py
+      - name: Validate direct-import and autosave feedback contracts
+        run: |
+          python -m unittest \
+            tests.test_flash_journal_silent_feedback \
+            tests.test_member_journal_server_autosave \
+            -v
