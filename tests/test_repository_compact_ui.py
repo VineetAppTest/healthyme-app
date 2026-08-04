@@ -22,10 +22,12 @@ class RepositoryCompactUiTests(unittest.TestCase):
         for path in PAGES.values():
             ast.parse(text(path), filename=str(path))
 
-    def test_repository_actions_are_compact_and_inline(self):
+    def test_repository_actions_are_compact_inline_and_centered(self):
         for path in PAGES.values():
             source = text(path)
-            self.assertIn('st.columns([5.8, 0.72, 0.82], gap="small")', source)
+            self.assertIn("st.columns(", source)
+            self.assertIn("[5.8, 0.72, 0.82]", source)
+            self.assertIn('gap="small", vertical_alignment="center"', source)
             self.assertIn('"Edit",', source)
             self.assertIn('"Delete",', source)
             self.assertIn('border-radius:999px!important', source)
