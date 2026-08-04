@@ -2,6 +2,7 @@ import streamlit as st
 
 import components.admin_scheduling_consolidated as admin_scheduling
 from components.admin_performance_optimization import admin_scheduling_render_scope
+from components.admin_schedule_feedback_aug04 import install_admin_schedule_feedback
 from components.admin_uiux_corrections import admin_scheduling_uiux_scope
 from components.performance_diagnostics import (
     begin_page_measurement,
@@ -10,6 +11,7 @@ from components.performance_diagnostics import (
 
 
 begin_page_measurement("Admin Scheduling")
+install_admin_schedule_feedback(admin_scheduling)
 
 # Keep Scheduling navigation consistent with the rest of HealthyMe: Back on the
 # left edge and Dashboard on the right edge at both the top and bottom of the page.
