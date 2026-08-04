@@ -25,7 +25,7 @@ class MemberHomeGlobalHeaderRuntimeTests(unittest.TestCase):
         runtime.st = self.original_runtime_st
         ui_common.topbar = self.original_topbar
 
-    def test_member_home_applies_global_spacing_and_preserves_profile_row(self):
+    def test_member_home_collapses_hidden_wrappers_and_hero_gap(self):
         calls = []
 
         def base_topbar(title, *args, **kwargs):
@@ -38,14 +38,30 @@ class MemberHomeGlobalHeaderRuntimeTests(unittest.TestCase):
 
         self.assertEqual(calls, ["Member Home"])
         rendered_css = "\n".join(self.fake_st.markdown_calls)
-        self.assertIn("hm-member-home-global-header-v2", rendered_css)
+        self.assertIn("hm-member-home-global-header-v3", rendered_css)
         self.assertIn("hm-member-identity-pill", rendered_css)
         self.assertIn("hm-top-profile-anchor", rendered_css)
         self.assertIn("hm-top-logout-anchor", rendered_css)
-        self.assertIn("min-height:2.84rem", rendered_css)
-        self.assertIn("margin-bottom:.34rem", rendered_css)
-        self.assertIn(".hero-shell", rendered_css)
-        self.assertNotIn("display:none!important;\n  visibility:hidden", rendered_css)
+        self.assertIn(
+            'div[data-testid="stElementContainer"]:has(.hm-top-profile-anchor)',
+            rendered_css,
+        )
+        self.assertIn(
+            'div[data-testid="stElementContainer"]:has(.hm-top-logout-anchor)',
+            rendered_css,
+        )
+        self.assertIn(
+            'div[data-testid="column"] > div[data-testid="stVerticalBlock"]:has(.hm-top-profile-anchor)',
+            rendered_css,
+        )
+        self.assertIn("gap:0!important", rendered_css)
+        self.assertIn("min-height:2.46rem", rendered_css)
+        self.assertIn(
+            'div[data-testid="stElementContainer"]:has(.hero-shell)',
+            rendered_css,
+        )
+        self.assertIn("margin-top:-.72rem!important", rendered_css)
+        self.assertNotIn("min-height:2.84rem", rendered_css)
 
     def test_other_pages_keep_their_existing_header_sequence(self):
         calls = []
