@@ -4,15 +4,19 @@ import copy
 from typing import Any, Iterable
 
 
-CONTRACT_VERSION = "2026-08-04-member-plan-builder-rebuild-v1"
+CONTRACT_VERSION = "2026-08-04-member-plan-builder-ux-performance-v2"
 MEAL_EDITABLE_ITEM_TYPES = ("meal",)
 LEGACY_READ_ONLY_ITEM_TYPES = ("exercise", "supplement")
+# Retained for route-registration and historical contract compatibility.
 ALLOCATION_WORKSPACE_SECTION = "Allocate Exercise & Supplement"
+EXERCISE_SECTION = "Exercise Allocation"
+SUPPLEMENT_SECTION = "Supplement Allocation"
 VIEW_PROFILES_SECTION = "View Member Plan"
 MEAL_PROFILE_BUILDER_SECTIONS = (
     "Profile Setup",
     "Meal Structure",
-    ALLOCATION_WORKSPACE_SECTION,
+    EXERCISE_SECTION,
+    SUPPLEMENT_SECTION,
     VIEW_PROFILES_SECTION,
 )
 
@@ -62,15 +66,16 @@ def meal_profile_builder_manifest() -> dict[str, Any]:
         "route": "pages/38_Admin_Recommendation_Profile_Builder.py",
         "write_rule": "only meal rows may be replaced from Member Plan Builder",
         "history_rule": (
-            "existing Profile Builder Exercise and Supplement rows remain readable; "
+            "existing Profile Builder Exercise and Supplement rows remain readable for audit; "
             "new Exercise and Supplement writes remain in their independent allocation stores"
         ),
         "navigation_rule": (
-            "Setup auto-loads the selected plan and supports complete Meal Plan cloning; "
-            "Meals use fixed seven-day slots with inline repository portion guidance, "
-            "Save renders the tabular review, Publish activates the current saved Draft, "
-            "Exercise and Supplement render on one compact page, and View Member Plan "
-            "retains the existing read-only view with an Excel download"
+            "Setup auto-loads and clones complete Meal Plans; Meals use fixed compact slots; "
+            "Exercise and Supplement render as separate top-level tasks; View Member Plan "
+            "uses the consolidated active-plan read model and removes Profile Scope"
+        ),
+        "performance_rule": (
+            "repository source contracts are cached and loaded only for sections that need them"
         ),
         "allocation_routes": [
             "pages/42_Admin_Exercise_Member_Allocation.py",
