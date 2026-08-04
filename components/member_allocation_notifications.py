@@ -6,6 +6,7 @@ import uuid
 from typing import Any
 
 from components.content_repository_store import get_repository_item
+from components.db import get_user_by_id
 from components.storage_backend import load_state, save_state
 
 
@@ -18,17 +19,6 @@ def _text(value: object) -> str:
 
 def _now_iso() -> str:
     return dt.datetime.now().isoformat(timespec="seconds")
-
-
-def _member_row(state: dict[str, Any], member_id: str) -> dict[str, Any]:
-    return next(
-        (
-            dict(row)
-            for row in state.get("users", []) or []
-            if _text((row or {}).get("id")) == _text(member_id)
-        ),
-        {},
-    )
 
 
 def _repository_payload(item_type: str, source_id: str) -> dict[str, Any]:
@@ -125,7 +115,7 @@ def _upsert_visible_delivery(
     if not member_id or not allocation_id:
         return
     state = load_state()
-    member = _member_row(state, member_id)
+    member = get_user_by_id(member_id) or {}
     timestamp = _now_iso()
     source_updated_at = _text(saved.get("updated_at") or saved.get("stopped_at"))
     dedupe_key = f"{domain}_allocation_visible|{allocation_id}|{source_updated_at}"
