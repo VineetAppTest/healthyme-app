@@ -1,9 +1,8 @@
 name: Apply Member Home Grid Patch
 
 on:
-  push:
-    branches:
-      - agent/compact-member-home-grids-fluid-time
+  pull_request:
+    types: [opened, reopened]
     paths:
       - "scripts/apply_member_home_grid_patch.py"
       - ".github/workflows/apply-member-home-grid-patch.yml"
@@ -13,7 +12,7 @@ permissions:
 
 jobs:
   apply:
-    if: ${{ !contains(github.event.head_commit.message, '[ui-patch-applied]') }}
+    if: ${{ github.event.pull_request.head.ref == 'agent/compact-member-home-grids-fluid-time' }}
     runs-on: ubuntu-24.04
     steps:
       - name: Check out branch
