@@ -1,0 +1,40 @@
+name: Scheduling Notifications Task Age Feedback
+
+on:
+  pull_request:
+    paths:
+      - "components/admin_schedule_feedback_aug04.py"
+      - "components/member_allocation_notifications.py"
+      - "components/member_task_pending_age.py"
+      - "components/streamlit_app_header_regression_guard.py"
+      - "components/__init__.py"
+      - "pages/32_Admin_Scheduling.py"
+      - "tests/test_feedback_scheduling_notifications_task_age.py"
+      - ".github/workflows/feedback-scheduling-notifications-task-age.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile corrected surfaces
+        run: |
+          python -m py_compile \
+            components/admin_schedule_feedback_aug04.py \
+            components/member_allocation_notifications.py \
+            components/member_task_pending_age.py \
+            components/streamlit_app_header_regression_guard.py \
+            components/__init__.py \
+            pages/32_Admin_Scheduling.py \
+            tests/test_feedback_scheduling_notifications_task_age.py
+      - name: Validate corrective contracts
+        run: python -m unittest tests.test_feedback_scheduling_notifications_task_age -v
