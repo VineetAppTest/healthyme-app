@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import io
 from collections import defaultdict
 from typing import Any, Dict, List
@@ -12,7 +13,6 @@ from components.member_plan_builder_export import load_member_plan_events, meal_
 from components.pbm_core import clean, safe
 from components.recommendation_profile_viewer import (
     _meal_cells,
-    _render_profile_table,
     _render_view_profiles_css,
     load_profile_detail_readonly,
     load_profile_inventory,
@@ -77,6 +77,42 @@ def _allocation_rows(model: Dict[str, Any], domain: str) -> List[Dict[str, Any]]
                     }
                 )
     return output
+
+
+def _plain_table_cell(value: object) -> str:
+    return html.unescape(str(value or "").replace("<br>", "\n"))
+
+
+def _meal_plan_rows(
+    start_date: str,
+    items: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for day in range(1, 8):
+        timing, meal, liquid, remarks = _meal_cells(items, day)
+        rows.append(
+            {
+                "Start Date": start_date,
+                "Type": "Meal",
+                "Day": f"Day {day}",
+                "Timing": _plain_table_cell(timing),
+                "Meal": _plain_table_cell(meal),
+                "Liquid": _plain_table_cell(liquid),
+                "Remarks": _plain_table_cell(remarks),
+            }
+        )
+    return rows
+
+
+def _render_meal_plan_table(
+    start_date: str,
+    items: List[Dict[str, Any]],
+) -> None:
+    st.dataframe(
+        pd.DataFrame(_meal_plan_rows(start_date, items)),
+        use_container_width=True,
+        hide_index=True,
+    )
 
 
 def _legacy_rows(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -240,11 +276,9 @@ def render_view_member_plan_compact() -> None:
     else:
         st.caption("This is a Draft or historical Meal Profile. Current independent allocations are shown only with the member's Active profile.")
 
-    _render_profile_table(
-        start_date=clean(profile.get("start_date")),
-        section_type="Meal",
-        headers=("Timing", "Meal", "Liquid", "Remarks"),
-        day_cells=lambda day: _meal_cells(items, day),
+    _render_meal_plan_table(
+        clean(profile.get("start_date")),
+        items,
     )
 
     if model:

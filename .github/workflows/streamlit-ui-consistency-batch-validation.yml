@@ -1,0 +1,50 @@
+name: Streamlit UI Consistency Batch Validation
+
+on:
+  pull_request:
+    paths:
+      - "components/member_journal_server_autosave.py"
+      - "components/repository_layout_correction_runtime.py"
+      - "components/profile_builder_modular.py"
+      - "components/member_plan_builder_view_compact.py"
+      - "pages/18_Daily_Log.py"
+      - "tests/test_member_journal_server_autosave.py"
+      - "tests/test_streamlit_ui_consistency_batch.py"
+      - ".github/workflows/streamlit-ui-consistency-batch-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install project dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile changed surfaces
+        run: |
+          python -m py_compile \
+            components/member_journal_server_autosave.py \
+            components/repository_layout_correction_runtime.py \
+            components/profile_builder_modular.py \
+            components/member_plan_builder_view_compact.py \
+            pages/18_Daily_Log.py \
+            tests/test_member_journal_server_autosave.py \
+            tests/test_streamlit_ui_consistency_batch.py
+      - name: Run focused UI and behavior contracts
+        run: |
+          python -m unittest \
+            tests.test_member_journal_server_autosave \
+            tests.test_streamlit_ui_consistency_batch \
+            tests.test_food_journal_meal_grid_saved_days_cleanup \
+            tests.test_repository_layout_correction_runtime \
+            tests.test_repository_exclusive_tabs_runtime \
+            tests.test_issue_260_profile_builder_ui_cleanup \
+            -v

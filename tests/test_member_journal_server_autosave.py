@@ -41,25 +41,49 @@ class MemberJournalServerAutosaveTests(unittest.TestCase):
         autosave._current_page_filename = self.original_page
         autosave.flash.set_system_message = self.original_message
 
-    def test_food_autosaves_only_after_meaningful_change(self):
+    def test_food_changes_do_not_synthesize_save_day_clicks(self):
         self.fake_st.session_state["hm_food_journal_date"] = dt.date(2026, 8, 4)
         food_key = "2026-08-04_breakfast_food_0"
         self.fake_st.session_state[food_key] = "Eggs"
 
         self.assertFalse(self.fake_st.button("Save Day"))
         self.fake_st.session_state[food_key] = "Oats"
-        self.assertTrue(self.fake_st.button("Save Day"))
-        self.assertEqual(
-            self.fake_st.session_state.get("_hm_last_journal_autosave"),
-            "food",
+        self.assertFalse(self.fake_st.button("Save Day"))
+        self.assertEqual(self.fake_st.rerun_count, 0)
+        self.assertEqual(self.messages, [])
+
+    def test_food_payload_autosaves_directly_without_rerun_or_flash(self):
+        saved = []
+        payload = {"date": "2026-08-04", "meals": {}}
+
+        did_save, error = autosave.autosave_food_payload(
+            "member-1",
+            "2026-08-04",
+            payload,
+            lambda user_id, date_key, row: saved.append((user_id, date_key, row)),
+            meaningful=False,
+        )
+        self.assertFalse(did_save)
+        self.assertEqual(error, "")
+
+        changed = {
+            "date": "2026-08-04",
+            "meals": {"breakfast": {"food_items": [{"food": "Oats"}]}},
+        }
+        did_save, error = autosave.autosave_food_payload(
+            "member-1",
+            "2026-08-04",
+            changed,
+            lambda user_id, date_key, row: saved.append((user_id, date_key, row)),
+            meaningful=True,
         )
 
-        autosave.flash.set_system_message("Saved food journal.", "success")
-        self.fake_st.rerun()
-
-        self.assertEqual(self.messages, [])
+        self.assertTrue(did_save)
+        self.assertEqual(error, "")
+        self.assertEqual(len(saved), 1)
+        self.assertEqual(saved[0][2], changed)
         self.assertEqual(self.fake_st.rerun_count, 0)
-        self.assertFalse(self.fake_st.button("Save Day"))
+        self.assertEqual(self.messages, [])
 
     def test_blank_new_food_widget_does_not_trigger_autosave(self):
         self.fake_st.session_state["hm_food_journal_date"] = dt.date(2026, 8, 4)

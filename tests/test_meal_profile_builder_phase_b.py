@@ -107,13 +107,16 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         widget_at = source.index("selected_id = select_col.selectbox(")
         self.assertLess(apply_at, widget_at)
 
-    def test_expanders_are_standardised_to_one_line_more_details(self) -> None:
+    def test_expanders_use_full_visible_more_details_labels(self) -> None:
         source = EXPANDER_FILE.read_text(encoding="utf-8")
         self.assertIn('text == "More setup details"', source)
         self.assertIn('text.startswith("More details —")', source)
         self.assertIn('label = "More details"', source)
         modular = MODULAR_FILE.read_text(encoding="utf-8")
-        self.assertIn("white-space:nowrap", modular)
+        self.assertIn("white-space:normal", modular)
+        self.assertIn("overflow:visible", modular)
+        self.assertIn("text-overflow:clip", modular)
+        self.assertNotIn("text-overflow:ellipsis", modular)
         self.assertIn("stVerticalBlockBorderWrapper", modular)
 
     def test_meals_use_fixed_compact_cards_portion_guidance_and_review(self) -> None:
