@@ -56,6 +56,7 @@ CLASSIFIED_RUNTIME_PATHS = {
     "pages/40_Admin_Recommendation_Profile_Builder_Mockup_V4.py",
     # Shared form implementations and accepted hygiene layers.
     "components/admin_content_form_cleanup.py",
+    "components/admin_schedule_feedback_aug04.py",
     "components/admin_scheduling_consolidated.py",
     "components/auth_provisioning_form_hygiene.py",
     "components/member_exercise_journal.py",
