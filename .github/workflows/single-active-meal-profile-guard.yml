@@ -1,0 +1,28 @@
+name: Single Active Meal Profile Guard
+
+on:
+  pull_request:
+    paths:
+      - "components/profile_publish_control.py"
+      - "supabase/migrations/**"
+      - "tests/test_single_active_meal_profile_guard.py"
+      - ".github/workflows/single-active-meal-profile-guard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile validation test
+        run: python -m py_compile tests/test_single_active_meal_profile_guard.py
+      - name: Validate database and publish-path invariant
+        run: python -m unittest tests.test_single_active_meal_profile_guard -v
