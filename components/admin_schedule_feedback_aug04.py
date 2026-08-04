@@ -308,10 +308,11 @@ def install_admin_schedule_feedback(scheduling_module: Any) -> None:
                     key=prefix + "end",
                 )
 
-            _render_day_schedule(
-                _admin_schedule_for_date(schedule_date, practitioner_id),
+            selected_day_rows = _admin_schedule_for_date(
                 schedule_date,
+                practitioner_id,
             )
+            _render_day_schedule(selected_day_rows, schedule_date)
 
             mode_col, location_col = st.columns([0.9, 1.4], gap="medium")
             with mode_col:
