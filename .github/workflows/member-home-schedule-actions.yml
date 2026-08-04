@@ -5,6 +5,7 @@ on:
     paths:
       - "components/member_home_schedule_presentation.py"
       - "pages/02_Member_Home.py"
+      - "pages/18_Daily_Log.py"
       - "components/db.py"
       - "tests/test_member_home_schedule_presentation.py"
       - ".github/workflows/member-home-schedule-actions.yml"
@@ -25,11 +26,12 @@ jobs:
           python-version: "3.11"
       - name: Install project dependencies
         run: python -m pip install -r requirements.txt
-      - name: Compile schedule action surfaces
+      - name: Compile schedule and journal presentation surfaces
         run: |
           python -m py_compile \
             components/member_home_schedule_presentation.py \
             pages/02_Member_Home.py \
+            pages/18_Daily_Log.py \
             tests/test_member_home_schedule_presentation.py
-      - name: Validate schedule action contracts
+      - name: Validate schedule, message grid and fluid time contracts
         run: python -m unittest tests.test_member_home_schedule_presentation -v
