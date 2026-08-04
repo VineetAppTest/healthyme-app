@@ -8,12 +8,80 @@ from zoneinfo import ZoneInfo
 import streamlit as st
 
 
-_MARKER = "_hm_member_task_pending_age_v1"
+_MARKER = "_hm_member_task_pending_age_v2"
 _MEMBER_TIMEZONE = ZoneInfo("Asia/Kolkata")
+
+# This stylesheet is inserted with the task card itself. Member Home's accepted
+# side-by-side runtime injects its own ACTION REQUIRED pseudo-element during the
+# topbar render, so a later task-local stylesheet is required to suppress that
+# older label and keep the two real badges on the same line.
+_RUNTIME_STYLE = """
+<style id="hm-member-task-pending-age-runtime-v2">
+.hm-v990-task-progress::before{
+  display:none!important;
+  visibility:hidden!important;
+  content:none!important;
+  width:0!important;
+  height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+.hm-task-alert-row{
+  display:flex!important;
+  align-items:center!important;
+  gap:.45rem!important;
+  flex-wrap:wrap!important;
+  margin:0 0 .48rem 0!important;
+}
+.hm-task-alert-pill{
+  display:inline-flex!important;
+  align-items:center!important;
+  padding:.30rem .62rem!important;
+  border-radius:999px!important;
+  background:#FEE2E2!important;
+  border:1px solid #DC2626!important;
+  color:#B91C1C!important;
+  font-size:.88rem!important;
+  font-weight:950!important;
+  letter-spacing:.02em!important;
+  text-transform:uppercase!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+.hm-task-pending-age{
+  display:inline-flex!important;
+  align-items:center!important;
+  padding:.27rem .56rem!important;
+  border-radius:999px!important;
+  font-size:.78rem!important;
+  font-weight:900!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+.hm-task-pending-age.overdue,
+.hm-task-pending-age.today{
+  background:#FFF1F2!important;
+  border:1px solid #FB7185!important;
+  color:#BE123C!important;
+}
+.hm-task-pending-age.future{
+  background:#DCFCE7!important;
+  border:1px solid #22C55E!important;
+  color:#166534!important;
+}
+.hm-task-pending-age.neutral{
+  background:#F1F5F9!important;
+  border:1px solid #CBD5E1!important;
+  color:#475569!important;
+}
+</style>
+"""
 
 
 def _frame_file(frame) -> str:
-    return str((frame.f_globals if frame is not None else {}).get("__file__") or "").replace("\\", "/")
+    return str(
+        (frame.f_globals if frame is not None else {}).get("__file__") or ""
+    ).replace("\\", "/")
 
 
 def _member_task_frame():
@@ -89,10 +157,11 @@ def install_member_task_pending_age() -> None:
         ):
             label, state = _pending_age_label()
             alert = (
-                "<div class='hm-task-alert-row'>"
-                "<span class='hm-task-alert-pill'>ACTION REQUIRED</span>"
-                f"<span class='hm-task-pending-age {state}'>{label}</span>"
-                "</div>"
+                _RUNTIME_STYLE
+                + "<div class='hm-task-alert-row'>"
+                + "<span class='hm-task-alert-pill'>ACTION REQUIRED</span>"
+                + f"<span class='hm-task-pending-age {state}'>{label}</span>"
+                + "</div>"
             )
             body = body.replace(
                 "<div class='hm-v990-task-progress'>",
@@ -103,18 +172,3 @@ def install_member_task_pending_age() -> None:
 
     setattr(markdown_with_pending_age, _MARKER, True)
     st.markdown = markdown_with_pending_age
-
-    current_markdown(
-        """
-<style id="hm-member-task-pending-age-v1">
-.hm-v990-task-progress::before{display:none!important;content:none!important;}
-.hm-task-alert-row{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin:0 0 .48rem 0;}
-.hm-task-alert-pill{display:inline-flex;align-items:center;padding:.30rem .62rem;border-radius:999px;background:#FEE2E2;border:1px solid #DC2626;color:#B91C1C;font-size:.88rem;font-weight:950;letter-spacing:.02em;text-transform:uppercase;line-height:1.1;}
-.hm-task-pending-age{display:inline-flex;align-items:center;padding:.27rem .56rem;border-radius:999px;font-size:.78rem;font-weight:900;line-height:1.1;}
-.hm-task-pending-age.overdue,.hm-task-pending-age.today{background:#FFF1F2;border:1px solid #FB7185;color:#BE123C;}
-.hm-task-pending-age.future{background:#DCFCE7;border:1px solid #22C55E;color:#166534;}
-.hm-task-pending-age.neutral{background:#F1F5F9;border:1px solid #CBD5E1;color:#475569;}
-</style>
-""",
-        unsafe_allow_html=True,
-    )

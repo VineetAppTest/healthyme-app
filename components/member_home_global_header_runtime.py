@@ -5,65 +5,98 @@ import functools
 import streamlit as st
 
 
-_MARKER = "_hm_member_home_global_header_v2"
+_MARKER = "_hm_member_home_global_header_v3"
 _MEMBER_HOME_TITLE = "Member Home"
 
 _GLOBAL_HEADER_CSS = """
-<style id="hm-member-home-global-header-v2">
-/* Keep Member Home's profile action, but enforce the same compact global header
-   height and spacing used across HealthyMe pages. */
+<style id="hm-member-home-global-header-v3">
+/* Member Home keeps its profile action, but the utility row must occupy only the
+   visible control height. Hidden Streamlit anchor wrappers previously enlarged the
+   row and left a blank band before the hero. */
 div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) {
-  min-height:2.84rem!important;
-  height:2.84rem!important;
-  margin-top:0!important;
-  margin-bottom:.34rem!important;
+  min-height:2.46rem!important;
+  height:auto!important;
+  margin:0!important;
   padding:0!important;
   align-items:center!important;
   gap:.72rem!important;
 }
 div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"] {
-  min-height:2.84rem!important;
-  height:2.84rem!important;
+  min-height:2.46rem!important;
+  height:auto!important;
   display:flex!important;
   align-items:center!important;
+  margin:0!important;
+  padding:0!important;
+}
+div[data-testid="column"] > div[data-testid="stVerticalBlock"]:has(.hm-top-profile-anchor),
+div[data-testid="column"] > div[data-testid="stVerticalBlock"]:has(.hm-top-logout-anchor) {
+  gap:0!important;
+  min-height:2.46rem!important;
+  height:2.46rem!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+/* Remove the complete Streamlit element wrapper, not only the zero-height span. */
+div[data-testid="stElementContainer"]:has(.hm-top-profile-anchor),
+div[data-testid="stElementContainer"]:has(.hm-top-logout-anchor),
+div.element-container:has(.hm-top-profile-anchor),
+div.element-container:has(.hm-top-logout-anchor) {
+  display:none!important;
+  visibility:hidden!important;
+  width:0!important;
+  min-width:0!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
 }
 .hm-member-identity-pill {
   width:100%!important;
-  min-height:2.84rem!important;
-  height:2.84rem!important;
-  padding:.42rem .72rem!important;
+  min-height:2.46rem!important;
+  height:2.46rem!important;
+  padding:.24rem .64rem!important;
   margin:0!important;
   box-sizing:border-box!important;
 }
-.hm-top-profile-anchor + div,
-.hm-top-logout-anchor + div {
-  min-height:2.84rem!important;
-  height:2.84rem!important;
+div[data-testid="column"]:has(.hm-top-profile-anchor) [data-testid="stButton"],
+div[data-testid="column"]:has(.hm-top-logout-anchor) [data-testid="stButton"] {
+  min-height:2.46rem!important;
+  height:2.46rem!important;
   margin:0!important;
   padding:0!important;
   display:flex!important;
   align-items:center!important;
-  justify-content:center!important;
 }
-.hm-top-profile-anchor + div [data-testid="stButton"] > button,
-.hm-top-profile-anchor + div .stButton > button,
-.hm-top-logout-anchor + div [data-testid="stButton"] > button,
-.hm-top-logout-anchor + div .stButton > button {
-  min-height:2.84rem!important;
-  height:2.84rem!important;
+div[data-testid="column"]:has(.hm-top-profile-anchor) [data-testid="stButton"] > button,
+div[data-testid="column"]:has(.hm-top-profile-anchor) .stButton > button,
+div[data-testid="column"]:has(.hm-top-logout-anchor) [data-testid="stButton"] > button,
+div[data-testid="column"]:has(.hm-top-logout-anchor) .stButton > button {
+  min-height:2.46rem!important;
+  height:2.46rem!important;
+  max-height:2.46rem!important;
   margin:0!important;
 }
 
-/* The injected style and any zero-height wrapper must not create a band between
-   the identity row and the hero banner. */
-div[data-testid="stElementContainer"]:has(style#hm-member-home-global-header-v2),
-div.element-container:has(style#hm-member-home-global-header-v2) {
+/* The injected stylesheet itself must not create a Streamlit element band. */
+div[data-testid="stElementContainer"]:has(style#hm-member-home-global-header-v3),
+div.element-container:has(style#hm-member-home-global-header-v3) {
   display:none!important;
   height:0!important;
   min-height:0!important;
   margin:0!important;
   padding:0!important;
   overflow:hidden!important;
+}
+
+/* Streamlit's root vertical block keeps a standard inter-element gap. Pull only the
+   Member Home hero back by that residual amount after the compact utility row. */
+div[data-testid="stElementContainer"]:has(.hero-shell),
+div.element-container:has(.hero-shell) {
+  margin-top:-.72rem!important;
+  padding-top:0!important;
 }
 .hero-shell {
   margin-top:0!important;
@@ -73,7 +106,7 @@ div.element-container:has(style#hm-member-home-global-header-v2) {
 
 
 def install_member_home_global_header_runtime() -> None:
-    """Apply the global header spacing contract to Member Home."""
+    """Apply the compact global header spacing contract to Member Home."""
 
     from components import ui_common
 

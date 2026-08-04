@@ -23,10 +23,25 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         ):
             compile(path.read_text(encoding="utf-8"), str(path), "exec")
 
-    def test_schedule_uses_75_25_layout_and_selected_date_table(self):
+    def test_schedule_is_full_width_and_sharply_structured(self):
         source = SCHEDULE.read_text(encoding="utf-8")
         page = SCHEDULE_PAGE.read_text(encoding="utf-8")
-        self.assertIn("st.columns([3, 1]", source)
+
+        self.assertNotIn("st.columns([3, 1]", source)
+        self.assertIn("type_col, title_col = st.columns([0.85, 1.35]", source)
+        self.assertIn("date_col, start_col, end_col = st.columns(3", source)
+
+        schedule_panel = source.index("selected_day_rows = _admin_schedule_for_date(")
+        mode_row = source.index("mode_col, location_col = st.columns")
+        self.assertLess(schedule_panel, mode_row)
+        self.assertIn("_render_day_schedule(selected_day_rows, schedule_date)", source)
+
+        self.assertIn("with st.expander(", source)
+        self.assertIn("Admin schedule · {len(rows)} {meeting_word}", source)
+        self.assertIn("No meeting is scheduled on the selected date", source)
+        self.assertIn("hm-sched-day-empty", source)
+        self.assertIn("hm-sched-day-anchor", source)
+
         for label in (
             "Schedule date",
             "Name of Member",
@@ -34,7 +49,7 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
             "Subject",
         ):
             self.assertIn(label, source)
-        self.assertIn("_admin_schedule_for_date(schedule_date, practitioner_id)", source)
+        self.assertIn("_admin_schedule_for_date(", source)
         self.assertIn("schedule_time_context", source)
         self.assertIn("install_admin_schedule_feedback(admin_scheduling)", page)
         self.assertNotIn(
@@ -57,7 +72,7 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertLess(next_version, rerun)
         self.assertIn("A fresh form is ready for the next schedule", source)
 
-    def test_schedule_side_panel_is_read_only_against_identity_authority(self):
+    def test_schedule_read_model_is_read_only_against_identity_authority(self):
         source = SCHEDULE.read_text(encoding="utf-8")
         self.assertIn("from components.storage_backend import load_state", source)
         self.assertNotIn("get_user_by_id", source)
@@ -83,16 +98,26 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertNotIn('setdefault("users"', source)
         self.assertIn('saved.get("member_email")', source)
 
-    def test_pending_age_is_real_adjacent_content_not_css_only(self):
+    def test_pending_age_is_one_adjacent_badge_not_duplicate_action_text(self):
         source = TASK_AGE.read_text(encoding="utf-8")
         bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+
         self.assertIn("today - due_date", source)
         self.assertIn("Task is pending for {delta} {unit}", source)
         self.assertIn("hm-task-alert-row", source)
-        self.assertIn("ACTION REQUIRED", source)
-        self.assertIn("hm-v990-task-progress::before", source)
-        self.assertIn("content:none", source)
+        rendered_badge = "<span class='hm-task-alert-pill'>ACTION REQUIRED</span>"
+        self.assertEqual(source.count(rendered_badge), 1)
+        self.assertIn("_RUNTIME_STYLE", source)
+        self.assertIn("hm-member-task-pending-age-runtime-v2", source)
+        self.assertIn(".hm-v990-task-progress::before", source)
+        self.assertIn("display:none!important", source)
+        self.assertIn("content:none!important", source)
+        self.assertIn("white-space:nowrap!important", source)
         self.assertIn("install_member_task_pending_age()", bootstrap)
+
+        runtime_style = source.index("_RUNTIME_STYLE")
+        alert_row = source.index("<div class='hm-task-alert-row'>")
+        self.assertLess(runtime_style, alert_row)
 
     def test_new_streamlit_app_header_is_hidden_globally(self):
         source = APP_HEADER.read_text(encoding="utf-8")

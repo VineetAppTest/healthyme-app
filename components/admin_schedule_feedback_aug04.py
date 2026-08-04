@@ -11,7 +11,7 @@ from components.schedule_timezone import schedule_time_context
 from components.storage_backend import load_state
 
 
-_MARKER = "_hm_admin_schedule_feedback_aug04_v1"
+_MARKER = "_hm_admin_schedule_feedback_aug04_v2"
 
 
 def _text(value: object) -> str:
@@ -76,8 +76,12 @@ def _admin_schedule_for_date(
             continue
         schedule_time = _text(practitioner.get("time_window"))
         if not schedule_time:
-            start = _text(raw.get("practitioner_local_start_time") or raw.get("start_time"))
-            end = _text(raw.get("practitioner_local_end_time") or raw.get("end_time"))
+            start = _text(
+                raw.get("practitioner_local_start_time") or raw.get("start_time")
+            )
+            end = _text(
+                raw.get("practitioner_local_end_time") or raw.get("end_time")
+            )
             schedule_time = " – ".join(value for value in (start, end) if value)
         output.append(
             {
@@ -88,19 +92,13 @@ def _admin_schedule_for_date(
                 or "Scheduled session",
             }
         )
-    output.sort(key=lambda row: (row["Schedule Time"], row["Name of Member"].casefold()))
+    output.sort(
+        key=lambda row: (row["Schedule Time"], row["Name of Member"].casefold())
+    )
     return output
 
 
-def _render_day_schedule(rows: list[dict[str, str]], selected_date: dt.date) -> None:
-    st.markdown(
-        "<div class='hm-sched-day-title'>Admin schedule</div>"
-        f"<div class='hm-sched-day-sub'>{_safe(selected_date.strftime('%d %b %Y'))}</div>",
-        unsafe_allow_html=True,
-    )
-    if not rows:
-        st.info("No meetings are scheduled for this Admin on the selected date.")
-        return
+def _render_schedule_table(rows: list[dict[str, str]]) -> None:
     body = "".join(
         "<tr>"
         f"<td>{_safe(row['Schedule date'])}</td>"
@@ -119,24 +117,116 @@ def _render_day_schedule(rows: list[dict[str, str]], selected_date: dt.date) -> 
     )
 
 
+def _render_day_schedule(rows: list[dict[str, str]], selected_date: dt.date) -> None:
+    date_label = _safe(selected_date.strftime("%d %b %Y"))
+    if not rows:
+        st.markdown(
+            "<div class='hm-sched-day-empty'>"
+            f"No meeting is scheduled on the selected date · {date_label}"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    meeting_word = "meeting" if len(rows) == 1 else "meetings"
+    with st.expander(
+        f"Admin schedule · {len(rows)} {meeting_word} · {selected_date.strftime('%d %b %Y')}",
+        expanded=False,
+    ):
+        st.markdown(
+            "<span class='hm-sched-day-anchor'></span>",
+            unsafe_allow_html=True,
+        )
+        _render_schedule_table(rows)
+
+
 def _render_feedback_styles() -> None:
     st.markdown(
         """
-<style id="hm-admin-schedule-feedback-aug04-v1">
-.hm-sched-create-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-sched-create-anchor){align-items:flex-start!important;gap:.85rem!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-sched-create-anchor)>div:first-child{flex:3 1 0!important;min-width:0!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-sched-create-anchor)>div:last-child{flex:1 1 0!important;min-width:250px!important;}
-.hm-sched-day-title{color:#064E3B;font-size:.96rem;font-weight:950;margin:.08rem 0 .05rem;}
-.hm-sched-day-sub{color:#64748B;font-size:.76rem;font-weight:750;margin-bottom:.42rem;}
-.hm-sched-day-table-wrap{overflow:auto;border:1px solid #E3C98E;border-radius:13px;background:#FFFDF8;max-height:500px;}
-.hm-sched-day-table{width:100%;border-collapse:collapse;font-size:.68rem;line-height:1.25;}
-.hm-sched-day-table th{background:#FFF4DE;color:#064E3B;font-weight:900;text-align:left;padding:.42rem .38rem;border-bottom:1px solid #E3C98E;vertical-align:top;}
-.hm-sched-day-table td{color:#334155;font-weight:650;padding:.42rem .38rem;border-bottom:1px solid #F1E2BD;vertical-align:top;overflow-wrap:anywhere;}
+<style id="hm-admin-schedule-feedback-aug04-v2">
+.hm-sched-section-title{
+  color:#064E3B!important;
+  font-size:1.08rem!important;
+  font-weight:950!important;
+  margin:0 0 .48rem 0!important;
+}
+.hm-sched-day-empty{
+  border:1px solid #E3C98E;
+  border-radius:13px;
+  background:#FFFDF8;
+  color:#64748B;
+  font-size:.82rem;
+  font-weight:750;
+  padding:.66rem .78rem;
+  margin:.34rem 0 .72rem 0;
+}
+.hm-sched-day-anchor{
+  display:none!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+div[data-testid="stExpander"]:has(.hm-sched-day-anchor){
+  border:1px solid #E3C98E!important;
+  border-radius:14px!important;
+  background:#FFFDF8!important;
+  margin:.34rem 0 .72rem 0!important;
+  overflow:hidden!important;
+  box-shadow:0 6px 16px rgba(15,23,42,.04)!important;
+}
+div[data-testid="stExpander"]:has(.hm-sched-day-anchor) summary{
+  min-height:2.46rem!important;
+  padding:.46rem .72rem!important;
+  border:0!important;
+  background:#FFF7E6!important;
+  color:#064E3B!important;
+  font-size:.84rem!important;
+  font-weight:900!important;
+}
+div[data-testid="stExpander"]:has(.hm-sched-day-anchor) summary p{
+  margin:0!important;
+  color:#064E3B!important;
+  font-size:.84rem!important;
+  font-weight:900!important;
+}
+div[data-testid="stExpander"]:has(.hm-sched-day-anchor) [data-testid="stExpanderDetails"]{
+  padding:.55rem .68rem .68rem!important;
+  border:0!important;
+}
+.hm-sched-day-table-wrap{
+  overflow:auto;
+  border:1px solid #E3C98E;
+  border-radius:12px;
+  background:#FFFFFF;
+}
+.hm-sched-day-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.76rem;
+  line-height:1.28;
+}
+.hm-sched-day-table th{
+  background:#FFF4DE;
+  color:#064E3B;
+  font-weight:900;
+  text-align:left;
+  padding:.50rem .48rem;
+  border-bottom:1px solid #E3C98E;
+  vertical-align:top;
+}
+.hm-sched-day-table td{
+  color:#334155;
+  font-weight:650;
+  padding:.50rem .48rem;
+  border-bottom:1px solid #F1E2BD;
+  vertical-align:top;
+  overflow-wrap:anywhere;
+}
 .hm-sched-day-table tr:last-child td{border-bottom:0;}
-@media(max-width:900px){
-  div[data-testid="stHorizontalBlock"]:has(.hm-sched-create-anchor){display:flex!important;flex-direction:column!important;}
-  div[data-testid="stHorizontalBlock"]:has(.hm-sched-create-anchor)>div{width:100%!important;min-width:100%!important;}
+@media(max-width:760px){
+  .hm-sched-day-table{font-size:.70rem;}
 }
 </style>
 """,
@@ -157,21 +247,22 @@ def install_admin_schedule_feedback(scheduling_module: Any) -> None:
     ) -> None:
         _consume_pending_reset(scheduling_module)
         _render_feedback_styles()
-        version = int(st.session_state.get(scheduling_module._CREATE_VERSION_KEY, 1) or 1)
+        version = int(
+            st.session_state.get(scheduling_module._CREATE_VERSION_KEY, 1) or 1
+        )
         prefix = f"hm_admin_sched_create_v{version}_"
         practitioner_tz = _text(
             st.session_state.get(scheduling_module._SELECTED_TIMEZONE_KEY)
         )
 
-        st.markdown("<span class='hm-sched-create-anchor'></span>", unsafe_allow_html=True)
-        form_col, day_col = st.columns([3, 1], gap="small")
+        with st.container(border=True):
+            st.markdown(
+                "<div class='hm-sched-section-title'>Create Schedule / Notify Member</div>",
+                unsafe_allow_html=True,
+            )
 
-        with form_col:
-            with st.container(border=True):
-                st.markdown(
-                    "<div class='hm-sched-section-title'>Create Schedule / Notify Member</div>",
-                    unsafe_allow_html=True,
-                )
+            type_col, title_col = st.columns([0.85, 1.35], gap="medium")
+            with type_col:
                 schedule_type = st.selectbox(
                     "Schedule type",
                     (
@@ -185,171 +276,174 @@ def install_admin_schedule_feedback(scheduling_module: Any) -> None:
                     ),
                     key=prefix + "type",
                 )
+            with title_col:
                 title = st.text_input(
                     "Schedule title",
                     value=schedule_type,
                     placeholder="Example: Follow-up call",
                     key=prefix + "title",
                 )
-                date_col, start_col, end_col = st.columns(3, gap="medium")
-                with date_col:
-                    schedule_date = st.date_input(
-                        "Date",
-                        value=scheduling_module.today_in_timezone(source_tz),
-                        key=prefix + "date",
-                    )
-                with start_col:
-                    start_time = st.time_input(
-                        "Start time",
-                        value=dt.time(10, 0),
-                        key=prefix + "start",
-                    )
-                with end_col:
-                    default_end = (
-                        dt.datetime.combine(schedule_date, start_time)
-                        + dt.timedelta(minutes=30)
-                    ).time()
-                    end_time = st.time_input(
-                        "End time",
-                        value=default_end,
-                        key=prefix + "end",
-                    )
-                mode_col, location_col = st.columns([0.9, 1.4], gap="medium")
-                with mode_col:
-                    mode = st.selectbox(
-                        "Mode",
-                        ("Video", "Call", "In-person", "App message", "Other"),
-                        key=prefix + "mode",
-                    )
-                with location_col:
-                    location_or_link = st.text_input(
-                        "Meeting link / phone / location",
-                        placeholder="Optional",
-                        key=prefix + "location",
-                    )
-                notes = st.text_area(
-                    "Notes for member",
-                    placeholder="Optional instructions for the member",
-                    height=88,
-                    key=prefix + "notes",
+
+            date_col, start_col, end_col = st.columns(3, gap="medium")
+            with date_col:
+                schedule_date = st.date_input(
+                    "Date",
+                    value=scheduling_module.today_in_timezone(source_tz),
+                    key=prefix + "date",
+                )
+            with start_col:
+                start_time = st.time_input(
+                    "Start time",
+                    value=dt.time(10, 0),
+                    key=prefix + "start",
+                )
+            with end_col:
+                default_end = (
+                    dt.datetime.combine(schedule_date, start_time)
+                    + dt.timedelta(minutes=30)
+                ).time()
+                end_time = st.time_input(
+                    "End time",
+                    value=default_end,
+                    key=prefix + "end",
                 )
 
-                preview: dict[str, Any] = {}
-                preview_error = ""
+            selected_day_rows = _admin_schedule_for_date(
+                schedule_date,
+                practitioner_id,
+            )
+            _render_day_schedule(selected_day_rows, schedule_date)
+
+            mode_col, location_col = st.columns([0.9, 1.4], gap="medium")
+            with mode_col:
+                mode = st.selectbox(
+                    "Mode",
+                    ("Video", "Call", "In-person", "App message", "Other"),
+                    key=prefix + "mode",
+                )
+            with location_col:
+                location_or_link = st.text_input(
+                    "Meeting link / phone / location",
+                    placeholder="Optional",
+                    key=prefix + "location",
+                )
+            notes = st.text_area(
+                "Notes for member",
+                placeholder="Optional instructions for the member",
+                height=88,
+                key=prefix + "notes",
+            )
+
+            preview: dict[str, Any] = {}
+            preview_error = ""
+            try:
+                preview = scheduling_module.build_dual_time_context(
+                    schedule_date,
+                    start_time,
+                    end_time,
+                    source_timezone_name=source_tz,
+                    member_timezone=member_tz,
+                    practitioner_timezone=practitioner_tz,
+                )
+            except ValueError as exc:
+                preview_error = str(exc)
+                st.error(preview_error)
+            if preview:
+                scheduling_module._render_time_context(
+                    preview,
+                    "Timezone confirmation before creating the schedule",
+                    member_first=False,
+                )
+
+            capacity = scheduling_module.schedule_capacity(member_id, schedule_date)
+            metrics = dict(capacity.get("metrics") or {})
+            package = dict(capacity.get("package") or {})
+            st.markdown(
+                "<div class='hm-sched-capacity'><b>Package capacity:</b> "
+                f"{_safe(package.get('package_name') or 'No current package')} · "
+                f"Allowance {int(metrics.get('package_sessions', 0) or 0)} · "
+                f"Consumed {int(metrics.get('sessions_consumed', 0) or 0)} · "
+                f"Reserved {int(metrics.get('sessions_reserved', 0) or 0)} · "
+                f"Available to schedule {int(metrics.get('sessions_available_to_schedule', 0) or 0)}</div>",
+                unsafe_allow_html=True,
+            )
+
+            blocked = bool(capacity.get("requires_override"))
+            override = False
+            override_reason = ""
+            if blocked:
+                st.warning(
+                    capacity.get("message")
+                    or "A package-limit override is required."
+                )
+                if scheduling_module.current_user_is_admin():
+                    override = st.checkbox(
+                        "Admin/Super Admin override — allow this schedule despite the package limit",
+                        key=prefix + "override",
+                    )
+                    if override:
+                        override_reason = st.text_area(
+                            "Mandatory package-limit override reason",
+                            placeholder="Explain why this schedule must be created beyond the current package limit or lifecycle status.",
+                            key=prefix + "override_reason",
+                        ).strip()
+                else:
+                    st.error(
+                        "Only Admin or Super Admin can override package scheduling limits."
+                    )
+
+            if st.button(
+                "Create Schedule / Notify Member",
+                type="primary",
+                use_container_width=True,
+                key=prefix + "submit",
+                disabled=bool(preview_error),
+            ):
+                if blocked and (not override or not override_reason):
+                    st.error(
+                        "Enter the mandatory Admin/Super Admin override reason before creating this schedule."
+                    )
+                    return
+                st.session_state["hm_package_schedule_limit_override"] = bool(
+                    blocked and override
+                )
+                st.session_state[
+                    "hm_package_schedule_limit_override_reason"
+                ] = override_reason
                 try:
-                    preview = scheduling_module.build_dual_time_context(
-                        schedule_date,
-                        start_time,
-                        end_time,
+                    created = scheduling_module.create_timezone_aware_member_schedule(
+                        member_id=member_id,
+                        title=title,
+                        schedule_type=schedule_type,
+                        local_date=schedule_date,
+                        start_time=start_time,
+                        end_time=end_time,
                         source_timezone_name=source_tz,
-                        member_timezone=member_tz,
-                        practitioner_timezone=practitioner_tz,
+                        practitioner_id=practitioner_id,
+                        mode=mode,
+                        location_or_link=location_or_link,
+                        notes=notes,
                     )
                 except ValueError as exc:
-                    preview_error = str(exc)
-                    st.error(preview_error)
-                if preview:
-                    scheduling_module._render_time_context(
-                        preview,
-                        "Timezone confirmation before creating the schedule",
-                        member_first=False,
+                    created = {"error": str(exc)}
+                finally:
+                    st.session_state.pop(
+                        "hm_package_schedule_limit_override", None
                     )
-
-                capacity = scheduling_module.schedule_capacity(member_id, schedule_date)
-                metrics = dict(capacity.get("metrics") or {})
-                package = dict(capacity.get("package") or {})
-                st.markdown(
-                    "<div class='hm-sched-capacity'><b>Package capacity:</b> "
-                    f"{_safe(package.get('package_name') or 'No current package')} · "
-                    f"Allowance {int(metrics.get('package_sessions', 0) or 0)} · "
-                    f"Consumed {int(metrics.get('sessions_consumed', 0) or 0)} · "
-                    f"Reserved {int(metrics.get('sessions_reserved', 0) or 0)} · "
-                    f"Available to schedule {int(metrics.get('sessions_available_to_schedule', 0) or 0)}</div>",
-                    unsafe_allow_html=True,
-                )
-
-                blocked = bool(capacity.get("requires_override"))
-                override = False
-                override_reason = ""
-                if blocked:
-                    st.warning(
-                        capacity.get("message")
-                        or "A package-limit override is required."
+                    st.session_state.pop(
+                        "hm_package_schedule_limit_override_reason", None
                     )
-                    if scheduling_module.current_user_is_admin():
-                        override = st.checkbox(
-                            "Admin/Super Admin override — allow this schedule despite the package limit",
-                            key=prefix + "override",
-                        )
-                        if override:
-                            override_reason = st.text_area(
-                                "Mandatory package-limit override reason",
-                                placeholder="Explain why this schedule must be created beyond the current package limit or lifecycle status.",
-                                key=prefix + "override_reason",
-                            ).strip()
-                    else:
-                        st.error(
-                            "Only Admin or Super Admin can override package scheduling limits."
-                        )
-
-                if st.button(
-                    "Create Schedule / Notify Member",
-                    type="primary",
-                    use_container_width=True,
-                    key=prefix + "submit",
-                    disabled=bool(preview_error),
-                ):
-                    if blocked and (not override or not override_reason):
-                        st.error(
-                            "Enter the mandatory Admin/Super Admin override reason before creating this schedule."
-                        )
-                        return
-                    st.session_state["hm_package_schedule_limit_override"] = bool(
-                        blocked and override
-                    )
-                    st.session_state[
-                        "hm_package_schedule_limit_override_reason"
-                    ] = override_reason
-                    try:
-                        created = scheduling_module.create_timezone_aware_member_schedule(
-                            member_id=member_id,
-                            title=title,
-                            schedule_type=schedule_type,
-                            local_date=schedule_date,
-                            start_time=start_time,
-                            end_time=end_time,
-                            source_timezone_name=source_tz,
-                            practitioner_id=practitioner_id,
-                            mode=mode,
-                            location_or_link=location_or_link,
-                            notes=notes,
-                        )
-                    except ValueError as exc:
-                        created = {"error": str(exc)}
-                    finally:
-                        st.session_state.pop(
-                            "hm_package_schedule_limit_override", None
-                        )
-                        st.session_state.pop(
-                            "hm_package_schedule_limit_override_reason", None
-                        )
-                    if created.get("error"):
-                        st.error(created.get("error"))
-                        return
-                    st.session_state[scheduling_module._FLASH_KEY] = {
-                        "kind": "success",
-                        "message": "Schedule created. A fresh form is ready for the next schedule.",
-                    }
-                    st.session_state[scheduling_module._CREATE_CLEANUP_KEY] = version
-                    st.session_state[scheduling_module._CREATE_VERSION_KEY] = version + 1
-                    st.session_state[scheduling_module._SECTION_KEY] = "create"
-                    st.rerun()
-
-        with day_col:
-            _render_day_schedule(
-                _admin_schedule_for_date(schedule_date, practitioner_id),
-                schedule_date,
-            )
+                if created.get("error"):
+                    st.error(created.get("error"))
+                    return
+                st.session_state[scheduling_module._FLASH_KEY] = {
+                    "kind": "success",
+                    "message": "Schedule created. A fresh form is ready for the next schedule.",
+                }
+                st.session_state[scheduling_module._CREATE_CLEANUP_KEY] = version
+                st.session_state[scheduling_module._CREATE_VERSION_KEY] = version + 1
+                st.session_state[scheduling_module._SECTION_KEY] = "create"
+                st.rerun()
 
     scheduling_module._render_create_schedule = render_create_schedule_feedback
     setattr(scheduling_module, _MARKER, True)
