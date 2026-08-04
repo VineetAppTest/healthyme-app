@@ -33,6 +33,11 @@ _FOOD_KEY_MARKERS = (
     "hm_daily_minute_v12_",
     "hm_daily_ampm_v12_",
 )
+_AUTOSAVE_CONTROL_PREFIXES = (
+    "_hm_food_autosave_",
+    "_hm_exercise_autosave_",
+    "_hm_last_journal_autosave",
+)
 _DEFAULT_VALUES = {
     "",
     "none",
@@ -109,6 +114,8 @@ def _food_state(date_key: str) -> dict[str, Any]:
         return output
     for raw_key, value in list(st.session_state.items()):
         key = str(raw_key)
+        if key.startswith(_AUTOSAVE_CONTROL_PREFIXES):
+            continue
         if date_key not in key:
             continue
         if not any(marker in key for marker in _FOOD_KEY_MARKERS):
