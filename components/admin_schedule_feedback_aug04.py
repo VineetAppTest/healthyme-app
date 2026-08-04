@@ -7,8 +7,8 @@ from typing import Any
 
 import streamlit as st
 
-from components import db as db_api
 from components.schedule_timezone import schedule_time_context
+from components.storage_backend import load_state
 
 
 _MARKER = "_hm_admin_schedule_feedback_aug04_v1"
@@ -36,17 +36,10 @@ def _consume_pending_reset(scheduling_module: Any) -> None:
 
 
 def _member_name(schedule: dict[str, Any]) -> str:
-    direct = _text(schedule.get("member_name"))
-    if direct:
-        return direct
-    member_id = _text(schedule.get("member_id"))
-    member_email = _text(schedule.get("member_email")).lower()
-    member = db_api.get_user_by_id(member_id) or {}
     return (
-        _text(member.get("name"))
-        or _text(member.get("email"))
-        or member_email
-        or member_id
+        _text(schedule.get("member_name"))
+        or _text(schedule.get("member_email"))
+        or _text(schedule.get("member_id"))
         or "Member"
     )
 
@@ -55,10 +48,10 @@ def _admin_schedule_for_date(
     selected_date: dt.date,
     practitioner_id: str,
 ) -> list[dict[str, str]]:
-    db = db_api.load_db()
+    state = load_state()
     practitioner_key = _text(practitioner_id) or "admin"
     output: list[dict[str, str]] = []
-    for raw in db.get("schedules", []) or []:
+    for raw in state.get("schedules", []) or []:
         if not isinstance(raw, dict):
             continue
         status = _text(raw.get("status") or "scheduled").lower()
