@@ -48,7 +48,6 @@ jobs:
             pages/02_Member_Home.py \
             pages/18_Daily_Log.py \
             components/member_home_schedule_presentation.py \
-            tests/test_member_home_schedule_presentation.py \
-            .github/workflows/member-home-schedule-actions.yml
+            tests/test_member_home_schedule_presentation.py
           git commit -m "[ui-patch-applied] Compact Member Home grids and fluid time controls"
           git push origin HEAD:agent/compact-member-home-grids-fluid-time
