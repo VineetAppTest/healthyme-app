@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import io
 from collections import defaultdict
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import pandas as pd
 import streamlit as st
@@ -50,15 +50,20 @@ def _allocation_rows(model: Dict[str, Any], domain: str) -> List[Dict[str, Any]]
     for state in ("current", "upcoming", "expired_pending_stop", "stopped"):
         for row in list(partitions.get(state) or []):
             snapshot = dict(row.get("source_snapshot") or {})
+            common = {
+                "Start": clean(row.get("start_date")),
+                "End": clean(row.get("end_date")) or "Open",
+                "Instructions": clean(row.get("instructions") or snapshot.get("instructions")),
+                "Status": state.replace("_", " ").title(),
+                "Allocation ID": clean(row.get("id")),
+                "Source ID": clean(row.get("source_id") or row.get("exercise_id") or row.get("supplement_id")),
+            }
             if domain == "exercise":
                 output.append(
                     {
                         "Exercise": clean(row.get("exercise_name") or row.get("title") or snapshot.get("title")),
                         "Duration / Reps": clean(snapshot.get("duration_or_reps")),
-                        "Start": clean(row.get("start_date")),
-                        "End": clean(row.get("end_date")) or "Open",
-                        "Instructions": clean(row.get("instructions") or snapshot.get("instructions")),
-                        "Status": state.replace("_", " ").title(),
+                        **common,
                     }
                 )
             else:
@@ -68,10 +73,7 @@ def _allocation_rows(model: Dict[str, Any], domain: str) -> List[Dict[str, Any]]
                         "Dosage": clean(row.get("dosage") or snapshot.get("dosage")),
                         "Frequency": clean(row.get("frequency") or snapshot.get("frequency")),
                         "Timing": clean(row.get("timing") or snapshot.get("timing")),
-                        "Start": clean(row.get("start_date")),
-                        "End": clean(row.get("end_date")) or "Open",
-                        "Instructions": clean(row.get("instructions") or snapshot.get("instructions")),
-                        "Status": state.replace("_", " ").title(),
+                        **common,
                     }
                 )
     return output
@@ -86,6 +88,8 @@ def _legacy_rows(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "Item": clean(row.get("reference_label")),
             "Dose / Portion": clean(row.get("dosage_frequency") or row.get("portion")),
             "Instruction": clean(row.get("instruction")),
+            "Legacy Row ID": clean(row.get("id")),
+            "Source ID": clean(row.get("source_id") or row.get("reference_id")),
         }
         for row in items or []
         if clean(row.get("item_type")).lower() in {"exercise", "supplement"}
@@ -99,8 +103,10 @@ def _build_workbook(
     events: List[Dict[str, Any]],
 ) -> bytes:
     summary = [
+        {"Field": "Profile ID", "Value": clean(profile.get("id"))},
         {"Field": "Plan Name", "Value": clean(profile.get("profile_name"))},
         {"Field": "Status", "Value": clean(profile.get("status")).title()},
+        {"Field": "Member ID", "Value": clean(profile.get("assigned_member_id"))},
         {"Field": "Member", "Value": clean(profile.get("assigned_member_label"))},
         {"Field": "Plan Start Date", "Value": clean(profile.get("start_date"))},
         {"Field": "Region / Food Culture", "Value": clean(profile.get("region"))},
@@ -108,6 +114,7 @@ def _build_workbook(
         {"Field": "Health Concerns", "Value": ", ".join(profile.get("health_concerns") or [])},
         {"Field": "Nutritionist Note", "Value": clean(profile.get("profile_note"))},
         {"Field": "Change Note", "Value": clean(profile.get("change_note"))},
+        {"Field": "Clone Source Profile ID", "Value": clean(profile.get("clone_source_profile_id"))},
     ]
     exercises = _allocation_rows(model or {}, "exercise") if model else []
     supplements = _allocation_rows(model or {}, "supplement") if model else []
@@ -136,7 +143,11 @@ def _render_allocation_table(title: str, rows: List[Dict[str, Any]], empty: str)
     st.markdown(f"<div class='mpb-section-label'>{safe(title)}</div>", unsafe_allow_html=True)
     visible = [row for row in rows if row.get("Status") in {"Current", "Upcoming"}]
     if visible:
-        st.dataframe(pd.DataFrame(visible), use_container_width=True, hide_index=True)
+        display = pd.DataFrame(visible).drop(
+            columns=["Allocation ID", "Source ID"],
+            errors="ignore",
+        )
+        st.dataframe(display, use_container_width=True, hide_index=True)
     else:
         st.info(empty)
 
