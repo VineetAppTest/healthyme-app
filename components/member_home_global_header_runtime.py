@@ -5,14 +5,15 @@ import functools
 import streamlit as st
 
 
-_MARKER = "_hm_member_home_global_header_v4"
+_MARKER = "_hm_member_home_global_header_v5"
 _MEMBER_HOME_TITLE = "Member Home"
 
 _GLOBAL_HEADER_CSS = """
-<style id="hm-member-home-global-header-v4">
-/* Member Home has one root header sequence: identity row followed by the hero.
-   Control the root vertical block gap directly instead of relying on a negative
-   margin against Streamlit's generated hero wrapper. */
+<style id="hm-member-home-global-header-v5">
+/* Member Home has one root header sequence: identity row followed by the hero. */
+div[data-testid="stAppViewContainer"] .block-container:has(.hm-member-identity-pill) {
+  padding-top:.12rem!important;
+}
 div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill):has(> div[data-testid="stElementContainer"] .hero-shell),
 div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill):has(> div.element-container .hero-shell) {
   gap:.28rem!important;
@@ -66,6 +67,7 @@ div.element-container:has(.hm-top-logout-anchor) {
   padding:.24rem .64rem!important;
   margin:0!important;
   box-sizing:border-box!important;
+  min-width:0!important;
 }
 div[data-testid="column"]:has(.hm-top-profile-anchor) [data-testid="stButton"],
 div[data-testid="column"]:has(.hm-top-logout-anchor) [data-testid="stButton"] {
@@ -98,14 +100,90 @@ div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .h
 }
 
 /* The injected stylesheet itself must not become another flex-gap item. */
-div[data-testid="stElementContainer"]:has(style#hm-member-home-global-header-v4),
-div.element-container:has(style#hm-member-home-global-header-v4) {
+div[data-testid="stElementContainer"]:has(style#hm-member-home-global-header-v5),
+div.element-container:has(style#hm-member-home-global-header-v5) {
   display:none!important;
   height:0!important;
   min-height:0!important;
   margin:0!important;
   padding:0!important;
   overflow:hidden!important;
+}
+
+/* Streamlit stacks columns on small screens by default. Keep this utility row as
+   one compact grid so Profile and Logout never become full-width vertical cards. */
+@media(max-width:760px) {
+  div[data-testid="stAppViewContainer"] .block-container:has(.hm-member-identity-pill) {
+    padding-top:.04rem!important;
+  }
+  div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) {
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 2.55rem 4.65rem!important;
+    gap:.30rem!important;
+    align-items:center!important;
+    width:100%!important;
+    min-height:2.30rem!important;
+  }
+  div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"] {
+    display:block!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+    flex:none!important;
+    height:2.30rem!important;
+    min-height:2.30rem!important;
+  }
+  div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"]:nth-child(1) {
+    grid-column:1!important;
+  }
+  div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"]:nth-child(2) {
+    grid-column:2!important;
+  }
+  div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"]:nth-child(3) {
+    grid-column:3!important;
+  }
+  .hm-member-identity-pill {
+    height:2.30rem!important;
+    min-height:2.30rem!important;
+    padding:.20rem .42rem!important;
+    font-size:.66rem!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:.22rem!important;
+    overflow:hidden!important;
+    white-space:nowrap!important;
+  }
+  .hm-member-identity-pill > span:first-child {
+    min-width:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  .hm-member-role-inline {
+    flex:0 0 auto!important;
+    font-size:.58rem!important;
+    padding:.10rem .22rem!important;
+    margin-left:0!important;
+    white-space:nowrap!important;
+  }
+  div[data-testid="column"]:has(.hm-top-profile-anchor) [data-testid="stButton"],
+  div[data-testid="column"]:has(.hm-top-logout-anchor) [data-testid="stButton"],
+  div[data-testid="column"]:has(.hm-top-profile-anchor) [data-testid="stButton"] > button,
+  div[data-testid="column"]:has(.hm-top-profile-anchor) .stButton > button,
+  div[data-testid="column"]:has(.hm-top-logout-anchor) [data-testid="stButton"] > button,
+  div[data-testid="column"]:has(.hm-top-logout-anchor) .stButton > button {
+    width:100%!important;
+    min-width:0!important;
+    height:2.30rem!important;
+    min-height:2.30rem!important;
+    max-height:2.30rem!important;
+    padding:.16rem .24rem!important;
+    margin:0!important;
+    border-radius:12px!important;
+    font-size:.70rem!important;
+    line-height:1!important;
+    white-space:nowrap!important;
+  }
 }
 </style>
 """
