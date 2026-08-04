@@ -10,6 +10,7 @@ replacements = {
     'self.assertIn("details[open] summary:before{content:"−"!important;}", source)': 'self.assertIn("details[open] summary:before", source)',
     'self.assertIn("summary:before{content:"+"!important", css)': 'self.assertIn("summary:before", css)',
     'self.assertIn("details[open] summary:before{content:"−"!important", css)': 'self.assertIn("details[open] summary:before", css)',
+    'self.assertNotIn("st.rerun", direct_api)': 'self.assertNotIn("st.rerun(", direct_api)',
 }
 
 for old, new in replacements.items():
