@@ -12,6 +12,7 @@ from components import recommendation_profile_store as profile_store
 _INSTALLED = False
 _ORIGINAL_BUILD_SOURCE_CONTRACT = source_contract.build_profile_builder_source_contract
 _ORIGINAL_LOAD_PROFILE_SOURCES = profile_store.load_profile_builder_sources
+_ORIGINAL_CHECK_PROFILE_STORE = profile_store.check_profile_builder_store
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -22,6 +23,15 @@ def _cached_source_contract():
 @st.cache_data(ttl=180, show_spinner=False)
 def _cached_profile_sources():
     return _ORIGINAL_LOAD_PROFILE_SOURCES()
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _cached_profile_store_status():
+    return _ORIGINAL_CHECK_PROFILE_STORE()
+
+
+def _check_profile_store_cached():
+    return copy.deepcopy(_cached_profile_store_status())
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -83,6 +93,7 @@ def install_member_plan_builder_performance_cache() -> None:
     if _INSTALLED:
         return
     source_contract.build_profile_builder_source_contract = _build_source_contract_cached
+    profile_store.check_profile_builder_store = _check_profile_store_cached
     profile_store.load_profile_builder_sources = _load_profile_sources_cached
     _INSTALLED = True
 
@@ -90,5 +101,6 @@ def install_member_plan_builder_performance_cache() -> None:
 def clear_member_plan_builder_source_caches() -> None:
     _cached_source_contract.clear()
     _cached_profile_sources.clear()
+    _cached_profile_store_status.clear()
     load_member_plan_setup_options.clear()
     load_member_plan_recipe_options.clear()
