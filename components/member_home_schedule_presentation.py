@@ -220,7 +220,7 @@ def prepare_member_home_upcoming_schedules(
     for raw in rows or []:
         row = dict(raw or {})
         status = _text(row.get("status") or "scheduled").lower()
-        if status in _CLOSED_STATUSES:
+        if status in _CLOSED_STATUSES or status == "acknowledged":
             continue
         end_value = _schedule_end_utc(row)
         if end_value is not None and end_value <= now_value:
