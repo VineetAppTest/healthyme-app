@@ -29,6 +29,9 @@ from components.recommendation_profile_store import check_profile_builder_store
 
 
 NEW_PLAN = "__new_plan__"
+_SELECTOR_KEY = "mpb_plan_selector"
+_SELECTOR_NEXT_KEY = "mpb_plan_selector_next"
+_LAST_SELECTOR_KEY = "mpb_last_plan_selector"
 
 
 def _profile_label(row: Dict) -> str:
@@ -37,27 +40,52 @@ def _profile_label(row: Dict) -> str:
     return f"{clean(row.get('profile_name')) or 'Untitled'} · {member} · {status}"
 
 
+def _queue_plan_selector(plan_id: str) -> None:
+    """Defer selector changes until the next run, before its widget is created."""
+
+    st.session_state[_SELECTOR_NEXT_KEY] = plan_id
+    st.session_state[_LAST_SELECTOR_KEY] = plan_id
+
+
+def _apply_queued_plan_selector(selector_options: List[str], loaded_id: str) -> None:
+    """Set selector state only before Streamlit instantiates the selectbox."""
+
+    queued = clean(st.session_state.pop(_SELECTOR_NEXT_KEY, ""))
+    if queued:
+        st.session_state[_SELECTOR_KEY] = (
+            queued if queued in selector_options else NEW_PLAN
+        )
+
+    if _SELECTOR_KEY not in st.session_state:
+        st.session_state[_SELECTOR_KEY] = (
+            loaded_id if loaded_id in selector_options else NEW_PLAN
+        )
+    if st.session_state[_SELECTOR_KEY] not in selector_options:
+        st.session_state[_SELECTOR_KEY] = NEW_PLAN
+
+    if _LAST_SELECTOR_KEY not in st.session_state:
+        st.session_state[_LAST_SELECTOR_KEY] = st.session_state[_SELECTOR_KEY]
+
+
 def _new_plan() -> None:
     reset_profile()
-    st.session_state["mpb_plan_selector"] = NEW_PLAN
+    _queue_plan_selector(NEW_PLAN)
     st.session_state["mpb_setup_flash"] = "New blank meal plan started."
 
 
 def _handle_plan_selection(selected_id: str) -> None:
-    previous = clean(st.session_state.get("mpb_last_plan_selector"))
+    previous = clean(st.session_state.get(_LAST_SELECTOR_KEY))
     if selected_id == previous:
         return
-    st.session_state["mpb_last_plan_selector"] = selected_id
+    st.session_state[_LAST_SELECTOR_KEY] = selected_id
     if selected_id == NEW_PLAN:
         reset_profile()
-        st.session_state["mpb_plan_selector"] = NEW_PLAN
         st.session_state["mpb_setup_flash"] = "New blank meal plan started."
         st.rerun()
 
     ok, message = load_selected(selected_id, shell_only=False)
     if ok:
         st.session_state["mpb_setup_flash"] = message
-        st.session_state["mpb_plan_selector"] = selected_id
         st.rerun()
     st.error(message)
 
@@ -116,7 +144,7 @@ def _clone_complete_plan() -> None:
     st.session_state["pbm_items"] = meals
     st.session_state["pbm_loaded_profile_id"] = new_id
     st.session_state["pbm_loaded_member_id"] = clean(clone.get("assigned_member_id"))
-    st.session_state["mpb_plan_selector"] = new_id
+    _queue_plan_selector(new_id)
     st.session_state["mpb_setup_flash"] = (
         f"Complete meal plan cloned as a new Draft. {len(meals)} meal row(s) copied."
     )
@@ -125,11 +153,7 @@ def _clone_complete_plan() -> None:
 
 
 def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
-    st.markdown(
-        "<div class='hm-title'>Setup</div>"
-        "<div class='hm-sub'>Select a plan and it loads automatically. Keep only the information needed to build and allocate the meal plan.</div>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("<div class='hm-title'>Setup</div>", unsafe_allow_html=True)
 
     member_labels, label_to_id, id_to_label, _member_message = member_maps()
     ok_profiles, profiles, profile_message = list_profiles_for_editing(EDIT_SCOPE_ALL)
@@ -142,18 +166,18 @@ def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
     }
     selector_options = [NEW_PLAN] + list(profile_by_id.keys())
     loaded_id = clean(st.session_state.get("pbm_loaded_profile_id"))
-    if "mpb_plan_selector" not in st.session_state:
-        st.session_state["mpb_plan_selector"] = (
-            loaded_id if loaded_id in selector_options else NEW_PLAN
-        )
-    if st.session_state["mpb_plan_selector"] not in selector_options:
-        st.session_state["mpb_plan_selector"] = NEW_PLAN
+    _apply_queued_plan_selector(selector_options, loaded_id)
 
-    select_col, new_col, clone_col = st.columns([0.58, 0.18, 0.24], gap="small")
+    select_col, new_col, clone_col = st.columns(
+        [0.58, 0.18, 0.24],
+        gap="small",
+        vertical_alignment="bottom",
+    )
     selected_id = select_col.selectbox(
-        "Meal Plan",
+        "Select Meal Plan",
         selector_options,
-        key="mpb_plan_selector",
+        key=_SELECTOR_KEY,
+        label_visibility="collapsed",
         format_func=lambda value: (
             "New Meal Plan" if value == NEW_PLAN else _profile_label(profile_by_id[value])
         ),
@@ -279,7 +303,8 @@ def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
             st.session_state["pbm_loaded_member_id"] = clean(
                 profile.get("assigned_member_id")
             )
-            st.session_state["mpb_plan_selector"] = profile_id
-            st.success(message)
+            _queue_plan_selector(profile_id)
+            st.session_state["mpb_setup_flash"] = message
+            st.rerun()
         else:
             st.error(message)

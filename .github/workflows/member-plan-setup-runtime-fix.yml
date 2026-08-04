@@ -1,0 +1,30 @@
+name: Member Plan Setup runtime fix validation
+
+on:
+  pull_request:
+    paths:
+      - "components/member_plan_builder_setup.py"
+      - "tests/test_member_plan_setup_runtime_fix.py"
+      - "tests/test_meal_profile_builder_phase_b.py"
+      - "docs/member_plan_setup_runtime_fix_2026-08-04.md"
+      - ".github/workflows/member-plan-setup-runtime-fix.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile Setup runtime
+        run: python -m py_compile components/member_plan_builder_setup.py
+      - name: Run focused Setup regression
+        run: python -m unittest tests.test_member_plan_setup_runtime_fix -v
+      - name: Revalidate Member Plan Builder contract
+        run: python -m unittest tests.test_meal_profile_builder_phase_b -v
