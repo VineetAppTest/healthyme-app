@@ -5,15 +5,21 @@ import functools
 import streamlit as st
 
 
-_MARKER = "_hm_member_home_global_header_v3"
+_MARKER = "_hm_member_home_global_header_v4"
 _MEMBER_HOME_TITLE = "Member Home"
 
 _GLOBAL_HEADER_CSS = """
-<style id="hm-member-home-global-header-v3">
-/* Member Home keeps its profile action, but the utility row must occupy only the
-   visible control height. Hidden Streamlit anchor wrappers previously enlarged the
-   row and left a blank band before the hero. */
-div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) {
+<style id="hm-member-home-global-header-v4">
+/* Member Home has one root header sequence: identity row followed by the hero.
+   Control the root vertical block gap directly instead of relying on a negative
+   margin against Streamlit's generated hero wrapper. */
+div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill):has(> div[data-testid="stElementContainer"] .hero-shell),
+div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill):has(> div.element-container .hero-shell) {
+  gap:.28rem!important;
+  padding-top:0!important;
+  margin-top:0!important;
+}
+div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill) > div[data-testid="stHorizontalBlock"] {
   min-height:2.46rem!important;
   height:auto!important;
   margin:0!important;
@@ -38,7 +44,7 @@ div[data-testid="column"] > div[data-testid="stVerticalBlock"]:has(.hm-top-logou
   padding:0!important;
 }
 
-/* Remove the complete Streamlit element wrapper, not only the zero-height span. */
+/* Hidden anchor elements must not reserve a second row inside their columns. */
 div[data-testid="stElementContainer"]:has(.hm-top-profile-anchor),
 div[data-testid="stElementContainer"]:has(.hm-top-logout-anchor),
 div.element-container:has(.hm-top-profile-anchor),
@@ -80,9 +86,20 @@ div[data-testid="column"]:has(.hm-top-logout-anchor) .stButton > button {
   margin:0!important;
 }
 
-/* The injected stylesheet itself must not create a Streamlit element band. */
-div[data-testid="stElementContainer"]:has(style#hm-member-home-global-header-v3),
-div.element-container:has(style#hm-member-home-global-header-v3) {
+/* The hero is the next visible item in the controlled root sequence. */
+div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill) > div[data-testid="stElementContainer"]:has(.hero-shell),
+div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill) > div.element-container:has(.hero-shell) {
+  margin:0!important;
+  padding:0!important;
+  min-height:0!important;
+}
+div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill) .hero-shell {
+  margin-top:0!important;
+}
+
+/* The injected stylesheet itself must not become another flex-gap item. */
+div[data-testid="stElementContainer"]:has(style#hm-member-home-global-header-v4),
+div.element-container:has(style#hm-member-home-global-header-v4) {
   display:none!important;
   height:0!important;
   min-height:0!important;
@@ -90,23 +107,12 @@ div.element-container:has(style#hm-member-home-global-header-v3) {
   padding:0!important;
   overflow:hidden!important;
 }
-
-/* Streamlit's root vertical block keeps a standard inter-element gap. Pull only the
-   Member Home hero back by that residual amount after the compact utility row. */
-div[data-testid="stElementContainer"]:has(.hero-shell),
-div.element-container:has(.hero-shell) {
-  margin-top:-.72rem!important;
-  padding-top:0!important;
-}
-.hero-shell {
-  margin-top:0!important;
-}
 </style>
 """
 
 
 def install_member_home_global_header_runtime() -> None:
-    """Apply the compact global header spacing contract to Member Home."""
+    """Apply the controlled identity-row and hero spacing contract."""
 
     from components import ui_common
 

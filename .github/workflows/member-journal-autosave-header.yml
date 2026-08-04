@@ -1,0 +1,42 @@
+name: Member Journal Autosave and Header Validation
+
+on:
+  pull_request:
+    paths:
+      - "components/member_journal_server_autosave.py"
+      - "components/member_home_global_header_runtime.py"
+      - "components/__init__.py"
+      - "tests/test_member_journal_server_autosave.py"
+      - "tests/test_member_home_global_header_runtime.py"
+      - ".github/workflows/member-journal-autosave-header.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install project dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile corrected surfaces
+        run: |
+          python -m py_compile \
+            components/member_journal_server_autosave.py \
+            components/member_home_global_header_runtime.py \
+            components/__init__.py \
+            tests/test_member_journal_server_autosave.py \
+            tests/test_member_home_global_header_runtime.py
+      - name: Validate autosave and header contracts
+        run: |
+          python -m unittest \
+            tests.test_member_journal_server_autosave \
+            tests.test_member_home_global_header_runtime \
+            -v

@@ -71,6 +71,9 @@ from components.member_daily_log_native_tab_persistence import (
 from components.daily_log_widget_route_preservation import (
     install_daily_log_widget_route_preservation,
 )
+from components.member_journal_server_autosave import (
+    install_member_journal_server_autosave,
+)
 from components.member_home_global_header_runtime import (
     install_member_home_global_header_runtime,
 )
@@ -130,9 +133,13 @@ install_admin_exercise_repair_runtime()
 install_member_daily_log_native_tab_persistence()
 
 # Streamlit widget changes rerun internally and bypass the explicit st.rerun wrapper
-# in app.py. Install this last so every accepted Daily Log widget wrapper composes a
-# route-preservation callback without affecting Back or Dashboard navigation.
+# in app.py. Install this before autosave so every journal widget and the subsequent
+# explicit save rerun preserve the Daily Log route and selected journal.
 install_daily_log_widget_route_preservation()
+
+# Autosave is server-side and reuses the existing Save Day / Save Progress handlers.
+# It does not scan the DOM, synthesize browser clicks or introduce a second write path.
+install_member_journal_server_autosave()
 
 # Member Home has a page-specific profile control, but its row must follow the same
 # compact height and hero spacing as the global header used elsewhere.

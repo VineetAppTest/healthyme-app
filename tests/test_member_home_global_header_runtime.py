@@ -25,7 +25,7 @@ class MemberHomeGlobalHeaderRuntimeTests(unittest.TestCase):
         runtime.st = self.original_runtime_st
         ui_common.topbar = self.original_topbar
 
-    def test_member_home_collapses_hidden_wrappers_and_hero_gap(self):
+    def test_member_home_controls_root_header_sequence_without_negative_margin(self):
         calls = []
 
         def base_topbar(title, *args, **kwargs):
@@ -38,30 +38,22 @@ class MemberHomeGlobalHeaderRuntimeTests(unittest.TestCase):
 
         self.assertEqual(calls, ["Member Home"])
         rendered_css = "\n".join(self.fake_st.markdown_calls)
-        self.assertIn("hm-member-home-global-header-v3", rendered_css)
+        self.assertIn("hm-member-home-global-header-v4", rendered_css)
         self.assertIn("hm-member-identity-pill", rendered_css)
         self.assertIn("hm-top-profile-anchor", rendered_css)
         self.assertIn("hm-top-logout-anchor", rendered_css)
         self.assertIn(
-            'div[data-testid="stElementContainer"]:has(.hm-top-profile-anchor)',
+            'div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill)',
             rendered_css,
         )
+        self.assertIn("gap:.28rem!important", rendered_css)
         self.assertIn(
-            'div[data-testid="stElementContainer"]:has(.hm-top-logout-anchor)',
+            '> div[data-testid="stElementContainer"]:has(.hero-shell)',
             rendered_css,
         )
-        self.assertIn(
-            'div[data-testid="column"] > div[data-testid="stVerticalBlock"]:has(.hm-top-profile-anchor)',
-            rendered_css,
-        )
-        self.assertIn("gap:0!important", rendered_css)
+        self.assertIn("margin-top:0!important", rendered_css)
+        self.assertNotIn("margin-top:-", rendered_css)
         self.assertIn("min-height:2.46rem", rendered_css)
-        self.assertIn(
-            'div[data-testid="stElementContainer"]:has(.hero-shell)',
-            rendered_css,
-        )
-        self.assertIn("margin-top:-.72rem!important", rendered_css)
-        self.assertNotIn("min-height:2.84rem", rendered_css)
 
     def test_other_pages_keep_their_existing_header_sequence(self):
         calls = []
