@@ -2,9 +2,25 @@ from __future__ import annotations
 
 import streamlit as st
 
+from components.member_plan_builder_expander_hygiene import (
+    install_member_plan_builder_expander_hygiene,
+)
+from components.member_plan_builder_performance import (
+    install_member_plan_builder_performance_cache,
+    load_member_plan_recipe_options,
+    load_member_plan_setup_options,
+)
+
+
+# Install performance and presentation guards before rebuilt renderers bind their
+# source and widget functions.
+install_member_plan_builder_performance_cache()
+install_member_plan_builder_expander_hygiene()
+
 from components.meal_profile_builder_phase_b import (
-    ALLOCATION_WORKSPACE_SECTION,
+    EXERCISE_SECTION,
     MEAL_PROFILE_BUILDER_SECTIONS,
+    SUPPLEMENT_SECTION,
     VIEW_PROFILES_SECTION,
 )
 from components.pbm_core import ensure_state, safe_key
@@ -15,25 +31,30 @@ from components.profile_builder_access import (
 from components.profile_builder_form_hygiene import (
     install_profile_builder_form_hygiene,
 )
-from components.recommendation_profile_store import load_profile_builder_sources
 
 
-# Install the established success-only reset layer before the rebuilt renderer
-# modules bind any Profile Builder save or publish functions.
+# Install the established success-only reset layer before renderer modules bind
+# any Profile Builder save or publish functions.
 install_profile_builder_form_hygiene()
 
-from components.member_plan_builder_allocations import render_member_plan_allocations
-from components.member_plan_builder_export import render_view_member_plan
-from components.member_plan_builder_meals import render_member_plan_meals
+from components.member_plan_builder_exercise import render_member_plan_exercise
+from components.member_plan_builder_meals_compact import (
+    render_member_plan_meals_compact,
+)
 from components.member_plan_builder_setup import render_member_plan_setup
+from components.member_plan_builder_supplement import render_member_plan_supplement
+from components.member_plan_builder_view_compact import (
+    render_view_member_plan_compact,
+)
 
 
-APP_BUILD_VERSION = "v101.00"
-APP_BUILD_LABEL = "Simplified Member Plan Builder"
+APP_BUILD_VERSION = "v101.10"
+APP_BUILD_LABEL = "Compact Member Plan Builder"
 SECTION_LABELS = {
     "Profile Setup": "Setup",
     "Meal Structure": "Meals",
-    ALLOCATION_WORKSPACE_SECTION: "Exercise & Supplement",
+    EXERCISE_SECTION: "Exercise",
+    SUPPLEMENT_SECTION: "Supplement",
     VIEW_PROFILES_SECTION: "View Member Plan",
 }
 
@@ -41,20 +62,30 @@ SECTION_LABELS = {
 def _render_css() -> None:
     st.markdown(
         """
-<style id="hm-member-plan-builder-rebuild-v1">
-.hm-title{color:#064E3B;font-size:1.05rem;font-weight:950;margin:.18rem 0 .22rem}
-.hm-sub{color:#64748B;font-size:.82rem;font-weight:700;margin:0 0 .72rem}
-.mpb-nav [data-testid="stButton"]>button{width:100%!important;min-height:2.62rem!important;border-radius:14px!important;font-weight:900!important;border:1px solid #D8A84E!important;background:#fff!important;color:#064E3B!important}
+<style id="hm-member-plan-builder-compact-v2">
+.hm-title{color:#064E3B;font-size:1.03rem;font-weight:950;margin:.12rem 0 .18rem}
+.hm-sub{color:#64748B;font-size:.80rem;font-weight:680;margin:0 0 .62rem}
+.mpb-nav [data-testid="stButton"]>button{width:100%!important;min-height:2.48rem!important;border-radius:13px!important;font-weight:900!important;border:1px solid #D8A84E!important;background:#fff!important;color:#064E3B!important;padding:.32rem .46rem!important}
 .mpb-nav [data-testid="stButton"]>button[kind="primary"]{background:linear-gradient(135deg,#064E3B,#0F766E)!important;color:#fff!important;border-color:#064E3B!important}
-.mpb-rule{height:1px;background:linear-gradient(90deg,transparent,#D8A84E,transparent);margin:.38rem 0 .86rem}
-.mpb-meal-card{border:1px solid #E3C98E;background:#FFFDF8;border-radius:15px;padding:.66rem .74rem;margin:.45rem 0;box-shadow:0 5px 14px rgba(15,23,42,.035)}
-.mpb-meal-card-title{color:#064E3B;font-size:.88rem;font-weight:950;margin:0 0 .44rem}
-.mpb-selected-recipe{min-height:2.44rem;display:flex;align-items:center;border:1px solid #E2E8F0;border-radius:10px;padding:.35rem .55rem;background:#fff;color:#475569;font-size:.80rem;font-weight:720}
-.mpb-allocation-card{border:1px solid #E3C98E;background:#FFFDF8;border-radius:15px;padding:.70rem .82rem;margin:.28rem 0 .72rem}
-.mpb-allocation-card b{display:block;color:#064E3B;font-size:.92rem;margin-bottom:.18rem}
-.mpb-allocation-card span{display:block;color:#64748B;font-size:.80rem;font-weight:680}
-div[data-testid="stExpander"]{border-color:#E3C98E!important;border-radius:12px!important}
-@media(max-width:900px){.mpb-nav [data-testid="stButton"]>button{font-size:.76rem!important}.mpb-meal-card{padding:.56rem}}
+.mpb-rule{height:1px;background:linear-gradient(90deg,transparent,#D8A84E,transparent);margin:.32rem 0 .68rem}
+.mpb-meal-card-title{display:flex;justify-content:space-between;align-items:center;color:#064E3B;font-size:.88rem;font-weight:950;margin:0 0 .42rem}
+.mpb-meal-card-title span{color:#8A6A24;font-size:.69rem;font-weight:760;border:1px solid #E3C98E;background:#FFF9EC;border-radius:999px;padding:.12rem .38rem}
+.mpb-meal-guide{display:grid;grid-template-columns:38fr 22fr 30fr 10fr;gap:.45rem;color:#64748B;font-size:.70rem;font-weight:850;text-transform:uppercase;letter-spacing:.02em;padding:0 .25rem .28rem}
+.mpb-meal-guide b:last-child{text-align:center}
+.mpb-section-label{color:#064E3B;font-size:.94rem;font-weight:950;margin:.72rem 0 .34rem}
+.mpb-source-summary{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;border:1px solid #E3C98E;background:#FFF9EC;border-radius:11px;padding:.42rem .56rem;margin:.12rem 0 .42rem}
+.mpb-source-summary b{color:#064E3B;font-size:.83rem;font-weight:950}
+.mpb-source-summary span{color:#64748B;font-size:.75rem;font-weight:720}
+.mpb-plan-summary-card{border:1px solid #E3C98E;background:linear-gradient(135deg,#FFFDF8,#FFF7E7);border-radius:14px;padding:.66rem .76rem;margin:.24rem 0 .58rem;box-shadow:0 5px 14px rgba(15,23,42,.035)}
+.mpb-plan-summary-card b{display:block;color:#064E3B;font-size:.94rem;font-weight:950;margin-bottom:.12rem}
+.mpb-plan-summary-card span{display:block;color:#64748B;font-size:.77rem;font-weight:700}
+.mpb-integrity-note{border:1px solid #A7D7C8;background:#F0FDF8;color:#065F46;border-radius:11px;padding:.48rem .60rem;margin:.20rem 0 .54rem;font-size:.77rem;font-weight:760}
+div[data-testid="stVerticalBlockBorderWrapper"]{border-color:#E3C98E!important;border-radius:14px!important;background:#FFFDF8!important;box-shadow:0 5px 14px rgba(15,23,42,.028)!important;margin:.34rem 0!important}
+div[data-testid="stExpander"]{border-color:#E3C98E!important;border-radius:12px!important;background:#FFFDF8!important}
+div[data-testid="stExpander"] details summary{min-height:2.42rem!important;padding:.34rem .58rem!important;display:flex!important;align-items:center!important}
+div[data-testid="stExpander"] details summary p{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:#064E3B!important;font-size:.80rem!important;font-weight:900!important;line-height:1.2!important;margin:0!important}
+div[data-testid="stExpander"] details summary svg{flex:0 0 auto!important}
+@media(max-width:980px){.mpb-nav [data-testid="stButton"]>button{font-size:.72rem!important}.mpb-meal-guide{display:none}}
 </style>
 """,
         unsafe_allow_html=True,
@@ -69,23 +100,17 @@ def render_modular_profile_builder() -> None:
     can_publish = current_profile_builder_user_can_publish()
     visible_sections = list(MEAL_PROFILE_BUILDER_SECTIONS)
     if role not in {"admin", "super_admin"}:
-        visible_sections.remove(ALLOCATION_WORKSPACE_SECTION)
+        for section in (EXERCISE_SECTION, SUPPLEMENT_SECTION):
+            if section in visible_sections:
+                visible_sections.remove(section)
     if st.session_state.get("pbm_section") not in visible_sections:
         st.session_state["pbm_section"] = "Profile Setup"
-
-    sources, _message = load_profile_builder_sources()
-    options = {
-        "recipe": list(sources.get("recipe") or []),
-        "age_band": list(sources.get("age_band") or []),
-        "health_concern": list(sources.get("health_concern") or []),
-        "diet_type": list(sources.get("diet_type") or []),
-    }
 
     st.markdown(
         "<div class='hero-shell'>"
         "<div class='hero-kicker'>Member Planning</div>"
         "<div class='hero-title'>Member Plan Builder</div>"
-        "<div class='hero-subtitle'>Set up the member, build the seven-day meal plan, publish it and manage Exercise or Supplement allocations from one simple workflow.</div>"
+        "<div class='hero-subtitle'>Set up the member, build meals, allocate Exercise and Supplement, and verify the final member plan.</div>"
         f"<div><span class='meta-pill'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span></div>"
         "</div>",
         unsafe_allow_html=True,
@@ -97,11 +122,7 @@ def render_modular_profile_builder() -> None:
         if column.button(
             SECTION_LABELS[section],
             key=f"mpb_nav_{safe_key(section)}",
-            type=(
-                "primary"
-                if st.session_state.get("pbm_section") == section
-                else "secondary"
-            ),
+            type="primary" if st.session_state.get("pbm_section") == section else "secondary",
             use_container_width=True,
         ):
             st.session_state["pbm_section"] = section
@@ -110,10 +131,15 @@ def render_modular_profile_builder() -> None:
 
     section = st.session_state.get("pbm_section")
     if section == "Profile Setup":
-        render_member_plan_setup(options)
+        render_member_plan_setup(load_member_plan_setup_options())
     elif section == "Meal Structure":
-        render_member_plan_meals(options["recipe"], can_publish)
-    elif section == ALLOCATION_WORKSPACE_SECTION:
-        render_member_plan_allocations()
+        render_member_plan_meals_compact(
+            load_member_plan_recipe_options(),
+            can_publish,
+        )
+    elif section == EXERCISE_SECTION:
+        render_member_plan_exercise()
+    elif section == SUPPLEMENT_SECTION:
+        render_member_plan_supplement()
     else:
-        render_view_member_plan()
+        render_view_member_plan_compact()
