@@ -4,7 +4,9 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEDULE = ROOT / "components" / "admin_schedule_feedback_aug04.py"
+SCHEDULE_POLISH = ROOT / "components" / "admin_schedule_disclosure_polish.py"
 SCHEDULE_PAGE = ROOT / "pages" / "32_Admin_Scheduling.py"
+EXERCISE = ROOT / "components" / "member_plan_builder_exercise.py"
 NOTIFICATIONS = ROOT / "components" / "member_allocation_notifications.py"
 TASK_AGE = ROOT / "components" / "member_task_pending_age.py"
 APP_HEADER = ROOT / "components" / "streamlit_app_header_regression_guard.py"
@@ -15,7 +17,9 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
     def test_changed_python_files_compile(self):
         for path in (
             SCHEDULE,
+            SCHEDULE_POLISH,
             SCHEDULE_PAGE,
+            EXERCISE,
             NOTIFICATIONS,
             TASK_AGE,
             APP_HEADER,
@@ -36,12 +40,6 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertLess(schedule_panel, mode_row)
         self.assertIn("_render_day_schedule(selected_day_rows, schedule_date)", source)
 
-        self.assertIn("with st.expander(", source)
-        self.assertIn("Admin schedule · {len(rows)} {meeting_word}", source)
-        self.assertIn("No meeting is scheduled on the selected date", source)
-        self.assertIn("hm-sched-day-empty", source)
-        self.assertIn("hm-sched-day-anchor", source)
-
         for label in (
             "Schedule date",
             "Name of Member",
@@ -56,6 +54,20 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
             "Only this workspace section is rendered. A successful creation opens a fresh transaction form",
             source,
         )
+
+    def test_schedule_uses_app_standard_direct_disclosure_and_safe_table(self):
+        source = SCHEDULE_POLISH.read_text(encoding="utf-8")
+        page = SCHEDULE_PAGE.read_text(encoding="utf-8")
+        self.assertIn('marker = "−" if is_open else "+"', source)
+        self.assertIn("Admin schedule · {len(rows)} {meeting_word}", source)
+        self.assertIn("st.button(", source)
+        self.assertNotIn("st.expander(", source)
+        self.assertIn("hm-sched-polish-table-card", source)
+        self.assertIn("overflow-x:auto!important", source)
+        self.assertIn("table-layout:fixed!important", source)
+        self.assertIn("white-space:nowrap!important", source)
+        self.assertIn("install_admin_schedule_disclosure_polish", page)
+        self.assertIn("No meeting is scheduled on the selected date", source)
 
     def test_schedule_success_queues_cleanup_before_new_transaction(self):
         source = SCHEDULE.read_text(encoding="utf-8")
@@ -74,10 +86,24 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
 
     def test_schedule_read_model_is_read_only_against_identity_authority(self):
         source = SCHEDULE.read_text(encoding="utf-8")
+        polish = SCHEDULE_POLISH.read_text(encoding="utf-8")
         self.assertIn("from components.storage_backend import load_state", source)
-        self.assertNotIn("get_user_by_id", source)
-        self.assertNotIn('get("users"', source)
-        self.assertNotIn("save_state", source)
+        for text in (source, polish):
+            self.assertNotIn("get_user_by_id", text)
+            self.assertNotIn('get("users"', text)
+            self.assertNotIn("save_state", text)
+
+    def test_exercise_feedback_disclosure_and_equal_compact_notes(self):
+        source = EXERCISE.read_text(encoding="utf-8")
+        self.assertIn("mpb-exercise-more-details-anchor", source)
+        self.assertIn('content:"+"', source)
+        self.assertIn('content:"−"', source)
+        self.assertIn("note_cols = st.columns(2", source)
+        self.assertGreaterEqual(source.count('height=60'), 4)
+        self.assertNotIn('note_cols[1].text_input(', source)
+        self.assertIn("The member has been notified", source)
+        self.assertIn("available in View Member Plan", source)
+        self.assertIn('st.success(f"✓ {flash}")', source)
 
     def test_allocations_write_visible_member_messages_with_benefits(self):
         source = NOTIFICATIONS.read_text(encoding="utf-8")

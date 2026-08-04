@@ -53,6 +53,10 @@ def _render_source_details(source: Dict) -> None:
         ),
     )
     with st.expander("More details", expanded=False):
+        st.markdown(
+            "<span class='mpb-exercise-more-details-anchor'></span>",
+            unsafe_allow_html=True,
+        )
         details = (
             ("Category", source.get("category")),
             ("Difficulty", source.get("difficulty")),
@@ -69,7 +73,7 @@ def _render_source_details(source: Dict) -> None:
             st.caption("No additional repository information is available.")
 
 
-def _render_add_exercise(member_id: str) -> None:
+def _render_add_exercise(member_id: str, member_label: str) -> None:
     st.markdown("<div class='mpb-section-label'>Allocate Exercise</div>", unsafe_allow_html=True)
     sources = list_active_exercise_sources()
     source_options = {_exercise_label(row): row for row in sources}
@@ -97,15 +101,16 @@ def _render_add_exercise(member_id: str) -> None:
             dt.date.today() + dt.timedelta(days=6),
             key=f"mpb_ex_add_end_{member_id}",
         )
-        note_cols = st.columns([0.68, 0.32], gap="small")
+        note_cols = st.columns(2, gap="small")
         instructions = note_cols[0].text_area(
             "Member Instructions",
             value=clean(source.get("instructions")),
-            height=72,
+            height=60,
             key=f"mpb_ex_add_instruction_{member_id}",
         )
-        notes = note_cols[1].text_input(
+        notes = note_cols[1].text_area(
             "Notes",
+            height=60,
             key=f"mpb_ex_add_notes_{member_id}",
         )
         if st.button(
@@ -126,13 +131,16 @@ def _render_add_exercise(member_id: str) -> None:
                     actor_id=_actor_id(),
                 )
                 _clear_prefix("mpb_ex_add_")
-                st.session_state["mpb_exercise_flash"] = "Exercise allocation saved."
+                st.session_state["mpb_exercise_flash"] = (
+                    f"Exercise allocated successfully to {member_label}. "
+                    "The member has been notified and the allocation is available in View Member Plan."
+                )
                 st.rerun()
             except Exception as exc:
                 st.error(str(exc))
 
 
-def _render_edit_exercise(member_id: str) -> None:
+def _render_edit_exercise(member_id: str, member_label: str) -> None:
     st.markdown("<div class='mpb-section-label'>Edit Exercise</div>", unsafe_allow_html=True)
     rows = list_member_exercise_allocations(member_id, include_stopped=True)
     if not rows:
@@ -190,17 +198,18 @@ def _render_edit_exercise(member_id: str) -> None:
             disabled=stopped,
             key=f"mpb_ex_edit_end_{allocation_id}",
         )
-        note_cols = st.columns([0.68, 0.32], gap="small")
+        note_cols = st.columns(2, gap="small")
         edit_instruction = note_cols[0].text_area(
             "Member Instructions",
             value=clean(selected.get("instructions")),
-            height=72,
+            height=60,
             disabled=stopped,
             key=f"mpb_ex_edit_instruction_{allocation_id}",
         )
-        edit_notes = note_cols[1].text_input(
+        edit_notes = note_cols[1].text_area(
             "Notes",
             value=clean(selected.get("notes")),
+            height=60,
             disabled=stopped,
             key=f"mpb_ex_edit_notes_{allocation_id}",
         )
@@ -224,7 +233,10 @@ def _render_edit_exercise(member_id: str) -> None:
                     actor_id=_actor_id(),
                     allocation_id=allocation_id,
                 )
-                st.session_state["mpb_exercise_flash"] = "Exercise allocation updated."
+                st.session_state["mpb_exercise_flash"] = (
+                    f"Exercise allocation updated successfully for {member_label}. "
+                    "The member has been notified of the revised plan."
+                )
                 st.rerun()
             except Exception as exc:
                 st.error(str(exc))
@@ -242,23 +254,88 @@ def _render_edit_exercise(member_id: str) -> None:
                     stop_date=dt.date.today(),
                     stop_reason=edit_notes,
                 )
-                st.session_state["mpb_exercise_flash"] = "Exercise allocation stopped; history retained."
+                st.session_state["mpb_exercise_flash"] = (
+                    f"Exercise allocation stopped for {member_label}. History has been retained."
+                )
                 st.rerun()
             except Exception as exc:
                 st.error(str(exc))
 
 
+def _render_exercise_polish_styles() -> None:
+    st.markdown(
+        """
+<style id="hm-member-plan-exercise-polish-v1">
+.mpb-exercise-more-details-anchor{
+  display:none!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary{
+  min-height:2.18rem!important;
+  height:2.18rem!important;
+  padding:.30rem .58rem!important;
+  border:1px solid #E3C98E!important;
+  border-radius:11px!important;
+  background:#FFFDF8!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:.42rem!important;
+}
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary p{
+  margin:0!important;
+  color:#064E3B!important;
+  font-size:.78rem!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+}
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary [data-testid="stExpanderToggleIcon"],
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary [data-testid="stIconMaterial"],
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary svg{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+  min-width:0!important;
+  margin:0!important;
+}
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary::before{
+  content:"+";
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:.82rem;
+  min-width:.82rem;
+  color:#064E3B;
+  font-size:.92rem;
+  font-weight:950;
+  line-height:1;
+}
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[open] summary::before{
+  content:"−";
+}
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) [data-testid="stExpanderDetails"]{
+  padding:.42rem .58rem .52rem!important;
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+
 def render_member_plan_exercise() -> None:
+    _render_exercise_polish_styles()
     st.markdown(
         "<div class='hm-title'>Exercise</div>"
         "<div class='hm-sub'>Select the member, allocate one repository exercise, then edit or stop existing allocations below.</div>",
         unsafe_allow_html=True,
     )
-    member_id, _member = render_allocation_member_selector("mpb_exercise_member")
+    member_id, member_label = render_allocation_member_selector("mpb_exercise_member")
     if not member_id:
         return
     flash = st.session_state.pop("mpb_exercise_flash", "")
     if flash:
-        st.success(flash)
-    _render_add_exercise(member_id)
-    _render_edit_exercise(member_id)
+        st.success(f"✓ {flash}")
+    _render_add_exercise(member_id, member_label)
+    _render_edit_exercise(member_id, member_label)
