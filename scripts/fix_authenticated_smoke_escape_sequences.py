@@ -14,4 +14,13 @@ text = text.replace(
     'joined = lambda items: "\\\\n".join(value for value in items if value)',
 )
 path.write_text(text, encoding="utf-8")
+
+test_path = Path("scripts/update_authenticated_smoke_test_contracts.py")
+test_text = test_path.read_text(encoding="utf-8")
+test_text = test_text.replace(
+    "source.index('topbar(\\n        \"Member Home\"', render_start)",
+    "source.index('topbar(\\\\n        \"Member Home\"', render_start)",
+)
+test_path.write_text(test_text, encoding="utf-8")
+
 print("Authenticated smoke generated newline literals corrected.")
