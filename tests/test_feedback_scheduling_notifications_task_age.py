@@ -93,11 +93,15 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
             self.assertNotIn('get("users"', text)
             self.assertNotIn("save_state", text)
 
-    def test_exercise_feedback_disclosure_and_equal_compact_notes(self):
+    def test_exercise_summary_dropdowns_and_equal_compact_notes(self):
         source = EXERCISE.read_text(encoding="utf-8")
-        self.assertIn("mpb-exercise-more-details-anchor", source)
-        self.assertIn('content:"+"', source)
-        self.assertIn('content:"−"', source)
+        self.assertNotIn("mpb-exercise-more-details-anchor", source)
+        self.assertNotIn('st.expander("More details"', source)
+        self.assertIn("source_summary(", source)
+        self.assertIn('"Frequency per week"', source)
+        self.assertIn('"Timing"', source)
+        self.assertIn("EXERCISE_FREQUENCY_OPTIONS", source)
+        self.assertIn("EXERCISE_TIMING_OPTIONS", source)
         self.assertIn("note_cols = st.columns(2", source)
         self.assertGreaterEqual(source.count('height=60'), 4)
         self.assertNotIn('note_cols[1].text_input(', source)
