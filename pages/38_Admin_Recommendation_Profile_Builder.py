@@ -9,6 +9,9 @@ from components.admin_performance_optimization import (
 from components.meal_profile_builder_write_boundary import (
     install_meal_profile_builder_write_boundary,
 )
+from components.member_plan_builder_setup_responsive import (
+    render_member_plan_setup_responsive_styles,
+)
 from components.performance_diagnostics import (
     begin_page_measurement,
     finish_and_render_page_diagnostics,
@@ -70,6 +73,7 @@ begin_page_measurement("Recommendation Profile Builder")
 _install_build_label_suppression()
 inject_global_styles()
 apply_luxe_theme()
+render_member_plan_setup_responsive_styles()
 require_profile_builder_access()
 profile_builder_role_utility_bar()
 
