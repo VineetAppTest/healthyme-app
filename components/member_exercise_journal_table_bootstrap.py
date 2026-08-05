@@ -6,7 +6,7 @@ import functools
 import inspect
 
 
-_DAILY_LOG_LABELS = ("Food Journal", "Exercise Journal")
+_DAILY_LOG_LABELS = ("Food Journal", "Exercise Journal", "Supplement Journal")
 _DAILY_LOG_SELECTOR_KEY = "hm_daily_log_active_journal"
 _DAILY_LOG_TAB_MARKER = "_hm_daily_log_tab_isolation_v3"
 _DAILY_LOG_LAYOUT_MARKER = "_hm_exercise_layout_v4_installed"
@@ -207,7 +207,7 @@ div[data-testid="stHorizontalBlock"]:has(.utility-bar){
             "<span class='hm-daily-log-selector-anchor'></span>",
             unsafe_allow_html=True,
         )
-        food_col, exercise_col = st.columns(2, gap="small")
+        food_col, exercise_col, supplement_col = st.columns(3, gap="small")
         with food_col:
             st.button(
                 "Food Journal",
@@ -234,9 +234,23 @@ div[data-testid="stHorizontalBlock"]:has(.utility-bar){
                 on_click=_activate_daily_log_journal,
                 args=(_DAILY_LOG_LABELS[1],),
             )
+        with supplement_col:
+            st.button(
+                "Supplement Journal",
+                key="hm_daily_log_supplement_journal_selector",
+                type=(
+                    "primary"
+                    if current_value == _DAILY_LOG_LABELS[2]
+                    else "secondary"
+                ),
+                use_container_width=True,
+                on_click=_activate_daily_log_journal,
+                args=(_DAILY_LOG_LABELS[2],),
+            )
 
         food_renderer = frame_globals.get("_render_food_journal")
         exercise_renderer = frame_globals.get("_render_exercise_journal")
+        supplement_renderer = frame_globals.get("_render_supplement_journal")
 
         if callable(food_renderer) and not getattr(
             food_renderer,
@@ -282,7 +296,38 @@ div[data-testid="stHorizontalBlock"]:has(.utility-bar){
                 "_render_exercise_journal"
             ] = render_exercise_only_when_selected
 
-        return [contextlib.nullcontext(), contextlib.nullcontext()]
+        if callable(supplement_renderer) and not getattr(
+            supplement_renderer,
+            _DAILY_LOG_TAB_MARKER,
+            False,
+        ):
+
+            @functools.wraps(supplement_renderer)
+            def render_supplement_only_when_selected(*render_args, **render_kwargs):
+                if (
+                    st.session_state.get(
+                        _DAILY_LOG_SELECTOR_KEY,
+                        _DAILY_LOG_LABELS[0],
+                    )
+                    != _DAILY_LOG_LABELS[2]
+                ):
+                    return None
+                return supplement_renderer(*render_args, **render_kwargs)
+
+            setattr(
+                render_supplement_only_when_selected,
+                _DAILY_LOG_TAB_MARKER,
+                True,
+            )
+            frame_globals[
+                "_render_supplement_journal"
+            ] = render_supplement_only_when_selected
+
+        return [
+            contextlib.nullcontext(),
+            contextlib.nullcontext(),
+            contextlib.nullcontext(),
+        ]
 
     setattr(isolated_daily_log_tabs, _DAILY_LOG_TAB_MARKER, True)
     isolated_daily_log_tabs._hm_original_tabs = current_tabs

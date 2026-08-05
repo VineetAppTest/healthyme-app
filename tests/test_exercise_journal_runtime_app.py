@@ -45,11 +45,19 @@ def _render_exercise_journal(user_id):
         st.rerun()
 
 
-food_tab, exercise_tab = st.tabs(["Food Journal", "Exercise Journal"])
+def _render_supplement_journal(user_id):
+    st.text("SUPPLEMENT_PANEL_VISIBLE")
+
+
+food_tab, exercise_tab, supplement_tab = st.tabs(
+    ["Food Journal", "Exercise Journal", "Supplement Journal"]
+)
 with food_tab:
     _render_food_journal("member-1")
 with exercise_tab:
     _render_exercise_journal("member-1")
+with supplement_tab:
+    _render_supplement_journal("member-1")
 '''
         pages_dir = pathlib.Path(self.temp_dir.name) / "pages"
         pages_dir.mkdir(parents=True, exist_ok=True)
@@ -71,6 +79,7 @@ with exercise_tab:
     def _assert_exercise_only(self, app):
         self.assertIn("EXERCISE_PANEL_VISIBLE", self._text_values(app))
         self.assertNotIn("FOOD_PANEL_VISIBLE", self._text_values(app))
+        self.assertNotIn("SUPPLEMENT_PANEL_VISIBLE", self._text_values(app))
         self.assertEqual([box.label for box in app.selectbox], ["Exercise status"])
 
     def test_exercise_selection_survives_dropdown_and_explicit_save_reruns(self):

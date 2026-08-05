@@ -12,8 +12,8 @@ class MemberDailyLogSelectorAndDiagnosticsTests(unittest.TestCase):
         source = (
             ROOT / "components/member_exercise_journal_table_bootstrap.py"
         ).read_text()
-        self.assertIn('st.columns(2, gap="small")', source)
-        self.assertIn('if current_value == _DAILY_LOG_LABELS[1]', source)
+        self.assertIn('st.columns(3, gap="small")', source)
+        self.assertIn('if current_value == _DAILY_LOG_LABELS[2]', source)
         self.assertIn('else "secondary"', source)
 
     def test_selector_does_not_mutate_its_widget_key_after_creation(self):
@@ -31,7 +31,8 @@ class MemberDailyLogSelectorAndDiagnosticsTests(unittest.TestCase):
         ).read_text()
         self.assertIn("render_food_only_when_selected", source)
         self.assertIn("render_exercise_only_when_selected", source)
-        self.assertIn("return [contextlib.nullcontext(), contextlib.nullcontext()]", source)
+        self.assertIn("render_supplement_only_when_selected", source)
+        self.assertGreaterEqual(source.count("contextlib.nullcontext()"), 3)
 
     def test_disabled_measurement_uses_footer_panel_only(self):
         source = (ROOT / "components/performance_measurement_gate.py").read_text()

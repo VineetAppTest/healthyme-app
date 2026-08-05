@@ -1,0 +1,48 @@
+name: Member supplement journal validation
+
+on:
+  pull_request:
+    paths:
+      - "components/member_supplement_journal.py"
+      - "components/member_daily_log_native_tab_persistence.py"
+      - "components/member_exercise_journal_table_bootstrap.py"
+      - "pages/18_Daily_Log.py"
+      - "supabase/migrations/20260805114000_create_member_supplement_logs.sql"
+      - "tests/test_member_supplement_journal.py"
+      - "tests/test_exercise_live_repair.py"
+      - "tests/test_exercise_journal_runtime_app.py"
+      - "tests/test_form_reset_closure_inventory_v2.py"
+      - ".github/workflows/member-supplement-journal-validation.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile changed surfaces
+        run: |
+          python -m py_compile \
+            components/member_supplement_journal.py \
+            components/member_daily_log_native_tab_persistence.py \
+            components/member_exercise_journal_table_bootstrap.py \
+            pages/18_Daily_Log.py \
+            tests/test_member_supplement_journal.py
+      - name: Run focused regression suite
+        run: |
+          python -m unittest \
+            tests.test_member_supplement_journal \
+            tests.test_exercise_live_repair \
+            tests.test_exercise_journal_runtime_app \
+            tests.test_member_schedule_tabs_exercise_journal \
+            tests.test_member_daily_log_selector_and_diagnostics \
+            tests.test_exercise_journal_repository_fix_contract \
+            tests.test_exercise_daily_log_widget_route_preservation \
+            tests.test_form_reset_closure_inventory_v2 \
+            -v

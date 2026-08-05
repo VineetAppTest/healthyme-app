@@ -6,6 +6,7 @@ import streamlit as st
 
 from components.guards import require_member
 from components.member_exercise_journal import render_member_exercise_journal
+from components.member_supplement_journal import render_member_supplement_journal
 from components.ui_common import (
     inject_global_styles,
     apply_luxe_theme,
@@ -709,6 +710,13 @@ def _render_exercise_journal(user_id):
     )
 
 
+def _render_supplement_journal(user_id):
+    render_member_supplement_journal(
+        user_id,
+        key_prefix="hm_daily_log_supplement",
+    )
+
+
 def _render_saved_days(user_id):
     today = member_local_today(user_id)
     initialise_food_saved_days_range(st.session_state, today)
@@ -1100,16 +1108,24 @@ inject_global_styles()
 apply_luxe_theme()
 require_member()
 utility_logout_bar()
-topbar("Daily Log", "Capture food and exercise updates for one day.", "Member tracker")
+topbar(
+    "Daily Log",
+    "Capture food, exercise and supplement updates for one day.",
+    "Member tracker",
+)
 _render_css()
 render_system_message()
 
 user_id = st.session_state["user_id"]
-food_tab, exercise_tab = st.tabs(["Food Journal", "Exercise Journal"])
+food_tab, exercise_tab, supplement_tab = st.tabs(
+    ["Food Journal", "Exercise Journal", "Supplement Journal"]
+)
 with food_tab:
     _render_food_journal(user_id)
 with exercise_tab:
     _render_exercise_journal(user_id)
+with supplement_tab:
+    _render_supplement_journal(user_id)
 
 render_page_nav(
     "Daily Log",

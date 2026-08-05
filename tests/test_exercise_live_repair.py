@@ -47,10 +47,14 @@ class ExerciseLiveRepairTests(unittest.TestCase):
         def render_exercise(user_id):
             rendered.append(("exercise", user_id))
 
+        def render_supplement(user_id):
+            rendered.append(("supplement", user_id))
+
         page_globals = {
             "__file__": "/app/pages/18_Daily_Log.py",
             "_render_food_journal": render_food,
             "_render_exercise_journal": render_exercise,
+            "_render_supplement_journal": render_supplement,
         }
         fake_frame = types.SimpleNamespace(f_globals=page_globals)
         markdown_calls = []
@@ -58,7 +62,7 @@ class ExerciseLiveRepairTests(unittest.TestCase):
             tabs=current_tabs,
             session_state={},
             markdown=lambda body, **kwargs: markdown_calls.append(str(body)),
-            columns=lambda *args, **kwargs: [_Context(), _Context()],
+            columns=lambda *args, **kwargs: [_Context(), _Context(), _Context()],
             button=lambda label, *args, **kwargs: button_labels.append(str(label)) or False,
         )
 
@@ -69,13 +73,19 @@ class ExerciseLiveRepairTests(unittest.TestCase):
             member_runtime._daily_log_frame = lambda: fake_frame
             member_runtime.install_member_daily_log_native_tab_persistence()
 
-            contexts = fake_st.tabs(["Food Journal", "Exercise Journal"])
-            self.assertEqual(len(contexts), 2)
+            contexts = fake_st.tabs(
+                ["Food Journal", "Exercise Journal", "Supplement Journal"]
+            )
+            self.assertEqual(len(contexts), 3)
             self.assertEqual(delegated_tabs, [])
-            self.assertEqual(button_labels, ["Food Journal", "Exercise Journal"])
+            self.assertEqual(
+                button_labels,
+                ["Food Journal", "Exercise Journal", "Supplement Journal"],
+            )
 
             page_globals["_render_food_journal"]("member-1")
             page_globals["_render_exercise_journal"]("member-1")
+            page_globals["_render_supplement_journal"]("member-1")
             self.assertEqual(rendered, [("food", "member-1")])
 
             member_runtime._activate_journal("Exercise Journal")
@@ -83,6 +93,7 @@ class ExerciseLiveRepairTests(unittest.TestCase):
             fake_st.session_state.pop(member_runtime._SELECTOR_KEY, None)
             page_globals["_render_food_journal"]("member-1")
             page_globals["_render_exercise_journal"]("member-1")
+            page_globals["_render_supplement_journal"]("member-1")
             self.assertEqual(
                 rendered,
                 [("food", "member-1"), ("exercise", "member-1")],

@@ -242,17 +242,25 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
             ROOT / "components/member_exercise_journal_table_bootstrap.py"
         ).read_text()
         page = (ROOT / "pages/18_Daily_Log.py").read_text()
-        self.assertIn('_DAILY_LOG_LABELS = ("Food Journal", "Exercise Journal")', bootstrap)
+        self.assertIn(
+            '_DAILY_LOG_LABELS = ("Food Journal", "Exercise Journal", "Supplement Journal")',
+            bootstrap,
+        )
         self.assertIn('st.button(\n                "Food Journal"', bootstrap)
         self.assertIn('st.button(\n                "Exercise Journal"', bootstrap)
+        self.assertIn('st.button(\n                "Supplement Journal"', bootstrap)
         self.assertIn('type=(\n                    "primary"', bootstrap)
         self.assertIn("on_click=_activate_daily_log_journal", bootstrap)
         self.assertNotIn("st.segmented_control", bootstrap)
         self.assertIn("contextlib.nullcontext()", bootstrap)
         self.assertIn("render_food_only_when_selected", bootstrap)
         self.assertIn("render_exercise_only_when_selected", bootstrap)
+        self.assertIn("render_supplement_only_when_selected", bootstrap)
         self.assertIn("pages/18_Daily_Log.py", bootstrap)
-        self.assertIn('st.tabs(["Food Journal", "Exercise Journal"])', page)
+        self.assertIn(
+            '["Food Journal", "Exercise Journal", "Supplement Journal"]',
+            page,
+        )
         for forbidden in (
             "save_daily_food_journal_day",
             "save_member_exercise_log",

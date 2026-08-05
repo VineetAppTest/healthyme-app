@@ -55,11 +55,15 @@ class ExerciseJournalRepositoryFixContractTests(unittest.TestCase):
 
     def test_member_daily_log_uses_exclusive_server_rendering(self):
         runtime = source("components/member_daily_log_native_tab_persistence.py")
-        self.assertIn('("Food Journal", "Exercise Journal")', runtime)
+        self.assertIn(
+            '("Food Journal", "Exercise Journal", "Supplement Journal")',
+            runtime,
+        )
         self.assertIn("_daily_log_frame", runtime)
         self.assertIn("_install_renderer_gates", runtime)
         self.assertIn("_render_food_journal", runtime)
         self.assertIn("_render_exercise_journal", runtime)
+        self.assertIn("_render_supplement_journal", runtime)
         self.assertIn("contextlib.nullcontext()", runtime)
         self.assertNotIn("sessionStorage", runtime)
         self.assertNotIn("MutationObserver", runtime)
