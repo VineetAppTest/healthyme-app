@@ -5,6 +5,7 @@ on:
     types: [opened, reopened, synchronize]
     paths:
       - "scripts/apply_authenticated_member_followup.py"
+      - "tests/test_member_home_schedule_presentation.py"
       - ".github/workflows/apply-authenticated-member-followup.yml"
 
 permissions:
@@ -37,7 +38,8 @@ jobs:
             pages/02_Member_Home.py \
             pages/18_Daily_Log.py \
             tests/test_authenticated_member_followup_corrections.py \
-            tests/test_food_journal_meal_grid_saved_days_cleanup.py
+            tests/test_food_journal_meal_grid_saved_days_cleanup.py \
+            tests/test_member_home_schedule_presentation.py
       - name: Run focused follow-up contracts
         run: |
           python -m unittest \
