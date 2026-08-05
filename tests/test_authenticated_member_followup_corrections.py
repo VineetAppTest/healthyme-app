@@ -29,7 +29,9 @@ class AuthenticatedMemberFollowupCorrectionTests(unittest.TestCase):
 
     def test_task_card_and_balanced_columns_have_breathing_space(self):
         page = (ROOT / "pages/02_Member_Home.py").read_text()
-        self.assertIn('min-height:15.75rem', page)
+        self.assertIn('padding:1rem 1rem 1.04rem', page)
+        self.assertIn('min-height:0;box-sizing:border-box', page)
+        self.assertNotIn('min-height:15.75rem', page)
         self.assertIn(':has(.hm-member-home-balanced-card){align-items:stretch', page)
         self.assertIn('Due date: <b>&nbsp;{due_date}</b>', page)
         self.assertIn('SHOW_MEMBER_REFERENCE_LIBRARY = False', page)

@@ -75,7 +75,8 @@ class AuthenticatedSmokeCorrectionTests(unittest.TestCase):
         self.assertNotIn("html,body,#root{margin-top:0", page)
         self.assertIn("hm-member-home-global-header-v6", runtime)
         self.assertIn('id="hm-member-home-local-style-v3"', schedule)
-        self.assertIn("width:min(420px,100%)", schedule)
+        self.assertIn("width:fit-content!important", schedule)
+        self.assertNotIn("width:min(420px,100%)", schedule)
         self.assertNotIn("top:-2.75rem", schedule)
 
     def test_food_journal_uses_two_rows_and_add_preserves_daily_log_route(self):

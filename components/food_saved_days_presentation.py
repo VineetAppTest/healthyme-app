@@ -256,14 +256,14 @@ def saved_days_card_css() -> str:
     }
     .hm-saved-day-card-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
     div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-saved-day-card-anchor){
-      height:100%!important;min-height:12rem!important;padding:.66rem .72rem!important;
+      height:auto!important;min-height:0!important;align-self:flex-start!important;padding:.66rem .72rem!important;
       border:1px solid #E1B95E!important;border-radius:14px!important;
       background:#FFFDF8!important;box-shadow:none!important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-saved-day-card-anchor)>div{
       gap:.36rem!important;padding:0!important;
     }
-    .hm-saved-day-card{display:flex;flex-direction:column;gap:.27rem;min-height:8.8rem;}
+    .hm-saved-day-card{display:flex;flex-direction:column;gap:.27rem;min-height:0;}
     .hm-saved-day-date{color:#064E3B;font-size:.86rem;font-weight:950;margin:0 0 .18rem 0;}
     .hm-saved-day-row{display:grid;grid-template-columns:minmax(4.8rem,.42fr) minmax(0,.58fr);gap:.40rem;align-items:start;font-size:.74rem;line-height:1.30;}
     .hm-saved-day-row span{color:#7A5A16;font-weight:900;}
