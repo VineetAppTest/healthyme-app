@@ -201,16 +201,18 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         self.assertIn("hm-fluid-time-grid-anchor", source)
         self.assertNotIn("fluid_time = st.time_input(", source)
 
-    def test_every_eligible_home_schedule_has_acknowledge_and_reschedule_actions(self):
+    def test_every_eligible_home_schedule_has_accept_and_reschedule_actions(self):
         helper = (ROOT / "components/member_home_schedule_presentation.py").read_text()
         page = (ROOT / "pages/02_Member_Home.py").read_text()
         db_source = (ROOT / "components/db.py").read_text()
 
-        self.assertIn('"Acknowledge"', helper)
-        self.assertIn('"Acknowledged"', helper)
+        self.assertIn('"Accept"', helper)
+        self.assertIn('"Accepted"', helper)
         self.assertIn('"Reschedule"', helper)
         self.assertIn('"Reschedule pending"', helper)
         self.assertIn("acknowledge_member_schedule", helper)
+        self.assertIn("on_click=_accept_member_home_schedule", helper)
+        self.assertNotIn('"Acknowledge"', helper)
         self.assertIn('st.switch_page("pages/33_My_Schedule.py")', helper)
         self.assertIn(
             'st.session_state["hm_member_schedule_active_section"] = "Upcoming Schedule"',
