@@ -1,0 +1,42 @@
+name: Admin Profile Builder Review Follow-up Validation
+
+on:
+  pull_request:
+    paths:
+      - "components/member_plan_builder_setup.py"
+      - "components/member_plan_builder_meals_compact.py"
+      - "components/member_plan_builder_export.py"
+      - "components/member_plan_builder_exercise.py"
+      - "components/exercise_member_allocation.py"
+      - "components/current_member_plan_view.py"
+      - "tests/test_admin_profile_builder_review_followup.py"
+      - ".github/workflows/admin-profile-builder-review-followup-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install project dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile corrected Admin surfaces
+        run: |
+          python -m py_compile \
+            components/member_plan_builder_setup.py \
+            components/member_plan_builder_meals_compact.py \
+            components/member_plan_builder_export.py \
+            components/member_plan_builder_exercise.py \
+            components/exercise_member_allocation.py \
+            components/current_member_plan_view.py \
+            tests/test_admin_profile_builder_review_followup.py
+      - name: Run focused Admin Profile Builder contracts
+        run: python -m unittest tests.test_admin_profile_builder_review_followup -v
