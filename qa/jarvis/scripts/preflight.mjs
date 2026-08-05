@@ -35,8 +35,8 @@ try {
   errors.push('JARVIS_BASE_URL is not a valid URL.');
 }
 
-if (!['all', 'public', 'member', 'admin'].includes(suite)) {
-  errors.push(`Unsupported JARVIS_SUITE: ${suite}. Use all, public, member or admin.`);
+if (!['all', 'public', 'member', 'admin', 'auth'].includes(suite)) {
+  errors.push(`Unsupported JARVIS_SUITE: ${suite}. Use all, public, member, admin or auth.`);
 }
 if (!['uat', 'production'].includes(environment)) {
   errors.push(`Unsupported JARVIS_ENVIRONMENT: ${environment}. Use uat or production.`);
@@ -77,8 +77,8 @@ if (adminEmailConfigured !== adminPasswordConfigured) {
   errors.push('Admin credentials are only partially configured. Set both secrets or neither.');
 }
 
-const memberRouteRequested = suite === 'all' || suite === 'member';
-const adminRouteRequested = suite === 'all' || suite === 'admin';
+const memberRouteRequested = suite === 'all' || suite === 'member' || suite === 'auth';
+const adminRouteRequested = suite === 'all' || suite === 'admin' || suite === 'auth';
 
 if (memberRouteRequested && !memberEmailConfigured) {
   const message = 'Authenticated member route is disabled until both member secrets are configured.';
