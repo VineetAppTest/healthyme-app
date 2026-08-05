@@ -141,10 +141,8 @@ for section, qs in sections.items():
 save_body_mind_response(user_id, answers, completed=False)
 st.markdown("<div class='autosave-note'>Auto-saved. Submit this page when ready.</div>", unsafe_allow_html=True)
 
-c1, c2 = st.columns(2)
-with c1:
-    pass  # v102.0 legacy direct navigation removed; use canonical footer
-with c2:
+_submit_left, submit_center, _submit_right = st.columns([1, 2, 1])
+with submit_center:
     if st.button("Submit Body-Mind Page", type="secondary", use_container_width=True):
         save_body_mind_response(user_id, answers, completed=True)
         mark_body_mind_completed_for_current_instance(user_id, answers)

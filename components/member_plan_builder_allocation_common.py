@@ -7,10 +7,13 @@ import streamlit as st
 
 from components.db import list_members
 from components.pbm_core import clean
+from components.profile_publish_control import load_active_profiles
 
 
-def member_label(row: Dict) -> str:
-    return f"{row.get('name') or 'Member'} — {row.get('email') or row.get('id')}"
+def member_label(row: Dict, plan: Dict | None = None) -> str:
+    base = f"{row.get('name') or 'Member'} — {row.get('email') or row.get('id')}"
+    plan_name = clean((plan or {}).get("profile_name"))
+    return f"{base} · {plan_name}" if plan_name else base
 
 
 def render_allocation_member_selector(key: str) -> Tuple[str, str]:
@@ -19,7 +22,27 @@ def render_allocation_member_selector(key: str) -> Tuple[str, str]:
         st.warning("No active members are available.")
         return "", ""
 
-    options = {member_label(row): row for row in members}
+    plans_ok, active_plans, plan_message = load_active_profiles()
+    if not plans_ok:
+        st.warning(plan_message)
+        return "", ""
+    plan_by_member = {
+        clean(row.get("assigned_member_id")): row
+        for row in active_plans
+        if clean(row.get("assigned_member_id"))
+    }
+    members = [row for row in members if clean(row.get("id")) in plan_by_member]
+    if not members:
+        st.warning(
+            "No member has an active Meal Plan. Publish a Meal Profile from Meals before "
+            "allocating Exercise or Supplement."
+        )
+        return "", ""
+
+    options = {
+        member_label(row, plan_by_member.get(clean(row.get("id")))): row
+        for row in members
+    }
     labels = list(options)
     assigned_id = clean((st.session_state.get("pbm_profile") or {}).get("assigned_member_id"))
     default_label = next(
@@ -28,7 +51,12 @@ def render_allocation_member_selector(key: str) -> Tuple[str, str]:
     )
     if st.session_state.get(key) not in labels:
         st.session_state[key] = default_label
-    selected_label = st.selectbox("Member", labels, key=key)
+    selected_label = st.selectbox(
+        "Member Plan",
+        labels,
+        key=key,
+        help="Exercise and Supplement allocations attach through the member's active Meal Plan.",
+    )
     return clean(options[selected_label].get("id")), selected_label
 
 

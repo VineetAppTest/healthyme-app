@@ -49,8 +49,8 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
                 "View Member Plan",
             ],
         )
-        self.assertIn("separate top-level tasks", manifest["navigation_rule"])
-        self.assertIn("consolidated active-plan read model", manifest["navigation_rule"])
+        self.assertIn("reusable unallocated Meal Profiles", manifest["navigation_rule"])
+        self.assertIn("active Meal Plan", manifest["navigation_rule"])
         self.assertIn("cached", manifest["performance_rule"])
 
     def test_item_split_preserves_legacy_rows_and_defensive_copies(self) -> None:
@@ -83,14 +83,16 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         self.assertGreater(setup_load_index, setup_index)
         self.assertGreater(recipe_load_index, meals_index)
 
-    def test_setup_auto_loads_and_clones_complete_meal_plan(self) -> None:
+    def test_setup_auto_loads_and_clones_meal_only_profile(self) -> None:
         source = SETUP_FILE.read_text(encoding="utf-8")
         self.assertIn("_handle_plan_selection(selected_id)", source)
         self.assertIn("load_selected(selected_id, shell_only=False)", source)
         self.assertNotIn('"Load Profile"', source)
-        self.assertIn('"Clone Complete Plan"', source)
+        self.assertIn('"Clone Meal Profile"', source)
         self.assertIn('if clean(row.get("item_type")).lower() == "meal"', source)
         self.assertIn("save_profile_module(", source)
+        self.assertIn('clone["assigned_member_id"] = ""', source)
+        self.assertIn('"Exercise and Supplement allocations were not copied."', source)
 
     def test_setup_selector_is_compact_aligned_and_state_safe(self) -> None:
         source = SETUP_FILE.read_text(encoding="utf-8")
@@ -127,9 +129,11 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         self.assertIn('with st.expander("More details"', source)
         self.assertIn('"Save Meal Plan"', source)
         self.assertIn("meal_review_rows", source)
-        self.assertIn('"Publish & Allocate to Member"', source)
-        self.assertIn('"start_date": clean(profile.get("start_date"))', source)
-        self.assertIn('activate_profile(publish_profile, "ACTIVATE")', source)
+        self.assertIn('"Meal Profile"', source)
+        self.assertIn('"Member"', source)
+        self.assertIn('"Publish"', source)
+        self.assertIn('"clone_source_profile_id": source_id', source)
+        self.assertIn('activate_profile(member_plan, "ACTIVATE")', source)
         self.assertNotIn('"Preview Meal Plan"', source)
 
     def test_exercise_and_supplement_are_separate_without_visible_allocation_ids(self) -> None:
@@ -153,11 +157,10 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         self.assertNotIn("Profile Scope", source)
         self.assertIn("build_current_member_plan", source)
         self.assertIn("model_profile_id != selected_id", source)
-        self.assertIn("more than one active Meal Profile", source)
-        self.assertIn('"Exercise Allocations"', source)
-        self.assertIn('"Supplement Allocations"', source)
-        self.assertIn('"Download Selected Member Plan"', source)
-        self.assertIn('sheet_name="Legacy Profile Rows"', source)
+        self.assertIn("profile_matches_or_filters", source)
+        self.assertIn('"Download Excel"', source)
+        self.assertIn('"Download PDF"', source)
+        self.assertIn("allocation_day_groups", source)
 
     def test_source_contract_and_section_options_are_cached(self) -> None:
         source = PERFORMANCE_FILE.read_text(encoding="utf-8")

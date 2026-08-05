@@ -38,7 +38,7 @@ class AuthenticatedSmokeCorrectionTests(unittest.TestCase):
     def test_view_member_plan_uses_weekly_tables_without_internal_banners(self):
         source = (ROOT / "components/member_plan_builder_view_compact.py").read_text()
         page = (ROOT / "pages/38_Admin_Recommendation_Profile_Builder.py").read_text()
-        self.assertIn("def _render_weekly_table", source)
+        self.assertIn("def _render_grouped_weekly_table", source)
         self.assertIn('("Timing", "Activity", "Duration/Sets", "Remarks")', source)
         self.assertIn('("Timing", "Supplement", "Dosage", "Remarks")', source)
         self.assertNotIn("Active-plan integrity verified", source)
