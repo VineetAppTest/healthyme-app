@@ -520,7 +520,11 @@ def _render_css():
         div.element-container:has(.hm-toggle-anchor) + div.element-container button{justify-content:flex-start!important;text-align:left!important;}
         div[data-testid="stElementContainer"]:has(.hm-toggle-anchor) + div[data-testid="stElementContainer"] button p,
         div.element-container:has(.hm-toggle-anchor) + div.element-container button p{width:100%!important;text-align:left!important;justify-content:flex-start!important;}
-        .hm-meal-time-grid-anchor,.hm-meal-food-grid-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+        .hm-meal-time-grid-anchor,.hm-meal-food-grid-anchor,.hm-meal-entry-card-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-meal-entry-card-anchor){height:auto!important;min-height:0!important;padding:.68rem .76rem .78rem!important;margin:.06rem 0 .52rem 0!important;border:1.25px solid #D8A84E!important;border-radius:14px!important;background:#FFFDF8!important;box-shadow:0 5px 14px rgba(15,23,42,.035)!important;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-meal-entry-card-anchor)>div{padding:0!important;gap:.30rem!important;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-meal-entry-card-anchor) div[data-testid="stTextInput"],div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-meal-entry-card-anchor) div[data-testid="stSelectbox"]{margin-bottom:.24rem!important;padding-bottom:0!important;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-meal-entry-card-anchor) label{margin-bottom:.18rem!important;padding-bottom:0!important;}
         div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor){display:grid!important;grid-template-columns:minmax(5rem,1fr) minmax(5rem,1fr) minmax(6rem,1.15fr) minmax(0,3fr)!important;gap:.48rem!important;align-items:end!important;width:100%!important;}
         div[data-testid="stHorizontalBlock"]:has(.hm-meal-food-grid-anchor){display:grid!important;grid-template-columns:minmax(14rem,2.2fr) minmax(8rem,1.25fr)!important;gap:.48rem!important;align-items:end!important;width:100%!important;}
         div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor)>div,div[data-testid="stHorizontalBlock"]:has(.hm-meal-food-grid-anchor)>div{width:100%!important;min-width:0!important;max-width:none!important;flex:none!important;overflow:visible!important;}
@@ -629,7 +633,12 @@ def _render_meal_fields(label, key, prior, date_key):
 
 def _render_meal_toggle(label, key, prior, date_key):
     if _toggle_button(f"{label} — {_meal_summary(prior)}", f"{date_key}_{key}"):
-        return _render_meal_fields(label, key, prior, date_key)
+        with st.container(border=True):
+            st.markdown(
+                "<span class='hm-meal-entry-card-anchor'></span>",
+                unsafe_allow_html=True,
+            )
+            return _render_meal_fields(label, key, prior, date_key)
     return _as_dict(prior)
 
 

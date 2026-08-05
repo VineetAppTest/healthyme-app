@@ -39,7 +39,7 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) hr{
   display:none!important;border:0!important;height:0!important;margin:0!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
-  width:min(420px,100%)!important;max-width:100%!important;
+  width:fit-content!important;max-width:100%!important;min-width:0!important;
   min-height:2.12rem!important;padding:.30rem .72rem!important;
   border:1px solid #E3C98E!important;border-bottom:1px solid #E3C98E!important;
   border-radius:999px!important;background:#FFFDF8!important;
@@ -72,7 +72,7 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
   transform:rotate(90deg);
 }
 .hm-v101-schedule-card{
-  width:100%!important;max-width:none!important;
+  width:100%!important;max-width:none!important;min-height:0!important;
   margin:0!important;padding:0!important;border-radius:0!important;
 }
 .hm-upcoming-schedule-anchor,.hm-member-schedule-action-anchor{
@@ -101,7 +101,7 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
 }
 @media(max-width:640px){
   div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
-    width:min(285px,calc(100vw - 2rem))!important;
+    width:fit-content!important;max-width:calc(100vw - 2rem)!important;
   }
   .hm-v101-schedule-card,
   .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"]{
@@ -269,11 +269,27 @@ def _next_schedule_action_row() -> dict[str, Any] | None:
     return dict(rows[index] or {})
 
 
-def _render_member_home_schedule_actions(row: dict[str, Any]) -> None:
-    """Render consistent acknowledgement and reschedule actions under a card."""
+def _accept_member_home_schedule(
+    schedule_id: str,
+    member_id: object,
+    error_key: str,
+) -> None:
+    """Accept before the normal Streamlit button rerun; do not trigger a second rerun."""
 
     import streamlit as st
     from components import db as db_api
+
+    updated = db_api.acknowledge_member_schedule(schedule_id, member_id)
+    if not updated:
+        st.session_state[error_key] = (
+            "This schedule could not be accepted. Please refresh and retry."
+        )
+
+
+def _render_member_home_schedule_actions(row: dict[str, Any]) -> None:
+    """Render consistent acceptance and reschedule actions under a card."""
+
+    import streamlit as st
 
     schedule_id = _text(row.get("id"))
     if not schedule_id:
@@ -291,27 +307,29 @@ def _render_member_home_schedule_actions(row: dict[str, Any]) -> None:
     pending_reschedule = (
         _text(row.get("reschedule_request_status")).lower() == "pending"
     )
+    error_key = f"_hm_home_accept_error_{schedule_id}"
+    error_message = st.session_state.pop(error_key, "")
+    if error_message:
+        st.error(error_message)
 
     st.markdown(
         "<span class='hm-member-schedule-action-anchor'></span>",
         unsafe_allow_html=True,
     )
-    acknowledge_col, reschedule_col = st.columns(2, gap="small")
-    with acknowledge_col:
+    accept_col, reschedule_col = st.columns(2, gap="small")
+    with accept_col:
         if status == "scheduled":
-            if st.button(
-                "Acknowledge",
-                key=f"hm_home_ack_schedule_{schedule_id}",
+            st.button(
+                "Accept",
+                key=f"hm_home_accept_schedule_{schedule_id}",
                 use_container_width=True,
-            ):
-                updated = db_api.acknowledge_member_schedule(schedule_id, row.get("member_id"))
-                if updated:
-                    st.rerun()
-                st.error("This schedule could not be acknowledged. Please refresh and retry.")
+                on_click=_accept_member_home_schedule,
+                args=(schedule_id, row.get("member_id"), error_key),
+            )
         else:
             st.button(
-                "Acknowledged",
-                key=f"hm_home_acknowledged_schedule_{schedule_id}",
+                "Accepted",
+                key=f"hm_home_accepted_schedule_{schedule_id}",
                 use_container_width=True,
                 disabled=True,
             )

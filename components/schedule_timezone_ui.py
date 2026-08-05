@@ -554,6 +554,20 @@ def render_admin_scheduling_page() -> None:
     render_back_to_top()
 
 
+def _accept_member_schedule_once(schedule_id: object, user_id: object) -> None:
+    """Persist acceptance during the button callback, before the normal rerun."""
+
+    result_key = f"_hm_tz_accept_result_{schedule_id}"
+    accepted = acknowledge_member_schedule(schedule_id, user_id)
+    st.session_state[result_key] = "accepted" if accepted else "error"
+
+
+def _toggle_member_reschedule_form(state_key: str) -> None:
+    """Toggle the form in the button callback without an explicit second rerun."""
+
+    st.session_state[state_key] = not st.session_state.get(state_key, False)
+
+
 def render_member_schedule_page() -> None:
     st.set_page_config(
         page_title="My Schedule",
@@ -568,7 +582,7 @@ def render_member_schedule_page() -> None:
     utility_logout_bar()
     topbar(
         "My Schedule",
-        "View, acknowledge or request a reschedule for upcoming sessions.",
+        "View, accept or reschedule upcoming sessions.",
         "Member content",
     )
     _inject_schedule_styles()
@@ -599,38 +613,50 @@ def render_member_schedule_page() -> None:
                 "</div>",
                 unsafe_allow_html=True,
             )
+            schedule_id = row.get("id")
+            accept_result_key = f"_hm_tz_accept_result_{schedule_id}"
+            accept_result = st.session_state.pop(accept_result_key, "")
+            if accept_result == "error":
+                st.error("This schedule could not be accepted. Please refresh and retry.")
+
+            state_key = f"hm_tz_show_reschedule_{schedule_id}"
             action_col_1, action_col_2 = st.columns(2, gap="medium")
             with action_col_1:
                 if status == "scheduled":
-                    if st.button(
-                        "Acknowledge schedule",
-                        key=f"hm_tz_ack_schedule_{row.get('id')}",
+                    st.button(
+                        "Accept",
+                        key=f"hm_tz_accept_schedule_{schedule_id}",
                         use_container_width=True,
-                    ):
-                        acknowledge_member_schedule(row.get("id"), user_id)
-                        st.success("Schedule acknowledged.")
-                        st.rerun()
+                        on_click=_accept_member_schedule_once,
+                        args=(schedule_id, user_id),
+                    )
+                elif status == "acknowledged":
+                    st.button(
+                        "Accepted",
+                        key=f"hm_tz_accepted_schedule_{schedule_id}",
+                        use_container_width=True,
+                        disabled=True,
+                    )
             with action_col_2:
                 can_request = (
                     status in ["scheduled", "acknowledged"]
                     and row.get("reschedule_request_status") != "pending"
                 )
-                if st.button(
-                    "Request Reschedule",
-                    key=f"hm_tz_open_reschedule_{row.get('id')}",
+                st.button(
+                    "Reschedule",
+                    key=f"hm_tz_open_reschedule_{schedule_id}",
                     use_container_width=True,
                     disabled=not can_request,
-                ):
-                    state_key = f"hm_tz_show_reschedule_{row.get('id')}"
-                    st.session_state[state_key] = not st.session_state.get(state_key, False)
-                    st.rerun()
+                    on_click=_toggle_member_reschedule_form,
+                    args=(state_key,),
+                )
             if row.get("reschedule_request_status") == "pending":
                 st.caption("A reschedule request is already pending admin review.")
 
-            state_key = f"hm_tz_show_reschedule_{row.get('id')}"
+            state_key = f"hm_tz_show_reschedule_{schedule_id}"
             if st.session_state.get(state_key, False):
                 with st.container(border=True):
-                    st.markdown("#### Request reschedule")
+                    st.markdown("#### Reschedule")
                     st.caption(
                         f"Enter your preferred slot in your local timezone: {member_tz}."
                     )
