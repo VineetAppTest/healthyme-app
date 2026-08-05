@@ -17,7 +17,6 @@ on:
           - public
           - member
           - admin
-          - auth
       base_url:
         description: "Optional HealthyMe environment URL override"
         required: false
@@ -146,7 +145,6 @@ jobs:
             public) npm run test:public ;;
             member) npm run test:member ;;
             admin) npm run test:admin ;;
-            auth) npm run test:auth ;;
             all) npm test ;;
             *) echo "Unsupported suite: $JARVIS_SUITE" >&2; exit 1 ;;
           esac
