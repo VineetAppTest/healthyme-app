@@ -11,6 +11,10 @@ from components.member_plan_builder_export import (
     meal_review_rows,
     render_publish_log_and_download,
 )
+from components.member_allocation_notifications import (
+    delivery_summary,
+    queue_meal_plan_allocation,
+)
 from components.pbm_core import (
     MEAL_SLOTS,
     SELECT_RECIPE,
@@ -168,11 +172,29 @@ def _publish_repository_plan(
     if not active_ok:
         st.error(active_message)
         return
+    try:
+        delivery = queue_meal_plan_allocation(
+            member_plan,
+            source_profile_id=source_id,
+            meal_rows=meals,
+            actor_id=(
+                st.session_state.get("user_id")
+                or st.session_state.get("user_email")
+                or "admin"
+            ),
+        )
+    except Exception as exc:
+        delivery = {
+            "status": "failed",
+            "error": str(exc)[:500],
+            "in_app_created": False,
+        }
     clear_publish_cache()
     load_member_plan_events.clear()
     st.session_state["mpb_publish_flash"] = (
         f"Meal Profile published to {member_label}. Exercise and Supplement remain "
-        "independent allocations linked through this member's active Meal Plan."
+        "independent allocations linked through this member's active Meal Plan. "
+        f"{delivery_summary(delivery)}"
     )
     st.rerun()
 

@@ -11,6 +11,7 @@ from components.member_plan_builder_allocation_common import (
     allocation_choice_map,
     render_allocation_member_selector,
 )
+from components.member_allocation_notifications import delivery_summary
 from components.pbm_core import clean
 from components.supplement_member_allocation import (
     list_active_supplement_sources,
@@ -205,7 +206,7 @@ def _render_add_supplement(member_id: str) -> None:
             key=f"mpb_su_add_save_{member_id}",
         ):
             try:
-                save_supplement_member_allocation(
+                saved = save_supplement_member_allocation(
                     member_id=member_id,
                     source_id=_source_id(source),
                     dosage=dosage,
@@ -217,7 +218,10 @@ def _render_add_supplement(member_id: str) -> None:
                     actor_id=_actor_id(),
                 )
                 _clear_prefix("mpb_su_add_")
-                st.session_state["mpb_supplement_flash"] = "Supplement allocation saved."
+                st.session_state["mpb_supplement_flash"] = (
+                    "Supplement allocation saved. "
+                    f"{delivery_summary(saved.get('notification_delivery'))}"
+                )
                 st.rerun()
             except Exception as exc:
                 st.error(str(exc))

@@ -17,6 +17,7 @@ from components.member_plan_builder_allocation_common import (
     render_allocation_member_selector,
     source_summary,
 )
+from components.member_allocation_notifications import delivery_summary
 from components.pbm_core import clean, safe
 
 
@@ -121,7 +122,7 @@ def _render_add_exercise(member_id: str, member_label: str) -> None:
             key=f"mpb_ex_add_save_{member_id}",
         ):
             try:
-                save_exercise_member_allocation(
+                saved = save_exercise_member_allocation(
                     member_id=member_id,
                     source_id=clean(source.get("source_id") or source.get("id")),
                     start_date=start,
@@ -134,7 +135,8 @@ def _render_add_exercise(member_id: str, member_label: str) -> None:
                 _clear_prefix("mpb_ex_add_")
                 st.session_state["mpb_exercise_flash"] = (
                     f"Exercise allocated successfully to {member_label}. "
-                    "The member has been notified and the allocation is available in View Member Plan."
+                    f"{delivery_summary(saved.get('notification_delivery'))} "
+                    "The allocation is available in View Member Plan."
                 )
                 st.rerun()
             except Exception as exc:
@@ -278,7 +280,7 @@ div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary{
   min-height:2.18rem!important;
   height:2.18rem!important;
   padding:.30rem .58rem!important;
-  border:1px solid #E3C98E!important;
+  border:0!important;
   border-radius:11px!important;
   background:#FFFDF8!important;
   display:flex!important;
@@ -317,24 +319,33 @@ div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[ope
   content:"−";
 }
 div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) [data-testid="stExpanderDetails"]{
-  padding:.42rem .58rem .52rem!important;
+  display:block!important;
+  position:static!important;
+  clear:both!important;
+  box-sizing:border-box!important;
+  padding:.52rem .66rem .68rem!important;
+  border-top:1px solid #F0DFC0!important;
   height:auto!important;
+  max-height:none!important;
   min-height:0!important;
   overflow:visible!important;
 }
 div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[open],
 div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[open]>div,
 div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[open] div[data-testid="stVerticalBlock"]{
+  display:block!important;
+  position:static!important;
+  box-sizing:border-box!important;
   height:auto!important;
   max-height:none!important;
   min-height:0!important;
   overflow:visible!important;
 }
-.mpb-exercise-detail-wrap{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.45rem 1rem;width:100%;}
-.mpb-exercise-detail{display:inline-flex;align-items:flex-start;gap:.25rem;flex:0 1 auto;max-width:100%;font-size:.80rem;line-height:1.35;color:#334155;white-space:normal;}
+.mpb-exercise-detail-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));align-items:start;gap:.42rem .90rem;width:100%;box-sizing:border-box;padding:.08rem 0 .12rem;}
+.mpb-exercise-detail{display:grid;grid-template-columns:max-content minmax(0,1fr);align-items:start;gap:.25rem;min-width:0;max-width:100%;padding:.10rem .08rem;font-size:.80rem;line-height:1.35;color:#334155;white-space:normal;}
 .mpb-exercise-detail b{color:#064E3B;white-space:nowrap;}
 .mpb-exercise-detail span{min-width:0;overflow-wrap:anywhere;}
-@media(max-width:720px){.mpb-exercise-detail{flex:1 1 100%;}}
+@media(max-width:720px){.mpb-exercise-detail-wrap{grid-template-columns:1fr;}}
 </style>
 """,
         unsafe_allow_html=True,

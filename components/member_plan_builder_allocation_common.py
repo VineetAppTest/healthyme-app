@@ -52,7 +52,7 @@ def render_allocation_member_selector(key: str) -> Tuple[str, str]:
     if st.session_state.get(key) not in labels:
         st.session_state[key] = default_label
     selected_label = st.selectbox(
-        "Member Plan",
+        "Member",
         labels,
         key=key,
         help="Exercise and Supplement allocations attach through the member's active Meal Plan.",

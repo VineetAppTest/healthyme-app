@@ -11,7 +11,7 @@
     "test": "playwright test",
     "test:public": "playwright test tests/public-login.spec.ts",
     "test:member": "playwright test tests/member-login-refresh.spec.ts",
-    "test:admin": "playwright test tests/admin-login-refresh.spec.ts",
+    "test:admin": "playwright test tests/admin-login-refresh.spec.ts tests/admin-plan-builder-readonly.spec.ts",
     "verify:evidence": "node scripts/verify-evidence.mjs",
     "summary:safe": "node scripts/write-safe-summary.mjs",
     "verify:cleanup": "node scripts/verify-test-data-cleanup.mjs",

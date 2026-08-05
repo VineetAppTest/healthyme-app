@@ -101,7 +101,7 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertIn("note_cols = st.columns(2", source)
         self.assertGreaterEqual(source.count('height=60'), 4)
         self.assertNotIn('note_cols[1].text_input(', source)
-        self.assertIn("The member has been notified", source)
+        self.assertIn("delivery_summary", source)
         self.assertIn("available in View Member Plan", source)
         self.assertIn('st.success(f"✓ {flash}")', source)
 
@@ -115,6 +115,10 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertIn("exercise_api.save_exercise_member_allocation", source)
         self.assertIn("supplement_api.save_supplement_member_allocation", source)
         self.assertIn("supplement_api.stop_supplement_member_allocation", source)
+        self.assertIn("queue_member_event_email", source)
+        self.assertIn("queue_meal_plan_allocation", source)
+        self.assertIn("member-allocation-email-v2", source)
+        self.assertIn("meal-plan-allocation-email-v2", source)
         self.assertIn("install_member_allocation_notifications()", bootstrap)
 
     def test_notification_delivery_does_not_invoke_identity_write_paths(self):

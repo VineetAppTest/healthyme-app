@@ -82,6 +82,35 @@ def list_profiles_for_editing(
         return False, [], f"Could not load editable profiles: {exc}"
 
 
+def list_profiles_for_repository(
+    limit: int = 500,
+) -> Tuple[bool, List[dict], str]:
+    """Return every retained Meal Profile for repository selection.
+
+    Setup must not hide allocated or historical records. Draft, unallocated
+    profiles remain editable; every other status is loaded for read-only review
+    and meal-only cloning so member-plan history cannot be overwritten.
+    """
+    if not check_profile_builder_store().get("ok"):
+        return False, [], "Profile Builder tables are not ready."
+
+    try:
+        result = (
+            _client()
+            .table(PROFILE_TABLE)
+            .select(
+                "id,profile_name,status,assigned_member_id,"
+                "assigned_member_label,start_date,updated_at"
+            )
+            .order("updated_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return True, _rows(result), "Loaded all retained Meal Profiles."
+    except Exception as exc:
+        return False, [], f"Could not load the Meal Profile repository: {exc}"
+
+
 def list_draft_profiles_for_member(
     member_id: str,
     limit: int = 100,
