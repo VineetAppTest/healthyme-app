@@ -7,35 +7,47 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 _DEFAULT_MEMBER_TIMEZONE = "Asia/Kolkata"
-_PATCH_MARKER = "_hm_member_home_schedule_presentation_v3"
-_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v7"
+_PATCH_MARKER = "_hm_member_home_schedule_presentation_v4"
+_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v8"
 _MEMBER_HOME_STYLE_MARKER = 'id="hm-member-home-local-style-v3"'
 _CLOSED_STATUSES = {"cancelled", "completed", "rescheduled"}
 _ACTION_ROWS_KEY = "_hm_member_home_schedule_action_rows"
 _ACTION_INDEX_KEY = "_hm_member_home_schedule_action_index"
 _ACTION_RENDERED_IDS_KEY = "_hm_member_home_schedule_action_rendered_ids"
+_REMINDER_READ_FIELD = "member_home_48h_read_at"
 _MEMBER_HOME_COMPACT_CSS = """
-/* hm-member-home-compact-polish-v7 */
+/* hm-member-home-compact-polish-v8 */
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor),
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor),
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) > div,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) > div,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details,
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) [data-testid="stExpanderDetails"]{
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) details,
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) [data-testid="stExpanderDetails"],
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) [data-testid="stExpanderDetails"]{
   border:0!important;border-top:0!important;border-bottom:0!important;outline:0!important;
   background:transparent!important;box-shadow:none!important;
   margin:.20rem 0 .42rem 0!important;padding:0!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details::before,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) details::before,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details::after,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) details::after,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary::after,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary::after,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary + div::before,
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary + div::after{
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary + div::before,
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary + div::after,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary + div::after{
   display:none!important;content:none!important;border:0!important;
 }
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary + div{
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary + div,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary + div{
   border:0!important;border-top:0!important;border-bottom:0!important;
   box-shadow:none!important;margin-top:0!important;padding-top:.24rem!important;
 }
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) hr{
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) hr,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) hr{
   display:none!important;border:0!important;height:0!important;margin:0!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
@@ -47,6 +59,17 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
   display:flex!important;align-items:center!important;gap:.44rem!important;
   overflow:visible!important;
 }
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary{
+  width:fit-content!important;max-width:100%!important;min-width:0!important;
+  min-height:2.12rem!important;padding:.30rem .72rem!important;
+  border:1px solid #E3C98E!important;border-radius:999px!important;
+  background:#FFFDF8!important;box-shadow:0 3px 8px rgba(6,78,59,.05)!important;
+  display:flex!important;align-items:center!important;gap:.44rem!important;
+}
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary p{
+  margin:0!important;font-size:.78rem!important;font-weight:900!important;
+  white-space:nowrap!important;color:#064E3B!important;
+}
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary *{
   white-space:nowrap!important;overflow-wrap:normal!important;
@@ -56,26 +79,32 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary p{
   margin:0!important;font-size:.78rem!important;font-weight:900!important;flex:1 1 auto!important;max-width:none!important;overflow:visible!important;text-overflow:clip!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary [data-testid="stExpanderToggleIcon"],
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary [data-testid="stExpanderToggleIcon"],
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary [data-testid="stIconMaterial"],
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary [data-testid="stIconMaterial"],
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary [class*="material-symbol"],
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary svg{
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary [class*="material-symbol"],
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary svg,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary svg{
   display:none!important;width:0!important;height:0!important;min-width:0!important;
   margin:0!important;padding:0!important;overflow:hidden!important;font-size:0!important;
 }
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary::before{
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary::before,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary::before{
   content:"›";display:inline-flex;align-items:center;justify-content:center;
   width:.78rem;height:.78rem;min-width:.78rem;color:#064E3B;
   font-size:1rem;font-weight:900;line-height:1;transform:rotate(0deg);
   transition:transform .16s ease;
 }
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] summary::before{
+div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] summary::before,
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor) details[open] summary::before{
   transform:rotate(90deg);
 }
 .hm-v101-schedule-card{
   width:100%!important;max-width:none!important;min-height:0!important;
   margin:0!important;padding:0!important;border-radius:0!important;
 }
-.hm-upcoming-schedule-anchor,.hm-member-schedule-action-anchor{
+.hm-upcoming-schedule-anchor,.hm-message-pill-anchor,.hm-member-schedule-action-anchor{
   display:none!important;height:0!important;min-height:0!important;
   margin:0!important;padding:0!important;overflow:hidden!important;
 }
@@ -193,6 +222,33 @@ def _schedule_end_utc(row: dict[str, Any]) -> dt.datetime | None:
     return start_value + dt.timedelta(minutes=30) if start_value else None
 
 
+def member_home_schedule_phase(
+    row: dict[str, Any],
+    *,
+    now_utc: dt.datetime | None = None,
+) -> str:
+    """Resolve the requested two-stage Member Home consultation lifecycle."""
+
+    status = _text(row.get("status") or "scheduled").lower()
+    if status in _CLOSED_STATUSES:
+        return ""
+    if _text(row.get("reschedule_request_status")).lower() == "pending":
+        return "reschedule_pending"
+    if status == "scheduled":
+        return "initial"
+    if status != "acknowledged" or _text(row.get(_REMINDER_READ_FIELD)):
+        return ""
+
+    now_value = now_utc or dt.datetime.now(dt.timezone.utc)
+    if now_value.tzinfo is None:
+        now_value = now_value.replace(tzinfo=dt.timezone.utc)
+    start_value = _schedule_start_utc(row)
+    if start_value is None:
+        return ""
+    delta = start_value - now_value.astimezone(dt.timezone.utc)
+    return "reminder" if dt.timedelta(0) <= delta <= dt.timedelta(hours=48) else ""
+
+
 def prepare_member_home_upcoming_schedules(
     rows: list[dict[str, Any]],
     *,
@@ -213,12 +269,13 @@ def prepare_member_home_upcoming_schedules(
     visible: list[dict[str, Any]] = []
     for raw in rows or []:
         row = dict(raw or {})
-        status = _text(row.get("status") or "scheduled").lower()
-        if status in _CLOSED_STATUSES or status == "acknowledged":
+        phase = member_home_schedule_phase(row, now_utc=now_value)
+        if not phase:
             continue
         end_value = _schedule_end_utc(row)
         if end_value is not None and end_value <= now_value:
             continue
+        row["_member_home_phase"] = phase
         visible.append(row)
 
     minimum = dt.datetime.min.replace(tzinfo=dt.timezone.utc)
@@ -286,6 +343,21 @@ def _accept_member_home_schedule(
         )
 
 
+def _read_member_home_schedule_reminder(
+    schedule_id: str,
+    member_id: object,
+    error_key: str,
+) -> None:
+    import streamlit as st
+    from components import db as db_api
+
+    updated = db_api.mark_member_schedule_reminder_read(schedule_id, member_id)
+    if not updated:
+        st.session_state[error_key] = (
+            "This consultation reminder could not be marked as read. Please refresh and retry."
+        )
+
+
 def _render_member_home_schedule_actions(row: dict[str, Any]) -> None:
     """Render consistent acceptance and reschedule actions under a card."""
 
@@ -302,6 +374,7 @@ def _render_member_home_schedule_actions(row: dict[str, Any]) -> None:
     st.session_state[_ACTION_RENDERED_IDS_KEY] = rendered_ids
 
     status = _text(row.get("status") or "scheduled").lower()
+    phase = _text(row.get("_member_home_phase")) or member_home_schedule_phase(row)
     if status not in {"scheduled", "acknowledged"}:
         return
     pending_reschedule = (
@@ -318,7 +391,7 @@ def _render_member_home_schedule_actions(row: dict[str, Any]) -> None:
     )
     accept_col, reschedule_col = st.columns(2, gap="small")
     with accept_col:
-        if status == "scheduled":
+        if phase == "initial" and status == "scheduled":
             st.button(
                 "Accept",
                 key=f"hm_home_accept_schedule_{schedule_id}",
@@ -326,9 +399,17 @@ def _render_member_home_schedule_actions(row: dict[str, Any]) -> None:
                 on_click=_accept_member_home_schedule,
                 args=(schedule_id, row.get("member_id"), error_key),
             )
+        elif phase == "reminder":
+            st.button(
+                "Read",
+                key=f"hm_home_read_schedule_{schedule_id}",
+                use_container_width=True,
+                on_click=_read_member_home_schedule_reminder,
+                args=(schedule_id, row.get("member_id"), error_key),
+            )
         else:
             st.button(
-                "Accepted",
+                "Accepted" if status == "acknowledged" else "Pending",
                 key=f"hm_home_accepted_schedule_{schedule_id}",
                 use_container_width=True,
                 disabled=True,
@@ -360,7 +441,7 @@ def _install_member_home_compact_polish() -> None:
         if (
             isinstance(body, str)
             and _MEMBER_HOME_STYLE_MARKER in body
-            and "hm-member-home-compact-polish-v7" not in body
+            and "hm-member-home-compact-polish-v8" not in body
         ):
             body = body.replace(
                 "</style>",

@@ -37,7 +37,7 @@ class FoodJournalMealGridSavedDaysCleanupTests(unittest.TestCase):
         self.assertIn("justify-content:flex-start!important", source)
         self.assertIn("button p{width:100%!important;text-align:left!important", source)
 
-    def test_saved_days_keeps_only_direct_four_column_cards(self):
+    def test_saved_days_keeps_only_direct_three_column_cards(self):
         page = (ROOT / "pages/18_Daily_Log.py").read_text()
         dispatch = (
             ROOT / "components/member_saved_days_dispatch_runtime.py"
@@ -46,7 +46,7 @@ class FoodJournalMealGridSavedDaysCleanupTests(unittest.TestCase):
             ROOT / "components/member_saved_days_home_cleanup.py"
         ).read_text()
 
-        self.assertIn('st.columns(4, gap="small")', page)
+        self.assertIn('st.columns(3, gap="small")', page)
         self.assertIn("saved_day_card_html", page)
         self.assertNotIn('"Open saved day"', page)
         self.assertNotIn("Viewing saved entries for", page)

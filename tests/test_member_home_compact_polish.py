@@ -21,7 +21,7 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
         self.assertIn('id="hm-member-home-local-style-v3"', source)
-        self.assertIn("hm-member-home-compact-polish-v7", source)
+        self.assertIn("hm-member-home-compact-polish-v8", source)
         self.assertNotIn("top:-2.75rem", source)
         self.assertIn("width:fit-content", source)
         self.assertIn("white-space:nowrap", source)
@@ -60,13 +60,15 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
         self.assertIn("margin:0", source)
         self.assertNotIn("width:47%", source)
 
-    def test_upcoming_pill_is_not_rendered_when_no_schedule_remains(self):
+    def test_upcoming_pill_remains_visible_when_no_schedule_requires_action(self):
         page = (ROOT / "pages/02_Member_Home.py").read_text()
-        empty_guard = page.index("if not upcoming_schedules:")
-        empty_return = page.index("return", empty_guard)
-        expander = page.index("with st.expander(", empty_guard)
-        self.assertLess(empty_guard, empty_return)
-        self.assertLess(empty_return, expander)
+        expander = page.index("with st.expander(")
+        label = page.index('f"Upcoming Consultation ({len(upcoming_schedules)})"')
+        empty_guard = page.index("if not upcoming_schedules:", label)
+        empty_state = page.index("No upcoming consultation requires action.", empty_guard)
+        self.assertLess(expander, label)
+        self.assertLess(label, empty_guard)
+        self.assertLess(empty_guard, empty_state)
 
     def test_compact_polish_does_not_change_schedule_or_member_business_state(self):
         source = (

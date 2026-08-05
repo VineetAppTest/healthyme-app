@@ -1,24 +1,56 @@
 from __future__ import annotations
 
+import datetime as dt
 import html
+import json
+import re
+from collections import OrderedDict
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import streamlit as st
 
 from components.current_member_plan import load_current_member_plan
-from components.member_recommendation_member_labels import (
-    _inject_member_label_styles,
-    _render_member_guidance,
-    _render_weekly_type_clean,
+from components.member_recommendation_member_labels import _render_member_guidance
+from components.member_recommendation_split_display import today_day_number
+from components.member_timezone import (
+    DEFAULT_MEMBER_TIMEZONE,
+    member_local_today,
+    member_timezone_name,
 )
-from components.member_recommendation_split_display import (
-    _inject_styles,
-    _render_section,
-    day_label,
-    items_for_day,
-    today_day_number,
+
+
+PERIOD_ORDER = ("Morning", "Midday", "Evening", "Night", "Anytime")
+DOMAIN_LABELS = {
+    "meal": "Meal",
+    "supplement": "Supplement",
+    "exercise": "Exercise",
+}
+TIMING_ORDER = (
+    "wake-up",
+    "wake up",
+    "early morning",
+    "empty stomach",
+    "before breakfast",
+    "breakfast",
+    "after breakfast",
+    "morning",
+    "mid-morning",
+    "mid morning",
+    "before lunch",
+    "lunch",
+    "after lunch",
+    "midday",
+    "afternoon",
+    "evening snack",
+    "before dinner",
+    "dinner",
+    "after dinner",
+    "evening",
+    "night",
+    "before bed",
+    "bedtime",
 )
-from components.member_timezone import member_local_today
 
 
 def _clean(value: Any) -> str:
@@ -27,6 +59,41 @@ def _clean(value: Any) -> str:
 
 def _esc(value: Any) -> str:
     return html.escape(_clean(value))
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value or default)
+    except Exception:
+        return default
+
+
+def _parse_date(value: Any) -> dt.date | None:
+    text = _clean(value)[:10]
+    if not text:
+        return None
+    try:
+        return dt.date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def _snapshot(row: dict[str, Any]) -> dict[str, Any]:
+    raw_snapshot = row.get("source_snapshot") or {}
+    if isinstance(raw_snapshot, str):
+        try:
+            raw_snapshot = json.loads(raw_snapshot)
+        except (TypeError, ValueError):
+            raw_snapshot = {}
+    snapshot = dict(raw_snapshot) if isinstance(raw_snapshot, dict) else {}
+    raw_original = snapshot.get("source_original_snapshot") or {}
+    if isinstance(raw_original, str):
+        try:
+            raw_original = json.loads(raw_original)
+        except (TypeError, ValueError):
+            raw_original = {}
+    original = dict(raw_original) if isinstance(raw_original, dict) else {}
+    return original or snapshot
 
 
 def _member_identity() -> tuple[str, str]:
@@ -50,117 +117,325 @@ def _load_model() -> tuple[bool, dict[str, Any], str]:
     )
 
 
+def _member_local_now(member_id: str) -> dt.datetime:
+    timezone_name = member_timezone_name(member_id, persist=False)
+    try:
+        return dt.datetime.now(ZoneInfo(timezone_name))
+    except (ZoneInfoNotFoundError, ValueError):
+        return dt.datetime.now(ZoneInfo(DEFAULT_MEMBER_TIMEZONE))
+
+
 def _inject_current_plan_styles() -> None:
     st.markdown(
         """
-        <style id="hm-current-member-plan-v1">
-        .hm-current-plan-note{border:1px solid #D9C28F;border-radius:14px;background:#FFF9EC;color:#5D4A1E;padding:.66rem .78rem;margin:.38rem 0 .72rem 0;font-size:.82rem;font-weight:720;line-height:1.38;}
-        .hm-current-card{border:1px solid #E7D8BE;border-radius:16px;background:#FFFDF8;padding:.76rem .84rem;margin:.42rem 0 .62rem 0;box-shadow:0 7px 18px rgba(15,23,42,.045);}
-        .hm-current-title{color:#064E3B;font-size:.96rem;font-weight:950;line-height:1.22;margin:0 0 .34rem 0;}
-        .hm-current-chip-row{display:flex;flex-wrap:wrap;gap:.32rem;margin:.18rem 0 .30rem 0;}
-        .hm-current-chip{display:inline-flex;gap:.22rem;align-items:center;border:1px solid #D9C28F;border-radius:999px;background:#FFF7E6;color:#5D4A1E;padding:.18rem .46rem;font-size:.72rem;font-weight:760;line-height:1.15;}
-        .hm-current-line{color:#334155;font-size:.82rem;line-height:1.42;margin:.20rem 0 0 0;}
-        .hm-current-provenance{color:#64748B;font-size:.70rem;line-height:1.32;margin:.30rem 0 0 0;}
-        .hm-current-section{color:#064E3B;font-size:1rem;font-weight:950;margin:.28rem 0 .42rem 0;}
-        .hm-current-empty{border:1px dashed #D9C28F;border-radius:14px;background:#FFFDF8;color:#64748B;padding:.72rem .78rem;margin:.36rem 0 .62rem 0;font-size:.82rem;line-height:1.38;}
+        <style id="hm-current-member-plan-v2">
+        .hm-plan-view-note{display:inline-flex;align-items:center;border:1px solid #D9C28F;border-radius:999px;background:#FFF9EC;color:#72551A;padding:.24rem .56rem;margin:.20rem 0 .58rem;font-size:.72rem;font-weight:850;}
+        .hm-plan-day-head{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap;margin:.18rem 0 .58rem;}
+        .hm-plan-day-title{color:#064E3B;font-size:1.02rem;font-weight:950;}.hm-plan-day-sub{color:#64748B;font-size:.78rem;font-weight:720;}
+        .hm-plan-period{border:1px solid #E7D8BE;border-radius:15px;background:#FFFDF8;padding:.58rem .68rem;margin:.34rem 0 .48rem;}
+        .hm-plan-period.current{border-color:#D8A84E;background:linear-gradient(135deg,#FFFDF8,#FFF5DF);box-shadow:0 6px 15px rgba(6,78,59,.05);}
+        .hm-plan-period-head{display:flex;align-items:center;justify-content:space-between;gap:.55rem;color:#72551A;font-size:.79rem;font-weight:950;margin:0 0 .30rem;}
+        .hm-plan-now{display:inline-flex;border:1px solid #B8DCCF;border-radius:999px;background:#ECFDF5;color:#065F46;padding:.10rem .38rem;font-size:.62rem;font-weight:950;}
+        .hm-plan-item{display:grid;grid-template-columns:5.3rem minmax(0,1fr);gap:.48rem;padding:.37rem .08rem;border-top:1px solid #EFE4CE;}
+        .hm-plan-item:first-of-type{border-top:0;}.hm-plan-domain{display:inline-flex;align-items:flex-start;color:#72551A;font-size:.67rem;font-weight:950;line-height:1.25;padding-top:.08rem;}
+        .hm-plan-item-title{color:#064E3B;font-size:.81rem;font-weight:930;line-height:1.30;}.hm-plan-item-meta{color:#475569;font-size:.70rem;font-weight:720;line-height:1.34;margin-top:.08rem;}.hm-plan-item-instruction{color:#64748B;font-size:.68rem;line-height:1.34;margin-top:.10rem;}
+        .hm-plan-empty{border:1px dashed #D9C28F;border-radius:14px;background:#FFFDF8;color:#64748B;padding:.68rem .74rem;margin:.30rem 0 .56rem;font-size:.78rem;font-weight:720;line-height:1.38;}
+        .hm-plan-week-intro{color:#475569;font-size:.80rem;font-weight:720;line-height:1.42;margin:.10rem 0 .62rem;}
+        .hm-rec-section-title{color:#72551A;font-size:.92rem;font-weight:950;margin:.70rem 0 .38rem;}
+        .hm-rec-empty{border:1px dashed #D9C28F;background:#FFF9EC;border-radius:14px;padding:.72rem;color:#64748B;font-size:.80rem;font-weight:740;line-height:1.4;}
+        .hm-guidance-box{border:1px solid #E3C98E;background:#FFFDF8;border-radius:16px;padding:.66rem .72rem;box-shadow:0 6px 15px rgba(15,23,42,.035);}
+        .hm-chip-row{display:flex;flex-wrap:wrap;gap:.30rem .34rem;margin:.16rem 0;}
+        .hm-chip{display:inline-flex;align-items:center;gap:.28rem;border:1px solid #D9C28F;background:#FFF9EC;color:#334155;border-radius:999px;padding:.20rem .46rem;font-size:.72rem;font-weight:760;line-height:1.25;max-width:100%;}
+        .hm-chip b{color:#064E3B;font-weight:950;margin-right:.10rem;}
+        div[data-testid="stExpander"]:has(.hm-plan-day-anchor){margin:.34rem 0!important;}
+        div[data-testid="stExpander"]:has(.hm-plan-day-anchor) summary{border:1px solid #E3C98E!important;border-radius:14px!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:920!important;min-height:2.65rem!important;}
+        div[data-testid="stExpander"]:has(.hm-plan-today-anchor) summary{border-color:#D8A84E!important;background:#FFF6E5!important;}
+        .hm-plan-day-anchor,.hm-plan-today-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+        @media(max-width:700px){.hm-plan-item{grid-template-columns:4.6rem minmax(0,1fr);gap:.34rem}.hm-plan-period{padding:.52rem .58rem}.hm-plan-item-title{font-size:.78rem}}
         </style>
         """,
         unsafe_allow_html=True,
     )
 
 
-def _chip(label: str, value: Any) -> str:
-    text = _clean(value)
-    if not text:
-        return ""
-    return (
-        "<span class='hm-current-chip'>"
-        f"<b>{_esc(label)}:</b> {_esc(text)}"
-        "</span>"
-    )
+def _row_effective_on(row: dict[str, Any], target: dt.date) -> bool:
+    start = _parse_date(row.get("start_date"))
+    end = _parse_date(row.get("end_date"))
+    return not ((start and target < start) or (end and target > end))
 
 
-def _render_allocation_card(row: dict[str, Any], domain: str) -> None:
-    snapshot = dict(row.get("source_snapshot") or {})
-    if domain == "exercise":
-        title = (
-            _clean(row.get("exercise_name"))
-            or _clean(row.get("title"))
-            or _clean(snapshot.get("title"))
-            or "Exercise"
-        )
-        chips = [
-            _chip("Start", row.get("start_date") or "Current"),
-            _chip("End", row.get("end_date") or "Open"),
-            _chip("Category", snapshot.get("category")),
-            _chip("Difficulty", snapshot.get("difficulty")),
-            _chip("Duration/Reps", snapshot.get("duration_or_reps")),
-            _chip("Equipment", snapshot.get("equipment")),
-        ]
-        instruction = _clean(row.get("instructions") or snapshot.get("instructions"))
-        note = _clean(row.get("notes"))
-    else:
-        title = (
-            _clean(row.get("supplement_name"))
-            or _clean(row.get("title"))
-            or _clean(snapshot.get("supplement_name"))
-            or _clean(snapshot.get("title"))
-            or "Supplement"
-        )
-        chips = [
-            _chip("Dosage", row.get("dosage") or snapshot.get("dosage")),
-            _chip("Frequency", row.get("frequency") or snapshot.get("frequency")),
-            _chip("Timing", row.get("timing") or snapshot.get("timing")),
-            _chip("Start", row.get("start_date") or "Current"),
-            _chip("End", row.get("end_date") or "Open"),
-        ]
-        instruction = _clean(row.get("instructions") or snapshot.get("instructions"))
-        note = ""
-
-    source_id = _clean(row.get("source_id"))
-    source_type = _clean(row.get("source_type"))
-    body = ""
-    if instruction:
-        body += "<div class='hm-current-line'>" f"<b>Instructions:</b> {_esc(instruction)}" "</div>"
-    if note:
-        body += "<div class='hm-current-line'>" f"<b>Notes:</b> {_esc(note)}" "</div>"
-    provenance = ""
-    if source_type or source_id:
-        provenance = (
-            "<div class='hm-current-provenance'>"
-            f"Source: {_esc(source_type)}"
-            + (f" · {_esc(source_id)}" if source_id else "")
-            + "</div>"
-        )
-
-    st.markdown(
-        (
-            "<div class='hm-current-card'>"
-            f"<div class='hm-current-title'>{_esc(title)}</div>"
-            f"<div class='hm-current-chip-row'>{''.join(chips)}</div>"
-            f"{body}{provenance}"
-            "</div>"
-        ),
-        unsafe_allow_html=True,
-    )
-
-
-def _render_allocation_group(
-    title: str,
-    current_rows: list[dict[str, Any]],
-    upcoming_rows: list[dict[str, Any]],
+def _allocation_rows_for_date(
+    model: dict[str, Any],
     domain: str,
-    empty_message: str,
+    target: dt.date,
+) -> list[dict[str, Any]]:
+    partitions = dict(model.get(domain) or {})
+    rows = list(partitions.get("current") or []) + list(
+        partitions.get("upcoming") or []
+    )
+    return [dict(row or {}) for row in rows if _row_effective_on(row, target)]
+
+
+def _split_timings(value: Any) -> list[str]:
+    values = [
+        part.strip()
+        for part in re.split(r"[,;|]", _clean(value))
+        if part.strip()
+    ]
+    meaningful = [
+        value
+        for value in values
+        if value.casefold() not in {"none", "not set", "n/a", "na"}
+    ]
+    return meaningful or ["Anytime / as advised"]
+
+
+def _period_for_timing(value: Any) -> str:
+    text = _clean(value).casefold()
+    if any(token in text for token in ("bed", "night", "sleep")):
+        return "Night"
+    if any(
+        token in text
+        for token in (
+            "evening",
+            "dinner",
+            "sunset",
+        )
+    ):
+        return "Evening"
+    if any(
+        token in text
+        for token in (
+            "mid-morning",
+            "mid morning",
+            "lunch",
+            "midday",
+            "afternoon",
+        )
+    ):
+        return "Midday"
+    if any(
+        token in text
+        for token in (
+            "wake",
+            "morning",
+            "breakfast",
+            "empty stomach",
+        )
+    ):
+        return "Morning"
+    return "Anytime"
+
+
+def _timing_rank(value: Any) -> int:
+    text = _clean(value).casefold()
+    for index, token in enumerate(TIMING_ORDER):
+        if token in text:
+            return index
+    return len(TIMING_ORDER) + 1
+
+
+def _meal_items(
+    meals: list[dict[str, Any]],
+    day_number: int,
+) -> list[dict[str, str]]:
+    output: list[dict[str, str]] = []
+    for row in meals:
+        if _safe_int(row.get("day_number")) != day_number:
+            continue
+        snapshot = _snapshot(row)
+        timing = _clean(row.get("slot_name") or row.get("scheduled_time")) or (
+            "Anytime / as advised"
+        )
+        meta = " · ".join(
+            value
+            for value in (
+                _clean(row.get("portion")) or "Portion as advised",
+                (
+                    f"Prep {_clean(snapshot.get('prep_time'))}"
+                    if _clean(snapshot.get("prep_time"))
+                    else ""
+                ),
+            )
+            if value
+        )
+        output.append(
+            {
+                "domain": "meal",
+                "title": _clean(row.get("reference_label")) or "Meal",
+                "timing": timing,
+                "period": _period_for_timing(timing),
+                "meta": meta,
+                "instruction": _clean(row.get("instruction")),
+                "order": f"{_timing_rank(timing):04d}-{_safe_int(row.get('item_order'), 0):04d}",
+            }
+        )
+    return output
+
+
+def _supplement_items(
+    rows: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    output: list[dict[str, str]] = []
+    for row in rows:
+        snapshot = _snapshot(row)
+        timing_value = row.get("timing") or snapshot.get("timing")
+        for timing in _split_timings(timing_value):
+            meta = " · ".join(
+                value
+                for value in (
+                    _clean(row.get("dosage") or snapshot.get("dosage")),
+                    _clean(row.get("frequency") or snapshot.get("frequency")),
+                )
+                if value
+            )
+            output.append(
+                {
+                    "domain": "supplement",
+                    "title": _clean(
+                        row.get("supplement_name")
+                        or row.get("title")
+                        or snapshot.get("supplement_name")
+                        or snapshot.get("title")
+                    )
+                    or "Supplement",
+                    "timing": timing,
+                    "period": _period_for_timing(timing),
+                    "meta": meta or "Dosage as advised",
+                    "instruction": _clean(
+                        row.get("instructions") or snapshot.get("instructions")
+                    ),
+                    "order": f"{_timing_rank(timing):04d}-{_clean(timing).casefold()}",
+                }
+            )
+    return output
+
+
+def _exercise_items(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    output: list[dict[str, str]] = []
+    for row in rows:
+        snapshot = _snapshot(row)
+        timing_value = row.get("timing") or snapshot.get("timing")
+        for timing in _split_timings(timing_value):
+            meta = " · ".join(
+                value
+                for value in (
+                    _clean(snapshot.get("duration_or_reps")),
+                    _clean(snapshot.get("equipment")),
+                )
+                if value
+            )
+            output.append(
+                {
+                    "domain": "exercise",
+                    "title": _clean(
+                        row.get("exercise_name")
+                        or row.get("title")
+                        or snapshot.get("title")
+                    )
+                    or "Exercise",
+                    "timing": timing,
+                    "period": _period_for_timing(timing),
+                    "meta": meta or "Duration / repetitions as advised",
+                    "instruction": _clean(
+                        row.get("instructions") or snapshot.get("instructions")
+                    ),
+                    "order": f"{_timing_rank(timing):04d}-{_clean(timing).casefold()}",
+                }
+            )
+    return output
+
+
+def build_day_timeline(
+    model: dict[str, Any],
+    *,
+    day_number: int,
+    target_date: dt.date,
+) -> OrderedDict[str, list[dict[str, str]]]:
+    """Build one member-safe, chronological day view from the three authorities."""
+
+    items = _meal_items(list(model.get("meals") or []), day_number)
+    items.extend(
+        _supplement_items(
+            _allocation_rows_for_date(model, "supplement", target_date)
+        )
+    )
+    items.extend(
+        _exercise_items(_allocation_rows_for_date(model, "exercise", target_date))
+    )
+    domain_order = {"meal": 0, "supplement": 1, "exercise": 2}
+    items.sort(
+        key=lambda row: (
+            PERIOD_ORDER.index(row["period"]),
+            row.get("order", ""),
+            domain_order.get(row.get("domain", ""), 9),
+            row.get("title", "").casefold(),
+        )
+    )
+    grouped: OrderedDict[str, list[dict[str, str]]] = OrderedDict()
+    for period in PERIOD_ORDER:
+        period_items = [row for row in items if row.get("period") == period]
+        if period_items:
+            grouped[period] = period_items
+    return grouped
+
+
+def _current_period(local_now: dt.datetime) -> str:
+    hour = local_now.hour
+    if hour < 11:
+        return "Morning"
+    if hour < 16:
+        return "Midday"
+    if hour < 20:
+        return "Evening"
+    return "Night"
+
+
+def _render_timeline_item(row: dict[str, str]) -> str:
+    instruction = _clean(row.get("instruction"))
+    timing = _clean(row.get("timing"))
+    meta = " · ".join(
+        value for value in (timing, _clean(row.get("meta"))) if value
+    )
+    instruction_html = (
+        f"<div class='hm-plan-item-instruction'>{_esc(instruction)}</div>"
+        if instruction
+        else ""
+    )
+    return (
+        "<div class='hm-plan-item'>"
+        f"<span class='hm-plan-domain'>{_esc(DOMAIN_LABELS.get(row.get('domain', ''), 'Plan'))}</span>"
+        "<div>"
+        f"<div class='hm-plan-item-title'>{_esc(row.get('title'))}</div>"
+        f"<div class='hm-plan-item-meta'>{_esc(meta)}</div>"
+        f"{instruction_html}"
+        "</div></div>"
+    )
+
+
+def _render_day_timeline(
+    grouped: OrderedDict[str, list[dict[str, str]]],
+    *,
+    active_period: str = "",
 ) -> None:
-    st.markdown(f"<div class='hm-current-section'>{_esc(title)}</div>", unsafe_allow_html=True)
-    if not current_rows:
-        st.markdown(f"<div class='hm-current-empty'>{_esc(empty_message)}</div>", unsafe_allow_html=True)
-    for row in current_rows:
-        _render_allocation_card(row, domain)
-    if upcoming_rows:
-        with st.expander(f"Upcoming {title.lower()} ({len(upcoming_rows)})"):
-            for row in upcoming_rows:
-                _render_allocation_card(row, domain)
+    if not grouped:
+        st.markdown(
+            "<div class='hm-plan-empty'>No meal, supplement or exercise is scheduled for this day.</div>",
+            unsafe_allow_html=True,
+        )
+        return
+    for period, rows in grouped.items():
+        current_class = " current" if period == active_period else ""
+        now_badge = "<span class='hm-plan-now'>Current period</span>" if current_class else ""
+        st.markdown(
+            (
+                f"<div class='hm-plan-period{current_class}'>"
+                f"<div class='hm-plan-period-head'><span>{_esc(period)}</span>{now_badge}</div>"
+                + "".join(_render_timeline_item(row) for row in rows)
+                + "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
 
 
 def _render_warnings(model: dict[str, Any]) -> None:
@@ -169,88 +444,123 @@ def _render_warnings(model: dict[str, Any]) -> None:
         st.warning(" ".join(warnings))
 
 
-def _render_authority_note(model: dict[str, Any]) -> None:
-    ignored = dict(model.get("ignored_profile_rows") or {})
-    hidden = int(ignored.get("exercise", 0)) + int(ignored.get("supplement", 0))
-    note = (
-        "This page is read-only. Meals come from the active Meal Profile; "
-        "Exercises and Supplements come from their independent member-allocation workflows."
+def _render_view_note() -> None:
+    st.markdown(
+        "<div class='hm-plan-view-note'>View only · Updates are managed by your nutritionist</div>",
+        unsafe_allow_html=True,
     )
-    if hidden:
-        note += (
-            f" {hidden} retained legacy non-meal Profile Builder row"
-            + ("s are" if hidden != 1 else " is")
-            + " intentionally excluded."
-        )
-    st.markdown(f"<div class='hm-current-plan-note'>{_esc(note)}</div>", unsafe_allow_html=True)
+
+
+def _cycle_dates(
+    profile: dict[str, Any],
+    today: dt.date,
+) -> tuple[int, list[tuple[int, dt.date]]]:
+    current_day = today_day_number(profile, today=today) if profile else 1
+    cycle_start = today - dt.timedelta(days=current_day - 1)
+    return current_day, [
+        (day, cycle_start + dt.timedelta(days=day - 1))
+        for day in range(1, 8)
+    ]
 
 
 def render_current_member_plan_view() -> None:
-    _inject_styles()
-    _inject_member_label_styles()
     _inject_current_plan_styles()
     ok, model, message = _load_model()
     if not ok:
         st.error(message)
         return
     _render_warnings(model)
-    _render_authority_note(model)
+    _render_view_note()
     if not model.get("has_content"):
-        st.markdown("<div class='hm-current-empty'>No current plan has been allocated yet.</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='hm-plan-empty'>No current plan has been allocated yet.</div>",
+            unsafe_allow_html=True,
+        )
         return
 
-    meal_tab, exercise_tab, supplement_tab, guidance_tab = st.tabs(
-        ["Meals", "Exercises", "Supplements", "Nutrition Guidance"]
+    member_id = _clean(model.get("member_id"))
+    today = member_local_today(member_id)
+    profile = dict(model.get("meal_profile") or {})
+    current_day, dates = _cycle_dates(profile, today)
+    st.markdown(
+        "<div class='hm-plan-week-intro'>Your complete seven-day cycle is organised by day. Open a day to see Meals, Supplements and Exercise together in the order they apply.</div>",
+        unsafe_allow_html=True,
     )
-    with meal_tab:
-        profile = dict(model.get("meal_profile") or {})
-        meals = list(model.get("meals") or [])
-        if profile and meals:
-            _render_weekly_type_clean(profile, meals, "meal", "Weekly Meal Recommendation", "No meals scheduled for this day.")
-        else:
-            st.markdown("<div class='hm-current-empty'>No active Meal Profile is published.</div>", unsafe_allow_html=True)
-    with exercise_tab:
-        exercise = dict(model.get("exercise") or {})
-        _render_allocation_group("Current Exercises", list(exercise.get("current") or []), list(exercise.get("upcoming") or []), "exercise", "No current Exercise allocation.")
-    with supplement_tab:
-        supplement = dict(model.get("supplement") or {})
-        _render_allocation_group("Current Supplements", list(supplement.get("current") or []), list(supplement.get("upcoming") or []), "supplement", "No current Supplement allocation.")
-    with guidance_tab:
-        _render_member_guidance(dict(model.get("meal_profile") or {}), list(model.get("guidance_items") or []), day=None, title="Current Nutrition Guidance")
+
+    for day_number, target_date in dates:
+        is_today = day_number == current_day
+        label = (
+            f"Day {day_number} · {target_date.strftime('%a, %d %b')}"
+            + (" · Today" if is_today else "")
+        )
+        with st.expander(label, expanded=is_today):
+            st.markdown(
+                "<span class='hm-plan-day-anchor hm-plan-today-anchor'></span>"
+                if is_today
+                else "<span class='hm-plan-day-anchor'></span>",
+                unsafe_allow_html=True,
+            )
+            _render_day_timeline(
+                build_day_timeline(
+                    model,
+                    day_number=day_number,
+                    target_date=target_date,
+                ),
+                active_period=(
+                    _current_period(_member_local_now(member_id)) if is_today else ""
+                ),
+            )
+
+    with st.expander("Nutrition Guidance", expanded=False):
+        _render_member_guidance(
+            profile,
+            list(model.get("guidance_items") or []),
+            day=None,
+            title="Nutrition Guidance",
+        )
 
 
 def render_todays_current_plan_view() -> None:
-    _inject_styles()
-    _inject_member_label_styles()
     _inject_current_plan_styles()
     ok, model, message = _load_model()
     if not ok:
         st.error(message)
         return
     _render_warnings(model)
-    _render_authority_note(model)
+    _render_view_note()
 
+    member_id = _clean(model.get("member_id"))
+    local_now = _member_local_now(member_id)
+    today = local_now.date()
     profile = dict(model.get("meal_profile") or {})
-    meals = list(model.get("meals") or [])
-    today_meals: list[dict[str, Any]] = []
-    today_day = None
-    if profile:
-        today_day = today_day_number(profile, today=member_local_today(model.get("member_id", "")))
-        today_meals = items_for_day(meals, today_day, "meal")
-        st.markdown("<div class='hm-rec-day-label'>" f"Today - {_esc(day_label(profile, today_day))}" "</div>", unsafe_allow_html=True)
+    day_number = today_day_number(profile, today=today) if profile else 1
+    grouped = build_day_timeline(
+        model,
+        day_number=day_number,
+        target_date=today,
+    )
+    st.markdown(
+        (
+            "<div class='hm-plan-day-head'>"
+            f"<div class='hm-plan-day-title'>Today · Day {day_number} · {_esc(today.strftime('%a, %d %b'))}</div>"
+            "<div class='hm-plan-day-sub'>Meals, Supplements and Exercise in one daily sequence</div>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+    _render_day_timeline(grouped, active_period=_current_period(local_now))
 
-    exercise = dict(model.get("exercise") or {})
-    supplement = dict(model.get("supplement") or {})
-    meal_col, supplement_col, exercise_col = st.columns(3, gap="small")
-    with meal_col:
-        _render_section("Meals", today_meals, "No meal recommendation added for today.", compact=True)
-    with supplement_col:
-        _render_allocation_group("Supplements", list(supplement.get("current") or []), [], "supplement", "No current Supplement allocation.")
-    with exercise_col:
-        _render_allocation_group("Exercises", list(exercise.get("current") or []), [], "exercise", "No current Exercise allocation.")
-
-    _render_member_guidance(profile, list(model.get("guidance_items") or []), day=today_day, title="Nutrition Guidance")
+    _render_member_guidance(
+        profile,
+        list(model.get("guidance_items") or []),
+        day=day_number,
+        title="Nutrition Guidance",
+    )
     st.divider()
-    if st.button("Log today's activity", key="hm_current_plan_log_activity", use_container_width=True):
+    if st.button(
+        "Log today's activity",
+        key="hm_current_plan_log_activity",
+        use_container_width=True,
+    ):
         st.session_state["hm_daily_log_target_tab"] = "Food Journal"
         st.switch_page("pages/18_Daily_Log.py")

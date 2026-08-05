@@ -12,7 +12,6 @@ from components.db import (
     list_upcoming_member_schedules,
     mark_member_message_read,
     queue_schedule_acknowledgement_reminders_v104b11,
-    schedule_acknowledgement_notice_v104b11,
     schedule_display_status_label_v104b11,
 )
 from components.flash import render_system_message, set_system_message
@@ -28,6 +27,12 @@ from components.ui_common import (
 
 
 SHOW_MEMBER_REFERENCE_LIBRARY = False
+
+UPCOMING_CONSULTATION_ADVISORY = (
+    "Please acknowledge the scheduled session or submit a reschedule request as soon as possible. "
+    "Reschedule requests raised within 24 hours of the session may not be accepted and, if "
+    "accommodated, may use an additional session count."
+)
 
 
 st.set_page_config(
@@ -150,8 +155,12 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-te
 .hm-v101-schedule-pill{display:inline-flex;padding:.16rem .44rem;border-radius:999px;border:1px solid #D9C28F;background:#FFF7E6;color:#7A5A16;font-size:.70rem;font-weight:850;margin-left:.22rem;}
 .hm-v104b11-ack-note{border:1px solid #E3C98E;background:#FFF7E6;color:#7A5A16!important;border-radius:12px;padding:.55rem .70rem;margin-top:.45rem!important;font-weight:560!important;}
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor){margin:.45rem 0 .85rem 0!important;}
+div[data-testid="stExpander"]:has(.hm-message-pill-anchor){margin:.45rem 0 .85rem 0!important;}
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{border:1.4px solid #D8A84E!important;border-radius:16px!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:950!important;}
 .hm-upcoming-schedule-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+.hm-message-pill-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+.hm-consultation-advisory{border:1px solid #E3C98E;background:#FFF7E6;color:#7A5A16!important;border-radius:12px;padding:.48rem .62rem;margin:.12rem 0 .48rem!important;font-size:.75rem;font-weight:620;line-height:1.36;}
+.hm-home-empty{color:#64748B;font-size:.78rem;font-weight:720;padding:.22rem .08rem .38rem;}
 .hm-home-section-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin:.42rem 0 .48rem 0;padding:.44rem .12rem .38rem .12rem;color:#064E3B;font-size:1rem;font-weight:950;}
 .hm-home-section-head span{display:inline-flex;align-items:center;padding:.14rem .42rem;border:1px solid #D9C28F;border-radius:999px;background:#FFF7E6;color:#7A5A16;font-size:.68rem;font-weight:850;white-space:nowrap;}
 .hm-home-section-divider{height:1px;background:linear-gradient(90deg,transparent 0%,#D8A84E 12%,#D8A84E 88%,transparent 100%);margin:.88rem 0 .72rem 0;}
@@ -249,8 +258,6 @@ def _render_member_utility_bar():
 def _render_messages(user_id, show_divider=False):
     auto_archive_expired_nutritionist_messages(user_id)
     messages = get_member_messages(user_id, limit=6)
-    if not messages:
-        return False
 
     unique_messages = []
     seen_msg_keys = set()
@@ -266,84 +273,74 @@ def _render_messages(user_id, show_divider=False):
         if len(unique_messages) == 6:
             break
 
-    if not unique_messages:
-        return False
-    if show_divider:
-        st.markdown(
-            "<div class='hm-home-section-divider'></div>",
-            unsafe_allow_html=True,
-        )
-    st.markdown(
-        f"<div class='hm-home-section-head'><div>Messages from Nutritionist</div><span>{len(unique_messages)} recent</span></div>",
-        unsafe_allow_html=True,
-    )
-
-    for row_start in range(0, len(unique_messages), 3):
-        cols = st.columns(3, gap="small")
-        for col, msg in zip(cols, unique_messages[row_start : row_start + 3]):
-            with col:
-                with st.container(border=True):
-                    st.markdown(
-                        f"""
-                        <span class='hm-message-grid-anchor'></span>
-                        <div class='hm-b13-message-card'>
-                          <div class='hm-b13-message-subject'>{_esc(msg.get('subject','Message'))}</div>
-                          <div class='hm-b13-message-date'>{_esc(format_local_ts(msg.get('ts','')))}</div>
-                          <p class='hm-b13-message-body'>{_esc(_member_message_text(msg.get('message','')))}</p>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-                    if st.button(
-                        "Read & Archive",
-                        key=f"read_msg_{msg.get('id','')}",
-                        use_container_width=True,
-                    ):
-                        ok = mark_member_message_read(user_id, msg.get("id", ""))
-                        if ok:
-                            set_system_message(
-                                "Message archived. You can find it in Daily Food Journal → "
-                                "Nutritionist Notes Archive.",
-                                "success",
-                            )
-                        else:
-                            set_system_message(
-                                "Message could not be archived. Please refresh and try again.",
-                                "error",
-                            )
-                        st.rerun()
-    return True
+    with st.expander("Message from Nutritionist", expanded=True):
+        st.markdown("<span class='hm-message-pill-anchor'></span>", unsafe_allow_html=True)
+        if not unique_messages:
+            st.markdown("<div class='hm-home-empty'>No new message from your nutritionist.</div>", unsafe_allow_html=True)
+        for row_start in range(0, len(unique_messages), 3):
+            cols = st.columns(3, gap="small")
+            for col, msg in zip(cols, unique_messages[row_start : row_start + 3]):
+                with col:
+                    with st.container(border=True):
+                        st.markdown(
+                            f"""
+                            <span class='hm-message-grid-anchor'></span>
+                            <div class='hm-b13-message-card'>
+                              <div class='hm-b13-message-subject'>{_esc(msg.get('subject','Message'))}</div>
+                              <div class='hm-b13-message-date'>{_esc(format_local_ts(msg.get('ts','')))}</div>
+                              <p class='hm-b13-message-body'>{_esc(_member_message_text(msg.get('message','')))}</p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        if st.button(
+                            "Read & Archive",
+                            key=f"read_msg_{msg.get('id','')}",
+                            use_container_width=True,
+                        ):
+                            ok = mark_member_message_read(user_id, msg.get("id", ""))
+                            if ok:
+                                set_system_message(
+                                    "Message archived. You can find it in Daily Food Journal → "
+                                    "Nutritionist Notes Archive.",
+                                    "success",
+                                )
+                            else:
+                                set_system_message(
+                                    "Message could not be archived. Please refresh and try again.",
+                                    "error",
+                                )
+                            st.rerun()
+    return bool(unique_messages)
 
 
 def _render_upcoming_schedules(user_id):
     queue_schedule_acknowledgement_reminders_v104b11(user_id)
     upcoming_schedules = list_upcoming_member_schedules(user_id, limit=6)
-    if not upcoming_schedules:
-        return False
 
     with st.expander(
-        f"Upcoming Schedule ({len(upcoming_schedules)})",
+        f"Upcoming Consultation ({len(upcoming_schedules)})",
         expanded=True,
     ):
         st.markdown(
             "<span class='hm-upcoming-schedule-anchor'></span>",
             unsafe_allow_html=True,
         )
-        for row_start in range(0, len(upcoming_schedules), 2):
-            cols = st.columns(2, gap="medium")
-            for col, schedule in zip(cols, upcoming_schedules[row_start : row_start + 2]):
+        if not upcoming_schedules:
+            st.markdown("<div class='hm-home-empty'>No upcoming consultation requires action.</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(
+                f"<div class='hm-consultation-advisory'>{_esc(UPCOMING_CONSULTATION_ADVISORY)}</div>",
+                unsafe_allow_html=True,
+            )
+        for row_start in range(0, len(upcoming_schedules), 3):
+            cols = st.columns(3, gap="small")
+            for col, schedule in zip(cols, upcoming_schedules[row_start : row_start + 3]):
                 with col:
                     with st.container(border=True):
                         time_text = str(schedule.get("start_time", "") or "")
                         if schedule.get("end_time"):
                             time_text += f" - {schedule.get('end_time')}"
-                        notice = schedule_acknowledgement_notice_v104b11(schedule)
-                        notice_html = (
-                            "<div class='hm-v101-schedule-line hm-v104b11-ack-note'>"
-                            f"{_esc(notice)}</div>"
-                            if notice
-                            else ""
-                        )
                         st.markdown(
                             f"""
                             <span class='hm-home-grid-anchor'></span>
@@ -351,12 +348,11 @@ def _render_upcoming_schedules(user_id):
                               <div class='hm-v101-schedule-title'>{_esc(schedule.get('title','Scheduled session'))}<span class='hm-v101-schedule-pill'>{_esc(schedule_display_status_label_v104b11(schedule))}</span></div>
                               <div class='hm-v101-schedule-line'>{_esc(schedule.get('schedule_date',''))} · {_esc(time_text)}</div>
                               <div class='hm-v101-schedule-line'>Mode: {_esc(schedule.get('mode','-'))} · Link/location: {_esc(schedule.get('location_or_link') or '-')}</div>
-                              {notice_html}
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
-    return True
+    return bool(upcoming_schedules)
 
 
 def _render_task_button(label, key, page, disabled=False):

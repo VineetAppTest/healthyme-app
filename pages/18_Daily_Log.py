@@ -739,10 +739,10 @@ def _render_saved_days(user_id):
 
         st.caption(f"Showing {len(filtered_days)} saved day(s) in the selected range.")
         st.markdown(saved_days_card_css(), unsafe_allow_html=True)
-        for row_start in range(0, len(filtered_days), 4):
-            cols = st.columns(4, gap="small")
+        for row_start in range(0, len(filtered_days), 3):
+            cols = st.columns(3, gap="small")
             for column_index, (col, day) in enumerate(
-                zip(cols, filtered_days[row_start : row_start + 4])
+                zip(cols, filtered_days[row_start : row_start + 3])
             ):
                 date_text = _format_saved_date(day)
                 with col:

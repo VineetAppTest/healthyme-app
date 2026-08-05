@@ -88,9 +88,9 @@ def initialise_food_saved_days_range(
     session_state.setdefault(SAVED_TO_KEY, today)
 
 
-def _food_items(meal: object) -> list[str]:
+def _food_items(meal: object) -> list[tuple[str, str]]:
     meal_row = _as_dict(meal)
-    items: list[str] = []
+    items: list[tuple[str, str]] = []
     raw_items = meal_row.get("food_items")
     if isinstance(raw_items, list):
         for raw_item in raw_items:
@@ -101,9 +101,8 @@ def _food_items(meal: object) -> list[str]:
                 or item.get("portion")
                 or item.get("quantity")
             )
-            detail = ", ".join(value for value in (food, portion) if value)
-            if detail:
-                items.append(detail)
+            if food or portion:
+                items.append((food or "No entry", portion or "No entry"))
 
     if not items:
         food = _clean(
@@ -116,30 +115,20 @@ def _food_items(meal: object) -> list[str]:
             or meal_row.get("portion")
             or meal_row.get("quantity")
         )
-        detail = ", ".join(value for value in (food, portion) if value)
-        if detail:
-            items.append(detail)
+        if food or portion:
+            items.append((food or "No entry", portion or "No entry"))
     return items
 
 
-def _meal_summary(meal: object) -> str:
+def _meal_columns(meal: object) -> tuple[str, str, str]:
     meal_row = _as_dict(meal)
     items = _food_items(meal_row)
-    shown_items = items[:3]
-    item_text = "; ".join(shown_items)
-    if len(items) > len(shown_items):
-        item_text = f"{item_text} + {len(items) - len(shown_items)} more"
-
-    time_text = _clean(meal_row.get("time"))
-    if item_text and time_text:
-        return f"{item_text} · {time_text}"
-    if item_text:
-        return item_text
-    if time_text:
-        return f"Recorded · {time_text}"
-    if any(_clean(meal_row.get(key)) for key in ("mood", "energy", "mood_energy")):
-        return "Recorded"
-    return ""
+    time_text = _clean(meal_row.get("time")) or "No entry"
+    if not items:
+        return time_text, "No entry", "No entry"
+    foods = "; ".join(food for food, _quantity in items)
+    quantities = "; ".join(quantity for _food, quantity in items)
+    return time_text, foods, quantities
 
 
 def _meal_for_key(meals: dict[str, Any], key: str) -> dict[str, Any]:
@@ -173,19 +162,27 @@ def _other_liquids(day: dict[str, Any]) -> str:
     return "; ".join(values) if values else "No entry"
 
 
-def saved_day_card_rows(day: object) -> list[tuple[str, str]]:
-    """Return compact read-only meal and hydration rows for one saved day."""
+def saved_day_meal_rows(day: object) -> list[dict[str, str]]:
+    """Return every meal as Meal/Time, Food and Quantity columns."""
 
     day_row = _as_dict(day)
     meals = _as_dict(day_row.get("meals"))
-    rows: list[tuple[str, str]] = []
+    rows: list[dict[str, str]] = []
 
     for label, key in _STRUCTURED_MEALS:
-        summary = _meal_summary(_meal_for_key(meals, key))
-        if summary:
-            rows.append((label, summary))
+        time_text, food_text, quantity_text = _meal_columns(
+            _meal_for_key(meals, key)
+        )
+        rows.append(
+            {
+                "meal": label,
+                "time": time_text,
+                "food": food_text,
+                "quantity": quantity_text,
+            }
+        )
 
-    snack_rows = []
+    snack_rows: list[tuple[str, dict[str, str]]] = []
     for key, value in meals.items():
         key_text = str(key or "").lower()
         if not (
@@ -194,15 +191,40 @@ def saved_day_card_rows(day: object) -> list[tuple[str, str]]:
             or key_text.startswith("other_snack")
         ):
             continue
-        summary = _meal_summary(value)
-        if summary:
-            snack_rows.append((key_text, summary))
-    for index, (_key, summary) in enumerate(sorted(snack_rows), start=1):
-        rows.append((f"Snacking {index}", summary))
+        time_text, food_text, quantity_text = _meal_columns(value)
+        if (
+            food_text != "No entry"
+            or time_text != "No entry"
+            or quantity_text != "No entry"
+        ):
+            snack_rows.append(
+                (
+                    key_text,
+                    {
+                        "meal": "",
+                        "time": time_text,
+                        "food": food_text,
+                        "quantity": quantity_text,
+                    },
+                )
+            )
+    for index, (_key, row) in enumerate(sorted(snack_rows), start=1):
+        row["meal"] = f"Snacking {index}"
+        rows.append(row)
+    return rows
 
-    if not rows:
-        rows.append(("Meals", "No entry"))
 
+def saved_day_card_rows(day: object) -> list[tuple[str, str]]:
+    """Compatibility summary with every meal and both hydration entries."""
+
+    day_row = _as_dict(day)
+    rows = [
+        (
+            row["meal"],
+            f"{row['time']} | {row['food']} | {row['quantity']}",
+        )
+        for row in saved_day_meal_rows(day_row)
+    ]
     rows.append(("Water", _clean(day_row.get("water_litres")) or "No entry"))
     rows.append(("Other Liquids", _other_liquids(day_row)))
     return rows
@@ -229,20 +251,32 @@ def saved_day_sort_key(day: object) -> tuple[int, str]:
 
 
 def saved_day_card_html(day: object, date_text: object = "") -> str:
+    day_row = _as_dict(day)
     parsed = _parse_date(date_text) or saved_day_date(day)
     date_label = parsed.strftime("%a, %d %b %Y") if parsed else _text(date_text)
     row_html = "".join(
         "<div class='hm-saved-day-row'>"
-        f"<span>{html.escape(label)}</span>"
-        f"<strong>{html.escape(value)}</strong>"
+        "<span class='hm-saved-day-meal-time'>"
+        f"<b>{html.escape(row['meal'])}</b>"
+        f"<small>{html.escape(row['time'])}</small>"
+        "</span>"
+        f"<span>{html.escape(row['food'])}</span>"
+        f"<span>{html.escape(row['quantity'])}</span>"
         "</div>"
-        for label, value in saved_day_card_rows(day)
+        for row in saved_day_meal_rows(day_row)
     )
+    water = _clean(day_row.get("water_litres")) or "No entry"
+    liquids = _other_liquids(day_row)
     return (
         "<span class='hm-saved-day-card-anchor'></span>"
         "<div class='hm-saved-day-card'>"
         f"<div class='hm-saved-day-date'>{html.escape(date_label)}</div>"
+        "<div class='hm-saved-day-table-head'><span>Meal · Time</span><span>Food</span><span>Quantity</span></div>"
         f"{row_html}"
+        "<div class='hm-saved-day-hydration'>"
+        f"<div><b>Water</b><span>{html.escape(water)}</span></div>"
+        f"<div><b>Other Liquids</b><span>{html.escape(liquids)}</span></div>"
+        "</div>"
         "</div>"
     )
 
@@ -263,17 +297,23 @@ def saved_days_card_css() -> str:
     div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-saved-day-card-anchor)>div{
       gap:.36rem!important;padding:0!important;
     }
-    .hm-saved-day-card{display:flex;flex-direction:column;gap:.27rem;min-height:0;}
+    .hm-saved-day-card{display:flex;flex-direction:column;gap:.24rem;min-height:0;}
     .hm-saved-day-date{color:#064E3B;font-size:.86rem;font-weight:950;margin:0 0 .18rem 0;}
-    .hm-saved-day-row{display:grid;grid-template-columns:minmax(4.8rem,.42fr) minmax(0,.58fr);gap:.40rem;align-items:start;font-size:.74rem;line-height:1.30;}
-    .hm-saved-day-row span{color:#7A5A16;font-weight:900;}
-    .hm-saved-day-row strong{color:#334155;font-weight:520;overflow-wrap:anywhere;}
+    .hm-saved-day-table-head,.hm-saved-day-row{display:grid;grid-template-columns:minmax(5.4rem,.95fr) minmax(4.2rem,1.2fr) minmax(3.8rem,.72fr);gap:.36rem;align-items:start;}
+    .hm-saved-day-table-head{padding:.22rem .28rem;border-radius:8px;background:#FFF7E6;color:#7A5A16;font-size:.65rem;font-weight:950;}
+    .hm-saved-day-row{padding:.23rem .28rem;border-bottom:1px solid #F0E5CF;color:#334155;font-size:.69rem;line-height:1.28;}
+    .hm-saved-day-row>span{overflow-wrap:anywhere;}
+    .hm-saved-day-meal-time{display:flex;flex-direction:column;gap:.05rem;}
+    .hm-saved-day-meal-time b{color:#72551A;font-weight:920;}.hm-saved-day-meal-time small{color:#64748B;font-size:.64rem;font-weight:720;}
+    .hm-saved-day-hydration{display:grid;grid-template-columns:1fr;gap:.18rem;margin-top:.22rem;padding-top:.28rem;border-top:1px solid #D9C28F;}
+    .hm-saved-day-hydration>div{display:grid;grid-template-columns:5.4rem minmax(0,1fr);gap:.36rem;color:#334155;font-size:.68rem;line-height:1.28;}
+    .hm-saved-day-hydration b{color:#72551A;font-weight:920;}.hm-saved-day-hydration span{overflow-wrap:anywhere;}
     div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-saved-day-card-anchor) button{
       min-height:2rem!important;height:2rem!important;padding:.24rem .42rem!important;
       border-radius:9px!important;font-size:.72rem!important;font-weight:850!important;
     }
     @media(max-width:900px){
-      .hm-saved-day-row{grid-template-columns:minmax(4.4rem,.40fr) minmax(0,.60fr);}
+      .hm-saved-day-table-head,.hm-saved-day-row{grid-template-columns:minmax(5rem,.9fr) minmax(4rem,1.15fr) minmax(3.6rem,.7fr);}
     }
     </style>
     """
