@@ -1,0 +1,56 @@
+name: Apply Admin Profile Builder Review Follow-up
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - "scripts/apply_admin_profile_builder_review_followup.py"
+      - "tests/test_admin_profile_builder_review_followup.py"
+      - ".github/workflows/apply-admin-profile-builder-review-followup.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.event.pull_request.head.ref == 'fix/admin-profile-builder-review-aug05' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out correction branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/admin-profile-builder-review-aug05
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install project dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Apply exact Admin Profile Builder patch
+        run: python scripts/apply_admin_profile_builder_review_followup.py
+      - name: Compile changed Python surfaces
+        run: |
+          python -m py_compile \
+            components/member_plan_builder_setup.py \
+            components/member_plan_builder_meals_compact.py \
+            components/member_plan_builder_export.py \
+            components/member_plan_builder_exercise.py \
+            components/exercise_member_allocation.py \
+            components/current_member_plan_view.py \
+            tests/test_admin_profile_builder_review_followup.py
+      - name: Run focused Admin Profile Builder contracts
+        run: python -m unittest tests.test_admin_profile_builder_review_followup -v
+      - name: Commit permanent application changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            components/member_plan_builder_setup.py \
+            components/member_plan_builder_meals_compact.py \
+            components/member_plan_builder_export.py \
+            components/member_plan_builder_exercise.py \
+            components/exercise_member_allocation.py \
+            components/current_member_plan_view.py
+          git commit -m "Refine Admin Profile Builder review surfaces"
+          git push origin HEAD:fix/admin-profile-builder-review-aug05
