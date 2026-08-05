@@ -71,8 +71,8 @@ def _task_due_state_class() -> str:
 def _completed_task_button_label(label: object) -> str | None:
     text = str(label or "").strip()
     task_map = {
-        "Start NSP Page 1": ("nsp1_completed", "NSP Page 1 Completed"),
-        "Start NSP Page 2": ("nsp2_completed", "NSP Page 2 Completed"),
+        "Start NSP Page 1": ("nsp1_completed", "NSP Page 1 Done"),
+        "Start NSP Page 2": ("nsp2_completed", "NSP Page 2 Done"),
     }
     task = task_map.get(text)
     if task is None:

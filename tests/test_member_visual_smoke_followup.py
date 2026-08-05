@@ -12,16 +12,27 @@ class MemberVisualSmokeFollowupTests(unittest.TestCase):
         source = (ROOT / "components/member_home_global_header_runtime.py").read_text()
         page = (ROOT / "pages/02_Member_Home.py").read_text()
 
-        self.assertIn(
-            '>div[data-testid="column"]>div[data-testid="stVerticalBlock"]',
-            source,
-        )
+        self.assertIn('div[data-testid="column"]', source)
+        self.assertIn('div[data-testid="stColumn"]', source)
         self.assertIn('height:2.46rem!important', source)
         self.assertIn('justify-content:center!important', source)
-        self.assertIn(
-            '> div[data-testid="column"] > div[data-testid="stVerticalBlock"]',
-            page,
-        )
+        utility_start = page.index("def _render_member_utility_bar")
+        utility_end = page.index("def _render_messages", utility_start)
+        self.assertIn('vertical_alignment="center"', page[utility_start:utility_end])
+
+    def test_member_task_buttons_use_short_done_labels_in_one_equal_row(self):
+        runtime = (
+            ROOT / "components/member_home_side_by_side_runtime.py"
+        ).read_text()
+        page = (ROOT / "pages/02_Member_Home.py").read_text()
+
+        self.assertIn('"NSP Page 1 Done"', runtime)
+        self.assertIn('"NSP Page 2 Done"', runtime)
+        self.assertNotIn('"NSP Page 1 Completed"', runtime)
+        self.assertNotIn('"NSP Page 2 Completed"', runtime)
+        self.assertIn('label = "Body Mind Done" if body_done else "Body Mind"', page)
+        self.assertEqual(page.count("[1, 1, 1],"), 2)
+        self.assertGreaterEqual(page.count('vertical_alignment="center"'), 3)
 
     def test_upcoming_schedule_pill_and_card_are_content_sized(self):
         presentation = (

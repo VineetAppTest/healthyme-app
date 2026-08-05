@@ -208,6 +208,7 @@ def _render_member_utility_bar():
     identity_col, profile_col, logout_col = st.columns(
         [6.65, 0.42, 1.0],
         gap="small",
+        vertical_alignment="center",
     )
     with identity_col:
         st.markdown(
@@ -414,7 +415,11 @@ def _render_task_progress(current_instance, wf, requested_pages):
     if not visible_tasks:
         st.warning("No active task is selected for this request.")
         return
-    task_cols = st.columns([1, 1, 1.08], gap="medium")
+    task_cols = st.columns(
+        [1, 1, 1],
+        gap="medium",
+        vertical_alignment="center",
+    )
     with task_cols[0]:
         if "nsp1" in visible_tasks:
             _render_task_button(
@@ -436,7 +441,7 @@ def _render_task_progress(current_instance, wf, requested_pages):
                 wf,
                 "body_mind",
             )
-            label = "Body Mind Completed" if body_done else "Body Mind"
+            label = "Body Mind Done" if body_done else "Body Mind"
             _render_task_button(
                 label,
                 "hm_task_body_mind",
@@ -563,7 +568,11 @@ with left:
                 "Your latest evaluation has been submitted and is under review."
             )
         else:
-            action_cols = st.columns([1, 1, 1.08], gap="medium")
+            action_cols = st.columns(
+                [1, 1, 1],
+                gap="medium",
+                vertical_alignment="center",
+            )
             with action_cols[0]:
                 _render_task_button(
                     "Start NSP Page 1",
