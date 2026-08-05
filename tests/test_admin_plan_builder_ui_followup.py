@@ -14,6 +14,14 @@ class AdminPlanBuilderUiFollowupTests(unittest.TestCase):
         ast.parse(text)
         return text
 
+    def test_setup_more_details_wraps_inputs_responsively(self):
+        source = self._source("components/member_plan_builder_setup.py")
+        self.assertIn("mpb-setup-details-anchor", source)
+        self.assertIn("repeat(auto-fit,minmax(220px,1fr))", source)
+        self.assertIn('row2 = st.columns(4, gap="small")', source)
+        self.assertIn('row2[3].multiselect(', source)
+        self.assertIn("grid-template-columns:1fr!important", source)
+
     def test_meal_more_details_use_responsive_wrapping(self):
         source = self._source("components/member_plan_builder_meals_compact.py")
         self.assertIn("mpb-responsive-details", source)
