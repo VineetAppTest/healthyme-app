@@ -17,13 +17,13 @@ class AuthenticatedMemberFollowupCorrectionTests(unittest.TestCase):
         self.assertNotIn("message_expander", installer)
         self.assertNotIn("margin:-", installer)
 
-    def test_header_has_no_negative_offset_and_schedule_is_two_across(self):
+    def test_header_has_no_negative_offset_and_consultations_are_three_across(self):
         page = (ROOT / "pages/02_Member_Home.py").read_text()
         presentation = (ROOT / "components/member_home_schedule_presentation.py").read_text()
         self.assertIn('padding-top:.18rem!important', page)
-        self.assertIn('f"Upcoming Schedule ({len(upcoming_schedules)})"', page)
-        self.assertIn('range(0, len(upcoming_schedules), 2)', page)
-        self.assertIn('st.columns(2, gap="medium")', page)
+        self.assertIn('f"Upcoming Consultation ({len(upcoming_schedules)})"', page)
+        self.assertIn('range(0, len(upcoming_schedules), 3)', page)
+        self.assertIn('st.columns(3, gap="small")', page)
         self.assertNotIn('top:-1.75rem', presentation)
         self.assertIn('font-size:.72rem!important', presentation)
 

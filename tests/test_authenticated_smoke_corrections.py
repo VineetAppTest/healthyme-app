@@ -76,7 +76,7 @@ class AuthenticatedSmokeCorrectionTests(unittest.TestCase):
         self.assertIn("hm-member-home-root-anchor", page)
         self.assertIn("with st.container():", page)
         self.assertNotIn("html,body,#root{margin-top:0", page)
-        self.assertIn("hm-member-home-global-header-v8", runtime)
+        self.assertIn("hm-member-home-global-header-v9", runtime)
         self.assertIn('id="hm-member-home-local-style-v3"', schedule)
         self.assertIn("width:fit-content!important", schedule)
         self.assertNotIn("width:min(420px,100%)", schedule)

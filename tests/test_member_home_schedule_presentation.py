@@ -6,6 +6,7 @@ import pathlib
 import unittest
 
 from components.member_home_schedule_presentation import (
+    member_home_schedule_phase,
     prepare_member_home_upcoming_schedules,
 )
 
@@ -114,6 +115,44 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
 
         self.assertEqual([row["id"] for row in visible], ["scheduled"])
 
+    def test_acknowledged_schedule_returns_inside_48_hours_until_read(self):
+        row = {
+            "id": "acknowledged",
+            "status": "acknowledged",
+            "start_at_utc": "2026-08-08T04:30:00Z",
+            "end_at_utc": "2026-08-08T05:00:00Z",
+        }
+        now = dt.datetime(2026, 8, 6, 5, 0, tzinfo=UTC)
+
+        visible = prepare_member_home_upcoming_schedules(
+            [row], now_utc=now, limit=6
+        )
+
+        self.assertEqual([item["id"] for item in visible], ["acknowledged"])
+        self.assertEqual(visible[0]["_member_home_phase"], "reminder")
+        self.assertEqual(member_home_schedule_phase(row, now_utc=now), "reminder")
+
+        row["member_home_48h_read_at"] = "2026-08-06T05:01:00Z"
+        self.assertEqual(
+            prepare_member_home_upcoming_schedules([row], now_utc=now, limit=6),
+            [],
+        )
+
+    def test_pending_reschedule_remains_visible_until_admin_decides(self):
+        row = {
+            "id": "pending",
+            "status": "acknowledged",
+            "reschedule_request_status": "pending",
+            "start_at_utc": "2026-08-12T04:30:00Z",
+            "end_at_utc": "2026-08-12T05:00:00Z",
+        }
+        visible = prepare_member_home_upcoming_schedules(
+            [row],
+            now_utc=dt.datetime(2026, 8, 4, tzinfo=UTC),
+            limit=6,
+        )
+        self.assertEqual(visible[0]["_member_home_phase"], "reschedule_pending")
+
     def test_closed_schedule_is_not_returned(self):
         rows = [
             {
@@ -159,16 +198,15 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, helper)
 
-    def test_member_home_uses_two_card_schedule_and_three_card_message_grids(self):
+    def test_member_home_uses_two_pills_and_three_by_two_card_grids(self):
         source = (ROOT / "pages/02_Member_Home.py").read_text()
         ast.parse(source)
         self.assertIn("list_upcoming_member_schedules(user_id, limit=6)", source)
         self.assertIn("get_member_messages(user_id, limit=6)", source)
-        self.assertIn("for row_start in range(0, len(upcoming_schedules), 2):", source)
-        self.assertIn('st.columns(2, gap="medium")', source)
+        self.assertIn("for row_start in range(0, len(upcoming_schedules), 3):", source)
+        self.assertGreaterEqual(source.count('st.columns(3, gap="small")'), 2)
         self.assertIn("for row_start in range(0, len(unique_messages), 3):", source)
         self.assertIn('st.columns(3, gap="small")', source)
-        self.assertIn("hm-home-section-divider", source)
         self.assertIn("hm-home-grid-anchor", source)
         self.assertIn("hm-message-grid-anchor", source)
         self.assertLess(
@@ -182,7 +220,14 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         self.assertIn("with st.expander(", schedule_slice)
         self.assertIn("hm-upcoming-schedule-anchor", schedule_slice)
         self.assertIn("expanded=True", schedule_slice)
-        self.assertIn('f"Upcoming Schedule ({len(upcoming_schedules)})"', schedule_slice)
+        self.assertIn('f"Upcoming Consultation ({len(upcoming_schedules)})"', schedule_slice)
+        message_slice = source[
+            source.index("def _render_messages") :
+            source.index("def _render_upcoming_schedules")
+        ]
+        self.assertIn('with st.expander("Message from Nutritionist"', message_slice)
+        self.assertIn("hm-message-pill-anchor", message_slice)
+        self.assertIn("UPCOMING_CONSULTATION_ADVISORY", schedule_slice)
         for forbidden in (
             "update_member_schedule_status(",
             "session_counted =",
@@ -223,10 +268,13 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         self.assertIn("_ACTION_RENDERED_IDS_KEY", helper)
         self.assertIn("seen_schedule_keys", helper)
         self.assertIn('status == "acknowledged"', helper)
+        self.assertIn('"Read"', helper)
+        self.assertIn("mark_member_schedule_reminder_read", helper)
 
-        # The action row is always present for eligible sessions. Only the advisory
-        # copy remains tied to the existing 48-hour reminder window.
-        self.assertIn("schedule_acknowledgement_notice_v104b11(schedule)", page)
+        # Advisory copy is displayed once between the pill and the compact cards.
+        self.assertIn("UPCOMING_CONSULTATION_ADVISORY", page)
+        self.assertIn("additional session count", page)
+        self.assertIn("def mark_member_schedule_reminder_read", db_source)
         self.assertIn("if not _hm_v104b11_is_within_hours(row, hours=48)", db_source)
 
     def test_member_home_header_renders_before_slow_workflow_reads(self):

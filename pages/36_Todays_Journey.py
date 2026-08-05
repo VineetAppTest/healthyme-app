@@ -23,7 +23,7 @@ require_member()
 utility_logout_bar()
 topbar(
     "Today's Plan",
-    "Today's meals plus your current Exercise and Supplement allocations.",
+    "What to eat, take and do today—shown in one practical sequence.",
     "Member plan",
 )
 

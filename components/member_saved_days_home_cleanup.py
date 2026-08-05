@@ -170,21 +170,9 @@ def _install_saved_days_window() -> None:
 
 
 def _install_member_home_cleanup() -> None:
+    """Suppress only the retired KPI strip; page sections own their layout."""
+
     from components import ui_common
-
-    current_columns = st.columns
-    current_markdown = st.markdown
-    current_button = st.button
-    current_expander = st.expander
-    home_columns = {"pair": None}
-
-    def ensure_home_columns():
-        if home_columns["pair"] is None:
-            left, right = current_columns([1, 1], gap="large")
-            left.markdown("<span class='hm-home-side-col-anchor'></span>", unsafe_allow_html=True)
-            right.markdown("<span class='hm-home-side-col-anchor'></span>", unsafe_allow_html=True)
-            home_columns["pair"] = (left, right)
-        return home_columns["pair"]
 
     current_stat_grid = ui_common.stat_grid
     if not getattr(current_stat_grid, _MARKER, False):
@@ -198,70 +186,6 @@ def _install_member_home_cleanup() -> None:
         setattr(stat_grid_without_member_home, _MARKER, True)
         ui_common.stat_grid = stat_grid_without_member_home
 
-    current_topbar = ui_common.topbar
-    if not getattr(current_topbar, _MARKER, False):
-        @functools.wraps(current_topbar)
-        def topbar_with_member_home_columns(title, *args, **kwargs):
-            if str(title or "").strip() == "Member Home":
-                home_columns["pair"] = None
-            result = current_topbar(title, *args, **kwargs)
-            if str(title or "").strip() == "Member Home":
-                current_markdown(
-                    """
-<style id="hm-member-home-message-schedule-layout-v2">
-.hm-home-side-col-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
-div[data-testid="stHorizontalBlock"]:has(.hm-home-side-col-anchor){align-items:flex-start!important;gap:1.25rem!important;margin:.42rem 0 .82rem 0!important;}
-.hm-b13-message-shell{float:none!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;}
-.hm-b13-message-title{display:flex!important;align-items:center!important;width:285px!important;min-height:2.45rem!important;padding:.42rem .72rem!important;border:1.35px solid #D8A84E!important;border-radius:999px!important;background:#FFFDF8!important;color:#064E3B!important;font-size:.88rem!important;font-weight:950!important;margin:0 0 .52rem 0!important;white-space:nowrap!important;}
-.hm-b13-message-card{width:100%!important;margin:.42rem 0!important;border-radius:15px!important;padding:.66rem .72rem!important;}
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor){float:none!important;width:100%!important;max-width:none!important;margin:0!important;}
-div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) .hm-v101-schedule-card{width:100%!important;max-width:none!important;margin:.42rem 0!important;}
-@media(max-width:900px){div[data-testid="stHorizontalBlock"]:has(.hm-home-side-col-anchor){display:flex!important;flex-direction:column!important;gap:.8rem!important;}div[data-testid="stHorizontalBlock"]:has(.hm-home-side-col-anchor)>div{width:100%!important;min-width:100%!important}.hm-b13-message-title{width:100%!important}}
-</style>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            return result
-
-        setattr(topbar_with_member_home_columns, _MARKER, True)
-        ui_common.topbar = topbar_with_member_home_columns
-
-    if not getattr(current_markdown, _MARKER, False):
-        @functools.wraps(current_markdown)
-        def markdown_in_member_home_column(body, *args, **kwargs):
-            caller = inspect.currentframe().f_back
-            if _is_member_home_frame(caller) and _frame_function(caller) == "_render_messages":
-                _, right = ensure_home_columns()
-                return right.markdown(body, *args, **kwargs)
-            return current_markdown(body, *args, **kwargs)
-
-        setattr(markdown_in_member_home_column, _MARKER, True)
-        st.markdown = markdown_in_member_home_column
-
-    if not getattr(current_button, _MARKER, False):
-        @functools.wraps(current_button)
-        def button_in_member_home_column(label, *args, **kwargs):
-            caller = inspect.currentframe().f_back
-            if _is_member_home_frame(caller) and _frame_function(caller) == "_render_messages":
-                _, right = ensure_home_columns()
-                return right.button(label, *args, **kwargs)
-            return current_button(label, *args, **kwargs)
-
-        setattr(button_in_member_home_column, _MARKER, True)
-        st.button = button_in_member_home_column
-
-    if not getattr(current_expander, _MARKER, False):
-        @functools.wraps(current_expander)
-        def expander_in_member_home_column(label, *args, **kwargs):
-            caller = inspect.currentframe().f_back
-            if _is_member_home_frame(caller) and _frame_function(caller) == "_render_upcoming_schedules":
-                if home_columns["pair"] is not None:
-                    left, _ = ensure_home_columns()
-                    return left.expander(label, *args, **kwargs)
-            return current_expander(label, *args, **kwargs)
-
-        setattr(expander_in_member_home_column, _MARKER, True)
-        st.expander = expander_in_member_home_column
 
 
 def install_member_saved_days_home_cleanup() -> None:

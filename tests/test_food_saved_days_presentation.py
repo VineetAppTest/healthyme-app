@@ -12,6 +12,7 @@ from components.food_saved_days_presentation import (
     initialise_food_saved_days_range,
     saved_day_card_html,
     saved_day_card_rows,
+    saved_day_meal_rows,
     saved_day_sort_key,
 )
 
@@ -70,14 +71,19 @@ class FoodSavedDaysPresentationTests(unittest.TestCase):
             ],
         }
 
-        rows = dict(saved_day_card_rows(day))
+        rows = {row["meal"]: row for row in saved_day_meal_rows(day)}
+        summaries = dict(saved_day_card_rows(day))
         html = saved_day_card_html(day)
 
-        self.assertEqual(rows["Breakfast"], "Chilla")
-        self.assertEqual(rows["Lunch"], "Dal; Roti")
-        self.assertEqual(rows["Water"], "2 Litres")
-        self.assertIn("Herbal Tea", rows["Other Liquids"])
+        self.assertEqual(rows["Breakfast"]["food"], "Chilla")
+        self.assertEqual(rows["Breakfast"]["quantity"], "No entry")
+        self.assertEqual(rows["Lunch"]["food"], "Dal; Roti")
+        self.assertEqual(rows["Dinner"]["food"], "No entry")
+        self.assertEqual(summaries["Water"], "2 Litres")
+        self.assertIn("Herbal Tea", summaries["Other Liquids"])
         self.assertIn("Tue, 04 Aug 2026", html)
+        self.assertIn("Meal · Time", html)
+        self.assertIn("Quantity", html)
         self.assertIn("Other Liquids", html)
 
     def test_card_keeps_hydration_labels_when_no_entry_exists(self):
@@ -94,12 +100,12 @@ class FoodSavedDaysPresentationTests(unittest.TestCase):
 
         self.assertEqual(ordered, [later, earlier])
 
-    def test_daily_log_uses_four_column_card_grid_and_member_local_today(self):
+    def test_daily_log_uses_three_column_card_grid_and_member_local_today(self):
         source = (ROOT / "pages/18_Daily_Log.py").read_text()
 
         self.assertIn("member_local_today(user_id)", source)
         self.assertIn("initialise_food_saved_days_range", source)
-        self.assertIn('st.columns(4, gap="small")', source)
+        self.assertIn('st.columns(3, gap="small")', source)
         self.assertIn("saved_day_card_html", source)
         self.assertNotIn('"Open saved day"', source)
         self.assertNotIn("hm_h9a4c_load_", source)

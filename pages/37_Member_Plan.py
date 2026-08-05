@@ -23,7 +23,7 @@ require_member()
 utility_logout_bar()
 topbar(
     "Current Member Plan",
-    "Your current meals, exercises and supplements in one read-only view.",
+    "Your complete seven-day cycle, organised day by day.",
     "Member plan",
 )
 

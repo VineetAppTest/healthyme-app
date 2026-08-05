@@ -4273,6 +4273,22 @@ def acknowledge_member_schedule(schedule_id, member_id):
         save_db(db)
     return updated
 
+def mark_member_schedule_reminder_read(schedule_id, member_id):
+    """Hide the acknowledged 48-hour Member Home reminder without closing the session."""
+    db = _ensure_schedule_store(load_db())
+    now = _now_iso()
+    updated = None
+    for row in db.get("schedules", []) or []:
+        if row.get("id") == schedule_id and _hm_v1024b13_member_matches_value(db, row, member_id):
+            row["member_home_48h_read_at"] = now
+            row["updated_at"] = now
+            row["updated_by"] = member_id
+            updated = dict(row)
+            break
+    if updated:
+        save_db(db)
+    return updated
+
 def request_member_schedule_reschedule(
     schedule_id,
     member_id,
