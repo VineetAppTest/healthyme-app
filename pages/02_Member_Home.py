@@ -294,7 +294,7 @@ def _render_messages(user_id, show_divider=False):
                             unsafe_allow_html=True,
                         )
                         if st.button(
-                            "Read & Archive",
+                            "Archive",
                             key=f"read_msg_{msg.get('id','')}",
                             use_container_width=True,
                         ):

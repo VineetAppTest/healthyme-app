@@ -13,6 +13,55 @@ from components.admin_role_model import (
 
 NATIVE_MEMBER_BUILD = "H13R0-native-member-auth-retirement-v1"
 
+_MEMBER_UTILITY_CSS = """
+<style id="hm-native-member-utility-v2">
+div[data-testid="stElementContainer"]:has(style#hm-native-member-utility-v2),
+div.element-container:has(style#hm-native-member-utility-v2){
+  display:none!important;height:0!important;min-height:0!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+}
+.st-key-hm_native_member_utility_row{margin:0 0 .18rem!important;padding:0!important;}
+.st-key-hm_native_member_utility_row div[data-testid="stHorizontalBlock"]{
+  min-height:2.46rem!important;height:2.46rem!important;align-items:center!important;
+  gap:.72rem!important;margin:0!important;padding:0!important;
+}
+.st-key-hm_native_member_utility_row :is(div[data-testid="stColumn"],div[data-testid="column"]){
+  min-height:2.46rem!important;height:2.46rem!important;display:flex!important;
+  align-items:center!important;margin:0!important;padding:0!important;
+}
+.st-key-hm_native_member_utility_row :is(div[data-testid="stColumn"],div[data-testid="column"])>div[data-testid="stVerticalBlock"]{
+  width:100%!important;min-height:2.46rem!important;height:2.46rem!important;
+  display:flex!important;flex-direction:column!important;justify-content:center!important;
+  gap:0!important;margin:0!important;padding:0!important;
+}
+.st-key-hm_native_member_utility_row .utility-bar{
+  width:100%!important;min-height:2.46rem!important;height:2.46rem!important;
+  display:flex!important;align-items:center!important;box-sizing:border-box!important;
+  margin:0!important;
+}
+.st-key-hm_native_member_profile [data-testid="stButton"]>button{
+  width:2.34rem!important;min-width:2.34rem!important;max-width:2.34rem!important;
+  height:2.34rem!important;min-height:2.34rem!important;max-height:2.34rem!important;
+  border-radius:999px!important;padding:0!important;margin:0 auto!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+.st-key-hm_native_member_logout [data-testid="stButton"]>button{
+  min-height:2.46rem!important;height:2.46rem!important;max-height:2.46rem!important;
+  margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
+}
+@media(max-width:760px){
+  .st-key-hm_native_member_utility_row div[data-testid="stHorizontalBlock"]{
+    display:grid!important;grid-template-columns:minmax(0,1fr) 2.55rem 4.65rem!important;
+    gap:.30rem!important;
+  }
+  .st-key-hm_native_member_utility_row .utility-user{
+    min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+}
+</style>
+"""
+
 _DERIVED_MEMBER_CONTEXT_KEYS = {
     "logged_in",
     "user_id",
@@ -155,21 +204,47 @@ def native_member_utility_bar(*args: Any, **kwargs: Any) -> None:
         or native_claim("email")
         or "member"
     )
-    identity_col, logout_col = st.columns([6.8, 1.1], gap="small")
-    with identity_col:
-        st.markdown(
-            "<div class='utility-bar'><span class='utility-user'>Signed in as: "
-            f"<b>{email}</b><span class='utility-role'>Active member</span>"
-            "</span></div>",
-            unsafe_allow_html=True,
+    st.markdown(_MEMBER_UTILITY_CSS, unsafe_allow_html=True)
+    with st.container(key="hm_native_member_utility_row"):
+        identity_col, profile_col, logout_col = st.columns(
+            [6.65, 0.42, 1.0],
+            gap="small",
+            vertical_alignment="center",
         )
-    with logout_col:
-        if st.button(
-            "Logout",
-            key="h13r0_native_member_logout",
-            use_container_width=True,
-        ):
-            logout_native_member()
+        with identity_col:
+            st.markdown(
+                "<div class='utility-bar'><span class='utility-user'>Signed in as: "
+                f"<b>{email}</b><span class='utility-role'>Active member</span>"
+                "</span></div>",
+                unsafe_allow_html=True,
+            )
+        with profile_col:
+            with st.container(
+                key="hm_native_member_profile",
+                horizontal=True,
+                horizontal_alignment="center",
+                vertical_alignment="center",
+            ):
+                if st.button(
+                    "👤",
+                    key="h13r0_native_member_profile",
+                    use_container_width=True,
+                    help="My Profile",
+                ):
+                    st.switch_page("pages/07_My_Profile.py")
+        with logout_col:
+            with st.container(
+                key="hm_native_member_logout",
+                horizontal=True,
+                horizontal_alignment="center",
+                vertical_alignment="center",
+            ):
+                if st.button(
+                    "Logout",
+                    key="h13r0_native_member_logout",
+                    use_container_width=True,
+                ):
+                    logout_native_member()
 
 
 def _no_legacy_keepalive(*args: Any, **kwargs: Any) -> None:
