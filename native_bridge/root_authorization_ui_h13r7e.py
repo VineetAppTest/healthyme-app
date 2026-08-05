@@ -355,19 +355,46 @@ def render_root_authorization_ui(authorization_id: str) -> None:
     <script type="module">
       import {{ createClient }} from "https://esm.sh/@supabase/supabase-js@2.105.3";
 
-      const supabase = createClient(
-        {json.dumps(supabase_url)},
-        {json.dumps(publishable_key)},
-        {{auth:{{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}}}
-      );
       const authorizationId = {json.dumps(authorization_id)};
       const clientLoginUrl = {json.dumps(client_login_url)};
+      const authorizationMarkerPrefix = "hm_h13r2_oauth_reload:";
+      const authStepTimeoutMs = 45000;
       const loginPanel = document.getElementById("hm-login");
       const progressPanel = document.getElementById("hm-progress");
       const restartPanel = document.getElementById("hm-restart");
       const messageBox = document.getElementById("hm-message");
       const signInButton = document.getElementById("hm-signin");
       let busy = false;
+
+      function createFreshSupabaseClient() {{
+        return createClient(
+          {json.dumps(supabase_url)},
+          {json.dumps(publishable_key)},
+          {{auth:{{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}}}
+        );
+      }}
+
+      function resetPriorAuthorizationMarkers() {{
+        try {{
+          const storage = window.top?.sessionStorage || window.sessionStorage;
+          for (let index = storage.length - 1; index >= 0; index -= 1) {{
+            const key = String(storage.key(index) || "");
+            if (key.startsWith(authorizationMarkerPrefix)) storage.removeItem(key);
+          }}
+        }} catch (_error) {{}}
+      }}
+
+      function withTimeout(promise, step) {{
+        let timeoutId;
+        const timeout = new Promise((_, reject) => {{
+          timeoutId = window.setTimeout(() => {{
+            const error = new Error(`${{step}} took too long. Please start again.`);
+            error.name = "HealthyMeAuthTimeout";
+            reject(error);
+          }}, authStepTimeoutMs);
+        }});
+        return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
+      }}
 
       function showMessage(text, level="info") {{
         messageBox.textContent = text;
@@ -394,16 +421,19 @@ def render_root_authorization_ui(authorization_id: str) -> None:
           || message.includes("expired");
       }}
 
-      function requireRestart() {{
+      function requireRestart(message="This secure login request has expired. Please start again.") {{
         loginPanel.style.display = "none";
         progressPanel.style.display = "none";
         restartPanel.style.display = "block";
-        showMessage("This secure login request has expired. Please start again.", "error");
+        showMessage(message, "error");
       }}
 
-      async function approveAndContinue() {{
+      async function approveAndContinue(supabase) {{
         const {{data:details,error:detailsError}} =
-          await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
+          await withTimeout(
+            supabase.auth.oauth.getAuthorizationDetails(authorizationId),
+            "Secure authorization validation"
+          );
         if (detailsError) throw detailsError;
 
         if (details?.redirect_url && !("authorization_id" in details)) {{
@@ -411,10 +441,15 @@ def render_root_authorization_ui(authorization_id: str) -> None:
           return;
         }}
 
-        const {{data,error}} = await supabase.auth.oauth.approveAuthorization(authorizationId);
+        const {{data,error}} = await withTimeout(
+          supabase.auth.oauth.approveAuthorization(authorizationId),
+          "HealthyMe access authorization"
+        );
         if (error) throw error;
         redirectTop(data.redirect_url);
       }}
+
+      resetPriorAuthorizationMarkers();
 
       document.getElementById("hm-form").addEventListener("submit", async (event) => {{
         event.preventDefault();
@@ -425,31 +460,36 @@ def render_root_authorization_ui(authorization_id: str) -> None:
 
         const email = document.getElementById("hm-email").value.trim();
         const passwordInput = document.getElementById("hm-password");
-        const {{error}} = await supabase.auth.signInWithPassword({{
-          email,
-          password:passwordInput.value
-        }});
-        passwordInput.value = "";
-
-        if (error) {{
-          showMessage(error.message || "Unable to sign in. Please check your details.", "error");
-          busy = false;
-          signInButton.disabled = false;
-          return;
-        }}
-
-        showProgress();
+        const password = passwordInput.value;
+        const supabase = createFreshSupabaseClient();
         try {{
-          await approveAndContinue();
+          const {{error}} = await withTimeout(
+            supabase.auth.signInWithPassword({{email,password}}),
+            "Credential confirmation"
+          );
+          passwordInput.value = "";
+
+          if (error) throw error;
+
+          showProgress();
+          await approveAndContinue(supabase);
         }} catch (error) {{
-          if (isStale(error)) {{
-            try {{ await supabase.auth.signOut(); }} catch (_error) {{}}
-            requireRestart();
+          passwordInput.value = "";
+          if (isStale(error) || error?.name === "HealthyMeAuthTimeout") {{
+            try {{ await supabase.auth.signOut({{scope:"local"}}); }} catch (_error) {{}}
+            requireRestart(
+              error?.name === "HealthyMeAuthTimeout"
+                ? "Secure login took too long. Please start a fresh login."
+                : "This secure login request has expired. Please start again."
+            );
             return;
           }}
           loginPanel.style.display = "block";
           progressPanel.style.display = "none";
-          showMessage(error?.message || "Unable to complete secure login.", "error");
+          showMessage(
+            error?.message || "Unable to complete secure login. Please try again.",
+            "error"
+          );
           busy = false;
           signInButton.disabled = false;
         }}
