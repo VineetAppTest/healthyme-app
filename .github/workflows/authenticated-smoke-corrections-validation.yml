@@ -21,6 +21,7 @@ on:
       - "tests/test_authenticated_member_followup_corrections.py"
       - "tests/test_authenticated_smoke_corrections.py"
       - "tests/test_food_journal_meal_grid_saved_days_cleanup.py"
+      - "tests/test_food_saved_days_presentation.py"
       - "tests/test_member_home_global_header_runtime.py"
       - "tests/test_member_home_schedule_presentation.py"
       - "tests/test_streamlit_ui_consistency_batch.py"
@@ -63,6 +64,7 @@ jobs:
             tests/test_authenticated_member_followup_corrections.py \
             tests/test_authenticated_smoke_corrections.py \
             tests/test_food_journal_meal_grid_saved_days_cleanup.py \
+            tests/test_food_saved_days_presentation.py \
             tests/test_member_home_global_header_runtime.py \
             tests/test_member_home_schedule_presentation.py \
             tests/test_streamlit_ui_consistency_batch.py
@@ -73,6 +75,7 @@ jobs:
             tests.test_authenticated_smoke_corrections \
             tests.test_streamlit_ui_consistency_batch \
             tests.test_food_journal_meal_grid_saved_days_cleanup \
+            tests.test_food_saved_days_presentation \
             tests.test_member_home_global_header_runtime \
             tests.test_member_home_schedule_presentation \
             tests.test_meal_profile_builder_phase_b \
