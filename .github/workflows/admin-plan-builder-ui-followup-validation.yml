@@ -1,0 +1,38 @@
+name: Admin Plan Builder UI Follow-up Validation
+
+on:
+  pull_request:
+    paths:
+      - "components/member_plan_builder_setup.py"
+      - "components/member_plan_builder_meals_compact.py"
+      - "components/member_plan_builder_export.py"
+      - "components/member_plan_builder_exercise.py"
+      - "components/member_plan_builder_supplement.py"
+      - "tests/test_admin_plan_builder_ui_followup.py"
+      - ".github/workflows/admin-plan-builder-ui-followup-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile corrected Admin plan builder surfaces
+        run: |
+          python -m py_compile \
+            components/member_plan_builder_setup.py \
+            components/member_plan_builder_meals_compact.py \
+            components/member_plan_builder_export.py \
+            components/member_plan_builder_exercise.py \
+            components/member_plan_builder_supplement.py \
+            tests/test_admin_plan_builder_ui_followup.py
+      - name: Run focused Admin plan builder contracts
+        run: python -m unittest tests.test_admin_plan_builder_ui_followup -v

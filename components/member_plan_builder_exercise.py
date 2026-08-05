@@ -44,33 +44,34 @@ def _exercise_label(row: Dict) -> str:
 
 
 def _render_source_details(source: Dict) -> None:
-    source_summary(
-        clean(source.get("title")) or "Exercise",
-        (
-            clean(source.get("duration_or_reps")),
-            clean(source.get("difficulty")),
-            clean(source.get("category")),
-        ),
-    )
     with st.expander("More details", expanded=False):
         st.markdown(
             "<span class='mpb-exercise-more-details-anchor'></span>",
             unsafe_allow_html=True,
         )
-        details = (
-            ("Category", source.get("category")),
-            ("Difficulty", source.get("difficulty")),
-            ("Duration / Reps", source.get("duration_or_reps")),
-            ("Equipment", source.get("equipment")),
-            ("Benefits", source.get("benefits")),
-        )
-        shown = False
-        for label, value in details:
-            if clean(value):
-                shown = True
-                st.markdown(f"**{label}:** {clean(value)}")
-        if not shown:
+        details = [
+            (label, clean(value))
+            for label, value in (
+                ("Category", source.get("category")),
+                ("Difficulty", source.get("difficulty")),
+                ("Duration / Reps", source.get("duration_or_reps")),
+                ("Equipment", source.get("equipment")),
+                ("Benefits", source.get("benefits")),
+            )
+            if clean(value)
+        ]
+        if not details:
             st.caption("No additional repository information is available.")
+            return
+        detail_html = "".join(
+            f"<div class='mpb-exercise-detail{' mpb-exercise-detail-wide' if label == 'Benefits' else ''}'>"
+            f"<b>{label}:</b><span>{value}</span></div>"
+            for label, value in details
+        )
+        st.markdown(
+            f"<div class='mpb-exercise-detail-wrap'>{detail_html}</div>",
+            unsafe_allow_html=True,
+        )
 
 
 def _render_add_exercise(member_id: str, member_label: str) -> None:
@@ -318,6 +319,12 @@ div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[ope
 div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) [data-testid="stExpanderDetails"]{
   padding:.42rem .58rem .52rem!important;
 }
+.mpb-exercise-detail-wrap{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.45rem 1rem;width:100%;}
+.mpb-exercise-detail{display:inline-flex;align-items:flex-start;gap:.25rem;flex:0 1 auto;max-width:100%;font-size:.80rem;line-height:1.35;color:#334155;}
+.mpb-exercise-detail b{color:#064E3B;white-space:nowrap;}
+.mpb-exercise-detail span{min-width:0;overflow-wrap:anywhere;}
+.mpb-exercise-detail-wide{flex:1 1 22rem;}
+@media(max-width:720px){.mpb-exercise-detail,.mpb-exercise-detail-wide{flex:1 1 100%;}}
 </style>
 """,
         unsafe_allow_html=True,
