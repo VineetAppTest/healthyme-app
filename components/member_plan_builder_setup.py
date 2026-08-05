@@ -154,6 +154,32 @@ def _clone_complete_plan() -> None:
 
 def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
     st.markdown("<div class='hm-title'>Setup</div>", unsafe_allow_html=True)
+    st.markdown(
+        """
+<style id="hm-member-plan-setup-responsive-details-v1">
+.mpb-setup-details-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr))!important;
+  gap:.52rem!important;
+  width:100%!important;
+  align-items:start!important;
+}
+div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]>div[data-testid="column"]{
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  flex:none!important;
+}
+@media(max-width:640px){
+  div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]{
+    grid-template-columns:1fr!important;
+  }
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
 
     member_labels, label_to_id, id_to_label, _member_message = member_maps()
     ok_profiles, profiles, profile_message = list_profiles_for_editing(EDIT_SCOPE_ALL)
@@ -236,7 +262,11 @@ def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
     )
 
     with st.expander("More setup details", expanded=False):
-        row2 = st.columns(3, gap="small")
+        st.markdown(
+            "<span class='mpb-setup-details-anchor'></span>",
+            unsafe_allow_html=True,
+        )
+        row2 = st.columns(4, gap="small")
         profile["region"] = row2[0].text_input(
             "Region / Food Culture",
             value=clean(profile.get("region")),
@@ -267,7 +297,7 @@ def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
         for concern in profile.get("health_concerns") or []:
             if concern not in concerns:
                 concerns.append(concern)
-        profile["health_concerns"] = st.multiselect(
+        profile["health_concerns"] = row2[3].multiselect(
             "Health Concerns",
             concerns,
             default=list(profile.get("health_concerns") or []),
