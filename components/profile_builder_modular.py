@@ -48,8 +48,8 @@ from components.member_plan_builder_view_compact import (
 )
 
 
-APP_BUILD_VERSION = "v101.10"
-APP_BUILD_LABEL = "Compact Member Plan Builder"
+APP_BUILD_VERSION = "v101.11"
+APP_BUILD_LABEL = "Repository-led Member Plan Builder"
 SECTION_LABELS = {
     "Profile Setup": "Setup",
     "Meal Structure": "Meals",
@@ -76,9 +76,6 @@ def _render_css() -> None:
 .mpb-source-summary{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;border:1px solid #E3C98E;background:#FFF9EC;border-radius:11px;padding:.42rem .56rem;margin:.12rem 0 .42rem}
 .mpb-source-summary b{color:#064E3B;font-size:.83rem;font-weight:950}
 .mpb-source-summary span{color:#64748B;font-size:.75rem;font-weight:720}
-.mpb-plan-summary-card{border:1px solid #E3C98E;background:linear-gradient(135deg,#FFFDF8,#FFF7E7);border-radius:14px;padding:.66rem .76rem;margin:.24rem 0 .58rem;box-shadow:0 5px 14px rgba(15,23,42,.035)}
-.mpb-plan-summary-card b{display:block;color:#064E3B;font-size:.94rem;font-weight:950;margin-bottom:.12rem}
-.mpb-plan-summary-card span{display:block;color:#64748B;font-size:.77rem;font-weight:700}
 .mpb-integrity-note{border:1px solid #A7D7C8;background:#F0FDF8;color:#065F46;border-radius:11px;padding:.48rem .60rem;margin:.20rem 0 .54rem;font-size:.77rem;font-weight:760}
 div[data-testid="stVerticalBlockBorderWrapper"]{border-color:#E3C98E!important;border-radius:14px!important;background:#FFFDF8!important;box-shadow:0 5px 14px rgba(15,23,42,.028)!important;margin:.34rem 0!important}
 div[data-testid="stExpander"]{border:0!important;border-radius:10px!important;background:transparent!important}
@@ -115,7 +112,7 @@ def render_modular_profile_builder() -> None:
         "<div class='hero-shell'>"
         "<div class='hero-kicker'>Member Planning</div>"
         "<div class='hero-title'>Member Plan Builder</div>"
-        "<div class='hero-subtitle'>Set up the member, build meals, allocate Exercise and Supplement, and verify the final member plan.</div>"
+        "<div class='hero-subtitle'>Create reusable Meal Profiles, publish one to a member, then attach Exercise and Supplement allocations to that active plan.</div>"
         f"<div><span class='meta-pill'>{APP_BUILD_VERSION} · {APP_BUILD_LABEL}</span></div>"
         "</div>",
         unsafe_allow_html=True,

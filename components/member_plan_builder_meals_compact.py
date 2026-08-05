@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -14,7 +15,10 @@ from components.pbm_core import (
     MEAL_SLOTS,
     SELECT_RECIPE,
     clean,
+    clean_date,
     day_label,
+    load_selected,
+    member_maps,
     new_row,
     safe,
     safe_key,
@@ -22,8 +26,155 @@ from components.pbm_core import (
     storage_rows,
     with_placeholder,
 )
-from components.profile_builder_module_store import save_profile_module
+from components.profile_builder_module_store import (
+    EDIT_SCOPE_ALL,
+    list_profiles_for_editing,
+    save_profile_module,
+    save_profile_shell,
+)
 from components.profile_publish_control import activate_profile, clear_publish_cache
+
+
+_MEAL_PROFILE_SELECTOR = "mpb_meal_repository_profile"
+
+
+def _repository_profile_label(row: Dict[str, Any]) -> str:
+    return clean(row.get("profile_name")) or "Untitled Meal Profile"
+
+
+def _render_publish_controls(
+    can_publish: bool,
+) -> tuple[Dict[str, Any], str, str, object, bool]:
+    ok, profiles, message = list_profiles_for_editing(EDIT_SCOPE_ALL)
+    if not ok:
+        st.error(message)
+        return {}, "", "", clean_date(""), False
+    profiles = [
+        row for row in profiles if clean(row.get("status")).lower() == "draft"
+    ]
+    profile_by_id = {
+        clean(row.get("id")): row for row in profiles if clean(row.get("id"))
+    }
+    profile_ids = list(profile_by_id)
+    if not profile_ids:
+        st.info("Create a Meal Profile under Setup before building or publishing meals.")
+        return {}, "", "", clean_date(""), False
+
+    loaded_id = clean(st.session_state.get("pbm_loaded_profile_id"))
+    if st.session_state.get(_MEAL_PROFILE_SELECTOR) not in profile_ids:
+        st.session_state[_MEAL_PROFILE_SELECTOR] = (
+            loaded_id if loaded_id in profile_ids else profile_ids[0]
+        )
+
+    member_labels, label_to_id, _id_to_label, _member_message = member_maps()
+    controls = st.columns([0.36, 0.29, 0.18, 0.17], gap="small", vertical_alignment="bottom")
+    selected_profile_id = controls[0].selectbox(
+        "Meal Profile",
+        profile_ids,
+        format_func=lambda value: _repository_profile_label(profile_by_id[value]),
+        key=_MEAL_PROFILE_SELECTOR,
+    )
+    if selected_profile_id != loaded_id:
+        load_ok, load_message = load_selected(selected_profile_id, shell_only=False)
+        if load_ok:
+            st.rerun()
+        st.error(load_message)
+        return {}, "", "", clean_date(""), False
+
+    selected_member_label = controls[1].selectbox(
+        "Member",
+        member_labels,
+        key=f"mpb_meal_publish_member_{selected_profile_id}",
+    )
+    selected_member_id = label_to_id.get(selected_member_label, "")
+    start_date = controls[2].date_input(
+        "Plan Start Date",
+        value=clean_date(""),
+        key=f"mpb_meal_publish_start_{selected_profile_id}",
+    )
+    publish_clicked = controls[3].button(
+        "Publish",
+        type="primary",
+        use_container_width=True,
+        disabled=not can_publish or not bool(selected_member_id),
+        key=f"mpb_publish_repository_plan_{selected_profile_id}",
+        help="Publish a meal-only copy to the selected member.",
+    )
+    if not any(label_to_id.values()):
+        st.caption("No active member directory entries are available for publishing.")
+    return (
+        profile_by_id[selected_profile_id],
+        selected_member_id,
+        selected_member_label,
+        start_date,
+        publish_clicked,
+    )
+
+
+def _publish_repository_plan(
+    profile: Dict[str, Any],
+    member_id: str,
+    member_label: str,
+    start_date: object,
+) -> None:
+    source_id = clean(profile.get("id"))
+    meals = storage_rows("meal")
+    if not source_id:
+        st.error("Select a saved Meal Profile before publishing.")
+        return
+    if not member_id:
+        st.error("Select a Member before publishing.")
+        return
+    if not meals:
+        st.error("Add and save at least one Meal item before publishing.")
+        return
+
+    member_plan = copy.deepcopy(profile)
+    member_plan.update(
+        {
+            "id": "",
+            "status": "draft",
+            "assigned_member_id": member_id,
+            "assigned_member_label": member_label,
+            "start_date": clean(start_date),
+            "clone_source_profile_id": source_id,
+            "clone_source_label": clean(profile.get("profile_name")),
+            "created_by_user_id": st.session_state.get("user_id", ""),
+            "created_by_email": st.session_state.get("user_email", ""),
+        }
+    )
+    ok, member_plan_id, message = save_profile_shell(member_plan)
+    if not ok:
+        st.error(message)
+        return
+
+    meals_ok, meals_message = save_profile_module(
+        member_plan_id,
+        member_id,
+        "meal",
+        meals,
+        created_by_user_id=st.session_state.get("user_id", ""),
+        created_by_email=st.session_state.get("user_email", ""),
+    )
+    if not meals_ok:
+        st.error(
+            "The member-plan Draft was created, but its meals could not be copied. "
+            f"{meals_message}"
+        )
+        return
+
+    member_plan["id"] = member_plan_id
+    active_ok, active_message = activate_profile(member_plan, "ACTIVATE")
+    if not active_ok:
+        st.error(active_message)
+        return
+    clear_publish_cache()
+    load_member_plan_events.clear()
+    st.session_state["mpb_publish_flash"] = (
+        f"Meal Profile published to {member_label}. Exercise and Supplement remain "
+        "independent allocations linked through this member's active Meal Plan."
+    )
+    st.rerun()
 
 
 def _meal_rows(day: int, slot: str) -> List[Dict[str, Any]]:
@@ -276,41 +427,6 @@ def _render_review_table() -> None:
         st.info("No Meal items have been added yet.")
 
 
-def _publish_current_plan() -> None:
-    profile = st.session_state.get("pbm_profile") or {}
-    profile_id = clean(profile.get("id"))
-    if not profile_id:
-        st.error("Save Setup and Meals before publishing.")
-        return
-    if clean(profile.get("status")).lower() == "active":
-        st.info("This plan is already active for the selected member.")
-        return
-    if not clean(profile.get("assigned_member_id")):
-        st.error("Select and save a Member under Setup before publishing.")
-        return
-    if not meal_review_rows(st.session_state.get("pbm_items") or []):
-        st.error("Add and save at least one Meal item before publishing.")
-        return
-    try:
-        # Streamlit date widgets retain ``datetime.date`` values in session state.
-        # Keep the publish boundary JSON-safe even if backend instrumentation or a
-        # client serializer observes the complete profile object.
-        publish_profile = {
-            **profile,
-            "start_date": clean(profile.get("start_date")),
-        }
-        ok, message = activate_profile(publish_profile, "ACTIVATE")
-        if ok:
-            profile["status"] = "active"
-            clear_publish_cache()
-            load_member_plan_events.clear()
-            st.session_state["mpb_publish_flash"] = message
-            st.rerun()
-        st.error(message)
-    except Exception as exc:
-        st.error(f"Could not publish the meal plan: {exc}")
-
-
 def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> None:
     st.markdown(
         """
@@ -324,15 +440,34 @@ def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> N
 """,
         unsafe_allow_html=True,
     )
+    st.markdown(
+        "<div class='hm-title'>Meals</div>"
+        "<div class='hm-sub'>Select a reusable Meal Profile and member, then build or publish the meal allocation.</div>",
+        unsafe_allow_html=True,
+    )
+    (
+        _selected_profile,
+        publish_member_id,
+        publish_member_label,
+        publish_start_date,
+        publish_clicked,
+    ) = _render_publish_controls(can_publish)
     profile = st.session_state.get("pbm_profile") or {}
     profile_id = clean(profile.get("id"))
     if not profile_id:
-        st.info("Create or select a Meal Plan under Setup first.")
         return
+    if publish_clicked:
+        _publish_repository_plan(
+            profile,
+            publish_member_id,
+            publish_member_label,
+            publish_start_date,
+        )
 
     st.markdown(
-        "<div class='hm-title'>Meals</div>"
-        "<div class='hm-sub'>Choose a day, then complete each fixed meal slot from left to right.</div>",
+        "<div class='mpb-integrity-note'>Publishing creates a meal-only member-plan copy. "
+        "The repository Meal Profile stays reusable; Exercise and Supplement allocations "
+        "are managed separately.</div>",
         unsafe_allow_html=True,
     )
     day = _render_day_picker()
@@ -383,19 +518,6 @@ def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> N
     if flash:
         st.success(flash)
 
-    publish_label = (
-        "Plan Already Active"
-        if clean(profile.get("status")).lower() == "active"
-        else "Publish & Allocate to Member"
-    )
-    if st.button(
-        publish_label,
-        type="primary",
-        use_container_width=True,
-        disabled=(not can_publish or clean(profile.get("status")).lower() == "active"),
-        key="mpb_publish_current_plan",
-    ):
-        _publish_current_plan()
     if not can_publish:
         st.caption("Publishing is restricted to Admin and Super Admin.")
 

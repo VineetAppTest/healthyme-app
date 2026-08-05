@@ -46,16 +46,16 @@ class ViewMemberPlanExcelSSOTContractTest(unittest.TestCase):
         self.assertNotIn("Profile Scope", source)
         self.assertIn('"Member"', source)
         self.assertIn('"View Existing Profile"', source)
-        self.assertIn("active_profiles", source)
-        self.assertIn("more than one active Meal Profile", source)
+        self.assertIn('"Health Concerns"', source)
+        self.assertIn("profile_matches_or_filters", source)
 
     def test_active_view_uses_consolidated_member_plan_and_checks_identity(self):
         source = VIEW.read_text(encoding="utf-8")
         self.assertIn("build_current_member_plan", source)
         self.assertIn("model_profile_id != selected_id", source)
-        self.assertIn("Exercise Allocations", source)
-        self.assertIn("Supplement Allocations", source)
-        self.assertIn("ignored_profile_rows", source)
+        self.assertIn("allocation_day_groups", source)
+        self.assertIn('"Exercise"', source)
+        self.assertIn('"Supplement"', source)
         current = CURRENT_PLAN.read_text(encoding="utf-8")
         self.assertIn("read_only", current)
         self.assertIn("member_exercise_allocations", current)
@@ -74,15 +74,13 @@ class ViewMemberPlanExcelSSOTContractTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, source)
 
-    def test_download_contains_full_plan_and_audit_history(self):
+    def test_download_matches_three_on_screen_plan_sections(self):
         source = VIEW.read_text(encoding="utf-8")
-        self.assertIn('"Download Selected Member Plan"', source)
-        self.assertIn('sheet_name="Plan Summary"', source)
-        self.assertIn('sheet_name="Seven Day Meals"', source)
-        self.assertIn('sheet_name="Exercise Allocations"', source)
-        self.assertIn('sheet_name="Supplement Allocations"', source)
-        self.assertIn('sheet_name="Change Log"', source)
-        self.assertIn('sheet_name="Legacy Profile Rows"', source)
+        self.assertIn('"Download Excel"', source)
+        self.assertIn('"Download PDF"', source)
+        self.assertIn('"Meals": section_rows(', source)
+        self.assertIn('"Exercise": section_rows(', source)
+        self.assertIn('"Supplement": section_rows(', source)
 
     def test_legacy_viewer_is_retained_read_only_for_compatibility(self):
         source = LEGACY_VIEWER.read_text(encoding="utf-8")

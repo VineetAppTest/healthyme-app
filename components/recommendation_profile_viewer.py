@@ -108,7 +108,7 @@ def load_profile_inventory(limit: int = 500) -> Tuple[bool, List[dict], str]:
             .table(PROFILE_TABLE)
             .select(
                 "id,profile_name,status,assigned_member_id,assigned_member_label,"
-                "start_date,updated_at"
+                "start_date,health_concerns,updated_at"
             )
             .order("updated_at", desc=True)
             .limit(limit)

@@ -130,14 +130,14 @@ div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card)>div[data
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card){height:100%!important;min-height:100%!important;}
 .hm-member-identity-pill{height:2.46rem;min-height:2.46rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.76);border:1px solid #E9DFCC;border-radius:999px;padding:.24rem .64rem;margin:0!important;}
 .hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;white-space:nowrap;}
-.hm-top-profile-anchor,.hm-top-logout-anchor,.hm-task-action-anchor,.hm-home-action-anchor,.hm-member-home-balanced-card{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
+.hm-task-action-anchor,.hm-home-action-anchor,.hm-member-home-balanced-card{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){align-items:center!important;gap:.72rem!important;margin:0!important;padding:0!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"]{display:flex!important;align-items:center!important;height:2.46rem!important;min-height:2.46rem!important;}
 div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill) > div[data-testid="column"] > div[data-testid="stVerticalBlock"]{width:100%!important;height:2.46rem!important;min-height:2.46rem!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:0!important;margin:0!important;padding:0!important;}
-.hm-top-profile-anchor + div,.hm-top-logout-anchor + div{display:flex!important;align-items:center!important;justify-content:center!important;height:2.46rem!important;min-height:2.46rem!important;margin:0!important;padding:0!important;}
-.hm-top-profile-anchor + div [data-testid="stButton"] > button,.hm-top-profile-anchor + div .stButton > button{width:2.34rem!important;min-width:2.34rem!important;max-width:2.34rem!important;height:2.34rem!important;min-height:2.34rem!important;max-height:2.34rem!important;border-radius:999px!important;padding:0!important;font-size:.92rem!important;background:#FFFFFF!important;color:#064E3B!important;border:1.4px solid #D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.055)!important;margin:0 auto!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
-.hm-top-profile-anchor + div [data-testid="stButton"] > button *,.hm-top-profile-anchor + div .stButton > button *{color:#064E3B!important;font-size:.92rem!important;line-height:1!important;}
-.hm-top-logout-anchor + div [data-testid="stButton"] > button,.hm-top-logout-anchor + div .stButton > button{height:2.46rem!important;min-height:2.46rem!important;max-height:2.46rem!important;border-radius:12px!important;padding:.36rem .78rem!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.st-key-hm_top_profile_control,.st-key-hm_top_logout_control{height:2.46rem!important;min-height:2.46rem!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;padding:0!important;}
+.st-key-hm_top_profile_control [data-testid="stButton"] > button{width:2.34rem!important;min-width:2.34rem!important;max-width:2.34rem!important;height:2.34rem!important;min-height:2.34rem!important;max-height:2.34rem!important;border-radius:999px!important;padding:0!important;font-size:.92rem!important;background:#FFFFFF!important;color:#064E3B!important;border:1.4px solid #D8A84E!important;box-shadow:0 4px 10px rgba(6,78,59,.055)!important;margin:0 auto!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.st-key-hm_top_profile_control [data-testid="stButton"] > button *{color:#064E3B!important;font-size:.92rem!important;line-height:1!important;}
+.st-key-hm_top_logout_control [data-testid="stButton"] > button{height:2.46rem!important;min-height:2.46rem!important;max-height:2.46rem!important;border-radius:12px!important;padding:.36rem .78rem!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 .hm-b13-message-shell{border:1px solid #E3C98E;background:#FFFDF8;border-radius:20px;padding:.85rem .95rem;margin:.60rem 0 1rem 0;box-shadow:0 8px 22px rgba(15,23,42,.045);}
 .hm-b13-message-title{color:#064E3B;font-size:1.05rem;font-weight:760;margin-bottom:.50rem;}
 .hm-b13-message-card{border:1px solid #EAD9AA;background:#FFF9EC;border-radius:16px;padding:.75rem .82rem;margin:.45rem 0;}
@@ -221,25 +221,29 @@ def _render_member_utility_bar():
             unsafe_allow_html=True,
         )
     with profile_col:
-        st.markdown(
-            "<span class='hm-top-profile-anchor'></span>",
-            unsafe_allow_html=True,
-        )
-        if st.button(
-            "👤",
-            key="hm_top_my_profile",
-            use_container_width=True,
-            help="My Profile",
+        with st.container(
+            key="hm_top_profile_control",
+            horizontal=True,
+            horizontal_alignment="center",
+            vertical_alignment="center",
         ):
-            st.switch_page("pages/07_My_Profile.py")
+            if st.button(
+                "👤",
+                key="hm_top_my_profile",
+                use_container_width=True,
+                help="My Profile",
+            ):
+                st.switch_page("pages/07_My_Profile.py")
     with logout_col:
-        st.markdown(
-            "<span class='hm-top-logout-anchor'></span>",
-            unsafe_allow_html=True,
-        )
-        if st.button("Logout", key="hm_top_logout", use_container_width=True):
-            logout_current_user()
-            st.rerun()
+        with st.container(
+            key="hm_top_logout_control",
+            horizontal=True,
+            horizontal_alignment="center",
+            vertical_alignment="center",
+        ):
+            if st.button("Logout", key="hm_top_logout", use_container_width=True):
+                logout_current_user()
+                st.rerun()
 
 
 def _render_messages(user_id, show_divider=False):

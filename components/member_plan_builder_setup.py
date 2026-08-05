@@ -9,12 +9,9 @@ import streamlit as st
 from components.pbm_core import (
     SELECT_AGE,
     SELECT_DIET,
-    SELECT_MEMBER,
     bump_epoch,
     clean,
-    clean_date,
     load_selected,
-    member_maps,
     profile_payload,
     reset_profile,
     with_placeholder,
@@ -36,8 +33,7 @@ _LAST_SELECTOR_KEY = "mpb_last_plan_selector"
 
 def _profile_label(row: Dict) -> str:
     status = clean(row.get("status"), "draft").title()
-    member = clean(row.get("assigned_member_label")) or "Unallocated"
-    return f"{clean(row.get('profile_name')) or 'Untitled'} · {member} · {status}"
+    return f"{clean(row.get('profile_name')) or 'Untitled'} · {status}"
 
 
 def _queue_plan_selector(plan_id: str) -> None:
@@ -90,7 +86,7 @@ def _handle_plan_selection(selected_id: str) -> None:
     st.error(message)
 
 
-def _clone_complete_plan() -> None:
+def _clone_meal_profile() -> None:
     profile = copy.deepcopy(st.session_state.get("pbm_profile") or {})
     source_id = clean(profile.get("id"))
     source_name = clean(profile.get("profile_name")) or "Selected plan"
@@ -112,6 +108,9 @@ def _clone_complete_plan() -> None:
     clone["profile_name"] = f"Copy of {source_name}"
     clone["clone_source_profile_id"] = source_id
     clone["clone_source_label"] = source_name
+    clone["assigned_member_id"] = ""
+    clone["assigned_member_label"] = ""
+    clone["start_date"] = ""
     clone["created_by_user_id"] = st.session_state.get("user_id", "")
     clone["created_by_email"] = st.session_state.get("user_email", "")
 
@@ -127,7 +126,7 @@ def _clone_complete_plan() -> None:
 
     save_ok, save_message = save_profile_module(
         new_id,
-        clean(clone.get("assigned_member_id")),
+        "",
         "meal",
         meals,
         created_by_user_id=st.session_state.get("user_id", ""),
@@ -143,10 +142,11 @@ def _clone_complete_plan() -> None:
     st.session_state["pbm_profile"] = clone
     st.session_state["pbm_items"] = meals
     st.session_state["pbm_loaded_profile_id"] = new_id
-    st.session_state["pbm_loaded_member_id"] = clean(clone.get("assigned_member_id"))
+    st.session_state["pbm_loaded_member_id"] = ""
     _queue_plan_selector(new_id)
     st.session_state["mpb_setup_flash"] = (
-        f"Complete meal plan cloned as a new Draft. {len(meals)} meal row(s) copied."
+        f"Meal Profile cloned as a new Draft. {len(meals)} meal row(s) copied. "
+        "Exercise and Supplement allocations were not copied."
     )
     bump_epoch()
     st.rerun()
@@ -156,8 +156,10 @@ def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
     st.markdown("<div class='hm-title'>Setup</div>", unsafe_allow_html=True)
     st.markdown(
         """
-<style id="hm-member-plan-setup-responsive-details-v2">
+<style id="hm-member-plan-setup-responsive-details-v3">
 .mpb-setup-details-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) [data-testid="stExpanderDetails"]{padding:.48rem .62rem .58rem!important;}
+div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stVerticalBlock"]{gap:.42rem!important;}
 div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]{
   display:grid!important;
   grid-template-columns:repeat(auto-fit,minmax(255px,1fr))!important;
@@ -165,12 +167,13 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
   width:100%!important;
   align-items:start!important;
 }
-div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]>div[data-testid="column"]{
+div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]>:is(div[data-testid="column"],div[data-testid="stColumn"]){
   width:auto!important;
   min-width:0!important;
   max-width:none!important;
   flex:none!important;
 }
+.mpb-setup-group-title{color:#064E3B;font-size:.76rem;font-weight:950;text-transform:uppercase;letter-spacing:.04em;margin:.08rem 0 -.08rem;padding-bottom:.18rem;border-bottom:1px solid #F0DFC0;}
 @media(max-width:640px){
   div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]{
     grid-template-columns:1fr!important;
@@ -181,12 +184,14 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
         unsafe_allow_html=True,
     )
 
-    member_labels, label_to_id, id_to_label, _member_message = member_maps()
     ok_profiles, profiles, profile_message = list_profiles_for_editing(EDIT_SCOPE_ALL)
     if not ok_profiles:
         profiles = []
         st.warning(profile_message)
 
+    profiles = [
+        row for row in profiles if clean(row.get("status")).lower() == "draft"
+    ]
     profile_by_id = {
         clean(row.get("id")): row for row in profiles if clean(row.get("id"))
     }
@@ -213,12 +218,12 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
         st.rerun()
     clone_disabled = not bool(loaded_id)
     if clone_col.button(
-        "Clone Complete Plan",
+        "Clone Meal Profile",
         use_container_width=True,
         disabled=clone_disabled,
         key="mpb_clone_complete_plan",
     ):
-        _clone_complete_plan()
+        _clone_meal_profile()
 
     _handle_plan_selection(selected_id)
 
@@ -229,15 +234,7 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
     profile = st.session_state["pbm_profile"]
     epoch = int(st.session_state.get("pbm_epoch", 0))
 
-    current_member_id = clean(profile.get("assigned_member_id"))
-    current_member = id_to_label.get(
-        current_member_id,
-        clean(profile.get("assigned_member_label")) or SELECT_MEMBER,
-    )
-    if current_member not in member_labels:
-        current_member = SELECT_MEMBER
-
-    row1 = st.columns([0.42, 0.34, 0.24], gap="small")
+    row1 = st.columns(1, gap="small")
     profile["profile_name"] = row1[0].text_input(
         "Plan Name",
         value=clean(profile.get("profile_name")),
@@ -245,29 +242,17 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
         label_visibility="collapsed",
         key=f"mpb_profile_name_{epoch}",
     )
-    selected_member = row1[1].selectbox(
-        "Member",
-        member_labels,
-        index=member_labels.index(current_member),
-        label_visibility="collapsed",
-        key=f"mpb_member_{epoch}",
-        disabled=(
-            bool(profile.get("id"))
-            and clean(profile.get("status")).lower() == "active"
-        ),
-    )
-    profile["assigned_member_label"] = selected_member
-    profile["assigned_member_id"] = label_to_id.get(selected_member, "")
-    profile["start_date"] = row1[2].date_input(
-        "Plan Start Date",
-        value=clean_date(profile.get("start_date")),
-        label_visibility="collapsed",
-        key=f"mpb_start_date_{epoch}",
-    )
+    profile["assigned_member_label"] = ""
+    profile["assigned_member_id"] = ""
+    profile["start_date"] = ""
 
     with st.expander("More setup details", expanded=False):
         st.markdown(
             "<span class='mpb-setup-details-anchor'></span>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            "<div class='mpb-setup-group-title'>Profile classification</div>",
             unsafe_allow_html=True,
         )
         row2 = st.columns(4, gap="small")
@@ -308,6 +293,10 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
             key=f"mpb_concerns_{epoch}",
         )
 
+        st.markdown(
+            "<div class='mpb-setup-group-title'>Internal notes</div>",
+            unsafe_allow_html=True,
+        )
         note_col, change_col = st.columns(2, gap="small")
         profile["profile_note"] = note_col.text_area(
             "Nutritionist Note",
@@ -329,13 +318,18 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
         disabled=not check_profile_builder_store().get("ok"),
         key="mpb_save_setup",
     ):
-        ok, profile_id, message = save_profile_shell(profile_payload())
+        payload = {
+            **profile_payload(),
+            "assigned_member_id": "",
+            "assigned_member_label": "",
+            "start_date": "",
+            "status": "draft",
+        }
+        ok, profile_id, message = save_profile_shell(payload)
         if ok:
             profile["id"] = profile_id
             st.session_state["pbm_loaded_profile_id"] = profile_id
-            st.session_state["pbm_loaded_member_id"] = clean(
-                profile.get("assigned_member_id")
-            )
+            st.session_state["pbm_loaded_member_id"] = ""
             _queue_plan_selector(profile_id)
             st.session_state["mpb_setup_flash"] = message
             st.rerun()

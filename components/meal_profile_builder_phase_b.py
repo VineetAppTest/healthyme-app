@@ -4,7 +4,7 @@ import copy
 from typing import Any, Iterable
 
 
-CONTRACT_VERSION = "2026-08-04-member-plan-builder-ux-performance-v2"
+CONTRACT_VERSION = "2026-08-05-repository-publish-and-plan-view-v3"
 MEAL_EDITABLE_ITEM_TYPES = ("meal",)
 LEGACY_READ_ONLY_ITEM_TYPES = ("exercise", "supplement")
 # Retained for route-registration and historical contract compatibility.
@@ -70,9 +70,10 @@ def meal_profile_builder_manifest() -> dict[str, Any]:
             "new Exercise and Supplement writes remain in their independent allocation stores"
         ),
         "navigation_rule": (
-            "Setup auto-loads and clones complete Meal Plans; Meals use fixed compact slots; "
-            "Exercise and Supplement render as separate top-level tasks; View Member Plan "
-            "uses the consolidated active-plan read model and removes Profile Scope"
+            "Setup owns reusable unallocated Meal Profiles and meal-only cloning; Meals select "
+            "the repository profile, member and publisher; Exercise and Supplement attach through "
+            "the member's active Meal Plan; View Member Plan uses OR filters and the consolidated "
+            "active-plan read model"
         ),
         "performance_rule": (
             "repository source contracts are cached and loaded only for sections that need them"

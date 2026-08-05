@@ -68,7 +68,7 @@ class StreamlitUiConsistencyBatchTests(unittest.TestCase):
 
     def test_member_plan_uses_consistent_weekly_tables(self):
         source = (ROOT / "components/member_plan_builder_view_compact.py").read_text()
-        self.assertIn("def _render_weekly_table", source)
+        self.assertIn("def _render_grouped_weekly_table", source)
         self.assertIn("<th>Start Date</th>", source)
         self.assertIn("<th>Type</th>", source)
         self.assertIn("<th>Day</th>", source)

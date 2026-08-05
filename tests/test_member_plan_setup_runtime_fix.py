@@ -18,7 +18,7 @@ class MemberPlanSetupRuntimeFixTests(unittest.TestCase):
         self.assertLess(apply_at, widget_at)
         handler = source[
             source.index("def _handle_plan_selection") : source.index(
-                "def _clone_complete_plan"
+            "def _clone_meal_profile"
             )
         ]
         self.assertNotIn("st.session_state[_SELECTOR_KEY] =", handler)

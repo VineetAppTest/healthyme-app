@@ -42,11 +42,12 @@ class Issue260ProfileBuilderUICleanupTests(unittest.TestCase):
         self.assertNotIn("Recommendation Profile lifecycle", self.builder_source)
         self.assertNotIn("Preview Meal Plan", self.builder_source)
 
-    def test_setup_removes_manual_load_and_keeps_complete_clone(self) -> None:
+    def test_setup_removes_manual_load_and_keeps_meal_only_clone(self) -> None:
         self.assertNotIn('"Load Profile"', self.setup_source)
         self.assertIn("load_selected(selected_id, shell_only=False)", self.setup_source)
-        self.assertIn('"Clone Complete Plan"', self.setup_source)
+        self.assertIn('"Clone Meal Profile"', self.setup_source)
         self.assertIn("save_profile_module", self.setup_source)
+        self.assertNotIn('selectbox(\n        "Member"', self.setup_source)
 
     def test_meal_workflow_is_fixed_and_review_driven(self) -> None:
         self.assertIn("MEAL_SLOTS", self.meals_source)
@@ -54,7 +55,8 @@ class Issue260ProfileBuilderUICleanupTests(unittest.TestCase):
         self.assertIn('with st.expander("More details"', self.meals_source)
         self.assertIn('"Save Meal Plan"', self.meals_source)
         self.assertIn("st.dataframe", self.meals_source)
-        self.assertIn('"Publish & Allocate to Member"', self.meals_source)
+        self.assertIn('"Meal Profile"', self.meals_source)
+        self.assertIn('"Publish"', self.meals_source)
 
     def test_allocation_workflows_are_separate_and_embedded(self) -> None:
         self.assertIn("save_exercise_member_allocation", self.exercise_source)
@@ -71,7 +73,8 @@ class Issue260ProfileBuilderUICleanupTests(unittest.TestCase):
         self.assertIn("render_view_member_plan_compact()", self.builder_source)
         self.assertNotIn("Profile Scope", self.view_source)
         self.assertIn("build_current_member_plan", self.view_source)
-        self.assertIn('"Download Selected Member Plan"', self.view_source)
+        self.assertIn('"Download Excel"', self.view_source)
+        self.assertIn('"Download PDF"', self.view_source)
 
 
 if __name__ == "__main__":

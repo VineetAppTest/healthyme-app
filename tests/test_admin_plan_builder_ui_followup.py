@@ -21,7 +21,9 @@ class AdminPlanBuilderUiFollowupTests(unittest.TestCase):
         self.assertIn('row2 = st.columns(4, gap="small")', source)
         self.assertIn('row2[3].multiselect(', source)
         self.assertIn("grid-template-columns:1fr!important", source)
-        self.assertGreaterEqual(source.count('label_visibility="collapsed"'), 3)
+        self.assertIn("Profile classification", source)
+        self.assertIn("Internal notes", source)
+        self.assertGreaterEqual(source.count('label_visibility="collapsed"'), 1)
 
     def test_meal_more_details_use_responsive_wrapping(self):
         source = self._source("components/member_plan_builder_meals_compact.py")

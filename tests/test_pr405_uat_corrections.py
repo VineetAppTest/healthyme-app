@@ -17,10 +17,10 @@ class Pr405UatCorrectionTests(unittest.TestCase):
 
     def test_setup_hides_repeated_labels_and_preserves_natural_field_width(self):
         source = self._source("components/member_plan_builder_setup.py")
-        row_start = source.index('row1 = st.columns([0.42, 0.34, 0.24]')
+        row_start = source.index('row1 = st.columns(1')
         row_end = source.index('with st.expander("More setup details"', row_start)
         row = source[row_start:row_end]
-        self.assertEqual(row.count('label_visibility="collapsed"'), 3)
+        self.assertEqual(row.count('label_visibility="collapsed"'), 1)
         self.assertIn("repeat(auto-fit,minmax(255px,1fr))", source)
         self.assertNotIn("repeat(auto-fit,minmax(220px,1fr))", source)
 
@@ -42,13 +42,14 @@ class Pr405UatCorrectionTests(unittest.TestCase):
         self.assertGreaterEqual(source.count('timing=", ".join(timing)'), 2)
         self.assertNotIn("source_summary(", source)
 
-    def test_publish_normalises_date_before_activation(self):
+    def test_publish_creates_member_copy_before_activation(self):
         source = self._source("components/member_plan_builder_meals_compact.py")
-        start = source.index("def _publish_current_plan")
+        start = source.index("def _publish_repository_plan")
         end = source.index("def render_member_plan_meals_compact", start)
         block = source[start:end]
-        self.assertIn('"start_date": clean(profile.get("start_date"))', block)
-        self.assertIn('activate_profile(publish_profile, "ACTIVATE")', block)
+        self.assertIn('"start_date": clean(start_date)', block)
+        self.assertIn('"clone_source_profile_id": source_id', block)
+        self.assertIn('activate_profile(member_plan, "ACTIVATE")', block)
         self.assertNotIn('activate_profile(profile, "ACTIVATE")', block)
 
     def test_member_header_has_explicit_control_and_section_spacing(self):
