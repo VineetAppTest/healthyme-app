@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import io
 from collections import defaultdict
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -83,36 +84,109 @@ def _plain_table_cell(value: object) -> str:
     return html.unescape(str(value or "").replace("<br>", "\n"))
 
 
-def _meal_plan_rows(
-    start_date: str,
-    items: List[Dict[str, Any]],
-) -> List[Dict[str, Any]]:
-    rows: List[Dict[str, Any]] = []
-    for day in range(1, 8):
-        timing, meal, liquid, remarks = _meal_cells(items, day)
-        rows.append(
-            {
-                "Start Date": start_date,
-                "Type": "Meal",
-                "Day": f"Day {day}",
-                "Timing": _plain_table_cell(timing),
-                "Meal": _plain_table_cell(meal),
-                "Liquid": _plain_table_cell(liquid),
-                "Remarks": _plain_table_cell(remarks),
-            }
-        )
-    return rows
+def _parse_date(value: object) -> date | None:
+    raw = clean(value)
+    if not raw:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d-%m-%Y", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(raw[:10], fmt).date()
+        except ValueError:
+            pass
+    return None
 
 
-def _render_meal_plan_table(
+def _html_cell(value: object) -> str:
+    text = _plain_table_cell(value)
+    return "<br>".join(html.escape(line) for line in text.splitlines())
+
+
+def _render_weekly_table(
     start_date: str,
-    items: List[Dict[str, Any]],
+    section_type: str,
+    headers: tuple[str, str, str, str],
+    day_cells,
 ) -> None:
-    st.dataframe(
-        pd.DataFrame(_meal_plan_rows(start_date, items)),
-        use_container_width=True,
-        hide_index=True,
+    rows = []
+    for day_number in range(1, 8):
+        cells = tuple(day_cells(day_number))
+        prefix = ""
+        if day_number == 1:
+            prefix = (
+                f"<td rowspan='7' class='mpb-weekly-fixed'>{_html_cell(start_date)}</td>"
+                f"<td rowspan='7' class='mpb-weekly-fixed'>{html.escape(section_type)}</td>"
+            )
+        rows.append(
+            "<tr>"
+            f"{prefix}<td class='mpb-weekly-day'>Day {day_number}</td>"
+            + "".join(f"<td>{_html_cell(value)}</td>" for value in cells)
+            + "</tr>"
+        )
+    st.markdown(
+        """
+<style id="mpb-weekly-table-v1">
+.mpb-weekly-wrap{overflow:auto;border:1px solid #D8A84E;border-radius:12px;background:#fff;margin:.34rem 0 .78rem}.mpb-weekly-table{width:100%;border-collapse:collapse;font-size:.75rem;line-height:1.28}.mpb-weekly-table th{background:#FFF4DE;color:#064E3B;font-weight:900;text-align:center;padding:.45rem .42rem;border:1px solid #D8A84E}.mpb-weekly-table td{color:#334155;font-weight:650;padding:.45rem .42rem;border:1px solid #E3C98E;vertical-align:top}.mpb-weekly-table .mpb-weekly-fixed,.mpb-weekly-table .mpb-weekly-day{text-align:center;vertical-align:middle;color:#064E3B;font-weight:900;white-space:nowrap}.mpb-weekly-title{color:#064E3B;font-size:.92rem;font-weight:950;margin:.72rem 0 .28rem}
+</style>
+""",
+        unsafe_allow_html=True,
     )
+    header_html = "".join(f"<th>{html.escape(value)}</th>" for value in headers)
+    st.markdown(
+        f"<div class='mpb-weekly-title'>{html.escape(section_type)}</div>"
+        "<div class='mpb-weekly-wrap'><table class='mpb-weekly-table'>"
+        "<thead><tr><th>Start Date</th><th>Type</th><th>Day</th>"
+        f"{header_html}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _model_rows(model: Dict[str, Any], domain: str) -> List[Dict[str, Any]]:
+    partitions = dict(model.get(domain) or {})
+    output: List[Dict[str, Any]] = []
+    for state in ("current", "upcoming"):
+        output.extend(dict(row or {}) for row in partitions.get(state) or [])
+    return output
+
+
+def _row_applies_to_date(row: Dict[str, Any], target: date | None) -> bool:
+    if target is None:
+        return True
+    start = _parse_date(row.get("start_date"))
+    end = _parse_date(row.get("end_date"))
+    if start and target < start:
+        return False
+    if end and target > end:
+        return False
+    return True
+
+
+def _allocation_day_cells(
+    model: Dict[str, Any],
+    domain: str,
+    plan_start: str,
+    day_number: int,
+) -> tuple[str, str, str, str]:
+    parsed_start = _parse_date(plan_start)
+    target = parsed_start + timedelta(days=day_number - 1) if parsed_start else None
+    rows = [row for row in _model_rows(model, domain) if _row_applies_to_date(row, target)]
+    timing: List[str] = []
+    names: List[str] = []
+    values: List[str] = []
+    remarks: List[str] = []
+    for row in rows:
+        snapshot = dict(row.get("source_snapshot") or {})
+        timing.append(clean(row.get("timing") or snapshot.get("timing")))
+        if domain == "exercise":
+            names.append(clean(row.get("exercise_name") or row.get("title") or snapshot.get("title")))
+            values.append(clean(snapshot.get("duration_or_reps")))
+        else:
+            names.append(clean(row.get("supplement_name") or row.get("title") or snapshot.get("supplement_name") or snapshot.get("title")))
+            dose = clean(row.get("dosage") or snapshot.get("dosage"))
+            frequency = clean(row.get("frequency") or snapshot.get("frequency"))
+            values.append(" · ".join(value for value in (dose, frequency) if value))
+        remarks.append(clean(row.get("instructions") or snapshot.get("instructions")))
+    joined = lambda items: "\n".join(value for value in items if value)
+    return joined(timing), joined(names), joined(values), joined(remarks)
 
 
 def _legacy_rows(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -173,19 +247,6 @@ def _build_workbook(
                 sheet.column_dimensions[column_cells[0].column_letter].width = width
     buffer.seek(0)
     return buffer.getvalue()
-
-
-def _render_allocation_table(title: str, rows: List[Dict[str, Any]], empty: str) -> None:
-    st.markdown(f"<div class='mpb-section-label'>{safe(title)}</div>", unsafe_allow_html=True)
-    visible = [row for row in rows if row.get("Status") in {"Current", "Upcoming"}]
-    if visible:
-        display = pd.DataFrame(visible).drop(
-            columns=["Allocation ID", "Source ID"],
-            errors="ignore",
-        )
-        st.dataframe(display, use_container_width=True, hide_index=True)
-    else:
-        st.info(empty)
 
 
 def render_view_member_plan_compact() -> None:
@@ -269,28 +330,33 @@ def render_view_member_plan_compact() -> None:
         if model_profile_id != selected_id:
             st.error("Integrity check failed: the selected active Meal Profile does not match the member's consolidated current plan.")
             return
-        st.markdown(
-            "<div class='mpb-integrity-note'>Active-plan integrity verified: Meals, Exercise and Supplement are consolidated for the same member.</div>",
-            unsafe_allow_html=True,
-        )
     else:
         st.caption("This is a Draft or historical Meal Profile. Current independent allocations are shown only with the member's Active profile.")
 
-    _render_meal_plan_table(
-        clean(profile.get("start_date")),
-        items,
+    plan_start = clean(profile.get("start_date"))
+    _render_weekly_table(
+        plan_start,
+        "Meal",
+        ("Timing", "Meal", "Liquid", "Remarks"),
+        lambda day_number: _meal_cells(items, day_number),
     )
 
     if model:
-        _render_allocation_table(
-            "Exercise Allocations",
-            _allocation_rows(model, "exercise"),
-            "No current or upcoming Exercise allocation.",
+        _render_weekly_table(
+            plan_start,
+            "Exercise",
+            ("Timing", "Activity", "Duration/Sets", "Remarks"),
+            lambda day_number: _allocation_day_cells(
+                model, "exercise", plan_start, day_number
+            ),
         )
-        _render_allocation_table(
-            "Supplement Allocations",
-            _allocation_rows(model, "supplement"),
-            "No current or upcoming Supplement allocation.",
+        _render_weekly_table(
+            plan_start,
+            "Supplement",
+            ("Timing", "Supplement", "Dosage", "Remarks"),
+            lambda day_number: _allocation_day_cells(
+                model, "supplement", plan_start, day_number
+            ),
         )
         ignored = dict(model.get("ignored_profile_rows") or {})
         ignored_count = int(ignored.get("exercise", 0)) + int(ignored.get("supplement", 0))

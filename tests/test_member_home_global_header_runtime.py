@@ -32,33 +32,18 @@ class MemberHomeGlobalHeaderRuntimeTests(unittest.TestCase):
             calls.append(title)
 
         ui_common.topbar = base_topbar
-
         runtime.install_member_home_global_header_runtime()
         ui_common.topbar("Member Home", "Member subtitle", "Member experience")
-
         self.assertEqual(calls, ["Member Home"])
         rendered_css = "\n".join(self.fake_st.markdown_calls)
-        self.assertIn("hm-member-home-global-header-v5", rendered_css)
+        self.assertIn("hm-member-home-global-header-v6", rendered_css)
         self.assertIn("hm-member-identity-pill", rendered_css)
         self.assertIn("hm-top-profile-anchor", rendered_css)
         self.assertIn("hm-top-logout-anchor", rendered_css)
-        self.assertIn(
-            'div[data-testid="stVerticalBlock"]:has(> div[data-testid="stHorizontalBlock"] .hm-member-identity-pill)',
-            rendered_css,
-        )
-        self.assertIn("gap:.28rem!important", rendered_css)
-        self.assertIn(
-            '> div[data-testid="stElementContainer"]:has(.hero-shell)',
-            rendered_css,
-        )
-        self.assertIn("padding-top:.12rem!important", rendered_css)
         self.assertIn("@media(max-width:760px)", rendered_css)
-        self.assertIn(
-            "grid-template-columns:minmax(0,1fr) 2.55rem 4.65rem!important",
-            rendered_css,
-        )
+        self.assertIn("grid-template-columns:minmax(0,1fr) 2.55rem 4.65rem!important", rendered_css)
         self.assertIn("text-overflow:ellipsis!important", rendered_css)
-        self.assertIn("height:2.30rem!important", rendered_css)
+        self.assertNotIn("padding-top:.12rem!important", rendered_css)
         self.assertNotIn("margin-top:-", rendered_css)
 
     def test_other_pages_keep_their_existing_header_sequence(self):

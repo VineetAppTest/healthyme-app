@@ -159,14 +159,15 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, helper)
 
-    def test_member_home_uses_compact_three_by_two_schedule_and_message_grids(self):
+    def test_member_home_uses_two_card_schedule_and_three_card_message_grids(self):
         source = (ROOT / "pages/02_Member_Home.py").read_text()
         ast.parse(source)
         self.assertIn("list_upcoming_member_schedules(user_id, limit=6)", source)
         self.assertIn("get_member_messages(user_id, limit=6)", source)
-        self.assertIn("for row_start in range(0, len(upcoming_schedules), 3):", source)
+        self.assertIn("for row_start in range(0, len(upcoming_schedules), 2):", source)
+        self.assertIn('st.columns(2, gap="medium")', source)
         self.assertIn("for row_start in range(0, len(unique_messages), 3):", source)
-        self.assertGreaterEqual(source.count('st.columns(3, gap="small")'), 2)
+        self.assertIn('st.columns(3, gap="small")', source)
         self.assertIn("hm-home-section-divider", source)
         self.assertIn("hm-home-grid-anchor", source)
         self.assertIn("hm-message-grid-anchor", source)
@@ -181,6 +182,7 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         self.assertIn("with st.expander(", schedule_slice)
         self.assertIn("hm-upcoming-schedule-anchor", schedule_slice)
         self.assertIn("expanded=True", schedule_slice)
+        self.assertIn('f"Upcoming Schedule ({len(upcoming_schedules)})"', schedule_slice)
         for forbidden in (
             "update_member_schedule_status(",
             "session_counted =",
@@ -227,18 +229,18 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
 
     def test_member_home_header_renders_before_slow_workflow_reads(self):
         source = (ROOT / "pages/02_Member_Home.py").read_text()
-        self.assertIn("hm-member-home-local-style-v2", source)
-        self.assertIn("padding-top:0!important", source)
-        render_start = source.index(
-            "# Render the local spacing override and first visible controls"
-        )
+        self.assertIn("hm-member-home-local-style-v3", source)
+        self.assertIn("hm-member-home-root-anchor", source)
+        self.assertIn("# Render one structural header shell", source)
+        self.assertNotIn("html,body,#root{margin-top:0", source)
+        render_start = source.index("# Render one structural header shell")
         workflow_read = source.index("get_workflow(user_id)")
         self.assertLess(render_start, workflow_read)
-        self.assertLess(source.index("\n_render_member_home_css()\n"), workflow_read)
-        self.assertLess(source.index("\n_render_member_utility_bar()\n"), workflow_read)
-        self.assertLess(source.index('topbar(\n    "Member Home"'), workflow_read)
-        self.assertEqual(source.count("\n_render_member_home_css()\n"), 1)
-        self.assertEqual(source.count("\n_render_member_utility_bar()\n"), 1)
+        self.assertLess(source.index("_render_member_home_css()", render_start), workflow_read)
+        self.assertLess(source.index("_render_member_utility_bar()", render_start), workflow_read)
+        self.assertLess(source.index('topbar(\n        "Member Home"', render_start), workflow_read)
+        self.assertEqual(source.count("    _render_member_home_css()"), 1)
+        self.assertEqual(source.count("    _render_member_utility_bar()"), 1)
 
     def test_installer_and_export_discovery_are_active(self):
         bootstrap = (ROOT / "components/__init__.py").read_text()

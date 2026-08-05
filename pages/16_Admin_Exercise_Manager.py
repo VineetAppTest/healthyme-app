@@ -225,6 +225,16 @@ div[data-testid="stExpander"] details[open]>div{padding:.25rem .7rem .72rem!impo
 div[data-testid="stExpander"] div[data-testid="stVerticalBlock"]{gap:.38rem!important;}
 div[data-testid="stExpander"] textarea{min-height:68px!important;}
 div[data-testid="stExpander"] h4{font-size:.82rem!important;margin:.2rem 0!important;color:#064E3B!important;}
+
+/* Authenticated smoke repository correction. */
+div[data-testid="stTabs"] [role="tablist"]{gap:.62rem!important;border:0!important;margin:.12rem 0 .65rem!important;}
+div[data-testid="stTabs"] button[role="tab"]{min-width:10.5rem!important;min-height:2.35rem!important;border:1.3px solid #D8A84E!important;border-radius:10px!important;background:#FFFFFF!important;color:#064E3B!important;font-weight:900!important;box-shadow:0 4px 10px rgba(6,78,59,.04)!important;}
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"]{background:linear-gradient(135deg,#064E3B,#0F766E)!important;color:#FFFFFF!important;border-color:#064E3B!important;}
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *{color:#FFFFFF!important;}
+div[data-testid="stExpander"] summary{display:flex!important;align-items:center!important;gap:.42rem!important;font-size:0!important;}
+div[data-testid="stExpander"] summary p{display:block!important;margin:0!important;font-size:.82rem!important;line-height:1.2!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;text-align:left!important;}
+div[data-testid="stExpander"] summary svg,div[data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"],div[data-testid="stExpander"] summary [data-testid="stIconMaterial"],div[data-testid="stExpander"] summary [class*="material-symbol"],div[data-testid="stExpander"] summary span[aria-hidden="true"]{display:none!important;width:0!important;min-width:0!important;font-size:0!important;}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -248,7 +258,9 @@ with repository_tab:
         st.info("No active exercises are available.")
     for row in active_rows:
         exercise_id = str(row.get("id"))
-        details_col, edit_col, delete_col = st.columns([5.8, 0.72, 0.82], gap="small")
+        details_col, edit_col, delete_col = st.columns(
+            [5.8, 0.72, 0.82], gap="small", vertical_alignment="center"
+        )
         with details_col:
             st.markdown(
                 f"<div class='hm-repo-row'><div class='hm-repo-title'>{_clean(row.get('title')) or 'Untitled Exercise'}</div>"

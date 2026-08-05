@@ -520,47 +520,11 @@ def _render_css():
         div.element-container:has(.hm-toggle-anchor) + div.element-container button{justify-content:flex-start!important;text-align:left!important;}
         div[data-testid="stElementContainer"]:has(.hm-toggle-anchor) + div[data-testid="stElementContainer"] button p,
         div.element-container:has(.hm-toggle-anchor) + div.element-container button p{width:100%!important;text-align:left!important;justify-content:flex-start!important;}
-        .hm-meal-entry-grid-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
-        /* Exact desktop contract: Hour | Minutes | AM/PM | Food Item | Portion.
-           Override Streamlit's flex widths at the row boundary so global responsive
-           column rules cannot shrink or reorder these five controls. */
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor){
-          display:grid!important;
-          grid-template-columns:minmax(4.75rem,.72fr) minmax(5.10rem,.78fr) minmax(5.55rem,.92fr) minmax(15rem,2.15fr) minmax(9rem,1.35fr)!important;
-          gap:.48rem!important;
-          align-items:end!important;
-          width:100%!important;
-          overflow:visible!important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div[data-testid="stColumn"],
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div[data-testid="column"]{
-          width:100%!important;min-width:0!important;max-width:none!important;
-          flex:none!important;align-self:end!important;overflow:visible!important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) label p{
-          font-size:.74rem!important;font-weight:820!important;white-space:nowrap!important;
-          overflow:visible!important;text-overflow:clip!important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) [data-testid="stSelectbox"],
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) [data-testid="stTextInput"]{
-          width:100%!important;min-width:0!important;margin-bottom:0!important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) [data-baseweb="select"] > div,
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor) input{
-          width:100%!important;min-width:0!important;min-height:2.42rem!important;
-          padding-left:.42rem!important;padding-right:.34rem!important;
-        }
-        .hm-meal-grid-spacer{display:block;height:1px;min-height:1px;}
-        @media(max-width:780px){
-          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor){
-            grid-template-columns:repeat(6,minmax(0,1fr))!important;
-          }
-          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(1),
-          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(2),
-          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(3){grid-column:span 2!important;}
-          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(4){grid-column:span 4!important;}
-          div[data-testid="stHorizontalBlock"]:has(.hm-meal-entry-grid-anchor)>div:nth-child(5){grid-column:span 2!important;}
-        }
+        .hm-meal-time-grid-anchor,.hm-meal-food-grid-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor){display:grid!important;grid-template-columns:minmax(5rem,1fr) minmax(5rem,1fr) minmax(6rem,1.15fr) minmax(0,3fr)!important;gap:.48rem!important;align-items:end!important;width:100%!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-food-grid-anchor){display:grid!important;grid-template-columns:minmax(14rem,2.2fr) minmax(8rem,1.25fr)!important;gap:.48rem!important;align-items:end!important;width:100%!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor)>div,div[data-testid="stHorizontalBlock"]:has(.hm-meal-food-grid-anchor)>div{width:100%!important;min-width:0!important;max-width:none!important;flex:none!important;overflow:visible!important;}
+        @media(max-width:760px){div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor){grid-template-columns:repeat(3,minmax(0,1fr))!important;}div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor)>div:nth-child(4){display:none!important;}div[data-testid="stHorizontalBlock"]:has(.hm-meal-food-grid-anchor){grid-template-columns:1fr!important;}}
         .hm-toggle-body:empty{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;}
         .hm-toggle-body{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:1rem 1rem 1.18rem!important;margin:.16rem 0 .76rem 0;overflow:visible!important;}
         .hm-toggle-body div[data-testid="stHorizontalBlock"]{overflow:visible!important;padding-bottom:.18rem!important;}
@@ -608,149 +572,59 @@ def _render_meal_fields(label, key, prior, date_key):
     prior_hour = f"{((parsed_time.hour - 1) % 12) + 1:02d}" if parsed_time else "HH"
     prior_minute = f"{parsed_time.minute:02d}" if parsed_time else "MM"
     prior_period = ("AM" if parsed_time.hour < 12 else "PM") if parsed_time else "AM/PM"
-
     hour_options = ["HH"] + [f"{value:02d}" for value in range(1, 13)]
     minute_options = ["MM"] + [f"{value:02d}" for value in range(60)]
     period_options = ["AM/PM", "AM", "PM"]
+
+    time_cols = st.columns([1, 1, 1.15, 3], gap="small")
+    with time_cols[0]:
+        st.markdown("<span class='hm-meal-time-grid-anchor'></span>", unsafe_allow_html=True)
+        selected_hour = st.selectbox("Hour", hour_options, index=hour_options.index(prior_hour), key=f"hm_daily_hour_v13_{date_key}_{key}")
+    with time_cols[1]:
+        selected_minute = st.selectbox("Minutes", minute_options, index=minute_options.index(prior_minute), key=f"hm_daily_minute_v13_{date_key}_{key}")
+    with time_cols[2]:
+        selected_period = st.selectbox("AM/PM", period_options, index=period_options.index(prior_period), key=f"hm_daily_ampm_v13_{date_key}_{key}")
 
     existing_items = _normalise_food_items(prior)
     count_key = f"hm_meal_item_count_{date_key}_{key}"
     if count_key not in st.session_state:
         st.session_state[count_key] = max(1, len(existing_items))
-    item_count = max(
-        1,
-        min(MAX_MEAL_ITEMS, int(st.session_state.get(count_key, 1) or 1)),
-    )
-
+    item_count = max(1, min(MAX_MEAL_ITEMS, int(st.session_state.get(count_key, 1) or 1)))
     food_items = []
-    selected_hour = prior_hour
-    selected_minute = prior_minute
-    selected_period = prior_period
-
     for idx in range(item_count):
         prior_item = existing_items[idx] if idx < len(existing_items) else {}
-        hour_col, minute_col, period_col, food_col, portion_col = st.columns(
-            [0.72, 0.78, 0.92, 2.15, 1.35],
-            gap="small",
-        )
-        with hour_col:
-            st.markdown(
-                "<span class='hm-meal-entry-grid-anchor'></span>",
-                unsafe_allow_html=True,
-            )
-            if idx == 0:
-                selected_hour = st.selectbox(
-                    "Hour",
-                    hour_options,
-                    index=hour_options.index(prior_hour),
-                    key=f"hm_daily_hour_v12_{date_key}_{key}",
-                )
-            else:
-                st.markdown("<span class='hm-meal-grid-spacer'></span>", unsafe_allow_html=True)
-        with minute_col:
-            if idx == 0:
-                selected_minute = st.selectbox(
-                    "Minutes",
-                    minute_options,
-                    index=minute_options.index(prior_minute),
-                    key=f"hm_daily_minute_v12_{date_key}_{key}",
-                )
-            else:
-                st.markdown("<span class='hm-meal-grid-spacer'></span>", unsafe_allow_html=True)
-        with period_col:
-            if idx == 0:
-                selected_period = st.selectbox(
-                    "AM/PM",
-                    period_options,
-                    index=period_options.index(prior_period),
-                    key=f"hm_daily_ampm_v12_{date_key}_{key}",
-                )
-            else:
-                st.markdown("<span class='hm-meal-grid-spacer'></span>", unsafe_allow_html=True)
+        food_col, portion_col = st.columns([2.2, 1.25], gap="small")
         with food_col:
-            food = st.text_input(
-                f"Food Item {idx + 1}",
-                value=prior_item.get("food", ""),
-                key=f"{date_key}_{key}_food_{idx}",
-                placeholder="Enter food item",
-            )
+            st.markdown("<span class='hm-meal-food-grid-anchor'></span>", unsafe_allow_html=True)
+            food = st.text_input(f"Food Item {idx + 1}", value=prior_item.get("food", ""), key=f"hm_daily_log_{date_key}_{key}_food_{idx}", placeholder="Enter food item")
         with portion_col:
-            portion = st.text_input(
-                f"Portion {idx + 1}",
-                value=prior_item.get("portion_size", ""),
-                key=f"{date_key}_{key}_portion_{idx}",
-                placeholder="Enter portion",
-            )
+            portion = st.text_input(f"Portion {idx + 1}", value=prior_item.get("portion_size", ""), key=f"hm_daily_log_{date_key}_{key}_portion_{idx}", placeholder="Enter portion")
         row = {"food": _clean(food), "portion_size": _clean(portion)}
         if _food_item_has_data(row):
             food_items.append(row)
 
     st.markdown("<span class='hm-add-food-anchor'></span>", unsafe_allow_html=True)
-    if st.button(
-        "+ Add food item",
-        key=f"hm_add_food_item_{date_key}_{key}",
-        disabled=item_count >= MAX_MEAL_ITEMS,
-    ):
+    if st.button("+ Add food item", key=f"hm_daily_log_add_food_item_{date_key}_{key}", disabled=item_count >= MAX_MEAL_ITEMS):
         st.session_state[count_key] = min(MAX_MEAL_ITEMS, item_count + 1)
+        st.session_state["_hm_h13r9e_pending_rerun_path"] = "Daily_Log"
         st.rerun()
 
     time_value = None
-    if (
-        selected_hour != "HH"
-        and selected_minute != "MM"
-        and selected_period != "AM/PM"
-    ):
-        time_value = datetime.strptime(
-            f"{selected_hour}:{selected_minute} {selected_period}",
-            "%I:%M %p",
-        ).time()
+    if selected_hour != "HH" and selected_minute != "MM" and selected_period != "AM/PM":
+        time_value = datetime.strptime(f"{selected_hour}:{selected_minute} {selected_period}", "%I:%M %p").time()
 
     prior_mood, prior_energy = _legacy_mood_and_energy(prior)
     mood_col, energy_col = st.columns(2, gap="medium")
     with mood_col:
-        mood = st.text_input(
-            f"Mood after {label.lower()}",
-            value=prior_mood,
-            key=f"{date_key}_{key}_mood",
-            placeholder="How did you feel?",
-        )
+        mood = st.text_input(f"Mood after {label.lower()}", value=prior_mood, key=f"hm_daily_log_{date_key}_{key}_mood", placeholder="How did you feel?")
     with energy_col:
-        energy = st.text_input(
-            f"Energy after {label.lower()}",
-            value=prior_energy,
-            key=f"{date_key}_{key}_energy",
-            placeholder="How was your energy?",
-        )
-
+        energy = st.text_input(f"Energy after {label.lower()}", value=prior_energy, key=f"hm_daily_log_{date_key}_{key}_energy", placeholder="How was your energy?")
     clean_mood = _clean(mood)
     clean_energy = _clean(energy)
-    legacy_food = "; ".join(
-        item.get("food", "") for item in food_items if item.get("food")
-    )
-    legacy_portion = "; ".join(
-        item.get("portion_size", "")
-        for item in food_items
-        if item.get("portion_size")
-    )
-    combined_mood_energy = " | ".join(
-        value
-        for value in [
-            f"Mood: {clean_mood}" if clean_mood else "",
-            f"Energy: {clean_energy}" if clean_energy else "",
-        ]
-        if value
-    )
-
-    return {
-        "label": label,
-        "time": _time_text(time_value),
-        "food_items": food_items,
-        "food": legacy_food,
-        "portion_size": legacy_portion,
-        "mood": clean_mood,
-        "energy": clean_energy,
-        "mood_energy": combined_mood_energy,
-    }
+    legacy_food = "; ".join(item.get("food", "") for item in food_items if item.get("food"))
+    legacy_portion = "; ".join(item.get("portion_size", "") for item in food_items if item.get("portion_size"))
+    combined_mood_energy = " | ".join(value for value in [f"Mood: {clean_mood}" if clean_mood else "", f"Energy: {clean_energy}" if clean_energy else ""] if value)
+    return {"label": label, "time": _time_text(time_value), "food_items": food_items, "food": legacy_food, "portion_size": legacy_portion, "mood": clean_mood, "energy": clean_energy, "mood_energy": combined_mood_energy}
 
 
 def _render_meal_toggle(label, key, prior, date_key):
@@ -860,24 +734,12 @@ def _render_saved_days(user_id):
                 zip(cols, filtered_days[row_start : row_start + 4])
             ):
                 date_text = _format_saved_date(day)
-                label_date = _parse_date(date_text)
                 with col:
                     with st.container(border=True):
                         st.markdown(
                             saved_day_card_html(day, date_text),
                             unsafe_allow_html=True,
                         )
-                        if st.button(
-                            "Open saved day",
-                            key=(
-                                f"hm_h9a4c_load_{date_text}_"
-                                f"{row_start}_{column_index}"
-                            ),
-                            use_container_width=True,
-                        ):
-                            if label_date:
-                                st.session_state["hm_food_journal_date"] = label_date
-                                st.rerun()
 
 
 def _render_food_journal(user_id):
@@ -897,21 +759,8 @@ def _render_food_journal(user_id):
     existing_other_fluids = _normalise_other_fluids(
         existing.get("other_fluids", []) or []
     )
-    is_saved_date = bool(existing and _day_has_meaningful_entry(existing))
-
     with st.container(border=True):
         st.markdown("### Meal Section")
-        if is_saved_date:
-            st.markdown(
-                f"<div class='hm-h9a4c-note'>Viewing saved entries for {log_date.strftime('%d %b')}. Open a section only if you want to edit it.</div>",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                "<div class='hm-h9a4c-note'>Open only the meal you want to update.</div>",
-                unsafe_allow_html=True,
-            )
-
         meals_payload = {}
         for label, key in STRUCTURED_MEAL_ORDER:
             meals_payload[key] = _render_meal_toggle(

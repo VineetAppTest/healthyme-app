@@ -6,7 +6,7 @@ from typing import Any, Callable
 import streamlit as st
 
 
-_INSTALL_MARKER = "_hm_daily_log_widget_route_preservation_v1"
+_INSTALL_MARKER = "_hm_daily_log_widget_route_preservation_v2"
 _PENDING_ROUTE_KEY = "_hm_h13r9e_pending_rerun_path"
 _DAILY_LOG_ROUTE = "Daily_Log"
 
@@ -15,6 +15,7 @@ _DAILY_LOG_ROUTE = "Daily_Log"
 # changes are never pulled back to Daily Log.
 _DAILY_LOG_KEY_PREFIXES = (
     "hm_daily_log_",
+    "hm_daily_",
     "hm_h9a4c_",
     "hm_food_journal_",
 )

@@ -310,11 +310,6 @@ def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> N
         unsafe_allow_html=True,
     )
     day = _render_day_picker()
-    st.markdown(
-        "<div class='mpb-meal-guide'><b>Recipe</b><b>Portion guidance</b>"
-        "<b>Member instruction</b><b>Add</b></div>",
-        unsafe_allow_html=True,
-    )
     st.caption(day_label(day))
 
     snapshots: Dict[str, Dict[str, Any]] = {}

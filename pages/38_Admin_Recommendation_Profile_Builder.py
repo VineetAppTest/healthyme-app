@@ -1,3 +1,5 @@
+import functools
+
 import streamlit as st
 
 from components.admin_performance_optimization import (
@@ -24,6 +26,32 @@ from components.ui_common import (
 )
 
 
+_HIDDEN_BUILD_LABEL = "Full Admin integration build:"
+_BUILD_LABEL_SUPPRESSION_MARKER = "_hm_profile_builder_build_label_suppressed"
+
+
+def _install_build_label_suppression() -> None:
+    """Hide the obsolete technical build caption without removing measurement."""
+
+    def should_hide(value: object) -> bool:
+        return _HIDDEN_BUILD_LABEL in str(value or "")
+
+    for attribute in ("caption", "markdown", "write"):
+        original = getattr(st, attribute, None)
+        if not callable(original) or getattr(original, _BUILD_LABEL_SUPPRESSION_MARKER, False):
+            continue
+
+        @functools.wraps(original)
+        def without_build_label(*args, __original=original, **kwargs):
+            body = args[0] if args else kwargs.get("body", kwargs.get("value", ""))
+            if should_hide(body):
+                return None
+            return __original(*args, **kwargs)
+
+        setattr(without_build_label, _BUILD_LABEL_SUPPRESSION_MARKER, True)
+        setattr(st, attribute, without_build_label)
+
+
 # Keep the stable route. Install the meals-only write boundary before importing
 # the rebuilt Member Plan Builder so Exercise and Supplement writes remain in
 # their independent allocation stores.
@@ -39,6 +67,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 begin_page_measurement("Recommendation Profile Builder")
+_install_build_label_suppression()
 inject_global_styles()
 apply_luxe_theme()
 require_profile_builder_access()

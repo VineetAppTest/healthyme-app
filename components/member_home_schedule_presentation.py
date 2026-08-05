@@ -8,22 +8,14 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 _DEFAULT_MEMBER_TIMEZONE = "Asia/Kolkata"
 _PATCH_MARKER = "_hm_member_home_schedule_presentation_v3"
-_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v6"
-_MEMBER_HOME_STYLE_MARKER = 'id="hm-member-home-local-style-v2"'
+_MARKDOWN_PATCH_MARKER = "_hm_member_home_compact_polish_v7"
+_MEMBER_HOME_STYLE_MARKER = 'id="hm-member-home-local-style-v3"'
 _CLOSED_STATUSES = {"cancelled", "completed", "rescheduled"}
 _ACTION_ROWS_KEY = "_hm_member_home_schedule_action_rows"
 _ACTION_INDEX_KEY = "_hm_member_home_schedule_action_index"
 _ACTION_RENDERED_IDS_KEY = "_hm_member_home_schedule_action_rendered_ids"
 _MEMBER_HOME_COMPACT_CSS = """
-/* hm-member-home-compact-polish-v6 */
-div[data-testid="stElementContainer"]:has(#hm-member-home-local-style-v2){
-  display:none!important;height:0!important;min-height:0!important;
-  margin:0!important;padding:0!important;overflow:hidden!important;
-}
-div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){
-  position:relative!important;top:-2.75rem!important;
-  margin-bottom:-2.25rem!important;
-}
+/* hm-member-home-compact-polish-v7 */
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor),
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) > div,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details,
@@ -47,13 +39,13 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) hr{
   display:none!important;border:0!important;height:0!important;margin:0!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
-  width:285px!important;max-width:calc(100vw - 2rem)!important;
+  width:min(420px,100%)!important;max-width:100%!important;
   min-height:2.12rem!important;padding:.30rem .72rem!important;
   border:1px solid #E3C98E!important;border-bottom:1px solid #E3C98E!important;
   border-radius:999px!important;background:#FFFDF8!important;
   box-shadow:0 3px 8px rgba(6,78,59,.05)!important;
   display:flex!important;align-items:center!important;gap:.44rem!important;
-  overflow:hidden!important;
+  overflow:visible!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary *{
@@ -61,7 +53,7 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary *{
   word-break:keep-all!important;line-height:1.10!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary p{
-  margin:0!important;font-size:.88rem!important;font-weight:900!important;
+  margin:0!important;font-size:.78rem!important;font-weight:900!important;flex:1 1 auto!important;max-width:none!important;overflow:visible!important;text-overflow:clip!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary [data-testid="stExpanderToggleIcon"],
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary [data-testid="stIconMaterial"],
@@ -92,9 +84,14 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
   gap:.34rem!important;margin:.24rem 0 0 0!important;
 }
 .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"] button{
-  min-height:2.18rem!important;height:2.18rem!important;
-  padding:.30rem .55rem!important;border-radius:10px!important;
-  font-size:.78rem!important;font-weight:900!important;
+  min-height:2.34rem!important;height:auto!important;
+  padding:.34rem .48rem!important;border-radius:10px!important;
+  font-size:.72rem!important;font-weight:900!important;
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+}
+.hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"] button p{
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+  font-size:.72rem!important;line-height:1.14!important;
 }
 @media(max-width:900px){
   .hm-v101-schedule-card,
@@ -103,9 +100,6 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) details[open] su
   }
 }
 @media(max-width:640px){
-  div[data-testid="stHorizontalBlock"]:has(.hm-member-identity-pill){
-    top:-1.75rem!important;margin-bottom:-1.30rem!important;
-  }
   div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
     width:min(285px,calc(100vw - 2rem))!important;
   }
@@ -348,7 +342,7 @@ def _install_member_home_compact_polish() -> None:
         if (
             isinstance(body, str)
             and _MEMBER_HOME_STYLE_MARKER in body
-            and "hm-member-home-compact-polish-v6" not in body
+            and "hm-member-home-compact-polish-v7" not in body
         ):
             body = body.replace(
                 "</style>",

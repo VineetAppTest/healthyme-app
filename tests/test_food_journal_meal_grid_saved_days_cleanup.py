@@ -8,21 +8,23 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class FoodJournalMealGridSavedDaysCleanupTests(unittest.TestCase):
-    def test_meal_entry_uses_five_part_inline_grid(self):
+    def test_meal_entry_uses_two_row_time_and_food_grid(self):
         source = (ROOT / "pages/18_Daily_Log.py").read_text()
         start = source.index("def _render_meal_fields")
         end = source.index("def _render_meal_toggle", start)
         block = source[start:end]
-
-        self.assertIn("[0.72, 0.78, 0.92, 2.15, 1.35]", block)
+        self.assertIn("time_cols = st.columns([1, 1, 1.15, 3]", block)
+        self.assertIn("food_col, portion_col = st.columns([2.2, 1.25]", block)
         self.assertIn('"Hour"', block)
         self.assertIn('"Minutes"', block)
         self.assertIn('"AM/PM"', block)
         self.assertIn('f"Food Item {idx + 1}"', block)
         self.assertIn('f"Portion {idx + 1}"', block)
-        self.assertIn("hm_daily_hour_v12_", block)
-        self.assertIn("hm_daily_minute_v12_", block)
-        self.assertIn("hm_daily_ampm_v12_", block)
+        self.assertIn("hm_daily_hour_v13_", block)
+        self.assertIn("hm_daily_minute_v13_", block)
+        self.assertIn("hm_daily_ampm_v13_", block)
+        self.assertIn("hm_daily_log_add_food_item_", block)
+        self.assertIn('st.session_state["_hm_h13r9e_pending_rerun_path"] = "Daily_Log"', block)
         self.assertNotIn("st.time_input(", block)
 
     def test_meal_disclosure_text_is_left_aligned(self):
@@ -46,7 +48,8 @@ class FoodJournalMealGridSavedDaysCleanupTests(unittest.TestCase):
 
         self.assertIn('st.columns(4, gap="small")', page)
         self.assertIn("saved_day_card_html", page)
-        self.assertIn('"Open saved day"', page)
+        self.assertNotIn('"Open saved day"', page)
+        self.assertNotIn("Viewing saved entries for", page)
         self.assertNotIn("_render_filtered_meal_summary", dispatch)
         self.assertNotIn("dt.timedelta(days=6)", dispatch)
 
