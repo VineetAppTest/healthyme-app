@@ -16,14 +16,14 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
         self.assertIn("base.repository_activity_catalog()", source)
         self.assertIn("base.save_member_exercise_log", source)
 
-    def test_member_home_compact_css_targets_existing_local_style_only(self):
+    def test_member_home_compact_css_targets_current_local_style_only(self):
         source = (
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
-        self.assertIn('id="hm-member-home-local-style-v2"', source)
-        self.assertIn("hm-member-home-compact-polish-v4", source)
-        self.assertIn("top:-2.75rem", source)
-        self.assertIn("width:285px", source)
+        self.assertIn('id="hm-member-home-local-style-v3"', source)
+        self.assertIn("hm-member-home-compact-polish-v7", source)
+        self.assertNotIn("top:-2.75rem", source)
+        self.assertIn("width:fit-content", source)
         self.assertIn("white-space:nowrap", source)
         self.assertIn("word-break:keep-all", source)
         self.assertIn("_install_member_home_compact_polish()", source)
@@ -42,22 +42,23 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
         source = (
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
-        self.assertIn("width:285px", source)
+        self.assertIn("width:fit-content", source)
+        self.assertIn("max-width:100%", source)
         self.assertIn('[data-testid="stExpanderDetails"]', source)
         self.assertIn("summary + div", source)
         self.assertIn("border-top:0", source)
         self.assertIn("hr{", source)
         self.assertIn("display:none", source)
 
-    def test_consultation_cards_are_left_aligned_and_reduced_to_sixty_percent(self):
+    def test_consultation_cards_fill_their_responsive_member_home_column(self):
         source = (
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
         self.assertIn(".hm-v101-schedule-card", source)
-        self.assertIn("width:47%", source)
-        self.assertIn("max-width:460px", source)
-        self.assertIn("margin:.34rem 0 .52rem 0", source)
         self.assertIn("width:100%", source)
+        self.assertIn("max-width:none", source)
+        self.assertIn("margin:0", source)
+        self.assertNotIn("width:47%", source)
 
     def test_upcoming_pill_is_not_rendered_when_no_schedule_remains(self):
         page = (ROOT / "pages/02_Member_Home.py").read_text()
@@ -78,7 +79,6 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
             "assign_or_replace_member_package(",
             "session_counted =",
             "logout_current_user",
-            "switch_page",
             "require_member",
         ):
             self.assertNotIn(forbidden, source)

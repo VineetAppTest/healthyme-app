@@ -128,7 +128,8 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         self.assertIn('"Save Meal Plan"', source)
         self.assertIn("meal_review_rows", source)
         self.assertIn('"Publish & Allocate to Member"', source)
-        self.assertIn('activate_profile(profile, "ACTIVATE")', source)
+        self.assertIn('"start_date": clean(profile.get("start_date"))', source)
+        self.assertIn('activate_profile(publish_profile, "ACTIVATE")', source)
         self.assertNotIn('"Preview Meal Plan"', source)
 
     def test_exercise_and_supplement_are_separate_without_visible_allocation_ids(self) -> None:
