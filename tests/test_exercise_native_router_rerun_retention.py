@@ -107,6 +107,25 @@ class NativeRouterRerunRetentionTests(unittest.TestCase):
         namespace["_rerun_with_route_preservation"](scope="fragment")
         self.assertNotIn(PENDING_KEY, fake_st.session_state)
 
+    def test_widget_staged_route_wins_over_stale_browser_path(self):
+        _source, namespace = _load_router_functions()
+        fake_st = _FakeStreamlit()
+        fake_st.session_state[PENDING_KEY] = "Daily_Log"
+        calls = []
+        namespace.update(
+            {
+                "st": fake_st,
+                "_native_identity_present": lambda: True,
+                "_registered_path_from_browser": lambda: "Member_Home",
+                "_BASE_RERUN": lambda *args, **kwargs: calls.append(True),
+            }
+        )
+
+        namespace["_rerun_with_route_preservation"]()
+
+        self.assertEqual(fake_st.session_state[PENDING_KEY], "Daily_Log")
+        self.assertEqual(calls, [True])
+
     def test_pending_daily_log_route_is_restored_before_root_login_fallback(self):
         _source, namespace = _load_router_functions()
         fake_st = _FakeStreamlit()

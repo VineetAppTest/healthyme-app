@@ -249,7 +249,15 @@ def _rerun_with_route_preservation(*args: Any, **kwargs: Any) -> Any:
 
     scope = str(kwargs.get("scope") or "app").strip().lower()
     route_path = _registered_path_from_browser()
-    if scope != "fragment" and _native_identity_present() and route_path:
+    staged_path = str(
+        st.session_state.get(_PENDING_RERUN_PATH_KEY) or ""
+    ).strip()
+    if (
+        scope != "fragment"
+        and _native_identity_present()
+        and route_path
+        and not staged_path
+    ):
         st.session_state[_PENDING_RERUN_PATH_KEY] = route_path
     return _BASE_RERUN(*args, **kwargs)
 
