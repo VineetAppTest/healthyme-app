@@ -53,7 +53,7 @@ class Pr405UatCorrectionTests(unittest.TestCase):
 
     def test_member_header_has_explicit_control_and_section_spacing(self):
         source = self._source("components/member_home_global_header_runtime.py")
-        self.assertIn("hm-member-home-global-header-v7", source)
+        self.assertIn("hm-member-home-global-header-v8", source)
         self.assertIn("margin:.16rem 0 1rem 0!important", source)
         self.assertIn("margin-top:.78rem!important", source)
         self.assertIn(

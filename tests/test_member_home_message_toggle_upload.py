@@ -61,8 +61,8 @@ def test_task_due_state_uses_india_date_and_distinct_green_red_styles():
 
 def test_completed_nsp_buttons_are_relabelled_and_disabled_without_data_writes():
     source = HOME_RUNTIME.read_text(encoding="utf-8")
-    assert '"nsp1_completed", "NSP Page 1 Completed"' in source
-    assert '"nsp2_completed", "NSP Page 2 Completed"' in source
+    assert '"nsp1_completed", "NSP Page 1 Done"' in source
+    assert '"nsp2_completed", "NSP Page 2 Done"' in source
     assert 'kwargs["disabled"] = True' in source
     assert '_member_home_frame("_render_task_progress")' in source
     for forbidden in (
