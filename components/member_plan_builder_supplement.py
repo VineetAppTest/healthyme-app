@@ -12,6 +12,34 @@ from components.member_plan_builder_allocation_common import (
     source_summary,
 )
 from components.pbm_core import clean
+
+
+TIMING_OPTIONS = [
+    "Morning",
+    "Midday",
+    "Evening",
+    "Before Bed",
+    "With Food",
+    "Empty Stomach",
+    "After Meals",
+]
+FREQUENCY_OPTIONS = [
+    "Once",
+    "Twice",
+    "Thrice",
+    "Four times",
+    "Five times",
+    "Six times",
+    "Seven times",
+    "Eight times",
+    "Nine times",
+    "Ten times",
+]
+
+
+def _options_with_current(options: list[str], current: object) -> list[str]:
+    value = clean(current)
+    return options + [value] if value and value not in options else list(options)
 from components.supplement_member_allocation import (
     list_active_supplement_sources,
     list_member_supplement_allocations,
@@ -50,32 +78,6 @@ def _supplement_label(row: Dict) -> str:
     return f"{title}{' · ' + details if details else ''}"
 
 
-def _render_source_details(source: Dict) -> None:
-    title = clean(source.get("supplement_name") or source.get("title")) or "Supplement"
-    source_summary(
-        title,
-        (
-            clean(source.get("dosage")),
-            clean(source.get("frequency")),
-            clean(source.get("timing")),
-        ),
-    )
-    with st.expander("More details", expanded=False):
-        details = (
-            ("Dosage", source.get("dosage")),
-            ("Frequency", source.get("frequency")),
-            ("Timing", source.get("timing")),
-            ("Instructions", source.get("instructions")),
-        )
-        shown = False
-        for label, value in details:
-            if clean(value):
-                shown = True
-                st.markdown(f"**{label}:** {clean(value)}")
-        if not shown:
-            st.caption("No additional repository information is available.")
-
-
 def _render_add_supplement(member_id: str) -> None:
     st.markdown("<div class='mpb-section-label'>Allocate Supplement</div>", unsafe_allow_html=True)
     sources = list_active_supplement_sources()
@@ -91,22 +93,28 @@ def _render_add_supplement(member_id: str) -> None:
             key=f"mpb_su_add_source_{member_id}",
         )
         source = source_options[selected_label]
-        _render_source_details(source)
-
         fields = st.columns(3, gap="small")
         dosage = fields[0].text_input(
             "Dosage",
             value=clean(source.get("dosage")),
             key=f"mpb_su_add_dosage_{member_id}",
         )
-        frequency = fields[1].text_input(
+        frequency_options = _options_with_current(
+            FREQUENCY_OPTIONS, source.get("frequency")
+        )
+        current_frequency = clean(source.get("frequency")) or FREQUENCY_OPTIONS[0]
+        frequency = fields[1].selectbox(
             "Frequency",
-            value=clean(source.get("frequency")),
+            frequency_options,
+            index=frequency_options.index(current_frequency),
             key=f"mpb_su_add_frequency_{member_id}",
         )
-        timing = fields[2].text_input(
+        timing_options = _options_with_current(TIMING_OPTIONS, source.get("timing"))
+        current_timing = clean(source.get("timing")) or TIMING_OPTIONS[0]
+        timing = fields[2].selectbox(
             "Timing",
-            value=clean(source.get("timing")),
+            timing_options,
+            index=timing_options.index(current_timing),
             key=f"mpb_su_add_timing_{member_id}",
         )
         instructions = st.text_area(
@@ -235,15 +243,25 @@ def _render_edit_supplement(member_id: str) -> None:
             disabled=stopped,
             key=f"mpb_su_edit_dosage_{allocation_id}",
         )
-        frequency = fields[1].text_input(
+        edit_frequency_options = _options_with_current(
+            FREQUENCY_OPTIONS, selected.get("frequency")
+        )
+        current_edit_frequency = clean(selected.get("frequency")) or FREQUENCY_OPTIONS[0]
+        frequency = fields[1].selectbox(
             "Frequency",
-            value=clean(selected.get("frequency")),
+            edit_frequency_options,
+            index=edit_frequency_options.index(current_edit_frequency),
             disabled=stopped,
             key=f"mpb_su_edit_frequency_{allocation_id}",
         )
-        timing = fields[2].text_input(
+        edit_timing_options = _options_with_current(
+            TIMING_OPTIONS, selected.get("timing")
+        )
+        current_edit_timing = clean(selected.get("timing")) or TIMING_OPTIONS[0]
+        timing = fields[2].selectbox(
             "Timing",
-            value=clean(selected.get("timing")),
+            edit_timing_options,
+            index=edit_timing_options.index(current_edit_timing),
             disabled=stopped,
             key=f"mpb_su_edit_timing_{allocation_id}",
         )

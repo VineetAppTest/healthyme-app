@@ -88,8 +88,16 @@ def _render_more_details(snapshot: Dict[str, Any]) -> None:
         if not details:
             st.caption("No additional repository information is available.")
             return
-        for label, value in details:
-            st.markdown(f"**{label}:** {safe(value)}")
+        long_labels = {"Ingredients", "Preparation", "Repository Instructions"}
+        detail_html = "".join(
+            f"<div class='mpb-responsive-detail{' mpb-responsive-detail-wide' if label in long_labels else ''}'>"
+            f"<b>{safe(label)}:</b><span>{safe(value)}</span></div>"
+            for label, value in details
+        )
+        st.markdown(
+            f"<div class='mpb-responsive-details'>{detail_html}</div>",
+            unsafe_allow_html=True,
+        )
 
 
 def _snapshot_for(label: str, snapshots: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
@@ -298,6 +306,19 @@ def _publish_current_plan() -> None:
 
 
 def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> None:
+    st.markdown(
+        """
+<style id="hm-admin-plan-builder-responsive-details-v1">
+.mpb-responsive-details{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.48rem 1rem;width:100%;}
+.mpb-responsive-detail{display:inline-flex;align-items:flex-start;gap:.25rem;flex:0 1 auto;max-width:100%;font-size:.82rem;line-height:1.35;color:#334155;}
+.mpb-responsive-detail b{color:#064E3B;white-space:nowrap;}
+.mpb-responsive-detail span{min-width:0;overflow-wrap:anywhere;}
+.mpb-responsive-detail-wide{flex:1 1 22rem;}
+@media(max-width:720px){.mpb-responsive-detail,.mpb-responsive-detail-wide{flex:1 1 100%;}}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
     profile = st.session_state.get("pbm_profile") or {}
     profile_id = clean(profile.get("id"))
     if not profile_id:
