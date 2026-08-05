@@ -100,6 +100,65 @@ def load_member_plan_events(member_id: str) -> Tuple[bool, List[Dict[str, Any]],
         return False, [], f"Could not load plan change history: {exc}"
 
 
+@st.cache_data(ttl=60, show_spinner=False)
+def load_profile_plan_events(
+    profile_id: str,
+) -> Tuple[bool, List[Dict[str, Any]], str]:
+    """Load change events for one opened profile only."""
+
+    clean_profile_id = clean(profile_id)
+    if not clean_profile_id:
+        return False, [], "Save or select a profile to view its change history."
+    try:
+        client = _client()
+        profile_result = (
+            client.table(PROFILE_TABLE)
+            .select("id,profile_name,status,start_date,updated_at")
+            .eq("id", clean_profile_id)
+            .limit(1)
+            .execute()
+        )
+        profiles = _rows(profile_result)
+        if not profiles:
+            return False, [], "The selected profile could not be found."
+        profile = profiles[0]
+        profile_info = {
+            "Plan": clean(profile.get("profile_name")) or "Untitled",
+            "Current Status": clean(profile.get("status")).title(),
+            "Plan Start": clean(profile.get("start_date")),
+        }
+        event_result = (
+            client.table(EVENT_TABLE)
+            .select(
+                "profile_id,event_type,event_note,created_by_user_id,"
+                "created_by_email,created_at"
+            )
+            .eq("profile_id", clean_profile_id)
+            .order("created_at", desc=True)
+            .limit(1000)
+            .execute()
+        )
+        events: List[Dict[str, Any]] = []
+        for row in _rows(event_result):
+            events.append(
+                {
+                    "Changed At": clean(row.get("created_at"))[:19],
+                    "Plan": profile_info["Plan"],
+                    "Plan Status": profile_info["Current Status"],
+                    "Plan Start": profile_info["Plan Start"],
+                    "Action": clean(row.get("event_type")).replace("_", " ").title(),
+                    "Change Detail": clean(row.get("event_note")),
+                    "Changed By": clean(row.get("created_by_email"))
+                    or clean(row.get("created_by_user_id"))
+                    or "System",
+                    "Profile ID": clean(row.get("profile_id")),
+                }
+            )
+        return True, events, f"Loaded {len(events)} change event(s) for the selected profile."
+    except Exception as exc:
+        return False, [], f"Could not load selected profile history: {exc}"
+
+
 def build_member_plan_workbook(
     profile: Dict[str, Any],
     items: List[Dict[str, Any]],
@@ -165,13 +224,13 @@ def render_publish_log_and_download(
     profile: Dict[str, Any],
     items: List[Dict[str, Any]],
 ) -> None:
-    member_id = clean(profile.get("assigned_member_id"))
+    profile_id = clean(profile.get("id"))
     st.markdown(
         "<div class='hm-title'>Publish & Change Log</div>"
         "<div class='hm-sub'>A read-only record of what changed, when it changed and who made the change.</div>",
         unsafe_allow_html=True,
     )
-    ok, events, message = load_member_plan_events(member_id)
+    ok, events, message = load_profile_plan_events(profile_id)
     if not ok:
         st.warning(message)
         events = []
@@ -204,9 +263,7 @@ def render_view_member_plan() -> None:
     if not ok:
         st.warning(message)
         return
-    events_ok, events, _ = load_member_plan_events(
-        clean(profile.get("assigned_member_id"))
-    )
+    events_ok, events, _ = load_profile_plan_events(selected_id)
     workbook = build_member_plan_workbook(
         profile,
         items,

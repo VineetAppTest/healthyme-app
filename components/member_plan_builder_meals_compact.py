@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from components.member_plan_builder_export import (
-    load_member_plan_events,
+    load_profile_plan_events,
     meal_review_rows,
     render_publish_log_and_download,
 )
@@ -88,8 +88,16 @@ def _render_more_details(snapshot: Dict[str, Any]) -> None:
         if not details:
             st.caption("No additional repository information is available.")
             return
-        for label, value in details:
-            st.markdown(f"**{label}:** {safe(value)}")
+        tiles = "".join(
+            "<div class='mpb-recipe-detail-tile'>"
+            f"<span>{safe(label)}</span><strong>{safe(value)}</strong>"
+            "</div>"
+            for label, value in details
+        )
+        st.markdown(
+            f"<div class='mpb-recipe-detail-grid'>{tiles}</div>",
+            unsafe_allow_html=True,
+        )
 
 
 def _snapshot_for(label: str, snapshots: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
@@ -289,7 +297,7 @@ def _publish_current_plan() -> None:
         if ok:
             profile["status"] = "active"
             clear_publish_cache()
-            load_member_plan_events.clear()
+            load_profile_plan_events.clear()
             st.session_state["mpb_publish_flash"] = message
             st.rerun()
         st.error(message)
@@ -298,6 +306,44 @@ def _publish_current_plan() -> None:
 
 
 def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> None:
+    st.markdown(
+        """
+<style id="hm-member-plan-recipe-detail-grid-v1">
+.mpb-recipe-detail-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:.46rem;
+  width:100%;
+  align-items:stretch;
+}
+.mpb-recipe-detail-tile{
+  min-width:0;
+  border:1px solid #E7D8BE;
+  border-radius:10px;
+  background:#FFFFFF;
+  padding:.44rem .52rem;
+}
+.mpb-recipe-detail-tile span{
+  display:block;
+  color:#7A5A16;
+  font-size:.68rem;
+  font-weight:900;
+  line-height:1.2;
+  margin-bottom:.14rem;
+}
+.mpb-recipe-detail-tile strong{
+  display:block;
+  color:#334155;
+  font-size:.76rem;
+  font-weight:720;
+  line-height:1.34;
+  overflow-wrap:anywhere;
+}
+@media(max-width:640px){.mpb-recipe-detail-grid{grid-template-columns:1fr;}}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
     profile = st.session_state.get("pbm_profile") or {}
     profile_id = clean(profile.get("id"))
     if not profile_id:
@@ -332,7 +378,7 @@ def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> N
         )
         if ok:
             st.session_state["mpb_meal_saved"] = True
-            load_member_plan_events.clear()
+            load_profile_plan_events.clear()
             st.success(message)
         else:
             st.error(message)

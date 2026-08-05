@@ -80,6 +80,11 @@ def _chip(label: str, value: Any) -> str:
     )
 
 
+def _frequency_label(value: Any) -> str:
+    text = _clean(value)
+    return f"{text}x/week" if text else ""
+
+
 def _render_allocation_card(row: dict[str, Any], domain: str) -> None:
     snapshot = dict(row.get("source_snapshot") or {})
     if domain == "exercise":
@@ -95,6 +100,8 @@ def _render_allocation_card(row: dict[str, Any], domain: str) -> None:
             _chip("Category", snapshot.get("category")),
             _chip("Difficulty", snapshot.get("difficulty")),
             _chip("Duration/Reps", snapshot.get("duration_or_reps")),
+            _chip("Frequency", _frequency_label(row.get("frequency_per_week"))),
+            _chip("Timing", row.get("timing")),
             _chip("Equipment", snapshot.get("equipment")),
         ]
         instruction = _clean(row.get("instructions") or snapshot.get("instructions"))

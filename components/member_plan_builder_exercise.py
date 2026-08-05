@@ -7,6 +7,8 @@ import pandas as pd
 import streamlit as st
 
 from components.exercise_member_allocation import (
+    EXERCISE_FREQUENCY_OPTIONS,
+    EXERCISE_TIMING_OPTIONS,
     list_active_exercise_sources,
     list_member_exercise_allocations,
     save_exercise_member_allocation,
@@ -43,6 +45,19 @@ def _exercise_label(row: Dict) -> str:
     return f"{clean(row.get('title')) or 'Exercise'}{' · ' + detail if detail else ''}"
 
 
+def _frequency_value(value: object) -> int:
+    try:
+        candidate = int(value or 1)
+    except Exception:
+        candidate = 1
+    return candidate if candidate in EXERCISE_FREQUENCY_OPTIONS else 1
+
+
+def _timing_value(value: object) -> str:
+    candidate = clean(value)
+    return candidate if candidate in EXERCISE_TIMING_OPTIONS else "As advised"
+
+
 def _render_source_details(source: Dict) -> None:
     source_summary(
         clean(source.get("title")) or "Exercise",
@@ -52,25 +67,6 @@ def _render_source_details(source: Dict) -> None:
             clean(source.get("category")),
         ),
     )
-    with st.expander("More details", expanded=False):
-        st.markdown(
-            "<span class='mpb-exercise-more-details-anchor'></span>",
-            unsafe_allow_html=True,
-        )
-        details = (
-            ("Category", source.get("category")),
-            ("Difficulty", source.get("difficulty")),
-            ("Duration / Reps", source.get("duration_or_reps")),
-            ("Equipment", source.get("equipment")),
-            ("Benefits", source.get("benefits")),
-        )
-        shown = False
-        for label, value in details:
-            if clean(value):
-                shown = True
-                st.markdown(f"**{label}:** {clean(value)}")
-        if not shown:
-            st.caption("No additional repository information is available.")
 
 
 def _render_add_exercise(member_id: str, member_label: str) -> None:
@@ -101,6 +97,21 @@ def _render_add_exercise(member_id: str, member_label: str) -> None:
             dt.date.today() + dt.timedelta(days=6),
             key=f"mpb_ex_add_end_{member_id}",
         )
+        prescription_cols = st.columns(2, gap="small")
+        default_frequency = _frequency_value(source.get("frequency_per_week"))
+        frequency_per_week = prescription_cols[0].selectbox(
+            "Frequency per week",
+            EXERCISE_FREQUENCY_OPTIONS,
+            index=EXERCISE_FREQUENCY_OPTIONS.index(default_frequency),
+            key=f"mpb_ex_add_frequency_{member_id}",
+        )
+        default_timing = _timing_value(source.get("timing") or source.get("time_of_day"))
+        timing = prescription_cols[1].selectbox(
+            "Timing",
+            EXERCISE_TIMING_OPTIONS,
+            index=EXERCISE_TIMING_OPTIONS.index(default_timing),
+            key=f"mpb_ex_add_timing_{member_id}",
+        )
         note_cols = st.columns(2, gap="small")
         instructions = note_cols[0].text_area(
             "Member Instructions",
@@ -125,6 +136,8 @@ def _render_add_exercise(member_id: str, member_label: str) -> None:
                     source_id=clean(source.get("source_id") or source.get("id")),
                     start_date=start,
                     end_date=end,
+                    frequency_per_week=frequency_per_week,
+                    timing=timing,
                     instructions=instructions,
                     notes=notes,
                     status="active",
@@ -154,6 +167,8 @@ def _render_edit_exercise(member_id: str, member_label: str) -> None:
                     "Exercise": row.get("exercise_name"),
                     "Start": row.get("start_date"),
                     "End": row.get("end_date") or "Open",
+                    "Frequency": row.get("frequency_per_week"),
+                    "Timing": row.get("timing"),
                     "Status": clean(row.get("status")).title(),
                 }
                 for row in rows
@@ -198,6 +213,23 @@ def _render_edit_exercise(member_id: str, member_label: str) -> None:
             disabled=stopped,
             key=f"mpb_ex_edit_end_{allocation_id}",
         )
+        prescription_cols = st.columns(2, gap="small")
+        current_frequency = _frequency_value(selected.get("frequency_per_week"))
+        edit_frequency_per_week = prescription_cols[0].selectbox(
+            "Frequency per week",
+            EXERCISE_FREQUENCY_OPTIONS,
+            index=EXERCISE_FREQUENCY_OPTIONS.index(current_frequency),
+            disabled=stopped,
+            key=f"mpb_ex_edit_frequency_{allocation_id}",
+        )
+        current_timing = _timing_value(selected.get("timing"))
+        edit_timing = prescription_cols[1].selectbox(
+            "Timing",
+            EXERCISE_TIMING_OPTIONS,
+            index=EXERCISE_TIMING_OPTIONS.index(current_timing),
+            disabled=stopped,
+            key=f"mpb_ex_edit_timing_{allocation_id}",
+        )
         note_cols = st.columns(2, gap="small")
         edit_instruction = note_cols[0].text_area(
             "Member Instructions",
@@ -227,6 +259,8 @@ def _render_edit_exercise(member_id: str, member_label: str) -> None:
                     source_id=clean(selected.get("source_id")),
                     start_date=edit_start,
                     end_date=edit_end,
+                    frequency_per_week=edit_frequency_per_week,
+                    timing=edit_timing,
                     instructions=edit_instruction,
                     notes=edit_notes,
                     status="active",
@@ -262,70 +296,7 @@ def _render_edit_exercise(member_id: str, member_label: str) -> None:
                 st.error(str(exc))
 
 
-def _render_exercise_polish_styles() -> None:
-    st.markdown(
-        """
-<style id="hm-member-plan-exercise-polish-v1">
-.mpb-exercise-more-details-anchor{
-  display:none!important;
-  height:0!important;
-  min-height:0!important;
-  margin:0!important;
-  padding:0!important;
-}
-div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary{
-  min-height:2.18rem!important;
-  height:2.18rem!important;
-  padding:.30rem .58rem!important;
-  border:1px solid #E3C98E!important;
-  border-radius:11px!important;
-  background:#FFFDF8!important;
-  display:flex!important;
-  align-items:center!important;
-  gap:.42rem!important;
-}
-div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary p{
-  margin:0!important;
-  color:#064E3B!important;
-  font-size:.78rem!important;
-  font-weight:900!important;
-  white-space:nowrap!important;
-}
-div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary [data-testid="stExpanderToggleIcon"],
-div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary [data-testid="stIconMaterial"],
-div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary svg{
-  display:none!important;
-  width:0!important;
-  height:0!important;
-  min-width:0!important;
-  margin:0!important;
-}
-div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) summary::before{
-  content:"+";
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:.82rem;
-  min-width:.82rem;
-  color:#064E3B;
-  font-size:.92rem;
-  font-weight:950;
-  line-height:1;
-}
-div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[open] summary::before{
-  content:"−";
-}
-div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) [data-testid="stExpanderDetails"]{
-  padding:.42rem .58rem .52rem!important;
-}
-</style>
-""",
-        unsafe_allow_html=True,
-    )
-
-
 def render_member_plan_exercise() -> None:
-    _render_exercise_polish_styles()
     st.markdown(
         "<div class='hm-title'>Exercise</div>"
         "<div class='hm-sub'>Select the member, allocate one repository exercise, then edit or stop existing allocations below.</div>",

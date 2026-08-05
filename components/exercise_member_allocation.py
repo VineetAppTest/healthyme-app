@@ -17,6 +17,14 @@ AUDIT_KEY = "exercise_member_allocation_audit"
 SOURCE_TYPE = "exercise_repository"
 ACTIVE_STATUS = "active"
 INACTIVE_STATUSES = {"inactive", "stopped", "archived"}
+EXERCISE_FREQUENCY_OPTIONS = tuple(range(1, 8))
+EXERCISE_TIMING_OPTIONS = (
+    "Morning",
+    "Afternoon",
+    "Evening",
+    "Night",
+    "As advised",
+)
 
 
 def _clean(value: Any) -> str:
@@ -29,6 +37,27 @@ def _now_iso() -> str:
 
 def _normalise_status(value: Any) -> str:
     return "stopped" if _clean(value).lower() in INACTIVE_STATUSES else ACTIVE_STATUS
+
+
+def _normalise_frequency(value: Any, *, strict: bool = False) -> int:
+    try:
+        frequency = int(value or 1)
+    except Exception:
+        frequency = 0
+    if frequency in EXERCISE_FREQUENCY_OPTIONS:
+        return frequency
+    if strict and _clean(value):
+        raise ValueError("Frequency per week must be between 1 and 7.")
+    return 1
+
+
+def _normalise_timing(value: Any, *, strict: bool = False) -> str:
+    timing = _clean(value)
+    if timing in EXERCISE_TIMING_OPTIONS:
+        return timing
+    if strict and timing:
+        raise ValueError("Timing must use an approved Exercise timing option.")
+    return "As advised"
 
 
 def _repository_lookup(*, active_only: bool = False) -> dict[str, dict[str, Any]]:
@@ -105,6 +134,8 @@ def _normalise_existing_row(
         "title": title,
         "start_date": _clean(source.get("start_date")),
         "end_date": _clean(source.get("end_date")),
+        "frequency_per_week": _normalise_frequency(source.get("frequency_per_week")),
+        "timing": _normalise_timing(source.get("timing")),
         "instructions": _clean(source.get("instructions")),
         "notes": _clean(source.get("notes")),
         "status": _normalise_status(source.get("status")),
@@ -154,6 +185,8 @@ def save_exercise_member_allocation(
     source_id: str,
     start_date: Any = "",
     end_date: Any = "",
+    frequency_per_week: Any = None,
+    timing: Any = None,
     instructions: Any = "",
     notes: Any = "",
     status: Any = ACTIVE_STATUS,
@@ -210,6 +243,21 @@ def save_exercise_member_allocation(
     if not source:
         raise ValueError("Exercise repository source was not found.")
 
+    frequency_value = (
+        existing.get("frequency_per_week")
+        if existing and frequency_per_week is None
+        else frequency_per_week
+    )
+    timing_value = existing.get("timing") if existing and timing is None else timing
+    frequency = _normalise_frequency(
+        frequency_value,
+        strict=frequency_per_week is not None,
+    )
+    allocation_timing = _normalise_timing(
+        timing_value,
+        strict=timing is not None,
+    )
+
     display_title = (
         _clean((existing.get("source_snapshot") or {}).get("title"))
         or _clean(existing.get("exercise_name"))
@@ -228,6 +276,8 @@ def save_exercise_member_allocation(
         "title": display_title,
         "start_date": start,
         "end_date": end,
+        "frequency_per_week": frequency,
+        "timing": allocation_timing,
         "instructions": _clean(instructions),
         "notes": _clean(notes),
         "status": _normalise_status(status),
@@ -258,6 +308,8 @@ def save_exercise_member_allocation(
             "source_type": SOURCE_TYPE,
             "source_id": saved["source_id"],
             "status": saved["status"],
+            "frequency_per_week": saved["frequency_per_week"],
+            "timing": saved["timing"],
             "actor_id": _clean(actor_id) or "admin",
         }
     )
@@ -286,6 +338,8 @@ def stop_exercise_member_allocation(
         source_id=_clean(allocation.get("source_id")),
         start_date=allocation.get("start_date", ""),
         end_date=end_date,
+        frequency_per_week=allocation.get("frequency_per_week"),
+        timing=allocation.get("timing"),
         instructions=allocation.get("instructions", ""),
         notes=_clean(stop_reason) or allocation.get("notes", ""),
         status="stopped",
