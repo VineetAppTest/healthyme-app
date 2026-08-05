@@ -985,6 +985,7 @@ def _render_food_journal(user_id):
             placeholder="Any cravings, bloating, missed meals, late meals, etc.",
             key=f"hm_h9a4c_notes_{date_key}",
             height=90,
+            label_visibility="collapsed",
         )
 
     clean_meals_payload = {

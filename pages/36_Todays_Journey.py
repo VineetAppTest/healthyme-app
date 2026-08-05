@@ -6,7 +6,6 @@ from components.ui_common import (
     apply_luxe_theme,
     inject_global_styles,
     render_back_to_top,
-    render_page_nav,
     topbar,
     utility_logout_bar,
 )
@@ -29,12 +28,4 @@ topbar(
 
 render_todays_current_plan_view()
 
-render_page_nav(
-    "Today's Plan",
-    back_page="pages/02_Member_Home.py",
-    dashboard_page="pages/02_Member_Home.py",
-    show_evaluation=False,
-    show_dashboard=True,
-    location="bottom",
-)
 render_back_to_top()

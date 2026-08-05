@@ -95,7 +95,9 @@ class MemberPlanExperienceRedesignTests(unittest.TestCase):
     def test_weekly_view_is_day_first_and_today_view_is_one_timeline(self):
         source = VIEW.read_text(encoding="utf-8")
         self.assertIn("for day_number, target_date in dates:", source)
-        self.assertIn("with st.expander(label, expanded=is_today):", source)
+        self.assertIn('marker = "−" if is_open else "+"', source)
+        self.assertIn("on_click=_toggle_day_disclosure", source)
+        self.assertIn("white-space:nowrap!important", source)
         self.assertIn("Meals, Supplements and Exercise together", source)
         self.assertNotIn("st.tabs(", source)
         self.assertNotIn("st.columns(3", source)

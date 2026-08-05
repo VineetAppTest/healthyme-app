@@ -141,16 +141,38 @@ def _inject_current_plan_styles() -> None:
         .hm-plan-item-title{color:#064E3B;font-size:.81rem;font-weight:930;line-height:1.30;}.hm-plan-item-meta{color:#475569;font-size:.70rem;font-weight:720;line-height:1.34;margin-top:.08rem;}.hm-plan-item-instruction{color:#64748B;font-size:.68rem;line-height:1.34;margin-top:.10rem;}
         .hm-plan-empty{border:1px dashed #D9C28F;border-radius:14px;background:#FFFDF8;color:#64748B;padding:.68rem .74rem;margin:.30rem 0 .56rem;font-size:.78rem;font-weight:720;line-height:1.38;}
         .hm-plan-week-intro{color:#475569;font-size:.80rem;font-weight:720;line-height:1.42;margin:.10rem 0 .62rem;}
+        div[class*="st-key-hm_member_plan_day_toggle_"]{margin:.34rem 0 .18rem!important;}
+        div[class*="st-key-hm_member_plan_day_toggle_"] [data-testid="stButton"]>button{
+          width:100%!important;min-height:2.65rem!important;height:auto!important;
+          justify-content:flex-start!important;text-align:left!important;padding:.46rem .72rem!important;
+          border:1px solid #E3C98E!important;border-radius:14px!important;background:#FFFDF8!important;
+          color:#064E3B!important;font-weight:920!important;
+        }
+        div[class*="st-key-hm_member_plan_day_toggle_"] [data-testid="stButton"]>button p{
+          width:100%!important;white-space:nowrap!important;overflow:hidden!important;
+          text-overflow:ellipsis!important;word-break:keep-all!important;text-align:left!important;
+        }
+        div[class*="st-key-hm_member_plan_day_toggle_"][class*="_today"] [data-testid="stButton"]>button{
+          border-color:#D8A84E!important;background:#FFF6E5!important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-plan-day-body-anchor){
+          border:1px solid #E3C98E!important;border-radius:14px!important;background:#FFFFFF!important;
+          padding:.36rem .52rem .42rem!important;margin:0 0 .42rem!important;
+        }
+        .hm-plan-day-body-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+        .hm-plan-action-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+        div[data-testid="stElementContainer"]:has(.hm-plan-action-anchor)+div[data-testid="stHorizontalBlock"]{
+          gap:.72rem!important;margin:.12rem 0 .24rem!important;
+        }
+        div[data-testid="stElementContainer"]:has(.hm-plan-action-anchor)+div[data-testid="stHorizontalBlock"] button{
+          min-height:2.48rem!important;height:2.48rem!important;border-radius:12px!important;
+        }
         .hm-rec-section-title{color:#72551A;font-size:.92rem;font-weight:950;margin:.70rem 0 .38rem;}
         .hm-rec-empty{border:1px dashed #D9C28F;background:#FFF9EC;border-radius:14px;padding:.72rem;color:#64748B;font-size:.80rem;font-weight:740;line-height:1.4;}
         .hm-guidance-box{border:1px solid #E3C98E;background:#FFFDF8;border-radius:16px;padding:.66rem .72rem;box-shadow:0 6px 15px rgba(15,23,42,.035);}
         .hm-chip-row{display:flex;flex-wrap:wrap;gap:.30rem .34rem;margin:.16rem 0;}
         .hm-chip{display:inline-flex;align-items:center;gap:.28rem;border:1px solid #D9C28F;background:#FFF9EC;color:#334155;border-radius:999px;padding:.20rem .46rem;font-size:.72rem;font-weight:760;line-height:1.25;max-width:100%;}
         .hm-chip b{color:#064E3B;font-weight:950;margin-right:.10rem;}
-        div[data-testid="stExpander"]:has(.hm-plan-day-anchor){margin:.34rem 0!important;}
-        div[data-testid="stExpander"]:has(.hm-plan-day-anchor) summary{border:1px solid #E3C98E!important;border-radius:14px!important;background:#FFFDF8!important;color:#064E3B!important;font-weight:920!important;min-height:2.65rem!important;}
-        div[data-testid="stExpander"]:has(.hm-plan-today-anchor) summary{border-color:#D8A84E!important;background:#FFF6E5!important;}
-        .hm-plan-day-anchor,.hm-plan-today-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
         @media(max-width:700px){.hm-plan-item{grid-template-columns:4.6rem minmax(0,1fr);gap:.34rem}.hm-plan-period{padding:.52rem .58rem}.hm-plan-item-title{font-size:.78rem}}
         </style>
         """,
@@ -463,6 +485,10 @@ def _cycle_dates(
     ]
 
 
+def _toggle_day_disclosure(state_key: str) -> None:
+    st.session_state[state_key] = not bool(st.session_state.get(state_key))
+
+
 def render_current_member_plan_view() -> None:
     _inject_current_plan_styles()
     ok, model, message = _load_model()
@@ -493,23 +519,42 @@ def render_current_member_plan_view() -> None:
             f"Day {day_number} · {target_date.strftime('%a, %d %b')}"
             + (" · Today" if is_today else "")
         )
-        with st.expander(label, expanded=is_today):
-            st.markdown(
-                "<span class='hm-plan-day-anchor hm-plan-today-anchor'></span>"
-                if is_today
-                else "<span class='hm-plan-day-anchor'></span>",
-                unsafe_allow_html=True,
+        state_key = f"hm_member_plan_day_open_{target_date.isoformat()}"
+        st.session_state.setdefault(state_key, is_today)
+        is_open = bool(st.session_state.get(state_key))
+        marker = "−" if is_open else "+"
+        toggle_suffix = "_today" if is_today else ""
+        with st.container(
+            key=(
+                f"hm_member_plan_day_toggle_{day_number}_"
+                f"{target_date.isoformat()}{toggle_suffix}"
             )
-            _render_day_timeline(
-                build_day_timeline(
-                    model,
-                    day_number=day_number,
-                    target_date=target_date,
-                ),
-                active_period=(
-                    _current_period(_member_local_now(member_id)) if is_today else ""
-                ),
+        ):
+            st.button(
+                f"{marker}  {label}",
+                key=f"hm_member_plan_day_button_{target_date.isoformat()}",
+                use_container_width=True,
+                on_click=_toggle_day_disclosure,
+                args=(state_key,),
             )
+        if is_open:
+            with st.container(border=True):
+                st.markdown(
+                    "<span class='hm-plan-day-body-anchor'></span>",
+                    unsafe_allow_html=True,
+                )
+                _render_day_timeline(
+                    build_day_timeline(
+                        model,
+                        day_number=day_number,
+                        target_date=target_date,
+                    ),
+                    active_period=(
+                        _current_period(_member_local_now(member_id))
+                        if is_today
+                        else ""
+                    ),
+                )
 
     with st.expander("Nutrition Guidance", expanded=False):
         _render_member_guidance(
@@ -557,10 +602,20 @@ def render_todays_current_plan_view() -> None:
         title="Nutrition Guidance",
     )
     st.divider()
-    if st.button(
-        "Log today's activity",
-        key="hm_current_plan_log_activity",
-        use_container_width=True,
-    ):
-        st.session_state["hm_daily_log_target_tab"] = "Food Journal"
-        st.switch_page("pages/18_Daily_Log.py")
+    st.markdown("<span class='hm-plan-action-anchor'></span>", unsafe_allow_html=True)
+    activity_col, dashboard_col = st.columns(2, gap="medium")
+    with activity_col:
+        if st.button(
+            "Today's Activity",
+            key="hm_current_plan_log_activity",
+            use_container_width=True,
+        ):
+            st.session_state["hm_daily_log_target_tab"] = "Food Journal"
+            st.switch_page("pages/18_Daily_Log.py")
+    with dashboard_col:
+        if st.button(
+            "Dashboard",
+            key="hm_current_plan_dashboard",
+            use_container_width=True,
+        ):
+            st.switch_page("pages/02_Member_Home.py")
