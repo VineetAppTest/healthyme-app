@@ -525,10 +525,12 @@ def _render_css():
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-meal-entry-card-anchor)>div{padding:0!important;gap:.30rem!important;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-meal-entry-card-anchor) div[data-testid="stTextInput"],div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-meal-entry-card-anchor) div[data-testid="stSelectbox"]{margin-bottom:.24rem!important;padding-bottom:0!important;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-meal-entry-card-anchor) label{margin-bottom:.18rem!important;padding-bottom:0!important;}
-        div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor){display:grid!important;grid-template-columns:minmax(5rem,1fr) minmax(5rem,1fr) minmax(6rem,1.15fr) minmax(0,3fr)!important;gap:.48rem!important;align-items:end!important;width:100%!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor){display:grid!important;grid-template-columns:repeat(3,minmax(7.5rem,1fr))!important;gap:.72rem!important;align-items:end!important;width:100%!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor) label,div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor) label p{text-align:center!important;justify-content:center!important;width:100%!important;}
+        div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor) [data-baseweb="select"]>div{text-align:center!important;}
         div[data-testid="stHorizontalBlock"]:has(.hm-meal-food-grid-anchor){display:grid!important;grid-template-columns:minmax(14rem,2.2fr) minmax(8rem,1.25fr)!important;gap:.48rem!important;align-items:end!important;width:100%!important;}
         div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor)>div,div[data-testid="stHorizontalBlock"]:has(.hm-meal-food-grid-anchor)>div{width:100%!important;min-width:0!important;max-width:none!important;flex:none!important;overflow:visible!important;}
-        @media(max-width:760px){div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor){grid-template-columns:repeat(3,minmax(0,1fr))!important;}div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor)>div:nth-child(4){display:none!important;}div[data-testid="stHorizontalBlock"]:has(.hm-meal-food-grid-anchor){grid-template-columns:1fr!important;}}
+        @media(max-width:760px){div[data-testid="stHorizontalBlock"]:has(.hm-meal-time-grid-anchor){grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.40rem!important;}div[data-testid="stHorizontalBlock"]:has(.hm-meal-food-grid-anchor){grid-template-columns:1fr!important;}}
         .hm-toggle-body:empty{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;}
         .hm-toggle-body{border:1px solid #E7D8BE;background:#FFFDF8;border-radius:16px;padding:1rem 1rem 1.18rem!important;margin:.16rem 0 .76rem 0;overflow:visible!important;}
         .hm-toggle-body div[data-testid="stHorizontalBlock"]{overflow:visible!important;padding-bottom:.18rem!important;}
@@ -580,7 +582,7 @@ def _render_meal_fields(label, key, prior, date_key):
     minute_options = ["MM"] + [f"{value:02d}" for value in range(60)]
     period_options = ["AM/PM", "AM", "PM"]
 
-    time_cols = st.columns([1, 1, 1.15, 3], gap="small")
+    time_cols = st.columns(3, gap="medium")
     with time_cols[0]:
         st.markdown("<span class='hm-meal-time-grid-anchor'></span>", unsafe_allow_html=True)
         selected_hour = st.selectbox("Hour", hour_options, index=hour_options.index(prior_hour), key=f"hm_daily_hour_v13_{date_key}_{key}")

@@ -13,7 +13,7 @@ class FoodJournalMealGridSavedDaysCleanupTests(unittest.TestCase):
         start = source.index("def _render_meal_fields")
         end = source.index("def _render_meal_toggle", start)
         block = source[start:end]
-        self.assertIn("time_cols = st.columns([1, 1, 1.15, 3]", block)
+        self.assertIn('time_cols = st.columns(3, gap="medium")', block)
         self.assertIn("food_col, portion_col = st.columns([2.2, 1.25]", block)
         self.assertIn('"Hour"', block)
         self.assertIn('"Minutes"', block)

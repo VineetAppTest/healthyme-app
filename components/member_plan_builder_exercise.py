@@ -17,7 +17,7 @@ from components.member_plan_builder_allocation_common import (
     render_allocation_member_selector,
     source_summary,
 )
-from components.pbm_core import clean
+from components.pbm_core import clean, safe
 
 
 def _actor_id() -> str:
@@ -64,8 +64,8 @@ def _render_source_details(source: Dict) -> None:
             st.caption("No additional repository information is available.")
             return
         detail_html = "".join(
-            f"<div class='mpb-exercise-detail{' mpb-exercise-detail-wide' if label == 'Benefits' else ''}'>"
-            f"<b>{label}:</b><span>{value}</span></div>"
+            "<div class='mpb-exercise-detail'>"
+            f"<b>{safe(label)}:</b><span>{safe(value)}</span></div>"
             for label, value in details
         )
         st.markdown(
@@ -318,13 +318,23 @@ div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[ope
 }
 div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) [data-testid="stExpanderDetails"]{
   padding:.42rem .58rem .52rem!important;
+  height:auto!important;
+  min-height:0!important;
+  overflow:visible!important;
+}
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[open],
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[open]>div,
+div[data-testid="stExpander"]:has(.mpb-exercise-more-details-anchor) details[open] div[data-testid="stVerticalBlock"]{
+  height:auto!important;
+  max-height:none!important;
+  min-height:0!important;
+  overflow:visible!important;
 }
 .mpb-exercise-detail-wrap{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.45rem 1rem;width:100%;}
-.mpb-exercise-detail{display:inline-flex;align-items:flex-start;gap:.25rem;flex:0 1 auto;max-width:100%;font-size:.80rem;line-height:1.35;color:#334155;}
+.mpb-exercise-detail{display:inline-flex;align-items:flex-start;gap:.25rem;flex:0 1 auto;max-width:100%;font-size:.80rem;line-height:1.35;color:#334155;white-space:normal;}
 .mpb-exercise-detail b{color:#064E3B;white-space:nowrap;}
 .mpb-exercise-detail span{min-width:0;overflow-wrap:anywhere;}
-.mpb-exercise-detail-wide{flex:1 1 22rem;}
-@media(max-width:720px){.mpb-exercise-detail,.mpb-exercise-detail-wide{flex:1 1 100%;}}
+@media(max-width:720px){.mpb-exercise-detail{flex:1 1 100%;}}
 </style>
 """,
         unsafe_allow_html=True,

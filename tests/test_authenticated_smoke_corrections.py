@@ -73,7 +73,7 @@ class AuthenticatedSmokeCorrectionTests(unittest.TestCase):
         self.assertIn("hm-member-home-root-anchor", page)
         self.assertIn("with st.container():", page)
         self.assertNotIn("html,body,#root{margin-top:0", page)
-        self.assertIn("hm-member-home-global-header-v6", runtime)
+        self.assertIn("hm-member-home-global-header-v7", runtime)
         self.assertIn('id="hm-member-home-local-style-v3"', schedule)
         self.assertIn("width:fit-content!important", schedule)
         self.assertNotIn("width:min(420px,100%)", schedule)
@@ -87,7 +87,7 @@ class AuthenticatedSmokeCorrectionTests(unittest.TestCase):
         block = source[start:end]
         self.assertIn("hm-meal-time-grid-anchor", source)
         self.assertIn("hm-meal-food-grid-anchor", source)
-        self.assertIn("time_cols = st.columns([1, 1, 1.15, 3]", block)
+        self.assertIn('time_cols = st.columns(3, gap="medium")', block)
         self.assertIn("food_col, portion_col = st.columns([2.2, 1.25]", block)
         self.assertIn("hm_daily_log_add_food_item_", block)
         self.assertIn('st.session_state["_hm_h13r9e_pending_rerun_path"] = "Daily_Log"', block)

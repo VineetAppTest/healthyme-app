@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 from typing import Dict
 
 import pandas as pd
@@ -9,15 +10,24 @@ import streamlit as st
 from components.member_plan_builder_allocation_common import (
     allocation_choice_map,
     render_allocation_member_selector,
-    source_summary,
 )
 from components.pbm_core import clean
+from components.supplement_member_allocation import (
+    list_active_supplement_sources,
+    list_member_supplement_allocations,
+    save_supplement_member_allocation,
+    stop_supplement_member_allocation,
+)
 
 
 TIMING_OPTIONS = [
+    "Early Morning",
     "Morning",
+    "Mid-morning",
     "Midday",
+    "Afternoon",
     "Evening",
+    "Night",
     "Before Bed",
     "With Food",
     "Empty Stomach",
@@ -35,17 +45,58 @@ FREQUENCY_OPTIONS = [
     "Nine times",
     "Ten times",
 ]
+FREQUENCY_COUNTS = {
+    "Once": 1,
+    "Twice": 2,
+    "Thrice": 3,
+    "Four times": 4,
+    "Five times": 5,
+    "Six times": 6,
+    "Seven times": 7,
+    "Eight times": 8,
+    "Nine times": 9,
+    "Ten times": 10,
+}
 
 
 def _options_with_current(options: list[str], current: object) -> list[str]:
     value = clean(current)
     return options + [value] if value and value not in options else list(options)
-from components.supplement_member_allocation import (
-    list_active_supplement_sources,
-    list_member_supplement_allocations,
-    save_supplement_member_allocation,
-    stop_supplement_member_allocation,
-)
+
+
+def _timing_values(value: object) -> list[str]:
+    if isinstance(value, (list, tuple, set)):
+        raw_values = list(value)
+    else:
+        raw_values = re.split(r"[,;|]", clean(value))
+    return list(dict.fromkeys(clean(item) for item in raw_values if clean(item)))
+
+
+def _timing_options_with_current(value: object) -> list[str]:
+    current = _timing_values(value)
+    return list(dict.fromkeys([*TIMING_OPTIONS, *current]))
+
+
+def _frequency_count(value: object) -> int:
+    text = clean(value)
+    if text in FREQUENCY_COUNTS:
+        return FREQUENCY_COUNTS[text]
+    if text.lower() in {"daily", "once daily", "one time"}:
+        return 1
+    match = re.search(r"\d+", text)
+    return int(match.group(0)) if match else 0
+
+
+def _frequency_timing_error(frequency: object, timings: list[str]) -> str:
+    expected = _frequency_count(frequency)
+    if expected <= 0:
+        return "Choose a supported Frequency before selecting Timing."
+    if len(timings) != expected:
+        return (
+            f"Select exactly {expected} Timing option(s) for {clean(frequency)}. "
+            f"Currently selected: {len(timings)}."
+        )
+    return ""
 
 
 def _actor_id() -> str:
@@ -109,14 +160,20 @@ def _render_add_supplement(member_id: str) -> None:
             index=frequency_options.index(current_frequency),
             key=f"mpb_su_add_frequency_{member_id}",
         )
-        timing_options = _options_with_current(TIMING_OPTIONS, source.get("timing"))
-        current_timing = clean(source.get("timing")) or TIMING_OPTIONS[0]
-        timing = fields[2].selectbox(
+        timing_options = _timing_options_with_current(source.get("timing"))
+        current_timings = _timing_values(source.get("timing"))
+        if not current_timings:
+            current_timings = TIMING_OPTIONS[: _frequency_count(frequency)]
+        timing = fields[2].multiselect(
             "Timing",
             timing_options,
-            index=timing_options.index(current_timing),
+            default=current_timings,
             key=f"mpb_su_add_timing_{member_id}",
+            help="Select one timing for each daily dose.",
         )
+        timing_error = _frequency_timing_error(frequency, timing)
+        if timing_error:
+            st.warning(timing_error)
         instructions = st.text_area(
             "Member Instructions",
             value=clean(source.get("instructions")),
@@ -144,6 +201,7 @@ def _render_add_supplement(member_id: str) -> None:
             "Save Supplement",
             type="primary",
             use_container_width=True,
+            disabled=bool(timing_error),
             key=f"mpb_su_add_save_{member_id}",
         ):
             try:
@@ -152,7 +210,7 @@ def _render_add_supplement(member_id: str) -> None:
                     source_id=_source_id(source),
                     dosage=dosage,
                     frequency=frequency,
-                    timing=timing,
+                    timing=", ".join(timing),
                     instructions=instructions,
                     start_date=start,
                     end_date="" if no_end else end,
@@ -210,14 +268,6 @@ def _render_edit_supplement(member_id: str) -> None:
     source_id = clean(selected.get("source_id"))
 
     with st.container(border=True):
-        source_summary(
-            clean(selected.get("supplement_name")) or "Supplement",
-            (
-                clean(selected.get("dosage")),
-                clean(selected.get("frequency")),
-                clean(selected.get("timing")),
-            ),
-        )
         if source_id:
             source = source_by_id.get(source_id)
             st.text_input(
@@ -254,17 +304,21 @@ def _render_edit_supplement(member_id: str) -> None:
             disabled=stopped,
             key=f"mpb_su_edit_frequency_{allocation_id}",
         )
-        edit_timing_options = _options_with_current(
-            TIMING_OPTIONS, selected.get("timing")
-        )
-        current_edit_timing = clean(selected.get("timing")) or TIMING_OPTIONS[0]
-        timing = fields[2].selectbox(
+        edit_timing_options = _timing_options_with_current(selected.get("timing"))
+        current_edit_timings = _timing_values(selected.get("timing"))
+        if not current_edit_timings:
+            current_edit_timings = TIMING_OPTIONS[: _frequency_count(frequency)]
+        timing = fields[2].multiselect(
             "Timing",
             edit_timing_options,
-            index=edit_timing_options.index(current_edit_timing),
+            default=current_edit_timings,
             disabled=stopped,
             key=f"mpb_su_edit_timing_{allocation_id}",
+            help="Select one timing for each daily dose.",
         )
+        timing_error = _frequency_timing_error(frequency, timing)
+        if timing_error and not stopped:
+            st.warning(timing_error)
         instructions = st.text_area(
             "Member Instructions",
             value=clean(selected.get("instructions")),
@@ -296,7 +350,7 @@ def _render_edit_supplement(member_id: str) -> None:
             "Save Changes",
             type="primary",
             use_container_width=True,
-            disabled=stopped or not source_id,
+            disabled=stopped or not source_id or bool(timing_error),
             key=f"mpb_su_edit_save_{allocation_id}",
         ):
             try:
@@ -305,7 +359,7 @@ def _render_edit_supplement(member_id: str) -> None:
                     source_id=source_id,
                     dosage=dosage,
                     frequency=frequency,
-                    timing=timing,
+                    timing=", ".join(timing),
                     instructions=instructions,
                     start_date=start,
                     end_date="" if no_end else end,

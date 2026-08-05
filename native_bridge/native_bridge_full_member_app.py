@@ -299,12 +299,6 @@ def _render_member_route(spec: MemberRouteSpec) -> None:
         st.set_page_config = saved[("streamlit", "set_page_config")]
         st.switch_page = saved[("streamlit", "switch_page")]
 
-    st.caption(
-        f"Full Member integration build: {BUILD} · {spec.checkpoint} · "
-        f"{spec.source_path}"
-    )
-
-
 def _make_member_page(spec: MemberRouteSpec) -> Callable[[], None]:
     def _page() -> None:
         _render_member_route(spec)

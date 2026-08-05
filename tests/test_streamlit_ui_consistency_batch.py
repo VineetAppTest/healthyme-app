@@ -15,7 +15,7 @@ class StreamlitUiConsistencyBatchTests(unittest.TestCase):
         render_start = source.index("def _render_meal_fields")
         render_end = source.index("def _render_meal_toggle", render_start)
         renderer = source[render_start:render_end]
-        self.assertIn("time_cols = st.columns([1, 1, 1.15, 3]", renderer)
+        self.assertIn('time_cols = st.columns(3, gap="medium")', renderer)
         self.assertIn("food_col, portion_col = st.columns([2.2, 1.25]", renderer)
         self.assertIn('"Hour"', renderer)
         self.assertIn('"Minutes"', renderer)

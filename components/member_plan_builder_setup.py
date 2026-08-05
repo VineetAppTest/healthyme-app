@@ -156,11 +156,11 @@ def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
     st.markdown("<div class='hm-title'>Setup</div>", unsafe_allow_html=True)
     st.markdown(
         """
-<style id="hm-member-plan-setup-responsive-details-v1">
+<style id="hm-member-plan-setup-responsive-details-v2">
 .mpb-setup-details-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
 div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]{
   display:grid!important;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr))!important;
+  grid-template-columns:repeat(auto-fit,minmax(255px,1fr))!important;
   gap:.52rem!important;
   width:100%!important;
   align-items:start!important;
@@ -241,12 +241,15 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
     profile["profile_name"] = row1[0].text_input(
         "Plan Name",
         value=clean(profile.get("profile_name")),
+        placeholder="Plan Name",
+        label_visibility="collapsed",
         key=f"mpb_profile_name_{epoch}",
     )
     selected_member = row1[1].selectbox(
         "Member",
         member_labels,
         index=member_labels.index(current_member),
+        label_visibility="collapsed",
         key=f"mpb_member_{epoch}",
         disabled=(
             bool(profile.get("id"))
@@ -258,6 +261,7 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
     profile["start_date"] = row1[2].date_input(
         "Plan Start Date",
         value=clean_date(profile.get("start_date")),
+        label_visibility="collapsed",
         key=f"mpb_start_date_{epoch}",
     )
 

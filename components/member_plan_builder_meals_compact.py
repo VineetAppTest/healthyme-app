@@ -88,9 +88,8 @@ def _render_more_details(snapshot: Dict[str, Any]) -> None:
         if not details:
             st.caption("No additional repository information is available.")
             return
-        long_labels = {"Ingredients", "Preparation", "Repository Instructions"}
         detail_html = "".join(
-            f"<div class='mpb-responsive-detail{' mpb-responsive-detail-wide' if label in long_labels else ''}'>"
+            "<div class='mpb-responsive-detail'>"
             f"<b>{safe(label)}:</b><span>{safe(value)}</span></div>"
             for label, value in details
         )
@@ -293,7 +292,14 @@ def _publish_current_plan() -> None:
         st.error("Add and save at least one Meal item before publishing.")
         return
     try:
-        ok, message = activate_profile(profile, "ACTIVATE")
+        # Streamlit date widgets retain ``datetime.date`` values in session state.
+        # Keep the publish boundary JSON-safe even if backend instrumentation or a
+        # client serializer observes the complete profile object.
+        publish_profile = {
+            **profile,
+            "start_date": clean(profile.get("start_date")),
+        }
+        ok, message = activate_profile(publish_profile, "ACTIVATE")
         if ok:
             profile["status"] = "active"
             clear_publish_cache()
@@ -310,11 +316,10 @@ def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> N
         """
 <style id="hm-admin-plan-builder-responsive-details-v1">
 .mpb-responsive-details{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.48rem 1rem;width:100%;}
-.mpb-responsive-detail{display:inline-flex;align-items:flex-start;gap:.25rem;flex:0 1 auto;max-width:100%;font-size:.82rem;line-height:1.35;color:#334155;}
+.mpb-responsive-detail{display:inline-flex;align-items:flex-start;gap:.25rem;flex:0 1 auto;max-width:100%;font-size:.82rem;line-height:1.35;color:#334155;white-space:normal;}
 .mpb-responsive-detail b{color:#064E3B;white-space:nowrap;}
 .mpb-responsive-detail span{min-width:0;overflow-wrap:anywhere;}
-.mpb-responsive-detail-wide{flex:1 1 22rem;}
-@media(max-width:720px){.mpb-responsive-detail,.mpb-responsive-detail-wide{flex:1 1 100%;}}
+@media(max-width:720px){.mpb-responsive-detail{flex:1 1 100%;}}
 </style>
 """,
         unsafe_allow_html=True,
