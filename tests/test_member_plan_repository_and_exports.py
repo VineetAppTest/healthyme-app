@@ -105,5 +105,6 @@ def test_setup_and_allocation_boundaries_follow_repository_model() -> None:
     assert '"assigned_member_id": ""' in setup
     assert '"Meal Profile"' in meals and '"Member"' in meals and '"Publish"' in meals
     assert "load_active_profiles()" in allocations
-    assert '"Member Plan"' in allocations
+    assert '"Member"' in allocations
+    assert '"Member Plan"' not in allocations
     assert "st.columns([1, 2, 1])" in body_mind

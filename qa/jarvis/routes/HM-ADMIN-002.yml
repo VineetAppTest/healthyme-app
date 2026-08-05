@@ -1,0 +1,45 @@
+id: HM-ADMIN-002
+name: Admin Member Plan Builder read-only regression
+owner: Jarvis
+risk: authenticated_admin_plan_builder_read_only
+execution:
+  trigger: manual_post_deployment_only
+  pull_request_live_assertions: skipped
+starting_state:
+  user_role: admin
+  authentication: signed_out
+  test_data_policy: dedicated_non_sensitive_admin_and_synthetic_uat_records
+  required_environment:
+    - JARVIS_BASE_URL
+    - JARVIS_ADMIN_EMAIL
+    - JARVIS_ADMIN_PASSWORD
+steps:
+  - checkpoint: P1
+    action: Sign in with the dedicated Jarvis admin identity
+    expected: Admin Dashboard is visible
+  - checkpoint: P2
+    action: Open Recommendation Profile Builder
+    expected: Member Plan Builder is visible
+  - checkpoint: P3
+    action: Open Setup and inspect the retained profile selector
+    expected: More Setup Details is absent and retained profiles are selectable
+  - checkpoint: P4
+    action: Open View Member Plan
+    expected: Meal Profile, Member and Health Concerns filters are visible in order
+  - checkpoint: P5
+    action: Compare the Setup and View profile option counts
+    expected: Both selectors expose the same retained profile population
+  - checkpoint: P6
+    action: Open Exercise and Supplement
+    expected: Each allocation page labels the active-plan-controlled selector Member
+  - checkpoint: P7
+    action: Expand Exercise More details and compare element bounds
+    expected: Detail content remains inside the disclosure border
+non_regression:
+  - Do not create, update, publish, allocate, stop, deactivate or delete records
+  - Do not send an email or in-app notification
+  - Do not report profile names, member identifiers, health tags or plan content
+  - Preserve authentication, routing, role, RLS and active-plan association logic
+artifacts:
+  - De-identified safe result only
+  - No screenshot, video or trace in strict privacy mode

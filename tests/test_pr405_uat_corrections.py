@@ -18,11 +18,11 @@ class Pr405UatCorrectionTests(unittest.TestCase):
     def test_setup_hides_repeated_labels_and_preserves_natural_field_width(self):
         source = self._source("components/member_plan_builder_setup.py")
         row_start = source.index('row1 = st.columns(1')
-        row_end = source.index('with st.expander("More setup details"', row_start)
+        row_end = source.index("classification_cols = st.columns(", row_start)
         row = source[row_start:row_end]
         self.assertEqual(row.count('label_visibility="collapsed"'), 1)
-        self.assertIn("repeat(auto-fit,minmax(255px,1fr))", source)
-        self.assertNotIn("repeat(auto-fit,minmax(220px,1fr))", source)
+        self.assertIn("[1.15, 1, 1, 1.15]", source)
+        self.assertNotIn("repeat(auto-fit,minmax", source)
 
     def test_meal_and_exercise_details_use_natural_width_and_visible_open_body(self):
         meals = self._source("components/member_plan_builder_meals_compact.py")

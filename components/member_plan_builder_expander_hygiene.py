@@ -15,7 +15,7 @@ def install_member_plan_builder_expander_hygiene() -> None:
 
     def compact_expander(self, label, *args, **kwargs):
         text = str(label or "").strip()
-        if text == "More setup details" or text.startswith("More details —"):
+        if text.startswith("More details —"):
             label = "More details"
         return original_expander(self, label, *args, **kwargs)
 

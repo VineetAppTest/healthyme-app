@@ -9,11 +9,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class AuthenticatedSmokeCorrectionTests(unittest.TestCase):
-    def test_setup_moves_metadata_inside_more_details_and_removes_clone_caption(self):
+    def test_setup_shows_metadata_in_aligned_sections_without_more_details(self):
         source = (ROOT / "components/member_plan_builder_setup.py").read_text()
-        start = source.index('with st.expander("More setup details"')
+        start = source.index("classification_cols = st.columns(")
         end = source.index('if st.button(\n        "Save Setup"', start)
         block = source[start:end]
+        self.assertNotIn('st.expander("More setup details"', source)
+        self.assertIn("[1.15, 1, 1, 1.15]", block)
+        self.assertIn('vertical_alignment="bottom"', block)
         for label in (
             '"Region / Food Culture"',
             '"Diet Type"',

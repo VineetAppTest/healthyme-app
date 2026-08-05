@@ -109,9 +109,11 @@ class MealProfileBuilderPhaseBTests(unittest.TestCase):
         widget_at = source.index("selected_id = select_col.selectbox(")
         self.assertLess(apply_at, widget_at)
 
-    def test_expanders_use_full_visible_more_details_labels(self) -> None:
+    def test_item_expanders_use_full_visible_more_details_labels(self) -> None:
         source = EXPANDER_FILE.read_text(encoding="utf-8")
-        self.assertIn('text == "More setup details"', source)
+        setup = SETUP_FILE.read_text(encoding="utf-8")
+        self.assertNotIn('st.expander("More setup details"', setup)
+        self.assertNotIn('text == "More setup details"', source)
         self.assertIn('text.startswith("More details —")', source)
         self.assertIn('label = "More details"', source)
         modular = MODULAR_FILE.read_text(encoding="utf-8")

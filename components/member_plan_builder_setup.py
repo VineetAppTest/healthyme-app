@@ -17,8 +17,7 @@ from components.pbm_core import (
     with_placeholder,
 )
 from components.profile_builder_module_store import (
-    EDIT_SCOPE_ALL,
-    list_profiles_for_editing,
+    list_profiles_for_repository,
     save_profile_module,
     save_profile_shell,
 )
@@ -156,42 +155,33 @@ def render_member_plan_setup(options: Dict[str, List[str]]) -> None:
     st.markdown("<div class='hm-title'>Setup</div>", unsafe_allow_html=True)
     st.markdown(
         """
-<style id="hm-member-plan-setup-responsive-details-v3">
-.mpb-setup-details-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
-div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) [data-testid="stExpanderDetails"]{padding:.48rem .62rem .58rem!important;}
-div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stVerticalBlock"]{gap:.42rem!important;}
-div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]{
-  display:grid!important;
-  grid-template-columns:repeat(auto-fit,minmax(255px,1fr))!important;
-  gap:.52rem!important;
-  width:100%!important;
-  align-items:start!important;
+<style id="hm-member-plan-setup-sections-v4">
+.mpb-setup-group-title{
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  color:#064E3B;
+  font-size:.76rem;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin:.58rem 0 .18rem;
 }
-div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]>:is(div[data-testid="column"],div[data-testid="stColumn"]){
-  width:auto!important;
-  min-width:0!important;
-  max-width:none!important;
-  flex:none!important;
-}
-.mpb-setup-group-title{color:#064E3B;font-size:.76rem;font-weight:950;text-transform:uppercase;letter-spacing:.04em;margin:.08rem 0 -.08rem;padding-bottom:.18rem;border-bottom:1px solid #F0DFC0;}
-@media(max-width:640px){
-  div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="stHorizontalBlock"]{
-    grid-template-columns:1fr!important;
-  }
+.mpb-setup-group-title:after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:#F0DFC0;
 }
 </style>
 """,
         unsafe_allow_html=True,
     )
 
-    ok_profiles, profiles, profile_message = list_profiles_for_editing(EDIT_SCOPE_ALL)
+    ok_profiles, profiles, profile_message = list_profiles_for_repository()
     if not ok_profiles:
         profiles = []
         st.warning(profile_message)
-
-    profiles = [
-        row for row in profiles if clean(row.get("status")).lower() == "draft"
-    ]
     profile_by_id = {
         clean(row.get("id")): row for row in profiles if clean(row.get("id"))
     }
@@ -233,6 +223,15 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
 
     profile = st.session_state["pbm_profile"]
     epoch = int(st.session_state.get("pbm_epoch", 0))
+    profile_status = clean(profile.get("status"), "draft").lower()
+    assigned_member_id = clean(profile.get("assigned_member_id"))
+    setup_editable = profile_status == "draft" and not assigned_member_id
+
+    if loaded_id and not setup_editable:
+        st.caption(
+            "This allocated or historical Meal Profile is retained read-only. "
+            "Use Clone Meal Profile to create an editable, reusable Draft."
+        )
 
     row1 = st.columns(1, gap="small")
     profile["profile_name"] = row1[0].text_input(
@@ -240,82 +239,91 @@ div[data-testid="stExpander"]:has(.mpb-setup-details-anchor) div[data-testid="st
         value=clean(profile.get("profile_name")),
         placeholder="Plan Name",
         label_visibility="collapsed",
+        disabled=not setup_editable,
         key=f"mpb_profile_name_{epoch}",
     )
-    profile["assigned_member_label"] = ""
-    profile["assigned_member_id"] = ""
-    profile["start_date"] = ""
+    if setup_editable:
+        profile["assigned_member_label"] = ""
+        profile["assigned_member_id"] = ""
+        profile["start_date"] = ""
 
-    with st.expander("More setup details", expanded=False):
-        st.markdown(
-            "<span class='mpb-setup-details-anchor'></span>",
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            "<div class='mpb-setup-group-title'>Profile classification</div>",
-            unsafe_allow_html=True,
-        )
-        row2 = st.columns(4, gap="small")
-        profile["region"] = row2[0].text_input(
-            "Region / Food Culture",
-            value=clean(profile.get("region")),
-            key=f"mpb_region_{epoch}",
-        )
-        diet_options = with_placeholder(list(options.get("diet_type") or []), SELECT_DIET)
-        current_diet = clean(profile.get("diet_type")) or SELECT_DIET
-        if current_diet not in diet_options:
-            diet_options.append(current_diet)
-        profile["diet_type"] = row2[1].selectbox(
-            "Diet Type",
-            diet_options,
-            index=diet_options.index(current_diet),
-            key=f"mpb_diet_{epoch}",
-        )
-        age_options = with_placeholder(list(options.get("age_band") or []), SELECT_AGE)
-        current_age = clean(profile.get("age_band")) or SELECT_AGE
-        if current_age not in age_options:
-            age_options.append(current_age)
-        profile["age_band"] = row2[2].selectbox(
-            "Age Band",
-            age_options,
-            index=age_options.index(current_age),
-            key=f"mpb_age_{epoch}",
-        )
+    st.markdown(
+        "<div class='mpb-setup-group-title'>Profile classification</div>",
+        unsafe_allow_html=True,
+    )
+    classification_cols = st.columns(
+        [1.15, 1, 1, 1.15],
+        gap="small",
+        vertical_alignment="bottom",
+    )
+    profile["region"] = classification_cols[0].text_input(
+        "Region / Food Culture",
+        value=clean(profile.get("region")),
+        disabled=not setup_editable,
+        key=f"mpb_region_{epoch}",
+    )
+    diet_options = with_placeholder(list(options.get("diet_type") or []), SELECT_DIET)
+    current_diet = clean(profile.get("diet_type")) or SELECT_DIET
+    if current_diet not in diet_options:
+        diet_options.append(current_diet)
+    profile["diet_type"] = classification_cols[1].selectbox(
+        "Diet Type",
+        diet_options,
+        index=diet_options.index(current_diet),
+        disabled=not setup_editable,
+        key=f"mpb_diet_{epoch}",
+    )
+    age_options = with_placeholder(list(options.get("age_band") or []), SELECT_AGE)
+    current_age = clean(profile.get("age_band")) or SELECT_AGE
+    if current_age not in age_options:
+        age_options.append(current_age)
+    profile["age_band"] = classification_cols[2].selectbox(
+        "Age Band",
+        age_options,
+        index=age_options.index(current_age),
+        disabled=not setup_editable,
+        key=f"mpb_age_{epoch}",
+    )
 
-        concerns = list(options.get("health_concern") or [])
-        for concern in profile.get("health_concerns") or []:
-            if concern not in concerns:
-                concerns.append(concern)
-        profile["health_concerns"] = row2[3].multiselect(
-            "Health Concerns",
-            concerns,
-            default=list(profile.get("health_concerns") or []),
-            key=f"mpb_concerns_{epoch}",
-        )
+    concerns = list(options.get("health_concern") or [])
+    for concern in profile.get("health_concerns") or []:
+        if concern not in concerns:
+            concerns.append(concern)
+    profile["health_concerns"] = classification_cols[3].multiselect(
+        "Health Concerns",
+        concerns,
+        default=list(profile.get("health_concerns") or []),
+        disabled=not setup_editable,
+        key=f"mpb_concerns_{epoch}",
+    )
 
-        st.markdown(
-            "<div class='mpb-setup-group-title'>Internal notes</div>",
-            unsafe_allow_html=True,
-        )
-        note_col, change_col = st.columns(2, gap="small")
-        profile["profile_note"] = note_col.text_area(
-            "Nutritionist Note",
-            value=clean(profile.get("profile_note")),
-            height=72,
-            key=f"mpb_note_{epoch}",
-        )
-        profile["change_note"] = change_col.text_area(
-            "Change Note",
-            value=clean(profile.get("change_note")),
-            height=72,
-            key=f"mpb_change_note_{epoch}",
-        )
+    st.markdown(
+        "<div class='mpb-setup-group-title'>Internal notes</div>",
+        unsafe_allow_html=True,
+    )
+    note_col, change_col = st.columns(2, gap="small")
+    profile["profile_note"] = note_col.text_area(
+        "Nutritionist Note",
+        value=clean(profile.get("profile_note")),
+        height=72,
+        disabled=not setup_editable,
+        key=f"mpb_note_{epoch}",
+    )
+    profile["change_note"] = change_col.text_area(
+        "Change Note",
+        value=clean(profile.get("change_note")),
+        height=72,
+        disabled=not setup_editable,
+        key=f"mpb_change_note_{epoch}",
+    )
 
     if st.button(
         "Save Setup",
         type="primary",
         use_container_width=True,
-        disabled=not check_profile_builder_store().get("ok"),
+        disabled=(
+            not check_profile_builder_store().get("ok") or not setup_editable
+        ),
         key="mpb_save_setup",
     ):
         payload = {

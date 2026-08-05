@@ -39,6 +39,20 @@ Uses the dedicated Jarvis admin identity to verify:
 
 The admin route is intentionally read-only and does not open member-detail or health-data pages.
 
+### HM-ADMIN-002
+
+Runs only as a manual post-deployment route. It uses the dedicated Jarvis admin
+identity to open Member Plan Builder without changing data and verifies:
+
+1. Setup contains all retained Meal Profiles and no More Setup Details wrapper.
+2. View Member Plan exposes Meal Profile, Member and Health Concerns in order.
+3. Setup and View Member Plan expose the same retained profile population.
+4. Exercise and Supplement use the Member label while remaining plan-controlled.
+5. Expanded Exercise details remain inside their disclosure border.
+
+Pull-request runs type-check this route but skip its live assertions because an
+unmerged branch cannot change the externally deployed HealthyMe application.
+
 Approved route definitions are stored under `routes/`.
 
 ## Evidence produced

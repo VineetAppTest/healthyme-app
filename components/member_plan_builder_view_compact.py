@@ -372,14 +372,15 @@ def render_view_member_plan_compact() -> None:
     if not ok:
         st.error(message)
         return
-    profiles = [row for row in profiles if clean(row.get("assigned_member_id"))]
     if not profiles:
-        st.info("No member plans are available.")
+        st.info("No Meal Profiles are available.")
         return
 
     profile_by_id = {clean(row.get("id")): row for row in profiles if clean(row.get("id"))}
     member_labels = {
-        clean(row.get("assigned_member_id")): _member_label(row) for row in profiles
+        clean(row.get("assigned_member_id")): _member_label(row)
+        for row in profiles
+        if clean(row.get("assigned_member_id"))
     }
     health_concerns = sorted(
         {
@@ -399,24 +400,25 @@ def render_view_member_plan_compact() -> None:
 
     controls = st.columns([0.40, 0.28, 0.32], gap="small")
     selected_profile_filter = controls[0].selectbox(
-        "View Existing Profile",
+        "Meal Profile",
         profile_options,
         format_func=lambda value: (
-            "All profiles" if not value else _profile_label(profile_by_id[value])
+            "All Meal Profiles" if not value else _profile_label(profile_by_id[value])
         ),
         key="mpb_view_profile_filter",
     )
     selected_member_filter = controls[1].selectbox(
         "Member",
         member_options,
-        format_func=lambda value: "All members" if not value else member_labels[value],
+        format_func=lambda value: "All Members" if not value else member_labels[value],
         key="mpb_view_member_filter",
     )
     selected_concerns = controls[2].multiselect(
         "Health Concerns",
         health_concerns,
         key="mpb_view_concern_filter",
-        placeholder="All health concerns",
+        placeholder="All Health Concerns",
+        help="Uses the Health Concern tags attached to each Meal Profile.",
     )
 
     matches = [
@@ -442,7 +444,7 @@ def render_view_member_plan_compact() -> None:
         match_ids[0]
         if len(match_ids) == 1
         else st.selectbox(
-            "Matching Member Plan",
+            "Matching Meal Profile",
             match_ids,
             format_func=lambda value: (
                 f"{_member_label(profile_by_id[value])} · {_profile_label(profile_by_id[value])}"

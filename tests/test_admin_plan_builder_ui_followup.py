@@ -14,13 +14,14 @@ class AdminPlanBuilderUiFollowupTests(unittest.TestCase):
         ast.parse(text)
         return text
 
-    def test_setup_more_details_wraps_inputs_responsively(self):
+    def test_setup_uses_visible_aligned_classification_and_notes_sections(self):
         source = self._source("components/member_plan_builder_setup.py")
-        self.assertIn("mpb-setup-details-anchor", source)
-        self.assertIn("repeat(auto-fit,minmax(255px,1fr))", source)
-        self.assertIn('row2 = st.columns(4, gap="small")', source)
-        self.assertIn('row2[3].multiselect(', source)
-        self.assertIn("grid-template-columns:1fr!important", source)
+        self.assertNotIn('st.expander("More setup details"', source)
+        self.assertNotIn("mpb-setup-details-anchor", source)
+        self.assertIn("classification_cols = st.columns(", source)
+        self.assertIn("[1.15, 1, 1, 1.15]", source)
+        self.assertIn('classification_cols[3].multiselect(', source)
+        self.assertIn("note_col, change_col = st.columns(2", source)
         self.assertIn("Profile classification", source)
         self.assertIn("Internal notes", source)
         self.assertGreaterEqual(source.count('label_visibility="collapsed"'), 1)
@@ -52,7 +53,12 @@ class AdminPlanBuilderUiFollowupTests(unittest.TestCase):
         self.assertNotIn("source_summary(", detail_block)
         self.assertIn("mpb-exercise-detail-wrap", detail_block)
         self.assertNotIn("mpb-exercise-detail-wide", source)
-        self.assertIn("flex-wrap:wrap", source)
+        self.assertIn(
+            "grid-template-columns:repeat(auto-fit,minmax(185px,1fr))",
+            source,
+        )
+        self.assertIn("height:auto!important", source)
+        self.assertIn("max-height:none!important", source)
         self.assertIn("details[open]>div", source)
 
     def test_supplement_removes_duplicate_details_and_uses_approved_dropdowns(self):

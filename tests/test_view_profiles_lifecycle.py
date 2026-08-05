@@ -45,7 +45,8 @@ class ViewMemberPlanExcelSSOTContractTest(unittest.TestCase):
         source = VIEW.read_text(encoding="utf-8")
         self.assertNotIn("Profile Scope", source)
         self.assertIn('"Member"', source)
-        self.assertIn('"View Existing Profile"', source)
+        self.assertIn('"Meal Profile"', source)
+        self.assertNotIn('"View Existing Profile"', source)
         self.assertIn('"Health Concerns"', source)
         self.assertIn("profile_matches_or_filters", source)
 
