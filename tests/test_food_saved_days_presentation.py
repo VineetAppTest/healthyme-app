@@ -101,7 +101,9 @@ class FoodSavedDaysPresentationTests(unittest.TestCase):
         self.assertIn("initialise_food_saved_days_range", source)
         self.assertIn('st.columns(4, gap="small")', source)
         self.assertIn("saved_day_card_html", source)
-        self.assertIn('"Open saved day"', source)
+        self.assertNotIn('"Open saved day"', source)
+        self.assertNotIn("hm_h9a4c_load_", source)
+        self.assertNotIn("Viewing saved entries for", source)
 
 
 if __name__ == "__main__":
