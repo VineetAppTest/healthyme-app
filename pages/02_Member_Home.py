@@ -45,6 +45,12 @@ def _esc(value):
     return html.escape(str(value or ""))
 
 
+def _member_message_text(value):
+    """Remove only the redundant allocation sentence from Member Home."""
+
+    return str(value or "").replace("Nutritionist has allocated a Task.", "").strip()
+
+
 def _workflow_finalized(wf_state):
     return (
         bool(wf_state.get("admin_completed"))
@@ -115,9 +121,13 @@ def _render_member_home_css():
 header[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"]{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;}
 .hm-member-home-root-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
 div[data-testid="stElementContainer"]:has(.hm-member-home-root-anchor),div.element-container:has(.hm-member-home-root-anchor),div[data-testid="stElementContainer"]:has(style#hm-member-home-local-style-v3),div.element-container:has(style#hm-member-home-local-style-v3){display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
-div[data-testid="stAppViewContainer"] .block-container:has(.hm-member-home-root-anchor){padding-top:.55rem!important;padding-block-start:.55rem!important;margin-top:0!important;}
+div[data-testid="stAppViewContainer"] .block-container:has(.hm-member-home-root-anchor){padding-top:.18rem!important;padding-block-start:.18rem!important;margin-top:0!important;}
 div[data-testid="stVerticalBlock"]:has(.hm-member-home-root-anchor):has(.hm-member-identity-pill):has(.hero-shell){gap:.28rem!important;margin:0!important;padding:0!important;}
 div[data-testid="stVerticalBlock"]:has(.hm-member-home-root-anchor) .hero-shell{margin-top:0!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card){align-items:stretch!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card)>div[data-testid="column"]{display:flex!important;align-self:stretch!important;}
+div[data-testid="stHorizontalBlock"]:has(.hm-member-home-balanced-card)>div[data-testid="column"]>div[data-testid="stVerticalBlock"]{width:100%!important;height:100%!important;}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-member-home-balanced-card){height:100%!important;min-height:100%!important;}
 .hm-member-identity-pill{height:2.46rem;min-height:2.46rem;display:flex;align-items:center;gap:.42rem;flex-wrap:wrap;color:#64748B;font-size:.80rem;font-weight:760;background:rgba(255,255,255,.76);border:1px solid #E9DFCC;border-radius:999px;padding:.24rem .64rem;margin:0!important;}
 .hm-member-role-inline{display:inline-flex;align-items:center;justify-content:center;color:#7A5A16;font-size:.68rem;font-weight:900;background:#FFF7E6;border:1px solid #D9C28F;border-radius:999px;padding:.12rem .42rem;line-height:1.1;white-space:nowrap;}
 .hm-top-profile-anchor,.hm-top-logout-anchor,.hm-task-action-anchor,.hm-home-action-anchor,.hm-member-home-balanced-card{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;line-height:0!important;}
@@ -158,7 +168,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-home-grid-anchor) > div,
 .hm-v104b11-ack-note{font-size:.72rem!important;line-height:1.34!important;padding:.38rem .46rem!important;margin-top:.34rem!important;}
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-message-grid-anchor) button{min-height:2.08rem!important;height:2.08rem!important;padding:.28rem .46rem!important;font-size:.74rem!important;border-radius:9px!important;}
 @media(max-width:900px){.hm-home-section-head{font-size:.94rem;}}
-.hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:.62rem .72rem;margin:.52rem 0 .62rem 0;}
+.hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:.82rem .86rem .88rem;margin:.58rem 0 .72rem 0;min-height:15.75rem;box-sizing:border-box;}
 .hm-v990-progress-head{display:flex;align-items:center;justify-content:space-between;gap:.65rem;flex-wrap:wrap;margin:0 0 .38rem 0;}
 .hm-v990-progress-title{color:#064E3B;font-size:.88rem;font-weight:920;margin:0;}
 .hm-v990-due-date{display:inline-flex;align-items:center;padding:.20rem .46rem;border-radius:999px;background:#FFF7E6;border:1px solid #D9C28F;color:#7A5A16;font-size:.74rem;font-weight:850;white-space:nowrap;}
@@ -272,7 +282,7 @@ def _render_messages(user_id, show_divider=False):
                         <div class='hm-b13-message-card'>
                           <div class='hm-b13-message-subject'>{_esc(msg.get('subject','Message'))}</div>
                           <div class='hm-b13-message-date'>{_esc(format_local_ts(msg.get('ts','')))}</div>
-                          <p class='hm-b13-message-body'>{_esc(msg.get('message',''))}</p>
+                          <p class='hm-b13-message-body'>{_esc(_member_message_text(msg.get('message','')))}</p>
                         </div>
                         """,
                         unsafe_allow_html=True,
@@ -305,16 +315,16 @@ def _render_upcoming_schedules(user_id):
         return False
 
     with st.expander(
-        f"Upcoming Schedule · {len(upcoming_schedules)} upcoming",
+        f"Upcoming Schedule ({len(upcoming_schedules)})",
         expanded=True,
     ):
         st.markdown(
             "<span class='hm-upcoming-schedule-anchor'></span>",
             unsafe_allow_html=True,
         )
-        for row_start in range(0, len(upcoming_schedules), 3):
-            cols = st.columns(3, gap="small")
-            for col, schedule in zip(cols, upcoming_schedules[row_start : row_start + 3]):
+        for row_start in range(0, len(upcoming_schedules), 2):
+            cols = st.columns(2, gap="medium")
+            for col, schedule in zip(cols, upcoming_schedules[row_start : row_start + 2]):
                 with col:
                     with st.container(border=True):
                         time_text = str(schedule.get("start_time", "") or "")

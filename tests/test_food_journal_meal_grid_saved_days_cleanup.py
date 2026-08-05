@@ -48,7 +48,8 @@ class FoodJournalMealGridSavedDaysCleanupTests(unittest.TestCase):
 
         self.assertIn('st.columns(4, gap="small")', page)
         self.assertIn("saved_day_card_html", page)
-        self.assertIn('"Open saved day"', page)
+        self.assertNotIn('"Open saved day"', page)
+        self.assertNotIn("Viewing saved entries for", page)
         self.assertNotIn("_render_filtered_meal_summary", dispatch)
         self.assertNotIn("dt.timedelta(days=6)", dispatch)
 

@@ -596,9 +596,9 @@ def _render_meal_fields(label, key, prior, date_key):
         food_col, portion_col = st.columns([2.2, 1.25], gap="small")
         with food_col:
             st.markdown("<span class='hm-meal-food-grid-anchor'></span>", unsafe_allow_html=True)
-            food = st.text_input(f"Food Item {idx + 1}", value=prior_item.get("food", ""), key=f"{date_key}_{key}_food_{idx}", placeholder="Enter food item")
+            food = st.text_input(f"Food Item {idx + 1}", value=prior_item.get("food", ""), key=f"hm_daily_log_{date_key}_{key}_food_{idx}", placeholder="Enter food item")
         with portion_col:
-            portion = st.text_input(f"Portion {idx + 1}", value=prior_item.get("portion_size", ""), key=f"{date_key}_{key}_portion_{idx}", placeholder="Enter portion")
+            portion = st.text_input(f"Portion {idx + 1}", value=prior_item.get("portion_size", ""), key=f"hm_daily_log_{date_key}_{key}_portion_{idx}", placeholder="Enter portion")
         row = {"food": _clean(food), "portion_size": _clean(portion)}
         if _food_item_has_data(row):
             food_items.append(row)
@@ -616,9 +616,9 @@ def _render_meal_fields(label, key, prior, date_key):
     prior_mood, prior_energy = _legacy_mood_and_energy(prior)
     mood_col, energy_col = st.columns(2, gap="medium")
     with mood_col:
-        mood = st.text_input(f"Mood after {label.lower()}", value=prior_mood, key=f"{date_key}_{key}_mood", placeholder="How did you feel?")
+        mood = st.text_input(f"Mood after {label.lower()}", value=prior_mood, key=f"hm_daily_log_{date_key}_{key}_mood", placeholder="How did you feel?")
     with energy_col:
-        energy = st.text_input(f"Energy after {label.lower()}", value=prior_energy, key=f"{date_key}_{key}_energy", placeholder="How was your energy?")
+        energy = st.text_input(f"Energy after {label.lower()}", value=prior_energy, key=f"hm_daily_log_{date_key}_{key}_energy", placeholder="How was your energy?")
     clean_mood = _clean(mood)
     clean_energy = _clean(energy)
     legacy_food = "; ".join(item.get("food", "") for item in food_items if item.get("food"))
@@ -734,24 +734,12 @@ def _render_saved_days(user_id):
                 zip(cols, filtered_days[row_start : row_start + 4])
             ):
                 date_text = _format_saved_date(day)
-                label_date = _parse_date(date_text)
                 with col:
                     with st.container(border=True):
                         st.markdown(
                             saved_day_card_html(day, date_text),
                             unsafe_allow_html=True,
                         )
-                        if st.button(
-                            "Open saved day",
-                            key=(
-                                f"hm_h9a4c_load_{date_text}_"
-                                f"{row_start}_{column_index}"
-                            ),
-                            use_container_width=True,
-                        ):
-                            if label_date:
-                                st.session_state["hm_food_journal_date"] = label_date
-                                st.rerun()
 
 
 def _render_food_journal(user_id):
@@ -771,21 +759,8 @@ def _render_food_journal(user_id):
     existing_other_fluids = _normalise_other_fluids(
         existing.get("other_fluids", []) or []
     )
-    is_saved_date = bool(existing and _day_has_meaningful_entry(existing))
-
     with st.container(border=True):
         st.markdown("### Meal Section")
-        if is_saved_date:
-            st.markdown(
-                f"<div class='hm-h9a4c-note'>Viewing saved entries for {log_date.strftime('%d %b')}. Open a section only if you want to edit it.</div>",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                "<div class='hm-h9a4c-note'>Open only the meal you want to update.</div>",
-                unsafe_allow_html=True,
-            )
-
         meals_payload = {}
         for label, key in STRUCTURED_MEAL_ORDER:
             meals_payload[key] = _render_meal_toggle(
