@@ -159,14 +159,15 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, helper)
 
-    def test_member_home_uses_compact_three_by_two_schedule_and_message_grids(self):
+    def test_member_home_uses_two_card_schedule_and_three_card_message_grids(self):
         source = (ROOT / "pages/02_Member_Home.py").read_text()
         ast.parse(source)
         self.assertIn("list_upcoming_member_schedules(user_id, limit=6)", source)
         self.assertIn("get_member_messages(user_id, limit=6)", source)
-        self.assertIn("for row_start in range(0, len(upcoming_schedules), 3):", source)
+        self.assertIn("for row_start in range(0, len(upcoming_schedules), 2):", source)
+        self.assertIn('st.columns(2, gap="medium")', source)
         self.assertIn("for row_start in range(0, len(unique_messages), 3):", source)
-        self.assertGreaterEqual(source.count('st.columns(3, gap="small")'), 2)
+        self.assertIn('st.columns(3, gap="small")', source)
         self.assertIn("hm-home-section-divider", source)
         self.assertIn("hm-home-grid-anchor", source)
         self.assertIn("hm-message-grid-anchor", source)
@@ -181,6 +182,7 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
         self.assertIn("with st.expander(", schedule_slice)
         self.assertIn("hm-upcoming-schedule-anchor", schedule_slice)
         self.assertIn("expanded=True", schedule_slice)
+        self.assertIn('f"Upcoming Schedule ({len(upcoming_schedules)})"', schedule_slice)
         for forbidden in (
             "update_member_schedule_status(",
             "session_counted =",
