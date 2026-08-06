@@ -12,6 +12,7 @@ from components.storage_backend import load_state
 
 UTC = dt.timezone.utc
 OPEN_STATUSES = {"scheduled", "acknowledged"}
+_READ_SIGNATURE_KEY = "hm_admin_upcoming_schedule_read_signature"
 
 
 def _text(value: object) -> str:
@@ -111,49 +112,70 @@ def upcoming_admin_schedule_rows(
 
 def render_admin_upcoming_schedule_reminder(practitioner_id: object) -> None:
     rows = upcoming_admin_schedule_rows(practitioner_id)
+    signature = "|".join(
+        "||".join(
+            row.get(field, "")
+            for field in ("Member", "Session", "Practitioner Time", "Status")
+        )
+        for row in rows
+    )
+    if st.session_state.get(_READ_SIGNATURE_KEY) == signature:
+        return
     st.markdown(
         """
 <style id="hm-admin-upcoming-schedule-reminder-v1">
-.hm-admin-upcoming-wrap{border:1px solid #E3C98E;background:#FFFDF8;border-radius:16px;padding:.68rem .74rem;margin:.42rem 0 .34rem}
+.hm-admin-upcoming-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important}
 .hm-admin-upcoming-title{display:flex;align-items:center;justify-content:space-between;gap:.5rem;color:#064E3B;font-size:.90rem;font-weight:950;margin:0 0 .42rem}
 .hm-admin-upcoming-pill{border:1px solid #D9C28F;background:#FFF7E6;color:#72551A;border-radius:999px;padding:.14rem .42rem;font-size:.68rem;font-weight:900;white-space:nowrap}
 .hm-admin-upcoming-table-wrap{overflow-x:auto;border:1px solid #E3C98E;border-radius:12px;background:#fff}
 .hm-admin-upcoming-table{width:100%;min-width:680px;border-collapse:collapse;font-size:.76rem;line-height:1.32}
 .hm-admin-upcoming-table th{background:#FFF4DE;color:#064E3B;font-weight:950;text-align:left;padding:.42rem .48rem;border:1px solid #E3C98E;white-space:nowrap}
 .hm-admin-upcoming-table td{color:#334155;font-weight:720;padding:.44rem .48rem;border:1px solid #F0E3C5;vertical-align:top}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor){margin:.08rem 0 .70rem!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) details{border:1px solid #E3C98E!important;border-radius:999px!important;background:#FFFDF8!important;overflow:hidden!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) details[open]{border-radius:16px!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary{min-height:2.52rem!important;padding:.46rem .72rem!important;display:flex!important;align-items:center!important;color:#064E3B!important;font-weight:950!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary p{font-size:.88rem!important;font-weight:950!important;margin:0!important;color:#064E3B!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) [data-testid="stExpanderDetails"]{padding:.18rem .72rem .72rem!important;border-top:1px solid #F0DFC0!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) div[data-testid="stButton"]>button{min-height:2.2rem!important;border-radius:12px!important}
 </style>
         """,
         unsafe_allow_html=True,
     )
-    st.markdown(
-        "<div class='hm-admin-upcoming-wrap'>"
-        "<div class='hm-admin-upcoming-title'>"
-        f"<span>Upcoming Schedule for Admin</span><span class='hm-admin-upcoming-pill'>Next 48 hrs · {len(rows)}</span>"
-        "</div>",
-        unsafe_allow_html=True,
-    )
-    if rows:
-        body = "".join(
-            "<tr>"
-            f"<td>{_safe(row['Member'])}</td>"
-            f"<td>{_safe(row['Session'])}</td>"
-            f"<td>{_safe(row['Practitioner Time'])}</td>"
-            f"<td>{_safe(row['Status'])}</td>"
-            "</tr>"
-            for row in rows
-        )
-        st.markdown(
-            "<div class='hm-admin-upcoming-table-wrap'><table class='hm-admin-upcoming-table'>"
-            "<thead><tr><th>Member</th><th>Session</th><th>Practitioner Time</th><th>Status</th></tr></thead>"
-            f"<tbody>{body}</tbody></table></div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.caption("No Admin schedule is due in the next 48 hours.")
-    if st.button(
-        "Open Scheduling",
-        key="hm_admin_dashboard_open_scheduling_from_upcoming",
-        use_container_width=True,
+    with st.expander(
+        f"Upcoming Schedule for Admin · Next 48 hrs · {len(rows)}",
+        expanded=True,
     ):
-        st.switch_page("pages/32_Admin_Scheduling.py")
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<span class='hm-admin-upcoming-anchor'></span>", unsafe_allow_html=True)
+        if rows:
+            body = "".join(
+                "<tr>"
+                f"<td>{_safe(row['Member'])}</td>"
+                f"<td>{_safe(row['Session'])}</td>"
+                f"<td>{_safe(row['Practitioner Time'])}</td>"
+                f"<td>{_safe(row['Status'])}</td>"
+                "</tr>"
+                for row in rows
+            )
+            st.markdown(
+                "<div class='hm-admin-upcoming-table-wrap'><table class='hm-admin-upcoming-table'>"
+                "<thead><tr><th>Member</th><th>Session</th><th>Practitioner Time</th><th>Status</th></tr></thead>"
+                f"<tbody>{body}</tbody></table></div>",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.caption("No Admin schedule is due in the next 48 hours.")
+        read_col, schedule_col = st.columns(2, gap="small")
+        if read_col.button(
+            "Read",
+            key="hm_admin_dashboard_read_upcoming_schedule",
+            use_container_width=True,
+        ):
+            st.session_state[_READ_SIGNATURE_KEY] = signature
+            st.rerun()
+        if schedule_col.button(
+            "Open Scheduling",
+            key="hm_admin_dashboard_open_scheduling_from_upcoming",
+            use_container_width=True,
+        ):
+            st.switch_page("pages/32_Admin_Scheduling.py")

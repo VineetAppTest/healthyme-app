@@ -63,6 +63,12 @@ apply_luxe_theme()
 require_admin()
 utility_logout_bar()
 
+render_admin_upcoming_schedule_reminder(
+    st.session_state.get("user_id")
+    or st.session_state.get("oidc_email")
+    or "admin"
+)
+
 topbar(
     "Admin Dashboard",
     "Access review workflows, content allocation, reports, communication and scheduling.",
@@ -315,11 +321,6 @@ with st.container(border=True):
             "pages/32_Admin_Scheduling.py",
             "dash_scheduling_v102_4b23",
         )
-    render_admin_upcoming_schedule_reminder(
-        st.session_state.get("user_id")
-        or st.session_state.get("oidc_email")
-        or "admin"
-    )
     st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 

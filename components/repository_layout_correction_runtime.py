@@ -111,7 +111,7 @@ div[data-testid="stExpander"] summary p{
 /* Use the same moderately compact, clearly grouped treatment for Add and Edit. */
 div[data-baseweb="tab-panel"] div[data-testid="stVerticalBlock"],
 div[data-testid="stExpander"] details[open] div[data-testid="stVerticalBlock"]{
-  gap:.30rem!important;
+  gap:.46rem!important;
 }
 div[data-baseweb="tab-panel"] h3,
 div[data-testid="stExpander"] h3{
@@ -127,14 +127,16 @@ div[data-testid="stExpander"] h4{
   border-radius:6px!important;
   font-size:.80rem!important;
   line-height:1.2!important;
-  margin:.32rem 0 .10rem!important;
+  margin:.44rem 0 .20rem!important;
   padding:.20rem .38rem!important;
 }
 div[data-baseweb="tab-panel"] label p,
 div[data-testid="stExpander"] label p{
+  display:block!important;
   font-size:.72rem!important;
-  line-height:1.15!important;
-  margin-bottom:.08rem!important;
+  line-height:1.22!important;
+  margin:.06rem 0 .18rem!important;
+  padding-left:.02rem!important;
 }
 div[data-baseweb="tab-panel"] input,
 div[data-testid="stExpander"] input,
@@ -248,12 +250,15 @@ div[data-testid="stExpander"] summary:before{
   border-radius:6px!important;background:#DDF7F3!important;color:#006D6F!important;
   font-size:.82rem!important;font-weight:950!important;line-height:1!important;
   margin:0!important;flex:0 0 1.34rem!important;}
+div[data-testid="stExpander"] summary:after{
+  content:""!important;display:block!important;width:1.34rem!important;
+  flex:0 0 1.34rem!important;}
 div[data-testid="stExpander"] details[open] summary:before{content:"−"!important;}
 div[data-testid="stExpander"] summary p{
   display:block!important;width:100%!important;max-width:none!important;
   margin:0!important;color:#064E3B!important;font-size:.82rem!important;
   font-weight:900!important;line-height:1.2!important;white-space:normal!important;
-  overflow:visible!important;text-overflow:clip!important;text-align:left!important;}
+  overflow:visible!important;text-overflow:clip!important;text-align:center!important;}
 </style>
 """
 
