@@ -77,6 +77,7 @@ class MemberPlanExperienceRedesignTests(unittest.TestCase):
         self.assertIn("Night", grouped)
         self.assertIn("Anytime", grouped)
         self.assertEqual(grouped["Anytime"][0]["timing"], "Anytime / as advised")
+        self.assertEqual(grouped["Morning"][0]["title"], "Moong Chilla - 2")
 
     def test_none_timing_is_not_rendered_when_real_timings_exist(self):
         grouped = build_day_timeline(

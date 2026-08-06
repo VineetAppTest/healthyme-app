@@ -10,12 +10,15 @@ from components.member_plan_builder_view_compact import (
     _build_workbook,
     _plan_sections,
 )
+from components.member_plan_builder_allocation_common import allocation_choice_map
 from components.member_plan_presentation import (
     allocation_day_groups,
     meal_day_groups,
     profile_matches_or_filters,
     split_timings,
 )
+from components.pbm_core import MEAL_SLOTS
+from components.recommendation_profile_viewer import _meal_cells
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,11 +28,45 @@ def test_meals_are_clubbed_by_timing_in_chronological_order() -> None:
     items = [
         {"item_type": "meal", "day_number": 1, "slot_name": "Lunch", "item_order": 2, "reference_label": "Dal"},
         {"item_type": "meal", "day_number": 1, "slot_name": "Breakfast", "item_order": 1, "reference_label": "Moong Chilla"},
-        {"item_type": "meal", "day_number": 1, "slot_name": "Lunch", "item_order": 1, "reference_label": "Paneer Salad"},
+        {"item_type": "meal", "day_number": 1, "slot_name": "Lunch", "item_order": 1, "reference_label": "Paneer Salad", "portion": "1 bowl"},
     ]
     groups = meal_day_groups(items, 1)
     assert [group["Timing"] for group in groups] == ["Breakfast", "Lunch"]
-    assert groups[1]["Meal"] == "Paneer Salad & Dal"
+    assert groups[1]["Meal"] == "Paneer Salad - 1 bowl + Dal"
+
+
+def test_meal_slots_remove_wake_up_early_morning_and_use_food_portion_cells() -> None:
+    assert "Wake-up / Early Morning" not in MEAL_SLOTS
+    assert "Early Morning" not in MEAL_SLOTS
+    items = [
+        {"item_type": "meal", "day_number": 1, "slot_name": "Breakfast", "item_order": 1, "reference_label": "Oats", "portion": "1 bowl"},
+        {"item_type": "meal", "day_number": 1, "slot_name": "Breakfast", "item_order": 2, "reference_label": "Apple", "portion": "1"},
+    ]
+    timing, meal, liquid, remarks = _meal_cells(items, 1)
+    assert timing == "Breakfast"
+    assert meal == "Oats - 1 bowl + Apple - 1"
+    assert liquid == ""
+    assert remarks == ""
+
+
+def test_exercise_edit_choice_uses_reps_duration_start_end_cell_format() -> None:
+    choices = allocation_choice_map(
+        [
+            {
+                "exercise_name": "Cat-Cow Stretch",
+                "start_date": "2026-08-06",
+                "end_date": "2026-08-13",
+                "status": "active",
+                "source_snapshot": {"duration_or_reps": "10 reps"},
+            }
+        ],
+        name_fields=("exercise_name", "title"),
+        detail_fields=("duration_or_reps",),
+        include_status=False,
+        separator=" | ",
+        date_format="%d %b %Y",
+    )
+    assert list(choices) == ["Cat-Cow Stretch | 10 reps | 06 Aug 2026 | 13 Aug 2026"]
 
 
 def test_exercise_and_supplements_are_clubbed_and_sorted_by_timing() -> None:

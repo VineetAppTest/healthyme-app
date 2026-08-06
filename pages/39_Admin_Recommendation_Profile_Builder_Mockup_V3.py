@@ -118,7 +118,7 @@ with profile:
 with meal:
     st.markdown("<div class='hm-card'>", unsafe_allow_html=True)
     day = day_picker("v3_meal_day")
-    for slot in ["Wake-up / Early Morning", "Breakfast", "Mid-morning Snack", "Lunch", "Evening Snack / Tea", "Dinner", "Bedtime"]:
+    for slot in ["Breakfast", "Mid-morning Snack", "Lunch", "Evening Snack / Tea", "Dinner", "Bedtime"]:
         st.markdown(f"<div class='hm-slot'>{slot}</div>", unsafe_allow_html=True)
         item_rows("meal", day, slot, RECIPES, [.44,.2,.36])
     x,y = st.columns(2)

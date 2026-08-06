@@ -269,10 +269,12 @@ def _meal_items(
         timing = _clean(row.get("slot_name") or row.get("scheduled_time")) or (
             "Anytime / as advised"
         )
+        food = _clean(row.get("reference_label")) or "Meal"
+        portion = _clean(row.get("portion"))
+        title = f"{food} - {portion}" if portion else food
         meta = " · ".join(
             value
             for value in (
-                _clean(row.get("portion")) or "Portion as advised",
                 (
                     f"Prep {_clean(snapshot.get('prep_time'))}"
                     if _clean(snapshot.get("prep_time"))
@@ -284,7 +286,7 @@ def _meal_items(
         output.append(
             {
                 "domain": "meal",
-                "title": _clean(row.get("reference_label")) or "Meal",
+                "title": title,
                 "timing": timing,
                 "period": _period_for_timing(timing),
                 "meta": meta,

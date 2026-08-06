@@ -245,11 +245,20 @@ def _unique_lines(values: List[str]) -> str:
     return "<br>".join(_safe(value) for value in output)
 
 
+def _unique_join(values: List[str], separator: str = " + ") -> str:
+    output: List[str] = []
+    for value in values:
+        cleaned = _clean(value)
+        if cleaned and cleaned not in output:
+            output.append(cleaned)
+    return separator.join(_safe(value) for value in output)
+
+
 def _item_and_quantity(row: dict) -> str:
     item = _clean(row.get("reference_label"))
     quantity = _clean(row.get("portion"))
     if item and quantity:
-        return f"{item} | {quantity}"
+        return f"{item} - {quantity}"
     return item or quantity
 
 
@@ -264,10 +273,10 @@ def _supplement_dosage(row: dict) -> str:
 def _meal_cells(items: List[dict], day: int) -> Tuple[str, str, str, str]:
     rows = _ordered_items(items, "meal", day)
     timing = _unique_lines([_clean(row.get("slot_name")) for row in rows])
-    meal = _unique_lines(
+    meal = _unique_join(
         [_item_and_quantity(row) for row in rows if not _is_liquid_meal(row)]
     )
-    liquid = _unique_lines(
+    liquid = _unique_join(
         [_item_and_quantity(row) for row in rows if _is_liquid_meal(row)]
     )
     remarks = _unique_lines([_clean(row.get("instruction")) for row in rows])

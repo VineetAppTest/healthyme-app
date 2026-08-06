@@ -7,7 +7,6 @@ from typing import Any, Dict, Iterable, List, Sequence
 
 
 MEAL_TIMINGS = (
-    "Wake-up / Early Morning",
     "Breakfast",
     "Mid-morning Snack",
     "Lunch",
@@ -120,7 +119,7 @@ def _join(values: Iterable[object], separator: str = "\n") -> str:
 def _meal_label(row: Dict[str, Any]) -> str:
     item = _clean(row.get("reference_label"))
     portion = _clean(row.get("portion"))
-    return f"{item} | {portion}" if item and portion else item or portion
+    return f"{item} - {portion}" if item and portion else item or portion
 
 
 def _is_liquid(row: Dict[str, Any]) -> bool:
@@ -149,11 +148,11 @@ def meal_day_groups(items: Sequence[Dict[str, Any]], day_number: int) -> List[Di
                 "Timing": timing,
                 "Meal": _join(
                     (_meal_label(row) for row in rows if not _is_liquid(row)),
-                    " & ",
+                    " + ",
                 ),
                 "Liquid": _join(
                     (_meal_label(row) for row in rows if _is_liquid(row)),
-                    " & ",
+                    " + ",
                 ),
                 "Remarks": _join(row.get("instruction") for row in rows),
             }
