@@ -44,8 +44,15 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertIn('"Read"', source)
         self.assertIn("Open Scheduling", source)
         dashboard_call = "render_admin_upcoming_schedule_reminder(\n    st.session_state"
-        self.assertLess(dashboard.index(dashboard_call), dashboard.index("topbar("))
+        hero = dashboard.index('topbar(\n    "Admin Dashboard"')
+        workflows = dashboard.index("<div class='hm-admin-title'>Main Workflows</div>")
+        self.assertGreater(dashboard.index(dashboard_call), hero)
+        self.assertLess(dashboard.index(dashboard_call), workflows)
         self.assertNotIn("render_admin_upcoming_schedule_reminder(\n        st.session_state", dashboard)
+        self.assertIn("hm-admin-upcoming-schedule-reminder-v2", source)
+        self.assertIn('summary::before{content:"+"', source)
+        self.assertIn('details[open] summary::before{content:"−"', source)
+        self.assertIn("font-size:.76rem", source)
         self.assertIn("load_state()", source)
         self.assertNotIn("save_state", source)
         self.assertNotIn("update_member_schedule_status", source)
@@ -125,6 +132,15 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertIn("note_cols = st.columns(2", source)
         self.assertIn("schedule_cols = st.columns([0.42, 0.29, 0.29]", source)
         self.assertIn('"Reps/Duration"', source)
+        self.assertIn("reps_duration = schedule_cols[0].text_input", source)
+        self.assertIn("edit_reps_duration = schedule_cols[0].text_input", source)
+        add_reps_block = source[
+            source.index("reps_duration = schedule_cols[0].text_input") :
+            source.index("start = schedule_cols[1].date_input")
+        ]
+        self.assertNotIn("disabled=True", add_reps_block)
+        self.assertIn("duration_or_reps=reps_duration", source)
+        self.assertIn("duration_or_reps=edit_reps_duration", source)
         self.assertGreaterEqual(source.count('height=60'), 4)
         self.assertNotIn('note_cols[1].text_input(', source)
         self.assertIn("Reps/Duration:", source)

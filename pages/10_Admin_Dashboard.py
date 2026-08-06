@@ -63,12 +63,6 @@ apply_luxe_theme()
 require_admin()
 utility_logout_bar()
 
-render_admin_upcoming_schedule_reminder(
-    st.session_state.get("user_id")
-    or st.session_state.get("oidc_email")
-    or "admin"
-)
-
 topbar(
     "Admin Dashboard",
     "Access review workflows, content allocation, reports, communication and scheduling.",
@@ -181,6 +175,12 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover{
 </style>
 """,
     unsafe_allow_html=True,
+)
+
+render_admin_upcoming_schedule_reminder(
+    st.session_state.get("user_id")
+    or st.session_state.get("oidc_email")
+    or "admin"
 )
 
 st.markdown(

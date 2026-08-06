@@ -123,19 +123,24 @@ def render_admin_upcoming_schedule_reminder(practitioner_id: object) -> None:
         return
     st.markdown(
         """
-<style id="hm-admin-upcoming-schedule-reminder-v1">
+<style id="hm-admin-upcoming-schedule-reminder-v2">
 .hm-admin-upcoming-anchor{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important}
-.hm-admin-upcoming-title{display:flex;align-items:center;justify-content:space-between;gap:.5rem;color:#064E3B;font-size:.90rem;font-weight:950;margin:0 0 .42rem}
 .hm-admin-upcoming-pill{border:1px solid #D9C28F;background:#FFF7E6;color:#72551A;border-radius:999px;padding:.14rem .42rem;font-size:.68rem;font-weight:900;white-space:nowrap}
 .hm-admin-upcoming-table-wrap{overflow-x:auto;border:1px solid #E3C98E;border-radius:12px;background:#fff}
 .hm-admin-upcoming-table{width:100%;min-width:680px;border-collapse:collapse;font-size:.76rem;line-height:1.32}
 .hm-admin-upcoming-table th{background:#FFF4DE;color:#064E3B;font-weight:950;text-align:left;padding:.42rem .48rem;border:1px solid #E3C98E;white-space:nowrap}
 .hm-admin-upcoming-table td{color:#334155;font-weight:720;padding:.44rem .48rem;border:1px solid #F0E3C5;vertical-align:top}
-div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor){margin:.08rem 0 .70rem!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor){display:block!important;width:fit-content!important;max-width:100%!important;margin:.04rem 0 .62rem!important}
 div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) details{border:1px solid #E3C98E!important;border-radius:999px!important;background:#FFFDF8!important;overflow:hidden!important}
 div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) details[open]{border-radius:16px!important}
-div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary{min-height:2.52rem!important;padding:.46rem .72rem!important;display:flex!important;align-items:center!important;color:#064E3B!important;font-weight:950!important}
-div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary p{font-size:.88rem!important;font-weight:950!important;margin:0!important;color:#064E3B!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary{min-height:2.05rem!important;padding:.28rem .62rem!important;display:flex!important;align-items:center!important;gap:.42rem!important;color:#064E3B!important;font-weight:950!important;white-space:nowrap!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary p{font-size:.76rem!important;font-weight:900!important;margin:0!important;color:#064E3B!important;white-space:nowrap!important;line-height:1.12!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary svg,
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary [data-testid="stExpanderToggleIcon"],
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary [data-testid="stIconMaterial"],
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary [class*="material-symbol"]{display:none!important;width:0!important;height:0!important;min-width:0!important;margin:0!important;padding:0!important}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) summary::before{content:"+";display:inline-flex;align-items:center;justify-content:center;width:.86rem;height:.86rem;min-width:.86rem;border-radius:999px;background:#DDF7F3;color:#006D6F;font-size:.86rem;font-weight:950;line-height:1}
+div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) details[open] summary::before{content:"−"}
 div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) [data-testid="stExpanderDetails"]{padding:.18rem .72rem .72rem!important;border-top:1px solid #F0DFC0!important}
 div[data-testid="stExpander"]:has(.hm-admin-upcoming-anchor) div[data-testid="stButton"]>button{min-height:2.2rem!important;border-radius:12px!important}
 </style>

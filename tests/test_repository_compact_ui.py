@@ -39,7 +39,12 @@ class RepositoryCompactUiTests(unittest.TestCase):
             self.assertIn(f'with st.expander(f"Edit {name} ·', source)
             self.assertIn('summary:before{content:"+"', source)
             self.assertIn('details[open] summary:before{content:"−"', source)
-            self.assertIn('summary p{white-space:nowrap!important', source)
+            if name in {"Recipe", "Exercise"}:
+                self.assertIn("justify-content:center!important", source)
+                self.assertIn("position:absolute!important;left:.68rem", source)
+                self.assertIn("text-align:center!important", source)
+            else:
+                self.assertIn('summary p{white-space:nowrap!important', source)
 
     def test_edit_panels_are_compact_and_structured(self):
         recipe = text(PAGES["Recipe"])
@@ -56,6 +61,10 @@ class RepositoryCompactUiTests(unittest.TestCase):
         self.assertIn('st.markdown("#### Preparation")', recipe)
         self.assertIn('detail_left, detail_right = st.columns(2, gap="small")', exercise)
         self.assertIn('basic_name, basic_dose, basic_frequency = st.columns(3, gap="small")', supplement)
+        for source in (recipe, exercise):
+            self.assertIn('[data-testid="stWidgetLabel"]', source)
+            self.assertIn("margin:.16rem 0 .28rem!important", source)
+            self.assertIn("margin-top:.10rem!important", source)
 
     def test_inactive_repository_uses_same_disclosure_pattern(self):
         for path in PAGES.values():
@@ -63,6 +72,9 @@ class RepositoryCompactUiTests(unittest.TestCase):
             self.assertIn('with st.expander(f"Inactive Repository Items (', source)
             self.assertIn('summary:before{content:"+"', source)
             self.assertIn('details[open] summary:before{content:"−"', source)
+        for path in (PAGES["Recipe"], PAGES["Exercise"]):
+            source = text(path)
+            self.assertIn("text-align:center!important", source)
 
     def test_safe_delete_and_form_hygiene_remain(self):
         recipe = text(PAGES["Recipe"])

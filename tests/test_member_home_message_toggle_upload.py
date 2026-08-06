@@ -29,7 +29,8 @@ def test_schedule_and_messages_share_compact_pill_contract():
     assert ':has(.hm-upcoming-schedule-anchor)' in source
     assert ':has(.hm-message-pill-anchor)' in source
     assert 'min-height:2.12rem!important' in source
-    assert 'width:fit-content!important' in source
+    assert 'width:max-content!important' in source
+    assert 'min-width:15.5rem!important' in source
     assert 'summary + div' in source
     assert 'border:0!important' in source
 

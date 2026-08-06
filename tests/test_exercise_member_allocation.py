@@ -80,6 +80,7 @@ class ExerciseMemberAllocationTests(unittest.TestCase):
             source_id="12",
             start_date="2026-08-04",
             end_date="2026-08-10",
+            duration_or_reps="4 x 12",
             instructions="Do this after breakfast.",
             notes="Low-impact plan.",
             actor_id="admin-1",
@@ -89,7 +90,9 @@ class ExerciseMemberAllocationTests(unittest.TestCase):
         self.assertEqual(saved["source_id"], "12")
         self.assertEqual(saved["exercise_id"], "12")
         self.assertEqual(saved["exercise_name"], "Chair Squat")
+        self.assertEqual(saved["duration_or_reps"], "4 x 12")
         self.assertEqual(saved["source_snapshot"]["title"], "Chair Squat")
+        self.assertEqual(saved["source_snapshot"]["duration_or_reps"], "3 x 10")
         self.assertEqual(
             len(self.db["member_exercise_allocations"]["member-1"]), 1
         )
@@ -123,6 +126,7 @@ class ExerciseMemberAllocationTests(unittest.TestCase):
             allocation_id="legacy-allocation-7",
             start_date="2026-08-05",
             end_date="2026-08-12",
+            duration_or_reps="Updated reps",
             instructions="Updated",
             status="active",
         )
@@ -135,6 +139,7 @@ class ExerciseMemberAllocationTests(unittest.TestCase):
             self.db["member_exercise_allocations"]["member-1"][0]["id"],
             "legacy-allocation-7",
         )
+        self.assertEqual(saved["duration_or_reps"], "Updated reps")
 
     def test_existing_source_identity_cannot_be_changed(self):
         self.db["member_exercise_allocations"]["member-1"] = [
@@ -259,6 +264,10 @@ class ExerciseMemberAllocationTests(unittest.TestCase):
         self.assertNotIn("save_unified_recommendation_share", page)
         self.assertIn("_clear_add_form(member_id)", page)
         self.assertIn("st.session_state.pop", page)
+        self.assertIn('duration_or_reps = detail_cols[0].text_input(', page)
+        self.assertIn('edit_duration_or_reps = edit_cols[0].text_input(', page)
+        self.assertIn("duration_or_reps=duration_or_reps", page)
+        self.assertIn("duration_or_reps=edit_duration_or_reps", page)
 
 
 if __name__ == "__main__":

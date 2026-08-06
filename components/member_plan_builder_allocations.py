@@ -49,6 +49,11 @@ def _exercise_label(row: Dict) -> str:
     return f"{row.get('title') or 'Exercise'}{' · ' + detail if detail else ''}"
 
 
+def _duration_or_reps(row: Dict) -> str:
+    snapshot = row.get("source_snapshot") if isinstance(row.get("source_snapshot"), dict) else {}
+    return clean(row.get("duration_or_reps") or snapshot.get("duration_or_reps"))
+
+
 def _supplement_id(row: Dict) -> str:
     return clean(row.get("source_id") or row.get("id"))
 
@@ -83,9 +88,14 @@ def _render_exercise(member_id: str) -> None:
             ):
                 if clean(source.get(field)):
                     st.markdown(f"**{name}:** {clean(source.get(field))}")
-        dates = st.columns(2, gap="small")
-        start = dates[0].date_input("Start Date", dt.date.today(), key=f"mpb_ex_start_{member_id}")
-        end = dates[1].date_input(
+        detail_cols = st.columns([0.42, 0.29, 0.29], gap="small")
+        duration_or_reps = detail_cols[0].text_input(
+            "Reps/Duration",
+            value=_duration_or_reps(source) or "As advised",
+            key=f"mpb_ex_duration_{member_id}",
+        )
+        start = detail_cols[1].date_input("Start Date", dt.date.today(), key=f"mpb_ex_start_{member_id}")
+        end = detail_cols[2].date_input(
             "End Date", dt.date.today() + dt.timedelta(days=6), key=f"mpb_ex_end_{member_id}"
         )
         instructions = st.text_area(
@@ -107,6 +117,7 @@ def _render_exercise(member_id: str) -> None:
                     source_id=clean(source.get("source_id") or source.get("id")),
                     start_date=start,
                     end_date=end,
+                    duration_or_reps=duration_or_reps,
                     instructions=instructions,
                     notes=notes,
                     status="active",
@@ -129,6 +140,7 @@ def _render_exercise(member_id: str) -> None:
             [
                 {
                     "Exercise": row.get("exercise_name"),
+                    "Reps/Duration": _duration_or_reps(row) or "As advised",
                     "Start": row.get("start_date"),
                     "End": row.get("end_date"),
                     "Status": row.get("status"),
@@ -154,14 +166,20 @@ def _render_exercise(member_id: str) -> None:
     allocation_id = clean(selected.get("id"))
     stopped = clean(selected.get("status")).lower() != "active"
     with st.expander("Edit selected Exercise allocation", expanded=False):
-        dates = st.columns(2, gap="small")
-        edit_start = dates[0].date_input(
+        detail_cols = st.columns([0.42, 0.29, 0.29], gap="small")
+        edit_duration_or_reps = detail_cols[0].text_input(
+            "Reps/Duration",
+            value=_duration_or_reps(selected) or "As advised",
+            disabled=stopped,
+            key=f"mpb_ex_edit_duration_{allocation_id}",
+        )
+        edit_start = detail_cols[1].date_input(
             "Start Date",
             _to_date(selected.get("start_date"), dt.date.today()),
             disabled=stopped,
             key=f"mpb_ex_edit_start_{allocation_id}",
         )
-        edit_end = dates[1].date_input(
+        edit_end = detail_cols[2].date_input(
             "End Date",
             _to_date(selected.get("end_date"), dt.date.today()),
             disabled=stopped,
@@ -194,6 +212,7 @@ def _render_exercise(member_id: str) -> None:
                     source_id=clean(selected.get("source_id")),
                     start_date=edit_start,
                     end_date=edit_end,
+                    duration_or_reps=edit_duration_or_reps,
                     instructions=edit_instruction,
                     notes=edit_notes,
                     status="active",

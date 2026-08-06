@@ -103,6 +103,11 @@ def _normalise_existing_row(
         "exercise_id": source_id,
         "exercise_name": title,
         "title": title,
+        "duration_or_reps": (
+            _clean(source.get("duration_or_reps"))
+            or _clean(stored_snapshot.get("duration_or_reps"))
+            or _clean(repo_row.get("duration_or_reps"))
+        ),
         "start_date": _clean(source.get("start_date")),
         "end_date": _clean(source.get("end_date")),
         "instructions": _clean(source.get("instructions")),
@@ -154,6 +159,7 @@ def save_exercise_member_allocation(
     source_id: str,
     start_date: Any = "",
     end_date: Any = "",
+    duration_or_reps: Any = None,
     instructions: Any = "",
     notes: Any = "",
     status: Any = ACTIVE_STATUS,
@@ -216,6 +222,16 @@ def save_exercise_member_allocation(
         or _clean(source.get("title"))
         or "Exercise"
     )
+    snapshot = existing.get("source_snapshot") or _snapshot(source)
+    display_duration = (
+        _clean(duration_or_reps)
+        if duration_or_reps is not None
+        else (
+            _clean(existing.get("duration_or_reps"))
+            or _clean(snapshot.get("duration_or_reps"))
+            or _clean(source.get("duration_or_reps"))
+        )
+    )
     now = _now_iso()
     saved = {
         **existing,
@@ -226,12 +242,13 @@ def save_exercise_member_allocation(
         "exercise_id": source_ref["source_id"],
         "exercise_name": display_title,
         "title": display_title,
+        "duration_or_reps": display_duration,
         "start_date": start,
         "end_date": end,
         "instructions": _clean(instructions),
         "notes": _clean(notes),
         "status": _normalise_status(status),
-        "source_snapshot": existing.get("source_snapshot") or _snapshot(source),
+        "source_snapshot": snapshot,
         "source": "exercise_member_allocation",
         "updated_at": now,
         "updated_by": _clean(actor_id) or "admin",
@@ -286,6 +303,7 @@ def stop_exercise_member_allocation(
         source_id=_clean(allocation.get("source_id")),
         start_date=allocation.get("start_date", ""),
         end_date=end_date,
+        duration_or_reps=allocation.get("duration_or_reps"),
         instructions=allocation.get("instructions", ""),
         notes=_clean(stop_reason) or allocation.get("notes", ""),
         status="stopped",
