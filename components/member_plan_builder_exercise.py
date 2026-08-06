@@ -18,7 +18,7 @@ from components.member_plan_builder_allocation_common import (
     source_summary,
 )
 from components.member_allocation_notifications import delivery_summary
-from components.pbm_core import clean, safe
+from components.pbm_core import as_dict, clean, safe
 
 
 def _actor_id() -> str:
@@ -42,6 +42,11 @@ def _clear_prefix(prefix: str) -> None:
 def _exercise_label(row: Dict) -> str:
     detail = clean(row.get("duration_or_reps") or row.get("category"))
     return f"{clean(row.get('title')) or 'Exercise'}{' · ' + detail if detail else ''}"
+
+
+def _duration_or_reps(row: Dict) -> str:
+    snapshot = as_dict(row.get("source_snapshot"))
+    return clean(row.get("duration_or_reps") or snapshot.get("duration_or_reps"))
 
 
 def _render_source_details(source: Dict) -> None:
@@ -155,6 +160,7 @@ def _render_edit_exercise(member_id: str, member_label: str) -> None:
             [
                 {
                     "Exercise": row.get("exercise_name"),
+                    "Reps/Duration": _duration_or_reps(row) or "As advised",
                     "Start": row.get("start_date"),
                     "End": row.get("end_date") or "Open",
                     "Status": clean(row.get("status")).title(),
@@ -169,6 +175,10 @@ def _render_edit_exercise(member_id: str, member_label: str) -> None:
     choices = allocation_choice_map(
         rows,
         name_fields=("exercise_name", "title"),
+        detail_fields=("duration_or_reps",),
+        include_status=False,
+        separator=" | ",
+        date_format="%d %b %Y",
     )
     selected_label = st.selectbox(
         "Select Exercise Allocation to Edit",
@@ -183,9 +193,9 @@ def _render_edit_exercise(member_id: str, member_label: str) -> None:
         source_summary(
             clean(selected.get("exercise_name")) or "Exercise",
             (
+                _duration_or_reps(selected),
                 clean(selected.get("start_date")),
                 clean(selected.get("end_date")) or "Open",
-                clean(selected.get("status")).title(),
             ),
         )
         date_cols = st.columns(2, gap="small")

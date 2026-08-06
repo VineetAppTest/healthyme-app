@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Dict, Iterable, List, Tuple
+import datetime as dt
+from typing import Any, Dict, Iterable, List, Tuple
 
 import streamlit as st
 
 from components.db import list_members
-from components.pbm_core import clean
+from components.pbm_core import as_dict, clean
 from components.profile_publish_control import load_active_profiles
 
 
@@ -64,14 +65,29 @@ def allocation_choice_map(
     rows: Iterable[Dict],
     *,
     name_fields: Tuple[str, ...],
+    detail_fields: Tuple[str, ...] = (),
+    include_status: bool = True,
+    separator: str = " · ",
+    date_format: str = "",
 ) -> Dict[str, Dict]:
     prepared = []
     for row in rows or []:
         name = next((clean(row.get(field)) for field in name_fields if clean(row.get(field))), "Item")
-        start = clean(row.get("start_date")) or "No start"
-        end = clean(row.get("end_date")) or "Open"
+        start = _format_date(row.get("start_date"), date_format) or "No start"
+        end = _format_date(row.get("end_date"), date_format) or "Open"
         status = clean(row.get("status")).title() or "Unknown"
-        base = f"{name} · {start} → {end} · {status}"
+        if not detail_fields and include_status and separator == " · ":
+            base = f"{name} · {start} → {end} · {status}"
+        else:
+            details = [
+                value
+                for value in (_row_value(row, field) for field in detail_fields)
+                if value
+            ]
+            parts = [name, *details, start, end]
+            if include_status:
+                parts.append(status)
+            base = separator.join(parts)
         prepared.append((base, row))
 
     counts = Counter(base for base, _row in prepared)
@@ -83,6 +99,26 @@ def allocation_choice_map(
             label = f"{base} · {suffix}"
         output[label] = row
     return output
+
+
+def _row_value(row: Dict[str, Any], field: str) -> str:
+    direct = clean(row.get(field))
+    if direct:
+        return direct
+    snapshot = as_dict(row.get("source_snapshot"))
+    return clean(snapshot.get(field))
+
+
+def _format_date(value: object, date_format: str) -> str:
+    text = clean(value)
+    if not text:
+        return ""
+    if not date_format:
+        return text
+    try:
+        return dt.date.fromisoformat(text[:10]).strftime(date_format)
+    except Exception:
+        return text
 
 
 def source_summary(title: str, details: Iterable[str]) -> None:
