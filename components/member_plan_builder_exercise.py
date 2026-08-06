@@ -97,13 +97,19 @@ def _render_add_exercise(member_id: str, member_label: str) -> None:
         source = source_options[selected_label]
         _render_source_details(source)
 
-        date_cols = st.columns(2, gap="small")
-        start = date_cols[0].date_input(
+        schedule_cols = st.columns([0.42, 0.29, 0.29], gap="small")
+        schedule_cols[0].text_input(
+            "Reps/Duration",
+            value=_duration_or_reps(source) or "As advised",
+            disabled=True,
+            key=f"mpb_ex_add_reps_duration_{member_id}",
+        )
+        start = schedule_cols[1].date_input(
             "Start Date",
             dt.date.today(),
             key=f"mpb_ex_add_start_{member_id}",
         )
-        end = date_cols[1].date_input(
+        end = schedule_cols[2].date_input(
             "End Date",
             dt.date.today() + dt.timedelta(days=6),
             key=f"mpb_ex_add_end_{member_id}",
@@ -204,14 +210,20 @@ def _render_edit_exercise(member_id: str, member_label: str) -> None:
             clean(selected.get("exercise_name")) or "Exercise",
             summary_details,
         )
-        date_cols = st.columns(2, gap="small")
-        edit_start = date_cols[0].date_input(
+        schedule_cols = st.columns([0.42, 0.29, 0.29], gap="small")
+        schedule_cols[0].text_input(
+            "Reps/Duration",
+            value=reps_duration or "As advised",
+            disabled=True,
+            key=f"mpb_ex_edit_reps_duration_{allocation_id}",
+        )
+        edit_start = schedule_cols[1].date_input(
             "Start Date",
             _to_date(selected.get("start_date"), dt.date.today()),
             disabled=stopped,
             key=f"mpb_ex_edit_start_{allocation_id}",
         )
-        edit_end = date_cols[1].date_input(
+        edit_end = schedule_cols[2].date_input(
             "End Date",
             _to_date(selected.get("end_date"), dt.date.today()),
             disabled=stopped,

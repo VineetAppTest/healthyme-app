@@ -145,6 +145,15 @@ def test_setup_and_allocation_boundaries_follow_repository_model() -> None:
     assert '"Clone Meal Profile"' in setup
     assert '"assigned_member_id": ""' in setup
     assert '"Meal Profile"' in meals and '"Member"' in meals and '"Publish"' in meals
+    assert "profile_row = st.columns(" in meals
+    assert "[0.38, 0.62]" in meals
+    assert "member_row = st.columns(" in meals
+    assert "[0.42, 0.24, 0.34]" in meals
+    assert "profile_row[0].multiselect" in meals
+    assert "profile_row[1].selectbox" in meals
+    assert "member_row[0].selectbox" in meals
+    assert "member_row[1].date_input" in meals
+    assert "member_row[2].button" in meals
     assert "load_active_profiles()" in allocations
     assert "Meal Profile labels could not be loaded" in allocations
     assert "All active members are visible" in allocations

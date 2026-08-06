@@ -48,6 +48,8 @@ class RepositoryLayoutCorrectionRuntimeTests(unittest.TestCase):
         self.assertIn("overflow:visible!important", source)
         self.assertIn("text-overflow:clip!important", source)
         self.assertIn("max-width:none!important", source)
+        self.assertIn("summary:after", source)
+        self.assertIn("text-align:center!important", source)
 
     def test_add_and_edit_forms_use_approved_sections(self):
         source = text(RUNTIME)
@@ -67,10 +69,12 @@ class RepositoryLayoutCorrectionRuntimeTests(unittest.TestCase):
 
     def test_add_and_edit_forms_have_balanced_compact_density(self):
         source = text(RUNTIME)
-        self.assertIn('gap:.30rem!important;', source)
+        self.assertIn('gap:.46rem!important;', source)
         self.assertIn('background:#F8F3E7!important;', source)
         self.assertIn('border-left:3px solid #E3C98E!important;', source)
         self.assertIn('font-size:.72rem!important;', source)
+        self.assertIn('line-height:1.22!important;', source)
+        self.assertIn('margin:.06rem 0 .18rem!important;', source)
         self.assertIn('min-height:2.10rem!important;', source)
         self.assertIn('min-height:58px!important;', source)
         self.assertIn('padding:.58rem .68rem!important;', source)

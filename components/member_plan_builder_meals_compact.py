@@ -86,7 +86,12 @@ def _render_publish_controls(
             if clean(concern)
         }
     )
-    selected_concerns = st.multiselect(
+    profile_row = st.columns(
+        [0.38, 0.62],
+        gap="small",
+        vertical_alignment="bottom",
+    )
+    selected_concerns = profile_row[0].multiselect(
         "Health Concerns",
         health_options,
         key="mpb_meal_profile_health_filter",
@@ -112,12 +117,7 @@ def _render_publish_controls(
         )
 
     member_labels, label_to_id, _id_to_label, _member_message = member_maps()
-    controls = st.columns(
-        [0.34, 0.28, 0.18, 0.20],
-        gap="small",
-        vertical_alignment="bottom",
-    )
-    selected_profile_id = controls[0].selectbox(
+    selected_profile_id = profile_row[1].selectbox(
         "Meal Profile",
         profile_options,
         format_func=lambda value: (
@@ -126,6 +126,11 @@ def _render_publish_controls(
             else _repository_profile_label(profile_by_id[value])
         ),
         key=_MEAL_PROFILE_SELECTOR,
+    )
+    member_row = st.columns(
+        [0.42, 0.24, 0.34],
+        gap="small",
+        vertical_alignment="bottom",
     )
     if selected_profile_id == SELECT_PROFILE:
         if loaded_id:
@@ -145,18 +150,18 @@ def _render_publish_controls(
     selected_profile = profile_by_id[selected_profile_id]
     profile_editable = _profile_is_editable(selected_profile)
 
-    selected_member_label = controls[1].selectbox(
+    selected_member_label = member_row[0].selectbox(
         "Member",
         member_labels,
         key=f"mpb_meal_publish_member_{selected_profile_id}",
     )
     selected_member_id = label_to_id.get(selected_member_label, "")
-    start_date = controls[2].date_input(
+    start_date = member_row[1].date_input(
         "Plan Start Date",
         value=clean_date(""),
         key=f"mpb_meal_publish_start_{selected_profile_id}",
     )
-    publish_clicked = controls[3].button(
+    publish_clicked = member_row[2].button(
         "Publish",
         type="primary",
         use_container_width=True,
