@@ -232,8 +232,31 @@ div[data-testid="stTabs"] button[role="tab"]{min-width:10.5rem!important;min-hei
 div[data-testid="stTabs"] button[role="tab"][aria-selected="true"]{background:linear-gradient(135deg,#064E3B,#0F766E)!important;color:#FFFFFF!important;border-color:#064E3B!important;}
 div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *{color:#FFFFFF!important;}
 div[data-testid="stExpander"] summary{display:flex!important;align-items:center!important;gap:.42rem!important;font-size:0!important;}
-div[data-testid="stExpander"] summary p{display:block!important;margin:0!important;font-size:.82rem!important;line-height:1.2!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;text-align:left!important;}
+div[data-testid="stExpander"] summary{position:relative!important;justify-content:center!important;padding-left:2.35rem!important;padding-right:2.35rem!important;}
+div[data-testid="stExpander"] summary:before{position:absolute!important;left:.68rem!important;margin-right:0!important;}
+div[data-testid="stExpander"] summary p{display:block!important;width:100%!important;margin:0!important;font-size:.82rem!important;line-height:1.2!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;text-align:center!important;}
 div[data-testid="stExpander"] summary svg,div[data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"],div[data-testid="stExpander"] summary [data-testid="stIconMaterial"],div[data-testid="stExpander"] summary [class*="material-symbol"],div[data-testid="stExpander"] summary span[aria-hidden="true"]{display:none!important;width:0!important;min-width:0!important;font-size:0!important;}
+div[data-testid="stExpander"] [data-testid="stWidgetLabel"],
+div[data-testid="stExpander"] label{
+  display:block!important;
+  margin:.16rem 0 .28rem!important;
+  padding:0!important;
+  line-height:1.22!important;
+}
+div[data-testid="stExpander"] [data-testid="stWidgetLabel"] p,
+div[data-testid="stExpander"] label p{
+  margin:0!important;
+  line-height:1.22!important;
+  font-size:.78rem!important;
+  font-weight:850!important;
+  color:#064E3B!important;
+}
+div[data-testid="stExpander"] [data-testid="stTextInput"],
+div[data-testid="stExpander"] [data-testid="stTextArea"],
+div[data-testid="stExpander"] [data-testid="stSelectbox"],
+div[data-testid="stExpander"] [data-testid="stFileUploader"]{
+  margin-top:.10rem!important;
+}
 
 </style>
 """,

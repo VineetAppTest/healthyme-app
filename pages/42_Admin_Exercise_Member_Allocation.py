@@ -68,8 +68,13 @@ def _to_date(value: object, fallback: dt.date) -> dt.date:
         return fallback
 
 
+def _duration_or_reps(row: dict) -> str:
+    snapshot = row.get("source_snapshot") if isinstance(row.get("source_snapshot"), dict) else {}
+    return str(row.get("duration_or_reps") or snapshot.get("duration_or_reps") or "").strip()
+
+
 def _clear_add_form(member_id: str) -> None:
-    for suffix in ("source", "start", "end", "instructions", "notes"):
+    for suffix in ("source", "duration", "start", "end", "instructions", "notes"):
         st.session_state.pop(f"phase_c_{suffix}_{member_id}", None)
 
 
@@ -140,12 +145,18 @@ with tab_add:
             key=f"phase_c_source_{member_id}",
         )
         selected_source = source_options[selected_source_label]
-        start_date = st.date_input(
+        detail_cols = st.columns([0.42, 0.29, 0.29], gap="small")
+        duration_or_reps = detail_cols[0].text_input(
+            "Reps/Duration",
+            value=_duration_or_reps(selected_source) or "As advised",
+            key=f"phase_c_duration_{member_id}",
+        )
+        start_date = detail_cols[1].date_input(
             "Start date",
             value=dt.date.today(),
             key=f"phase_c_start_{member_id}",
         )
-        end_date = st.date_input(
+        end_date = detail_cols[2].date_input(
             "End date",
             value=dt.date.today() + dt.timedelta(days=6),
             key=f"phase_c_end_{member_id}",
@@ -176,6 +187,7 @@ with tab_add:
                     ),
                     start_date=start_date,
                     end_date=end_date,
+                    duration_or_reps=duration_or_reps,
                     instructions=instructions,
                     notes=notes,
                     status="active",
@@ -198,6 +210,7 @@ with tab_manage:
             {
                 "Allocation ID": row.get("id"),
                 "Exercise": row.get("exercise_name"),
+                "Reps/Duration": _duration_or_reps(row) or "As advised",
                 "Source ID": row.get("source_id"),
                 "Start": row.get("start_date"),
                 "End": row.get("end_date"),
@@ -222,12 +235,18 @@ with tab_manage:
         )
         selected = allocation_options[selected_allocation_label]
         today = dt.date.today()
-        edit_start = st.date_input(
+        edit_cols = st.columns([0.42, 0.29, 0.29], gap="small")
+        edit_duration_or_reps = edit_cols[0].text_input(
+            "Reps/Duration",
+            value=_duration_or_reps(selected) or "As advised",
+            key=f"phase_c_edit_duration_{selected.get('id')}",
+        )
+        edit_start = edit_cols[1].date_input(
             "Start date",
             value=_to_date(selected.get("start_date"), today),
             key=f"phase_c_edit_start_{selected.get('id')}",
         )
-        edit_end = st.date_input(
+        edit_end = edit_cols[2].date_input(
             "End date",
             value=_to_date(
                 selected.get("end_date"),
@@ -274,6 +293,7 @@ with tab_manage:
                         source_id=str(selected.get("source_id")),
                         start_date=edit_start,
                         end_date=edit_end,
+                        duration_or_reps=edit_duration_or_reps,
                         instructions=edit_instructions,
                         notes=edit_notes,
                         status=edit_status,

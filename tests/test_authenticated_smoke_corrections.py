@@ -80,7 +80,8 @@ class AuthenticatedSmokeCorrectionTests(unittest.TestCase):
         self.assertNotIn("html,body,#root{margin-top:0", page)
         self.assertIn("hm-member-home-global-header-v9", runtime)
         self.assertIn('id="hm-member-home-local-style-v3"', schedule)
-        self.assertIn("width:fit-content!important", schedule)
+        self.assertIn("width:max-content!important", schedule)
+        self.assertIn("min-width:15.5rem!important", schedule)
         self.assertNotIn("width:min(420px,100%)", schedule)
         self.assertNotIn("top:-2.75rem", schedule)
 

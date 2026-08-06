@@ -51,7 +51,7 @@ div[data-testid="stExpander"]:has(.hm-message-pill-anchor) hr{
   display:none!important;border:0!important;height:0!important;margin:0!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
-  width:fit-content!important;max-width:100%!important;min-width:0!important;
+  width:max-content!important;max-width:100%!important;min-width:15.5rem!important;
   min-height:2.12rem!important;padding:.30rem .72rem!important;
   border:1px solid #E3C98E!important;border-bottom:1px solid #E3C98E!important;
   border-radius:999px!important;background:#FFFDF8!important;
@@ -67,7 +67,7 @@ div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary{
   display:flex!important;align-items:center!important;gap:.44rem!important;
 }
 div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary p{
-  margin:0!important;font-size:.78rem!important;font-weight:900!important;
+  margin:0!important;font-size:.72rem!important;font-weight:900!important;
   white-space:nowrap!important;color:#064E3B!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary,
@@ -76,7 +76,7 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary *{
   word-break:keep-all!important;line-height:1.10!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary p{
-  margin:0!important;font-size:.78rem!important;font-weight:900!important;flex:1 1 auto!important;max-width:none!important;overflow:visible!important;text-overflow:clip!important;
+  margin:0!important;font-size:.72rem!important;font-weight:900!important;flex:1 1 auto!important;max-width:none!important;overflow:visible!important;text-overflow:clip!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary [data-testid="stExpanderToggleIcon"],
 div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary [data-testid="stExpanderToggleIcon"],
@@ -113,14 +113,14 @@ div[data-testid="stExpander"]:has(.hm-message-pill-anchor) details[open] summary
   gap:.34rem!important;margin:.24rem 0 0 0!important;
 }
 .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"] button{
-  min-height:2.34rem!important;height:auto!important;
-  padding:.34rem .48rem!important;border-radius:10px!important;
-  font-size:.72rem!important;font-weight:900!important;
+  width:60%!important;min-height:1.40rem!important;height:auto!important;
+  margin:0 auto!important;padding:.16rem .30rem!important;border-radius:9px!important;
+  font-size:.66rem!important;font-weight:900!important;
   white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
 }
 .hm-member-schedule-action-anchor + div[data-testid="stHorizontalBlock"] button p{
   white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
-  font-size:.72rem!important;line-height:1.14!important;
+  font-size:.66rem!important;line-height:1.10!important;
 }
 @media(max-width:900px){
   .hm-v101-schedule-card,

@@ -195,5 +195,8 @@ def test_meal_plan_publish_queues_one_email_and_in_app_event() -> None:
     assert len(state["messages"]) == 1
     assert len(state["notifications"]) == 1
     assert state["notifications"][0]["kind"] == "meal_plan_allocated"
-    assert "Check the My Weekly Plan." in state["messages"][0]["message"]
-    assert "Check the My Weekly Plan." in state["notifications"][0]["message"]
+    assert state["messages"][0]["subject"] == "Meal added"
+    assert 'Please review it in "My Weekly Plan".' in state["messages"][0]["message"]
+    assert "Benefits:" in state["messages"][0]["message"]
+    assert "Member instructions:" in state["messages"][0]["message"]
+    assert 'Please review it in "My Weekly Plan".' in state["notifications"][0]["message"]

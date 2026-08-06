@@ -177,6 +177,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-home-grid-anchor) > div,
 .hm-v101-schedule-pill{font-size:.64rem!important;padding:.12rem .34rem!important;}
 .hm-v104b11-ack-note{font-size:.72rem!important;line-height:1.34!important;padding:.38rem .46rem!important;margin-top:.34rem!important;}
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-message-grid-anchor) button{min-height:2.08rem!important;height:2.08rem!important;padding:.28rem .46rem!important;font-size:.74rem!important;border-radius:9px!important;}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-message-grid-anchor) [data-testid="stButton"] > button{width:50%!important;min-width:0!important;margin:.12rem auto 0!important;}
 @media(max-width:900px){.hm-home-section-head{font-size:.94rem;}}
 .hm-v990-task-progress{border:1px solid #E5D2A9;background:#FFFDF8;border-radius:14px;padding:1rem 1rem 1.04rem;margin:.58rem 0 .78rem 0;min-height:0;box-sizing:border-box;}
 .hm-v990-progress-head{display:flex;align-items:center;justify-content:space-between;gap:.78rem;flex-wrap:wrap;margin:0 0 .52rem 0;}

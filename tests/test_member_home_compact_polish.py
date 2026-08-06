@@ -23,7 +23,8 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
         self.assertIn('id="hm-member-home-local-style-v3"', source)
         self.assertIn("hm-member-home-compact-polish-v8", source)
         self.assertNotIn("top:-2.75rem", source)
-        self.assertIn("width:fit-content", source)
+        self.assertIn("width:max-content", source)
+        self.assertIn("min-width:15.5rem", source)
         self.assertIn("white-space:nowrap", source)
         self.assertIn("word-break:keep-all", source)
         self.assertIn("_install_member_home_compact_polish()", source)
@@ -42,7 +43,7 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
         source = (
             ROOT / "components/member_home_schedule_presentation.py"
         ).read_text()
-        self.assertIn("width:fit-content", source)
+        self.assertIn("width:max-content", source)
         self.assertIn("max-width:100%", source)
         self.assertIn('[data-testid="stExpanderDetails"]', source)
         self.assertIn("summary + div", source)
@@ -59,6 +60,15 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
         self.assertIn("max-width:none", source)
         self.assertIn("margin:0", source)
         self.assertNotIn("width:47%", source)
+
+    def test_member_home_schedule_and_archive_buttons_are_compact(self):
+        helper = (
+            ROOT / "components/member_home_schedule_presentation.py"
+        ).read_text()
+        page = (ROOT / "pages/02_Member_Home.py").read_text()
+        self.assertIn("width:60%!important;min-height:1.40rem", helper)
+        self.assertIn("font-size:.66rem!important", helper)
+        self.assertIn("width:50%!important;min-width:0!important", page)
 
     def test_upcoming_pill_remains_visible_when_no_schedule_requires_action(self):
         page = (ROOT / "pages/02_Member_Home.py").read_text()

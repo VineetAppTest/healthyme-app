@@ -66,6 +66,14 @@ def _date_window(saved: dict[str, Any]) -> str:
     return start or end or "As advised"
 
 
+def _domain_label(domain: str) -> str:
+    return {
+        "meal": "Meal",
+        "exercise": "Exercise",
+        "supplement": "Supplement",
+    }.get(_text(domain).lower(), "Plan")
+
+
 def _message_payload(
     domain: str,
     saved: dict[str, Any],
@@ -78,28 +86,20 @@ def _message_payload(
         "inactive",
         "archived",
     }
-    action = event_action or ("stopped" if stopped else "updated")
     benefits = _benefits(domain, saved)
+    member_instructions = _text(saved.get("instructions")) or "Not provided"
+    domain_label = _domain_label(domain)
     if domain == "exercise":
         name = _text(saved.get("exercise_name") or saved.get("title")) or "Exercise"
-        subject = (
-            f"Exercise allocation stopped: {name}"
-            if stopped
-            else f"Exercise added to your HealthyMe plan: {name}"
-        )
         details = {
             "Exercise": name,
+            "Reps/Duration": _text(saved.get("duration_or_reps")) or "As advised",
             "Schedule": _date_window(saved),
             "Benefits": benefits,
-            "Member instructions": _text(saved.get("instructions")) or "Not provided",
+            "Member instructions": member_instructions,
         }
     else:
         name = _text(saved.get("supplement_name") or saved.get("title")) or "Supplement"
-        subject = (
-            f"Supplement allocation stopped: {name}"
-            if stopped
-            else f"Supplement added to your HealthyMe plan: {name}"
-        )
         details = {
             "Supplement": name,
             "Dosage": _text(saved.get("dosage")) or "As advised",
@@ -107,12 +107,13 @@ def _message_payload(
             "Timing": _text(saved.get("timing")) or "As advised",
             "Schedule": _date_window(saved),
             "Benefits": benefits,
-            "Member instructions": _text(saved.get("instructions")) or "Not provided",
+            "Member instructions": member_instructions,
         }
-    detail_text = " · ".join(f"{key}: {value}" for key, value in details.items())
+    subject = f"{domain_label} {'stopped' if stopped else 'added'}"
     message = (
-        f"Your {domain} allocation has been {action}. {detail_text}. "
-        "Please review it in your Current Member Plan."
+        f"Your {domain_label} allocation has been updated. "
+        'Please review it in "My Weekly Plan". '
+        f"Benefits: {benefits} · Member instructions: {member_instructions}."
     )
     return subject, message, benefits, details
 
@@ -131,6 +132,7 @@ def _allocation_dedupe_key(domain: str, saved: dict[str, Any]) -> str:
         common.update(
             {
                 "name": _text(saved.get("exercise_name") or saved.get("title")),
+                "duration_or_reps": _text(saved.get("duration_or_reps")),
                 "notes": _text(saved.get("notes")),
             }
         )
@@ -295,10 +297,11 @@ def queue_meal_plan_allocation(
             "meals": fingerprint_rows,
         }
     )
-    subject = f"Meal Plan added to your HealthyMe plan: {profile_name}"
+    subject = "Meal added"
     message = (
-        "Your Meal Plan has been allocated by your HealthyMe nutritionist. "
-        "Check the My Weekly Plan."
+        'Your Meal allocation has been updated. Please review it in "My Weekly Plan". '
+        "Benefits: Follow the guidance shared by your HealthyMe nutritionist. "
+        "· Member instructions: Not provided."
     )
     details = {
         "Meal Profile": profile_name,

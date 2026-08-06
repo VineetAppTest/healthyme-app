@@ -40,7 +40,8 @@ class MemberVisualSmokeFollowupTests(unittest.TestCase):
         ).read_text()
         page = (ROOT / "pages/02_Member_Home.py").read_text()
 
-        self.assertIn('width:fit-content!important', presentation)
+        self.assertIn('width:max-content!important', presentation)
+        self.assertIn('min-width:15.5rem!important', presentation)
         self.assertNotIn('width:min(420px,100%)', presentation)
         self.assertIn(
             ':has(.hm-home-grid-anchor){height:auto!important;min-height:0!important',
