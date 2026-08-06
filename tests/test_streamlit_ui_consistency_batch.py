@@ -68,13 +68,13 @@ class StreamlitUiConsistencyBatchTests(unittest.TestCase):
 
     def test_member_plan_uses_consistent_weekly_tables(self):
         source = (ROOT / "components/member_plan_builder_view_compact.py").read_text()
-        self.assertIn("def _render_grouped_weekly_table", source)
-        self.assertIn("<th>Start Date</th>", source)
-        self.assertIn("<th>Type</th>", source)
+        self.assertIn("def _render_meal_week_grid", source)
+        self.assertIn("def _render_flat_plan_table", source)
+        self.assertIn("mpb-weekly-plan-grid-v1", source)
         self.assertIn("<th>Day</th>", source)
-        self.assertIn('("Timing", "Meal", "Liquid", "Remarks")', source)
-        self.assertIn('("Timing", "Activity", "Reps/Duration", "Remarks")', source)
-        self.assertIn('("Timing", "Supplement", "Dosage", "Remarks")', source)
+        self.assertNotIn("def _render_grouped_weekly_table", source)
+        self.assertIn('("Exercise", "Reps/Duration", "Timing", "Dates", "Status", "Remarks")', source)
+        self.assertIn('("Supplement", "Dosage", "Timing", "Dates", "Status", "Remarks")', source)
         self.assertNotIn("Active-plan integrity verified", source)
 
 

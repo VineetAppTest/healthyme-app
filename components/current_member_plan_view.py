@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import streamlit as st
 
 from components.current_member_plan import load_current_member_plan
+from components.member_plan_presentation import is_removed_meal_timing
 from components.member_recommendation_member_labels import _render_member_guidance
 from components.member_recommendation_split_display import today_day_number
 from components.member_timezone import (
@@ -141,25 +142,12 @@ def _inject_current_plan_styles() -> None:
         .hm-plan-item-title{color:#064E3B;font-size:.81rem;font-weight:930;line-height:1.30;}.hm-plan-item-meta{color:#475569;font-size:.70rem;font-weight:720;line-height:1.34;margin-top:.08rem;}.hm-plan-item-instruction{color:#64748B;font-size:.68rem;line-height:1.34;margin-top:.10rem;}
         .hm-plan-empty{border:1px dashed #D9C28F;border-radius:14px;background:#FFFDF8;color:#64748B;padding:.68rem .74rem;margin:.30rem 0 .56rem;font-size:.78rem;font-weight:720;line-height:1.38;}
         .hm-plan-week-intro{color:#475569;font-size:.80rem;font-weight:720;line-height:1.42;margin:.10rem 0 .62rem;}
-        div[class*="st-key-hm_member_plan_day_toggle_"]{margin:.34rem 0 .18rem!important;}
-        div[class*="st-key-hm_member_plan_day_toggle_"] [data-testid="stButton"]>button{
-          width:100%!important;min-height:2.65rem!important;height:auto!important;
-          justify-content:flex-start!important;text-align:left!important;padding:.46rem .72rem!important;
-          border:1px solid #E3C98E!important;border-radius:14px!important;background:#FFFDF8!important;
-          color:#064E3B!important;font-weight:920!important;
-        }
-        div[class*="st-key-hm_member_plan_day_toggle_"] [data-testid="stButton"]>button p{
-          width:100%!important;white-space:nowrap!important;overflow:hidden!important;
-          text-overflow:ellipsis!important;word-break:keep-all!important;text-align:left!important;
-        }
-        div[class*="st-key-hm_member_plan_day_toggle_"][class*="_today"] [data-testid="stButton"]>button{
-          border-color:#D8A84E!important;background:#FFF6E5!important;
-        }
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-plan-day-body-anchor){
-          border:1px solid #E3C98E!important;border-radius:14px!important;background:#FFFFFF!important;
-          padding:.36rem .52rem .42rem!important;margin:0 0 .42rem!important;
-        }
-        .hm-plan-day-body-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
+        .hm-week-allocation-title{color:#064E3B;font-size:.90rem;font-weight:950;margin:.58rem 0 .24rem}
+        .hm-week-allocation-wrap{overflow-x:auto;border:1px solid #E3C98E;border-radius:14px;background:#FFFDF8;margin:.18rem 0 .68rem}
+        .hm-week-allocation-table{width:100%;min-width:760px;border-collapse:collapse;font-size:.75rem;line-height:1.34}
+        .hm-week-allocation-table th{background:#FFF4DE;color:#064E3B;font-weight:950;text-align:center;padding:.44rem .48rem;border:1px solid #E3C98E;white-space:nowrap}
+        .hm-week-allocation-table td{color:#334155;font-weight:730;vertical-align:top;padding:.48rem .52rem;border:1px solid #F0E3C5}
+        .hm-week-allocation-table td:first-child{color:#064E3B;font-weight:900;background:#FFFCF5}
         .hm-plan-action-anchor{display:none!important;height:0!important;margin:0!important;padding:0!important;}
         div[data-testid="stElementContainer"]:has(.hm-plan-action-anchor)+div[data-testid="stHorizontalBlock"]{
           gap:.72rem!important;margin:.12rem 0 .24rem!important;
@@ -269,6 +257,8 @@ def _meal_items(
         timing = _clean(row.get("slot_name") or row.get("scheduled_time")) or (
             "Anytime / as advised"
         )
+        if is_removed_meal_timing(timing):
+            continue
         food = _clean(row.get("reference_label")) or "Meal"
         portion = _clean(row.get("portion"))
         title = f"{food} - {portion}" if portion else food
@@ -435,6 +425,137 @@ def _exercise_items(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
     return output
 
 
+def _weekly_domain_rows(
+    model: dict[str, Any],
+    domain: str,
+    dates: list[tuple[int, dt.date]],
+) -> list[dict[str, Any]]:
+    partitions = dict(model.get(domain) or {})
+    output: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for state in ("current", "upcoming"):
+        for raw in partitions.get(state) or []:
+            row = dict(raw or {})
+            if not any(_row_effective_on(row, target_date) for _day, target_date in dates):
+                continue
+            row["effective_state"] = _clean(row.get("effective_state")) or state
+            key = _clean(row.get("id")) or (
+                f"{state}|{_clean(row.get('start_date'))}|"
+                f"{_clean(row.get('exercise_name') or row.get('supplement_name') or row.get('title'))}"
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            output.append(row)
+    output.sort(
+        key=lambda row: (
+            _clean(row.get("start_date")),
+            _clean(row.get("exercise_name") or row.get("supplement_name") or row.get("title")).casefold(),
+            _clean(row.get("id")),
+        )
+    )
+    return output
+
+
+def _status_label(row: dict[str, Any]) -> str:
+    return (_clean(row.get("effective_state") or row.get("status")) or "current").replace(
+        "_", " "
+    ).title()
+
+
+def _date_range(row: dict[str, Any]) -> str:
+    start = _clean(row.get("start_date")) or "No start"
+    end = _clean(row.get("end_date")) or "Open"
+    return f"{start} to {end}"
+
+
+def _exercise_week_rows(
+    model: dict[str, Any],
+    dates: list[tuple[int, dt.date]],
+) -> list[dict[str, str]]:
+    output: list[dict[str, str]] = []
+    for row in _weekly_domain_rows(model, "exercise", dates):
+        snapshot = _snapshot(row)
+        output.append(
+            {
+                "Exercise": _clean(
+                    row.get("exercise_name") or row.get("title") or snapshot.get("title")
+                )
+                or "Exercise",
+                "Reps/Duration": _clean(
+                    row.get("duration_or_reps") or snapshot.get("duration_or_reps")
+                )
+                or "As advised",
+                "Timing": _clean(row.get("timing") or snapshot.get("timing")) or "As advised",
+                "Dates": _date_range(row),
+                "Status": _status_label(row),
+                "Instructions": _clean(row.get("instructions") or snapshot.get("instructions")),
+            }
+        )
+    return output
+
+
+def _supplement_week_rows(
+    model: dict[str, Any],
+    dates: list[tuple[int, dt.date]],
+) -> list[dict[str, str]]:
+    output: list[dict[str, str]] = []
+    for row in _weekly_domain_rows(model, "supplement", dates):
+        snapshot = _snapshot(row)
+        dosage = _clean(row.get("dosage") or snapshot.get("dosage"))
+        frequency = _clean(row.get("frequency") or snapshot.get("frequency"))
+        output.append(
+            {
+                "Supplement": _clean(
+                    row.get("supplement_name")
+                    or row.get("title")
+                    or snapshot.get("supplement_name")
+                    or snapshot.get("title")
+                )
+                or "Supplement",
+                "Dose/Frequency": " · ".join(value for value in (dosage, frequency) if value)
+                or "As advised",
+                "Timing": _clean(row.get("timing") or snapshot.get("timing")) or "As advised",
+                "Dates": _date_range(row),
+                "Status": _status_label(row),
+                "Instructions": _clean(row.get("instructions") or snapshot.get("instructions")),
+            }
+        )
+    return output
+
+
+def _html_lines(value: object) -> str:
+    lines = _clean(value).splitlines()
+    return "<br>".join(_esc(line) for line in lines if line.strip()) or "&mdash;"
+
+
+def _render_weekly_allocation_table(
+    title: str,
+    rows: list[dict[str, str]],
+    headers: tuple[str, ...],
+    empty_message: str,
+) -> None:
+    st.markdown(f"<div class='hm-week-allocation-title'>{_esc(title)}</div>", unsafe_allow_html=True)
+    if not rows:
+        st.markdown(
+            f"<div class='hm-plan-empty'>{_esc(empty_message)}</div>",
+            unsafe_allow_html=True,
+        )
+        return
+    header_html = "".join(f"<th>{_esc(header)}</th>" for header in headers)
+    body_html = "".join(
+        "<tr>"
+        + "".join(f"<td>{_html_lines(row.get(header))}</td>" for header in headers)
+        + "</tr>"
+        for row in rows
+    )
+    st.markdown(
+        "<div class='hm-week-allocation-wrap'><table class='hm-week-allocation-table'>"
+        f"<thead><tr>{header_html}</tr></thead><tbody>{body_html}</tbody></table></div>",
+        unsafe_allow_html=True,
+    )
+
+
 def build_day_timeline(
     model: dict[str, Any],
     *,
@@ -558,10 +679,6 @@ def _cycle_dates(
     ]
 
 
-def _toggle_day_disclosure(state_key: str) -> None:
-    st.session_state[state_key] = not bool(st.session_state.get(state_key))
-
-
 def render_current_member_plan_view() -> None:
     _inject_current_plan_styles()
     ok, model, message = _load_model()
@@ -580,9 +697,9 @@ def render_current_member_plan_view() -> None:
     member_id = _clean(model.get("member_id"))
     today = member_local_today(member_id)
     profile = dict(model.get("meal_profile") or {})
-    current_day, dates = _cycle_dates(profile, today)
+    _current_day, dates = _cycle_dates(profile, today)
     st.markdown(
-        "<div class='hm-plan-week-intro'>Your weekly meals are shown first. Open any day below to see Supplements and Exercise in the order they apply.</div>",
+        "<div class='hm-plan-week-intro'>Your weekly meals are shown first. Supplements and Exercise below show what applies during this week without day-wise open/close rows.</div>",
         unsafe_allow_html=True,
     )
     _render_meal_week_grid(list(model.get("meals") or []), dates)
@@ -591,50 +708,18 @@ def render_current_member_plan_view() -> None:
         unsafe_allow_html=True,
     )
 
-    for day_number, target_date in dates:
-        is_today = day_number == current_day
-        label = (
-            f"Day {day_number} · {target_date.strftime('%a, %d %b')}"
-            + (" · Today" if is_today else "")
-        )
-        state_key = f"hm_member_plan_day_open_{target_date.isoformat()}"
-        st.session_state.setdefault(state_key, is_today)
-        is_open = bool(st.session_state.get(state_key))
-        marker = "−" if is_open else "+"
-        toggle_suffix = "_today" if is_today else ""
-        with st.container(
-            key=(
-                f"hm_member_plan_day_toggle_{day_number}_"
-                f"{target_date.isoformat()}{toggle_suffix}"
-            )
-        ):
-            st.button(
-                f"{marker}  {label}",
-                key=f"hm_member_plan_day_button_{target_date.isoformat()}",
-                use_container_width=True,
-                on_click=_toggle_day_disclosure,
-                args=(state_key,),
-            )
-        if is_open:
-            with st.container(border=True):
-                st.markdown(
-                    "<span class='hm-plan-day-body-anchor'></span>",
-                    unsafe_allow_html=True,
-                )
-                _render_day_timeline(
-                    build_day_timeline(
-                        model,
-                        day_number=day_number,
-                        target_date=target_date,
-                        domains=("supplement", "exercise"),
-                    ),
-                    active_period=(
-                        _current_period(_member_local_now(member_id))
-                        if is_today
-                        else ""
-                    ),
-                    empty_message="No supplement or exercise is scheduled for this day.",
-                )
+    _render_weekly_allocation_table(
+        "Supplements",
+        _supplement_week_rows(model, dates),
+        ("Supplement", "Dose/Frequency", "Timing", "Dates", "Status", "Instructions"),
+        "No supplement is scheduled for this week.",
+    )
+    _render_weekly_allocation_table(
+        "Exercise",
+        _exercise_week_rows(model, dates),
+        ("Exercise", "Reps/Duration", "Timing", "Dates", "Status", "Instructions"),
+        "No exercise is scheduled for this week.",
+    )
 
     with st.expander("Nutrition Guidance", expanded=False):
         _render_member_guidance(

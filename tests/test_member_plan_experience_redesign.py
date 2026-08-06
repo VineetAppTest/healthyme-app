@@ -4,7 +4,11 @@ import datetime as dt
 from pathlib import Path
 import unittest
 
-from components.current_member_plan_view import build_day_timeline
+from components.current_member_plan_view import (
+    _exercise_week_rows,
+    _supplement_week_rows,
+    build_day_timeline,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +35,14 @@ class MemberPlanExperienceRedesignTests(unittest.TestCase):
                     "slot_name": "Dinner",
                     "reference_label": "Paneer Salad",
                     "portion": "1 bowl",
+                },
+                {
+                    "item_type": "meal",
+                    "day_number": 2,
+                    "item_order": 1,
+                    "slot_name": "Wake-up / Early Morning",
+                    "reference_label": "Fennel Water",
+                    "portion": "1 glass",
                 },
             ],
             "supplement": {
@@ -78,6 +90,10 @@ class MemberPlanExperienceRedesignTests(unittest.TestCase):
         self.assertIn("Anytime", grouped)
         self.assertEqual(grouped["Anytime"][0]["timing"], "Anytime / as advised")
         self.assertEqual(grouped["Morning"][0]["title"], "Moong Chilla - 2")
+        self.assertNotIn(
+            "Fennel Water - 1 glass",
+            [row["title"] for values in grouped.values() for row in values],
+        )
 
     def test_none_timing_is_not_rendered_when_real_timings_exist(self):
         grouped = build_day_timeline(
@@ -93,26 +109,44 @@ class MemberPlanExperienceRedesignTests(unittest.TestCase):
         ]
         self.assertEqual(supplement_timings, ["Morning", "Before Bed"])
 
-    def test_weekly_view_uses_meal_grid_and_day_first_exercise_supplements(self):
+    def test_weekly_view_uses_meal_grid_and_flat_exercise_supplement_tables(self):
         source = VIEW.read_text(encoding="utf-8")
         self.assertIn("def _render_meal_week_grid", source)
         self.assertIn("hm-member-weekly-meal-grid-v1", source)
+        self.assertIn("def _render_weekly_allocation_table", source)
+        self.assertIn("hm-week-allocation-table", source)
         self.assertIn('"Breakfast",', source)
         self.assertIn('"Mid-morning Snack",', source)
         self.assertNotIn('"Wake-up / Early Morning",', source)
         self.assertIn('" + ".join(values)', source)
-        self.assertIn("for day_number, target_date in dates:", source)
-        self.assertIn('marker = "−" if is_open else "+"', source)
-        self.assertIn("on_click=_toggle_day_disclosure", source)
-        self.assertIn("white-space:nowrap!important", source)
+        self.assertIn("without day-wise open/close rows", source)
+        self.assertNotIn("hm_member_plan_day_open", source)
+        self.assertNotIn("hm_member_plan_day_toggle", source)
+        self.assertNotIn("_toggle_day_disclosure", source)
+        self.assertIn("white-space:nowrap", source)
         self.assertIn("Your weekly meals are shown first.", source)
-        self.assertIn('domains=("supplement", "exercise")', source)
+        self.assertIn("_supplement_week_rows(model, dates)", source)
+        self.assertIn("_exercise_week_rows(model, dates)", source)
         self.assertNotIn("st.tabs(", source)
         self.assertNotIn("st.columns(3", source)
         self.assertNotIn("source_id", source)
         self.assertNotIn("admin_notes", source)
         self.assertIn(".hm-guidance-box", source)
         self.assertIn(".hm-chip-row", source)
+
+    def test_weekly_allocation_rows_are_flat_this_week_tables(self):
+        dates = [
+            (day, dt.date(2026, 8, 5) + dt.timedelta(days=day - 1))
+            for day in range(1, 8)
+        ]
+        supplements = _supplement_week_rows(self.model, dates)
+        exercises = _exercise_week_rows(self.model, dates)
+        self.assertEqual(supplements[0]["Supplement"], "Magnesium")
+        self.assertEqual(supplements[0]["Dose/Frequency"], "400 · Once")
+        self.assertEqual(supplements[0]["Dates"], "2026-08-01 to Open")
+        self.assertEqual(exercises[0]["Exercise"], "Brisk Walking")
+        self.assertEqual(exercises[0]["Reps/Duration"], "20 min")
+        self.assertNotIn("Day", exercises[0])
 
 
 if __name__ == "__main__":

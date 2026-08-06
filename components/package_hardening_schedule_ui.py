@@ -70,6 +70,14 @@ def _render_member_usage_status_table(
         or 0
     )
     status = _text(package.get("status") or "active").replace("_", " ").title()
+    rows = list(ledger.get("rows") or [])
+    scheduled_rows = [
+        row
+        for row in rows
+        if not row.get("consumed")
+        and _text(row.get("raw_status")).lower() in {"scheduled", "acknowledged"}
+    ]
+    consumed_rows = [row for row in rows if row.get("consumed")]
     st.markdown(
         """
 <style id="hm-member-package-usage-status-v1">
@@ -78,6 +86,12 @@ def _render_member_usage_status_table(
 .hm-usage-status-table th{background:#FFF7E6;color:#064E3B;text-align:center;font-weight:900;padding:.48rem .52rem;border:1px solid #E3C98E;white-space:nowrap}
 .hm-usage-status-table td{color:#334155;text-align:center;font-weight:760;padding:.52rem .54rem;border:1px solid #F0E3C5;white-space:nowrap}
 .hm-usage-status-caption{color:#64748B;font-size:.76rem;font-weight:700;margin:.32rem 0 0}
+.hm-meeting-detail-title{color:#064E3B;font-size:.84rem;font-weight:950;margin:.58rem 0 .24rem}
+.hm-meeting-detail-wrap{overflow-x:auto;border:1px solid #E3C98E;border-radius:12px;background:#FFFDF8;margin:.18rem 0 .58rem}
+.hm-meeting-detail-table{width:100%;min-width:660px;border-collapse:collapse;font-size:.76rem;line-height:1.32}
+.hm-meeting-detail-table th{background:#FFF7E6;color:#064E3B;text-align:left;font-weight:900;padding:.42rem .48rem;border:1px solid #E3C98E;white-space:nowrap}
+.hm-meeting-detail-table td{color:#334155;font-weight:730;padding:.44rem .48rem;border:1px solid #F0E3C5;vertical-align:top}
+.hm-meeting-detail-empty{border:1px dashed #D9C28F;border-radius:12px;background:#FFFDF8;color:#64748B;padding:.52rem .62rem;margin:.18rem 0 .58rem;font-size:.76rem;font-weight:720}
 </style>
         """,
         unsafe_allow_html=True,
@@ -91,6 +105,48 @@ def _render_member_usage_status_table(
         f"<td>{remaining}</td><td>{available}</td><td>{_safe(status)}</td>"
         "</tr></tbody></table></div>"
         "<div class='hm-usage-status-caption'>Usage status is based on completed sessions, open scheduled sessions and approved late-reschedule consumption.</div>",
+        unsafe_allow_html=True,
+    )
+    _render_meeting_detail_table(
+        "Scheduled Meeting Details",
+        scheduled_rows,
+        "No meeting is currently scheduled.",
+    )
+    _render_meeting_detail_table(
+        "Consumed Meeting Details",
+        consumed_rows,
+        "No meeting has been consumed yet.",
+    )
+
+
+def _render_meeting_detail_table(
+    title: str,
+    rows: list[dict],
+    empty_message: str,
+) -> None:
+    st.markdown(
+        f"<div class='hm-meeting-detail-title'>{_safe(title)}</div>",
+        unsafe_allow_html=True,
+    )
+    if not rows:
+        st.markdown(
+            f"<div class='hm-meeting-detail-empty'>{_safe(empty_message)}</div>",
+            unsafe_allow_html=True,
+        )
+        return
+    body = "".join(
+        "<tr>"
+        f"<td>{_safe(row.get('title') or 'Session')}</td>"
+        f"<td>{_safe(row.get('date') or '-')}</td>"
+        f"<td>{_safe(row.get('time') or '-')}</td>"
+        f"<td>{_safe(row.get('status') or '-')}</td>"
+        "</tr>"
+        for row in rows
+    )
+    st.markdown(
+        "<div class='hm-meeting-detail-wrap'><table class='hm-meeting-detail-table'>"
+        "<thead><tr><th>Meeting</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>"
+        f"<tbody>{body}</tbody></table></div>",
         unsafe_allow_html=True,
     )
 
@@ -107,7 +163,6 @@ def _selected_admin_member_id(schedule_timezone_ui) -> str:
 
 
 def _render_hardened_package(member_id: object, member_view: bool = False) -> None:
-    st.markdown("<div class='hm-schedule-section'>", unsafe_allow_html=True)
     heading = "Package Subscribed" if member_view else "Current Member Package"
     st.markdown(
         f"<div class='hm-schedule-heading'>{heading}</div>",
@@ -117,7 +172,6 @@ def _render_hardened_package(member_id: object, member_view: bool = False) -> No
         summary = get_member_package_summary(member_id)
     except Exception as exc:
         st.error(f"Package summary could not be loaded: {exc}")
-        st.markdown("</div>", unsafe_allow_html=True)
         return
     package = dict(summary.get("package") or {})
     metrics = dict(summary.get("metrics") or {})
@@ -127,7 +181,6 @@ def _render_hardened_package(member_id: object, member_view: bool = False) -> No
             if member_view
             else "No active or paused package is assigned to this member."
         )
-        st.markdown("</div>", unsafe_allow_html=True)
         return
 
     inclusions = [
@@ -149,7 +202,6 @@ def _render_hardened_package(member_id: object, member_view: bool = False) -> No
     )
     if member_view:
         _render_member_usage_status_table(member_id, metrics, package)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _render_hardened_ledger(member_id: object, member_timezone: str) -> None:

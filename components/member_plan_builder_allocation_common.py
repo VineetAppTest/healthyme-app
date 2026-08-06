@@ -14,7 +14,7 @@ from components.profile_publish_control import load_active_profiles
 def member_label(row: Dict, plan: Dict | None = None) -> str:
     base = f"{row.get('name') or 'Member'} — {row.get('email') or row.get('id')}"
     plan_name = clean((plan or {}).get("profile_name"))
-    return f"{base} · {plan_name}" if plan_name else base
+    return f"{base} · {plan_name}" if plan_name else f"{base} · No active Meal Plan"
 
 
 def render_allocation_member_selector(key: str) -> Tuple[str, str]:
@@ -23,22 +23,23 @@ def render_allocation_member_selector(key: str) -> Tuple[str, str]:
         st.warning("No active members are available.")
         return "", ""
 
-    plans_ok, active_plans, plan_message = load_active_profiles()
-    if not plans_ok:
-        st.warning(plan_message)
-        return "", ""
+    try:
+        plans_ok, active_plans, plan_message = load_active_profiles()
+    except Exception as exc:
+        plans_ok, active_plans, plan_message = (
+            False,
+            [],
+            f"Meal Profile labels could not be loaded: {exc}",
+        )
     plan_by_member = {
         clean(row.get("assigned_member_id")): row
         for row in active_plans
         if clean(row.get("assigned_member_id"))
-    }
-    members = [row for row in members if clean(row.get("id")) in plan_by_member]
-    if not members:
-        st.warning(
-            "No member has an active Meal Plan. Publish a Meal Profile from Meals before "
-            "allocating Exercise or Supplement."
+    } if plans_ok else {}
+    if not plans_ok:
+        st.caption(
+            f"{plan_message} All active members remain visible for allocation."
         )
-        return "", ""
 
     options = {
         member_label(row, plan_by_member.get(clean(row.get("id")))): row
@@ -56,7 +57,10 @@ def render_allocation_member_selector(key: str) -> Tuple[str, str]:
         "Member",
         labels,
         key=key,
-        help="Exercise and Supplement allocations attach through the member's active Meal Plan.",
+        help=(
+            "All active members are visible for Exercise and Supplement allocation. "
+            "The active Meal Plan name is shown when one is available."
+        ),
     )
     return clean(options[selected_label].get("id")), selected_label
 

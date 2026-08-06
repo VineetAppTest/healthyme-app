@@ -75,7 +75,9 @@ class Issue260ProfileBuilderUICleanupTests(unittest.TestCase):
         self.assertIn("build_current_member_plan", self.view_source)
         self.assertIn("def _render_member_summary", self.view_source)
         self.assertIn("mpb-member-summary-table-v1", self.view_source)
-        self.assertIn('("Timing", "Activity", "Reps/Duration", "Remarks")', self.view_source)
+        self.assertIn("def _render_meal_week_grid", self.view_source)
+        self.assertIn("def _render_flat_plan_table", self.view_source)
+        self.assertIn('("Exercise", "Reps/Duration", "Timing", "Dates", "Status", "Remarks")', self.view_source)
         self.assertIn('"Download Excel"', self.view_source)
         self.assertIn('"Download PDF"', self.view_source)
 
