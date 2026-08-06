@@ -114,6 +114,39 @@ def _render_grouped_weekly_table(
     )
 
 
+def _render_member_summary(profile: Dict[str, Any]) -> None:
+    rows = [
+        ("Member", _member_label(profile)),
+        ("Meal Profile", clean(profile.get("profile_name")) or "Untitled"),
+        ("Status", clean(profile.get("status")).title() or "Unknown"),
+        ("Start Date", clean(profile.get("start_date")) or "Not set"),
+        (
+            "Health Concerns",
+            ", ".join(clean(value) for value in profile.get("health_concerns") or [] if clean(value))
+            or "Not set",
+        ),
+    ]
+    body = "".join(
+        f"<tr><th>{html.escape(label)}</th><td>{_html_cell(value)}</td></tr>"
+        for label, value in rows
+    )
+    st.markdown(
+        """
+<style id="mpb-member-summary-table-v1">
+.mpb-member-summary-wrap{border:1px solid #E3C98E;border-radius:14px;background:#FFFDF8;overflow:hidden;margin:.42rem 0 .78rem}
+.mpb-member-summary-table{width:100%;border-collapse:collapse;font-size:.80rem;line-height:1.34}
+.mpb-member-summary-table th{width:12rem;background:#FFF4DE;color:#064E3B;font-weight:950;text-align:left;padding:.48rem .56rem;border:1px solid #E3C98E}
+.mpb-member-summary-table td{color:#334155;font-weight:720;padding:.48rem .56rem;border:1px solid #F0E3C5}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div class='mpb-member-summary-wrap'><table class='mpb-member-summary-table'><tbody>{body}</tbody></table></div>",
+        unsafe_allow_html=True,
+    )
+
+
 def _plan_sections(
     profile: Dict[str, Any],
     items: List[Dict[str, Any]],
@@ -131,7 +164,7 @@ def _plan_sections(
         "Exercise": section_rows(
             start_date=start_date,
             section_type="Exercise",
-            headers=("Timing", "Activity", "Duration/Sets", "Remarks"),
+            headers=("Timing", "Activity", "Reps/Duration", "Remarks"),
             day_groups=lambda day: allocation_day_groups(
                 current_model, "exercise", start_date, day
             ),
@@ -183,6 +216,7 @@ def _build_workbook(sections: Dict[str, List[Dict[str, str]]]) -> bytes:
             "Liquid": 25,
             "Activity": 30,
             "Duration/Sets": 20,
+            "Reps/Duration": 20,
             "Supplement": 30,
             "Dosage": 22,
             "Remarks": 44,
@@ -475,6 +509,7 @@ def render_view_member_plan_compact() -> None:
             return
 
     plan_start = clean(profile.get("start_date"))
+    _render_member_summary(profile)
     _render_grouped_weekly_table(
         plan_start,
         "Meal",
@@ -484,7 +519,7 @@ def render_view_member_plan_compact() -> None:
     _render_grouped_weekly_table(
         plan_start,
         "Exercise",
-        ("Timing", "Activity", "Duration/Sets", "Remarks"),
+        ("Timing", "Activity", "Reps/Duration", "Remarks"),
         lambda day: allocation_day_groups(model or {}, "exercise", plan_start, day),
     )
     _render_grouped_weekly_table(

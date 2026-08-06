@@ -18,12 +18,14 @@ from components.member_allocation_notifications import (
 from components.pbm_core import (
     MEAL_SLOTS,
     SELECT_RECIPE,
+    SELECT_PROFILE,
     clean,
     clean_date,
     day_label,
     load_selected,
     member_maps,
     new_row,
+    reset_profile,
     safe,
     safe_key,
     source_snapshot,
@@ -31,8 +33,7 @@ from components.pbm_core import (
     with_placeholder,
 )
 from components.profile_builder_module_store import (
-    EDIT_SCOPE_ALL,
-    list_profiles_for_editing,
+    list_profiles_for_repository,
     save_profile_module,
     save_profile_shell,
 )
@@ -43,47 +44,106 @@ _MEAL_PROFILE_SELECTOR = "mpb_meal_repository_profile"
 
 
 def _repository_profile_label(row: Dict[str, Any]) -> str:
-    return clean(row.get("profile_name")) or "Untitled Meal Profile"
+    name = clean(row.get("profile_name")) or "Untitled Meal Profile"
+    status = clean(row.get("status")).title() or "Unknown"
+    member = clean(row.get("assigned_member_label")) or "Unallocated"
+    return f"{name} · {status} · {member}"
+
+
+def _profile_is_editable(row: Dict[str, Any]) -> bool:
+    return clean(row.get("status")).lower() == "draft" and not clean(
+        row.get("assigned_member_id")
+    )
+
+
+def _profile_matches_health_filter(
+    row: Dict[str, Any],
+    selected_concerns: List[str],
+) -> bool:
+    selected = {clean(value).lower() for value in selected_concerns if clean(value)}
+    if not selected:
+        return True
+    row_concerns = {
+        clean(value).lower()
+        for value in row.get("health_concerns") or []
+        if clean(value)
+    }
+    return bool(row_concerns & selected)
 
 
 def _render_publish_controls(
     can_publish: bool,
-) -> tuple[Dict[str, Any], str, str, object, bool]:
-    ok, profiles, message = list_profiles_for_editing(EDIT_SCOPE_ALL)
+) -> tuple[Dict[str, Any], str, str, object, bool, bool]:
+    ok, profiles, message = list_profiles_for_repository()
     if not ok:
         st.error(message)
-        return {}, "", "", clean_date(""), False
+        return {}, "", "", clean_date(""), False, False
+    health_options = sorted(
+        {
+            clean(concern)
+            for row in profiles
+            for concern in row.get("health_concerns") or []
+            if clean(concern)
+        }
+    )
+    selected_concerns = st.multiselect(
+        "Health Concerns",
+        health_options,
+        key="mpb_meal_profile_health_filter",
+        placeholder="All Health Concerns",
+        help="Filter the Meal Profile selector without hiding retained profile history.",
+    )
     profiles = [
-        row for row in profiles if clean(row.get("status")).lower() == "draft"
+        row for row in profiles if _profile_matches_health_filter(row, selected_concerns)
     ]
     profile_by_id = {
         clean(row.get("id")): row for row in profiles if clean(row.get("id"))
     }
     profile_ids = list(profile_by_id)
     if not profile_ids:
-        st.info("Create a Meal Profile under Setup before building or publishing meals.")
-        return {}, "", "", clean_date(""), False
+        st.info("No Meal Profiles match the selected filters.")
+        return {}, "", "", clean_date(""), False, False
 
     loaded_id = clean(st.session_state.get("pbm_loaded_profile_id"))
-    if st.session_state.get(_MEAL_PROFILE_SELECTOR) not in profile_ids:
+    profile_options = [SELECT_PROFILE] + profile_ids
+    if st.session_state.get(_MEAL_PROFILE_SELECTOR) not in profile_options:
         st.session_state[_MEAL_PROFILE_SELECTOR] = (
-            loaded_id if loaded_id in profile_ids else profile_ids[0]
+            loaded_id if loaded_id in profile_ids else SELECT_PROFILE
         )
 
     member_labels, label_to_id, _id_to_label, _member_message = member_maps()
-    controls = st.columns([0.36, 0.29, 0.18, 0.17], gap="small", vertical_alignment="bottom")
+    controls = st.columns(
+        [0.34, 0.28, 0.18, 0.20],
+        gap="small",
+        vertical_alignment="bottom",
+    )
     selected_profile_id = controls[0].selectbox(
         "Meal Profile",
-        profile_ids,
-        format_func=lambda value: _repository_profile_label(profile_by_id[value]),
+        profile_options,
+        format_func=lambda value: (
+            "Select Meal Profile"
+            if value == SELECT_PROFILE
+            else _repository_profile_label(profile_by_id[value])
+        ),
         key=_MEAL_PROFILE_SELECTOR,
     )
+    if selected_profile_id == SELECT_PROFILE:
+        if loaded_id:
+            reset_profile()
+            st.session_state["pbm_loaded_profile_id"] = ""
+            st.session_state["pbm_loaded_member_id"] = ""
+            st.session_state["pbm_items"] = []
+            st.rerun()
+        return {}, "", "", clean_date(""), False, False
     if selected_profile_id != loaded_id:
         load_ok, load_message = load_selected(selected_profile_id, shell_only=False)
         if load_ok:
             st.rerun()
         st.error(load_message)
-        return {}, "", "", clean_date(""), False
+        return {}, "", "", clean_date(""), False, False
+
+    selected_profile = profile_by_id[selected_profile_id]
+    profile_editable = _profile_is_editable(selected_profile)
 
     selected_member_label = controls[1].selectbox(
         "Member",
@@ -100,18 +160,28 @@ def _render_publish_controls(
         "Publish",
         type="primary",
         use_container_width=True,
-        disabled=not can_publish or not bool(selected_member_id),
+        disabled=not can_publish or not bool(selected_member_id) or not profile_editable,
         key=f"mpb_publish_repository_plan_{selected_profile_id}",
-        help="Publish a meal-only copy to the selected member.",
+        help=(
+            "Publish a meal-only copy to the selected member."
+            if profile_editable
+            else "Allocated or historical Meal Profiles are retained read-only. Clone from Setup before publishing a new copy."
+        ),
     )
     if not any(label_to_id.values()):
         st.caption("No active member directory entries are available for publishing.")
+    if not profile_editable:
+        st.caption(
+            "This allocated or historical Meal Profile is visible for review only. "
+            "Use Setup → Clone Meal Profile to create an editable Draft."
+        )
     return (
-        profile_by_id[selected_profile_id],
+        selected_profile,
         selected_member_id,
         selected_member_label,
         start_date,
         publish_clicked,
+        profile_editable,
     )
 
 
@@ -191,6 +261,14 @@ def _publish_repository_plan(
         }
     clear_publish_cache()
     load_member_plan_events.clear()
+    _clear_prefix("mpb_compose_")
+    _clear_prefix("mpb_added_")
+    st.session_state[_MEAL_PROFILE_SELECTOR] = SELECT_PROFILE
+    st.session_state["pbm_loaded_profile_id"] = ""
+    st.session_state["pbm_loaded_member_id"] = ""
+    st.session_state["pbm_items"] = []
+    st.session_state["mpb_meal_saved"] = False
+    reset_profile()
     st.session_state["mpb_publish_flash"] = (
         f"Meal Profile published to {member_label}. Exercise and Supplement remain "
         "independent allocations linked through this member's active Meal Plan. "
@@ -218,6 +296,12 @@ def _meal_rows(day: int, slot: str) -> List[Dict[str, Any]]:
 
 def _clear_composer(day: int, slot: str) -> None:
     prefix = f"mpb_compose_{day}_{safe_key(slot)}_"
+    for key in list(st.session_state.keys()):
+        if str(key).startswith(prefix):
+            st.session_state.pop(key, None)
+
+
+def _clear_prefix(prefix: str) -> None:
     for key in list(st.session_state.keys()):
         if str(key).startswith(prefix):
             st.session_state.pop(key, None)
@@ -305,6 +389,7 @@ def _render_added_row(
     row: Dict[str, Any],
     recipes: List[str],
     snapshots: Dict[str, Dict[str, Any]],
+    disabled: bool = False,
 ) -> None:
     ui_id = clean(row.get("ui_id"))
     recipe_options = with_placeholder(recipes, SELECT_RECIPE)
@@ -319,9 +404,10 @@ def _render_added_row(
         index=recipe_options.index(current_recipe),
         key=f"mpb_added_{ui_id}_recipe",
         label_visibility="collapsed",
+        disabled=disabled,
     )
     selected = "" if selected == SELECT_RECIPE else selected
-    if selected != clean(row.get("reference_label")):
+    if not disabled and selected != clean(row.get("reference_label")):
         row["reference_label"] = selected
         snapshot = _snapshot_for(selected, snapshots)
         row["portion"] = clean(snapshot.get("portion_size"))
@@ -336,18 +422,21 @@ def _render_added_row(
         "Portion Guidance",
         key=portion_key,
         label_visibility="collapsed",
+        disabled=disabled,
     )
     row["instruction"] = columns[2].text_input(
         "Instruction",
         key=instruction_key,
         label_visibility="collapsed",
         placeholder="Optional instruction",
+        disabled=disabled,
     )
     if columns[3].button(
         "×",
         key=f"mpb_added_{ui_id}_remove",
         help="Remove item",
         use_container_width=True,
+        disabled=disabled,
     ):
         _remove_row(ui_id)
         st.session_state["mpb_meal_saved"] = False
@@ -360,6 +449,7 @@ def _render_slot(
     slot: str,
     recipes: List[str],
     snapshots: Dict[str, Dict[str, Any]],
+    disabled: bool = False,
 ) -> None:
     slot_key = safe_key(slot)
     existing = _meal_rows(day, slot)
@@ -370,7 +460,7 @@ def _render_slot(
             unsafe_allow_html=True,
         )
         for row in existing:
-            _render_added_row(row, recipes, snapshots)
+            _render_added_row(row, recipes, snapshots, disabled=disabled)
 
         recipe_key = f"mpb_compose_{day}_{slot_key}_recipe"
         portion_key = f"mpb_compose_{day}_{slot_key}_portion"
@@ -384,6 +474,7 @@ def _render_slot(
             options,
             key=recipe_key,
             label_visibility="collapsed",
+            disabled=disabled,
         )
         selected_recipe = "" if selected_recipe == SELECT_RECIPE else selected_recipe
         snapshot = _snapshot_for(selected_recipe, snapshots)
@@ -400,19 +491,21 @@ def _render_slot(
             key=portion_key,
             label_visibility="collapsed",
             placeholder="Portion guidance",
+            disabled=disabled,
         )
         instruction = compose[2].text_input(
             "Instruction",
             key=instruction_key,
             label_visibility="collapsed",
             placeholder="Optional instruction",
+            disabled=disabled,
         )
         if compose[3].button(
             "Add",
             key=f"mpb_compose_{day}_{slot_key}_add",
             type="primary",
             use_container_width=True,
-            disabled=not bool(selected_recipe),
+            disabled=disabled or not bool(selected_recipe),
         ):
             _add_composer_row(day, slot, selected_recipe, portion, instruction)
         if selected_recipe:
@@ -473,8 +566,12 @@ def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> N
         publish_member_label,
         publish_start_date,
         publish_clicked,
+        profile_editable,
     ) = _render_publish_controls(can_publish)
     profile = st.session_state.get("pbm_profile") or {}
+    flash = st.session_state.pop("mpb_publish_flash", "")
+    if flash:
+        st.success(flash)
     profile_id = clean(profile.get("id"))
     if not profile_id:
         return
@@ -497,12 +594,13 @@ def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> N
 
     snapshots: Dict[str, Dict[str, Any]] = {}
     for slot in MEAL_SLOTS:
-        _render_slot(day, slot, recipes, snapshots)
+        _render_slot(day, slot, recipes, snapshots, disabled=not profile_editable)
 
     if st.button(
         "Save Meal Plan",
         type="primary",
         use_container_width=True,
+        disabled=not profile_editable,
         key="mpb_save_meals",
     ):
         ok, message = save_profile_module(
@@ -535,10 +633,6 @@ def render_member_plan_meals_compact(recipes: List[str], can_publish: bool) -> N
             unsafe_allow_html=True,
         )
         _render_review_table()
-
-    flash = st.session_state.pop("mpb_publish_flash", "")
-    if flash:
-        st.success(flash)
 
     if not can_publish:
         st.caption("Publishing is restricted to Admin and Super Admin.")

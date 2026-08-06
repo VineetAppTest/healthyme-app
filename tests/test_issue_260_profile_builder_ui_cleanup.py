@@ -73,6 +73,9 @@ class Issue260ProfileBuilderUICleanupTests(unittest.TestCase):
         self.assertIn("render_view_member_plan_compact()", self.builder_source)
         self.assertNotIn("Profile Scope", self.view_source)
         self.assertIn("build_current_member_plan", self.view_source)
+        self.assertIn("def _render_member_summary", self.view_source)
+        self.assertIn("mpb-member-summary-table-v1", self.view_source)
+        self.assertIn('("Timing", "Activity", "Reps/Duration", "Remarks")', self.view_source)
         self.assertIn('"Download Excel"', self.view_source)
         self.assertIn('"Download PDF"', self.view_source)
 

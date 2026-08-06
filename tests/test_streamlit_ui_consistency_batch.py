@@ -73,7 +73,7 @@ class StreamlitUiConsistencyBatchTests(unittest.TestCase):
         self.assertIn("<th>Type</th>", source)
         self.assertIn("<th>Day</th>", source)
         self.assertIn('("Timing", "Meal", "Liquid", "Remarks")', source)
-        self.assertIn('("Timing", "Activity", "Duration/Sets", "Remarks")', source)
+        self.assertIn('("Timing", "Activity", "Reps/Duration", "Remarks")', source)
         self.assertIn('("Timing", "Supplement", "Dosage", "Remarks")', source)
         self.assertNotIn("Active-plan integrity verified", source)
 

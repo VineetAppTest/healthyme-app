@@ -14,18 +14,18 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
-    def test_my_schedule_uses_exact_three_sections_and_preserves_actions(self):
+    def test_my_schedule_uses_package_and_upcoming_sections_and_preserves_actions(self):
         source = (ROOT / "components/member_schedule_tabbed_page.py").read_text()
         self.assertIn(
-            '_SECTIONS = ("Package Subscribed", "Upcoming Schedule", "Session Usage")',
+            '_SECTIONS = ("Package Subscribed", "Upcoming Schedule")',
             source,
         )
         self.assertNotIn("st.tabs(", source)
         self.assertIn("on_click=_activate_section", source)
         self.assertIn('if selected == "Package Subscribed"', source)
-        self.assertIn('elif selected == "Upcoming Schedule"', source)
+        self.assertNotIn('"Session Usage"', source)
         self.assertIn("schedule_ui._render_package", source)
-        self.assertIn("schedule_ui._render_member_ledger", source)
+        self.assertNotIn("schedule_ui._render_member_ledger", source)
         self.assertIn("Acknowledge schedule", source)
         self.assertIn("Request Reschedule", source)
         self.assertIn("Submit Reschedule Request", source)
@@ -43,15 +43,22 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         source = (ROOT / "components/member_schedule_tabbed_page.py").read_text()
         selector = source.index("selected = _render_section_selector()")
         package_branch = source.index('if selected == "Package Subscribed"', selector)
-        upcoming_branch = source.index('elif selected == "Upcoming Schedule"', selector)
-        usage_branch = source.index("else:", upcoming_branch)
+        upcoming_branch = source.index("else:", package_branch)
         package_read = source.index("schedule_ui._render_package", package_branch)
         upcoming_read = source.index("_render_upcoming_section", upcoming_branch)
-        ledger_read = source.index("schedule_ui._render_member_ledger", usage_branch)
         self.assertLess(package_branch, package_read)
         self.assertLess(upcoming_branch, upcoming_read)
-        self.assertLess(usage_branch, ledger_read)
         self.assertNotIn("package_tab, upcoming_tab, usage_tab", source)
+        self.assertNotIn('selected == "Session Usage"', source)
+
+    def test_package_subscribed_contains_current_usage_status_table(self):
+        source = (ROOT / "components/package_hardening_schedule_ui.py").read_text()
+        self.assertIn("def _render_member_usage_status_table", source)
+        self.assertIn("hm-member-package-usage-status-v1", source)
+        self.assertIn("<th>Total Sessions</th><th>Consumed</th><th>Scheduled</th>", source)
+        self.assertIn("Available to Schedule", source)
+        self.assertIn("if member_view:", source)
+        self.assertIn("_render_member_usage_status_table(member_id, metrics, package)", source)
 
     def test_my_schedule_and_daily_log_use_member_home_spacing(self):
         schedule = (ROOT / "components/member_schedule_tabbed_page.py").read_text()

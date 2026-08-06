@@ -297,6 +297,71 @@ def _meal_items(
     return output
 
 
+def _meal_week_cell(meals: list[dict[str, Any]], day_number: int, slot: str) -> str:
+    rows = [
+        row
+        for row in meals
+        if _safe_int(row.get("day_number")) == day_number
+        and _clean(row.get("slot_name") or row.get("scheduled_time")) == slot
+    ]
+    rows.sort(key=lambda row: _safe_int(row.get("item_order"), 0))
+    values: list[str] = []
+    for row in rows:
+        food = _clean(row.get("reference_label"))
+        portion = _clean(row.get("portion"))
+        label = f"{food} - {portion}" if food and portion else food or portion
+        if label and label not in values:
+            values.append(label)
+    return " + ".join(values)
+
+
+def _render_meal_week_grid(
+    meals: list[dict[str, Any]],
+    dates: list[tuple[int, dt.date]],
+) -> None:
+    slots = (
+        "Breakfast",
+        "Mid-morning Snack",
+        "Lunch",
+        "Evening Snack / Tea",
+        "Dinner",
+        "Bedtime",
+    )
+    header_html = "".join(f"<th>{_esc(slot)}</th>" for slot in slots)
+    row_html = []
+    for day_number, target_date in dates:
+        cells = "".join(
+            f"<td>{_esc(_meal_week_cell(meals, day_number, slot)) or '&mdash;'}</td>"
+            for slot in slots
+        )
+        row_html.append(
+            "<tr>"
+            f"<td><b>Day {day_number}</b><span>{_esc(target_date.strftime('%a, %d %b'))}</span></td>"
+            f"{cells}</tr>"
+        )
+    st.markdown(
+        """
+<style id="hm-member-weekly-meal-grid-v1">
+.hm-week-meal-title{color:#064E3B;font-size:.96rem;font-weight:950;margin:.62rem 0 .32rem}
+.hm-week-meal-wrap{overflow-x:auto;border:1px solid #E3C98E;border-radius:14px;background:#FFFDF8;margin:.20rem 0 .84rem}
+.hm-week-meal-table{width:100%;min-width:920px;border-collapse:collapse;font-size:.76rem;line-height:1.34}
+.hm-week-meal-table th{background:#FFF4DE;color:#064E3B;font-weight:950;text-align:center;padding:.46rem .48rem;border:1px solid #E3C98E;white-space:nowrap}
+.hm-week-meal-table td{color:#334155;font-weight:730;vertical-align:top;padding:.50rem .52rem;border:1px solid #F0E3C5}
+.hm-week-meal-table td:first-child{color:#064E3B;font-weight:900;white-space:nowrap;background:#FFFCF5}
+.hm-week-meal-table td:first-child span{display:block;color:#64748B;font-size:.68rem;font-weight:720;margin-top:.08rem}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<div class='hm-week-meal-title'>Meals</div>"
+        "<div class='hm-week-meal-wrap'><table class='hm-week-meal-table'>"
+        f"<thead><tr><th>Day</th>{header_html}</tr></thead>"
+        f"<tbody>{''.join(row_html)}</tbody></table></div>",
+        unsafe_allow_html=True,
+    )
+
+
 def _supplement_items(
     rows: list[dict[str, Any]],
 ) -> list[dict[str, str]]:
@@ -375,18 +440,23 @@ def build_day_timeline(
     *,
     day_number: int,
     target_date: dt.date,
+    domains: tuple[str, ...] = ("meal", "supplement", "exercise"),
 ) -> OrderedDict[str, list[dict[str, str]]]:
     """Build one member-safe, chronological day view from the three authorities."""
 
-    items = _meal_items(list(model.get("meals") or []), day_number)
-    items.extend(
-        _supplement_items(
-            _allocation_rows_for_date(model, "supplement", target_date)
+    items: list[dict[str, str]] = []
+    if "meal" in domains:
+        items.extend(_meal_items(list(model.get("meals") or []), day_number))
+    if "supplement" in domains:
+        items.extend(
+            _supplement_items(
+                _allocation_rows_for_date(model, "supplement", target_date)
+            )
         )
-    )
-    items.extend(
-        _exercise_items(_allocation_rows_for_date(model, "exercise", target_date))
-    )
+    if "exercise" in domains:
+        items.extend(
+            _exercise_items(_allocation_rows_for_date(model, "exercise", target_date))
+        )
     domain_order = {"meal": 0, "supplement": 1, "exercise": 2}
     items.sort(
         key=lambda row: (
@@ -441,10 +511,11 @@ def _render_day_timeline(
     grouped: OrderedDict[str, list[dict[str, str]]],
     *,
     active_period: str = "",
+    empty_message: str = "No meal, supplement or exercise is scheduled for this day.",
 ) -> None:
     if not grouped:
         st.markdown(
-            "<div class='hm-plan-empty'>No meal, supplement or exercise is scheduled for this day.</div>",
+            f"<div class='hm-plan-empty'>{_esc(empty_message)}</div>",
             unsafe_allow_html=True,
         )
         return
@@ -511,7 +582,12 @@ def render_current_member_plan_view() -> None:
     profile = dict(model.get("meal_profile") or {})
     current_day, dates = _cycle_dates(profile, today)
     st.markdown(
-        "<div class='hm-plan-week-intro'>Your complete seven-day cycle is organised by day. Open a day to see Meals, Supplements and Exercise together in the order they apply.</div>",
+        "<div class='hm-plan-week-intro'>Your weekly meals are shown first. Open any day below to see Supplements and Exercise in the order they apply.</div>",
+        unsafe_allow_html=True,
+    )
+    _render_meal_week_grid(list(model.get("meals") or []), dates)
+    st.markdown(
+        "<div class='hm-week-meal-title'>Supplements & Exercise</div>",
         unsafe_allow_html=True,
     )
 
@@ -550,12 +626,14 @@ def render_current_member_plan_view() -> None:
                         model,
                         day_number=day_number,
                         target_date=target_date,
+                        domains=("supplement", "exercise"),
                     ),
                     active_period=(
                         _current_period(_member_local_now(member_id))
                         if is_today
                         else ""
                     ),
+                    empty_message="No supplement or exercise is scheduled for this day.",
                 )
 
     with st.expander("Nutrition Guidance", expanded=False):

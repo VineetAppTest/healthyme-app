@@ -4,6 +4,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEDULE = ROOT / "components" / "admin_schedule_feedback_aug04.py"
+ADMIN_DASHBOARD = ROOT / "pages" / "10_Admin_Dashboard.py"
+ADMIN_DASHBOARD_REMINDER = ROOT / "components" / "admin_dashboard_schedule_reminder.py"
 SCHEDULE_POLISH = ROOT / "components" / "admin_schedule_disclosure_polish.py"
 SCHEDULE_PAGE = ROOT / "pages" / "32_Admin_Scheduling.py"
 EXERCISE = ROOT / "components" / "member_plan_builder_exercise.py"
@@ -17,6 +19,8 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
     def test_changed_python_files_compile(self):
         for path in (
             SCHEDULE,
+            ADMIN_DASHBOARD,
+            ADMIN_DASHBOARD_REMINDER,
             SCHEDULE_POLISH,
             SCHEDULE_PAGE,
             EXERCISE,
@@ -26,6 +30,21 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
             BOOTSTRAP,
         ):
             compile(path.read_text(encoding="utf-8"), str(path), "exec")
+
+    def test_admin_dashboard_shows_read_only_48_hour_schedule_intimation(self):
+        source = ADMIN_DASHBOARD_REMINDER.read_text(encoding="utf-8")
+        dashboard = ADMIN_DASHBOARD.read_text(encoding="utf-8")
+        self.assertIn("def upcoming_admin_schedule_rows", source)
+        self.assertIn("hours: int = 48", source)
+        self.assertIn("window_end = now_value + dt.timedelta(hours=hours)", source)
+        self.assertIn("Upcoming Schedule for Admin", source)
+        self.assertIn("Next 48 hrs", source)
+        self.assertIn("Practitioner Time", source)
+        self.assertIn("Open Scheduling", source)
+        self.assertIn("load_state()", source)
+        self.assertNotIn("save_state", source)
+        self.assertNotIn("update_member_schedule_status", source)
+        self.assertIn("render_admin_upcoming_schedule_reminder", dashboard)
 
     def test_schedule_is_full_width_and_sharply_structured(self):
         source = SCHEDULE.read_text(encoding="utf-8")

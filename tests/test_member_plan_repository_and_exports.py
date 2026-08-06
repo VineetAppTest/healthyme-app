@@ -88,6 +88,7 @@ def test_exercise_and_supplements_are_clubbed_and_sorted_by_timing() -> None:
     exercise = allocation_day_groups(model, "exercise", "2026-08-05", 1)
     assert [group["Timing"] for group in exercise] == ["Morning", "Evening"]
     assert exercise[0]["Activity"] == "Squats\nBrisk Walk"
+    assert exercise[0]["Reps/Duration"] == "20-30\n30 min"
     supplements = allocation_day_groups(model, "supplement", "2026-08-05", 1)
     assert [group["Timing"] for group in supplements] == ["Morning", "Evening"]
     assert supplements[0]["Supplement"] == "Magnesium\nPotassium"
@@ -117,6 +118,7 @@ def test_excel_and_pdf_exports_contain_all_three_screen_sections() -> None:
     ]
     sections = _plan_sections(profile, items, {})
     assert list(sections) == ["Meals", "Exercise", "Supplement"]
+    assert "Reps/Duration" in sections["Exercise"][0]
     workbook = _build_workbook(sections)
     pdf = _build_pdf(profile, sections)
     assert workbook.startswith(b"PK")

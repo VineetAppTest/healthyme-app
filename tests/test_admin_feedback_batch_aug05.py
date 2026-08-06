@@ -47,14 +47,21 @@ def _state(*, supplement_placeholder: bool = False) -> dict:
 
 def test_admin_profile_filters_and_setup_retain_all_profiles() -> None:
     setup = (ROOT / "components/member_plan_builder_setup.py").read_text(encoding="utf-8")
+    meals = (ROOT / "components/member_plan_builder_meals_compact.py").read_text(encoding="utf-8")
     store = (ROOT / "components/profile_builder_module_store.py").read_text(encoding="utf-8")
     view = (ROOT / "components/member_plan_builder_view_compact.py").read_text(encoding="utf-8")
     allocation = (ROOT / "components/member_plan_builder_allocation_common.py").read_text(encoding="utf-8")
 
     assert "list_profiles_for_repository()" in setup
+    assert "list_profiles_for_repository()" in meals
+    assert '"Health Concerns"' in meals
+    assert "def _profile_is_editable" in meals
+    assert "This allocated or historical Meal Profile is visible for review only." in meals
+    assert 'st.session_state[_MEAL_PROFILE_SELECTOR] = SELECT_PROFILE' in meals
     assert 'clean(row.get("status")).lower() == "draft"' not in setup
     assert '"This allocated or historical Meal Profile is retained read-only.' in setup
     assert "def list_profiles_for_repository(" in store
+    assert "health_concerns" in store[store.index("def list_profiles_for_repository(") :]
     assert '.in_("status"' not in store[store.index("def list_profiles_for_repository(") :]
     assert 'profiles = [row for row in profiles if clean(row.get("assigned_member_id"))]' not in view
     assert '"Meal Profile"' in view
@@ -188,3 +195,5 @@ def test_meal_plan_publish_queues_one_email_and_in_app_event() -> None:
     assert len(state["messages"]) == 1
     assert len(state["notifications"]) == 1
     assert state["notifications"][0]["kind"] == "meal_plan_allocated"
+    assert "Check the My Weekly Plan." in state["messages"][0]["message"]
+    assert "Check the My Weekly Plan." in state["notifications"][0]["message"]

@@ -2,6 +2,9 @@ import functools
 
 import streamlit as st
 
+from components.admin_dashboard_schedule_reminder import (
+    render_admin_upcoming_schedule_reminder,
+)
 from components.guards import require_admin
 from components.performance_diagnostics import (
     begin_page_measurement,
@@ -312,6 +315,11 @@ with st.container(border=True):
             "pages/32_Admin_Scheduling.py",
             "dash_scheduling_v102_4b23",
         )
+    render_admin_upcoming_schedule_reminder(
+        st.session_state.get("user_id")
+        or st.session_state.get("oidc_email")
+        or "admin"
+    )
     st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
