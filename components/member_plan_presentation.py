@@ -46,10 +46,26 @@ _TIMING_ORDER = (
 )
 
 _LIQUID_TOKENS = ("liquid", "beverage", "drink", "fluid")
+_REMOVED_MEAL_TIMINGS = {
+    "wake-up",
+    "wake up",
+    "early morning",
+    "wake-up / early morning",
+    "wake up / early morning",
+}
 
 
 def _clean(value: object) -> str:
     return str(value or "").strip()
+
+
+def _normalised_timing(value: object) -> str:
+    text = _clean(value).replace("–", "-").replace("—", "-")
+    return re.sub(r"\s+", " ", text).casefold()
+
+
+def is_removed_meal_timing(value: object) -> bool:
+    return _normalised_timing(value) in _REMOVED_MEAL_TIMINGS
 
 
 def _as_dict(value: object) -> Dict[str, Any]:
@@ -138,6 +154,8 @@ def meal_day_groups(items: Sequence[Dict[str, Any]], day_number: int) -> List[Di
         if int(row.get("day_number") or 0) != day_number:
             continue
         timing = _clean(row.get("slot_name")) or "As advised"
+        if is_removed_meal_timing(timing):
+            continue
         grouped.setdefault(timing, []).append(dict(row))
 
     output: List[Dict[str, str]] = []

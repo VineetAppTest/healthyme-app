@@ -9,6 +9,7 @@ import streamlit as st
 
 from components.current_member_plan import build_current_member_plan
 from components.member_plan_presentation import (
+    MEAL_TIMINGS,
     allocation_day_groups,
     meal_day_groups,
     profile_matches_or_filters,
@@ -56,62 +57,150 @@ def _html_cell(value: object) -> str:
     return "<br>".join(html.escape(line) for line in text.splitlines()) or "&mdash;"
 
 
-def _render_grouped_weekly_table(
-    start_date: str,
-    section_type: str,
-    headers: Sequence[str],
-    day_groups,
-) -> None:
+def _meal_grid_cell(items: List[Dict[str, Any]], day_number: int, timing: str) -> str:
+    groups = {
+        clean(group.get("Timing")): group
+        for group in meal_day_groups(items, day_number)
+    }
+    group = groups.get(timing, {})
+    values = [
+        clean(value)
+        for value in (group.get("Meal"), group.get("Liquid"))
+        if clean(value)
+    ]
+    return " + ".join(values)
+
+
+def _render_meal_week_grid(items: List[Dict[str, Any]]) -> None:
+    header_html = "".join(f"<th>{html.escape(slot)}</th>" for slot in MEAL_TIMINGS)
     rows: List[str] = []
-    prepared = [list(day_groups(day_number) or [{}]) for day_number in range(1, 8)]
-    total_rows = sum(len(groups) for groups in prepared)
-    rendered_rows = 0
-
-    for day_number, groups in enumerate(prepared, 1):
-        for group_index, group in enumerate(groups):
-            prefix = ""
-            if rendered_rows == 0:
-                prefix += (
-                    f"<td rowspan='{total_rows}' class='mpb-weekly-fixed'>{_html_cell(start_date)}</td>"
-                    f"<td rowspan='{total_rows}' class='mpb-weekly-fixed'>{html.escape(section_type)}</td>"
-                )
-            if group_index == 0:
-                prefix += (
-                    f"<td rowspan='{len(groups)}' class='mpb-weekly-day'>Day {day_number}</td>"
-                )
-            timing_class = " mpb-timing-start" if group_index == 0 else ""
-            rows.append(
-                f"<tr class='{timing_class.strip()}'>"
-                f"{prefix}"
-                + "".join(f"<td>{_html_cell(group.get(header))}</td>" for header in headers)
-                + "</tr>"
-            )
-            rendered_rows += 1
-
+    for day_number in range(1, 8):
+        cells = "".join(
+            f"<td>{_html_cell(_meal_grid_cell(items, day_number, slot))}</td>"
+            for slot in MEAL_TIMINGS
+        )
+        rows.append(f"<tr><td>Day {day_number}</td>{cells}</tr>")
     st.markdown(
         """
-<style id="mpb-weekly-grouped-table-v2">
-.mpb-weekly-wrap{overflow:auto;border:1px solid #D8A84E;border-radius:12px;background:#fff;margin:.34rem 0 .78rem}
-.mpb-weekly-table{width:100%;border-collapse:collapse;font-size:.75rem;line-height:1.32}
-.mpb-weekly-table th{background:#FFF4DE;color:#064E3B;font-weight:900;text-align:center;padding:.45rem .42rem;border:1px solid #D8A84E}
-.mpb-weekly-table td{color:#334155;font-weight:650;padding:.48rem .44rem;border:1px solid #E3C98E;vertical-align:top}
-.mpb-weekly-table tr.mpb-timing-start td{border-top:1.5px solid #D8A84E}
-.mpb-weekly-table td:nth-last-child(4){color:#064E3B;font-weight:900;background:#FFFCF5}
-.mpb-weekly-table .mpb-weekly-fixed,.mpb-weekly-table .mpb-weekly-day{text-align:center;vertical-align:middle;color:#064E3B;font-weight:900;white-space:nowrap;background:#FFFDF8}
+<style id="mpb-weekly-plan-grid-v1">
 .mpb-weekly-title{color:#064E3B;font-size:.92rem;font-weight:950;margin:.72rem 0 .28rem}
-@media(max-width:760px){.mpb-weekly-table{min-width:840px}}
+.mpb-plan-table-wrap{overflow:auto;border:1px solid #D8A84E;border-radius:12px;background:#fff;margin:.34rem 0 .78rem}
+.mpb-plan-table{width:100%;border-collapse:collapse;font-size:.75rem;line-height:1.32}
+.mpb-plan-table th{background:#FFF4DE;color:#064E3B;font-weight:900;text-align:center;padding:.45rem .42rem;border:1px solid #D8A84E;white-space:nowrap}
+.mpb-plan-table td{color:#334155;font-weight:650;padding:.48rem .44rem;border:1px solid #E3C98E;vertical-align:top}
+.mpb-plan-table td:first-child{color:#064E3B;font-weight:900;text-align:center;white-space:nowrap;background:#FFFDF8}
+@media(max-width:760px){.mpb-plan-table{min-width:840px}}
 </style>
 """,
         unsafe_allow_html=True,
     )
-    header_html = "".join(f"<th>{html.escape(value)}</th>" for value in headers)
     st.markdown(
-        f"<div class='mpb-weekly-title'>{html.escape(section_type)}</div>"
-        "<div class='mpb-weekly-wrap'><table class='mpb-weekly-table'>"
-        "<thead><tr><th>Start Date</th><th>Type</th><th>Day</th>"
-        f"{header_html}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>",
+        "<div class='mpb-weekly-title'>Meal</div>"
+        "<div class='mpb-plan-table-wrap'><table class='mpb-plan-table'>"
+        f"<thead><tr><th>Day</th>{header_html}</tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table></div>",
         unsafe_allow_html=True,
     )
+
+
+def _model_rows(model: Dict[str, Any], domain: str) -> List[Dict[str, Any]]:
+    partitions = dict((model or {}).get(domain) or {})
+    rows = [dict(row or {}) for row in partitions.get("current") or []]
+    rows.extend(dict(row or {}) for row in partitions.get("upcoming") or [])
+    rows.sort(
+        key=lambda row: (
+            clean(row.get("start_date")),
+            clean(row.get("exercise_name") or row.get("supplement_name") or row.get("title")).casefold(),
+            clean(row.get("id")),
+        )
+    )
+    return rows
+
+
+def _snapshot(row: Dict[str, Any]) -> Dict[str, Any]:
+    source_snapshot = row.get("source_snapshot")
+    if isinstance(source_snapshot, dict):
+        original = source_snapshot.get("source_original_snapshot")
+        return dict(original) if isinstance(original, dict) else dict(source_snapshot)
+    return {}
+
+
+def _status_label(row: Dict[str, Any]) -> str:
+    return (clean(row.get("effective_state") or row.get("status")) or "current").replace(
+        "_", " "
+    ).title()
+
+
+def _date_range(row: Dict[str, Any]) -> str:
+    start = clean(row.get("start_date")) or "No start"
+    end = clean(row.get("end_date")) or "Open"
+    return f"{start} to {end}"
+
+
+def _render_flat_plan_table(
+    title: str,
+    rows: List[Dict[str, str]],
+    headers: Sequence[str],
+    empty_message: str,
+) -> None:
+    st.markdown(f"<div class='mpb-weekly-title'>{html.escape(title)}</div>", unsafe_allow_html=True)
+    if not rows:
+        st.info(empty_message)
+        return
+    header_html = "".join(f"<th>{html.escape(header)}</th>" for header in headers)
+    body_html = "".join(
+        "<tr>"
+        + "".join(f"<td>{_html_cell(row.get(header))}</td>" for header in headers)
+        + "</tr>"
+        for row in rows
+    )
+    st.markdown(
+        "<div class='mpb-plan-table-wrap'><table class='mpb-plan-table'>"
+        f"<thead><tr>{header_html}</tr></thead><tbody>{body_html}</tbody></table></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _exercise_plan_rows(model: Dict[str, Any]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for row in _model_rows(model, "exercise"):
+        snapshot = _snapshot(row)
+        rows.append(
+            {
+                "Exercise": clean(row.get("exercise_name") or row.get("title") or snapshot.get("title")) or "Exercise",
+                "Reps/Duration": clean(row.get("duration_or_reps") or snapshot.get("duration_or_reps")) or "As advised",
+                "Timing": clean(row.get("timing") or snapshot.get("timing")) or "As advised",
+                "Dates": _date_range(row),
+                "Status": _status_label(row),
+                "Remarks": clean(row.get("instructions") or snapshot.get("instructions")),
+            }
+        )
+    return rows
+
+
+def _supplement_plan_rows(model: Dict[str, Any]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for row in _model_rows(model, "supplement"):
+        snapshot = _snapshot(row)
+        dosage = clean(row.get("dosage") or snapshot.get("dosage"))
+        frequency = clean(row.get("frequency") or snapshot.get("frequency"))
+        rows.append(
+            {
+                "Supplement": clean(
+                    row.get("supplement_name")
+                    or row.get("title")
+                    or snapshot.get("supplement_name")
+                    or snapshot.get("title")
+                )
+                or "Supplement",
+                "Dosage": " · ".join(value for value in (dosage, frequency) if value) or "As advised",
+                "Timing": clean(row.get("timing") or snapshot.get("timing")) or "As advised",
+                "Dates": _date_range(row),
+                "Status": _status_label(row),
+                "Remarks": clean(row.get("instructions") or snapshot.get("instructions")),
+            }
+        )
+    return rows
 
 
 def _render_member_summary(profile: Dict[str, Any]) -> None:
@@ -510,23 +599,18 @@ def render_view_member_plan_compact() -> None:
 
     plan_start = clean(profile.get("start_date"))
     _render_member_summary(profile)
-    _render_grouped_weekly_table(
-        plan_start,
-        "Meal",
-        ("Timing", "Meal", "Liquid", "Remarks"),
-        lambda day: meal_day_groups(items, day),
-    )
-    _render_grouped_weekly_table(
-        plan_start,
+    _render_meal_week_grid(items)
+    _render_flat_plan_table(
         "Exercise",
-        ("Timing", "Activity", "Reps/Duration", "Remarks"),
-        lambda day: allocation_day_groups(model or {}, "exercise", plan_start, day),
+        _exercise_plan_rows(model or {}),
+        ("Exercise", "Reps/Duration", "Timing", "Dates", "Status", "Remarks"),
+        "No Exercise allocations are visible for this member plan.",
     )
-    _render_grouped_weekly_table(
-        plan_start,
+    _render_flat_plan_table(
         "Supplement",
-        ("Timing", "Supplement", "Dosage", "Remarks"),
-        lambda day: allocation_day_groups(model or {}, "supplement", plan_start, day),
+        _supplement_plan_rows(model or {}),
+        ("Supplement", "Dosage", "Timing", "Dates", "Status", "Remarks"),
+        "No Supplement allocations are visible for this member plan.",
     )
 
     sections = _plan_sections(profile, items, model)

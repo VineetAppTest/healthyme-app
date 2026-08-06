@@ -120,6 +120,7 @@ class FeedbackSchedulingNotificationsTaskAgeTests(unittest.TestCase):
         self.assertIn("note_cols = st.columns(2", source)
         self.assertGreaterEqual(source.count('height=60'), 4)
         self.assertNotIn('note_cols[1].text_input(', source)
+        self.assertIn("Reps/Duration:", source)
         self.assertIn("delivery_summary", source)
         self.assertIn("available in View Member Plan", source)
         self.assertIn('st.success(f"✓ {flash}")', source)

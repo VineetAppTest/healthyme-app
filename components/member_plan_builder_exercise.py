@@ -190,13 +190,19 @@ def _render_edit_exercise(member_id: str, member_label: str) -> None:
     stopped = clean(selected.get("status")).lower() != "active"
 
     with st.container(border=True):
+        summary_details = []
+        reps_duration = _duration_or_reps(selected)
+        if reps_duration:
+            summary_details.append(f"Reps/Duration: {reps_duration}")
+        summary_details.extend(
+            [
+                f"Start: {clean(selected.get('start_date')) or 'No start'}",
+                f"End: {clean(selected.get('end_date')) or 'Open'}",
+            ]
+        )
         source_summary(
             clean(selected.get("exercise_name")) or "Exercise",
-            (
-                _duration_or_reps(selected),
-                clean(selected.get("start_date")),
-                clean(selected.get("end_date")) or "Open",
-            ),
+            summary_details,
         )
         date_cols = st.columns(2, gap="small")
         edit_start = date_cols[0].date_input(

@@ -57,8 +57,26 @@ class MemberScheduleTabsExerciseJournalTests(unittest.TestCase):
         self.assertIn("hm-member-package-usage-status-v1", source)
         self.assertIn("<th>Total Sessions</th><th>Consumed</th><th>Scheduled</th>", source)
         self.assertIn("Available to Schedule", source)
+        self.assertIn("Scheduled Meeting Details", source)
+        self.assertIn("Consumed Meeting Details", source)
+        self.assertIn("def _render_meeting_detail_table", source)
+        self.assertIn('{"scheduled", "acknowledged"}', source)
         self.assertIn("if member_view:", source)
         self.assertIn("_render_member_usage_status_table(member_id, metrics, package)", source)
+
+    def test_package_subscribed_does_not_render_empty_section_divider(self):
+        source = (ROOT / "components/package_hardening_schedule_ui.py").read_text()
+        package_block = source[
+            source.index("def _render_hardened_package"):
+            source.index("def _render_hardened_ledger")
+        ]
+        self.assertNotIn("<div class='hm-schedule-section'>", package_block)
+        schedule_source = (ROOT / "components/member_schedule_tabbed_page.py").read_text()
+        upcoming_block = schedule_source[
+            schedule_source.index("def _render_upcoming_section"):
+            schedule_source.index("def render_tabbed_member_schedule_page")
+        ]
+        self.assertNotIn("<div class='hm-schedule-section'>", upcoming_block)
 
     def test_my_schedule_and_daily_log_use_member_home_spacing(self):
         schedule = (ROOT / "components/member_schedule_tabbed_page.py").read_text()

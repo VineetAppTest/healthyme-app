@@ -29,10 +29,12 @@ def test_meals_are_clubbed_by_timing_in_chronological_order() -> None:
         {"item_type": "meal", "day_number": 1, "slot_name": "Lunch", "item_order": 2, "reference_label": "Dal"},
         {"item_type": "meal", "day_number": 1, "slot_name": "Breakfast", "item_order": 1, "reference_label": "Moong Chilla"},
         {"item_type": "meal", "day_number": 1, "slot_name": "Lunch", "item_order": 1, "reference_label": "Paneer Salad", "portion": "1 bowl"},
+        {"item_type": "meal", "day_number": 1, "slot_name": "Wake-up / Early Morning", "item_order": 1, "reference_label": "Fennel Water"},
     ]
     groups = meal_day_groups(items, 1)
     assert [group["Timing"] for group in groups] == ["Breakfast", "Lunch"]
     assert groups[1]["Meal"] == "Paneer Salad - 1 bowl + Dal"
+    assert "Wake-up / Early Morning" not in [group["Timing"] for group in groups]
 
 
 def test_meal_slots_remove_wake_up_early_morning_and_use_food_portion_cells() -> None:
@@ -144,6 +146,9 @@ def test_setup_and_allocation_boundaries_follow_repository_model() -> None:
     assert '"assigned_member_id": ""' in setup
     assert '"Meal Profile"' in meals and '"Member"' in meals and '"Publish"' in meals
     assert "load_active_profiles()" in allocations
+    assert "Meal Profile labels could not be loaded" in allocations
+    assert "All active members are visible" in allocations
+    assert "members = [row for row in members if" not in allocations
     assert '"Member"' in allocations
     assert '"Member Plan"' not in allocations
     assert "st.columns([1, 2, 1])" in body_mind

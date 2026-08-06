@@ -90,7 +90,6 @@ def _render_section_selector() -> str:
 
 
 def _render_upcoming_section(schedule_ui, user_id: object, member_tz: str) -> None:
-    st.markdown("<div class='hm-schedule-section'>", unsafe_allow_html=True)
     st.markdown(
         "<div class='hm-schedule-heading'>Upcoming Schedule</div>",
         unsafe_allow_html=True,
@@ -244,7 +243,6 @@ def _render_upcoming_section(schedule_ui, user_id: object, member_tz: str) -> No
                             )
                             st.session_state[state_key] = False
                             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_tabbed_member_schedule_page(schedule_ui) -> None:
