@@ -1619,7 +1619,6 @@ def mark_member_message_read(member_id, message_id):
     return changed
 
 def get_member_unread_messages(member_id, limit=10):
-    auto_archive_expired_nutritionist_messages(member_id)
     db = load_db()
     rows = [
         m for m in db.get("messages", [])
@@ -1635,7 +1634,6 @@ def get_member_messages(member_id, limit=10):
     return get_member_unread_messages(member_id, limit=limit)
 
 def get_member_archived_messages(member_id, limit=50):
-    auto_archive_expired_nutritionist_messages(member_id)
     db = load_db()
     rows = [
         m for m in db.get("messages", [])

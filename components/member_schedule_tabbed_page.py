@@ -6,7 +6,7 @@ import streamlit as st
 
 
 _SECTION_KEY = "hm_member_schedule_active_section"
-_SECTIONS = ("Package Subscribed", "Upcoming Schedule", "Session Usage")
+_SECTIONS = ("Package Subscribed", "Upcoming Schedule")
 
 
 def _activate_section(label: str) -> None:
@@ -75,7 +75,7 @@ def _render_section_selector() -> str:
         "<span class='hm-member-schedule-selector-anchor'></span>",
         unsafe_allow_html=True,
     )
-    columns = st.columns(3, gap="small")
+    columns = st.columns(len(_SECTIONS), gap="small")
     for column, label in zip(columns, _SECTIONS):
         with column:
             st.button(
@@ -265,7 +265,7 @@ def render_tabbed_member_schedule_page(schedule_ui) -> None:
     schedule_ui.utility_logout_bar()
     schedule_ui.topbar(
         "My Schedule",
-        "View your package, upcoming sessions and session usage.",
+        "View your package usage status and upcoming sessions.",
         "Member content",
     )
 
@@ -285,11 +285,8 @@ def render_tabbed_member_schedule_page(schedule_ui) -> None:
     selected = _render_section_selector()
     if selected == "Package Subscribed":
         schedule_ui._render_package(user_id, member_view=True)
-    elif selected == "Upcoming Schedule":
-        member_tz = schedule_ui.member_timezone_name(user_id, persist=True)
-        _render_upcoming_section(schedule_ui, user_id, member_tz)
     else:
         member_tz = schedule_ui.member_timezone_name(user_id, persist=True)
-        schedule_ui._render_member_ledger(user_id, member_tz)
+        _render_upcoming_section(schedule_ui, user_id, member_tz)
 
     schedule_ui.render_back_to_top()

@@ -456,7 +456,7 @@ def render_view_profiles() -> None:
     _render_profile_table(
         start_date=start_date,
         section_type="Exercise",
-        headers=("Timing", "Activity", "Duration/Sets", "Remarks"),
+        headers=("Timing", "Activity", "Reps/Duration", "Remarks"),
         day_cells=lambda day: _exercise_cells(items, day),
     )
     _render_profile_table(

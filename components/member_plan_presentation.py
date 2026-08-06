@@ -224,6 +224,7 @@ def allocation_day_groups(
                     "Timing": timing,
                     "Activity": _join(row.get("Activity") for row in rows),
                     "Duration/Sets": _join(row.get("Duration/Sets") for row in rows),
+                    "Reps/Duration": _join(row.get("Duration/Sets") for row in rows),
                     "Remarks": _join(row.get("Remarks") for row in rows),
                 }
             )

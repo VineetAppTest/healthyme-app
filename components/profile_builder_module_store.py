@@ -100,7 +100,7 @@ def list_profiles_for_repository(
             .table(PROFILE_TABLE)
             .select(
                 "id,profile_name,status,assigned_member_id,"
-                "assigned_member_label,start_date,updated_at"
+                "assigned_member_label,start_date,health_concerns,updated_at"
             )
             .order("updated_at", desc=True)
             .limit(limit)

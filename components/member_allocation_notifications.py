@@ -298,7 +298,7 @@ def queue_meal_plan_allocation(
     subject = f"Meal Plan added to your HealthyMe plan: {profile_name}"
     message = (
         "Your Meal Plan has been allocated by your HealthyMe nutritionist. "
-        "Please review the complete schedule in your Current Member Plan."
+        "Check the My Weekly Plan."
     )
     details = {
         "Meal Profile": profile_name,

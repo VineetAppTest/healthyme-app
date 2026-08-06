@@ -93,13 +93,20 @@ class MemberPlanExperienceRedesignTests(unittest.TestCase):
         ]
         self.assertEqual(supplement_timings, ["Morning", "Before Bed"])
 
-    def test_weekly_view_is_day_first_and_today_view_is_one_timeline(self):
+    def test_weekly_view_uses_meal_grid_and_day_first_exercise_supplements(self):
         source = VIEW.read_text(encoding="utf-8")
+        self.assertIn("def _render_meal_week_grid", source)
+        self.assertIn("hm-member-weekly-meal-grid-v1", source)
+        self.assertIn('"Breakfast",', source)
+        self.assertIn('"Mid-morning Snack",', source)
+        self.assertNotIn('"Wake-up / Early Morning",', source)
+        self.assertIn('" + ".join(values)', source)
         self.assertIn("for day_number, target_date in dates:", source)
         self.assertIn('marker = "−" if is_open else "+"', source)
         self.assertIn("on_click=_toggle_day_disclosure", source)
         self.assertIn("white-space:nowrap!important", source)
-        self.assertIn("Meals, Supplements and Exercise together", source)
+        self.assertIn("Your weekly meals are shown first.", source)
+        self.assertIn('domains=("supplement", "exercise")', source)
         self.assertNotIn("st.tabs(", source)
         self.assertNotIn("st.columns(3", source)
         self.assertNotIn("source_id", source)

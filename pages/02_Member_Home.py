@@ -5,7 +5,6 @@ import streamlit as st
 from components.assessment_instances import get_current_assessment_instance
 from components.auth_session import logout_current_user
 from components.db import (
-    auto_archive_expired_nutritionist_messages,
     get_member_messages,
     get_workflow,
     hard_sync_body_mind_if_requested,
@@ -256,7 +255,6 @@ def _render_member_utility_bar():
 
 
 def _render_messages(user_id, show_divider=False):
-    auto_archive_expired_nutritionist_messages(user_id)
     messages = get_member_messages(user_id, limit=6)
 
     unique_messages = []

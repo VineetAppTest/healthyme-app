@@ -33,6 +33,68 @@ def _money(value: object, currency: object) -> str:
     return f"{_text(currency) or 'INR'} {amount:,.2f}"
 
 
+def _render_member_usage_status_table(
+    member_id: object,
+    metrics: dict,
+    package: dict,
+) -> None:
+    try:
+        ledger = member_session_ledger(member_id)
+    except Exception as exc:
+        st.error(f"Usage status could not be loaded: {exc}")
+        return
+
+    ledger_metrics = dict(ledger.get("metrics") or metrics or {})
+    consumed = int(
+        ledger_metrics.get("sessions_consumed", ledger.get("consumed_count", 0)) or 0
+    )
+    scheduled = int(
+        ledger_metrics.get("sessions_reserved", ledger.get("reserved_count", 0)) or 0
+    )
+    total = int(
+        ledger_metrics.get(
+            "package_sessions",
+            package.get("session_count", ledger.get("package_sessions", 0)),
+        )
+        or 0
+    )
+    remaining = int(
+        ledger_metrics.get("sessions_remaining", ledger.get("remaining_sessions", 0))
+        or 0
+    )
+    available = int(
+        ledger_metrics.get(
+            "sessions_available_to_schedule",
+            ledger.get("available_to_schedule", 0),
+        )
+        or 0
+    )
+    status = _text(package.get("status") or "active").replace("_", " ").title()
+    st.markdown(
+        """
+<style id="hm-member-package-usage-status-v1">
+.hm-usage-status-wrap{overflow-x:auto;border:1px solid #E3C98E;border-radius:14px;background:#FFFDF8;margin:.48rem 0 .10rem}
+.hm-usage-status-table{width:100%;border-collapse:collapse;min-width:720px;font-size:.80rem;line-height:1.32}
+.hm-usage-status-table th{background:#FFF7E6;color:#064E3B;text-align:center;font-weight:900;padding:.48rem .52rem;border:1px solid #E3C98E;white-space:nowrap}
+.hm-usage-status-table td{color:#334155;text-align:center;font-weight:760;padding:.52rem .54rem;border:1px solid #F0E3C5;white-space:nowrap}
+.hm-usage-status-caption{color:#64748B;font-size:.76rem;font-weight:700;margin:.32rem 0 0}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<div class='hm-usage-status-wrap'><table class='hm-usage-status-table'>"
+        "<thead><tr><th>Total Sessions</th><th>Consumed</th><th>Scheduled</th>"
+        "<th>Remaining</th><th>Available to Schedule</th><th>Status</th></tr></thead>"
+        "<tbody><tr>"
+        f"<td>{total}</td><td>{consumed}</td><td>{scheduled}</td>"
+        f"<td>{remaining}</td><td>{available}</td><td>{_safe(status)}</td>"
+        "</tr></tbody></table></div>"
+        "<div class='hm-usage-status-caption'>Usage status is based on completed sessions, open scheduled sessions and approved late-reschedule consumption.</div>",
+        unsafe_allow_html=True,
+    )
+
+
 def _selected_admin_member_id(schedule_timezone_ui) -> str:
     selected_label = st.session_state.get("hm_tz_schedule_member")
     if not selected_label:
@@ -85,6 +147,8 @@ def _render_hardened_package(member_id: object, member_view: bool = False) -> No
         "</div>",
         unsafe_allow_html=True,
     )
+    if member_view:
+        _render_member_usage_status_table(member_id, metrics, package)
     st.markdown("</div>", unsafe_allow_html=True)
 
 

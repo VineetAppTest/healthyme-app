@@ -38,8 +38,19 @@ class AuthenticatedMemberFollowupCorrectionTests(unittest.TestCase):
 
     def test_task_allocation_sentence_is_removed_only_from_member_message_body(self):
         page = (ROOT / "pages/02_Member_Home.py").read_text()
+        db_source = (ROOT / "components/db.py").read_text()
         self.assertIn('replace("Nutritionist has allocated a Task.", "")', page)
         self.assertIn("_member_message_text(msg.get('message',''))", page)
+        self.assertNotIn("auto_archive_expired_nutritionist_messages", page)
+        unread_block = db_source.rsplit("def get_member_unread_messages", 1)[1].split(
+            "def get_member_messages", 1
+        )[0]
+        archived_block = db_source.rsplit("def get_member_archived_messages", 1)[1].split(
+            "def ", 1
+        )[0]
+        self.assertNotIn("auto_archive_expired_nutritionist_messages", unread_block)
+        self.assertNotIn("auto_archive_expired_nutritionist_messages", archived_block)
+        self.assertIn('"archive_reason"] = "member_read"', db_source)
 
     def test_food_journal_route_and_saved_day_contract(self):
         page = (ROOT / "pages/18_Daily_Log.py").read_text()
