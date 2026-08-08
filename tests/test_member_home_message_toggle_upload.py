@@ -31,6 +31,9 @@ def test_schedule_and_messages_share_compact_pill_contract():
     assert 'min-height:2.12rem!important' in source
     assert 'width:max-content!important' in source
     assert 'min-width:15.5rem!important' in source
+    assert 'justify-content:flex-start!important' in source
+    assert 'text-align:left!important' in source
+    assert 'width:fit-content!important;max-width:100%!important;min-width:0!important' not in source
     assert 'summary + div' in source
     assert 'border:0!important' in source
 

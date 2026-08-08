@@ -70,15 +70,17 @@ class MemberHomeCompactPolishTests(unittest.TestCase):
         self.assertIn("font-size:.66rem!important", helper)
         self.assertIn("width:50%!important;min-width:0!important", page)
 
-    def test_upcoming_pill_remains_visible_when_no_schedule_requires_action(self):
+    def test_upcoming_pill_is_hidden_when_no_schedule_requires_action(self):
         page = (ROOT / "pages/02_Member_Home.py").read_text()
-        expander = page.index("with st.expander(")
-        label = page.index('f"Upcoming Consultation ({len(upcoming_schedules)})"')
-        empty_guard = page.index("if not upcoming_schedules:", label)
-        empty_state = page.index("No upcoming consultation requires action.", empty_guard)
-        self.assertLess(expander, label)
-        self.assertLess(label, empty_guard)
-        self.assertLess(empty_guard, empty_state)
+        schedule_slice = page[
+            page.index("def _render_upcoming_schedules") :
+            page.index("def _render_task_button")
+        ]
+        empty_guard = schedule_slice.index("if not upcoming_schedules:")
+        expander = schedule_slice.index("with st.expander(")
+        self.assertIn("return False", schedule_slice[empty_guard:expander])
+        self.assertLess(empty_guard, expander)
+        self.assertNotIn("No upcoming consultation requires action.", schedule_slice)
 
     def test_compact_polish_does_not_change_schedule_or_member_business_state(self):
         source = (
