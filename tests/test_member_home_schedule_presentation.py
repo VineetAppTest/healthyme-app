@@ -217,16 +217,32 @@ class MemberHomeSchedulePresentationTests(unittest.TestCase):
             source.index("def _render_upcoming_schedules") :
             source.index("def _render_task_button")
         ]
+        schedule_empty_guard = schedule_slice.index("if not upcoming_schedules:")
+        schedule_expander = schedule_slice.index("with st.expander(")
+        self.assertIn(
+            "return False",
+            schedule_slice[schedule_empty_guard:schedule_expander],
+        )
+        self.assertLess(schedule_empty_guard, schedule_expander)
         self.assertIn("with st.expander(", schedule_slice)
         self.assertIn("hm-upcoming-schedule-anchor", schedule_slice)
         self.assertIn("expanded=True", schedule_slice)
         self.assertIn('f"Upcoming Consultation ({len(upcoming_schedules)})"', schedule_slice)
+        self.assertNotIn("No upcoming consultation requires action.", schedule_slice)
         message_slice = source[
             source.index("def _render_messages") :
             source.index("def _render_upcoming_schedules")
         ]
+        message_empty_guard = message_slice.index("if not unique_messages:")
+        message_expander = message_slice.index('with st.expander("Message from Nutritionist"')
+        self.assertIn(
+            "return False",
+            message_slice[message_empty_guard:message_expander],
+        )
+        self.assertLess(message_empty_guard, message_expander)
         self.assertIn('with st.expander("Message from Nutritionist"', message_slice)
         self.assertIn("hm-message-pill-anchor", message_slice)
+        self.assertNotIn("No new message from your nutritionist.", message_slice)
         self.assertIn("UPCOMING_CONSULTATION_ADVISORY", schedule_slice)
         for forbidden in (
             "update_member_schedule_status(",

@@ -56,19 +56,23 @@ div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary{
   border:1px solid #E3C98E!important;border-bottom:1px solid #E3C98E!important;
   border-radius:999px!important;background:#FFFDF8!important;
   box-shadow:0 3px 8px rgba(6,78,59,.05)!important;
-  display:flex!important;align-items:center!important;gap:.44rem!important;
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  gap:.44rem!important;text-align:left!important;
   overflow:visible!important;
 }
 div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary{
-  width:fit-content!important;max-width:100%!important;min-width:0!important;
+  width:max-content!important;max-width:100%!important;min-width:15.5rem!important;
   min-height:2.12rem!important;padding:.30rem .72rem!important;
   border:1px solid #E3C98E!important;border-radius:999px!important;
   background:#FFFDF8!important;box-shadow:0 3px 8px rgba(6,78,59,.05)!important;
-  display:flex!important;align-items:center!important;gap:.44rem!important;
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  gap:.44rem!important;text-align:left!important;overflow:visible!important;
 }
 div[data-testid="stExpander"]:has(.hm-message-pill-anchor) summary p{
   margin:0!important;font-size:.72rem!important;font-weight:900!important;
-  white-space:nowrap!important;color:#064E3B!important;
+  white-space:nowrap!important;color:#064E3B!important;text-align:left!important;
+  flex:1 1 auto!important;max-width:none!important;overflow:visible!important;
+  text-overflow:clip!important;
 }
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary,
 div[data-testid="stExpander"]:has(.hm-upcoming-schedule-anchor) summary *{

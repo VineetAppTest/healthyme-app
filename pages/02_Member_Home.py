@@ -272,10 +272,11 @@ def _render_messages(user_id, show_divider=False):
         if len(unique_messages) == 6:
             break
 
+    if not unique_messages:
+        return False
+
     with st.expander("Message from Nutritionist", expanded=True):
         st.markdown("<span class='hm-message-pill-anchor'></span>", unsafe_allow_html=True)
-        if not unique_messages:
-            st.markdown("<div class='hm-home-empty'>No new message from your nutritionist.</div>", unsafe_allow_html=True)
         for row_start in range(0, len(unique_messages), 3):
             cols = st.columns(3, gap="small")
             for col, msg in zip(cols, unique_messages[row_start : row_start + 3]):
@@ -317,6 +318,9 @@ def _render_upcoming_schedules(user_id):
     queue_schedule_acknowledgement_reminders_v104b11(user_id)
     upcoming_schedules = list_upcoming_member_schedules(user_id, limit=6)
 
+    if not upcoming_schedules:
+        return False
+
     with st.expander(
         f"Upcoming Consultation ({len(upcoming_schedules)})",
         expanded=True,
@@ -325,13 +329,10 @@ def _render_upcoming_schedules(user_id):
             "<span class='hm-upcoming-schedule-anchor'></span>",
             unsafe_allow_html=True,
         )
-        if not upcoming_schedules:
-            st.markdown("<div class='hm-home-empty'>No upcoming consultation requires action.</div>", unsafe_allow_html=True)
-        else:
-            st.markdown(
-                f"<div class='hm-consultation-advisory'>{_esc(UPCOMING_CONSULTATION_ADVISORY)}</div>",
-                unsafe_allow_html=True,
-            )
+        st.markdown(
+            f"<div class='hm-consultation-advisory'>{_esc(UPCOMING_CONSULTATION_ADVISORY)}</div>",
+            unsafe_allow_html=True,
+        )
         for row_start in range(0, len(upcoming_schedules), 3):
             cols = st.columns(3, gap="small")
             for col, schedule in zip(cols, upcoming_schedules[row_start : row_start + 3]):
