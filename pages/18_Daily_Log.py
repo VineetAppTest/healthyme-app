@@ -40,6 +40,8 @@ from components.member_journal_server_autosave import (
 
 BUILD_NOTE = "v102.4B26 · Daily Log label alignment and meal spacing cleanup"
 MAX_MEAL_ITEMS = 9
+_PENDING_RERUN_PATH_KEY = "_hm_h13r9e_pending_rerun_path"
+_DAILY_LOG_ROUTE = "Daily_Log"
 
 STRUCTURED_MEAL_ORDER = [
     ("Breakfast", "breakfast"),
@@ -80,6 +82,44 @@ def _has_value(value):
 
 def _safe_html(value):
     return html.escape(_text(value))
+
+
+def _stage_daily_log_route():
+    st.session_state[_PENDING_RERUN_PATH_KEY] = _DAILY_LOG_ROUTE
+
+
+def _field_anchor(kind, key):
+    clean_kind = re.sub(r"[^a-z0-9_-]+", "-", str(kind or "").lower()).strip("-")
+    clean_key = re.sub(r"[^a-z0-9_-]+", "-", str(key or "").lower()).strip("-")
+    st.markdown(
+        (
+            "<span class='hm-daily-readable-field-anchor "
+            f"hm-daily-readable-{clean_kind}' data-hm-field='{clean_key}'></span>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def _daily_text_input(label, *, key, value="", placeholder="", **kwargs):
+    _field_anchor("text-input", key)
+    return st.text_input(
+        label,
+        value=value,
+        key=key,
+        placeholder=placeholder,
+        **kwargs,
+    )
+
+
+def _daily_text_area(label, *, key, value="", placeholder="", **kwargs):
+    _field_anchor("text-area", key)
+    return st.text_area(
+        label,
+        value=value,
+        key=key,
+        placeholder=placeholder,
+        **kwargs,
+    )
 
 
 def _as_dict(value):
@@ -558,8 +598,8 @@ def _toggle_button(label, key, default_open=False):
     prefix = "▾" if is_open else "▸"
     st.markdown("<div class='hm-toggle-anchor'></div>", unsafe_allow_html=True)
     if st.button(f"{prefix} {label}", key=f"{state_key}_btn", use_container_width=True):
+        _stage_daily_log_route()
         st.session_state[state_key] = not is_open
-        st.rerun()
     return bool(st.session_state.get(state_key))
 
 
@@ -603,9 +643,19 @@ def _render_meal_fields(label, key, prior, date_key):
         food_col, portion_col = st.columns([2.2, 1.25], gap="small")
         with food_col:
             st.markdown("<span class='hm-meal-food-grid-anchor'></span>", unsafe_allow_html=True)
-            food = st.text_input(f"Food Item {idx + 1}", value=prior_item.get("food", ""), key=f"hm_daily_log_{date_key}_{key}_food_{idx}", placeholder="Enter food item")
+            food = _daily_text_input(
+                f"Food Item {idx + 1}",
+                value=prior_item.get("food", ""),
+                key=f"hm_daily_log_{date_key}_{key}_food_{idx}",
+                placeholder="Enter food item",
+            )
         with portion_col:
-            portion = st.text_input(f"Portion {idx + 1}", value=prior_item.get("portion_size", ""), key=f"hm_daily_log_{date_key}_{key}_portion_{idx}", placeholder="Enter portion")
+            portion = _daily_text_input(
+                f"Portion {idx + 1}",
+                value=prior_item.get("portion_size", ""),
+                key=f"hm_daily_log_{date_key}_{key}_portion_{idx}",
+                placeholder="Enter portion",
+            )
         row = {"food": _clean(food), "portion_size": _clean(portion)}
         if _food_item_has_data(row):
             food_items.append(row)
@@ -613,7 +663,7 @@ def _render_meal_fields(label, key, prior, date_key):
     st.markdown("<span class='hm-add-food-anchor'></span>", unsafe_allow_html=True)
     if st.button("+ Add food item", key=f"hm_daily_log_add_food_item_{date_key}_{key}", disabled=item_count >= MAX_MEAL_ITEMS):
         st.session_state[count_key] = min(MAX_MEAL_ITEMS, item_count + 1)
-        st.session_state["_hm_h13r9e_pending_rerun_path"] = "Daily_Log"
+        _stage_daily_log_route()
         st.rerun()
 
     time_value = None
@@ -623,9 +673,19 @@ def _render_meal_fields(label, key, prior, date_key):
     prior_mood, prior_energy = _legacy_mood_and_energy(prior)
     mood_col, energy_col = st.columns(2, gap="medium")
     with mood_col:
-        mood = st.text_input(f"Mood after {label.lower()}", value=prior_mood, key=f"hm_daily_log_{date_key}_{key}_mood", placeholder="How did you feel?")
+        mood = _daily_text_input(
+            f"Mood after {label.lower()}",
+            value=prior_mood,
+            key=f"hm_daily_log_{date_key}_{key}_mood",
+            placeholder="How did you feel?",
+        )
     with energy_col:
-        energy = st.text_input(f"Energy after {label.lower()}", value=prior_energy, key=f"hm_daily_log_{date_key}_{key}_energy", placeholder="How was your energy?")
+        energy = _daily_text_input(
+            f"Energy after {label.lower()}",
+            value=prior_energy,
+            key=f"hm_daily_log_{date_key}_{key}_energy",
+            placeholder="How was your energy?",
+        )
     clean_mood = _clean(mood)
     clean_energy = _clean(energy)
     legacy_food = "; ".join(item.get("food", "") for item in food_items if item.get("food"))
@@ -665,6 +725,7 @@ def _render_snacking_toggle(existing_snacks, date_key):
                 disabled=snack_count >= 9,
                 use_container_width=True,
             ):
+                _stage_daily_log_route()
                 st.session_state[snack_count_key] = min(9, snack_count + 1)
                 st.rerun()
         with remove_col:
@@ -674,6 +735,7 @@ def _render_snacking_toggle(existing_snacks, date_key):
                 disabled=snack_count <= 0,
                 use_container_width=True,
             ):
+                _stage_daily_log_route()
                 st.session_state[snack_count_key] = max(0, snack_count - 1)
                 st.rerun()
         if snack_count == 0:
@@ -844,6 +906,7 @@ def _render_food_journal(user_id):
                     disabled=fluid_count >= 9,
                     use_container_width=True,
                 ):
+                    _stage_daily_log_route()
                     st.session_state[fluid_count_key] = min(9, fluid_count + 1)
                     st.rerun()
             with remove_col:
@@ -853,6 +916,7 @@ def _render_food_journal(user_id):
                     disabled=fluid_count <= 0,
                     use_container_width=True,
                 ):
+                    _stage_daily_log_route()
                     st.session_state[fluid_count_key] = max(0, fluid_count - 1)
                     st.rerun()
 
@@ -900,14 +964,14 @@ def _render_food_journal(user_id):
                     )
                 quantity_col, notes_col = st.columns(2)
                 with quantity_col:
-                    quantity = st.text_input(
+                    quantity = _daily_text_input(
                         f"Quantity {idx + 1}",
                         value=prior.get("quantity", ""),
                         placeholder="Example: 200 ml",
                         key=f"hm_h9a4c_fluid_qty_{date_key}_{idx}",
                     )
                 with notes_col:
-                    notes = st.text_input(
+                    notes = _daily_text_input(
                         f"Notes {idx + 1}",
                         value=prior.get("notes", ""),
                         placeholder="Example: unsweetened",
@@ -969,7 +1033,7 @@ def _render_food_journal(user_id):
                     poop_timings.append(_time_text(timing))
             else:
                 st.caption("No timing needed unless poop rounds are greater than 0.")
-            feeling_after_poop = st.text_area(
+            feeling_after_poop = _daily_text_area(
                 "Feeling after poop",
                 value=_clean(existing.get("feeling_after_poop")),
                 placeholder="Example: relieved / constipated / bloated / incomplete",
@@ -980,7 +1044,7 @@ def _render_food_journal(user_id):
 
     with st.container(border=True):
         st.markdown("### Member Notes")
-        day_notes = st.text_area(
+        day_notes = _daily_text_area(
             "Notes",
             value=_clean(existing.get("notes")),
             placeholder="Any cravings, bloating, missed meals, late meals, etc.",
@@ -1036,6 +1100,7 @@ def _render_food_journal(user_id):
                 set_system_message(
                     "Please add at least one entry before saving the day.", "error"
                 )
+                _stage_daily_log_route()
                 st.rerun()
             save_daily_food_journal_day(user_id, date_key, payload)
             mark_food_payload_saved(user_id, date_key, payload)
@@ -1043,6 +1108,7 @@ def _render_food_journal(user_id):
                 f"Saved food journal for {log_date.strftime('%d %b %Y')}.",
                 "success",
             )
+            _stage_daily_log_route()
             st.rerun()
 
     _autosaved, _autosave_error = autosave_food_payload(

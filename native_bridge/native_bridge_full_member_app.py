@@ -161,6 +161,13 @@ def _embedded_switch_handler(
     )
 
 
+def _stage_active_member_route(spec: MemberRouteSpec) -> None:
+    """Keep embedded Member page widget reruns on the page that rendered them."""
+    active_path = str(getattr(spec, "url_path", "") or "").strip().strip("/")
+    if active_path:
+        st.session_state[_PENDING_RERUN_PATH_KEY] = active_path
+
+
 def _native_utility_bar(route_key: str, *args: Any, **kwargs: Any) -> None:
     email = (
         st.session_state.get("user_email")
@@ -253,6 +260,7 @@ def _render_member_route(spec: MemberRouteSpec) -> None:
     context["full_member_page_loaded"] = True
     context["active_member_source"] = spec.source_path
     context["active_member_checkpoint"] = spec.checkpoint
+    _stage_active_member_route(spec)
 
     source_file = REPOSITORY_ROOT / spec.source_path
     try:

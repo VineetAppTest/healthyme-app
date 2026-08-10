@@ -96,7 +96,11 @@ class AuthenticatedSmokeCorrectionTests(unittest.TestCase):
         self.assertIn('time_cols = st.columns(3, gap="medium")', block)
         self.assertIn("food_col, portion_col = st.columns([2.2, 1.25]", block)
         self.assertIn("hm_daily_log_add_food_item_", block)
-        self.assertIn('st.session_state["_hm_h13r9e_pending_rerun_path"] = "Daily_Log"', block)
+        self.assertIn("_stage_daily_log_route()", block)
+        self.assertLess(
+            block.index("_stage_daily_log_route()"),
+            block.index("st.rerun()"),
+        )
 
 
 if __name__ == "__main__":

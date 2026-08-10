@@ -45,12 +45,15 @@ def _load_embedded_switch_handler():
             }
             if "_PENDING_RERUN_PATH_KEY" in names:
                 selected_nodes.append(node)
-        elif isinstance(node, ast.FunctionDef) and node.name == "_embedded_switch_handler":
+        elif isinstance(node, ast.FunctionDef) and node.name in {
+            "_embedded_switch_handler",
+            "_stage_active_member_route",
+        }:
             selected_nodes.append(node)
 
     module = ast.Module(body=selected_nodes, type_ignores=[])
     ast.fix_missing_locations(module)
-    namespace = {"Any": Any, "Callable": Callable}
+    namespace = {"Any": Any, "Callable": Callable, "MemberRouteSpec": Any}
     exec(compile(module, str(ROUTER), "exec"), namespace)
     return namespace
 
@@ -105,6 +108,15 @@ class NativeEmbeddedSwitchRouteIntentTests(unittest.TestCase):
         self.assertEqual(switches, [])
         self.assertNotIn(PENDING_KEY, fake_st.session_state)
         self.assertEqual(len(fake_st.warnings), 1)
+
+    def test_embedded_page_render_stages_its_active_route(self):
+        namespace = _load_embedded_switch_handler()
+        fake_st = _FakeStreamlit()
+        namespace.update({"st": fake_st})
+
+        namespace["_stage_active_member_route"](_Page("Daily_Log"))
+
+        self.assertEqual(fake_st.session_state[PENDING_KEY], "Daily_Log")
 
 
 if __name__ == "__main__":
