@@ -37,6 +37,7 @@ _URL_TO_PAGE: dict[str, Any] = {}
 _ROUTE_SPECS: list[MemberRouteSpec] = []
 _EXTRA_ROUTE_PATHS: set[str] = set()
 _SELECTED_PATH = ""
+_PENDING_RERUN_PATH_KEY = "_hm_h13r9e_pending_rerun_path"
 
 
 class _Missing:
@@ -145,6 +146,11 @@ def _embedded_switch_handler(
 ) -> None:
     resolved = _resolve_page(target)
     if resolved is not None:
+        resolved_path = (
+            str(getattr(resolved, "url_path", "") or "").strip().strip("/")
+        )
+        if resolved_path:
+            st.session_state[_PENDING_RERUN_PATH_KEY] = resolved_path
         _ORIGINAL_SWITCH_PAGE(resolved)
         st.stop()
 
