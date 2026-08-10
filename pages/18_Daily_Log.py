@@ -24,6 +24,7 @@ from components.db import (
     get_latest_daily_log_note_for_date,
 )
 from components.flash import set_system_message, render_system_message
+from components.daily_log_field_contrast import render_daily_log_field_contrast
 from components.food_saved_days_presentation import (
     initialise_food_saved_days_range,
     saved_day_card_html,
@@ -1103,6 +1104,7 @@ require_member()
 utility_logout_bar()
 topbar("Daily Log", "Capture food and exercise updates for one day.", "Member tracker")
 _render_css()
+render_daily_log_field_contrast()
 render_system_message()
 
 user_id = st.session_state["user_id"]
