@@ -24,7 +24,11 @@ class FoodJournalMealGridSavedDaysCleanupTests(unittest.TestCase):
         self.assertIn("hm_daily_minute_v13_", block)
         self.assertIn("hm_daily_ampm_v13_", block)
         self.assertIn("hm_daily_log_add_food_item_", block)
-        self.assertIn('st.session_state["_hm_h13r9e_pending_rerun_path"] = "Daily_Log"', block)
+        self.assertIn("_stage_daily_log_route()", block)
+        self.assertLess(
+            block.index("_stage_daily_log_route()"),
+            block.index("st.rerun()"),
+        )
         self.assertNotIn("st.time_input(", block)
 
     def test_meal_disclosure_text_is_left_aligned(self):
