@@ -1,0 +1,34 @@
+id: HM-APPLE-001
+name: Apple light and dark control contrast
+owner: Jarvis
+risk: synthetic_read_only
+starting_state:
+  authentication: not_applicable
+  test_data_policy: committed_synthetic_control_fixture
+  required_environment:
+    - JARVIS_APPLE_FIXTURE_URL
+matrix:
+  - macOS WebKit light
+  - macOS WebKit dark
+  - iPhone WebKit light
+  - iPhone WebKit dark
+steps:
+  - checkpoint: A1
+    action: Open the branch-local Streamlit 1.59 synthetic control fixture
+    expected: The HealthyMe Apple contrast fixture is visible
+  - checkpoint: A2
+    action: Enter synthetic values in text, password and textarea controls
+    expected: Typed values remain visible
+  - checkpoint: A3
+    action: Inspect text, textarea, number, date, time, select and multiselect surfaces
+    expected: Each visible field has an opaque light surface and at least 4.5:1 text contrast
+  - checkpoint: A4
+    action: Inspect checkbox, toggle, file uploader and data editor presence
+    expected: Each shared control remains available without layout or native-affordance removal
+non_regression:
+  - Do not access authentication, application routes, Supabase or production data
+  - Do not apply appearance:none to native Apple date or time controls
+  - Preserve the accepted HealthyMe light palette in both system appearance modes
+artifacts:
+  - De-identified safe result only
+  - No screenshot, video or trace in strict privacy mode
