@@ -17,6 +17,7 @@ on:
           - public
           - member
           - admin
+          - apple
       base_url:
         description: "Optional HealthyMe environment URL override"
         required: false
@@ -88,6 +89,7 @@ jobs:
         working-directory: qa/jarvis
     env:
       JARVIS_BASE_URL: ${{ inputs.base_url || vars.JARVIS_BASE_URL || 'https://healthymeappbyankita.streamlit.app' }}
+      JARVIS_APPLE_FIXTURE_URL: http://127.0.0.1:8502
       JARVIS_MEMBER_EMAIL: ${{ secrets.JARVIS_MEMBER_EMAIL }}
       JARVIS_MEMBER_PASSWORD: ${{ secrets.JARVIS_MEMBER_PASSWORD }}
       JARVIS_ADMIN_EMAIL: ${{ secrets.JARVIS_ADMIN_EMAIL }}
@@ -121,6 +123,31 @@ jobs:
       - name: Install Jarvis dependencies
         run: npm ci
 
+      - name: Set up Python for synthetic Apple fixture
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Streamlit fixture dependency
+        working-directory: .
+        run: python -m pip install "streamlit[auth]==1.59.0"
+
+      - name: Start branch-local Apple control fixture
+        working-directory: .
+        run: |
+          python -m streamlit run qa/jarvis/fixtures/apple_controls_app.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8502 >/tmp/healthyme-apple-fixture.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8502/_stcore/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          tail -80 /tmp/healthyme-apple-fixture.log
+          exit 1
+
       - name: Check critical dependency vulnerabilities
         run: npm audit --audit-level=critical
 
@@ -136,8 +163,8 @@ jobs:
       - name: Prepare ephemeral UAT run context
         run: npm run prepare:uat
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Execute approved Jarvis routes
         run: |
@@ -145,6 +172,7 @@ jobs:
             public) npm run test:public ;;
             member) npm run test:member ;;
             admin) npm run test:admin ;;
+            apple) npm run test:apple ;;
             all) npm test ;;
             *) echo "Unsupported suite: $JARVIS_SUITE" >&2; exit 1 ;;
           esac

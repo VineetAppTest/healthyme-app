@@ -2,3 +2,13 @@
 toolbarMode = "minimal"
 showSidebarNavigation = false
 showErrorDetails = "none"
+
+# HealthyMe is intentionally a light-branded application. Without an explicit
+# theme, Streamlit follows the browser preference and Apple dark mode can render
+# dark BaseWeb controls inside the app's light custom canvas.
+[theme]
+base = "light"
+primaryColor = "#0F766E"
+backgroundColor = "#FFFDF8"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#17211F"

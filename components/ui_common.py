@@ -2,6 +2,7 @@
 import streamlit as st
 from zoneinfo import ZoneInfo
 import datetime
+from components.apple_appearance_compat import render_apple_appearance_compat
 from components.auth_session import logout_current_user
 
 # --------------------------------------------------------------------
@@ -2977,7 +2978,9 @@ div[data-testid="stButton"] > button{
 </style>
 """
 
-def inject_global_styles(): st.markdown(LUXE_CSS, unsafe_allow_html=True)
+def inject_global_styles():
+    st.markdown(LUXE_CSS, unsafe_allow_html=True)
+    render_apple_appearance_compat()
 def apply_luxe_theme():
     return None
 def apply_mobile_first_premium_theme():

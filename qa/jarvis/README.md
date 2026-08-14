@@ -55,6 +55,13 @@ unmerged branch cannot change the externally deployed HealthyMe application.
 
 Approved route definitions are stored under `routes/`.
 
+### HM-APPLE-001
+
+Starts a branch-local Streamlit 1.59 synthetic control fixture and verifies the
+shared HealthyMe control palette in macOS WebKit and iPhone WebKit, each in
+light and dark appearance. It checks opaque control surfaces and a minimum 4.5:1
+text contrast without authentication, application data or database access.
+
 ## Evidence produced
 
 Every execution can create:
@@ -102,7 +109,8 @@ The workflow supports:
 - Environment and credential preflight
 - TypeScript validation
 - Locked dependencies and critical dependency audit
-- Chromium execution
+- Chromium execution for existing route checks
+- WebKit execution for macOS/iPhone light and dark control contrast
 - Post-run evidence privacy enforcement
 - A 14-day evidence bundle
 
@@ -114,7 +122,7 @@ From `qa/jarvis`:
 npm ci
 npm run typecheck
 npm run preflight
-npx playwright install chromium
+npx playwright install chromium webkit
 npm test
 npm run verify:evidence
 ```
