@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import streamlit as st
+from streamlit.errors import StreamlitAPIException
 
 from components.member_plan_builder_expander_hygiene import (
     install_member_plan_builder_expander_hygiene,
@@ -85,7 +86,7 @@ def _render_meals_with_selector_reset_guard(can_publish: bool) -> None:
             load_member_plan_recipe_options(),
             can_publish,
         )
-    except st.errors.StreamlitAPIException as exc:
+    except StreamlitAPIException as exc:
         message = str(exc)
         is_selector_reset_error = (
             _MEAL_PROFILE_SELECTOR in message
