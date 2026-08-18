@@ -188,8 +188,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.hm-message-grid-anchor) [da
 .hm-v990-task-chip{display:inline-flex;align-items:center;gap:.25rem;margin:.12rem .22rem .12rem 0;padding:.22rem .48rem;border-radius:999px;border:1px solid #D9C28F;color:#064E3B;background:#FAF8F1;font-size:.74rem;font-weight:850;}
 .hm-v990-task-chip.pending{color:#7A5A16;background:#FFF7E6;}
 .hm-v990-task-chip.done{color:#065F46;background:#ECFDF5;}
-.hm-v990-admin-note{color:#334155;font-size:.80rem;line-height:1.48;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:.56rem .64rem;margin:.56rem 0 .24rem 0;}
-.hm-v990-admin-note strong{color:#064E3B;}
 .hm-v990-submit-note{color:#64748B;font-size:.80rem;font-weight:720;line-height:1.42;margin:.48rem 0 .32rem 0;}
 .hm-task-action-anchor + div [data-testid="stButton"] > button,.hm-task-action-anchor + div .stButton > button{min-height:2.68rem!important;height:2.68rem!important;padding:.48rem .50rem!important;white-space:nowrap!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 .hm-task-action-anchor + div [data-testid="stButton"] > button *,.hm-task-action-anchor + div .stButton > button *{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;font-size:.80rem!important;line-height:1.05!important;word-break:keep-all!important;}
@@ -376,7 +374,6 @@ def _render_task_progress(current_instance, wf, requested_pages):
     ):
         visible_tasks.append("body_mind")
     due_date = _esc(current_instance.get("due_date") or "Not set")
-    admin_note = _esc(current_instance.get("admin_note") or "Not provided")
     progress_total = len(visible_tasks)
     progress_done = sum(
         1
@@ -406,7 +403,6 @@ def _render_task_progress(current_instance, wf, requested_pages):
           </div>
           <div class='hm-v990-progress-line'><div class='hm-v990-progress-fill' style='width:{progress_width}%;'></div></div>
           <div>{''.join(task_chips)}</div>
-          <div class='hm-v990-admin-note'><strong>Admin note:</strong> {admin_note}</div>
           <div class='hm-v990-submit-note'>Use Submit / Status after completing all requested tasks to send this to admin for review.</div>
         </div>
         """,
