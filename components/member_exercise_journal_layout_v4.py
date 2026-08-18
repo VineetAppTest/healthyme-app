@@ -68,7 +68,10 @@ def render_member_exercise_journal_layout_v4(
             catalog[name] = dict(row)
 
     base_rows = base.base_exercise_journal_rows(assigned, existing_rows)
-    base_count = len(base_rows)
+    # Preserve the accepted zero-assignment/edit-history minimum while allowing
+    # v2 identity rows (for example unmatched legacy history) to increase it.
+    base_count = max(1, len(assigned), len(existing_rows))
+    base_count = max(base_count, len(base_rows))
     count_key = f"{key_prefix}_row_count_{log_date}"
     st.session_state.setdefault(count_key, base_count)
     row_count = max(
@@ -90,7 +93,8 @@ def render_member_exercise_journal_layout_v4(
     )
     activities = list(catalog.keys())
 
-    for index, descriptor in enumerate(rows, start=1):
+    for index in range(1, row_count + 1):
+        descriptor = rows[index - 1]
         prescribed = dict(descriptor.get("prescribed") or {})
         prior = dict(descriptor.get("prior") or {})
         item_order = int(descriptor.get("item_order") or index)
@@ -110,9 +114,7 @@ def render_member_exercise_journal_layout_v4(
             or base._clean((descriptor.get("legacy_profile") or {}).get("id"))
             or str(index)
         )
-        widget = (
-            f"{key_prefix}_{base._slug(identity)}_{log_date}_{item_order}"
-        )
+        widget = f"{key_prefix}_{base._slug(identity)}_{log_date}_{item_order}"
 
         with st.container(border=True):
             st.markdown(
