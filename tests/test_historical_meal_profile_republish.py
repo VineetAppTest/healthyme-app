@@ -41,7 +41,7 @@ class HistoricalMealProfileRepublishTests(unittest.TestCase):
         self.assertIn("or not profile_publishable", source)
         self.assertNotIn("or not profile_editable", source)
         self.assertIn("source remains read-only and unchanged", source)
-        self.assertIn("Clone Meal Profile only when you need to modify", source)
+        self.assertIn("Meal Profile only when you need to modify", source)
 
     def test_publish_still_creates_a_new_copy_and_retains_source_identity(self) -> None:
         source = inspect.getsource(meals._publish_repository_plan)
