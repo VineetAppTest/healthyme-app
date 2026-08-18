@@ -31,40 +31,6 @@ def _normalise_status(value: Any) -> str:
     return "stopped" if _clean(value).lower() in INACTIVE_STATUSES else ACTIVE_STATUS
 
 
-def _parse_date(value: Any) -> dt.date | None:
-    if isinstance(value, dt.datetime):
-        return value.date()
-    if isinstance(value, dt.date):
-        return value
-    text = _clean(value)[:10]
-    if not text:
-        return None
-    try:
-        return dt.date.fromisoformat(text)
-    except ValueError:
-        return None
-
-
-def exercise_allocation_effective_state(
-    row: dict[str, Any],
-    on_date: dt.date | str,
-) -> str:
-    """Return the read-only lifecycle state for one allocation on one date."""
-
-    target = _parse_date(on_date)
-    if target is None:
-        raise ValueError("A valid Exercise allocation date is required.")
-    if _normalise_status(row.get("status")) != ACTIVE_STATUS:
-        return "stopped"
-    start = _parse_date(row.get("start_date"))
-    end = _parse_date(row.get("end_date"))
-    if start and start > target:
-        return "upcoming"
-    if end and end < target:
-        return "expired"
-    return "current"
-
-
 def _repository_lookup(*, active_only: bool = False) -> dict[str, dict[str, Any]]:
     rows = list_exercise_repository(active_only=active_only)
     return {
@@ -177,38 +143,6 @@ def list_member_exercise_allocations(
         )
     )
     return rows
-
-
-def list_member_exercise_allocations_for_date(
-    member_id: str,
-    on_date: dt.date | str,
-) -> list[dict[str, Any]]:
-    """Return only Exercise allocations effective on a selected member date.
-
-    This is a pure read. It does not auto-stop expired allocations or mutate
-    repository/allocation state.
-    """
-
-    target = _parse_date(on_date)
-    if target is None:
-        raise ValueError("A valid Exercise allocation date is required.")
-    rows = list_member_exercise_allocations(member_id, include_stopped=True)
-    current: list[dict[str, Any]] = []
-    for raw in rows:
-        row = copy.deepcopy(dict(raw or {}))
-        state = exercise_allocation_effective_state(row, target)
-        if state != "current":
-            continue
-        row["effective_state"] = state
-        current.append(row)
-    current.sort(
-        key=lambda row: (
-            _clean(row.get("start_date")),
-            _clean(row.get("exercise_name") or row.get("title")).casefold(),
-            _clean(row.get("id")),
-        )
-    )
-    return current
 
 
 def _validate_dates(start_date: Any, end_date: Any) -> tuple[str, str]:

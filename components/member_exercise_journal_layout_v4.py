@@ -29,7 +29,7 @@ def render_member_exercise_journal_layout_v4(
     key_prefix: str = "hm_member_exercise_table",
     show_build_note: bool = True,
 ) -> None:
-    """Render the accepted Exercise Journal layout on the v2 authority contract."""
+    """Render the existing Exercise Journal contract with the accepted Daily Log layout."""
 
     base._inject_styles()
     _inject_layout_styles()
@@ -52,26 +52,34 @@ def render_member_exercise_journal_layout_v4(
 
     contract = base.exercise_contract_for_date(member_id, member_email, selected_date)
     if not contract.get("ok"):
-        st.error(contract.get("message") or "Exercise allocations could not be loaded.")
+        st.error(
+            contract.get("message")
+            or "Exercise recommendations could not be loaded."
+        )
 
+    profile = dict(contract.get("profile") or {})
     assigned = list(contract.get("exercises") or [])
+    profile_items = list(contract.get("catalog") or [])
     existing_rows = base.list_member_exercise_logs(member_id, log_date)
+    existing = {
+        int(row.get("item_order") or index): dict(row)
+        for index, row in enumerate(existing_rows, 1)
+    }
 
     catalog = base.repository_activity_catalog()
-    for item in assigned:
-        name = base._clean(item.get("name"))
-        if name:
-            catalog[name] = dict(item)
+    catalog.update(
+        {
+            base._clean(item.get("name")): dict(item)
+            for item in profile_items
+            if base._clean(item.get("name"))
+        }
+    )
     for row in existing_rows:
         name = base._clean(row.get("exercise_name"))
         if name and name not in catalog:
             catalog[name] = dict(row)
 
-    base_rows = base.base_exercise_journal_rows(assigned, existing_rows)
-    # Preserve the accepted zero-assignment/edit-history minimum while allowing
-    # v2 identity rows (for example unmatched legacy history) to increase it.
     base_count = max(1, len(assigned), len(existing_rows))
-    base_count = max(base_count, len(base_rows))
     count_key = f"{key_prefix}_row_count_{log_date}"
     st.session_state.setdefault(count_key, base_count)
     row_count = max(
@@ -79,7 +87,6 @@ def render_member_exercise_journal_layout_v4(
         min(base.MAX_EXERCISE_ROWS, int(st.session_state[count_key])),
     )
     st.session_state[count_key] = row_count
-    rows = base.extend_exercise_journal_rows(base_rows, row_count)
 
     if show_build_note:
         st.markdown(
@@ -87,17 +94,26 @@ def render_member_exercise_journal_layout_v4(
             unsafe_allow_html=True,
         )
 
+    if not profile.get("id"):
+        st.warning(
+            "An active recommendation profile is required before a new Exercise "
+            "Journal entry can be saved. Existing saved days remain viewable."
+        )
+
     timings = base._unique(
-        [row.get("scheduled_time") for row in existing_rows]
+        [item.get("timing_or_slot") for item in profile_items]
+        + [row.get("scheduled_time") for row in existing_rows]
         + list(base.STANDARD_TIMING_OPTIONS)
     )
     activities = list(catalog.keys())
+    profile_id = base._clean(profile.get("id")) or "profile"
 
     for index in range(1, row_count + 1):
-        descriptor = rows[index - 1]
-        prescribed = dict(descriptor.get("prescribed") or {})
-        prior = dict(descriptor.get("prior") or {})
-        item_order = int(descriptor.get("item_order") or index)
+        prescribed = dict(assigned[index - 1]) if index <= len(assigned) else {}
+        prior = dict(existing.get(index) or {})
+        item_order = int(
+            prior.get("item_order") or prescribed.get("item_order") or index
+        )
         current_activity = (
             base._clean(prior.get("exercise_name"))
             or base._clean(prescribed.get("name"))
@@ -108,13 +124,10 @@ def render_member_exercise_journal_layout_v4(
             or base._clean(prescribed.get("timing_or_slot"))
             or "Morning"
         )
-        identity = (
-            base._clean(descriptor.get("allocation_id"))
-            or base._clean(descriptor.get("journal_entry_key"))
-            or base._clean((descriptor.get("legacy_profile") or {}).get("id"))
-            or str(index)
+        widget = (
+            f"{key_prefix}_{profile_id}_{contract.get('day_number')}_"
+            f"{log_date}_{item_order}"
         )
-        widget = f"{key_prefix}_{base._slug(identity)}_{log_date}_{item_order}"
 
         with st.container(border=True):
             st.markdown(
@@ -132,19 +145,21 @@ def render_member_exercise_journal_layout_v4(
                     key=f"{widget}_timing",
                 )
             with activity_col:
+                activity_options = base._unique([current_activity, *activities])
                 selected_activity = st.selectbox(
                     "Activity",
-                    base._unique([current_activity, *activities]),
+                    activity_options,
                     key=f"{widget}_activity",
                 )
 
-            definition = dict(catalog.get(selected_activity) or prescribed or prior)
+            definition = dict(
+                catalog.get(selected_activity) or prescribed or prior
+            )
             with duration_col:
                 selected_duration = st.text_input(
                     "Duration / Sets",
                     value=(
                         base._clean(prior.get("duration_or_reps"))
-                        or base._clean(prescribed.get("duration_or_reps"))
                         or base._clean(definition.get("duration_or_reps"))
                     ),
                     key=f"{widget}_{base._slug(selected_activity)}_duration",
@@ -190,7 +205,10 @@ def render_member_exercise_journal_layout_v4(
                     "Save Exercise Entry",
                     key=f"{widget}_save",
                     use_container_width=True,
-                    disabled=(selected_activity == "Select activity"),
+                    disabled=(
+                        selected_activity == "Select activity"
+                        or not bool(profile.get("id"))
+                    ),
                 )
 
             if save_clicked:
@@ -199,6 +217,8 @@ def render_member_exercise_journal_layout_v4(
                         base.build_exercise_log_payload(
                             member_id=member_id,
                             log_date=log_date,
+                            profile=profile,
+                            day_number=int(contract.get("day_number") or 1),
                             item_order=item_order,
                             selected_activity=selected_activity,
                             selected_timing=selected_timing,
@@ -207,14 +227,6 @@ def render_member_exercise_journal_layout_v4(
                             status=status,
                             completion_time=completion_time,
                             selected_definition=definition,
-                            allocation_id=base._clean(
-                                descriptor.get("allocation_id")
-                            ),
-                            journal_entry_key=base._clean(
-                                descriptor.get("journal_entry_key")
-                            ),
-                            profile=dict(descriptor.get("legacy_profile") or {}),
-                            day_number=descriptor.get("legacy_day_number"),
                         )
                     )
                     base.set_system_message(

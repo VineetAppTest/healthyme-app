@@ -13,8 +13,12 @@ from components.member_exercise_journal import (
     STATUS_OPTIONS,
     _client,
     list_member_exercise_logs,
-    load_member_exercise_contract,
     save_member_exercise_log,
+)
+from components.member_recommendation_display import (
+    build_member_recommendation_contract,
+    load_active_recommendation_profile,
+    today_day_number,
 )
 from components.profile_builder_source_contract import exercise_snapshot
 from components.recommendation_contract import list_repository_items
@@ -92,11 +96,6 @@ def _normalise_repository_row(row: Dict[str, Any]) -> Dict[str, Any]:
     snapshot = exercise_snapshot(row)
     image = dict(snapshot.get("image") or {})
     return {
-        "source_id": _clean(
-            row.get("source_id")
-            or row.get("id")
-            or snapshot.get("source_id")
-        ),
         "name": _clean(snapshot.get("title")),
         "difficulty": _clean(snapshot.get("difficulty")),
         "duration_or_reps": _clean(snapshot.get("duration_or_reps")),
@@ -129,21 +128,45 @@ def exercise_contract_for_date(
     email: str,
     selected_date: dt.date,
 ) -> Dict[str, Any]:
-    """Return Exercise assignments from independent allocation authority."""
-
-    contract = load_member_exercise_contract(
-        member_id,
-        email,
-        selected_date=selected_date,
+    ok, profile, items, message = load_active_recommendation_profile(member_id, email)
+    if not ok or not profile:
+        return {
+            "ok": ok,
+            "message": message,
+            "profile": {},
+            "day_number": 1,
+            "day_label": selected_date.strftime("%a, %d %b %Y"),
+            "exercises": [],
+            "catalog": [],
+        }
+    contract = build_member_recommendation_contract(profile, items)
+    day_number = int(today_day_number(profile, selected_date) or 1)
+    day_row = next(
+        (
+            row
+            for row in contract.get("days", [])
+            if int(row.get("day_number") or 0) == day_number
+        ),
+        {},
     )
-    exercises = [dict(item) for item in contract.get("exercises", [])]
+    all_exercises = [
+        dict(item)
+        for day in contract.get("days", [])
+        for item in day.get("items", [])
+        if item.get("type") == "exercise"
+    ]
     return {
-        "ok": bool(contract.get("ok")),
-        "message": contract.get("message", ""),
-        "day_label": selected_date.strftime("%a, %d %b %Y"),
-        "exercises": exercises,
-        "catalog": exercises,
-        "authority": contract.get("authority") or "member_exercise_allocations",
+        "ok": True,
+        "message": message,
+        "profile": dict(contract.get("profile") or {}),
+        "day_number": day_number,
+        "day_label": f"Day {day_number} · {selected_date.strftime('%a, %d %b %Y')}",
+        "exercises": [
+            dict(item)
+            for item in day_row.get("items", [])
+            if item.get("type") == "exercise"
+        ],
+        "catalog": all_exercises,
     }
 
 
@@ -173,6 +196,8 @@ def build_exercise_log_payload(
     *,
     member_id: str,
     log_date: str,
+    profile: Dict[str, Any],
+    day_number: int,
     item_order: int,
     selected_activity: str,
     selected_timing: str,
@@ -181,27 +206,15 @@ def build_exercise_log_payload(
     status: str,
     completion_time,
     selected_definition: Dict[str, Any],
-    allocation_id: str = "",
-    journal_entry_key: str = "",
-    profile: Dict[str, Any] | None = None,
-    day_number: int | None = None,
 ) -> Dict[str, Any]:
-    """Build a journal row without mutating its prescription authority.
-
-    Allocation-linked rows retain `allocation_id` even when the member records a
-    different actual Activity. Manual actual rows use `journal_entry_key`. The
-    optional profile/day parameters are only for retained legacy history.
-    """
-
-    payload: Dict[str, Any] = {
+    return {
         "member_id": member_id,
         "log_date": log_date,
+        "profile_id": profile.get("id"),
+        "profile_name": profile.get("profile_name"),
+        "day_number": day_number,
         "item_order": item_order,
         "exercise_name": _clean(selected_activity),
-        "source_id": _clean(
-            selected_definition.get("source_id")
-            or selected_definition.get("exercise_id")
-        ),
         "scheduled_time": _clean(selected_timing),
         "difficulty": selected_definition.get("difficulty"),
         "duration_or_reps": _clean(selected_duration),
@@ -213,124 +226,6 @@ def build_exercise_log_payload(
         "completion_time": _completion_time_value(completion_time),
         "member_notes": _clean(remarks),
     }
-    if _clean(allocation_id):
-        payload["allocation_id"] = _clean(allocation_id)
-    elif _clean(journal_entry_key):
-        payload["journal_entry_key"] = _clean(journal_entry_key)
-    elif _clean((profile or {}).get("id")):
-        payload.update(
-            {
-                "profile_id": (profile or {}).get("id"),
-                "profile_name": (profile or {}).get("profile_name"),
-                "day_number": day_number,
-            }
-        )
-    else:
-        raise ValueError("Exercise Journal row identity is required.")
-    return payload
-
-
-def _existing_allocation_map(rows: Iterable[dict]) -> Dict[str, dict]:
-    return {
-        _clean(row.get("allocation_id")): dict(row)
-        for row in rows or []
-        if _clean(row.get("allocation_id"))
-    }
-
-
-def base_exercise_journal_rows(
-    assigned: Iterable[dict],
-    existing_rows: Iterable[dict],
-) -> List[dict]:
-    """Build rows without matching legacy history to allocations by name/order."""
-
-    assigned_rows = [dict(row or {}) for row in assigned or []]
-    saved_rows = [dict(row or {}) for row in existing_rows or []]
-    by_allocation = _existing_allocation_map(saved_rows)
-    consumed_ids: set[str] = set()
-    rows: List[dict] = []
-
-    for index, prescribed in enumerate(assigned_rows, start=1):
-        allocation_id = _clean(prescribed.get("allocation_id"))
-        prior = dict(by_allocation.get(allocation_id) or {})
-        if prior.get("id"):
-            consumed_ids.add(_clean(prior.get("id")))
-        rows.append(
-            {
-                "prescribed": prescribed,
-                "prior": prior,
-                "allocation_id": allocation_id,
-                "journal_entry_key": "",
-                "legacy_profile": {},
-                "legacy_day_number": None,
-                "item_order": int(prior.get("item_order") or index),
-            }
-        )
-
-    for prior in saved_rows:
-        row_id = _clean(prior.get("id"))
-        if row_id and row_id in consumed_ids:
-            continue
-        if _clean(prior.get("allocation_id")) and any(
-            _clean(row.get("allocation_id")) == _clean(prior.get("allocation_id"))
-            for row in rows
-        ):
-            continue
-        legacy_profile = {}
-        legacy_day_number = None
-        journal_entry_key = _clean(prior.get("journal_entry_key"))
-        if not _clean(prior.get("allocation_id")) and not journal_entry_key:
-            if _clean(prior.get("profile_id")):
-                legacy_profile = {
-                    "id": prior.get("profile_id"),
-                    "profile_name": prior.get("profile_name"),
-                }
-                legacy_day_number = prior.get("day_number")
-            else:
-                journal_entry_key = f"manual:existing:{row_id or len(rows) + 1}"
-        rows.append(
-            {
-                "prescribed": {},
-                "prior": prior,
-                "allocation_id": _clean(prior.get("allocation_id")),
-                "journal_entry_key": journal_entry_key,
-                "legacy_profile": legacy_profile,
-                "legacy_day_number": legacy_day_number,
-                "item_order": int(prior.get("item_order") or len(rows) + 1),
-            }
-        )
-
-    if not rows:
-        rows.append(
-            {
-                "prescribed": {},
-                "prior": {},
-                "allocation_id": "",
-                "journal_entry_key": "manual:1",
-                "legacy_profile": {},
-                "legacy_day_number": None,
-                "item_order": 1,
-            }
-        )
-    return rows
-
-
-def extend_exercise_journal_rows(rows: List[dict], row_count: int) -> List[dict]:
-    output = [dict(row) for row in rows]
-    while len(output) < row_count:
-        slot = len(output) + 1
-        output.append(
-            {
-                "prescribed": {},
-                "prior": {},
-                "allocation_id": "",
-                "journal_entry_key": f"manual:{slot}",
-                "legacy_profile": {},
-                "legacy_day_number": None,
-                "item_order": slot,
-            }
-        )
-    return output[:row_count]
 
 
 def _inject_styles() -> None:
@@ -396,27 +291,6 @@ def _render_saved_days(
                         st.rerun()
 
 
-def _definition_for_row(
-    descriptor: dict,
-    catalog: Dict[str, Dict[str, Any]],
-    index: int,
-) -> tuple[dict, dict, str, str]:
-    prescribed = dict(descriptor.get("prescribed") or {})
-    prior = dict(descriptor.get("prior") or {})
-    current_activity = (
-        _clean(prior.get("exercise_name"))
-        or _clean(prescribed.get("name"))
-        or "Select activity"
-    )
-    current_timing = (
-        _clean(prior.get("scheduled_time"))
-        or _clean(prescribed.get("timing_or_slot"))
-        or "Morning"
-    )
-    definition = dict(catalog.get(current_activity) or prescribed or prior)
-    return prescribed, prior, current_activity, current_timing
-
-
 def render_member_exercise_journal_table(
     member_id: str,
     member_email: str = "",
@@ -443,22 +317,33 @@ def render_member_exercise_journal_table(
 
     contract = exercise_contract_for_date(member_id, member_email, selected_date)
     if not contract.get("ok"):
-        st.error(contract.get("message") or "Exercise allocations could not be loaded.")
+        st.error(
+            contract.get("message")
+            or "Exercise recommendations could not be loaded."
+        )
+    profile = dict(contract.get("profile") or {})
     assigned = list(contract.get("exercises") or [])
+    profile_items = list(contract.get("catalog") or [])
     existing_rows = list_member_exercise_logs(member_id, log_date)
+    existing = {
+        int(row.get("item_order") or idx): dict(row)
+        for idx, row in enumerate(existing_rows, 1)
+    }
 
     catalog = repository_activity_catalog()
-    for item in assigned:
-        name = _clean(item.get("name"))
-        if name:
-            catalog[name] = dict(item)
+    catalog.update(
+        {
+            _clean(item.get("name")): dict(item)
+            for item in profile_items
+            if _clean(item.get("name"))
+        }
+    )
     for row in existing_rows:
         name = _clean(row.get("exercise_name"))
         if name and name not in catalog:
             catalog[name] = dict(row)
 
-    base_rows = base_exercise_journal_rows(assigned, existing_rows)
-    base_count = len(base_rows)
+    base_count = max(1, len(assigned), len(existing_rows))
     count_key = f"{key_prefix}_row_count_{log_date}"
     st.session_state.setdefault(count_key, base_count)
     row_count = max(
@@ -466,12 +351,16 @@ def render_member_exercise_journal_table(
         min(MAX_EXERCISE_ROWS, int(st.session_state[count_key])),
     )
     st.session_state[count_key] = row_count
-    rows = extend_exercise_journal_rows(base_rows, row_count)
 
     if show_build_note:
         st.markdown(
             f"<div class='hm-exercise-date-caption'>{_esc(contract.get('day_label'))}</div>",
             unsafe_allow_html=True,
+        )
+    if not profile.get("id"):
+        st.warning(
+            "An active recommendation profile is required before a new Exercise "
+            "Journal entry can be saved. Existing saved days remain viewable."
         )
 
     add_col, remove_col = st.columns(2)
@@ -495,15 +384,19 @@ def render_member_exercise_journal_table(
             st.rerun()
 
     timings = _unique(
-        [row.get("scheduled_time") for row in existing_rows]
+        [item.get("timing_or_slot") for item in profile_items]
+        + [row.get("scheduled_time") for row in existing_rows]
         + list(STANDARD_TIMING_OPTIONS)
     )
     activities = list(catalog.keys())
+    profile_id = _clean(profile.get("id")) or "profile"
 
-    for index, descriptor in enumerate(rows, start=1):
-        prescribed = dict(descriptor.get("prescribed") or {})
-        prior = dict(descriptor.get("prior") or {})
-        item_order = int(descriptor.get("item_order") or index)
+    for index in range(1, row_count + 1):
+        prescribed = dict(assigned[index - 1]) if index <= len(assigned) else {}
+        prior = dict(existing.get(index) or {})
+        item_order = int(
+            prior.get("item_order") or prescribed.get("item_order") or index
+        )
         current_activity = (
             _clean(prior.get("exercise_name"))
             or _clean(prescribed.get("name"))
@@ -514,39 +407,40 @@ def render_member_exercise_journal_table(
             or _clean(prescribed.get("timing_or_slot"))
             or "Morning"
         )
-        identity = (
-            _clean(descriptor.get("allocation_id"))
-            or _clean(descriptor.get("journal_entry_key"))
-            or _clean((descriptor.get("legacy_profile") or {}).get("id"))
-            or str(index)
+        widget = (
+            f"{key_prefix}_{profile_id}_{contract.get('day_number')}_"
+            f"{log_date}_{item_order}"
         )
-        widget = f"{key_prefix}_{_slug(identity)}_{log_date}_{item_order}"
-
         with st.container(border=True):
             st.markdown(
                 f"<div class='hm-exercise-row-number'>Exercise {index}</div>",
                 unsafe_allow_html=True,
             )
             timing_col, activity_col, duration_col, remarks_col = st.columns(
-                [1, 1.65, 1.45, 2], gap="small"
+                [1, 1.65, 1.45, 2],
+                gap="small",
             )
             with timing_col:
                 selected_timing = st.selectbox(
-                    "Timing", _options(current_timing, timings), key=f"{widget}_timing"
+                    "Timing",
+                    _options(current_timing, timings),
+                    key=f"{widget}_timing",
                 )
             with activity_col:
+                activity_options = _unique([current_activity, *activities])
                 selected_activity = st.selectbox(
                     "Activity",
-                    _unique([current_activity, *activities]),
+                    activity_options,
                     key=f"{widget}_activity",
                 )
-            definition = dict(catalog.get(selected_activity) or prescribed or prior)
+            definition = dict(
+                catalog.get(selected_activity) or prescribed or prior
+            )
             with duration_col:
                 selected_duration = st.text_input(
                     "Duration / Sets",
                     value=(
                         _clean(prior.get("duration_or_reps"))
-                        or _clean(prescribed.get("duration_or_reps"))
                         or _clean(definition.get("duration_or_reps"))
                     ),
                     key=f"{widget}_{_slug(selected_activity)}_duration",
@@ -560,9 +454,31 @@ def render_member_exercise_journal_table(
                     placeholder="Optional remarks",
                 )
 
-            status_col, time_col, save_col = st.columns([1.1, 1.5, 1.35], gap="small")
+            details = " · ".join(
+                value
+                for value in (
+                    _clean(definition.get("difficulty")),
+                    _clean(definition.get("equipment")),
+                )
+                if value
+            )
+            if details:
+                st.markdown(
+                    f"<div class='hm-exercise-source-note'>Repository details: "
+                    f"{_esc(details)}</div>",
+                    unsafe_allow_html=True,
+                )
+
+            status_col, time_col, save_col = st.columns(
+                [1.1, 1.5, 1.35],
+                gap="small",
+            )
             with status_col:
-                prior_status = prior.get("status") if prior.get("status") in STATUS_OPTIONS else "Not Started"
+                prior_status = (
+                    prior.get("status")
+                    if prior.get("status") in STATUS_OPTIONS
+                    else "Not Started"
+                )
                 status = st.selectbox(
                     "Status",
                     STATUS_OPTIONS,
@@ -577,12 +493,18 @@ def render_member_exercise_journal_table(
                     placeholder="Example: 10:30 PM",
                 )
             with save_col:
-                st.markdown("<div style='height:1.55rem'></div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<div style='height:1.55rem'></div>",
+                    unsafe_allow_html=True,
+                )
                 save_clicked = st.button(
                     "Save Exercise Entry",
                     key=f"{widget}_save",
                     use_container_width=True,
-                    disabled=(selected_activity == "Select activity"),
+                    disabled=(
+                        selected_activity == "Select activity"
+                        or not bool(profile.get("id"))
+                    ),
                 )
             if save_clicked:
                 try:
@@ -590,6 +512,8 @@ def render_member_exercise_journal_table(
                         build_exercise_log_payload(
                             member_id=member_id,
                             log_date=log_date,
+                            profile=profile,
+                            day_number=int(contract.get("day_number") or 1),
                             item_order=item_order,
                             selected_activity=selected_activity,
                             selected_timing=selected_timing,
@@ -598,14 +522,11 @@ def render_member_exercise_journal_table(
                             status=status,
                             completion_time=completion_time,
                             selected_definition=definition,
-                            allocation_id=_clean(descriptor.get("allocation_id")),
-                            journal_entry_key=_clean(descriptor.get("journal_entry_key")),
-                            profile=dict(descriptor.get("legacy_profile") or {}),
-                            day_number=descriptor.get("legacy_day_number"),
                         )
                     )
                     set_system_message(
-                        f"Exercise Journal entry saved for {selected_activity} on "
+                        "Exercise Journal entry saved for "
+                        f"{selected_activity} on "
                         f"{selected_date.strftime('%d %b %Y')}.",
                         "success",
                     )
