@@ -23,7 +23,7 @@ from components.meal_profile_builder_phase_b import (
     SUPPLEMENT_SECTION,
     VIEW_PROFILES_SECTION,
 )
-from components.pbm_core import ensure_state, safe_key
+from components.pbm_core import SELECT_PROFILE, ensure_state, reset_profile, safe_key
 from components.profile_builder_access import (
     current_profile_builder_role,
     current_profile_builder_user_can_publish,
@@ -57,6 +57,50 @@ SECTION_LABELS = {
     SUPPLEMENT_SECTION: "Supplement",
     VIEW_PROFILES_SECTION: "View Member Plan",
 }
+
+_MEAL_PROFILE_SELECTOR = "mpb_meal_repository_profile"
+_MEAL_PROFILE_SELECTOR_RESET_PENDING = "_hm_mpb_meal_profile_selector_reset_pending"
+
+
+def _apply_pending_meal_profile_selector_reset() -> None:
+    """Reset the Meal Profile widget before Streamlit instantiates it."""
+
+    if not st.session_state.pop(_MEAL_PROFILE_SELECTOR_RESET_PENDING, False):
+        return
+    st.session_state[_MEAL_PROFILE_SELECTOR] = SELECT_PROFILE
+
+
+def _render_meals_with_selector_reset_guard(can_publish: bool) -> None:
+    """Recover from the legacy post-publish widget-state reset ordering bug.
+
+    The publish flow completes its persistence work before trying to reset the
+    Meal Profile selectbox. Streamlit does not allow a keyed widget's state to
+    be changed after that widget has been instantiated in the same run. Defer
+    only that selector reset to the next rerun, while preserving the successful
+    publish and clearing the builder state exactly once.
+    """
+
+    try:
+        render_member_plan_meals_compact(
+            load_member_plan_recipe_options(),
+            can_publish,
+        )
+    except st.errors.StreamlitAPIException as exc:
+        message = str(exc)
+        is_selector_reset_error = (
+            _MEAL_PROFILE_SELECTOR in message
+            and "cannot be modified after the widget with key" in message
+        )
+        if not is_selector_reset_error:
+            raise
+
+        st.session_state[_MEAL_PROFILE_SELECTOR_RESET_PENDING] = True
+        reset_profile()
+        st.session_state["mpb_meal_saved"] = False
+        st.session_state["mpb_publish_flash"] = (
+            "Meal Profile published. The builder was reset safely for the next allocation."
+        )
+        st.rerun()
 
 
 def _render_css() -> None:
@@ -96,6 +140,7 @@ div[data-testid="stExpander"] details summary svg,div[data-testid="stExpander"] 
 
 def render_modular_profile_builder() -> None:
     ensure_state()
+    _apply_pending_meal_profile_selector_reset()
     _render_css()
 
     role = current_profile_builder_role()
@@ -135,10 +180,7 @@ def render_modular_profile_builder() -> None:
     if section == "Profile Setup":
         render_member_plan_setup(load_member_plan_setup_options())
     elif section == "Meal Structure":
-        render_member_plan_meals_compact(
-            load_member_plan_recipe_options(),
-            can_publish,
-        )
+        _render_meals_with_selector_reset_guard(can_publish)
     elif section == EXERCISE_SECTION:
         render_member_plan_exercise()
     elif section == SUPPLEMENT_SECTION:
