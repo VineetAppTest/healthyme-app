@@ -7,15 +7,14 @@ from typing import Any, Dict, List
 
 import streamlit as st
 
-from components.flash import set_system_message
-from components.member_recommendation_display import (
-    build_member_recommendation_contract,
-    load_active_recommendation_profile,
+from components.exercise_member_allocation import (
+    list_member_exercise_allocations_for_date,
 )
+from components.flash import set_system_message
 
 LOG_TABLE = "hm_member_exercise_logs"
 SECRET_SECTIONS = ("auth", "auth0", "authentication", "healthyme", "supabase")
-BUILD_NOTE = "v102.5B · Inline Member Exercise Journal"
+BUILD_NOTE = "v102.6P0 · Allocation-linked Member Exercise Journal"
 STATUS_OPTIONS = ["Not Started", "In Progress", "Completed", "Skipped"]
 
 
@@ -77,36 +76,72 @@ def _rows(response) -> List[dict]:
     return list(getattr(response, "data", None) or [])
 
 
-def load_member_exercise_contract(member_id: str, email: str = "") -> Dict[str, Any]:
-    ok, profile, items, message = load_active_recommendation_profile(member_id, email)
-    if not ok or not profile:
-        return {
-            "ok": ok,
-            "message": message,
-            "profile": {},
-            "today_day": 1,
-            "exercises": [],
-        }
-    contract = build_member_recommendation_contract(profile, items)
-    today_day = int(contract.get("today_day") or 1)
-    day = next(
-        (
-            row
-            for row in contract.get("days", [])
-            if int(row.get("day_number") or 0) == today_day
+def _allocation_definition(row: dict[str, Any], index: int) -> dict[str, Any]:
+    snapshot = dict(row.get("source_snapshot") or {})
+    allocation_id = _clean(row.get("id"))
+    source_id = _clean(row.get("source_id") or row.get("exercise_id"))
+    return {
+        "allocation_id": allocation_id,
+        "source_id": source_id,
+        "name": (
+            _clean(row.get("exercise_name"))
+            or _clean(row.get("title"))
+            or _clean(snapshot.get("title"))
+            or f"Exercise {index}"
         ),
-        {},
-    )
+        "timing_or_slot": "",
+        "difficulty": _clean(snapshot.get("difficulty")),
+        "duration_or_reps": (
+            _clean(row.get("duration_or_reps"))
+            or _clean(snapshot.get("duration_or_reps"))
+        ),
+        "equipment": _clean(snapshot.get("equipment")),
+        "benefits": _clean(snapshot.get("benefits")),
+        "instruction": (
+            _clean(row.get("instructions"))
+            or _clean(snapshot.get("instructions"))
+        ),
+        "image_reference": _clean(snapshot.get("image_url")),
+        "source_context": "Exercise allocation",
+        "start_date": _clean(row.get("start_date")),
+        "end_date": _clean(row.get("end_date")),
+        "item_order": index,
+    }
+
+
+def load_member_exercise_contract(
+    member_id: str,
+    email: str = "",
+    *,
+    selected_date: dt.date | None = None,
+) -> Dict[str, Any]:
+    """Load prescribed Exercise rows from independent Exercise allocations."""
+
+    target = selected_date or dt.date.today()
+    try:
+        allocations = list_member_exercise_allocations_for_date(member_id, target)
+    except Exception as exc:
+        return {
+            "ok": False,
+            "message": f"Exercise allocations could not be loaded: {exc}",
+            "profile": {},
+            "today_day": None,
+            "day_label": target.strftime("%a, %d %b %Y"),
+            "exercises": [],
+            "authority": "member_exercise_allocations",
+        }
     exercises = [
-        item for item in day.get("items", []) if item.get("type") == "exercise"
+        _allocation_definition(row, index)
+        for index, row in enumerate(allocations, start=1)
     ]
     return {
         "ok": True,
-        "message": message,
-        "profile": contract.get("profile", {}),
-        "today_day": today_day,
-        "day_label": day.get("day_label", f"Day {today_day}"),
+        "message": "Loaded independent Exercise allocations.",
+        "profile": {},
+        "today_day": None,
+        "day_label": target.strftime("%a, %d %b %Y"),
         "exercises": exercises,
+        "authority": "member_exercise_allocations",
     }
 
 
@@ -127,38 +162,72 @@ def list_member_exercise_logs(member_id: str, log_date: str) -> List[dict]:
 
 
 def save_member_exercise_log(payload: Dict[str, Any]) -> None:
-    required = (
-        "member_id",
-        "log_date",
-        "profile_id",
-        "day_number",
-        "exercise_name",
-        "item_order",
-    )
+    """Save v2 allocation/manual rows while retaining legacy profile rows."""
+
+    row = dict(payload)
+    allocation_id = _clean(row.get("allocation_id"))
+    journal_entry_key = _clean(row.get("journal_entry_key"))
+    common_required = ("member_id", "log_date", "exercise_name")
     missing = [
         field
-        for field in required
-        if not _clean(payload.get(field)) and payload.get(field) != 0
+        for field in common_required
+        if not _clean(row.get(field)) and row.get(field) != 0
     ]
+
+    if allocation_id:
+        if not _clean(row.get("source_id")):
+            missing.append("source_id")
+        conflict = "member_id,log_date,allocation_id"
+        row.setdefault("item_order", 0)
+        row["journal_entry_key"] = None
+        row["profile_id"] = None
+        row["profile_name"] = None
+        row["day_number"] = None
+    elif journal_entry_key:
+        if not _clean(row.get("source_id")):
+            missing.append("source_id")
+        conflict = "member_id,log_date,journal_entry_key"
+        row.setdefault("item_order", 0)
+        row["allocation_id"] = None
+        row["profile_id"] = None
+        row["profile_name"] = None
+        row["day_number"] = None
+    else:
+        legacy_required = ("profile_id", "day_number", "item_order")
+        missing.extend(
+            field
+            for field in legacy_required
+            if not _clean(row.get(field)) and row.get(field) != 0
+        )
+        conflict = "member_id,log_date,profile_id,day_number,item_order"
+
     if missing:
-        raise ValueError(f"Missing exercise log fields: {', '.join(missing)}")
-    row = dict(payload)
+        raise ValueError(
+            f"Missing exercise log fields: {', '.join(dict.fromkeys(missing))}"
+        )
+
     row["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
     (
         _client()
         .table(LOG_TABLE)
-        .upsert(
-            row,
-            on_conflict="member_id,log_date,profile_id,day_number,item_order",
-        )
+        .upsert(row, on_conflict=conflict)
         .execute()
     )
 
 
 def exercise_log_map(member_id: str, log_date: str) -> Dict[int, dict]:
+    """Legacy item-order map retained for historical compatibility."""
     return {
         int(row.get("item_order") or 0): row
         for row in list_member_exercise_logs(member_id, log_date)
+    }
+
+
+def allocation_exercise_log_map(member_id: str, log_date: str) -> Dict[str, dict]:
+    return {
+        _clean(row.get("allocation_id")): row
+        for row in list_member_exercise_logs(member_id, log_date)
+        if _clean(row.get("allocation_id"))
     }
 
 
@@ -234,11 +303,7 @@ def render_member_exercise_journal(
     key_prefix: str = "hm_member_exercise",
     show_build_note: bool = True,
 ) -> None:
-    """Render the complete member exercise experience in-place.
-
-    This renderer is shared by the Daily Log Exercise Journal tab and the
-    standalone My Exercise route so both surfaces stay functionally identical.
-    """
+    """Render prescribed allocations with member progress controls."""
 
     _inject_exercise_styles()
     if heading:
@@ -246,16 +311,12 @@ def render_member_exercise_journal(
 
     contract = load_member_exercise_contract(member_id, member_email)
     if not contract.get("ok"):
-        st.error(
-            contract.get("message")
-            or "Exercise recommendations could not be loaded."
-        )
+        st.error(contract.get("message") or "Exercise allocations could not be loaded.")
         return
 
     exercises = contract.get("exercises", [])
-    profile = contract.get("profile", {})
     log_date = dt.date.today().isoformat()
-    existing_logs = exercise_log_map(member_id, log_date)
+    existing_logs = allocation_exercise_log_map(member_id, log_date)
     completed_count = sum(
         1 for row in existing_logs.values() if row.get("status") == "Completed"
     )
@@ -274,32 +335,23 @@ def render_member_exercise_journal(
     )
 
     if not exercises:
-        st.info(
-            "No exercise has been assigned for today in the active "
-            "recommendation profile."
-        )
+        st.info("No Exercise allocation applies for today.")
         return
 
-    profile_id = _clean(profile.get("id")) or "profile"
     for index, exercise in enumerate(exercises, start=1):
-        item_order = int(exercise.get("item_order") or index)
-        prior = existing_logs.get(item_order, {})
+        allocation_id = _clean(exercise.get("allocation_id"))
+        prior = existing_logs.get(allocation_id, {})
         name = _clean(exercise.get("name")) or f"Exercise {index}"
-        widget_key = (
-            f"{key_prefix}_{profile_id}_{contract.get('today_day')}_{item_order}"
-        )
+        widget_key = f"{key_prefix}_{allocation_id or index}"
 
         st.markdown(
             f"""
             <div class='hm-exercise-card'>
               <div class='hm-exercise-title'>{_esc(name)}</div>
               <div class='hm-exercise-meta'>
-                <div><b>Time of Day</b>{_esc(exercise.get('timing_or_slot') or '-')}</div>
                 <div><b>Difficulty</b>{_esc(exercise.get('difficulty') or '-')}</div>
                 <div><b>Duration / Repetitions</b>{_esc(exercise.get('duration_or_reps') or '-')}</div>
                 <div><b>Equipment</b>{_esc(exercise.get('equipment') or '-')}</div>
-                <div><b>Category / Source</b>{_esc(exercise.get('source_context') or '-')}</div>
-                <div><b>Image Reference</b>{_esc(exercise.get('image_reference') or '-')}</div>
               </div>
               <div class='hm-exercise-copy'><b>Benefits:</b> {_esc(exercise.get('benefits') or '-')}</div>
               <div class='hm-exercise-copy'><b>Instructions:</b> {_esc(exercise.get('instruction') or '-')}</div>
@@ -332,8 +384,7 @@ def render_member_exercise_journal(
             "Member notes",
             value=_clean(prior.get("member_notes")),
             placeholder=(
-                "Example: Completed comfortably / slight discomfort / "
-                "reduced pace."
+                "Example: Completed comfortably / slight discomfort / reduced pace."
             ),
             key=f"{widget_key}_notes",
             height=88,
@@ -349,10 +400,9 @@ def render_member_exercise_journal(
                     {
                         "member_id": member_id,
                         "log_date": log_date,
-                        "profile_id": profile.get("id"),
-                        "profile_name": profile.get("profile_name"),
-                        "day_number": contract.get("today_day"),
-                        "item_order": item_order,
+                        "allocation_id": allocation_id,
+                        "source_id": exercise.get("source_id"),
+                        "item_order": index,
                         "exercise_name": name,
                         "scheduled_time": exercise.get("timing_or_slot"),
                         "difficulty": exercise.get("difficulty"),

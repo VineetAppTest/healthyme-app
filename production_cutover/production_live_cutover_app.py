@@ -2,10 +2,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import streamlit as st
+
+from components.runtime_navigation_safety import unwrap_stale_full_app_navigation
+
 
 BUILD = "H13R5A-production-scoped-profile-builder-staff-v1"
 ROLLBACK_BUILD = "H13R5-production-direct-login-v1"
 SOURCE = Path(__file__).resolve().with_name("production_native_full_app.py")
+
+# Streamlit can reuse the same Python process across a code hot-reload. Never let
+# the production cutover capture a stale dynamic full-app adapter as its base;
+# doing so appends the Member/Admin route set twice and creates duplicate inferred
+# URL paths such as My_Profile. Preserve the current app-level navigation wrapper.
+st.navigation = unwrap_stale_full_app_navigation(st.navigation)
 
 source_text = SOURCE.read_text(encoding="utf-8")
 
