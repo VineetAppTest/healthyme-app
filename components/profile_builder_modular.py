@@ -71,7 +71,10 @@ def _apply_pending_meal_profile_selector_reset() -> None:
     st.session_state[_MEAL_PROFILE_SELECTOR] = SELECT_PROFILE
 
 
-def _render_meals_with_selector_reset_guard(can_publish: bool) -> None:
+def _render_meals_with_selector_reset_guard(
+    recipes: list[str],
+    can_publish: bool,
+) -> None:
     """Recover from the legacy post-publish widget-state reset ordering bug.
 
     The publish flow completes its persistence work before trying to reset the
@@ -82,10 +85,7 @@ def _render_meals_with_selector_reset_guard(can_publish: bool) -> None:
     """
 
     try:
-        render_member_plan_meals_compact(
-            load_member_plan_recipe_options(),
-            can_publish,
-        )
+        render_member_plan_meals_compact(recipes, can_publish)
     except StreamlitAPIException as exc:
         message = str(exc)
         is_selector_reset_error = (
@@ -181,7 +181,10 @@ def render_modular_profile_builder() -> None:
     if section == "Profile Setup":
         render_member_plan_setup(load_member_plan_setup_options())
     elif section == "Meal Structure":
-        _render_meals_with_selector_reset_guard(can_publish)
+        _render_meals_with_selector_reset_guard(
+            load_member_plan_recipe_options(),
+            can_publish,
+        )
     elif section == EXERCISE_SECTION:
         render_member_plan_exercise()
     elif section == SUPPLEMENT_SECTION:
