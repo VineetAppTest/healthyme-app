@@ -8,9 +8,12 @@ on:
       - "components/member_exercise_journal_table.py"
       - "components/member_exercise_journal_layout_v4.py"
       - "components/current_member_plan.py"
+      - "components/runtime_navigation_safety.py"
+      - "production_cutover/production_live_cutover_app.py"
       - "sql/p0_member_exercise_log_allocation_identity_v2.sql"
       - "docs/P0_MEMBER_AUTHORITY_CONTRACT_V2.md"
       - "tests/test_p0_member_authority_contract_v2.py"
+      - "tests/test_p0_runtime_navigation_safety.py"
       - "tests/test_member_schedule_tabs_exercise_journal.py"
       - "tests/test_current_member_plan.py"
       - "tests/test_exercise_member_allocation.py"
@@ -35,19 +38,23 @@ jobs:
       - name: Install project dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Compile P0 contract surfaces
+      - name: Compile P0 contract and runtime safety surfaces
         run: |
           python -m py_compile \
             components/exercise_member_allocation.py \
             components/member_exercise_journal.py \
             components/member_exercise_journal_table.py \
             components/member_exercise_journal_layout_v4.py \
-            tests/test_p0_member_authority_contract_v2.py
+            components/runtime_navigation_safety.py \
+            production_cutover/production_live_cutover_app.py \
+            tests/test_p0_member_authority_contract_v2.py \
+            tests/test_p0_runtime_navigation_safety.py
 
-      - name: Run focused authority and journal regressions
+      - name: Run focused authority, runtime navigation and journal regressions
         run: |
           python -m unittest -v \
             tests.test_p0_member_authority_contract_v2 \
+            tests.test_p0_runtime_navigation_safety \
             tests.test_current_member_plan \
             tests.test_exercise_member_allocation \
             tests.test_member_schedule_tabs_exercise_journal
