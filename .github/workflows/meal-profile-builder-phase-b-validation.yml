@@ -5,10 +5,12 @@ on:
     paths:
       - "components/meal_profile_builder_phase_b.py"
       - "components/meal_profile_builder_write_boundary.py"
+      - "components/member_plan_builder_meals_compact.py"
       - "components/profile_builder_modular.py"
       - "pages/38_Admin_Recommendation_Profile_Builder.py"
       - "docs/meal_profile_builder_phase_b_2026-08-04.md"
       - "tests/test_meal_profile_builder_phase_b.py"
+      - "tests/test_historical_meal_profile_republish.py"
       - ".github/workflows/meal-profile-builder-phase-b-validation.yml"
   workflow_dispatch:
 
@@ -38,12 +40,17 @@ jobs:
           python -m py_compile \
             components/meal_profile_builder_phase_b.py \
             components/meal_profile_builder_write_boundary.py \
+            components/member_plan_builder_meals_compact.py \
             components/profile_builder_modular.py \
             pages/38_Admin_Recommendation_Profile_Builder.py \
-            tests/test_meal_profile_builder_phase_b.py
+            tests/test_meal_profile_builder_phase_b.py \
+            tests/test_historical_meal_profile_republish.py
 
       - name: Validate meals-only live ownership
         run: python -m unittest tests.test_meal_profile_builder_phase_b -v
+
+      - name: Validate historical Meal Profile reuse
+        run: python -m unittest tests.test_historical_meal_profile_republish -v
 
       - name: Revalidate Member Planning separation contract
         run: python -m unittest tests.test_member_planning_separation_contract -v
