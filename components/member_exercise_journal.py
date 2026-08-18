@@ -115,12 +115,7 @@ def load_member_exercise_contract(
     *,
     selected_date: dt.date | None = None,
 ) -> Dict[str, Any]:
-    """Load the member Exercise prescription from independent allocations.
-
-    Recommendation Profile Exercise rows are intentionally not consulted. The
-    Current Member Plan and Exercise Journal therefore share the same Exercise
-    authority.
-    """
+    """Load prescribed Exercise rows from independent Exercise allocations."""
 
     target = selected_date or dt.date.today()
     try:
@@ -167,22 +162,33 @@ def list_member_exercise_logs(member_id: str, log_date: str) -> List[dict]:
 
 
 def save_member_exercise_log(payload: Dict[str, Any]) -> None:
-    """Save either a v2 allocation-linked row or a retained legacy profile row."""
+    """Save v2 allocation/manual rows while retaining legacy profile rows."""
 
     row = dict(payload)
     allocation_id = _clean(row.get("allocation_id"))
+    journal_entry_key = _clean(row.get("journal_entry_key"))
     common_required = ("member_id", "log_date", "exercise_name")
     missing = [
         field
         for field in common_required
         if not _clean(row.get(field)) and row.get(field) != 0
     ]
+
     if allocation_id:
         if not _clean(row.get("source_id")):
             missing.append("source_id")
         conflict = "member_id,log_date,allocation_id"
         row.setdefault("item_order", 0)
-        # New rows deliberately do not fabricate Recommendation Profile identity.
+        row["journal_entry_key"] = None
+        row["profile_id"] = None
+        row["profile_name"] = None
+        row["day_number"] = None
+    elif journal_entry_key:
+        if not _clean(row.get("source_id")):
+            missing.append("source_id")
+        conflict = "member_id,log_date,journal_entry_key"
+        row.setdefault("item_order", 0)
+        row["allocation_id"] = None
         row["profile_id"] = None
         row["profile_name"] = None
         row["day_number"] = None
@@ -194,6 +200,7 @@ def save_member_exercise_log(payload: Dict[str, Any]) -> None:
             if not _clean(row.get(field)) and row.get(field) != 0
         )
         conflict = "member_id,log_date,profile_id,day_number,item_order"
+
     if missing:
         raise ValueError(
             f"Missing exercise log fields: {', '.join(dict.fromkeys(missing))}"
