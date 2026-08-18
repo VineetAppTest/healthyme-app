@@ -30,13 +30,15 @@ Reads are side-effect free. An expired allocation is not silently persisted as s
 
 ## Exercise Journal identity
 
-New Exercise Journal rows use the stable allocation identity:
+A new prescribed Exercise Journal row keeps the stable assignment identity:
 
 - `member_id`
 - `log_date`
 - `allocation_id`
 
-`source_id` is retained as the canonical Exercise Repository reference for traceability.
+The accepted Journal also allows the member to add an extra actual Exercise that was not prescribed. Such a row must not fabricate an allocation or Recommendation Profile identity. It uses a journal-only stable `journal_entry_key` for that date instead.
+
+`source_id`, when available, records the canonical Exercise Repository item chosen as the actual activity for traceability. Changing the actual activity does not change the Exercise allocation.
 
 Legacy journal rows retain their existing Recommendation Profile identity:
 
@@ -50,7 +52,7 @@ Historical rows are not deleted, rewritten or matched to new allocations by Exer
 
 The accepted Exercise Journal remains an actual-behaviour surface. Timing, Activity, Duration / Sets, Remarks, Status and Completion Time remain member-editable where currently supported. A member changing the actual Activity does not change the underlying Exercise allocation: the journal row remains linked to the original `allocation_id`, while the selected actual activity/details are stored only in that journal row.
 
-Saved-day/history behaviour remains available. Legacy saved days remain readable.
+`+ Add Exercise`, `Remove Exercise`, saved-day/history and legacy saved days remain available.
 
 ## Member-safe fields
 
@@ -65,7 +67,7 @@ Internal/admin-only notes are not member content. In particular:
 - Existing Recommendation Profile, Exercise allocation and Supplement allocation stores are preserved.
 - Existing Exercise Journal rows and their identifiers are preserved.
 - Existing legacy Exercise Journal uniqueness remains valid for legacy rows.
-- A new allocation-linked uniqueness rule is additive for new rows.
+- Additive uniqueness is introduced for allocation-linked and journal-only new rows.
 - Existing web Current Member Plan remains read-only and keeps the three-authority model.
 - Flutter migration consumes the corrected contract after this web source-of-truth correction is validated.
 
@@ -82,7 +84,7 @@ Internal/admin-only notes are not member content. In particular:
 
 1. Web Current Member Plan and Web Exercise Journal use the same Exercise authority.
 2. Exercise Journal shows only allocations effective for the selected date as assigned rows.
-3. New Exercise Journal saves use `allocation_id`; old profile-linked history remains readable.
+3. New prescribed Exercise Journal saves use `allocation_id`; extra actual Exercise rows use journal-only identity; old profile-linked history remains readable.
 4. Exercise Journal writes cannot modify Exercise Repository, Recommendation Profile or Exercise allocation records.
 5. `admin_note` is not exposed on Member Home.
 6. Existing Meal, Supplement, journal history, auth/roles/RLS and schedule behaviour is unchanged.
