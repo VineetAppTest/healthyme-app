@@ -55,7 +55,7 @@ class MemberVisualSmokeFollowupTests(unittest.TestCase):
         self.assertIn('padding:1rem 1rem 1.04rem', page)
         self.assertIn('min-height:0;box-sizing:border-box', page)
         self.assertNotIn('min-height:15.75rem', page)
-        self.assertIn('margin:.56rem 0 .24rem 0', page)
+        self.assertIn('margin:.48rem 0 .32rem 0', page)
 
     def test_open_meals_render_in_real_compact_cards(self):
         source = (ROOT / "pages/18_Daily_Log.py").read_text()
