@@ -1,0 +1,30 @@
+name: Member Home admin note privacy
+
+on:
+  pull_request:
+    paths:
+      - "pages/02_Member_Home.py"
+      - "components/assessment_instances.py"
+      - "tests/test_member_home_admin_note_privacy.py"
+      - ".github/workflows/member-home-admin-note-privacy.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile Member Home
+        run: python -m py_compile pages/02_Member_Home.py tests/test_member_home_admin_note_privacy.py
+
+      - name: Run privacy contract test
+        run: python -m unittest -v tests.test_member_home_admin_note_privacy
