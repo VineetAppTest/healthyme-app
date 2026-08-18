@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 import unittest
 
 from components.runtime_navigation_safety import unwrap_stale_full_app_navigation
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class RuntimeNavigationSafetyTests(unittest.TestCase):
@@ -52,6 +56,21 @@ class RuntimeNavigationSafetyTests(unittest.TestCase):
             ),
             _navigation_with_authenticated_root_canonicalization,
         )
+
+    def test_production_cutover_applies_guard_before_compiling_runtime(self):
+        source = (
+            ROOT / "production_cutover" / "production_live_cutover_app.py"
+        ).read_text(encoding="utf-8")
+        guard_call = "st.navigation = unwrap_stale_full_app_navigation(st.navigation)"
+        source_read = "source_text = SOURCE.read_text(encoding=\"utf-8\")"
+        self.assertIn(
+            "from components.runtime_navigation_safety import "
+            "unwrap_stale_full_app_navigation",
+            source,
+        )
+        self.assertIn(guard_call, source)
+        self.assertIn(source_read, source)
+        self.assertLess(source.index(guard_call), source.index(source_read))
 
 
 if __name__ == "__main__":
