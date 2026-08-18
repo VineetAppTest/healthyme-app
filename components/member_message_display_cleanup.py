@@ -4,12 +4,15 @@ from typing import Any
 
 
 # Scheduling already has a dedicated Upcoming Schedule area on Member Home.
-# Keeping the same events in the generic message feed repeats the same action and
-# makes genuine Nutritionist guidance harder to find. The records remain stored,
-# auditable and eligible for email delivery; this wrapper changes display only.
-_MEMBER_HOME_DUPLICATED_SCHEDULE_SOURCES = {
+# The legacy Recommendation Profile activation message is also superseded by the
+# canonical domain allocation message (for example, "Meal added"). Keeping either
+# class of duplicate in the generic message feed repeats the same member action and
+# makes genuine Nutritionist guidance harder to find. Records remain stored and
+# auditable; this wrapper changes display only on Member Home.
+_MEMBER_HOME_SUPPRESSED_SOURCES = {
     "schedule",
     "schedule_48h_acknowledgement_reminder",
+    "recommendation_profile",
 }
 
 
@@ -28,13 +31,13 @@ def _display_key(row: dict[str, Any]) -> str:
 
 
 def member_home_visible_messages(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Return one actionable Member Home card per non-schedule message event."""
+    """Return one useful Member Home card per non-suppressed message event."""
 
     visible: list[dict[str, Any]] = []
     seen: set[str] = set()
     for source_row in rows or []:
         row = dict(source_row or {})
-        if _text(row.get("source")).lower() in _MEMBER_HOME_DUPLICATED_SCHEDULE_SOURCES:
+        if _text(row.get("source")).lower() in _MEMBER_HOME_SUPPRESSED_SOURCES:
             continue
         key = _display_key(row)
         if key in seen:
@@ -56,12 +59,12 @@ def install_member_message_display_cleanup() -> None:
     base = getattr(db_api, "_hm_member_message_display_cleanup_base", current)
     db_api._hm_member_message_display_cleanup_base = base
 
-    def get_member_messages_without_schedule_repetition(member_id, limit=10):
-        # Fetch extra rows first because schedule messages are removed after loading.
+    def get_member_messages_without_repetition(member_id, limit=10):
+        # Fetch extra rows first because suppressed duplicates are removed after loading.
         resolved_limit = int(limit or 10)
         fetch_limit = max(resolved_limit * 4, 40)
         rows = base(member_id, limit=fetch_limit)
         return member_home_visible_messages(list(rows or []))[:resolved_limit]
 
-    get_member_messages_without_schedule_repetition._hm_member_message_display_cleanup = True
-    db_api.get_member_messages = get_member_messages_without_schedule_repetition
+    get_member_messages_without_repetition._hm_member_message_display_cleanup = True
+    db_api.get_member_messages = get_member_messages_without_repetition
