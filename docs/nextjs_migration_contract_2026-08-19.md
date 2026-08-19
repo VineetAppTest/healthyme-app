@@ -1,5 +1,7 @@
 # HealthyMe Next.js Migration Contract — 2026-08-19
 
+> **Authority:** `docs/HEALTHYME_WEB_MIGRATION_SOURCE_OF_TRUTH.md` is the governing source of truth for this migration. This contract is an implementation-focused companion and must be interpreted consistently with that document. If they ever conflict, the Source of Truth takes precedence unless Vineet gives a newer explicit direction.
+
 ## Objective
 
 Replace the Streamlit presentation/application layer progressively with a Next.js frontend deployed independently on Vercel, while preserving HealthyMe's existing Supabase backend and accepted product behaviour.
