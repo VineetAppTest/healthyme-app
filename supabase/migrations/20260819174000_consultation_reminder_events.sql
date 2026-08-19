@@ -4,6 +4,8 @@
 -- reminder stages and delivery outcomes so the background worker never needs
 -- to rewrite the full application-state JSON blob.
 
+create extension if not exists supabase_vault with schema vault;
+
 create table if not exists public.hm_consultation_reminder_events (
     id uuid primary key default gen_random_uuid(),
     schedule_id text not null,
