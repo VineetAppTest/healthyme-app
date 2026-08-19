@@ -56,6 +56,17 @@ def _profile_is_editable(row: Dict[str, Any]) -> bool:
     )
 
 
+def _profile_is_publishable_source(row: Dict[str, Any]) -> bool:
+    """Any retained Meal Profile may seed a new member-plan copy.
+
+    Editability and publishability are intentionally separate. Historical,
+    replaced or already allocated profiles stay immutable in this screen, but
+    their retained meal rows may be reused unchanged by publishing a fresh copy.
+    """
+
+    return bool(clean(row.get("id")))
+
+
 def _profile_matches_health_filter(
     row: Dict[str, Any],
     selected_concerns: List[str],
@@ -149,6 +160,7 @@ def _render_publish_controls(
 
     selected_profile = profile_by_id[selected_profile_id]
     profile_editable = _profile_is_editable(selected_profile)
+    profile_publishable = _profile_is_publishable_source(selected_profile)
 
     selected_member_label = member_row[0].selectbox(
         "Member",
@@ -165,20 +177,25 @@ def _render_publish_controls(
         "Publish",
         type="primary",
         use_container_width=True,
-        disabled=not can_publish or not bool(selected_member_id) or not profile_editable,
+        disabled=(
+            not can_publish
+            or not bool(selected_member_id)
+            or not profile_publishable
+        ),
         key=f"mpb_publish_repository_plan_{selected_profile_id}",
         help=(
             "Publish a meal-only copy to the selected member."
             if profile_editable
-            else "Allocated or historical Meal Profiles are retained read-only. Clone from Setup before publishing a new copy."
+            else "Publish a fresh member-plan copy from this retained Meal Profile. The source remains read-only and unchanged."
         ),
     )
     if not any(label_to_id.values()):
         st.caption("No active member directory entries are available for publishing.")
     if not profile_editable:
         st.caption(
-            "This allocated or historical Meal Profile is visible for review only. "
-            "Use Setup → Clone Meal Profile to create an editable Draft."
+            "This Meal Profile remains read-only as a retained source. Publish creates "
+            "a new member-plan copy without changing this profile. Use Setup → Clone "
+            "Meal Profile only when you need to modify it before publishing."
         )
     return (
         selected_profile,
