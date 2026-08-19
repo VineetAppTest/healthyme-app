@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { signOut } from "@/app/login/actions";
 import { isAdminRole, isMemberRole } from "@/features/auth/app-user";
 import { getAuthenticatedHealthyMeUser } from "@/features/auth/current-user";
 
@@ -16,8 +17,13 @@ export default async function AdminMigrationHoldingPage() {
         <h1>Admin remains on the current HealthyMe web app.</h1>
         <p className="lead">
           The migration is proceeding member-first. This preview confirms the
-          canonical Admin role without replacing any Admin workflow yet.
+          canonical Admin role but does not replace or imitate any Admin workflow.
+          Continue using the current HealthyMe Admin until its future migration
+          slices are explicitly accepted.
         </p>
+        <form action={signOut}>
+          <button type="submit">Sign out of preview</button>
+        </form>
       </section>
     </main>
   );
