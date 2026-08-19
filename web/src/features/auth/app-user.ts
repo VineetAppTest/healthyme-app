@@ -16,7 +16,6 @@ export type HealthyMeAppUser = {
 type HmUserRow = {
   id?: unknown;
   name?: unknown;
-  full_name?: unknown;
   email?: unknown;
   role?: unknown;
   is_active?: unknown;
@@ -43,7 +42,7 @@ function toAppUser(row: HmUserRow | null | undefined): HealthyMeAppUser | null {
   const email = normalizeEmail(row.email);
   return {
     id: clean(row.id),
-    name: clean(row.name || row.full_name || row.email || "User"),
+    name: clean(row.name || row.email || "User"),
     email,
     role: normalizeRole(row.role),
     isActive: row.is_active !== false,
@@ -54,7 +53,7 @@ function toAppUser(row: HmUserRow | null | undefined): HealthyMeAppUser | null {
 }
 
 const SELECT_COLUMNS =
-  "id,name,full_name,email,role,is_active,auth_provider,must_reset_password,auth_user_id";
+  "id,name,email,role,is_active,auth_provider,must_reset_password,auth_user_id";
 
 /**
  * Reproduce HealthyMe's canonical role lookup without changing the backend.
