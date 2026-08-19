@@ -1,6 +1,7 @@
 # HealthyMe Next.js Migration Contract — 2026-08-19
 
-> **Authority:** `docs/HEALTHYME_WEB_MIGRATION_SOURCE_OF_TRUTH.md` is the governing source of truth for this migration. This contract is an implementation-focused companion and must be interpreted consistently with that document. If they ever conflict, the Source of Truth takes precedence unless Vineet gives a newer explicit direction.
+> **Authority:** `docs/HEALTHYME_WEB_MIGRATION_SOURCE_OF_TRUTH.md` is the governing source of truth for this migration.  
+> **Member blueprint:** `docs/HEALTHYME_MEMBER_JOURNEY_V1.md` governs the current member-first implementation.
 
 ## Objective
 
@@ -41,13 +42,11 @@ The default experience should proactively surface the member's relevant informat
 - **Later:** What is upcoming but does not require attention yet?
 - **Done:** What have I already completed or acknowledged?
 
+`Done` is never inferred from elapsed time or merely viewing a card; it requires an authoritative HealthyMe completion/acknowledgement state.
+
 Examples include meals, supplements, exercise, consultations, allocated tasks, due dates and other member actions. Where existing plan data includes timing or dates, the frontend should use that context to surface the relevant item at the appropriate time rather than requiring the member to navigate to a separate plan page to discover it.
 
-For example, an upcoming meal or exercise may become prominent in a `Now`/`Next` area when its scheduled time approaches, with the essential instruction and direct action available from that context. The underlying allocation, timing, completion and status logic remains authoritative in the existing HealthyMe backend; the frontend changes how clearly and proactively that information is presented.
-
 Proactive presentation should be useful rather than intrusive: prefer contextual cards, prioritized sections, badges and timely prompts over unnecessary blocking pop-ups. A member must still be able to browse the complete plan/history when needed.
-
-This principle applies especially to the member-facing web migration and should remain aligned with the intuitiveness principles used for the HealthyMe native app.
 
 ## Architecture
 
@@ -56,6 +55,7 @@ This principle applies especially to the member-facing web migration and should 
 - Hosting target: Vercel with repository Root Directory `/web`.
 - Backend: existing HealthyMe Supabase project.
 - Supabase web authentication: cookie-based SSR using `@supabase/ssr` and the project's publishable key.
+- Canonical `hm_users` role resolution: server-side only, reproducing the current HealthyMe lookup without changing RLS.
 - Privileged keys: never shipped to browser code.
 
 ## Branding
@@ -64,7 +64,7 @@ Product branding is centralized behind configuration. `HealthyMe` remains the de
 
 The product name, logo and related visual identity must remain replaceable without changing application workflows, Supabase data contracts or business logic.
 
-## Migration gates
+## Current migration gates — member first
 
 ### Gate 0 — Foundation
 
@@ -74,30 +74,43 @@ The product name, logo and related visual identity must remain replaceable witho
 - Vercel can target `/web` without changing Streamlit deployment.
 - No production backend writes or schema changes.
 
-### Gate 1 — Authentication/session parity
+### Member Gate M0 — Journey contract
+
+- current functional inventory completed;
+- lifecycle-aware target IA defined;
+- Today / Plan / Log / More primary navigation defined;
+- Now / Next / Later / Done doctrine defined;
+- backend boundary confirmed.
+
+### Member Gate M1 — Authentication/session/member-role parity
 
 Reproduce the currently accepted HealthyMe outcomes:
 
 - Supabase sign-in;
 - durable browser session/reload behaviour;
 - secure sign-out;
-- canonical `hm_users` mapping;
-- Admin vs Member routing;
-- direct-page return behaviour;
+- canonical `hm_users` mapping using `auth_user_id` then unique email fallback;
+- active Member authorization;
+- Admin role recognition without exposing an unfinished Admin migration;
+- direct-route protection;
 - inactive/unauthorized user rejection;
 - no silent re-login after explicit logout.
 
 Do not retire the Streamlit login until this gate passes focused browser UAT.
 
-### Gate 2 — Admin shell and Admin Dashboard
+### Member Gate M2 — Member shell + Today read-only orchestration
 
-Reproduce accepted Admin navigation, profile/header behaviour, dashboard information and responsive presentation without changing underlying data or actions.
+- persistent member navigation;
+- member-local context;
+- lifecycle-aware Today presentation;
+- read-only current plan/messages/schedule/task state first;
+- no write behaviour until the relevant contract is validated.
 
-### Gate 3 onward — workflow migration
+### Member Gate M3 onward
 
-Proceed in controlled slices: Member/Profile workflow, Meal Builder, Exercise Allocation, Supplement Allocation, Repository/remaining Admin workflows, then member web workflows if retained.
+Proceed through Assessment/Task actions -> Plan -> Log -> Schedule/Communication -> Profile/Reports/remaining member functions -> full member UAT/cutover, as defined in `HEALTHYME_MEMBER_JOURNEY_V1.md`.
 
-Each migrated member-facing slice must also be assessed against the `Now / Next / Later / Done` principle so that navigation parity does not become an excuse to reproduce avoidable hunting or memory-dependent behaviour from the old frontend.
+Admin migration follows as a separately controlled journey unless later product direction changes the sequence.
 
 ## Validation standard
 
