@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { APP_NAME } from "@/lib/brand";
 
 const migrationRules = [
@@ -6,12 +8,12 @@ const migrationRules = [
     copy: "Existing database, Auth, RLS, storage, IDs and history remain authoritative.",
   },
   {
-    title: "Replace presentation progressively",
-    copy: "Each Streamlit workflow is reproduced in Next.js and accepted through UAT before retirement.",
+    title: "Redesign the experience",
+    copy: "Streamlit remains the functional reference, but the new web app is not a page-for-page UX copy.",
   },
   {
-    title: "Protect accepted behaviour",
-    copy: "Navigation, role routing, lifecycle rules and member/admin outcomes are migration contracts, not redesign targets.",
+    title: "Member first",
+    copy: "The first product journey is proactive Today guidance: Now, Next, Later and authoritative Done states.",
   },
 ];
 
@@ -20,17 +22,20 @@ export default function Home() {
     <main className="shell">
       <header className="topbar">
         <div className="brand">{APP_NAME}</div>
-        <div className="status-pill">Next.js migration foundation</div>
+        <div className="status-pill">Next.js migration preview</div>
       </header>
 
       <section className="hero">
         <article className="card">
-          <p className="eyebrow">Frontend replacement</p>
-          <h1>A new interface over the same HealthyMe product.</h1>
+          <p className="eyebrow">Member-first frontend replacement</p>
+          <h1>A clearer HealthyMe experience over the same product.</h1>
           <p className="lead">
-            This Next.js application is being introduced alongside the current
-            Streamlit implementation. Backend behaviour is preserved while
-            screens are migrated and validated one workflow at a time.
+            The new web experience is being introduced alongside Streamlit. It
+            keeps the existing HealthyMe backend and business behaviour while
+            making the member journey more proactive, intuitive and responsive.
+          </p>
+          <p>
+            <Link href="/login">Open member migration preview →</Link>
           </p>
         </article>
 
