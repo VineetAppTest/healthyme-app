@@ -56,14 +56,6 @@ export async function signIn(
     };
   }
 
-  if (appUser.mustResetPassword) {
-    await supabase.auth.signOut();
-    return {
-      error:
-        "This account must complete the existing HealthyMe password-reset requirement before using the new web preview.",
-    };
-  }
-
   if (isMemberRole(appUser.role)) {
     redirect("/member/today");
   }
