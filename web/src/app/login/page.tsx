@@ -16,14 +16,16 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
+  let appUser = null;
 
   try {
-    const appUser = await getAuthenticatedHealthyMeUser();
-    if (appUser && isMemberRole(appUser.role)) redirect("/member/today");
-    if (appUser && isAdminRole(appUser.role)) redirect("/admin");
+    appUser = await getAuthenticatedHealthyMeUser();
   } catch {
     // The page must still render before the HealthyMe preview environment is wired.
   }
+
+  if (appUser && isMemberRole(appUser.role)) redirect("/member/today");
+  if (appUser && isAdminRole(appUser.role)) redirect("/admin");
 
   return (
     <main className={styles.page}>
