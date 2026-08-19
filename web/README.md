@@ -6,8 +6,8 @@ coexist during migration.
 
 ## Governing documents
 
-- `../docs/HEALTHYME_WEB_MIGRATION_SOURCE_OF_TRUTH.md` — overall migration authority.
-- `../docs/HEALTHYME_MEMBER_JOURNEY_V1.md` — governing member-experience blueprint and current member-first migration order.
+- `../docs/HEALTHYME_WEB_MIGRATION_SOURCE_OF_TRUTH.md` — overall migration authority and current member-first sequence.
+- `../docs/HEALTHYME_MEMBER_JOURNEY_V1.md` — governing member-experience blueprint.
 
 A later explicit product decision supersedes older sequencing and must be incorporated back into the governing documentation.
 
