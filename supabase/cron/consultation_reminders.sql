@@ -44,7 +44,10 @@ select cron.schedule(
             'trigger', 'supabase_cron',
             'invoked_at', now()
         ),
-        timeout_milliseconds := 10000
+        -- Gmail SMTP delivery may take longer than a simple HTTP-provider call.
+        -- The Edge Function processes a bounded batch and Free-plan functions
+        -- have a 150-second wall-clock limit, so keep the caller below that.
+        timeout_milliseconds := 120000
     ) as request_id;
     $cron$
 );
