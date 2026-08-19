@@ -3,13 +3,16 @@ import { createClient } from "npm:@supabase/supabase-js@2.111.0";
 
 const APP_STATE_ID = "healthyme_app_state_v1";
 const EVENT_TABLE = "hm_consultation_reminder_events";
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const DEFAULT_TIMEZONE = "Asia/Kolkata";
 const MAX_EMAIL_ATTEMPTS = 4;
-const STALE_SENDING_MINUTES = 15;
+const SMTP_HOST = "smtp.gmail.com";
+const SMTP_PORT = 465;
+const SMTP_TIMEOUT_MS = 12_000;
+const EMAIL_PROVIDER = "Gmail SMTP";
 
 type UnknownRecord = Record<string, unknown>;
 type ReminderStage = "72h_action" | "24h_action" | "24h_info";
+type DeliveryStatus = "sent" | "failed" | "configuration_missing" | "uncertain";
 
 type ReminderEvent = {
   id: string;
@@ -24,6 +27,12 @@ type ReminderEvent = {
   email_to: string;
   email_status: string;
   email_attempt_count: number;
+};
+
+type DeliveryResult = {
+  status: DeliveryStatus;
+  providerId: string;
+  error: string;
 };
 
 function text(value: unknown): string {
@@ -122,9 +131,6 @@ function legacyScheduleStartUtc(schedule: UnknownRecord): Date | null {
 
   let candidateMs = desiredPseudoUtc;
   try {
-    // Iteratively translate the wall-clock time in an IANA timezone to UTC.
-    // Current HealthyMe schedules normally carry start_at_utc; this is only a
-    // compatibility path for older rows.
     for (let index = 0; index < 3; index += 1) {
       const observed = localPartsAt(new Date(candidateMs), timezone);
       const observedPseudoUtc = Date.UTC(
@@ -298,58 +304,169 @@ function emailHtml(name: string, subject: string, message: string, appUrl: strin
 </div></div></body></html>`;
 }
 
-async function sendResend(event: ReminderEvent, name: string) {
-  const apiKey = text(Deno.env.get("RESEND_API_KEY"));
-  const sender = text(
-    Deno.env.get("RESEND_FROM_EMAIL")
-      || Deno.env.get("RESEND_FROM")
-      || Deno.env.get("EMAIL_FROM"),
-  );
-  const replyTo = text(Deno.env.get("RESEND_REPLY_TO") || Deno.env.get("EMAIL_REPLY_TO"));
+function isEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function encodeUtf8Base64(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function foldBase64(value: string): string {
+  const raw = encodeUtf8Base64(value);
+  const lines: string[] = [];
+  for (let index = 0; index < raw.length; index += 76) {
+    lines.push(raw.slice(index, index + 76));
+  }
+  return lines.join("\r\n");
+}
+
+function smtpMessage(event: ReminderEvent, name: string, sender: string, appUrl: string): { data: string; messageId: string } {
+  const boundary = `healthyme_${event.schedule_id}_${event.stage}`.replace(/[^A-Za-z0-9_-]/g, "_");
+  const safeId = event.schedule_id.replace(/[^A-Za-z0-9._-]/g, "_");
+  const messageId = `<healthyme-consultation-${safeId}-${event.stage}@gmail.local>`;
+  const plain = `Dear ${name || "there"},\n\n${event.subject}\n\n${event.message}\n\nOpen HealthyMe: ${appUrl}\n\nWarm regards,\nTeam HealthyMe`;
+  const html = emailHtml(name, event.subject, event.message, appUrl);
+  const headers = [
+    `From: HealthyMe <${sender}>`,
+    `To: <${event.email_to}>`,
+    `Subject: ${event.subject}`,
+    `Date: ${new Date().toUTCString()}`,
+    `Message-ID: ${messageId}`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/alternative; boundary=\"${boundary}\"`,
+    "",
+  ];
+  const body = [
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    foldBase64(plain),
+    `--${boundary}`,
+    "Content-Type: text/html; charset=UTF-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    foldBase64(html),
+    `--${boundary}--`,
+    "",
+  ];
+  return { data: [...headers, ...body].join("\r\n"), messageId };
+}
+
+async function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  let timer: number | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out`)), SMTP_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+async function readSmtpResponse(conn: Deno.Conn): Promise<{ code: number; text: string }> {
+  const decoder = new TextDecoder();
+  let accumulated = "";
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const buffer = new Uint8Array(4096);
+    const count = await withTimeout(conn.read(buffer), "SMTP read");
+    if (count === null) throw new Error("SMTP connection closed unexpectedly");
+    accumulated += decoder.decode(buffer.subarray(0, count), { stream: true });
+    const lines = accumulated.split("\r\n");
+    for (const line of lines) {
+      const match = line.match(/^(\d{3}) (.*)$/s);
+      if (match) {
+        return { code: Number.parseInt(match[1], 10), text: accumulated.trim() };
+      }
+    }
+  }
+  throw new Error("SMTP response was incomplete");
+}
+
+async function smtpCommand(conn: Deno.Conn, command: string, expected: number[]): Promise<{ code: number; text: string }> {
+  const encoded = new TextEncoder().encode(`${command}\r\n`);
+  await withTimeout(conn.write(encoded), "SMTP write");
+  const response = await readSmtpResponse(conn);
+  if (!expected.includes(response.code)) {
+    throw new Error(`SMTP ${response.code}: ${response.text.slice(0, 240)}`);
+  }
+  return response;
+}
+
+async function sendGmailSmtp(event: ReminderEvent, name: string): Promise<DeliveryResult> {
+  const sender = text(Deno.env.get("HEALTHYME_GMAIL_USER"));
+  const appPassword = text(Deno.env.get("HEALTHYME_GMAIL_APP_PASSWORD")).replace(/\s+/g, "");
   const appUrl = text(Deno.env.get("HEALTHYME_APP_URL")) || "https://healthyme.in";
 
-  if (!apiKey || !sender) {
-    return { status: "configuration_missing", providerId: "", error: "RESEND_API_KEY and RESEND_FROM_EMAIL/RESEND_FROM are required." };
+  if (!isEmail(sender) || !appPassword) {
+    return {
+      status: "configuration_missing",
+      providerId: "",
+      error: "HEALTHYME_GMAIL_USER and HEALTHYME_GMAIL_APP_PASSWORD are required.",
+    };
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(event.email_to)) {
+  if (!isEmail(event.email_to)) {
     return { status: "failed", providerId: "", error: "A valid member email address is not available." };
   }
 
-  const payload: UnknownRecord = {
-    from: sender.includes("<") ? sender : `HealthyMe <${sender}>`,
-    to: [event.email_to],
-    subject: event.subject,
-    html: emailHtml(name, event.subject, event.message, appUrl),
-    text: `Dear ${name || "there"},\n\n${event.subject}\n\n${event.message}\n\nOpen HealthyMe: ${appUrl}\n\nWarm regards,\nTeam HealthyMe`,
-  };
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyTo)) payload.reply_to = replyTo;
+  let conn: Deno.Conn | null = null;
+  let dataAccepted = false;
+  let dataStarted = false;
+  const message = smtpMessage(event, name, sender, appUrl);
 
   try {
-    const response = await fetch(RESEND_ENDPOINT, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "Idempotency-Key": `healthyme-consultation|${event.schedule_id}|${event.stage}`,
-      },
-      body: JSON.stringify(payload),
-    });
-    let body: UnknownRecord = {};
+    conn = await withTimeout(Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT }), "SMTP connect");
+    const greeting = await readSmtpResponse(conn);
+    if (greeting.code !== 220) throw new Error(`SMTP ${greeting.code}: ${greeting.text.slice(0, 240)}`);
+
+    await smtpCommand(conn, "EHLO healthyme.in", [250]);
+    await smtpCommand(conn, "AUTH LOGIN", [334]);
+    await smtpCommand(conn, btoa(sender), [334]);
+    await smtpCommand(conn, btoa(appPassword), [235]);
+    await smtpCommand(conn, `MAIL FROM:<${sender}>`, [250]);
+    await smtpCommand(conn, `RCPT TO:<${event.email_to}>`, [250, 251]);
+    await smtpCommand(conn, "DATA", [354]);
+    dataStarted = true;
+
+    const dotStuffed = message.data
+      .split("\r\n")
+      .map((line) => line.startsWith(".") ? `.${line}` : line)
+      .join("\r\n");
+    await withTimeout(conn.write(new TextEncoder().encode(`${dotStuffed}\r\n.\r\n`)), "SMTP DATA write");
+    const accepted = await readSmtpResponse(conn);
+    if (accepted.code !== 250) {
+      throw new Error(`SMTP ${accepted.code}: ${accepted.text.slice(0, 240)}`);
+    }
+    dataAccepted = true;
     try {
-      body = record(await response.json());
+      await smtpCommand(conn, "QUIT", [221]);
     } catch {
-      body = {};
+      // Delivery was already accepted by Gmail; QUIT failure does not change delivery outcome.
     }
-    if (response.ok) {
-      return { status: "sent", providerId: text(body.id), error: "" };
-    }
-    return {
-      status: "failed",
-      providerId: "",
-      error: text(body.message || record(body.error).message) || `Resend returned HTTP ${response.status}.`,
-    };
+    return { status: "sent", providerId: message.messageId, error: "" };
   } catch (error) {
-    return { status: "failed", providerId: "", error: text(error) || "Resend request failed." };
+    const messageText = text(error) || "Gmail SMTP delivery failed.";
+    if (dataStarted && !dataAccepted) {
+      return {
+        status: "uncertain",
+        providerId: message.messageId,
+        error: `Delivery outcome uncertain after SMTP DATA started: ${messageText}`,
+      };
+    }
+    return { status: "failed", providerId: message.messageId, error: messageText };
+  } finally {
+    try {
+      conn?.close();
+    } catch {
+      // Ignore socket-close errors.
+    }
   }
 }
 
@@ -425,6 +542,7 @@ Deno.serve(async (req: Request) => {
       },
       email_to: email,
       email_status: "pending",
+      email_provider: EMAIL_PROVIDER,
       updated_at: now.toISOString(),
     };
 
@@ -440,28 +558,26 @@ Deno.serve(async (req: Request) => {
     if (inserted?.id) created += 1;
   }
 
-  const resendConfigured = Boolean(
-    text(Deno.env.get("RESEND_API_KEY"))
-    && text(Deno.env.get("RESEND_FROM_EMAIL") || Deno.env.get("RESEND_FROM") || Deno.env.get("EMAIL_FROM")),
+  const gmailConfigured = Boolean(
+    isEmail(text(Deno.env.get("HEALTHYME_GMAIL_USER")))
+    && text(Deno.env.get("HEALTHYME_GMAIL_APP_PASSWORD")).replace(/\s+/g, ""),
   );
 
-  if (!resendConfigured) {
+  if (!gmailConfigured) {
     const { error: configMarkError } = await admin
       .from(EVENT_TABLE)
-      .update({ email_status: "configuration_missing", updated_at: now.toISOString() })
+      .update({
+        email_status: "configuration_missing",
+        email_provider: EMAIL_PROVIDER,
+        updated_at: now.toISOString(),
+      })
       .eq("email_status", "pending");
-    if (configMarkError) console.warn("consultation-reminders: could not mark missing email configuration", configMarkError.message);
-    console.warn("consultation-reminders: Resend configuration is missing; reminders were staged but email was not attempted");
-    return Response.json({ ok: true, eligible, created, emailed: 0, emailConfigured: false });
+    if (configMarkError) {
+      console.warn("consultation-reminders: could not mark missing Gmail configuration", configMarkError.message);
+    }
+    console.warn("consultation-reminders: Gmail SMTP configuration is missing; reminders were staged but email was not attempted");
+    return Response.json({ ok: true, eligible, created, emailed: 0, emailConfigured: false, provider: EMAIL_PROVIDER });
   }
-
-  const staleBefore = new Date(now.getTime() - STALE_SENDING_MINUTES * 60_000).toISOString();
-  await admin
-    .from(EVENT_TABLE)
-    .update({ email_status: "failed", email_error: "Recovered stale delivery claim.", updated_at: now.toISOString() })
-    .eq("email_status", "sending")
-    .lt("email_attempted_at", staleBefore)
-    .lt("email_attempt_count", MAX_EMAIL_ATTEMPTS);
 
   const { data: pendingRows, error: pendingError } = await admin
     .from(EVENT_TABLE)
@@ -469,7 +585,7 @@ Deno.serve(async (req: Request) => {
     .in("email_status", ["pending", "failed", "configuration_missing"])
     .lt("email_attempt_count", MAX_EMAIL_ATTEMPTS)
     .order("created_at", { ascending: true })
-    .limit(40);
+    .limit(8);
   if (pendingError) {
     console.error("consultation-reminders: pending delivery read failed", pendingError.message);
     return Response.json({ error: "Reminder delivery queue could not be read" }, { status: 500 });
@@ -478,6 +594,7 @@ Deno.serve(async (req: Request) => {
   let emailed = 0;
   let suppressed = 0;
   let failed = 0;
+  let uncertain = 0;
 
   for (const raw of pendingRows ?? []) {
     const event = raw as ReminderEvent;
@@ -485,7 +602,12 @@ Deno.serve(async (req: Request) => {
     if (!currentSchedule || !stageStillValid(event.stage, currentSchedule, new Date())) {
       await admin
         .from(EVENT_TABLE)
-        .update({ email_status: "suppressed", email_error: "Schedule is no longer eligible for this reminder stage.", updated_at: new Date().toISOString() })
+        .update({
+          email_status: "suppressed",
+          email_provider: EMAIL_PROVIDER,
+          email_error: "Schedule is no longer eligible for this reminder stage.",
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", event.id)
         .eq("email_status", event.email_status);
       suppressed += 1;
@@ -498,6 +620,7 @@ Deno.serve(async (req: Request) => {
       .from(EVENT_TABLE)
       .update({
         email_status: "sending",
+        email_provider: EMAIL_PROVIDER,
         email_attempt_count: attemptCount,
         email_attempted_at: attemptedAt,
         email_error: "",
@@ -510,14 +633,33 @@ Deno.serve(async (req: Request) => {
     if (claimError || !claimed) continue;
 
     const deliveryEvent = claimed as ReminderEvent;
-    const delivery = await sendResend(deliveryEvent, memberName(state, currentSchedule));
+    const delivery = await sendGmailSmtp(deliveryEvent, memberName(state, currentSchedule));
     const completedAt = new Date().toISOString();
     const sent = delivery.status === "sent";
+
+    if (delivery.status === "uncertain") {
+      const { error: uncertainUpdateError } = await admin
+        .from(EVENT_TABLE)
+        .update({
+          email_provider: EMAIL_PROVIDER,
+          email_provider_id: delivery.providerId,
+          email_error: delivery.error.slice(0, 500),
+          updated_at: completedAt,
+        })
+        .eq("id", event.id)
+        .eq("email_status", "sending");
+      if (uncertainUpdateError) {
+        console.error("consultation-reminders: uncertain delivery audit update failed", event.id, uncertainUpdateError.message);
+      }
+      uncertain += 1;
+      continue;
+    }
+
     const { error: updateError } = await admin
       .from(EVENT_TABLE)
       .update({
         email_status: delivery.status,
-        email_provider: "Resend",
+        email_provider: EMAIL_PROVIDER,
         email_provider_id: delivery.providerId,
         email_error: delivery.error.slice(0, 500),
         email_sent_at: sent ? completedAt : null,
@@ -534,13 +676,25 @@ Deno.serve(async (req: Request) => {
 
   console.log(JSON.stringify({
     event: "consultation_reminder_run",
+    provider: EMAIL_PROVIDER,
     eligible,
     created,
     emailed,
     suppressed,
     failed,
+    uncertain,
     at: now.toISOString(),
   }));
 
-  return Response.json({ ok: true, eligible, created, emailed, suppressed, failed, emailConfigured: true });
+  return Response.json({
+    ok: true,
+    eligible,
+    created,
+    emailed,
+    suppressed,
+    failed,
+    uncertain,
+    emailConfigured: true,
+    provider: EMAIL_PROVIDER,
+  });
 });
