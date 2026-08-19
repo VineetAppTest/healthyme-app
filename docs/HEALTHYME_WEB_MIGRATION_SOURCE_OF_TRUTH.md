@@ -346,7 +346,11 @@ No old workflow is retired merely because the new screen renders successfully.
 
 ---
 
-## 13. Migration sequence
+## 13. Current migration sequence — member first
+
+The explicit product direction is to migrate the **Member journey first**. Authentication/session parity remains the first technical safety gate because every member route depends on correct identity and canonical role resolution.
+
+The governing member blueprint is `docs/HEALTHYME_MEMBER_JOURNEY_V1.md`.
 
 ### Gate 0 — Foundation
 
@@ -356,34 +360,77 @@ No old workflow is retired merely because the new screen renders successfully.
 - Vercel capable of targeting `/web` independently;
 - no production backend change.
 
-### Gate 1 — Authentication/session parity
+### Member Gate M0 — Journey contract
 
-- Supabase login;
+- current member functional inventory;
+- lifecycle states;
+- target IA;
+- Now / Next / Later / Done doctrine;
+- backend boundary;
+- member UAT standard.
+
+### Member Gate M1 — Authentication/session/member-role parity
+
+- Supabase member sign-in;
 - session persistence/reload;
 - secure logout;
 - canonical `hm_users` authorization;
-- Admin/Member routing;
-- direct-page routing/return behaviour;
 - inactive/unauthorized handling;
+- member route protection;
 - no silent re-login.
 
-### Gate 2 — Admin shell and Admin Dashboard
+### Member Gate M2 — Member shell + read-only Today orchestration
 
-Rebuild the shell and dashboard using the new interaction/visual standards while preserving underlying data and accepted actions.
+- persistent `Today / Plan / Log / More` navigation;
+- responsive shell;
+- lifecycle-aware Today presentation;
+- member-local context;
+- existing task/plan/schedule/message reads only;
+- no new write semantics.
 
-### Gate 3 onward — controlled workflow slices
+### Member Gate M3 — Assessment/task actions
 
-Current intended order:
+- LAF;
+- NSP pages;
+- Body-Mind;
+- due date/progress;
+- Submit for Admin Review;
+- task request/reassessment lifecycle.
 
-1. Member/Profile management;
-2. Meal Builder;
-3. Exercise Allocation;
-4. Supplement Allocation;
-5. Repository;
-6. remaining Admin workflows;
-7. Member Web workflows if retained.
+### Member Gate M4 — Plan
 
-The sequence may be adjusted by explicit product direction, but the preserve-redesign-validate replacement method does not change.
+- Today plus seven-day plan;
+- meals, supplements and exercise unified in the member-facing presentation;
+- responsive week browse.
+
+### Member Gate M5 — Log
+
+- Daily Log parity;
+- exercise recording;
+- autosave/save/history behaviour.
+
+### Member Gate M6 — Schedule + communication
+
+- acknowledgement;
+- reschedule workflow and policies;
+- package/schedule view;
+- nutritionist message archive/history semantics.
+
+### Member Gate M7 — Profile/reports/remaining member functions
+
+- profile/timezone;
+- assessment/report access;
+- remaining lower-frequency functions.
+
+### Member Gate M8 — End-to-end UAT and member cutover
+
+- lifecycle UAT across assessment, review, active plan and reassessment;
+- responsive/light/dark/Safari checks;
+- Streamlit member journey remains fallback until explicit acceptance.
+
+### Admin migration
+
+Admin remains a required future migration journey, governed by the workflow-first doctrine in this document. It follows the member journey unless a later explicit product direction changes sequencing.
 
 ---
 
